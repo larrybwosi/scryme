@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@repo/db";
+import { organization, admin } from "better-auth/plugins";
 
 export const authOptions = {
     database: prismaAdapter(db, {
@@ -20,6 +21,10 @@ export const authOptions = {
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         },
     },
+    plugins: [
+        organization(),
+        admin()
+    ],
 } satisfies Parameters<typeof betterAuth>[0];
 
 // Export Permissions
