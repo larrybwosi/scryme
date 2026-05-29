@@ -1,5 +1,5 @@
 {
-  "extends": "../../packages/typescript-config/base.json",
+  "extends": "../../packages/config-typescript/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,
@@ -13,57 +13,23 @@
     "outDir": "./dist",
     "incremental": true,
     "paths": {
-      "@repo/db": [
-        "../../packages/db/src/index.ts"
-      ],
-      "@repo/db/client": [
-        "../../packages/db/src/client.ts"
-      ],
-      "@repo/auth": [
-        "../../packages/auth/src/index.ts"
-      ],
-      "@repo/shared": [
-        "../../packages/shared/src/index.ts"
-      ],
-      "@repo/notifications": [
-        "../../packages/notifications/src/index.ts"
-      ],
-      "@repo/mpesa": [
-        "../../packages/mpesa/src/index.ts"
-      ],
-      "@repo/zitadel": [
-        "../../packages/zitadel/src/index.ts"
-      ],
-      "@repo/windmill": [
-        "../../packages/windmill/src/index.ts"
-      ],
-      "@repo/windmill/server": [
-        "../../packages/windmill/src/server.ts"
-      ],
-      "@repo/suppliers": [
-        "../../packages/suppliers/src/index.ts"
-      ],
-      "@repo/crm": [
-        "../../packages/crm/src/index.ts"
-      ],
-      "@repo/crm/server": [
-        "../../packages/crm/src/server.ts"
-      ],
-      "@repo/documents": [
-        "../../packages/documents/src/index.ts"
-      ],
-      "@repo/documents/client": [
-        "../../packages/documents/src/client.ts"
-      ],
-      "@/*": [
-        "./src/*"
-      ],
-      "@/prisma/client": [
-        "./src/prisma/client.ts"
-      ],
-      "@/prisma/*": [
-        "./src/prisma/*"
-      ]
+      "@repo/db": ["../../packages/db/src/index.ts"],
+      "@repo/db/client": ["../../packages/db/src/client.ts"],
+      "@repo/auth": ["../../packages/auth/src/index.ts"],
+      "@repo/shared": ["../../packages/shared/src/index.ts"],
+      "@repo/notifications": ["../../packages/notifications/src/index.ts"],
+      "@repo/mpesa": ["../../packages/mpesa/src/index.ts"],
+      "@repo/zitadel": ["../../packages/zitadel/src/index.ts"],
+      "@repo/windmill": ["../../packages/windmill/src/index.ts"],
+      "@repo/windmill/server": ["../../packages/windmill/src/server.ts"],
+      "@repo/suppliers": ["../../packages/suppliers/src/index.ts"],
+      "@repo/crm": ["../../packages/crm/src/index.ts"],
+      "@repo/crm/server": ["../../packages/crm/src/server.ts"],
+      "@repo/documents": ["../../packages/documents/src/index.ts"],
+      "@repo/documents/client": ["../../packages/documents/src/client.ts"],
+      "@/*": ["./src/*"],
+      "@/prisma/client": ["./src/prisma/client.ts"],
+      "@/prisma/*": ["./src/prisma/*"]
     },
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -72,9 +38,6 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": false,
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["node"]
   }
 }
