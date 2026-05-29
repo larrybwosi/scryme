@@ -343,7 +343,7 @@ importers:
         version: link:../db
       '@repo/notifications':
         specifier: workspace:*
-        version: link:../notificaions
+        version: link:../notifications
       '@repo/shared':
         specifier: workspace:*
         version: link:../shared
@@ -544,7 +544,7 @@ importers:
         specifier: latest
         version: 6.0.3
 
-  packages/notificaions:
+  packages/notifications:
     dependencies:
       '@repo/db':
         specifier: workspace:*
@@ -864,7 +864,7 @@ importers:
         version: link:../db
       '@repo/notifications':
         specifier: workspace:*
-        version: link:../notificaions
+        version: link:../notifications
       axios:
         specifier: ^1.15.2
         version: 1.16.1

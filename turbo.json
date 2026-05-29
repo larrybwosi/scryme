@@ -27,6 +27,11 @@
       "dependsOn": ["^generate"],
       "cache": false
     },
-    "lint": {}
+    "lint": {
+      "dependsOn": ["^generate"]
+    },
+    "type-check": {
+      "dependsOn": ["^generate"]
+    }
   }
 }
