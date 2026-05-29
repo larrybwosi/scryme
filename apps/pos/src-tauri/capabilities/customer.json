@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "customer-capability",
+  "description": "Restricted capability for the customer facing window",
+  "windows": ["customer"],
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    "http:default",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://dealioerp.vercel.app" }]
+    }
+  ]
+}

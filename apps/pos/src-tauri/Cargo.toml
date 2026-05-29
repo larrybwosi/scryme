@@ -1,0 +1,101 @@
+[package]
+name = "dealio-desktop"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+retail = []
+standalone = []
+restaurant = []
+supermarket = []
+pharmacy = []
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "dealio_desctop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "blocking", "multipart"] } # For API calls
+directories = "5.0" # To find the app data folder
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+pcsc = "2.9.0" # Library to talk to Smart Card readers
+serialport = "4.8.1" # Library to talk to Serial ports
+tokio = { version = "1", features = ["full", "macros", "rt-multi-thread"] }
+axum = { version = "0.7", features = ["multipart", "ws"] }
+axum_typed_multipart = "0.11"
+local-ip-address = "0.6"
+machine-uid = "0.3.0"
+
+aes-gcm = "0.10"
+base64 = "0.21"
+rand = "0.8"
+sha2 = "0.10" # To derive a key from a passphrase/ID
+
+tauri-plugin-shell = "2.0.0"
+escpos-rs = "0.3.0"
+uuid = { version = "1.9", features = ["v7", "serde"] } 
+urlencoding = "2.1"
+tempfile = "3"       # For safe file handling (Security)
+thiserror = "1"      # For typed errors
+log = "0.4"          # For standard logging
+tauri-plugin-log = { version = "2", features = ["colored"] } # Structured file logging
+
+tauri-plugin-os = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-http = "2"
+hidapi = "2.6.3"
+tauri-plugin-hid = "0.2.2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-store = "2"
+tauri-plugin-upload = "2"
+tauri-plugin-deep-link = "2"
+tauri-plugin-process = "2"
+tauri-plugin-websocket = "2"
+dotenvy_macro = "0.15.7"
+# tauri-plugin-aptabase = { git = "https://github.com/aptabase/tauri-plugin-aptabase" }
+
+sentry = "0.42"
+tauri-plugin-sentry = "0.5"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+better-posthog = "0.2.4"
+tauri-plugin-better-posthog = "0.1.4"
+futures-util = "0.3.32"
+image = "0.25.10"
+sqlx = "0.8.6"
+
+[dev-dependencies]
+mockito = "1.2"
+serial_test = "3.2.0" # For running tests serially if needed
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-window-state = "2"
+
+[target.'cfg(windows)'.dependencies]
+# Updated to a more recent stable version of the windows crate
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Printing",
+    "Win32_Graphics_Gdi",
+] }
+
+[dependencies.keyring]
+version = "2"

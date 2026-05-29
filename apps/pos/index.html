@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dealio</title>
+
+    <style>
+      /* SPLASH VARIABLES */
+      :root {
+        --splash-primary: #6366f1;
+        --splash-primary-dark: #4f46e5;
+        --splash-glow: rgba(99, 102, 241, 0.15);
+        --splash-glow-intense: rgba(99, 102, 241, 0.3);
+      }
+
+      /* SPLASH CONTAINER */
+      #splash-root {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0a0e1a 0%, #0f1419 50%, #0a0e1a 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        transition:
+          opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+          visibility 0.6s;
+        overflow: hidden;
+      }
+
+      /* ANIMATED GRADIENT ORBS */
+      .splash-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+      }
+
+      .splash-orb-1 {
+        width: 500px;
+        height: 500px;
+        background: var(--splash-primary);
+        top: -250px;
+        right: -250px;
+        animation-delay: 0s;
+      }
+
+      .splash-orb-2 {
+        width: 400px;
+        height: 400px;
+        background: #8b5cf6;
+        bottom: -200px;
+        left: -200px;
+        animation-delay: -10s;
+      }
+
+      /* SUBTLE GRID PATTERN */
+      .splash-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 50px 50px;
+        mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+        -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+        pointer-events: none;
+      }
+
+      /* MAIN CONTENT WRAPPER */
+      .splash-content {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 48px;
+      }
+
+      /* LOGO CONTAINER */
+      .brand-lockup {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* MODERN ICON WITH SUBTLE GLOW */
+      .brand-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--splash-primary) 0%, var(--splash-primary-dark) 100%);
+        border-radius: 20px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.1),
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          0 0 60px var(--splash-glow);
+        animation: icon-glow 3s ease-in-out infinite;
+      }
+
+      /* ICON INNER DESIGN - Minimalist Chip/Terminal Symbol */
+      .brand-icon::before {
+        content: '';
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        position: relative;
+      }
+
+      .brand-icon::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: white;
+        border-radius: 3px;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+      }
+
+      /* BRAND TEXT */
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .brand-name {
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        color: #ffffff;
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+      }
+
+      .brand-tagline {
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      /* REFINED LOADING INDICATOR */
+      .loader-container {
+        width: 280px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+      }
+
+      /* PROGRESS BAR */
+      .loader-track {
+        width: 100%;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .loader-progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 40%;
+        background: linear-gradient(90deg, transparent 0%, var(--splash-primary) 50%, transparent 100%);
+        animation: shimmer 2s ease-in-out infinite;
+        box-shadow: 0 0 12px var(--splash-glow-intense);
+      }
+
+      /* STATUS TEXT */
+      .status-text {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        text-align: center;
+      }
+
+      /* FOOTER */
+      .splash-footer {
+        position: absolute;
+        bottom: 40px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.25);
+        letter-spacing: 0.08em;
+        font-weight: 500;
+        animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s backwards;
+      }
+
+      .footer-divider {
+        width: 3px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+      }
+
+      /* ANIMATIONS */
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(30px, -30px) scale(1.1);
+        }
+        66% {
+          transform: translate(-20px, 20px) scale(0.9);
+        }
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(350%);
+        }
+      }
+
+      @keyframes icon-glow {
+        0%,
+        100% {
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.1),
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 60px var(--splash-glow);
+        }
+        50% {
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.15),
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 80px var(--splash-glow-intense);
+        }
+      }
+
+      .splash-hidden {
+        opacity: 0 !important;
+        visibility: hidden !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="splash-root">
+      <!-- Animated gradient orbs -->
+      <div class="splash-orb splash-orb-1"></div>
+      <div class="splash-orb splash-orb-2"></div>
+
+      <!-- Subtle grid pattern -->
+      <div class="splash-grid"></div>
+
+      <!-- Main content -->
+      <div class="splash-content">
+        <div class="brand-lockup">
+          <div class="brand-icon"></div>
+
+          <div class="brand-text">
+            <span class="brand-name">Dealio</span>
+            <span class="brand-tagline">Enterprise POS</span>
+          </div>
+        </div>
+
+        <div class="loader-container">
+          <div class="loader-track">
+            <div class="loader-progress"></div>
+          </div>
+
+          <div class="status-text">Initializing secure environment...</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="splash-footer">
+        <span>ENCRYPTED CONNECTION</span>
+        <div class="footer-divider"></div>
+        <span>V2.4.0</span>
+      </div>
+    </div>
+    <div id="root"></div>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
