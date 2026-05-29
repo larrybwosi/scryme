@@ -1,6 +1,5 @@
 import 'server-only';
-import { db as prisma } from '@repo/db';
-import { Prisma } from '@repo/db';
+import { prisma } from '@repo/db/client';
 
 export type InvoiceQuerySortField = 'grandTotal' | 'dueDate' | 'postingDate' | 'customerName';
 export type SortOrder = 'asc' | 'desc';

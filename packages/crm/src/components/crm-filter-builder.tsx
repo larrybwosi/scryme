@@ -7,7 +7,7 @@ import { Badge } from '@repo/ui/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
 import { Calendar } from '@repo/ui/components/ui/calendar';
-import { Filter, Plus, X, Search, Save, Trash2, CalendarIcon, ChevronDown } from 'lucide-react';
+import { Filter, Plus, X, Search, Save,   CalendarIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 import { format } from 'date-fns';
 import { CrmFieldType } from '../types';
@@ -124,7 +124,7 @@ export function CrmFilterBuilder({
   savedViews = [],
   onSaveView,
   onLoadView,
-  onDeleteView,
+  onDeleteView: _onDeleteView,
 }: CrmFilterBuilderProps) {
   const [isExpanded, setIsExpanded] = useState(filters.length > 0);
   const [saveViewName, setSaveViewName] = useState('');
