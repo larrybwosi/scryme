@@ -1,5 +1,4 @@
 import { Controller, All, Req, Res } from '@nestjs/common';
-import { FastifyRequest, FastifyReply } from 'fastify';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -8,19 +7,12 @@ export class AuthController {
 
   @All('*')
   async handleAuth(@Req() req: any, @Res() res: any) {
-    const protocol = req.protocol;
-    const host = req.hostname;
-    const url = `${protocol}://${host}${req.raw.url}`;
+    const response = await this.authService.auth.handler(req.raw);
 
-    const request = new Request(url, {
-      method: req.method,
-      headers: req.headers as HeadersInit,
-      body: req.body ? JSON.stringify(req.body) : undefined,
-    });
+    // Better Auth handler returns a Web Response object
+    // We need to map it to the NestJS (Fastify) response
 
-    const response = await this.authService.auth.handler(request);
-
-    // Copy headers to fastify response
+    // Copy headers
     response.headers.forEach((value, key) => {
       res.header(key, value);
     });
@@ -28,7 +20,13 @@ export class AuthController {
     res.status(response.status);
 
     if (response.body) {
-      return res.send(await response.json());
+        // For JSON responses, better-auth usually returns JSON.
+        // We can use the text() or json() method of the Response object.
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+            return res.send(await response.json());
+        }
+        return res.send(await response.text());
     }
 
     return res.send();

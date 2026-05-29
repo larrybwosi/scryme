@@ -118,7 +118,9 @@ async function seedUnits(prisma: any) {
 
 async function seedConversions(prisma: any) {
   console.log('Seeding unit conversions...');
+  /* eslint-disable no-undef */
   const unitMap = new Map<string, string>();
+  /* eslint-enable no-undef */
   const dbUnits = await prisma.systemUnit.findMany();
   dbUnits.forEach((u: any) => unitMap.set(u.symbol, u.id));
 
