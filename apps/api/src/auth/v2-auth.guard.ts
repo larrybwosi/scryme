@@ -6,6 +6,7 @@ import { ZitadelCustomerService } from '../zitadel/zitadel-customer.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { validateDeviceKey, verifyMemberToken, verifyZitadelJwt, ROLE_PERMISSIONS, V2ApiContext } from '@repo/shared/server';
+import { verifyToken as verifyV2Token } from '../lib/api/v2/security/tokens';
 import { ALLOW_PUBLIC_KEY } from '../common/decorators/auth.decorator';
 import { FastifyRequest } from 'fastify';
 import { db } from '@repo/db';
@@ -91,47 +92,63 @@ export class V2AuthGuard implements CanActivate {
     const authHeader = request.headers['authorization'];
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const zitadelDomain = process.env.ZITADEL_DOMAIN;
-      const zitadelAudience = process.env.ZITADEL_CLIENT_ID;
 
-      if (zitadelDomain && zitadelAudience) {
-        try {
-          const zitadelPayload = await verifyZitadelJwt(token, this.redis, zitadelDomain, zitadelAudience);
-          const zitadelOrgId = zitadelPayload['urn:zitadel:iam:org:id'];
-          if (zitadelPayload && zitadelOrgId) {
-            const cfg = await this.prisma.client.zitadelConfiguration.findUnique({
-              where: { zitadelOrgId: zitadelOrgId },
-              select: { organizationId: true, isActive: true },
-            });
-            if (cfg?.isActive) {
-              // Offload sync to queue for high traffic
-              await this.zitadelSyncQueue.add('sync', {
-                organizationId: cfg.organizationId,
-                zitadelUserId: zitadelPayload.sub,
-                jwtPayload: zitadelPayload,
+      // Check for V2 API Token first
+      const v2TokenResult = verifyV2Token(token);
+      if (v2TokenResult.valid) {
+        bearerAuth = {
+          organizationId: v2TokenResult.organizationId,
+          deviceId: v2TokenResult.deviceId,
+          locationId: v2TokenResult.locationId,
+          permissions: v2TokenResult.permissions,
+          authType: 'oauth' as const,
+          jwtPayload: v2TokenResult.jwtPayload,
+          scopes: [], // OAuth tokens use permissions directly in this context
+        };
+      } else {
+        // Fallback to Zitadel
+        const zitadelDomain = process.env.ZITADEL_DOMAIN;
+        const zitadelAudience = process.env.ZITADEL_CLIENT_ID;
+
+        if (zitadelDomain && zitadelAudience) {
+          try {
+            const zitadelPayload = await verifyZitadelJwt(token, this.redis, zitadelDomain, zitadelAudience);
+            const zitadelOrgId = zitadelPayload['urn:zitadel:iam:org:id'];
+            if (zitadelPayload && zitadelOrgId) {
+              const cfg = await this.prisma.client.zitadelConfiguration.findUnique({
+                where: { zitadelOrgId: zitadelOrgId },
+                select: { organizationId: true, isActive: true },
               });
-
-              // Try to get existing mapping immediately if available, without waiting for full sync
-              const mapping = await db.externalMapping.findFirst({
-                where: {
+              if (cfg?.isActive) {
+                // Offload sync to queue for high traffic
+                await this.zitadelSyncQueue.add('sync', {
                   organizationId: cfg.organizationId,
-                  provider: 'ZITADEL',
-                  externalId: zitadelPayload.sub,
-                  entityType: 'CRM_RECORD',
-                },
-              });
+                  zitadelUserId: zitadelPayload.sub,
+                  jwtPayload: zitadelPayload,
+                });
 
-              bearerAuth = {
-                organizationId: cfg.organizationId,
-                zitadelUserId: zitadelPayload.sub,
-                customerId: mapping?.internalId,
-                scopes: (zitadelPayload.scope ?? '').split(' ').filter(Boolean),
-                authType: 'zitadel' as const,
-                jwtPayload: zitadelPayload,
-              };
+                // Try to get existing mapping immediately if available, without waiting for full sync
+                const mapping = await db.externalMapping.findFirst({
+                  where: {
+                    organizationId: cfg.organizationId,
+                    provider: 'ZITADEL',
+                    externalId: zitadelPayload.sub,
+                    entityType: 'CRM_RECORD',
+                  },
+                });
+
+                bearerAuth = {
+                  organizationId: cfg.organizationId,
+                  zitadelUserId: zitadelPayload.sub,
+                  customerId: mapping?.internalId,
+                  scopes: (zitadelPayload.scope ?? '').split(' ').filter(Boolean),
+                  authType: 'zitadel' as const,
+                  jwtPayload: zitadelPayload,
+                };
+              }
             }
-          }
-        } catch (err) {}
+          } catch (err) {}
+        }
       }
     }
 
@@ -150,14 +167,14 @@ export class V2AuthGuard implements CanActivate {
 
     request.v2Context = {
       organizationId: deviceAuth?.organizationId || memberAuth?.organizationId || bearerAuth?.organizationId || '',
-      deviceId: deviceAuth?.deviceId,
-      locationId: deviceAuth?.locationId,
+      deviceId: deviceAuth?.deviceId || bearerAuth?.deviceId,
+      locationId: deviceAuth?.locationId || bearerAuth?.locationId,
       memberId: memberAuth?.memberId,
       memberName: memberAuth?.memberName,
       zitadelUserId: bearerAuth?.zitadelUserId,
       customerId: bearerAuth?.customerId,
       authType,
-      permissions: [...(deviceAuth?.permissions || []), ...(memberAuth?.permissions || [])],
+      permissions: [...(deviceAuth?.permissions || []), ...(memberAuth?.permissions || []), ...(bearerAuth?.permissions || [])],
       scopes: bearerAuth?.scopes || [],
       jwtPayload: bearerAuth?.jwtPayload,
       correlationId,
