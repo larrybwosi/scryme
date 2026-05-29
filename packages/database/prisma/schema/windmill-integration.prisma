@@ -1,0 +1,78 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// WINDMILL INTEGRATION MODULE
+//
+// Windmill serves as the headless automation engine for Dealio.
+// Each Dealio Organization is mapped to a Windmill Workspace for isolation.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WindmillConfiguration {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Windmill Instance Details
+  // Usually these point to a shared internal instance, but can be per-org.
+  windmillBaseUrl String @default("http://windmill:8000")
+  windmillApiKey  String // Encrypted. Used to call Windmill Public API
+  webhookSecret   String? // Encrypted. Used to verify webhooks from Windmill
+
+  // Multi-tenant Mapping
+  // Maps this Dealio Organization to a specific Windmill Workspace.
+  workspaceId   String?  @unique // The ID or slug of the workspace in Windmill
+  workspaceName String?
+
+  // Scryme Chat Provisioning
+  scrymeChatWorkspaceId   String? @unique
+  scrymeChatWorkspaceSlug String? @unique
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  executions WindmillExecution[]
+
+  @@map("windmill_configuration")
+}
+
+model WindmillExecution {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  configId       String
+  config         WindmillConfiguration @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  // execution context
+  jobId          String @unique // Windmill Job ID
+  scriptPath     String // e.g. "f/dealio/customer_created"
+
+  // Correlation back to Dealio events
+  dealioEventType String
+  correlationId   String
+
+  status       WindmillExecutionStatus @default(PENDING)
+  result       Json?
+  error        String?
+
+  // Audit and Consolidation fields
+  summary           String?
+  relatedEntityType String?
+  relatedEntityId   String?
+
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  createdAt    DateTime @default(now())
+
+  @@index([organizationId, scriptPath])
+  @@index([correlationId])
+  @@map("windmill_execution")
+}
+
+enum WindmillExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

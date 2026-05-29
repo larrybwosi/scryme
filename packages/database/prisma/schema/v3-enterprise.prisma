@@ -1,0 +1,75 @@
+
+// --- V3 ENTERPRISE MODELS ---
+
+model V3ApiClient {
+  id             String       @id @default(cuid())
+  name           String
+  clientId       String       @unique
+  clientSecret   String       // Hashed
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  isActive       Boolean      @default(true)
+  scopes         String[]     @default(["read", "write"])
+  corsOrigins    String[]     @default([])
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  webhookSubscriptions WebhookSubscription[]
+
+  @@index([organizationId])
+  @@map("v3_api_client")
+}
+
+model WebhookSubscription {
+  id             String       @id @default(cuid())
+  name           String?
+  url            String
+  secret         String       // For HMAC signature verification
+  events         String[]     // e.g., ["order.created", "inventory.updated"]
+  isActive       Boolean      @default(true)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  apiClientId    String?
+  apiClient      V3ApiClient? @relation(fields: [apiClientId], references: [id], onDelete: SetNull)
+
+  logs           WebhookLog[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("webhook_subscription")
+}
+
+model WebhookLog {
+  id               String              @id @default(cuid())
+  subscriptionId   String
+  subscription     WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  event            String
+  payload          Json
+  responseStatus   Int?
+  responseBody     String?             @db.Text
+  error            String?             @db.Text
+
+  attemptCount     Int                 @default(1)
+  nextAttemptAt    DateTime?
+  status           WebhookDeliveryStatus @default(PENDING)
+
+  createdAt        DateTime            @default(now())
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("webhook_log")
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}

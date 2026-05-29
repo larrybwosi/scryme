@@ -1,0 +1,204 @@
+// CRM Core Models
+// This schema enables multi-tenant dynamic entities and fields, similar to Twenty.
+
+enum CrmFieldType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  DATE
+  SELECT
+  MULTI_SELECT
+  EMAIL
+  PHONE
+  URL
+  JSON
+
+  @@map("CrmFieldType")
+}
+
+enum CrmRelationshipType {
+  ONE_TO_ONE
+  ONE_TO_MANY
+  MANY_TO_MANY
+
+  @@map("CrmRelationshipType")
+}
+
+model CrmObjectDefinition {
+  id             String   @id @default(cuid())
+  name           String   // Internal name e.g. "person"
+  label          String   // Display name e.g. "Person"
+  labelPlural    String   // e.g. "People"
+  description    String?
+  icon           String?  // Lucide icon name
+  isSystem       Boolean  @default(false) // If true, cannot be deleted
+
+  organizationId String
+  organization   Organization @relation("OrgCrmObjects", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  fields         CrmFieldDefinition[]
+  records        CrmRecord[]
+
+  // Relationships where this is the source
+  sourceRelationships CrmRelationshipDefinition[] @relation("SourceRelationship")
+  // Relationships where this is the target
+  targetRelationships CrmRelationshipDefinition[] @relation("TargetRelationship")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("crm_object_definitions")
+}
+
+model CrmFieldDefinition {
+  id               String       @id @default(cuid())
+  objectId         String
+  objectDefinition CrmObjectDefinition @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  name             String       // e.g. "first_name"
+  label            String       // e.g. "First Name"
+  type             CrmFieldType
+  isRequired       Boolean      @default(false)
+  isUnique         Boolean      @default(false)
+  defaultValue     Json?
+  options          Json?        // For SELECT/MULTI_SELECT types: [{ label: string, value: string, color?: string }]
+
+  isSystem         Boolean      @default(false)
+  order            Int          @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([objectId, name])
+  @@index([objectId])
+  @@map("crm_field_definitions")
+}
+
+model CrmRecord {
+  id               String       @id @default(cuid())
+  objectId         String
+  objectDefinition CrmObjectDefinition @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  organizationId   String
+  organization     Organization @relation("OrgCrmRecords", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  data             Json         // The dynamic values: { "first_name": "John", ... }
+
+  // To keep track of "owner"
+  ownerId          String?
+  owner            Member?      @relation("CrmRecordOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  // Standard timestamps
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Associations
+  sourceAssociations CrmAssociation[] @relation("SourceRecord")
+  targetAssociations CrmAssociation[] @relation("TargetRecord")
+
+  businessAccount    BusinessAccount?
+  customer           Customer?
+
+  activities         CrmActivity[]
+  notes              CrmNote[]
+
+  @@index([objectId, organizationId])
+  @@index([organizationId])
+  @@map("crm_records")
+}
+
+model CrmRelationshipDefinition {
+  id               String       @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation("OrgCrmRelationships", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name             String       // e.g. "company_employees"
+  type             CrmRelationshipType
+
+  sourceObjectId   String
+  sourceObject     CrmObjectDefinition @relation("SourceRelationship", fields: [sourceObjectId], references: [id], onDelete: Cascade)
+
+  targetObjectId   String
+  targetObject     CrmObjectDefinition @relation("TargetRelationship", fields: [targetObjectId], references: [id], onDelete: Cascade)
+
+  // Labels for the relationship from both sides
+  sourceLabel      String       // e.g. "Employees"
+  targetLabel      String       // e.g. "Company"
+
+  associations     CrmAssociation[]
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("crm_relationship_definitions")
+}
+
+model CrmAssociation {
+  id               String       @id @default(cuid())
+  relationshipId   String
+  relationship     CrmRelationshipDefinition @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+
+  sourceRecordId   String
+  sourceRecord     CrmRecord @relation("SourceRecord", fields: [sourceRecordId], references: [id], onDelete: Cascade)
+
+  targetRecordId   String
+  targetRecord     CrmRecord @relation("TargetRecord", fields: [targetRecordId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([relationshipId, sourceRecordId, targetRecordId])
+  @@index([sourceRecordId])
+  @@index([targetRecordId])
+  @@map("crm_associations")
+}
+
+model CrmActivity {
+  id               String       @id @default(cuid())
+  recordId         String
+  record           CrmRecord    @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  organizationId   String
+  organization     Organization @relation("OrgCrmActivities", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  type             String       // e.g. "CREATION", "UPDATE", "EMAIL", "CALL", "NOTE"
+  description      String?      @db.Text
+  metadata         Json?        // To store old/new values or extra info
+
+  memberId         String?
+  member           Member?      @relation("CrmActivityMember", fields: [memberId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime     @default(now())
+
+  @@index([recordId])
+  @@index([organizationId])
+  @@map("crm_activities")
+}
+
+model CrmNote {
+  id               String       @id @default(cuid())
+  recordId         String
+  record           CrmRecord    @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  organizationId   String
+  organization     Organization @relation("OrgCrmNotes", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  content          String       @db.Text // Markdown string
+
+  createdById      String?
+  createdBy        Member?      @relation("CrmNoteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  timelineDate     DateTime     @default(now())
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([recordId])
+  @@index([organizationId])
+  @@index([timelineDate])
+  @@map("crm_notes")
+}

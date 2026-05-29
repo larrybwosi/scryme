@@ -1,0 +1,461 @@
+model BakeryCategory {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipes        Recipe[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("bakery_category")
+}
+
+enum ExpirationStatus {
+  FRESH
+  NEAR_EXPIRY
+  EXPIRED
+  DISPOSED
+}
+
+enum DisposalReason {
+  EXPIRED
+  NEAR_EXPIRY_UNSOLD
+  DAMAGED
+  QUALITY_ISSUE
+  CONTAMINATION
+  RECALL
+  OTHER
+}
+
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+enum BatchStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BakeryAuthMode {
+  SSO
+  CARD_PIN
+}
+
+model Recipe {
+  id                String             @id @default(cuid())
+  name              String
+  categoryId        String
+  category          BakeryCategory     @relation(fields: [categoryId], references: [id])
+  ingredients       RecipeIngredient[]
+
+  producesVariantId String             @unique
+  producesVariant   ProductVariant     @relation(fields: [producesVariantId], references: [id], onDelete: Restrict)
+
+  // Yield configuration
+  yieldQuantity     Decimal            @db.Decimal(10, 4)
+  systemUnitId      String?
+  systemUnit        SystemUnit?        @relation("RecipeYieldSystemUnit", fields: [systemUnitId], references: [id], onDelete: Restrict)
+  orgUnitId         String?
+  orgUnit           OrganizationUnit?  @relation("RecipeYieldOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+
+  // Pricing
+  costPrice         Decimal?           @db.Decimal(10, 2)
+
+  // Recipe details
+  description       String?
+  prepTime          Int?               // minutes
+  bakeTime          Int?               // minutes
+  totalTime         Int?               // minutes
+  difficulty        RecipeDifficulty?  @default(EASY)
+  temperatureCelsius Int?
+  servingSize       String?
+  instructions      String?            @db.Text
+  notes             String?            @db.Text
+  tags              String[]
+
+  organizationId    String
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  templates         Template[]
+  batches           Batch[]
+
+  @@unique([organizationId, name])
+  @@unique([id, organizationId])
+  @@index([organizationId, categoryId])
+  @@index([categoryId])
+  @@index([organizationId, difficulty])
+  @@index([systemUnitId])
+  @@index([orgUnitId])
+}
+
+model Batch {
+  id                    String               @id @default(cuid())
+  batchNumber           String
+  organizationId        String
+  organization          Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  recipeId              String
+  recipe                Recipe               @relation(fields: [recipeId], references: [id])
+
+  // Quantity configuration (uses recipe's yield unit for consistency)
+  plannedQuantity       Decimal              @db.Decimal(10, 4)
+  actualQuantity        Decimal?             @db.Decimal(10, 4)
+  systemUnitId          String?
+  systemUnit            SystemUnit?          @relation("BatchSystemUnit", fields: [systemUnitId], references: [id])
+  orgUnitId             String?
+  orgUnit               OrganizationUnit?    @relation("BatchOrgUnit", fields: [orgUnitId], references: [id])
+
+  // Recipe scaling
+  recipeMultiplier      Decimal              @default(1.0) @db.Decimal(10, 4)
+
+  // Scheduling & execution
+  status                BatchStatus          @default(PLANNED)
+  scheduledStartAt      DateTime
+  startedAt             DateTime?
+  completedAt           DateTime?
+  duration              Int?                 // minutes
+
+  leadBakerId           String?
+  leadBaker             BakeryBaker?         @relation("LeadBakerBatches", fields: [leadBakerId], references: [id], onDelete: SetNull)
+
+  assistantBakers       BakeryBaker[]        @relation("AssistantBakerBatches")
+
+  notes                 String?              @db.Text
+
+  createdFromTemplateId String?
+  createdFromTemplate   Template?            @relation(fields: [createdFromTemplateId], references: [id], onDelete: SetNull)
+
+  // Cancellation
+  cancelledAt           DateTime?
+  canceledById          String?
+  canceledBy            BakeryBaker?         @relation("CanceledBatches", fields: [canceledById], references: [id], onDelete: SetNull)
+
+  // Output location
+  outputLocationId      String?
+  outputLocation        InventoryLocation?   @relation(fields: [outputLocationId], references: [id], onDelete: Restrict)
+
+  // Expiration tracking
+  productionDate        DateTime?
+  expiresAt             DateTime?
+  shelfLifeDays         Int?
+  expirationStatus      ExpirationStatus     @default(FRESH)
+  nearExpiryAlertSent   Boolean              @default(false)
+  expiryAlertSentAt     DateTime?
+
+  // Disposal tracking
+  disposedAt            DateTime?
+  disposedById          String?
+  disposedBy            BakeryBaker?         @relation("DisposedBatches", fields: [disposedById], references: [id], onDelete: SetNull)
+  disposalReason        DisposalReason?
+  disposalNotes         String?
+  tags                  String[]
+
+  // Quality Control & Waste (New Standard Enterprise Fields)
+  qcData                Json?                // Stores structured QC checks (visual, weight, temp, notes)
+  wasteQuantity         Decimal?             @db.Decimal(10, 4) // Quantified waste from this batch
+  wasteReason           String?              // specific reason code or text for the waste
+
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  producedStock     StockBatch[] @relation("BatchOutput")
+  ingredientConsumptions BatchIngredientConsumption[]
+  qualityIncidents       QualityIncident[]
+
+  isRecalled            Boolean              @default(false)
+  recallId              String?
+  recall                Recall?              @relation(fields: [recallId], references: [id], onDelete: SetNull)
+
+  @@unique([id, organizationId])
+  @@unique([organizationId, batchNumber])
+  @@index([organizationId, scheduledStartAt])
+  @@index([organizationId, status, scheduledStartAt])
+  @@index([organizationId, expirationStatus, expiresAt])
+  @@index([recipeId])
+  @@index([leadBakerId])
+  @@index([createdFromTemplateId])
+  @@index([systemUnitId])
+  @@index([orgUnitId])
+  @@index([expiresAt])
+  @@index([outputLocationId, expirationStatus])
+  @@index([status, scheduledStartAt])
+}
+
+model Template {
+  id                String               @id @default(cuid())
+  name              String
+  recipeId          String
+  recipe            Recipe               @relation(fields: [recipeId], references: [id])
+
+  // Quantity configuration (uses recipe's yield unit)
+  quantity          Decimal              @db.Decimal(10, 4)
+  systemUnitId      String?
+  systemUnit        SystemUnit?          @relation("TemplateSystemUnit", fields: [systemUnitId], references: [id])
+  orgUnitId         String?
+  orgUnit           OrganizationUnit?    @relation("TemplateOrgUnit", fields: [orgUnitId], references: [id])
+  recipeMultiplier  Decimal              @default(1.0) @db.Decimal(10, 4)
+
+  duration          Int?                 // minutes
+
+  leadBakerId       String?
+  leadBaker         BakeryBaker?         @relation("TemplateLeadBaker", fields: [leadBakerId], references: [id], onDelete: SetNull)
+  assistantBakers   BakeryBaker[]        @relation("TemplateAssistantBakers")
+
+  notes             String?              @db.Text
+
+  isActive          Boolean              @default(true)
+  shelfLifeDays     Int?
+
+  organizationId    String
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  createdBatches    Batch[]
+  schedules         TemplateSchedule[]
+
+  @@unique([organizationId, name])
+  @@unique([id, organizationId])
+  @@index([recipeId])
+  @@index([organizationId, isActive])
+  @@index([systemUnitId])
+  @@index([orgUnitId])
+}
+
+model TemplateSchedule {
+  id         String   @id @default(cuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  dayOfWeek  Int      // 0=Sunday, 6=Saturday
+  time       String   // "09:00" format
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([templateId, dayOfWeek, time])
+  @@index([templateId])
+  @@map("template_schedule")
+}
+
+model RecipeIngredient {
+  id                  String             @id @default(cuid())
+  recipeId            String
+  recipe              Recipe             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  // Link to ingredient ProductVariant
+  ingredientVariantId String
+  ingredientVariant   ProductVariant     @relation(fields: [ingredientVariantId], references: [id], onDelete: Restrict)
+
+  // Quantity configuration
+  quantity            Decimal            @db.Decimal(10, 4)
+  systemUnitId        String?
+  systemUnit          SystemUnit?        @relation("RecipeIngredientSystemUnit", fields: [systemUnitId], references: [id], onDelete: Restrict)
+  orgUnitId           String?
+  orgUnit             OrganizationUnit?  @relation("RecipeIngredientOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+
+  // Optional preparation notes
+  preparationNotes    String?
+
+  @@unique([recipeId, ingredientVariantId, systemUnitId])
+  @@index([recipeId])
+  @@index([ingredientVariantId])
+  @@index([systemUnitId])
+  @@index([orgUnitId])
+  @@map("recipe_ingredient")
+}
+
+model BakerySettings {
+  id                     String         @id @default(cuid())
+  organizationId         String         @unique
+  organization           Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  defaultBakerId         String?
+  defaultBaker           BakeryBaker?   @relation("DefaultBaker", fields: [defaultBakerId], references: [id], onDelete: SetNull)
+
+  bakers                 BakeryBaker[]  @relation("BakerySettingsBakers")
+
+  autoCreateDailyBatches Boolean        @default(false)
+  expiryWarningDays      Int            @default(3)
+  authMode               BakeryAuthMode @default(CARD_PIN)
+
+  // Batch Numbering Configuration
+  batchPrefix            String         @default("BAT")
+  batchSeparator         String         @default("-")
+  batchDateFormat        String         @default("YYYYMMDD")
+  batchSequence          String         @default("4")
+
+  // Operational Rules
+  autoApproveBatches     Boolean        @default(false)
+  lowStockAlerts         Boolean        @default(true)
+  timezone               String         @default("UTC")
+
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@map("bakery_settings")
+}
+
+model BatchIngredientConsumption {
+  id             String         @id @default(cuid())
+  batchId        String
+  batch          Batch          @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  stockBatchId   String
+  stockBatch     StockBatch     @relation(fields: [stockBatchId], references: [id], onDelete: Restrict)
+  quantity       Decimal        @db.Decimal(10, 4)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  @@index([batchId])
+  @@index([stockBatchId])
+  @@index([organizationId])
+  @@map("batch_ingredient_consumption")
+}
+
+model QualityIncident {
+  id             String           @id @default(cuid())
+  incidentNumber String           @unique
+  title          String
+  description    String?          @db.Text
+  severity       RiskLevel        @default(low)
+  status         String           @default("OPEN") // OPEN, INVESTIGATING, RESOLVED, CLOSED
+
+  // Links
+  batchId        String?
+  batch          Batch?           @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  stockBatchId   String?
+  stockBatch     StockBatch?      @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+  supplierId     String?
+  supplier       Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  reportedById   String
+  reportedBy     Member           @relation("IncidentReporter", fields: [reportedById], references: [id])
+
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@index([batchId])
+  @@index([stockBatchId])
+  @@index([supplierId])
+  @@map("quality_incident")
+}
+
+model BakeryBaker {
+  id               String           @id @default(cuid())
+  bakerySettingsId String
+  bakerySettings   BakerySettings   @relation("BakerySettingsBakers", fields: [bakerySettingsId], references: [id], onDelete: Cascade)
+
+  memberId         String
+  member           Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  leadBatches      Batch[]          @relation("LeadBakerBatches")
+  assistantBatches Batch[]          @relation("AssistantBakerBatches")
+
+  templateLeads      Template[]       @relation("TemplateLeadBaker")
+  templateAssistants Template[]       @relation("TemplateAssistantBakers")
+
+  canceledBatches  Batch[]          @relation("CanceledBatches")
+  disposedBatches  Batch[]          @relation("DisposedBatches")
+  defaultBakerFor  BakerySettings[] @relation("DefaultBaker")
+
+  specialties      String[]
+  isActive         Boolean          @default(true)
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([bakerySettingsId, memberId])
+  @@index([bakerySettingsId])
+  @@index([memberId])
+  @@index([isActive])
+  @@map("bakery_bakers")
+}
+
+// ===================================
+// DELIVERY PARTNER SYSTEM
+// ===================================
+
+model DeliveryPartner {
+  id             String       @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  address        String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  walletBalance  Decimal      @default(0) @db.Decimal(12, 2)
+
+  // Configuration
+  commissionRate Decimal?     @db.Decimal(5, 2) // Percentage (e.g., 10.00)
+  fixedFee       Decimal?     @db.Decimal(12, 2)
+  benefitType    BenefitType  @default(COMMISSION)
+
+  reconciliationPolicy ReconciliationPolicy @default(RETURN_TO_STOCK)
+
+  drivers        Driver[]
+  walletLogs     PartnerWalletLog[]
+  transactions   Transaction[]
+
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("delivery_partner")
+}
+
+enum BenefitType {
+  COMMISSION
+  FIXED_FEE
+  PROFIT_MARGIN
+  NONE
+}
+
+enum ReconciliationPolicy {
+  RETURN_TO_STOCK
+  MARK_AS_WASTE
+  PARTNER_CHARGED
+}
+
+model PartnerWalletLog {
+  id                String          @id @default(cuid())
+  partnerId         String
+  partner           DeliveryPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  amount            Decimal         @db.Decimal(12, 2)
+  balanceAfter      Decimal         @db.Decimal(12, 2)
+  transactionType   WalletTxType
+
+  referenceId       String?         // ID of the Fulfillment or Transaction
+  referenceType     String?
+
+  notes             String?
+  createdAt         DateTime        @default(now())
+
+  @@index([partnerId])
+  @@map("partner_wallet_log")
+}
+
+enum WalletTxType {
+  BENEFIT_ACCRUAL
+  WITHDRAWAL
+  ADJUSTMENT
+  RECONCILIATION_CHARGE
+  DEPOSIT
+}

@@ -1,0 +1,75 @@
+/**
+ * Zitadel Integration — Prisma Schema
+ */
+
+enum ZitadelConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  UNKNOWN
+}
+
+enum ZitadelWebhookStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  SKIPPED
+}
+
+model ZitadelConfiguration {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// The ID of the corresponding Zitadel Organization.
+  zitadelOrgId String? @unique
+
+  /// The ID of the Zitadel Project for this organisation.
+  zitadelProjectId String? @unique
+
+  /// The ID of the Zitadel Application (OIDC) for this organisation's storefront.
+  zitadelAppId String? @unique
+
+  isActive Boolean @default(true)
+
+  autoSyncOnRegister Boolean @default(true)
+  autoSyncOnSignIn    Boolean @default(false)
+  syncToTwentyCrm     Boolean @default(true)
+  syncToErpCustomer   Boolean @default(true)
+
+  connectionStatus ZitadelConnectionStatus @default(UNKNOWN)
+  connectionError  String?
+  lastTestedAt     DateTime?
+  lastSyncAt       DateTime?
+
+  totalUsersSynced Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  webhookLogs ZitadelWebhookLog[]
+
+  @@map("zitadel_configuration")
+}
+
+model ZitadelWebhookLog {
+  id             String               @id @default(cuid())
+  configId       String
+  config         ZitadelConfiguration @relation(fields: [configId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  event String
+  zitadelUserId String?
+  payload Json
+
+  status          ZitadelWebhookStatus @default(PENDING)
+  processingError String?
+  processedAt     DateTime?
+  retryCount      Int @default(0)
+  receivedAt      DateTime @default(now())
+
+  @@index([configId, event])
+  @@index([organizationId, status])
+  @@index([zitadelUserId])
+  @@map("zitadel_webhook_log")
+}

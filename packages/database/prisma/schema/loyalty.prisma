@@ -1,0 +1,191 @@
+// ==========================================
+// LOYALTY ENGINE MODULE
+// ==========================================
+
+enum LoyaltyRuleType {
+  POINTS_PER_CURRENCY // e.g., 1 point per $1
+  POINTS_PER_ITEM     // e.g., 5 points for a specific product
+  FIXED_POINTS        // e.g., 10 points for signing up
+}
+
+enum LoyaltyRewardType {
+  DISCOUNT_PERCENTAGE
+  DISCOUNT_FIXED_AMOUNT
+  FREE_PRODUCT
+  STORE_CREDIT
+}
+
+enum LoyaltyTransactionType {
+  EARNED
+  REDEEMED
+  EXPIRED
+  ADJUSTED
+  REFUND_VOID
+}
+
+model LoyaltyProgram {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  isActive       Boolean  @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Configuration
+  pointsLabel    String   @default("Points")
+  exchangeRate   Decimal  @default(1.0) @db.Decimal(12, 4) // e.g., 100 points = $1 store credit
+  expiryMonths   Int?     // Points expire after X months (null = never)
+  tierBasis      TierBasis @default(CURRENT_BALANCE)
+
+  // Relations
+  tiers          LoyaltyTier[]
+  rules          LoyaltyRule[]
+  rewards        LoyaltyReward[]
+  vouchers       LoyaltyVoucher[]
+  transactions   LoyaltyTransaction[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model LoyaltyTier {
+  id             String   @id @default(cuid())
+  programId      String
+  program        LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  minPoints      Int      @default(0) // Minimum points to reach this tier
+  multiplier     Decimal  @default(1.0) @db.Decimal(5, 2) // Points multiplier for this tier (e.g., 1.2x)
+
+  // Display
+  color          String?
+  icon           String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([programId, minPoints])
+  @@unique([programId, name])
+}
+
+model LoyaltyRule {
+  id             String          @id @default(cuid())
+  programId      String
+  program        LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  ruleType       LoyaltyRuleType
+
+  // Values
+  pointsValue    Int             @default(0)
+  currencyAmount Decimal?        @db.Decimal(12, 2) // For POINTS_PER_CURRENCY
+
+  // Scoping
+  categoryId     String?         // Apply to specific category
+  productId      String?         // Apply to specific product
+  variantId      String?         // Apply to specific variant
+
+  // Conditions
+  minOrderValue  Decimal?        @db.Decimal(12, 2)
+  validFrom      DateTime?
+  validTo        DateTime?
+  isActive       Boolean         @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([programId])
+}
+
+model LoyaltyReward {
+  id             String            @id @default(cuid())
+  programId      String
+  program        LoyaltyProgram   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  rewardType     LoyaltyRewardType
+  pointsRequired Int
+
+  // Benefit values
+  discountValue  Decimal?          @db.Decimal(12, 2)
+  productId      String?           // For FREE_PRODUCT
+
+  isActive       Boolean           @default(true)
+  vouchers       LoyaltyVoucher[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([programId])
+}
+
+model LoyaltyVoucher {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  programId      String
+  program        LoyaltyProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  rewardId       String?
+  reward         LoyaltyReward? @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+
+  customerId     String
+  customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  organizationId String
+
+  status         VoucherStatus  @default(ACTIVE)
+  expiresAt      DateTime?
+  redeemedAt     DateTime?
+
+  // If it was redemmed in a transaction
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([programId])
+  @@index([code])
+}
+
+enum VoucherStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+  CANCELLED
+}
+
+model LoyaltyTransaction {
+  id             String                 @id @default(cuid())
+  programId      String
+  program        LoyaltyProgram        @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  customerId     String
+  customer       Customer               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  type           LoyaltyTransactionType
+  points         Int                    // Can be negative for redemptions
+  balanceAfter   Int                    // Balance of customer after this txn
+
+  description    String?
+
+  // Link to business entities
+  referenceId    String?                // e.g., Transaction ID, Order Number
+  referenceType  String?                // e.g., "TRANSACTION", "REFERRAL", "SIGNUP"
+
+  organizationId String
+
+  createdAt      DateTime @default(now())
+
+  @@index([customerId])
+  @@index([programId])
+  @@index([createdAt])
+}
+
+enum TierBasis {
+  CURRENT_BALANCE
+  LIFETIME_POINTS
+}

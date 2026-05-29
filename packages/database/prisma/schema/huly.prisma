@@ -1,0 +1,176 @@
+// Huly Enterprise Integration Models
+
+enum HulyConnectionHealth {
+  HEALTHY
+  DEGRADED
+  DISCONNECTED
+  UNKNOWN
+
+  @@map("HulyConnectionHealth")
+}
+
+enum HulyConnectionMode {
+  REST
+  WEBSOCKET
+
+  @@map("HulyConnectionMode")
+}
+
+enum HulyEventType {
+  STOCK_LOW
+  STOCK_OUT
+  ORDER_CREATED
+  ORDER_VOIDED
+  PURCHASE_CREATED
+  PURCHASE_APPROVED
+  PAYMENT_DUE_SOON
+  PAYMENT_OVERDUE
+  MEMBER_JOINED
+  APPROVAL_REQUIRED
+  APPROVAL_COMPLETED
+  RECONCILIATION_STARTED
+  RECONCILIATION_COMPLETED
+  BAKERY_BATCH_EXPIRING
+  BAKERY_BATCH_EXPIRED
+  BAKERY_BATCH_DISPOSED
+  BAKERY_DAILY_BATCHES_CREATED
+  BAKERY_BATCH_AUTO_CANCELLED
+  CUSTOM
+
+  @@map("HulyEventType")
+}
+
+enum HulyNotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("HulyNotificationPriority")
+}
+
+enum HulyEventStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+
+  @@map("HulyEventStatus")
+}
+
+model HulyConfiguration {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Huly Workspace Information
+  /// SDK workspace slug passed to connectRest() — matches the /workbench/<slug> URL segment
+  workspaceSlug String?
+  /// Base URL of the Huly instance, e.g. https://huly.app
+  workspaceUrl  String?
+
+  apiKey      String?
+
+  // Enterprise connection settings
+  connectionMode     HulyConnectionMode @default(REST)
+  defaultChannelId   String?
+  defaultChannelName String?
+
+  // Sync settings
+  autoSync     Boolean   @default(false)
+  syncMembers  Boolean   @default(false)
+  syncInterval Int       @default(30)
+  lastSyncAt   DateTime?
+
+  // Health tracking
+  connectionHealth  HulyConnectionHealth @default(UNKNOWN)
+  lastHealthCheckAt DateTime?
+  connectionError   String?
+  retryCount        Int                  @default(0)
+  maxRetries        Int                  @default(3)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  notificationRules HulyNotificationRule[]
+  eventLogs         HulyEventLog[]
+  channelMappings   HulyChannelMapping[]
+
+  @@map("huly_configuration")
+}
+
+model HulyNotificationRule {
+  id             String            @id @default(cuid())
+  organizationId String
+  configId       String
+  config         HulyConfiguration @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  eventType HulyEventType
+  isEnabled Boolean       @default(true)
+
+  // Target channel in Huly
+  channelId   String?
+  channelName String?
+
+  // Notification settings
+  priority        HulyNotificationPriority @default(MEDIUM)
+  /// { title: string, body: string, variables: string[] }
+  template        Json?
+  /// { minAmount?: number, roles?: string[], entityIds?: string[], conditions?: Record<string, string | number | boolean> }
+  filters         Json?
+  cooldownMinutes Int                      @default(0)
+  lastFiredAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([configId, eventType])
+  @@index([organizationId])
+  @@map("huly_notification_rule")
+}
+
+model HulyEventLog {
+  id             String            @id @default(cuid())
+  organizationId String
+  configId       String
+  config         HulyConfiguration @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  eventType     HulyEventType
+  status        HulyEventStatus @default(PENDING)
+  /// Full HulyEventPayload serialised as JSON
+  payload       Json
+  hulyMessageId String?
+  errorMessage  String?
+  durationMs    Int?
+  /// memberId or "system"
+  triggeredBy   String?
+  /// Parent HulyEventLog.id when this row is a retry
+  retryOf       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([configId, status])
+  @@index([organizationId, createdAt])
+  @@map("huly_event_log")
+}
+
+model HulyChannelMapping {
+  id             String            @id @default(cuid())
+  organizationId String
+  configId       String
+  config         HulyConfiguration @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  eventType       HulyEventType
+  hulyChannelId   String
+  hulyChannelName String
+  isDefault       Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([configId, eventType])
+  @@index([organizationId])
+  @@map("huly_channel_mapping")
+}

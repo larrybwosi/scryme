@@ -1,0 +1,821 @@
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  deletedAt    DateTime?
+  version      Int      @default(0)
+  logo         String?
+  banner       String?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  customFields Json?
+  email        String?
+  phone        String?
+  address      String?
+
+  defaultLocationId  String?
+  defaultWarehouseId String?
+
+  members     Member[]
+  invitations Invitation[]
+  customers   Customer[]   @relation("OrgCustomers")
+  categories  Category[]
+  products    Product[]
+  suppliers   Supplier[]
+
+  transactions     Transaction[]
+  returns          Return[]
+  payouts          Payout[]
+  businessAccounts BusinessAccount[] @relation("OrgBusinessAccounts")
+  purchases        Purchase[]
+
+  stockBatches                StockBatch[]
+  inventoryLocations          InventoryLocation[]
+  productVariantStocks        ProductVariantStock[]
+  stockAdjustments            StockAdjustment[]
+  stockMovements              StockMovement[]
+  cashDrawers                 CashDrawer[]
+  attachments                 Attachment[]
+  auditLogs                   AuditLog[]
+  settings                    OrganizationSettings?
+  paymentCredentials          PaymentCredentials?
+  organizationUnits           OrganizationUnit[]
+  organizationUnitConversions OrgUnitConversion[]
+
+  // New relations for storage management
+  storageZones     StorageZone[]
+  storageUnits     StorageUnit[]
+  storagePositions StoragePosition[]
+
+  b2bConnections B2BConnection[] @relation("OrganizationToB2BConnection")
+
+  // Expense management relations
+  expenses          Expense[]
+  budgets           Budget[]
+  recurringExpenses RecurringExpense[]
+  expenseApprovals  ApprovalRequest[]
+  budgetAlerts      BudgetAlert[]
+  departments       Department[]
+
+  expenseCategories        ExpenseCategory[]
+  pettyCashFunds           PettyCashFund[]
+  utilityAccounts          UtilityAccount[]
+  expenseApprovalRequired  Boolean           @default(false) // Whether expenses require approval
+  expenseApprovalThreshold Decimal?          @db.Decimal(10, 2) // Amount above which approval is required
+  pettyCashAutoApproveThreshold Decimal?     @db.Decimal(10, 2) // Amount below which petty cash is auto-approved
+  expenseReceiptRequired   Boolean           @default(true) // Whether receipts are mandatory
+  expenseReceiptThreshold  Decimal?          @db.Decimal(10, 2) // Amount above which receipt is required
+
+  activeExpenseWorkflowId String?
+  activeExpenseWorkflow   ApprovalWorkflow? @relation("ActiveOrgWorkflow", fields: [activeExpenseWorkflowId], references: [id], onDelete: SetNull)
+
+  // Relation to all workflows defined for this org
+  approvalWorkflows        ApprovalWorkflow[] @relation("OrgWorkflows")
+  expenseApprovalWorkflows ApprovalWorkflow[] @relation("ExpenseApprovalWorkflows")
+  defaultExpenseCurrency   String             @default("USD")
+  expenseTagOptions        String[]           @default([])
+
+  mpesaPaymentRequests MpesaPaymentRequest[]
+  attendanceLogs       AttendanceLog[]
+  taxes                TaxRate[]
+  customRoles          CustomRole[]
+  permissionSets       PermissionSet[]
+  roleGroups           RoleGroup[]
+  reports              Report[]
+  Subscription         Subscription?
+  referrals            Referral[]
+  referralPrograms     ReferralProgram[]
+
+  drivers        Driver[]
+  vehicles       Vehicle[]
+  stockRequests  StockRequest[]
+  stockTransfers StockTransfer[]
+  stockReceipts  StockReceipt[]
+
+  // Stock Reconciliation Relations
+  stockReconciliations StockReconciliation[]
+  actionAuditLogs      ActionAuditLog[]
+
+  // ---Bakery Batching System --- //
+  batches          Batch[]
+  deliveryPartners DeliveryPartner[]
+  templates        Template[]
+  recipes          Recipe[]
+  bakeryCategories BakeryCategory[]
+  bakerySettings   BakerySettings?
+
+  // Stock Reports
+  stockReportTemplates StockReportTemplate[]
+  stockReports         GeneratedStockReport[]
+
+  supplierInvoices SupplierInvoice[]
+  purchaseReturns  PurchaseReturn[]
+  supplierDocuments SupplierDocument[]
+  supplierPriceHistories SupplierPriceHistory[]
+  batchIngredientConsumptions BatchIngredientConsumption[]
+  qualityIncidents            QualityIncident[]
+  recalls                     Recall[]
+
+  taxAuthorities         TaxAuthority[]
+  taxFilings             TaxFiling[]
+  integrations           OrganizationIntegration[]
+  hulyConfiguration      HulyConfiguration?
+  zitadelConfiguration   ZitadelConfiguration?
+  notificationTemplates      NotificationTemplate[]
+  notificationDispatches     NotificationDispatch[]
+  notificationChannelConfigs NotificationChannelConfig[]
+  apiKeys                ApiKey[]
+  deviceSetupTokens      DeviceSetupToken[]
+  deviceRegistries       DeviceRegistry[]
+
+  priceLists          PriceList[]
+  pricingRules        PricingRule[]
+  pricingBundles      PricingBundle[]
+  priceImportJobs     PriceImportJob[]
+  priceChangeRequests PriceChangeRequest[]
+  costCenters         CostCenter[]
+
+  invoices          Invoice[]
+  kraComplianceLogs KRAComplianceLog[]
+  invoiceConfig     InvoiceConfig?
+  invoiceTemplates  InvoiceTemplate[]  @relation("OrgInvoiceTemplates")
+  templateUsageLogs TemplateUsageLog[] @relation("OrgTemplateUsageLogs")
+
+  // E-commerce Integration
+  ecommerceConnections      EcommerceConnection[]
+  ecommerceSyncLogs         EcommerceSyncLog[]
+  ecommerceProductMappings  EcommerceProductMapping[]
+  ecommerceOrderMappings    EcommerceOrderMapping[]
+  ecommerceCustomerMappings EcommerceCustomerMapping[]
+  ecommerceWebhookLogs      EcommerceWebhookLog[]
+  favorites                 Favorite[]
+  productReviews            ProductReview[]
+  apiKeyUsageLogs           ApiKeyUsageLog[]
+  v3ApiClients              V3ApiClient[]
+  webhookSubscriptions      WebhookSubscription[]
+
+  // Enterprise Stock Management
+  reorderRules           ReorderRule[]
+  reorderAlerts          ReorderAlert[]
+  stockAuditLogs         StockAuditLog[]
+  purchaseApprovalChains PurchaseApprovalChain[]
+  stockTakes             StockTake[]
+  supplierPerformances   SupplierPerformance[]
+  stockValuations        StockValuation[]
+  assemblies             Assembly[]
+
+  // Loyalty Program
+  loyaltyPrograms LoyaltyProgram[]
+
+  standaloneDevices StandaloneDevice[]
+
+  qcTemplates        QCTemplate[]
+  qcResults          QCResult[]
+  cycleCountConfigs  CycleCountConfig[]
+  serialNumbers      SerialNumber[]
+
+  // Windmill Integration
+  windmillConfiguration WindmillConfiguration?
+  windmillExecutions    WindmillExecution[]
+
+  reportAutomations ReportAutomation[]
+  reportChannels    ReportChannel[]
+
+  // CRM Relations
+  crmObjectDefinitions     CrmObjectDefinition[]     @relation("OrgCrmObjects")
+  crmRecords               CrmRecord[]               @relation("OrgCrmRecords")
+  crmRelationshipDefinitions CrmRelationshipDefinition[] @relation("OrgCrmRelationships")
+  crmActivities            CrmActivity[]             @relation("OrgCrmActivities")
+  crmNotes                 CrmNote[]                 @relation("OrgCrmNotes")
+
+  @@index([slug])
+  @@map("organization")
+}
+
+enum MpesaEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+model PaymentCredentials {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Public Identifiers (Safe to store plain text, useful for UI display)
+  mpesaShortCode String // The Paybill or Till Number
+  mpesaType      String @default("PAYBILL") // "PAYBILL" or "TILL"
+
+  // SECURE FIELDS (Store ENCRYPTED strings here)
+  mpesaConsumerKey    String
+  mpesaConsumerSecret String
+  mpesaPassKey        String? // Required for STK Push
+  mpesaInitiatorPass  String? // Required for B2C/B2B (Optional)
+
+  environment MpesaEnvironment @default(SANDBOX)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment_credentials")
+}
+
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+
+  cardId  String?
+  pinHash String?
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      MemberRole
+  membershipStatus MembershipStatus @default(ACTIVE)
+  isActive  Boolean          @default(true)
+  deletedAt DateTime?
+  version   Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  phone     String?
+  email     String?
+  address   String?
+  age       String?
+  gender    String?
+  tags      String?
+
+  auditLogs    AuditLog[]
+  transactions Transaction[]
+  returns      Return[]
+
+  stockAdjustments     StockAdjustment[]
+  stockMovements       StockMovement[]
+  cashDrawers          CashDrawer[]
+  inventoryManagements InventoryLocation[] @relation("LocationManager")
+  createdCustomers     Customer[]          @relation("CustomerCreatedBy")
+  updatedCustomers     Customer[]          @relation("CustomerUpdatedBy")
+  uploadedAttachments  Attachment[]        @relation("MemberUploadedAttachments")
+  documents            Attachment[]        @relation("MemberDocuments")
+
+  headedDepartments     Department[]          @relation("DepartmentHead")
+  mpesaPaymentRequests  MpesaPaymentRequest[]
+
+  departmentMemberships DepartmentMember[]
+
+  isCheckedIn              Boolean            @default(false)
+  lastCheckInTime          DateTime?
+  currentCheckInLocationId String? // References InventoryLocation
+  currentCheckInLocation   InventoryLocation? @relation(fields: [currentCheckInLocationId], references: [id], onDelete: SetNull)
+  currentAttendanceLogId   String?            @unique // Link to the active AttendanceLog record
+  currentAttendanceLog     AttendanceLog?     @relation("ActiveCheckIn", fields: [currentAttendanceLogId], references: [id], onDelete: SetNull)
+  attendanceLogs           AttendanceLog[]
+
+  // New field to mark temporary guest members
+  isGuest        Boolean   @default(false)
+  guestExpiresAt DateTime? // Expiration for the guest account
+
+  status     Status      @default(OFFLINE)
+
+  customRoles      CustomRole[] @relation("MemberCustomRoles")
+  roleGroups       RoleGroup[]  @relation("MemberRoleGroups")
+  generatedReports Report[]
+  driver           Driver?
+
+  createdTaxFilings TaxFiling[]
+  madeTaxPayments   TaxPayment[]
+
+  requestedStockRequests StockRequest[]  @relation("RequestedStockRequests")
+  approvedStockRequests  StockRequest[]  @relation("ApprovedStockRequests")
+  requestedTransfers     StockTransfer[] @relation("RequestedByMember")
+  shippedTransfers       StockTransfer[] @relation("ShippedByMember")
+  receivedTransfers      StockTransfer[] @relation("ReceivedByMember")
+
+  createdStockReports      StockReportTemplate[]
+  generatedStockReports    GeneratedStockReport[]
+  stockReceipts            StockReceipt[]
+  createdApiKeys           ApiKey[]
+  createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
+
+  bakeryRoles BakeryBaker[]
+
+  submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
+  approvedExpenses         Expense[]          @relation("ExpenseApprover")
+  createdRecurringExpenses RecurringExpense[] @relation("RecurringExpenseCreator")
+
+  responsibleFunds       PettyCashFund[] @relation("ResponsibleForFund")
+  pettyCashTransactions PettyCashTransaction[]
+
+  // Approval Relations
+  approvalRequests    ApprovalRequest[]    @relation("ApprovalRequester")
+  approvalDecisions   ApprovalDecision[]   @relation("ApprovalDecisions")
+  approvalStepActions ApprovalStepAction[] @relation("ApprovalStepActionMember")
+
+  // Budget Relations
+  createdBudgets         Budget[]       @relation("BudgetCreator")
+  generatedBudgetReports BudgetReport[] @relation("BudgetReportGenerator")
+  qualityIncidents       QualityIncident[] @relation("IncidentReporter")
+  qcResults              QCResult[] @relation("QCPerformer")
+
+  // CRM Relations
+  ownedCrmRecords        CrmRecord[]    @relation("CrmRecordOwner")
+  crmActivities          CrmActivity[]  @relation("CrmActivityMember")
+  crmNotes               CrmNote[]      @relation("CrmNoteCreator")
+
+  // Purchase Relations
+  createdPurchases Purchase[]        @relation("PurchaseCreator")
+  purchasePayments PurchasePayment[] @relation("PurchasePaymentMember")
+
+  // Audit Relations
+  stockAuditLogs     StockAuditLog[]
+  approvalSteps      PurchaseApprovalStep[]
+  stockTakesAssigned StockTake[]            @relation("StockTakeAssignee")
+  stockTakesReviewed StockTake[]            @relation("StockTakeReviewer")
+  stockValuations    StockValuation[]
+
+  // Enterprise Reporting
+  createdReportAutomations ReportAutomation[]
+  createdReportChannels    ReportChannel[]    @relation("MemberCreatedChannels")
+
+  // Invoice Template Relations
+  createdInvoiceTemplates  InvoiceTemplate[]        @relation("TemplateCreator")
+  invoiceTemplateVersions  InvoiceTemplateVersion[] @relation("TemplateVersionCreator")
+  invoiceTemplateUsageLogs TemplateUsageLog[]       @relation("TemplateUsageLog")
+
+  // Stock Reconciliation Relations
+  reconciliationsInitiated StockReconciliation[] @relation("ReconciliationInitiator")
+  reconciliationsCompleted StockReconciliation[] @relation("ReconciliationCompleter")
+  reconciliationsReviewed  StockReconciliation[] @relation("ReconciliationReviewer")
+  actionAuditLogs          ActionAuditLog[]
+
+  approvedTransfers       StockTransfer[] @relation("ApprovedByMember")
+  qualityCheckedTransfers StockTransfer[] @relation("TransferQualityChecker")
+  approvedAdjustments     StockAdjustment[] @relation("AdjustmentApprover")
+  assemblies              Assembly[]
+
+  @@unique([organizationId, userId])
+  @@unique([organizationId, cardId])
+  @@index([organizationId, userId])
+  @@index([userId])
+  @@index([cardId])
+  @@index([userId, cardId])
+  @@index([organizationId])
+  @@index([isCheckedIn])
+  @@map("member")
+}
+
+enum MemberRole {
+  OWNER // Full control over the organization
+  ADMIN // Can manage most aspects, except billing/org deletion
+  MANAGER // Can manage day-to-day operations (sales, inventory, staff)
+  EMPLOYEE // Standard user, can perform assigned tasks (e.g., make sales, receive stock)
+  CASHIER // Limited role, primarily for making sales
+  REPORTER // View-only access to reports
+  CUSTOMER // Can access customer portal, view own data
+  GUEST // Add GUEST role for temporary external users
+}
+
+enum MembershipStatus {
+  ACTIVE
+  PENDING_APPROVAL
+  SUSPENDED
+  REJECTED
+}
+
+model AttendanceLog {
+  id                 String             @id @default(cuid())
+  memberId           String
+  member             Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  organizationId     String
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  checkInTime        DateTime
+  checkOutTime       DateTime?
+  checkInLocationId  String // Now references InventoryLocation
+  checkInLocation    InventoryLocation  @relation("CheckInLocationLogs", fields: [checkInLocationId], references: [id], onDelete: Restrict)
+  checkOutLocationId String? // Optional: if checkout can happen at a different location
+  checkOutLocation   InventoryLocation? @relation("CheckOutLocationLogs", fields: [checkOutLocationId], references: [id], onDelete: Restrict)
+  durationMinutes    Int? // Calculated when member checks out
+  notes              String?
+  isAutoCheckout     Boolean            @default(false) // To flag if this was an auto checkout
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  activeMemberCheckIn Member? @relation("ActiveCheckIn") // Link to Member's current active log
+
+  @@index([memberId])
+  @@index([organizationId])
+  @@index([checkInTime])
+  @@index([checkOutTime])
+  @@index([checkInLocationId])
+  @@map("attendance_log")
+}
+
+model CustomRole {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    String[] // Array of permission strings, e.g., ["product:create", "sale:view"]
+
+  // For many-to-many with Member if a member can have multiple custom roles
+  members  Member[] @relation("MemberCustomRoles")
+  isActive Boolean  @default(true)
+
+  isSystemRole Boolean  @default(false) // True for roles like "Cashier" if you want them modifiable
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@map("custom_role")
+}
+
+model PermissionSet {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    String[] // Array of permission strings
+
+  roleGroups RoleGroup[] @relation("RoleGroupPermissionSets")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@map("permission_set")
+}
+
+model RoleGroup {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  permissionSets PermissionSet[] @relation("RoleGroupPermissionSets")
+  members        Member[]        @relation("MemberRoleGroups")
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, name])
+  @@map("role_group")
+}
+
+model Invitation {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           MemberRole
+  status         InvitationStatus @default(PENDING)
+  token          String           @unique
+  expiresAt      DateTime
+  inviterId      String
+  inviter        User             @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  departmentIds  String[]         @default([])
+  customRoleIds  String[]         @default([])
+  roleGroupIds   String[]         @default([])
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  isGuestInvite  Boolean          @default(false) // Flag to identify guest invitations
+
+  @@index([email])
+  @@index([organizationId])
+  @@index([inviterId])
+  @@map("invitation")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model OrganizationSettings {
+  id                        String          @id @default(cuid())
+  organizationId            String          @unique // Enforces one-to-one
+  organization              Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  defaultCurrency           String          @default("USD") // e.g., "USD", "EUR", "GBP"
+  defaultTimezone           String          @default("UTC") // e.g., "Africa/Nairobi"
+  defaultTaxRate            Decimal?        @db.Decimal(5, 4) // Default tax rate for new products/sales
+  inventoryPolicy           InventoryPolicy @default(FEFO) // Added: FIFO, LIFO, or FEFO preference
+  lowStockThreshold         Int             @default(10) // Default threshold for low stock alerts
+  negativeStock             Boolean         @default(false) // Allow selling into negative stock?
+  country                   String?         @default("Kenya") // Default country for tax and localization
+  taxIntegrationEnabled     Boolean         @default(false) // Whether tax integration (e.g., KRA) is enabled
+  highValueTaxThreshold     Decimal         @default(100000.00) @db.Decimal(15, 2) // Block high value sales if Navari is down
+  updatedAt                 DateTime        @default(now()) @updatedAt
+  enableCapacityTracking    Boolean         @default(false) // Enable space management features
+  enforceSpatialConstraints Boolean         @default(false) // Prevent over-capacity situations
+  enableProductDimensions   Boolean         @default(false) // Track product dimensions
+  defaultDimensionUnit      String? // e.g., "cm", "inches"
+  defaultWeightUnit         String? // e.g., "kg", "lbs"
+  defaultTaxId              String?
+
+  // --- Enterprise Security Settings ---
+  multiAdminRoleApproval Boolean @default(false)
+  auditLogRetentionDays  Int     @default(365)
+  enforceMfa             Boolean @default(false)
+
+  // --- Attendance Auto-Checkout Settings ---
+  enableAutoCheckout Boolean @default(false)
+  autoCheckoutTime   String? // Store as "HH:mm" in organization's local timezone (e.g., "17:00")
+  enableBakerySystem     Boolean @default(false) // Add this line
+  enabledPlugins         Json    @default("[]")
+  defaultInvoiceTemplate String  @default("default")
+
+  // --- Expense Settings ---
+  mileageRate            Decimal @default(0) @db.Decimal(19, 4)
+
+  // --- Automation Settings ---
+  supplierInvoiceReminderSchedule Int[] @default([0, 3, 7, 14, 30])
+
+  // --- Pricing Strategy Settings ---
+  priceSyncMode              PriceSyncMode     @default(MANUAL)
+  supplierSelectionStrategy  SupplierSelection @default(PREFERRED)
+  minMarginThreshold         Decimal           @default(0.10) @db.Decimal(5, 2)
+  priceApprovalThreshold     Decimal           @default(0.20) @db.Decimal(5, 2)
+
+  // --- Bot Integration Settings ---
+  telegramBotEnabled Boolean @default(false)
+  discordBotEnabled  Boolean @default(false)
+
+  // --- End Attendance Auto-Checkout Settings ---
+  @@map("organization_settings")
+}
+
+enum InventoryPolicy {
+  FIFO // First-In, First-Out (Based on receivedDate)
+  LIFO // Last-In, First-Out (Based on receivedDate)
+  FEFO // First-Expired, First-Out (Based on expiryDate, fallback to FIFO if no expiry)
+}
+
+enum PriceSyncMode {
+  MANUAL
+  AUTOMATIC
+  REVIEW_REQUIRED
+}
+
+enum SupplierSelection {
+  PREFERRED
+  LOWEST_COST
+  LATEST_DELIVERY
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  name           String
+  image          String?
+  banner         String?
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  headId                 String?
+  head                   Member?                 @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
+  departmentMembers      DepartmentMember[]
+  activeBudgetId         String?                 @unique
+  activeBudget           Budget?                 @relation("DepartmentBudget", fields: [activeBudgetId], references: [id], onDelete: SetNull)
+  budgets                Budget[]                @relation("DepartmentBudgets")
+  purchaseApprovalChains PurchaseApprovalChain[]
+
+  customFields Json?
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("department")
+}
+
+model DepartmentMember {
+  id                 String               @id @default(cuid())
+  departmentId       String
+  department         Department           @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  memberId           String
+  member             Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role               DepartmentMemberRole @default(MEMBER) // Role within the department
+  canApproveExpenses Boolean              @default(false) // Specific flag if this member can approve expenses for the dept
+  canManageBudget    Boolean              @default(false) // Specific flag for budget management permissions
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  // A member can only be in a department once
+  @@unique([departmentId, memberId])
+  @@index([memberId])
+  @@index([departmentId])
+  @@map("department_member")
+}
+
+enum DepartmentMemberRole {
+  HEAD // Department Head with full control over the department
+  MANAGER // Managerial role within the department
+  MEMBER // Regular member of the department
+  VIEWER // Read-only access to department information
+}
+
+model Subscription {
+  id                   String       @id @default(cuid())
+  organizationId       String       @unique
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  dodoCustomerId       String?      @unique @map("dodo_customer_id")
+  dodoSubscriptionId   String?      @unique @map("dodo_subscription_id")
+  dodoPriceId          String?      @map("dodo_price_id")
+  dodoCurrentPeriodEnd DateTime?    @map("dodo_current_period_end")
+
+  @@map("subscriptions")
+}
+
+// --- Device Setup Token Management --- //
+// Short-lived, single-use tokens generated by admins/owners to provision
+// POS devices without requiring the device to supply any setup fields.
+
+enum DeviceType {
+  POS_TERMINAL
+  MOBILE_POS
+  KIOSK
+  TABLET
+  BAKERY_TERMINAL
+}
+
+model DeviceSetupToken {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Token data (signed JWT is persisted only by its ID for single-use revocation)
+  tokenHash String @unique // SHA-256 of the signed JWT — for fast lookup & revocation
+  jti       String @unique // JWT ID embedded in the token (uuid)
+
+  // Pre-configured device fields embedded in the token payload
+  deviceName  String
+  deviceType  DeviceType
+  locationId  String
+  location    InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  permissions String[]          @default([])
+  allowedIps  String[]          @default([])
+  environment ApiKeyEnvironment @default(LIVE)
+
+  // Lifecycle
+  expiresAt        DateTime
+  usedAt           DateTime? // Set on first (and only) redemption
+  redeemedApiKeyId String? // The ApiKey created when the token was redeemed
+  revokedAt        DateTime?
+
+  // Audit
+  createdById String
+  createdBy   Member   @relation("DeviceSetupTokenCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([jti])
+  @@index([locationId])
+  @@index([createdById])
+  @@map("device_setup_token")
+}
+
+// --- Device Registry --- //
+// Tracks every provisioned POS device after setup-token redemption.
+
+model DeviceRegistry {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyId       String       @unique // One-to-one with the ApiKey it authenticates with
+  apiKey         ApiKey       @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  deviceName String
+  deviceType DeviceType
+  locationId String
+  location   InventoryLocation @relation("DeviceRegistryLocation", fields: [locationId], references: [id], onDelete: Restrict)
+
+  serialNumber String?
+  macAddress   String?
+  fingerprint  String?
+
+  status     DeviceStatus @default(ACTIVE)
+  allowedIps String[]     @default([])
+  lastSeenAt DateTime?
+  lastSeenIp String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([locationId])
+  @@index([status])
+  @@map("device_registry")
+}
+
+enum DeviceStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// --- API Key Management --- //
+
+// Add this enum anywhere in your file
+enum ApiKeyEnvironment {
+  LIVE // For production use, affects real data
+  TEST // For development/sandbox, affects test data
+}
+
+enum ApiKeyType {
+  POS
+  CLIENT
+}
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  // --- Security & Access ---
+  keyPrefix String @unique
+  hashedKey String
+
+  // --- Options & Capabilities ---
+  environment ApiKeyEnvironment @default(LIVE)
+  keyType     ApiKeyType        @default(POS)
+  permissions String[]          @default([])
+
+  // --- Enhanced Security & Tracking (New) ---
+  ipWhitelist   String[]           @default([])
+  locationId    String?
+  location      InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  rateLimitTier RateLimitTier      @default(STANDARD)
+  rateLimit     Int                @default(100)
+  requestCount  Int                @default(0)
+  lastUsedIp    String?
+  errorCount    Int                @default(0)
+  isActive      Boolean            @default(true)
+  metadata      Json?
+
+  // --- Auditing & Lifecycle ---
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeyUsageLogs ApiKeyUsageLog[]
+  deviceRegistry  DeviceRegistry?
+
+  @@unique([id, organizationId])
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([locationId]) // New index
+  @@index([isActive]) // New index
+  @@index([rateLimitTier]) // New index
+  @@map("api_key")
+}
+
+enum Status {
+  ONLINE
+  OFFLINE
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type           ReportType
+  data           Json
+  summary        String?      @db.Text // For storing AI-generated summary
+  startDate      DateTime
+  endDate        DateTime
+  generatedAt    DateTime     @default(now())
+  generatedById  String
+  generatedBy    Member       @relation(fields: [generatedById], references: [id])
+
+  @@unique([organizationId, type, startDate, endDate])
+  @@index([organizationId, type])
+  @@map("reports")
+}
+
+enum ReportType {
+  SALES_REPORT
+  SALES_WEEKLY
+  SALES_MONTHLY
+  INVENTORY_WEEKLY
+  INVENTORY_MONTHLY
+  INVENTORY_REPORT
+  EXPENSE_REPORT
+  BAKERY_REPORT
+  TAX_REPORT
+}

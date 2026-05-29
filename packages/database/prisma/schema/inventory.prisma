@@ -1,0 +1,610 @@
+model Category {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  name           String
+  description    String?
+  parentId       String?
+  parent         Category?    @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Restrict)
+  subcategories  Category[]   @relation("CategoryToSubcategory")
+  products       Product[]
+  cycleCountConfigs CycleCountConfig[]
+  color          String?
+  code           String       @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+  @@index([name])
+  @@index([organizationId])
+  @@index([organizationId, name])
+}
+
+enum ProductType {
+  RAW_MATERIAL // Ingredients used in production (e.g., flour, sugar)
+  FINISHED_GOOD // Products you manufacture and sell (e.g., bread, cakes)
+  MERCHANDISE // Products you buy and resell without modification (e.g., bottled water, coffee beans)
+  OTHER
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  sku         String      @unique
+  barcode     String?
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  isActive    Boolean     @default(true)
+  imageUrls   String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  type        ProductType @default(FINISHED_GOOD)
+
+  // Loyalty Points for this specific product
+  pointsOnPurchase Int?
+
+  brand               String?
+  rating              Float?
+  lowStockThreshold   Int?
+  isNew               Boolean  @default(false)
+  detailedDescription String?
+  tags                String[]
+  isFeatured          Boolean  @default(false)
+  slug                String? @unique
+
+  defaultLocationId String?
+  defaultLocation   InventoryLocation? @relation("ProductDefaultLocation", fields: [defaultLocationId], references: [id], onDelete: SetNull)
+
+  // Loyalty Points Override
+  loyaltyPointsOverride Int? // Specific points for this product, overrides default calculation
+
+  // Relations
+  variants        ProductVariant[]
+  variantStock    ProductVariantStock[]
+  suppliers       ProductSupplier[]
+  unitConversions ProductUnitConversion[] @relation
+  ecommerceMappings EcommerceProductMapping[] @relation("EcommerceProductMappings")
+  reorderRules ReorderRule[]
+  favorites       Favorite[]
+  reviews         ProductReview[]
+
+  organizationId       String
+  organization         Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([name])
+  @@index([sku])
+  @@index([slug])
+  @@index([organizationId])
+  @@index([organizationId, id])
+  @@unique([organizationId, barcode])
+  @@index([defaultLocationId])
+}
+
+// Updated ProductVariant with support for both system and custom units
+model ProductVariant {
+  id               String                @id @default(cuid())
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  productId        String
+  product          Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name             String
+  sku              String
+  barcode          String?               @unique
+  attributes       Json
+  isActive         Boolean               @default(true)
+  reorderPoint     Int                   @default(5)
+  reorderQty       Int                   @default(10)
+  lowStockAlert    Boolean               @default(false)
+  buyingPrice      Decimal               @db.Decimal(10, 2)
+  wholesalePrice   Decimal?              @db.Decimal(10, 2)
+  retailPrice      Decimal?              @db.Decimal(10, 2)
+  transactionItems TransactionItem[]
+  isPopular        Boolean               @default(false)
+  isNew            Boolean               @default(false)
+  promotionalPrice Decimal?              @db.Decimal(10, 2)
+  purchaseItems    PurchaseItem[]
+  stockBatches     StockBatch[]
+  stockAdjustments StockAdjustment[]
+  stockMovements   StockMovement[]
+  variantStocks    ProductVariantStock[]
+  suppliers        ProductSupplier[]
+
+  priceListItems   PriceListItem[]
+  pricingRules     PricingRule[]
+  bundleItems      PricingBundleItem[]
+
+  // Loyalty Points Override for this specific variant
+  pointsOnPurchase      Int?
+  loyaltyPointsOverride Int? // Specific points for this variant, overrides product and default calculation
+
+  stockRequestItems  StockRequestItem[]
+  stockTransferItems StockTransferItem[]
+  ecommerceMappings  EcommerceProductMapping[] @relation("EcommerceVariantMappings")
+  reorderRules       ReorderRule[]
+  stockTakeItems     StockTakeItem[]
+
+  // Base unit (primary inventory unit) - can be system or custom
+  baseUnitId    String?
+  baseUnit      SystemUnit?       @relation("VariantBaseUnit", fields: [baseUnitId], references: [id], onDelete: Restrict)
+  baseOrgUnitId String?
+  baseOrgUnit   OrganizationUnit? @relation("VariantOrgBaseUnit", fields: [baseOrgUnitId], references: [id], onDelete: Restrict)
+
+  // Stocking unit (purchasing/receiving unit) - can be system or custom
+  stockingUnitId    String?
+  stockingUnit      SystemUnit?       @relation("VariantStockingUnit", fields: [stockingUnitId], references: [id], onDelete: Restrict)
+  stockingOrgUnitId String?
+  stockingOrgUnit   OrganizationUnit? @relation("VariantOrgStockingUnit", fields: [stockingOrgUnitId], references: [id], onDelete: Restrict)
+
+  // Multiple selling units with different prices
+  sellingUnits VariantSellingUnit[]
+
+  usedInRecipes RecipeIngredient[]
+
+  // Expiration defaults
+  defaultShelfLifeDays   Int?    // Default shelf life for this product
+  requiresExpiryTracking Boolean @default(true) // Some products might not need tracking
+  expiryWarningDays      Int?    @default(2) // Days before expiry to trigger warning
+  requiresSerialNumber   Boolean @default(false)
+  tags                   String[]
+
+  producedByRecipe Recipe?
+  supplierPriceHistories SupplierPriceHistory[]
+
+  // Stock Reconciliation Relations
+  reconciliationItems ReconciliationItem[]
+  assemblies          Assembly[]
+  assemblyItems       AssemblyItem[]
+
+  serialNumbers       SerialNumber[]
+  qcTemplates         QCTemplate[] @relation("VariantQCTemplates")
+
+  @@unique([productId, sku])
+  @@unique([productId, barcode])
+  @@index([sku])
+  @@index([baseUnitId])
+  @@index([baseOrgUnitId])
+  @@index([stockingUnitId])
+  @@index([stockingOrgUnitId])
+  @@map("product_variant")
+}
+
+// Selling units can be system or organization custom units
+model VariantSellingUnit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  // System unit option
+  systemUnitId String?
+  systemUnit   SystemUnit? @relation(fields: [systemUnitId], references: [id], onDelete: Restrict)
+
+  // Organization custom unit option
+  orgUnitId String?
+  orgUnit   OrganizationUnit? @relation("OrgSellingUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+
+  // Pricing
+  retailPrice    Decimal? @db.Decimal(10, 2)
+  wholesalePrice Decimal? @db.Decimal(10, 2)
+
+  // Conversion multiplier to base unit (for quick calculations)
+  // e.g., if selling by "box" and base is "piece", multiplier might be 12
+  conversionMultiplier Decimal? @db.Decimal(20, 10)
+  priceListItems PriceListItem[] // Prices specifically set for this selling unit
+
+
+  isActive Boolean @default(true)
+
+  @@unique([variantId, systemUnitId, orgUnitId])
+  @@index([variantId])
+  @@index([systemUnitId])
+  @@index([orgUnitId])
+  @@map("variant_selling_unit")
+}
+
+enum SupplierType {
+  manufacturer
+  distributor
+  wholesaler
+  service_provider
+}
+
+enum RiskLevel {
+  low
+  medium
+  high
+}
+
+enum RecallStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Recall {
+  id             String       @id @default(cuid())
+  recallNumber   String       @unique
+  title          String
+  description    String?      @db.Text
+  status         RecallStatus @default(ACTIVE)
+
+  // Root cause link
+  supplierId     String?
+  supplier       Supplier?    @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  stockBatchId   String?      // If the recall started from a specific raw material batch
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  stockBatches   StockBatch[]
+  productionBatches Batch[]
+
+  @@index([organizationId])
+  @@index([supplierId])
+}
+
+model Supplier {
+  id                 String       @id @default(cuid())
+  name               String
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  code               String       @unique
+  type               SupplierType
+  website            String?
+  taxId              String?
+  registrationNumber String?
+  currency           String?
+  categories         String[]
+  riskLevel          RiskLevel    @default(low)
+  invoices          SupplierInvoice[]
+  purchaseReturns   PurchaseReturn[]
+  documents         SupplierDocument[]
+
+  // Contact Info
+  primaryContact String
+  phone          String?
+  email          String? @unique
+
+  // Address Info
+  street  String?
+  city    String?
+  state   String?
+  zipCode String?
+  country String?
+
+  paymentTerms            String?
+  paymentTermsDays        Int? // The number of days for credit (e.g., 30)
+  defaultNotifyBeforeDays Int? // Default days before due date to notify
+  leadTime                Int?
+  isActive                Boolean @default(true)
+  customFields            Json?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  products          ProductSupplier[]
+  priceHistory      SupplierPriceHistory[]
+  customBadges      String[]
+  purchases         Purchase[]
+  reorderRules      ReorderRule[]
+  performances      SupplierPerformance[]
+  expenses          Expense[]
+  recurringExpenses RecurringExpense[]
+  stockBatches      StockBatch[]
+  qualityIncidents  QualityIncident[]
+  recalls           Recall[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, email])
+  @@unique([organizationId, id])
+  @@index([organizationId])
+}
+
+model ProductSupplier {
+  id                   String          @id @default(cuid())
+  productId            String
+  product              Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId            String?
+  variant              ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  supplierId           String
+  supplier             Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierSku          String? // The SKU used by the supplier for this product
+  costPrice            Decimal         @db.Decimal(10, 2)
+  minimumOrderQuantity Int?
+  leadTimeDays         Int?
+
+  // Packaging configuration
+  packagingUnitId      String?
+  packagingUnit        SystemUnit?      @relation("SupplierPackagingUnit", fields: [packagingUnitId], references: [id], onDelete: Restrict)
+  packagingOrgUnitId   String?
+  packagingOrgUnit     OrganizationUnit? @relation("SupplierOrgPackagingUnit", fields: [packagingOrgUnitId], references: [id], onDelete: Restrict)
+  unitsPerPackage      Decimal?         @db.Decimal(10, 2) // e.g., 24 books in a carton
+
+  isPreferred          Boolean         @default(false) // Is this the preferred supplier for this product?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@unique([productId, supplierId])
+  @@index([supplierId])
+}
+
+model SupplierDocument {
+  id             String       @id @default(cuid())
+  supplierId     String
+  supplier       Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  name           String
+  documentType   String // e.g., "Health Certificate", "Insurance", "Contract"
+  fileUrl        String
+  expiryDate     DateTime?
+  status         String       @default("ACTIVE")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([supplierId])
+  @@index([organizationId])
+}
+
+model SupplierPriceHistory {
+  id             String          @id @default(cuid())
+  supplierId     String
+  supplier       Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  variantId      String
+  variant        ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  costPrice      Decimal         @db.Decimal(10, 2)
+  effectiveDate  DateTime        @default(now())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@index([variantId])
+  @@index([organizationId])
+}
+
+model InventoryLocation {
+  id                  String                  @id @default(cuid())
+  name                String
+  code                String?                 @unique
+  description         String?
+  isActive            Boolean                 @default(true)
+  isDefault           Boolean                 @default(false)
+  locationType        LocationType            @default(RETAIL_SHOP)
+  address             Json?
+  contact             Json?
+  capacity            Json?
+  settings            Json?
+  parentLocationId    String?
+  parentLocation      InventoryLocation?      @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
+  childLocations      InventoryLocation[]     @relation("LocationHierarchy")
+  customFields        Json?
+  approvalConditions     ApprovalStepCondition[] @relation("LocationCondition")
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  managerId           String?
+  manager             Member?                 @relation("LocationManager", fields: [managerId], references: [id], onDelete: SetNull)
+  cashDrawers         CashDrawer[]
+
+  organizationId    String
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stockBatches      StockBatch[]
+  stockAdjustments  StockAdjustment[]
+  variantStocks     ProductVariantStock[]
+  outgoingMovements StockMovement[]       @relation("FromLocationMovements")
+  incomingMovements StockMovement[]       @relation("ToLocationMovements")
+
+  transactions Transaction[]
+  pickupFulfillments Fulfillment[]
+  allocations        InventoryAllocation[]
+
+  zones                  StorageZone[]
+  storageUnits           StorageUnit[]
+  checkedInMembers       Member[]
+  checkInAttendanceLogs  AttendanceLog[] @relation("CheckInLocationLogs")
+  checkOutAttendanceLogs AttendanceLog[] @relation("CheckOutLocationLogs")
+
+  defaultProducts           Product[]                  @relation("ProductDefaultLocation")
+  ecommerceConnections      EcommerceConnection[]     // Back-relation for e-commerce default locations
+  reorderRules              ReorderRule[]
+  stockTakes                StockTake[]
+  stockValuations           StockValuation[]
+  expenses                  Expense[]
+  budgets                   Budget[]
+  fromStockRequests         StockRequest[]             @relation("FromStockRequests")
+  toStockRequests           StockRequest[]             @relation("ToStockRequests")
+  fromStockTransfers        StockTransfer[]            @relation("FromLocation")
+  toStockTransfers          StockTransfer[]            @relation("ToLocation")
+  batchOutputs              Batch[]
+
+  // Stock Reconciliation Relations
+  stockReconciliations      StockReconciliation[]
+
+  // API Key Relations
+  apiKeys                   ApiKey[]
+
+  // Device Setup & Registry Relations
+  deviceSetupTokens         DeviceSetupToken[]
+  deviceRegistries          DeviceRegistry[]  @relation("DeviceRegistryLocation")
+
+  serialNumbers             SerialNumber[]
+  cycleCountConfigs         CycleCountConfig[]
+
+  @@unique([organizationId, name])
+  @@index([name])
+  @@index([organizationId])
+  @@index([managerId])
+  @@index([locationType])
+  @@index([isDefault])
+  @@index([parentLocationId])
+}
+
+enum LocationType {
+  RETAIL_SHOP // A store front location where sales occur directly
+  WAREHOUSE // A storage facility primarily for inventory
+  DISTRIBUTION // Facility for receiving and distributing stock
+  PRODUCTION // Manufacturing facility
+  SUPPLIER // External supplier location (for reference)
+  CUSTOMER // External customer location (for reference)
+  TEMPORARY // Temporary or pop-up location
+  OTHER // Any other location type
+}
+
+model StorageZone {
+  id           String            @id @default(cuid())
+  name         String // e.g., "Zone A", "Electronics Section"
+  description  String?
+  locationId   String
+  location     InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  capacity     Float?
+  capacityUnit UnitType?
+  capacityUsed Float?            @default(0)
+  isActive     Boolean           @default(true)
+  customFields Json?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  // Relations
+  storageUnits   StorageUnit[]
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, name])
+  @@index([locationId])
+  @@index([organizationId])
+}
+
+model StorageUnit {
+  id            String            @id @default(cuid())
+  name          String // e.g., "Rack A1", "Bin B23"
+  reference     String? // External reference number/barcode
+  unitType      StorageUnitType
+  locationId    String
+  location      InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  zoneId        String?
+  zone          StorageZone?      @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+  width         Float? // Physical dimensions
+  height        Float?
+  depth         Float?
+  dimensionUnit String? // e.g., "cm", "inches"
+  maxWeight     Float? // Maximum weight capacity
+  weightUnit    String? // e.g., "kg", "lbs"
+  capacity      Float? // Storage capacity
+  capacityUnit  UnitType?
+  capacityUsed  Float?            @default(0)
+  isActive      Boolean           @default(true)
+  position      String? // Physical position reference (e.g., "Aisle 5, Section B")
+  customFields  Json?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  positions      StoragePosition[]
+  stockBatches   StockBatch[]      @relation("UnitStockBatches") // Direct assignment to unit
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, zoneId, name])
+  @@index([locationId])
+  @@index([zoneId])
+  @@index([unitType])
+  @@index([organizationId])
+}
+
+enum StorageUnitType {
+  SHELF // Standard shelf
+  RACK // Pallet or other racking system
+  BIN // Smaller container within a shelf/rack
+  DRAWER // Pull-out storage
+  PALLET // Standalone pallet
+  SECTION // Demarcated area within a zone
+  REFRIGERATOR // Temperature controlled unit
+  FREEZER // Freezer unit
+  CABINET // Enclosed cabinet
+  BULK_AREA // Open area for bulk storage
+  OTHER // Other storage type
+}
+
+model QCTemplate {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // JSON structure defining the checks (e.g., [{ name: "Temp", type: "NUMBER", required: true }])
+  config         Json
+
+  variants       ProductVariant[] @relation("VariantQCTemplates")
+  qcResults      QCResult[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model QCResult {
+  id             String       @id @default(cuid())
+  templateId     String
+  template       QCTemplate   @relation(fields: [templateId], references: [id], onDelete: Restrict)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Links to what was checked
+  stockBatchId   String?
+  stockBatch     StockBatch?  @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
+  purchaseItemId String?
+  purchaseItem   PurchaseItem? @relation(fields: [purchaseItemId], references: [id], onDelete: SetNull)
+
+  // The actual data collected
+  data           Json
+  status         QualityCheckStatus @default(PENDING)
+  notes          String?
+
+  performedById  String
+  performedBy    Member       @relation("QCPerformer", fields: [performedById], references: [id])
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([stockBatchId])
+  @@index([purchaseItemId])
+}
+
+model StoragePosition {
+  id            String      @id @default(cuid())
+  identifier    String // e.g., "A1-B2-C3" (unit-shelf-position)
+  storageUnitId String
+  storageUnit   StorageUnit @relation(fields: [storageUnitId], references: [id], onDelete: Cascade)
+  width         Float? // Physical dimensions
+  height        Float?
+  depth         Float?
+  dimensionUnit String? // e.g., "cm", "inches"
+  maxWeight     Float? // Maximum weight capacity
+  weightUnit    String? // e.g., "kg", "lbs"
+  isOccupied    Boolean     @default(false)
+  customFields  Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  stockBatches   StockBatch[] @relation("PositionStockBatches")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([storageUnitId, identifier])
+  @@index([storageUnitId])
+  @@index([isOccupied])
+  @@index([organizationId])
+}

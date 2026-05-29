@@ -1,0 +1,902 @@
+enum QualityCheckStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+model StockBatch {
+  id                  String             @id @default(cuid())
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  variantId           String
+  variant             ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  batchNumber         String?
+  supplierBatchNumber String?
+  purchaseItemId      String?
+  purchaseItem        PurchaseItem?      @relation(fields: [purchaseItemId], references: [id], onDelete: SetNull)
+  locationId          String
+  location            InventoryLocation  @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  qualityCheckStatus  QualityCheckStatus @default(PENDING)
+
+  storageUnitId String?
+  storageUnit   StorageUnit?     @relation("UnitStockBatches", fields: [storageUnitId], references: [id], onDelete: SetNull)
+  positionId    String?
+  position      StoragePosition? @relation("PositionStockBatches", fields: [positionId], references: [id], onDelete: SetNull)
+
+  // UPDATED: Quantities to Decimal
+  initialQuantity Decimal @db.Decimal(10, 2)
+  currentQuantity Decimal @db.Decimal(10, 2)
+
+  purchasePrice Decimal   @db.Decimal(10, 2)
+  expiryDate    DateTime?
+  receivedDate  DateTime  @default(now())
+
+  // Unit of this batch (can be bulk like Carton or base like Piece)
+  systemUnitId  String?
+  systemUnit    SystemUnit?       @relation("StockBatchSystemUnit", fields: [systemUnitId], references: [id], onDelete: Restrict)
+  orgUnitId     String?
+  orgUnit       OrganizationUnit? @relation("StockBatchOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  allocations    InventoryAllocation[]
+  adjustments    StockAdjustment[]
+  movements      StockMovement[]
+  atachments     Attachment[]
+  stockTakeItems StockTakeItem[]
+  transferItems  StockTransferItem[]
+
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
+  landedCost     Decimal? @db.Decimal(10, 2)
+  batchSalePrice Decimal? @db.Decimal(10, 2)
+
+  productionBatchId String?
+  productionBatch   Batch?  @relation("BatchOutput", fields: [productionBatchId], references: [id], onDelete: SetNull)
+
+  // Parent-Child Batch Tracking
+  parentId String?
+  parent   StockBatch?  @relation("BatchGenealogy", fields: [parentId], references: [id], onDelete: SetNull)
+  children StockBatch[] @relation("BatchGenealogy")
+
+  // Assembly/Kit Tracking
+  assemblyId String?
+  assembly   Assembly? @relation(fields: [assemblyId], references: [id], onDelete: SetNull)
+
+  isQuarantined    Boolean @default(false)
+  quarantineReason String?
+  consumedInBatches BatchIngredientConsumption[]
+  qualityIncidents   QualityIncident[]
+
+  isRecalled       Boolean @default(false)
+  recallId         String?
+  recall           Recall? @relation(fields: [recallId], references: [id], onDelete: SetNull)
+
+  assemblyItems    AssemblyItem[]
+  serialNumbers    SerialNumber[]
+  qcResults        QCResult[]
+
+  @@index([expiryDate])
+  @@index([receivedDate])
+  @@index([currentQuantity])
+  @@index([locationId])
+  @@index([organizationId])
+  @@index([storageUnitId])
+  @@index([positionId])
+}
+
+model StockReceipt {
+  id             String   @id @default(cuid())
+  organizationId String
+  memberId       String // The user who received the stock
+  purchaseId     String
+  receivedDate   DateTime
+  notes          String?
+  documentUrls   String[]
+
+  // Relations
+  purchase       Purchase        @relation(fields: [purchaseId], references: [id])
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  member         Member          @relation(fields: [memberId], references: [id])
+  stockMovements StockMovement[]
+
+  @@index([organizationId])
+  @@index([purchaseId])
+}
+
+model ProductVariantStock {
+  id         String            @id @default(cuid())
+  productId  String
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId  String
+  variant    ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  locationId String
+  location   InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  // UPDATED: Changed from Int to Decimal
+  currentStock   Decimal @default(0) @db.Decimal(10, 2) // Total available stock
+  reservedStock  Decimal @default(0) @db.Decimal(10, 2) // Stock reserved but not yet deducted
+  availableStock Decimal @default(0) @db.Decimal(10, 2) // Calculated: currentStock - reservedStock
+  reorderPoint   Decimal @default(5) @db.Decimal(10, 2) // Location-specific reorder point
+  reorderQty     Decimal @default(10) @db.Decimal(10, 2) // Location-specific reorder quantity
+
+  lastUpdated DateTime @updatedAt
+
+  // Relations
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Only one stock record per variant per location
+  @@unique([variantId, locationId])
+  @@index([productId])
+  @@index([locationId])
+  @@index([organizationId])
+}
+
+model SerialNumber {
+  id             String         @id @default(cuid())
+  serialNumber   String
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  stockBatchId   String?
+  stockBatch     StockBatch?    @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
+  locationId     String?
+  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  status         SerialNumberStatus @default(IN_STOCK)
+
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  movements      StockMovement[] @relation("MovementSerialNumbers")
+
+  @@unique([organizationId, serialNumber])
+  @@index([variantId])
+  @@index([stockBatchId])
+  @@index([organizationId])
+}
+
+enum SerialNumberStatus {
+  IN_STOCK
+  SOLD
+  TRANSFERRED
+  RETURNED
+  DAMAGED
+  LOST
+  QUARANTINED
+}
+
+model StockMovement {
+  id           String         @id @default(cuid())
+  variantId    String
+  variant      ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  stockBatchId String?
+  stockBatch   StockBatch?    @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
+  // UPDATED: Quantity to Decimal
+  quantity Decimal @db.Decimal(10, 2)
+
+  fromLocationId String?
+  fromLocation   InventoryLocation? @relation("FromLocationMovements", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocationId   String?
+  toLocation     InventoryLocation? @relation("ToLocationMovements", fields: [toLocationId], references: [id], onDelete: SetNull)
+  movementType   MovementType
+  referenceId    String?
+  referenceType  String?
+  adjustmentId   String?            @unique
+  adjustment     StockAdjustment?   @relation(fields: [adjustmentId], references: [id], onDelete: SetNull)
+  memberId       String
+  member         Member             @relation(fields: [memberId], references: [id])
+  notes          String?
+  movementDate   DateTime           @default(now())
+  createdAt      DateTime           @default(now())
+  stockReceiptId String?
+  stockReceipt   StockReceipt?      @relation(fields: [stockReceiptId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  serialNumbers  SerialNumber[] @relation("MovementSerialNumbers")
+
+  // Stock Reconciliation Relations
+  reconciliationLinks MovementReconciliationLink[]
+
+  @@index([stockBatchId])
+  @@index([fromLocationId])
+  @@index([toLocationId])
+  @@index([movementType, referenceId])
+  @@index([movementDate])
+  @@index([memberId])
+  @@index([organizationId])
+}
+
+model StockAdjustment {
+  id           String            @id @default(cuid())
+  variantId    String
+  variant      ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  stockBatchId String?
+  stockBatch   StockBatch?       @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+  locationId   String
+  location     InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  memberId     String
+  member       Member            @relation(fields: [memberId], references: [id])
+
+  // UPDATED: Quantity to Decimal
+  quantity Decimal @db.Decimal(10, 2)
+
+  reason          StockAdjustmentReason
+  status          AdjustmentStatus      @default(APPROVED) // Enterprise Workflow
+  notes           String?
+  adjustmentDate  DateTime              @default(now())
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  referenceNumber String?
+
+  // Approval details
+  approvedById String?
+  approvedBy   Member? @relation("AdjustmentApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt   DateTime?
+
+  movement       StockMovement?
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([stockBatchId])
+  @@index([adjustmentDate])
+  @@index([locationId])
+  @@index([memberId])
+  @@index([organizationId])
+}
+
+enum AdjustmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// Assembly/Kitting for Retail (Mirrors Bakery Recipes)
+model Assembly {
+  id             String         @id @default(cuid())
+  assemblyNumber String         @unique
+  name           String
+  description    String?        @db.Text
+
+  // The resulting product variant
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  quantity       Decimal        @db.Decimal(10, 2)
+
+  status         AssemblyStatus @default(PLANNED)
+
+  startedAt      DateTime?
+  completedAt    DateTime?
+
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  memberId       String
+  member         Member         @relation(fields: [memberId], references: [id])
+
+  items          AssemblyItem[]
+  producedBatches StockBatch[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([variantId])
+  @@map("stock_assembly")
+}
+
+model AssemblyItem {
+  id             String         @id @default(cuid())
+  assemblyId     String
+  assembly       Assembly       @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  // Quantity used for this assembly instance
+  quantity       Decimal        @db.Decimal(10, 2)
+
+  // Specific batch used if tracked
+  stockBatchId   String?
+  stockBatch     StockBatch?    @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime       @default(now())
+
+  @@index([assemblyId])
+  @@index([variantId])
+  @@map("stock_assembly_item")
+}
+
+enum AssemblyStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum StockAdjustmentReason {
+  INITIAL_STOCK // Setting up initial inventory count
+  RECEIVED_PURCHASE // Use StockBatch creation directly typically
+  DAMAGED // Item damaged while in stock
+  EXPIRED // Item expired while in stock
+  LOST // Item lost or unaccounted for
+  STOLEN // Item confirmed stolen
+  FOUND // Item previously lost/unaccounted for is found
+  RETURN_TO_SUPPLIER // Sending stock back to the supplier
+  CUSTOMER_RETURN // Receiving stock back from a customer (may create a new batch or adjust existing)
+  INVENTORY_COUNT // Adjustment due to physical stock count discrepancy
+  TRANSFER_OUT // Stock moved to another location (use StockMovement)
+  TRANSFER_IN // Stock received from another location (use StockMovement)
+  OTHER // Miscellaneous adjustmentsSALE // For dispatchOrder
+  ORDER_COMMIT // For confirmOrder
+  ORDER_CANCEL // For cancelOrder
+  SALE
+}
+
+enum StockRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+  PARTIALLY_FULFILLED
+  CANCELLED
+}
+
+enum StockRequestPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MovementType {
+  PURCHASE_RECEIPT // Stock entering from a supplier purchase
+  SALE // Stock leaving due to a customer sale
+  ADJUSTMENT_IN // Stock increased via adjustment (found, count up)
+  ADJUSTMENT_OUT // Stock decreased via adjustment (damaged, lost, expired, count down)
+  TRANSFER // Stock moved between internal locations
+  CUSTOMER_RETURN // Stock returning from a customer
+  SUPPLIER_RETURN // Stock being sent back to a supplier
+  INITIAL_STOCK // Initial stock count entry
+  PRODUCTION_IN // Stock created from internal production (if applicable)
+  PRODUCTION_OUT // Components used in internal production (if applicable)
+  QUALITY_REJECTION // Stock rejected during quality check
+  UNPACK_OUT // Stock leaving bulk unit
+  UNPACK_IN // Stock entering base unit
+}
+
+model StockRequest {
+  id                 String               @id @default(cuid())
+  organizationId     String
+  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestNumber      String
+  fromLocationId     String?
+  fromLocation       InventoryLocation?   @relation("FromStockRequests", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocationId       String
+  toLocation         InventoryLocation    @relation("ToStockRequests", fields: [toLocationId], references: [id], onDelete: Restrict)
+  status             StockRequestStatus   @default(PENDING)
+  priority           StockRequestPriority @default(MEDIUM)
+  justification      String?              @db.Text
+  requestedById      String
+  requestedBy        Member               @relation("RequestedStockRequests", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedById       String?
+  approvedBy         Member?              @relation("ApprovedStockRequests", fields: [approvedById], references: [id], onDelete: SetNull)
+  requestDate        DateTime             @default(now())
+  approvalDate       DateTime?
+  fulfilledDate      DateTime?
+  rejectionReason    String?
+  items              StockRequestItem[]
+  transfers          StockTransfer[]
+  purchases          Purchase[]
+  totalEstimatedCost Decimal              @db.Decimal(12, 2)
+
+  @@unique([organizationId, requestNumber])
+  @@index([organizationId, status])
+  @@map("stock_request")
+}
+
+model StockRequestItem {
+  id             String         @id @default(cuid())
+  stockRequestId String
+  stockRequest   StockRequest   @relation(fields: [stockRequestId], references: [id], onDelete: Cascade)
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  // UPDATED
+  requestedQuantity Decimal @db.Decimal(10, 2)
+
+  reason            String?
+  unitCostAtRequest Decimal @db.Decimal(10, 2)
+  allocatedQuantity Decimal @default(0) @db.Decimal(10, 2)
+  fulfilledQuantity Decimal @default(0) @db.Decimal(10, 2)
+
+  @@map("stock_request_item")
+}
+
+model StockTransferItem {
+  id              String         @id @default(cuid())
+  stockTransferId String
+  stockTransfer   StockTransfer  @relation(fields: [stockTransferId], references: [id], onDelete: Cascade)
+  variantId       String
+  variant         ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
+  // UPDATED
+  requestedQuantity Decimal  @db.Decimal(10, 2)
+  shippedQuantity   Decimal? @db.Decimal(10, 2)
+  receivedQuantity  Decimal? @db.Decimal(10, 2)
+
+  unitCost Decimal @db.Decimal(10, 2)
+
+  @@map("stock_transfer_item")
+}
+
+enum StockTransferStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SHIPPED
+  IN_TRANSIT
+  RECEIVED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model StockTransfer {
+  id              String               @id @default(cuid())
+  organizationId  String
+  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transferNumber  String
+  fromLocationId  String
+  fromLocation    InventoryLocation    @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocationId    String
+  toLocation      InventoryLocation    @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
+  status          StockTransferStatus  @default(PENDING_APPROVAL)
+  priority        StockRequestPriority @default(MEDIUM)
+  notes           String?
+  rejectionReason String?
+
+  // Shipping details
+  carrier          String?
+  trackingNumber   String?
+  shippingCost     Decimal?  @db.Decimal(10, 2)
+  estimatedArrival DateTime?
+  actualArrival    DateTime?
+
+  // Quality Check
+  qualityCheckStatus QualityCheckStatus @default(PENDING)
+  qualityCheckNotes  String?
+  qualityCheckedById String?
+  qualityCheckedBy   Member?            @relation("TransferQualityChecker", fields: [qualityCheckedById], references: [id], onDelete: SetNull)
+
+  requestedDate DateTime  @default(now())
+  shippedDate   DateTime?
+  receivedDate  DateTime?
+  completedDate DateTime?
+
+  requestedById String
+  requestedBy   Member @relation("RequestedByMember", fields: [requestedById], references: [id], onDelete: Restrict)
+
+  approvedById String?
+  approvedBy   Member? @relation("ApprovedByMember", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  shippedById String?
+  shippedBy   Member? @relation("ShippedByMember", fields: [shippedById], references: [id], onDelete: SetNull)
+
+  receivedById String?
+  receivedBy   Member? @relation("ReceivedByMember", fields: [receivedById], references: [id], onDelete: SetNull)
+
+  stockRequestId String?
+  stockRequest   StockRequest? @relation(fields: [stockRequestId], references: [id], onDelete: SetNull)
+  items StockTransferItem[]
+
+  @@unique([organizationId, transferNumber])
+  @@index([organizationId, status])
+  @@index([stockRequestId])
+  @@map("stock_transfer")
+}
+
+model StockReportTemplate {
+  id                String                 @id @default(cuid())
+  organizationId    String?
+  organization      Organization?          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  category          StockReportCategory
+  type              StockReportType
+  frequency         ReportFrequency        @default(ON_DEMAND)
+  // Defines the columns the report will contain, e.g., ["Product Name", "SKU", "Location", "Current Stock"]
+  columns           Json
+  // Defines the parameters required to generate the report, e.g., [{"name": "Date Range", "type": "DATE_RANGE", "required": true}]
+  parametersConfig  Json
+  isSystemTemplate  Boolean                @default(false) // System templates are default, not editable by orgs
+  isActive          Boolean                @default(true)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  createdByMemberId String?
+  createdByMember   Member?                @relation(fields: [createdByMemberId], references: [id], onDelete: SetNull)
+  generatedReports  GeneratedStockReport[]
+  automations       ReportAutomation[]
+
+  @@unique([organizationId, name])
+  @@map("stock_report_templates")
+}
+
+// Represents an instance of a generated report.
+model GeneratedStockReport {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  templateId String
+  template   StockReportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  name String // e.g., "Stock Level Summary - 2025-09-15"
+
+  // The actual parameters used for this instance, e.g., {"dateRange": {"from": "...", "to": "..."}, "locationId": "clx..."}
+  parametersUsed Json
+  status         ReportStatus @default(PENDING)
+  fileUrl        String? // URL to the generated file (e.g., PDF/CSV in cloud storage)
+  fileSize       String? // e.g., "2.3 MB"
+  summary        String?      @db.Text // AI-generated summary of the report's findings
+  data           Json? // Raw data of the report for quick access without file download
+
+  generatedAt   DateTime  @default(now())
+  completedAt   DateTime?
+  generatedById String
+  generatedBy   Member    @relation(fields: [generatedById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, templateId])
+  @@index([generatedById])
+  @@map("generated_stock_reports")
+}
+
+enum StockReportCategory {
+  STOCK_LEVELS // Reports on current stock quantities
+  INVENTORY_VALUATION // Reports on the financial value of stock
+  STOCK_MOVEMENT // Reports on how stock has moved (sales, transfers, adjustments)
+  AGING_REPORT // Reports on how long stock has been held
+  SUPPLIER_PERFORMANCE // Reports on stock received from suppliers
+  TRANSFERS // Reports on stock transfers between locations
+  TRANSFER_PERFORMANCE // Reports on the efficiency and timeliness of transfers
+  USER_ACTIVITY // Reports on actions taken by users related to stock (e.g., adjustments, audits)
+  BUSINESS_INSIGHTS // Reports on sales, expenses, and growth
+  CUSTOM // User-defined/custom reports
+}
+
+enum StockReportType {
+  SUMMARY // High-level overview
+  DETAILED // Granular, line-item level data
+  ANALYTICAL // Data with analysis or grouping (e.g., ABC analysis)
+}
+
+enum ReportFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  ON_DEMAND
+}
+
+enum ReportStatus {
+  PENDING // Queued for generation
+  GENERATING // Actively being processed
+  COMPLETED // Successfully generated and file is available
+  FAILED // An error occurred during generation
+}
+
+enum StockReportParameterType {
+  DATE_RANGE
+  LOCATION
+  PRODUCT_CATEGORY
+  SUPPLIER
+  PRODUCT_VARIANT
+}
+
+// ============================================
+// ENTERPRISE REPORTING: CHANNELS & AUTOMATION
+// ============================================
+
+enum AutomationFrequency {
+  HOURLY
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM // Uses cronExpression for custom schedules
+}
+
+enum AutomationStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+  ERROR
+}
+
+// Represents an automated/scheduled report
+model ReportAutomation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String // Display name, e.g., "Weekly Sales Report"
+  description String?
+
+  // What to generate
+  templateId String
+  template   StockReportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  // Report parameters to use (e.g., date range: "last_7_days", location: "all")
+  parameters Json @default("{}")
+
+  // Schedule configuration
+  frequency      AutomationFrequency
+  cronExpression String? // For CUSTOM frequency, e.g., "0 9 * * 1" (every Monday at 9am)
+  timezone       String              @default("UTC")
+
+  // Specific timing
+  dayOfWeek  Int? // 0-6 for weekly (0 = Sunday)
+  dayOfMonth Int? // 1-31 for monthly
+  timeOfDay  String? // HH:mm format, e.g., "09:00"
+
+  // Conditions (optional) - only run if conditions are met
+  // e.g., { "lowStockThreshold": 10, "salesMinimum": 1000 }
+  conditions Json @default("{}")
+
+  // Status
+  status    AutomationStatus @default(ACTIVE)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  lastError String?
+
+  // Statistics
+  runCount     Int @default(0)
+  successCount Int @default(0)
+  failureCount Int @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?
+  createdBy   Member?  @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  // Relations
+  executions ReportAutomationExecution[]
+  channels   ReportChannel[]             @relation("AutomationChannels")
+
+  @@unique([organizationId, name])
+  @@index([organizationId, status])
+  @@index([nextRunAt])
+  @@index([templateId])
+  @@map("report_automations")
+}
+
+// Log of automation executions
+model ReportAutomationExecution {
+  id           String           @id @default(cuid())
+  automationId String
+  automation   ReportAutomation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+
+  channelId String?
+  channel   ReportChannel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  // Execution details
+  startedAt   DateTime?
+  completedAt DateTime?
+  durationMs  Int? // Execution duration in milliseconds
+
+  // Generated report reference
+  reportId String? // Reference to GeneratedStockReport.id if successful
+
+  deliveredAt DateTime?
+
+  // Error handling
+  errorMessage String? @db.Text
+  errorCode    String?
+
+  // Metadata
+  triggeredBy String? // "schedule", "manual", "api"
+  metadata    Json    @default("{}")
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("report_automation_executions")
+}
+
+model ReportChannel {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  type        ReportChannelType
+  status      ReportChannelStatus @default(ACTIVE)
+
+  // Configuration for the channel (webhook URL, email list, chat ID, etc.)
+  config Json
+
+  isDefault Boolean @default(false)
+
+  // Which roles are allowed to use/view this channel
+  allowedRoles MemberRole[]
+
+  lastUsedAt DateTime?
+  lastError  String?
+
+  createdById String?
+  createdBy   Member? @relation("MemberCreatedChannels", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  automations ReportAutomation[]          @relation("AutomationChannels")
+  executions  ReportAutomationExecution[]
+
+  @@unique([organizationId, name])
+  @@map("report_channels")
+}
+
+enum ReportChannelType {
+  WORKSPACE_CHANNEL
+  EMAIL
+  WEBHOOK
+  TELEGRAM
+  DISCORD
+}
+
+enum ReportChannelStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+
+// Stock Reconciliation Models for Enterprise Inventory Management
+enum ReconciliationStatus {
+  DRAFT
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  COMPLETED
+  REJECTED
+}
+
+model StockReconciliation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  reconciliationDate DateTime
+  locationId         String
+  location           InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Restrict)
+
+  status      ReconciliationStatus @default(DRAFT)
+  description String?
+
+  // Counts
+  expectedValue   Decimal  @db.Decimal(10, 2) // Expected inventory value
+  actualValue     Decimal  @db.Decimal(10, 2) // Actual counted value
+  varianceValue   Decimal  @db.Decimal(10, 2) // Difference
+  variancePercent Decimal? @db.Decimal(5, 2) // Variance as percentage
+
+  // Audit
+  initiatedBy       String?
+  initiatedByMember Member? @relation("ReconciliationInitiator", fields: [initiatedBy], references: [id], onDelete: SetNull)
+  completedBy       String?
+  completedByMember Member? @relation("ReconciliationCompleter", fields: [completedBy], references: [id], onDelete: SetNull)
+  reviewedBy        String?
+  reviewedByMember  Member? @relation("ReconciliationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  // Evidence
+  photoUrls String[] // Photos of physical count
+  notes     String?  @db.Text // Reconciliation notes
+
+  // Relations
+  items           ReconciliationItem[]
+  linkedMovements MovementReconciliationLink[]
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@index([locationId])
+  @@index([status])
+  @@index([reconciliationDate])
+}
+
+model ReconciliationItem {
+  id               String              @id @default(cuid())
+  reconciliationId String
+  reconciliation   StockReconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+
+  expectedQuantity Decimal @db.Decimal(10, 2) // From inventory system
+  actualQuantity   Decimal @db.Decimal(10, 2) // Physical count
+  varianceQuantity Decimal @db.Decimal(10, 2) // Difference
+
+  expectedValue Decimal @db.Decimal(10, 2)
+  actualValue   Decimal @db.Decimal(10, 2)
+  varianceValue Decimal @db.Decimal(10, 2)
+
+  unitPrice Decimal @db.Decimal(10, 2) // Price used for valuation
+
+  // Resolution
+  resolutionType    String? // ADJUST, WRITE_OFF, INVESTIGATION, OTHER
+  resolutionNotes   String? @db.Text
+  adjustmentCreated Boolean @default(false) // Whether adjustment was created
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reconciliationId])
+  @@index([productVariantId])
+}
+
+model MovementReconciliationLink {
+  id               String              @id @default(cuid())
+  reconciliationId String
+  reconciliation   StockReconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+
+  movementId String
+  movement   StockMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+
+  relevanceScore Int? // 0-100 score indicating how relevant to reconciliation variance
+  notes          String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([reconciliationId, movementId])
+  @@index([reconciliationId])
+  @@index([movementId])
+}
+
+// Audit log for all inventory-related actions
+model ActionAuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  action       String // e.g., "CREATE_RESTOCK", "APPROVE_RESTOCK", "RECONCILE"
+  resourceType String // e.g., "RESTOCK", "RECONCILIATION", "TEMPLATE"
+  resourceId   String // ID of the affected resource
+
+  approved     Boolean // Whether action was allowed
+  denialReason String? // If denied, why
+
+  ipAddress String?
+  userAgent String?
+
+  changes  Json? // Before/after values for mutations
+  metadata Json? // Additional context
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([memberId])
+  @@index([action])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+}

@@ -1,0 +1,88 @@
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationStatus {
+  PENDING
+  QUEUED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+model NotificationTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String       // Internal name for the automation script to reference
+  subject        String?      // Optional subject (e.g. for Email)
+  content        String       @db.Text // Handlebars template for the main message content
+  metaTitle      String?      // Title for push notifications or channel messages
+
+  defaultPriority NotificationPriority @default(MEDIUM)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  dispatches     NotificationDispatch[]
+
+  @@unique([organizationId, name])
+  @@map("notification_template")
+}
+
+model NotificationDispatch {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  templateId     String
+  template       NotificationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  status         NotificationStatus @default(PENDING)
+  priority       NotificationPriority @default(MEDIUM)
+
+  // Recipient data
+  recipientIds   String[]     // Resolved list of User or Member IDs
+  recipientRoles String[]     // Resolved list of roles
+  recipientDepts String[]     // Resolved list of department IDs
+
+  // The actual data used to hydrate the template
+  data           Json?
+
+  // Final constructed content
+  finalContent   String?      @db.Text
+  finalSubject   String?
+
+  // Delivery configuration
+  channels       String[]     // e.g. ["WEBHOOK", "IN_APP"]
+  webhookUrl     String?      // Override webhook URL if needed
+
+  error          String?      @db.Text
+  sentAt         DateTime?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, status])
+  @@map("notification_dispatch")
+}
+
+model NotificationChannelConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  channel        String       // e.g. "WEBHOOK"
+  config         Json         // Channel specific settings like endpoint URLs, secrets
+  isActive       Boolean      @default(true)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, channel])
+  @@map("notification_channel_config")
+}

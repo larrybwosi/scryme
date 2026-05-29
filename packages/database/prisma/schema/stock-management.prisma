@@ -1,0 +1,379 @@
+// ========================================
+// ENTERPRISE STOCK MANAGEMENT EXTENSIONS
+// ========================================
+// Advanced features for enterprise-level stock and purchase management
+
+// Automated Reorder System
+model ReorderRule {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  locationId String
+  location   InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  // Reorder thresholds
+  minQuantity     Decimal @db.Decimal(10, 2) // Trigger point
+  maxQuantity     Decimal @db.Decimal(10, 2) // Target stock level
+  reorderQuantity Decimal @db.Decimal(10, 2) // How much to order
+
+  // Auto-reorder settings
+  isActive     Boolean @default(true)
+  autoGenerate Boolean @default(false) // Auto-create purchase order
+
+  // Preferred supplier for auto-ordering
+  preferredSupplierId String?
+  preferredSupplier   Supplier? @relation(fields: [preferredSupplierId], references: [id], onDelete: SetNull)
+
+  // Lead time consideration (days)
+  leadTimeDays    Int @default(7)
+  safetyStockDays Int @default(3) // Additional buffer
+
+  // Last triggered info
+  lastTriggeredAt DateTime?
+  lastOrderId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alerts ReorderAlert[]
+
+  @@unique([organizationId, productId, variantId, locationId])
+  @@index([organizationId, isActive])
+  @@index([locationId])
+  @@map("reorder_rule")
+}
+
+// Reorder Alert Logs
+model ReorderAlert {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  reorderRuleId String
+  reorderRule   ReorderRule @relation(fields: [reorderRuleId], references: [id], onDelete: Cascade)
+
+  alertDate      DateTime @default(now())
+  currentStock   Decimal  @db.Decimal(10, 2)
+  requiredStock  Decimal  @db.Decimal(10, 2)
+  suggestedOrder Decimal  @db.Decimal(10, 2)
+
+  status         AlertStatus @default(PENDING)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+
+  // If auto-purchase was created
+  purchaseId String?
+
+  notes String?
+
+  @@index([organizationId, status])
+  @@index([alertDate])
+  @@map("reorder_alert")
+}
+
+enum AlertStatus {
+  PENDING
+  ACKNOWLEDGED
+  ORDERED
+  IGNORED
+  EXPIRED
+}
+
+// Stock Audit Trail
+model StockAuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  entityType String // "Product", "Variant", "StockBatch", "Purchase"
+  entityId   String // ID of the entity
+
+  action    AuditAction
+  fieldName String? // Field that changed
+  oldValue  String?     @db.Text
+  newValue  String?     @db.Text
+
+  performedBy String
+  member      Member @relation(fields: [performedBy], references: [id], onDelete: Restrict)
+
+  ipAddress String?
+  userAgent String?
+
+  timestamp DateTime @default(now())
+
+  // Additional context
+  metadata Json?
+
+  @@index([organizationId, entityType, entityId])
+  @@index([performedBy])
+  @@index([timestamp])
+  @@map("stock_audit_log")
+}
+
+enum AuditAction {
+  CREATED
+  UPDATED
+  DELETED
+  STOCK_RECEIVED
+  STOCK_ADJUSTED
+  STOCK_TRANSFERRED
+  PURCHASE_CREATED
+  PURCHASE_APPROVED
+  PURCHASE_CANCELLED
+  SUPPLIER_UPDATED
+  REORDER_TRIGGERED
+}
+
+// Purchase Order Approval Chain
+model PurchaseApprovalChain {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  // Approval triggers
+  minAmount Decimal? @db.Decimal(19, 4)
+  maxAmount Decimal? @db.Decimal(19, 4)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  isActive Boolean @default(true)
+  priority Int     @default(0) // Higher priority chains evaluated first
+
+  steps PurchaseApprovalStep[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, isActive])
+  @@map("purchase_approval_chain")
+}
+
+model PurchaseApprovalStep {
+  id      String                @id @default(cuid())
+  chainId String
+  chain   PurchaseApprovalChain @relation(fields: [chainId], references: [id], onDelete: Cascade)
+
+  stepOrder Int // 1, 2, 3...
+
+  approverId String
+  approver   Member @relation(fields: [approverId], references: [id], onDelete: Restrict)
+
+  // Alternate approvers
+  alternateApproverIds String[] // Array of member IDs
+
+  // Auto-approval conditions
+  autoApprove      Boolean @default(false)
+  autoApproveAfter Int? // Hours to wait before auto-approval
+
+  @@unique([chainId, stepOrder])
+  @@index([chainId])
+  @@map("purchase_approval_step")
+}
+
+// Stock Take/Physical Count
+model StockTake {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  stockTakeNumber String
+
+  locationId String
+  location   InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  status StockTakeStatus @default(PLANNED)
+
+  scheduledDate DateTime
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  // Who's performing the count
+  assignedTo     String?
+  assignedMember Member? @relation("StockTakeAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+
+  // Who reviews the count
+  reviewedBy String?
+  reviewer   Member?   @relation("StockTakeReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  reviewedAt DateTime?
+
+  notes String? @db.Text
+
+  items StockTakeItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, stockTakeNumber])
+  @@index([organizationId, status])
+  @@index([locationId])
+  @@map("stock_take")
+}
+
+model StockTakeItem {
+  id          String    @id @default(cuid())
+  stockTakeId String
+  stockTake   StockTake @relation(fields: [stockTakeId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  // Expected vs actual quantities
+  systemQuantity  Decimal  @db.Decimal(10, 2) // What system shows
+  countedQuantity Decimal? @db.Decimal(10, 2) // What was physically counted
+  variance        Decimal? @db.Decimal(10, 2) // Difference
+
+  // Batch-level counting
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
+  notes String?
+
+  // Photo evidence
+  photoUrls String[]
+
+  countedAt DateTime?
+
+  @@index([stockTakeId])
+  @@index([variantId])
+  @@map("stock_take_item")
+}
+
+enum StockTakeStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  REVIEWED
+  CANCELLED
+}
+
+// Supplier Performance Metrics
+model SupplierPerformance {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  // Period metrics
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Delivery metrics
+  totalOrders      Int      @default(0)
+  onTimeDeliveries Int      @default(0)
+  lateDeliveries   Int      @default(0)
+  avgLeadTimeDays  Decimal? @db.Decimal(5, 2)
+
+  // Quality metrics
+  totalItemsReceived Int      @default(0)
+  rejectedItems      Int      @default(0)
+  qualityScore       Decimal? @db.Decimal(5, 2) // 0-100
+
+  // Financial metrics
+  totalSpend    Decimal  @default(0) @db.Decimal(19, 4)
+  avgOrderValue Decimal? @db.Decimal(19, 4)
+
+  // Returns
+  returnCount Int     @default(0)
+  returnValue Decimal @default(0) @db.Decimal(19, 4)
+
+  // Overall rating
+  overallScore Decimal? @db.Decimal(3, 2) // 0-5 stars z
+
+  calculatedAt DateTime @default(now())
+
+  @@unique([organizationId, supplierId, periodStart, periodEnd])
+  @@index([supplierId])
+  @@index([organizationId])
+  @@map("supplier_performance")
+}
+
+enum SyncOperation {
+  CREATE
+  UPDATE
+  DELETE
+  SYNC_FULL
+}
+
+// Note: SyncDirection and SyncStatus enums are defined in ecommerce.prisma and reused here
+
+// Stock Valuation Report (for accounting)
+model StockValuation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  valuationDate DateTime
+  locationId    String?
+  location      InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  // Valuation methods
+  method ValuationMethod @default(FIFO)
+
+  // Totals
+  totalQuantity Decimal @db.Decimal(10, 2)
+  totalValue    Decimal @db.Decimal(19, 4)
+
+  // Generated report data
+  reportData Json
+
+  generatedBy String
+  member      Member @relation(fields: [generatedBy], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, valuationDate])
+  @@index([locationId])
+  @@map("stock_valuation")
+}
+
+model CycleCountConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  // Scheduling
+  frequency      AutomationFrequency
+  cronExpression String?
+
+  // Selection Criteria
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // A-B-C Analysis based selection
+  includeABC String[] // ["A", "B", "C"]
+
+  isActive  Boolean   @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+enum ValuationMethod {
+  FIFO // First In First Out
+  LIFO // Last In First Out
+  WEIGHTED_AVG // Weighted Average Cost
+  STANDARD // Standard Cost
+}

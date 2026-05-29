@@ -1,0 +1,188 @@
+//------------------------TAX MODULE------------------------//
+
+enum TaxType {
+  WITHHOLDING_TAX
+  STAMP_DUTY
+  RENTAL_INCOME_TAX
+  DIVIDENDS_TAX
+  CAPITAL_GAINS_TAX
+  VAT // Value Added Tax
+  SALES_TAX
+  EXCISE_DUTY
+  INCOME_TAX // Corporate Income Tax
+  PROPERTY_TAX
+  OTHER
+}
+
+enum FilingStatus {
+  DRAFT
+  PENDING_APPROVAL
+  FILED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  REJECTED
+}
+
+model TaxAuthority {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name               String
+  jurisdiction       String // e.g., "National", "State", "City of Nairobi"
+  agencyCode         String? // Official code for the agency
+  contactEmail       String?
+  contactPhone       String?
+  website            String?
+  address            Json?
+  filingInstructions String?  @db.Text
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  taxes   TaxRate[]
+  filings TaxFiling[]
+
+  @@unique([organizationId, name])
+  @@map("tax_authority")
+}
+
+model TaxRate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String // e.g., "VAT 16%", "Sales Tax"
+  rate        Decimal @db.Decimal(5, 4) // e.g., 0.16 for 16%
+  description String?
+  isDefault   Boolean @default(false)
+  isActive    Boolean @default(true)
+
+  taxType           TaxType             @default(VAT)
+  taxAuthorityId      String?
+  taxAuthority        TaxAuthority?         @relation(fields: [taxAuthorityId], references: [id], onDelete: Restrict)
+  appliedToExpenses   AppliedExpenseTax[]
+  appliedToPurchases  AppliedPurchaseTax[]
+  purchaseItems       PurchaseItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appliedToSales AppliedTax[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("tax")
+}
+
+// NEW MODEL: Represents a tax filing or return submitted to a tax authority.
+model TaxFiling {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  filingNumber   String
+  taxAuthorityId String
+  taxAuthority   TaxAuthority @relation(fields: [taxAuthorityId], references: [id], onDelete: Restrict)
+
+  periodStartDate DateTime
+  periodEndDate   DateTime
+  dueDate         DateTime
+  filedDate       DateTime?
+
+  totalSales    Decimal @db.Decimal(12, 2)
+  taxableAmount Decimal @db.Decimal(12, 2)
+  totalTaxOwed  Decimal @db.Decimal(12, 2)
+  totalTaxPaid  Decimal @default(0) @db.Decimal(12, 2)
+
+  status FilingStatus @default(DRAFT)
+  notes  String?
+
+  confirmationNumber String? // Number received after successful filing
+
+  createdById String
+  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments TaxPayment[]
+
+  @@unique([organizationId, filingNumber])
+  @@index([taxAuthorityId, periodEndDate])
+  @@map("tax_filing")
+}
+
+// NEW MODEL: Represents an individual payment made towards a tax filing.
+model TaxPayment {
+  id       String    @id @default(cuid())
+  filingId String
+  filing   TaxFiling @relation(fields: [filingId], references: [id], onDelete: Cascade)
+
+  amount        Decimal       @db.Decimal(12, 2)
+  paymentDate   DateTime
+  paymentMethod PaymentMethod
+  reference     String? // e.g., Transaction ID, Cheque Number
+  notes         String?
+
+  processedById String
+  processedBy   Member @relation(fields: [processedById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([filingId])
+  @@map("tax_payment")
+}
+
+model AppliedTax {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  taxRateId String?
+  taxRate   TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  // Snapshot
+  name   String
+  rate   Decimal @db.Decimal(5, 4)
+  amount Decimal @db.Decimal(12, 2)
+
+  appliedAt DateTime @default(now())
+
+  @@index([transactionId])
+  @@map("applied_tax")
+}
+
+model AppliedExpenseTax {
+  id        String   @id @default(cuid())
+  expenseId String
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  taxId     String
+  tax       TaxRate      @relation(fields: [taxId], references: [id], onDelete: Restrict)
+  taxAmount Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  @@unique([expenseId, taxId])
+  @@map("applied_expense_tax")
+}
+
+model AppliedPurchaseTax {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  taxRateId String?
+  taxRate   TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  // Snapshot
+  name   String
+  rate   Decimal @db.Decimal(5, 4)
+  amount Decimal @db.Decimal(12, 2)
+
+  appliedAt DateTime @default(now())
+
+  @@index([purchaseId])
+  @@map("applied_purchase_tax")
+}

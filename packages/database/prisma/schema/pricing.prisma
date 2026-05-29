@@ -1,0 +1,388 @@
+// ==========================================
+// ENTERPRISE PRICING MODULE
+// ==========================================
+// This module provides comprehensive pricing capabilities including:
+// - Price Lists with advanced configuration
+// - Pricing Rules for conditional discounts
+// - Bundle Pricing (fixed & dynamic)
+// - Price History for audit trails
+// - Approval Workflows
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum PricingMethod {
+  FIXED        // $10.00 hardcoded
+  COST_MARKUP  // Cost + X% (e.g. $10 cost + 50% = $15 price)
+  COST_MARGIN  // Target Margin X% (e.g. 20% margin on $10 cost = $12.50 price)
+}
+
+enum RoundingMethod {
+  NONE           // No rounding applied
+  UP             // Always round up (ceil)
+  DOWN           // Always round down (floor)
+  NEAREST        // Standard mathematical rounding
+  PSYCHOLOGICAL  // e.g., $9.99 instead of $10.00
+}
+
+enum PriceApprovalStatus {
+  DRAFT             // Not yet submitted
+  PENDING_APPROVAL  // Awaiting review
+  APPROVED          // Ready for use
+  REJECTED          // Rejected with notes
+}
+
+enum DiscountType {
+  PERCENTAGE    // e.g., 10% off
+  FIXED_AMOUNT  // e.g., $5 off
+  FIXED_PRICE   // Override to specific price
+}
+
+enum BundleType {
+  FIXED    // Pre-defined bundle with set products
+  DYNAMIC  // Buy X Get Y style promotions
+}
+
+// ==========================================
+// CORE MODELS
+// ==========================================
+
+// Represents a collection of prices (e.g., "VIP Pricing", "Summer Sale 2024")
+model PriceList {
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  code           String          @unique // e.g. "B2B_GOLD", "XMAS_SALE"
+
+  // Configuration
+  currency       String          @default("USD")
+  isActive       Boolean         @default(true)
+
+  // Logic & Strategy
+  priority       Int             @default(0) // Higher value = Higher priority (e.g., Contract > Global Sale)
+  isGlobal       Boolean         @default(false) // If true, applies to ALL customers (e.g., Store-wide sale)
+
+  // Validity (For Events/Occasions)
+  validFrom      DateTime?
+  validTo        DateTime?
+
+  // Rounding Configuration
+  roundingMethod RoundingMethod  @default(NONE)
+  roundingValue  Decimal?        @db.Decimal(10, 2) // e.g., 0.99 for psychological pricing
+
+  // Automation
+  autoSyncWithCost Boolean @default(false)
+
+  // Tax Handling
+  taxInclusive   Boolean         @default(false)
+
+  // Approval Workflow
+  approvalStatus PriceApprovalStatus  @default(APPROVED)
+  approvalNotes  String?         // Reason for approval/rejection
+  approvedBy     String?         // User ID who approved
+  approvedAt     DateTime?
+  submittedAt    DateTime?       // When submitted for approval
+  submittedBy    String?         // User ID who submitted
+
+  // Organization Scope
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Relations
+  items            PriceListItem[]
+  rules            PricingRule[]
+  customers        Customer[]        // Customers explicitly assigned to this list
+  businessAccounts BusinessAccount[] // B2B Accounts assigned to this list
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([organizationId, approvalStatus])
+  @@index([validFrom, validTo])
+}
+
+// Represents a specific price for a product variant within a list
+model PriceListItem {
+  id          String      @id @default(cuid())
+  priceListId String
+  priceList   PriceList   @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  // Unit Awareness
+  // If null, this price applies to the Base Unit.
+  // If set, this price applies SPECIFICALLY to this packing unit (e.g., Box of 12)
+  sellingUnitId String?
+  sellingUnit   VariantSellingUnit? @relation(fields: [sellingUnitId], references: [id])
+
+  method      PricingMethod @default(FIXED)
+
+  // The input value for the calculation.
+  // If FIXED, this is null (we use the 'price' column).
+  // If COST_MARKUP, this is the percentage (e.g., 50 for 50%).
+  percentageValue Decimal? @db.Decimal(10, 4)
+
+  // The Final Calculated Price (Cached)
+  // We keep this field to avoid recalculating on every read.
+  // When Product Cost changes, a background job updates this field based on 'method' & 'percentageValue'.
+  price          Decimal  @db.Decimal(10, 2)
+  wholesalePrice Decimal? @db.Decimal(10, 2)
+
+  // Volume / Tiered Pricing
+  minQuantity Int         @default(1)
+  maxQuantity Int?
+
+  isActive    Boolean     @default(true)
+  deletedAt   DateTime?   // Soft deletion timestamp
+
+  // Relations
+  history       PriceHistory[]
+  changeRequests PriceChangeRequest[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Unique constraints for pricing rules
+  @@unique([priceListId, variantId, sellingUnitId, minQuantity])
+  @@unique([priceListId, variantId, minQuantity])
+  @@index([variantId])
+  @@index([sellingUnitId])
+  @@index([updatedAt])
+  @@index([deletedAt])
+}
+
+// ==========================================
+// PRICING RULES
+// ==========================================
+
+// Conditional pricing rules for advanced discounts
+model PricingRule {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+
+  priceListId     String
+  priceList       PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  // Target: What this rule applies to
+  // If null, applies to entire price list; if set, applies to specific variant
+  variantId       String?
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+
+  categoryId      String?  // Optional: Apply to entire category
+
+  // Conditions (JSON for flexibility)
+  // Examples:
+  // {"dayOfWeek": [0, 6]} - Weekend only
+  // {"timeRange": {"start": "18:00", "end": "21:00"}} - Happy hour
+  // {"channel": "online"} - Online orders only
+  // {"minOrderValue": 100} - Orders above $100
+  // {"customerTags": ["vip", "wholesale"]} - Specific customer segments
+  conditions      Json     @default("{}")
+
+  // Discount Action
+  discountType    DiscountType @default(PERCENTAGE)
+  discountValue   Decimal  @db.Decimal(10, 2)
+
+  // Stacking & Priority
+  stackable       Boolean  @default(false) // Can combine with other rules
+  priority        Int      @default(0)     // Higher = applies first
+  maxUsage        Int?                     // Max times this rule can be used (null = unlimited)
+  usageCount      Int      @default(0)     // Current usage count
+
+  isActive        Boolean  @default(true)
+  validFrom       DateTime?
+  validTo         DateTime?
+
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?  // User ID
+
+  @@index([priceListId, isActive])
+  @@index([organizationId, isActive])
+  @@index([validFrom, validTo])
+}
+
+// ==========================================
+// BUNDLE PRICING
+// ==========================================
+
+// Bundle definition (both fixed and dynamic)
+model PricingBundle {
+  id              String   @id @default(cuid())
+  name            String
+  code            String
+  description     String?
+
+  bundleType      BundleType @default(FIXED)
+
+  // For FIXED bundles: The special bundle price
+  bundlePrice     Decimal? @db.Decimal(10, 2)
+
+  // For DYNAMIC bundles (Buy X Get Y):
+  // Buy these items...
+  buyQuantity     Int?     // e.g., Buy 2
+  // ...and get these items at this discount
+  getQuantity     Int?     // e.g., Get 1
+  getDiscountType DiscountType? // e.g., PERCENTAGE
+  getDiscountValue Decimal? @db.Decimal(10, 2) // e.g., 50 (50% off)
+
+  // Display
+  savingsLabel    String?  // e.g., "Save $10!" or "Buy 2 Get 1 50% Off"
+  imageUrl        String?
+
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Bundle components
+  items           PricingBundleItem[]
+
+  isActive        Boolean  @default(true)
+  validFrom       DateTime?
+  validTo         DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@index([bundleType])
+  @@index([validFrom, validTo])
+}
+
+// Items within a bundle
+model PricingBundleItem {
+  id          String   @id @default(cuid())
+  bundleId    String
+  bundle      PricingBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+
+  variantId   String
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  quantity    Int      @default(1) // Quantity included in bundle
+
+  // For dynamic bundles: Is this a "buy" item or a "get" item?
+  itemRole    String?  // "BUY" | "GET" | null for fixed bundles
+
+  // Optional: Individual item price override within bundle
+  priceOverride Decimal? @db.Decimal(10, 2)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([bundleId, variantId, itemRole])
+  @@index([variantId])
+}
+
+// ==========================================
+// PRICE HISTORY & AUDIT
+// ==========================================
+
+// Audit trail for all price changes
+model PriceHistory {
+  id              String   @id @default(cuid())
+
+  priceListItemId String
+  priceListItem   PriceListItem @relation(fields: [priceListItemId], references: [id], onDelete: Cascade)
+
+  // Change details
+  previousPrice   Decimal  @db.Decimal(10, 2)
+  newPrice        Decimal  @db.Decimal(10, 2)
+  previousMethod  PricingMethod?
+  newMethod       PricingMethod?
+
+  // Reason & User
+  changeReason    String?  // e.g., "Cost increase", "Promotional pricing"
+  changeType      String   // "MANUAL" | "COST_RECALC" | "BULK_UPDATE" | "APPROVAL"
+  changedBy       String   // User ID who made the change
+
+  // Snapshot of calculation inputs at time of change
+  metadata        Json?    // e.g., {"previousCost": 8.50, "newCost": 9.00, "markupPercent": 30}
+
+  createdAt       DateTime @default(now())
+
+  @@index([priceListItemId])
+  @@index([createdAt])
+  @@index([changedBy])
+}
+
+// ==========================================
+// PRICE IMPORT/EXPORT TRACKING
+// ==========================================
+
+model PriceImportJob {
+  id              String   @id @default(cuid())
+
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  fileName        String
+  fileUrl         String?  // S3 or storage URL
+
+  status          String   @default("PENDING") // PENDING | PROCESSING | COMPLETED | FAILED
+
+  totalRows       Int      @default(0)
+  processedRows   Int      @default(0)
+  successRows     Int      @default(0)
+  errorRows       Int      @default(0)
+
+  errors          Json?    // Array of error details
+
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  createdBy       String
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId, status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// PRICE CHANGE MANAGEMENT
+// ==========================================
+
+model PriceChangeRequest {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  priceListItemId String
+  priceListItem   PriceListItem @relation(fields: [priceListItemId], references: [id], onDelete: Cascade)
+
+  // Proposed changes
+  oldPrice        Decimal  @db.Decimal(10, 2)
+  newPrice        Decimal  @db.Decimal(10, 2)
+  oldCost         Decimal  @db.Decimal(10, 2)
+  newCost         Decimal  @db.Decimal(10, 2)
+
+  reason          String?
+  source          String   // e.g. "PURCHASE_ORDER", "SUPPLIER_UPDATE"
+  sourceId        String?  // e.g. Purchase ID
+
+  status          PriceChangeStatus @default(PENDING)
+
+  requestedAt     DateTime @default(now())
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  @@index([organizationId, status])
+  @@index([priceListItemId])
+  @@map("price_change_request")
+}
+
+enum PriceChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}

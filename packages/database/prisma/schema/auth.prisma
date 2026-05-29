@@ -1,0 +1,166 @@
+model User {
+  id                   String             @id @default(cuid())
+  name                 String?
+  email                String             @unique
+  password             String?
+  role                 UserRole           @default(MEMBER)
+  isActive             Boolean            @default(true)
+  deletedAt            DateTime?
+  version              Int                @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  emailVerified        Boolean?
+  image                String?
+  banned               Boolean?
+  banReason            String?
+  banExpires           DateTime?
+  username             String?
+  accounts             Account[]
+  members              Member[]
+  invitations          Invitation[]
+  sessions             Session[]
+  activeOrganizationId String?
+  displayUsername      String?
+  apikeys              Apikey[]
+  banner               String? // To store the URL of the profile banner image
+  notificationPrefs    Json? // To store notification settings like { "mentions": true, "taskUpdates": false }
+
+  // Referral System Fields
+  referralCode  String?    @unique
+  referrerId    String?
+  referrer      User?      @relation("UserReferrer", fields: [referrerId], references: [id], onDelete: SetNull)
+  referees      User[]     @relation("UserReferrer")
+  referralsMade Referral[] @relation("ReferredBy")
+  referredBy    Referral?  @relation("ReferredUser")
+
+  @@unique([username])
+  @@map("user")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime
+  updatedAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  activeOrganizationId String?
+
+  @@map("session")
+}
+
+model Apikey {
+  id                  String    @id
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Boolean?
+  rateLimitEnabled    Boolean?
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  requestCount        Int?
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime
+  updatedAt           DateTime
+  permissions         String?
+  metadata            String?
+
+  @@map("apikey")
+}
+
+model Jwks {
+  id         String   @id
+  publicKey  String
+  privateKey String
+  createdAt  DateTime
+
+  @@map("jwks")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  DEVELOPER
+  CLIENT
+  MEMBER
+  CUSTOMER
+}
+
+enum RateLimitTier {
+  LOW        // 100 req/min
+  STANDARD   // 500 req/min
+  HIGH       // 2000 req/min
+  UNLIMITED
+}
+
+
+// API key usage logs for rate limiting and analytics
+model ApiKeyUsageLog {
+  id          String    @id @default(cuid())
+  apiKeyId    String
+  apiKey      ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  endpoint    String    // API endpoint called
+  method      String    // HTTP method
+  statusCode  Int       // Response status code
+  ipAddress   String?   // Client IP
+  userAgent   String?   // Client user agent
+
+  requestSize  Int?     // Request size in bytes
+  responseSize Int?     // Response size in bytes
+  duration     Int?     // Request duration in ms
+
+  timestamp   DateTime  @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([apiKeyId])
+  @@index([timestamp])
+  @@index([endpoint])
+  @@index([organizationId])
+  @@map("api_key_usage_log")
+}

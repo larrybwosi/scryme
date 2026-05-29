@@ -1,0 +1,243 @@
+model Customer {
+  id            String  @id @default(cuid())
+  name          String
+  email         String?
+  phone         String?
+  company       String?
+  customerType  String?
+  dateOfBirth   String?
+  loyaltyPoints Int     @default(0)
+  taxId         String? // KRA PIN for Kenyan customers
+  isActive      Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User/Creator relations
+  createdById  String?
+  updatedById  String?
+  creationType CustomerCreationType @default(MEMBER_CREATED)
+
+  // Delivery & Meta
+  pinnedLocation    Json?
+  deliveryNotes     String?
+  tags              String[]
+  defaultLocationId String?
+
+  // Organization
+  organizationId String
+  organization   Organization @relation("OrgCustomers", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Relations
+  businessAccountId String?
+  businessAccount   BusinessAccount? @relation("BusinessAccountCustomers", fields: [businessAccountId], references: [id], onDelete: SetNull)
+
+  transactions      Transaction[]
+  invoices          Invoice[]
+  addresses         Address[]
+  ecommerceMappings EcommerceCustomerMapping[]
+  favorites         Favorite[]
+  reviews           ProductReview[]
+  expenses          Expense[] @relation("CustomerExpenses")
+  recurringExpenses RecurringExpense[] @relation("CustomerRecurringExpenses")
+
+  createdBy            Member?                    @relation("CustomerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy            Member?                    @relation("CustomerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  priceLists PriceList[]
+
+  crmRecordId String?    @unique
+  crmRecord   CrmRecord? @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
+
+  vouchers            LoyaltyVoucher[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@unique([organizationId, email])
+  @@index([email, organizationId])
+  @@index([name])
+  @@index([email])
+  @@index([organizationId])
+}
+
+// ===================================
+// BUSINESS ACCOUNT (B2B)
+// ===================================
+model BusinessAccount {
+  id             String       @id @default(cuid())
+  name           String
+  taxId          String?
+  organizationId String
+  organization   Organization @relation("OrgBusinessAccounts", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  defaultLocationId String?
+
+  crmRecordId String?    @unique
+  crmRecord   CrmRecord? @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
+
+  transactions Transaction[]
+  customers    Customer[]    @relation("BusinessAccountCustomers")
+  addresses    Address[]
+  expenses          Expense[] @relation("BusinessAccountExpenses")
+  recurringExpenses RecurringExpense[] @relation("BusinessAccountRecurringExpenses")
+
+  // Added implicit Many-to-Many relation to support multiple contracts/deals
+  priceLists PriceList[]
+
+  // B2B Connections
+  b2bConnections B2BConnection[] @relation("BusinessAccountB2BConnections")
+
+  @@index([organizationId])
+  @@map("business_account")
+}
+
+model B2BConnection {
+  id String @id @default(cuid())
+
+  // The Supplier (The Organization running this system)
+  supplierOrgId String
+  supplierOrg   Organization @relation("OrganizationToB2BConnection", fields: [supplierOrgId], references: [id])
+
+  // The Customer (Can be an external user or another Org on the same platform)
+  businessAccountId String
+  businessAccount   BusinessAccount @relation("BusinessAccountB2BConnections", fields: [businessAccountId], references: [id])
+
+  // Security Credentials for this specific connection
+  apiKey   String  @unique @default(cuid()) // The "Secret" for the external system
+  isActive Boolean @default(true)
+
+  // Configuration
+  allowedCategories String[] @default([]) // Limit what they can see
+  priceListId       String? // Specific pricing for this B2B link
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([supplierOrgId, businessAccountId])
+  @@index([apiKey])
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+model ReferralProgram {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  isActive       Boolean      @default(true)
+  referrerReward Int
+  refereeReward  Int
+  rewardType     String       @default("points")
+  trigger        ReferralTrigger @default(FIRST_PURCHASE)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  referrals      Referral[]
+
+  @@unique([organizationId, name])
+  @@map("referral_program")
+}
+
+model Referral {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  referrerId     String
+  referrer       User            @relation("ReferredBy", fields: [referrerId], references: [id], onDelete: Cascade)
+  refereeId      String          @unique
+  referee        User            @relation("ReferredUser", fields: [refereeId], references: [id], onDelete: Cascade)
+  programId      String
+  program        ReferralProgram @relation(fields: [programId], references: [id])
+
+  status            String  @default("pending_verification")
+  firstPurchaseMade Boolean @default(false)
+  rewardApplied     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([refereeId])
+  @@map("referral")
+}
+
+// ===================================
+// DRIVER MODEL (Updated)
+// ===================================
+
+model Driver {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberId       String?      @unique
+  member         Member?       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  availability    DriverStatus @default(OFFLINE)
+  currentLocation String? // Could be lat/long
+  phone           String
+
+  deliveryPartnerId String?
+  deliveryPartner   DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id], onDelete: SetNull)
+
+  vehicleId String?  @unique
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  // UPDATED: Now links to Fulfillment instead of Delivery
+  fulfillments Fulfillment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("driver")
+}
+
+model Vehicle {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  driver       Driver?
+  make         String
+  model        String
+  licensePlate String      @unique
+  color        String?
+  type         VehicleType @default(CAR)
+  isActive     Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("vehicle")
+}
+
+enum DriverStatus {
+  ONLINE
+  OFFLINE
+  ON_DELIVERY
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  VAN
+  BICYCLE
+}
+
+enum CustomerCreationType {
+  MEMBER_CREATED
+  SELF_REGISTERED
+  IMPORTED
+  API_CREATED
+  OTHER
+}
+
+enum ReferralTrigger {
+  SIGNUP
+  FIRST_PURCHASE
+}

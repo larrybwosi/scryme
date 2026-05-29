@@ -1,0 +1,344 @@
+// E-COMMERCE INTEGRATION MODELS
+
+enum EcommercePlatform {
+  SHOPIFY
+  WOOCOMMERCE
+  MAGENTO
+  BIGCOMMERCE
+  PRESTASHOP
+  OPENCART
+  CUSTOM
+}
+
+enum SyncDirection {
+  INBOUND // From e-commerce platform to our system
+  OUTBOUND // From our system to e-commerce platform
+  BIDIRECTIONAL // Both directions
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PARTIALLY_COMPLETED
+}
+
+enum EntitySyncType {
+  PRODUCTS
+  INVENTORY
+  ORDERS
+  CUSTOMERS
+  CATEGORIES
+  PRICES
+}
+
+// Represents a connection to an e-commerce platform
+model EcommerceConnection {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name     String // Friendly name: "Main Shopify Store"
+  platform EcommercePlatform
+
+  // Connection credentials (encrypted)
+  storeUrl      String // e.g., "mystore.myshopify.com"
+  apiKey        String? // Platform API key
+  apiSecret     String? // Platform API secret/password
+  accessToken   String? // OAuth access token
+  webhookSecret String? // Secret for webhook verification
+
+  // Sync settings
+  autoSync         Boolean          @default(false)
+  syncInterval     Int? // Minutes between auto syncs
+  lastSyncAt       DateTime?
+  nextSyncAt       DateTime?
+  syncDirection    SyncDirection    @default(BIDIRECTIONAL)
+  enabledSyncTypes EntitySyncType[] // Which entities to sync
+
+  // Mapping settings
+  defaultLocationId String? // Default inventory location for syncing
+  defaultLocation   InventoryLocation? @relation(fields: [defaultLocationId], references: [id], onDelete: SetNull)
+
+  // Advanced settings
+  settings Json? // Platform-specific settings
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  syncLogs         EcommerceSyncLog[]
+  productMappings  EcommerceProductMapping[]
+  orderMappings    EcommerceOrderMapping[]
+  customerMappings EcommerceCustomerMapping[]
+  webhookLogs      EcommerceWebhookLog[]
+
+  @@unique([organizationId, storeUrl])
+  @@index([organizationId])
+  @@index([platform])
+  @@index([isActive])
+  @@map("ecommerce_connection")
+}
+
+// Logs each sync operation
+model EcommerceSyncLog {
+  id           String              @id @default(cuid())
+  connectionId String
+  connection   EcommerceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  syncType      EntitySyncType
+  syncDirection SyncDirection
+  status        SyncStatus     @default(PENDING)
+
+  // Statistics
+  totalItems   Int @default(0)
+  successCount Int @default(0)
+  failureCount Int @default(0)
+  skippedCount Int @default(0)
+
+  // Error tracking
+  errors Json? // Array of error messages
+
+  // Timing
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  duration    Int? // Duration in seconds
+
+  // Details
+  details     Json? // Additional sync details
+  triggeredBy String? // "manual", "auto", "webhook", member ID
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@index([syncType, status])
+  @@index([startedAt])
+  @@index([organizationId])
+  @@map("ecommerce_sync_log")
+}
+
+// Maps internal products to e-commerce platform products
+model EcommerceProductMapping {
+  id           String              @id @default(cuid())
+  connectionId String
+  connection   EcommerceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  // Internal references
+  productId String
+  product   Product         @relation("EcommerceProductMappings", fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation("EcommerceVariantMappings", fields: [variantId], references: [id], onDelete: Cascade)
+
+  // External references
+  externalProductId String // Platform product ID
+  externalVariantId String? // Platform variant ID
+  externalSku       String? // Platform SKU
+
+  // Sync settings
+  syncInventory Boolean @default(true)
+  syncPrice     Boolean @default(true)
+  syncStatus    Boolean @default(true)
+
+  // Cached data
+  externalData Json? // Cached product data from platform
+
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalProductId, externalVariantId])
+  @@index([productId])
+  @@index([variantId])
+  @@index([connectionId])
+  @@index([organizationId])
+  @@map("ecommerce_product_mapping")
+}
+
+// Maps internal orders/transactions to e-commerce platform orders
+model EcommerceOrderMapping {
+  id           String              @id @default(cuid())
+  connectionId String
+  connection   EcommerceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  // Internal reference
+  transactionId String      @unique
+  transaction   Transaction @relation("TransactionEcommerceMapping", fields: [transactionId], references: [id], onDelete: Cascade)
+
+  // External reference
+  externalOrderId     String // Platform order ID
+  externalOrderNumber String? // Human-readable order number
+
+  // Sync tracking
+  inventorySynced   Boolean @default(false)
+  fulfillmentSynced Boolean @default(false)
+
+  // Cached data
+  externalData Json? // Cached order data from platform
+
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalOrderId])
+  @@index([transactionId])
+  @@index([connectionId])
+  @@index([organizationId])
+  @@map("ecommerce_order_mapping")
+}
+
+// Maps internal customers to e-commerce platform customers
+model EcommerceCustomerMapping {
+  id           String              @id @default(cuid())
+  connectionId String
+  connection   EcommerceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  // Internal reference
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // External reference
+  externalCustomerId String // Platform customer ID
+  externalEmail      String? // Platform email
+
+  // Cached data
+  externalData Json? // Cached customer data from platform
+
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalCustomerId])
+  @@index([customerId])
+  @@index([connectionId])
+  @@index([organizationId])
+  @@map("ecommerce_customer_mapping")
+}
+
+// Logs incoming webhooks from e-commerce platforms
+model EcommerceWebhookLog {
+  id           String              @id @default(cuid())
+  connectionId String
+  connection   EcommerceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  topic   String // e.g., "orders/create", "products/update"
+  payload Json // Full webhook payload
+  headers Json? // Request headers
+
+  status          String    @default("PENDING") // PENDING, PROCESSED, FAILED
+  processedAt     DateTime?
+  processingError String?
+  retryCount      Int       @default(0)
+
+  receivedAt DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId, topic])
+  @@index([status])
+  @@index([receivedAt])
+  @@index([organizationId])
+  @@map("ecommerce_webhook_log")
+}
+
+model Cart {
+  id             String @id @default(cuid())
+  organizationId String
+
+  // This should match the internalId from your ExternalMapping table,
+  // OR just the External User ID.
+  customerId String?
+
+  // For anonymous/guest users before they log in
+  sessionId String? @unique
+
+  status CartStatus @default(ACTIVE) // ACTIVE, CHECKED_OUT, ABANDONED
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, customerId])
+  @@index([sessionId])
+}
+
+model CartItem {
+  id     String @id @default(cuid())
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String // Reference to your local product/pricing catalog
+  variantId String @default("base") // Reference to specific product variant (default to "base" to avoid NULL in unique constraint)
+  quantity  Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, variantId])
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+  ABANDONED
+}
+
+model Favorite {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([customerId, productId])
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([productId])
+  @@map("favorites")
+}
+
+model ProductReview {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  rating         Int      @default(5)
+  comment        String?  @db.Text
+
+  isVisible      Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([productId])
+  @@index([isVisible])
+  @@map("product_reviews")
+}

@@ -1,0 +1,127 @@
+// --- INTEGRATION MODELS ---
+
+enum IntegrationCategory {
+  E_COMMERCE
+  ACCOUNTING
+  MARKETING
+  PAYMENT_GATEWAY
+  CRM
+  COMMUNICATION
+  OTHER
+}
+
+enum AuthType {
+  API_KEY
+  OAUTH2
+  OTHER
+}
+
+// System-level model defining available integrations
+model IntegrationDefinition {
+  id          String              @id @default(cuid())
+  name        String              @unique // e.g., "Shopify", "QuickBooks Online"
+  slug        String              @unique // e.g., "shopify", "quickbooks"
+  description String?
+  logoUrl     String?
+  category    IntegrationCategory
+  authType    AuthType // What kind of authentication does it use?
+  isActive    Boolean             @default(true) // Can orgs connect to this?
+
+  // Back-relation to all organizations using this integration
+  organizationIntegrations OrganizationIntegration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("integration_definition")
+}
+
+// Represents an organization's specific connection to an integration
+model OrganizationIntegration {
+  id                      String                @id @default(cuid())
+  organizationId          String
+  organization            Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integrationDefinitionId String
+  integrationDefinition   IntegrationDefinition @relation(fields: [integrationDefinitionId], references: [id], onDelete: Cascade)
+
+  isActive Boolean @default(false)
+
+  // Encrypted credentials (e.g., API keys, OAuth tokens)
+  // IMPORTANT: ALWAYS encrypt this data before storing it in the database.
+  credentials Json?
+
+  // Specific settings for this integration (e.g., default location to sync stock)
+  settings Json?
+
+  lastSyncAt  DateTime? // When the last successful data sync occurred
+  syncStatus  String? // e.g., "SYNCED", "ERROR", "SYNCING"
+  syncMessage String? // Message related to the sync status
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Back-relations for logging and mapping
+  events   IntegrationEvent[]
+  mappings ExternalMapping[]
+
+  @@unique([organizationId, integrationDefinitionId])
+  @@map("organization_integration")
+}
+
+// Maps internal entities (Products, Customers) to their external IDs
+model ExternalMapping {
+  id                        String                  @id @default(cuid())
+  organizationIntegrationId String?
+  organizationIntegration   OrganizationIntegration? @relation(fields: [organizationIntegrationId], references: [id], onDelete: Cascade)
+
+  organizationId            String? // Added for direct org relation
+
+  // Your internal entity information
+  internalEntityType String? // e.g., "Product", "Customer", "Order", "Invoice"
+  internalId         String? // The CUID of the product/customer in your DB (renamed from internalEntityId)
+  internalEntityId   String? // Kept for backward compatibility
+
+  // The external entity information
+  externalId       String  // The ID from the external system (renamed from externalEntityId)
+  externalEntityId String? // Kept for backward compatibility
+  externalData     Json?   // Optional: Cache some external data here
+
+  // Added fields for ERPNext integration
+  entityType       String? // e.g., "CUSTOMER", "PRODUCT", "ORDER", "INVOICE"
+  provider         String? // e.g., "ERPNEXT", "SHOPIFY", "QUICKBOOKS"
+
+  lastSyncedAt DateTime @updatedAt
+
+  @@unique([organizationId, provider, externalId, entityType], name: "organizationId_provider_externalId_entityType")
+  @@index([organizationIntegrationId])
+  @@index([internalEntityType, internalEntityId])
+  @@index([internalId])
+  @@index([externalId])
+  @@index([organizationId])
+  @@map("external_mapping")
+}
+
+enum IntegrationEventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Logs incoming webhook events from external integrations
+model IntegrationEvent {
+  id                        String                  @id @default(cuid())
+  organizationIntegrationId String
+  organizationIntegration   OrganizationIntegration @relation(fields: [organizationIntegrationId], references: [id], onDelete: Cascade)
+
+  eventType       String // e.g., "orders/create", "products/update"
+  payload         Json // The full webhook payload
+  status          IntegrationEventStatus @default(PENDING)
+  processingError String? // Store error messages if processing fails
+
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([organizationIntegrationId, status])
+  @@map("integration_event")
+}

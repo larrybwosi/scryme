@@ -1,0 +1,203 @@
+// Invoice Management Schema
+
+model Invoice {
+  id             String   @id @default(cuid())
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName   String? // Fallback or name at time of invoice
+  postingDate    DateTime
+  dueDate        DateTime?
+  netTotal       Float    @default(0)
+  totalTaxes     Float    @default(0)
+  grandTotal     Float    @default(0)
+  amountPaid     Float    @default(0)
+  balanceDue     Float    @default(0)
+  status         String   @default("DRAFT")
+  kraPin         String?
+  kraCompliant   Boolean  @default(false)
+  etrMode        Boolean  @default(false)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  transactionId  String?
+  transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  templateId     String?
+  template       InvoiceTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  templateVersion Int? // Track which version of template was used
+
+  items          InvoiceItem[]
+  usageLog       TemplateUsageLog[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([customerId])
+  @@index([postingDate])
+  @@index([status])
+  @@index([templateId])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  itemCode    String
+  itemName    String
+  quantity    Float
+  rate        Float
+  amount      Float
+  taxTemplate String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([invoiceId])
+}
+
+model KRAComplianceLog {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  kraPin         String
+  taxType        String   // VAT, WITHHOLDING_TAX, EXCISE_DUTY
+  taxRate        Float
+  taxableAmount  Float
+  taxAmount      Float
+  etrMode        Boolean  @default(false)
+  status         String   @default("LOGGED") // LOGGED, SUBMITTED, ACKNOWLEDGED, FAILED
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  submittedAt    DateTime @default(now())
+  acknowledgedAt DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([invoiceId])
+  @@index([kraPin])
+  @@index([submittedAt])
+}
+
+// Invoice Template Management Models
+model InvoiceTemplate {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation("OrgInvoiceTemplates", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String
+  description    String?
+  type           String   @default("SALES_INVOICE") // SALES_INVOICE, PO, CREDIT_NOTE, QUOTE
+
+  isActive       Boolean  @default(true)
+  isDefault      Boolean  @default(false)
+
+  // Template design stored as JSON for flexibility
+  templateData   Json     // Stores layout, colors, fonts, fields configuration
+  logoUrl        String?
+
+  // Configuration
+  showLineNumbers Boolean @default(false)
+  showTaxBreakdown Boolean @default(true)
+  showTerms      Boolean  @default(true)
+  showNotes      Boolean  @default(true)
+  defaultNotes   String?
+  defaultTerms   String?
+  paymentTermsDay Int?
+
+  // Audit
+  createdBy      String?
+  createdByMember Member? @relation("TemplateCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  updatedBy      String?
+
+  // Relations
+  invoices       Invoice[]
+  versions       InvoiceTemplateVersion[]
+  usageLogs      TemplateUsageLog[]
+
+  @@index([organizationId])
+  @@index([isDefault])
+  @@index([isActive])
+  @@index([type])
+  @@unique([organizationId, name])
+}
+
+model InvoiceTemplateVersion {
+  id             String   @id @default(cuid())
+  templateId     String
+  template       InvoiceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  versionNumber  Int
+  templateData   Json     // Snapshot of template data
+  changesSummary String?  // What changed in this version
+
+  createdBy      String?
+  createdByMember Member? @relation("TemplateVersionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@index([templateId])
+  @@unique([templateId, versionNumber])
+}
+
+model TemplateUsageLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation("OrgTemplateUsageLogs", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  templateId     String
+  template       InvoiceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  invoiceId      String
+  invoice        Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  templateVersion Int? // Which version was used
+  usedBy         String?
+  usedByMember   Member? @relation("TemplateUsageLog", fields: [usedBy], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([templateId])
+  @@index([invoiceId])
+  @@index([createdAt])
+}
+
+model InvoiceConfig {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  defaultTemplate String @default("default")
+
+  // Branding Overrides
+  primaryColor   String?
+  logoUrl        String?
+  companyName    String?
+  companyAddress String?
+  companyEmail   String?
+  companyPhone   String?
+  companyWebsite String?
+
+  // Layout Toggles
+  showTaxBreakdown Boolean @default(true)
+  showTerms        Boolean @default(true)
+  showNotes        Boolean @default(true)
+  showLineNumbers  Boolean @default(false)
+
+  // Default Content
+  defaultTerms String? @db.Text
+  defaultNotes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("invoice_config")
+}

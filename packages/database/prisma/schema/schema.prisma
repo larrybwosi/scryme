@@ -1,0 +1,22 @@
+generator client {
+  provider      = "prisma-client"
+  output        = "../../generated"
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String
+  company   String
+  size      String
+  budget    String
+  message   String?  @db.Text // Allows for longer messages
+  status    String   @default("PENDING") // To track if sales has contacted them
+  createdAt DateTime @default(now())
+}

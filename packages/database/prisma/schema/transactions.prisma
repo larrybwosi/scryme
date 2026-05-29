@@ -1,0 +1,564 @@
+enum TransactionType {
+  POS_SALE // Instant counter sale (Payment + Fulfillment usually immediate)
+  ONLINE_ORDER // Customer created via Web/App
+  SALES_ORDER // "Normal" Order: Created by staff, B2B, Phone orders (Invoiced/Shipped later)
+  SERVICE_BOOKING // Appointment based
+  SUBSCRIPTION // Recurring
+  QUOTE // B2B/Enterprise estimation
+}
+
+// To distinguish "Where" the order came from
+enum TransactionChannel {
+  POS_TERMINAL
+  ECOMMERCE_STORE // Website
+  MOBILE_APP
+  MANUAL_ENTRY // Staff typing in a phone order
+  THIRD_PARTY_API // e.g. UberEats integration
+}
+
+enum TransactionStatus {
+  DRAFT
+  PENDING_CONFIRMATION
+  CONFIRMED
+  PROCESSING
+  READY
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+  FAILED
+  EXPIRED
+
+  QUOTE_SENT // Emailed/Printed for customer
+  QUOTE_ACCEPTED // Customer agreed (Ready to convert to Order)
+  QUOTE_REJECTED // Customer declined
+}
+
+enum FulfillmentType {
+  IMMEDIATE // Handed over counter (POS)
+  PICKUP // Customer coming to collect (Restaurant Takeout / BOPIS)
+  DELIVERY // Local courier / Restaurant Delivery
+  SHIPPING // Postal / FedEx / UPS
+  DIGITAL // Email/Download
+  DINE_IN // Restaurant Table Service
+  SERVICE // Service performed
+}
+
+enum FulfillmentStatus {
+  PENDING
+  PREPARING
+  READY
+  IN_TRANSIT
+  DELIVERED
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+// ===================================
+// TRANSACTION HEADER
+// ===================================
+
+model Transaction {
+  id     String @id @default(cuid())
+  number String // Human-readable number (e.g., ORD-001)
+
+  // MODIFIED: Type and Channel for better classification
+  type    TransactionType
+  channel TransactionChannel @default(POS_TERMINAL)
+
+  status         TransactionStatus @default(DRAFT)
+  paymentStatus  PaymentStatus     @default(UNPAID)
+  totalPaid      Decimal           @default(0) @db.Decimal(12, 2) // Cache the sum here
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  // B2B / "Normal" Order Support
+  businessAccountId String?
+  deliveryPartnerId String?
+  businessAccount   BusinessAccount? @relation(fields: [businessAccountId], references: [id], onDelete: SetNull)
+  deliveryPartner   DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id])
+
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  locationId String
+  location   InventoryLocation @relation(fields: [locationId], references: [id])
+
+  // Financial summary
+  subtotal      Decimal @db.Decimal(12, 2)
+  discountTotal Decimal @default(0) @db.Decimal(12, 2)
+  taxTotal      Decimal @default(0) @db.Decimal(12, 2)
+  shippingTotal Decimal @default(0) @db.Decimal(12, 2)
+  finalTotal    Decimal @db.Decimal(12, 2)
+
+  // Multi-currency support
+  currencyCode      String  @default("USD")
+  exchangeRate      Decimal @default(1) @db.Decimal(12, 6)
+  baseCurrencyTotal Decimal @db.Decimal(12, 2)
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  confirmedAt DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  expiresAt   DateTime? // For QUOTE
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  items                 TransactionItem[]
+  payments              Payment[]
+  discounts             AppliedDiscount[]
+  taxes                 AppliedTax[]
+  fulfillments          Fulfillment[] // Tracks Shipping, Dine-In, or Delivery
+  returns               Return[]
+  attachments           Attachment[]
+  invoices              Invoice[]
+  ecommerceOrderMapping EcommerceOrderMapping? @relation("TransactionEcommerceMapping") // Back-relation for e-commerce order mappings
+  loyaltyVouchers       LoyaltyVoucher[]
+
+  // ---  QUOTES ---
+  termsAndConditions String? @db.Text // Specific legal text for this quote
+
+  // Self-Relation to link Quote -> Order
+  parentTransactionId String?
+  parentTransaction   Transaction?  @relation("TransactionHistory", fields: [parentTransactionId], references: [id], onDelete: SetNull)
+  childTransactions   Transaction[] @relation("TransactionHistory")
+
+  // Metadata
+  notes      String?
+  tags       String[]
+  receiptUrl String?
+  metadata   Json?
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status])
+  @@index([organizationId, type])
+  @@index([customerId])
+  @@index([businessAccountId])
+  @@index([createdAt])
+  @@map("transaction")
+}
+
+// ===================================
+// TRANSACTION ITEMS
+// ===================================
+
+model TransactionItem {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  // Snapshot data (frozen at transaction time)
+  productName String
+  variantName String
+  sku         String
+
+  quantity  Int
+  listPrice Decimal @db.Decimal(10, 2)
+  unitPrice Decimal @db.Decimal(10, 2)
+  unitCost  Decimal @db.Decimal(10, 2)
+
+  // Line-level calculations
+  subtotal       Decimal @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+  taxAmount      Decimal @default(0) @db.Decimal(10, 2)
+  lineTotal      Decimal @db.Decimal(12, 2)
+
+  sellingUnitId String?
+  sellingUnit   SystemUnit? @relation(fields: [sellingUnitId], references: [id], onDelete: Restrict)
+
+  sellingOrgUnitId String?
+  sellingOrgUnit   OrganizationUnit? @relation("OrgTransactionUnit", fields: [sellingOrgUnitId], references: [id], onDelete: Restrict)
+
+  // Metadata
+  notes        String?
+  customFields Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  returnItems      ReturnItem[]
+  fulfillments     FulfillmentItem[]
+  stockAllocations InventoryAllocation[]
+  appliedDiscounts AppliedDiscount[]
+
+  @@index([transactionId])
+  @@index([variantId])
+  @@map("transaction_item")
+}
+
+// ===================================
+// INVENTORY ALLOCATION
+// ===================================
+
+// Tracks reservation of stock (Soft deduction)
+model InventoryAllocation {
+  id                String          @id @default(cuid())
+  transactionItemId String
+  transactionItem   TransactionItem @relation(fields: [transactionItemId], references: [id], onDelete: Cascade)
+
+  stockBatchId String
+  stockBatch   StockBatch @relation(fields: [stockBatchId], references: [id], onDelete: Restrict)
+
+  inventoryLocationId String
+  inventoryLocation   InventoryLocation @relation(fields: [inventoryLocationId], references: [id], onDelete: Restrict)
+
+  quantity Int
+  status   AllocationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([transactionItemId])
+  @@index([stockBatchId])
+  @@map("inventory_allocation")
+}
+
+enum AllocationStatus {
+  PENDING // Reserved
+  FULFILLED // Shipped/Picked (Hard deduction usually happens here)
+  CANCELLED // Released back to stock
+  RESERVED // For future use (e.g., backorders)
+}
+
+// ===================================
+// PAYMENT MODEL
+// ===================================
+
+// 1. The Fixed Payment Model (For confirmed sales)
+model Payment {
+  id String @id @default(cuid())
+
+  // Relation to Transaction (REQUIRED for valid payments)
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  organizationId String?
+
+  method PaymentMethod
+  status PaymentStatus @default(PENDING) // Changed default from UNPAID (Transactions are UNPAID, Payments are PENDING/COMPLETED)
+  amount Decimal       @db.Decimal(12, 2)
+
+  // Cash-specific
+  amountReceived Decimal? @db.Decimal(12, 2)
+  change         Decimal? @db.Decimal(12, 2)
+
+  // Digital payment / Gateway (M-Pesa specific fields)
+  gatewayTxnId        String? // The M-Pesa Receipt (e.g., QWE23456)
+  gatewayResponse     Json? // Full callback payload
+  gatewayCurrencyCode String?  @default("KES")
+  gatewayAmount       Decimal? @db.Decimal(12, 2)
+  gatewayFee          Decimal? @db.Decimal(12, 2)
+
+  // Payer Details (Important for M-Pesa)
+  payerPhone String? // MSISDN
+  payerName  String? // FirstName + LastName
+
+  // Reconciliation
+  payoutId String?
+  payout   Payout? @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+
+  // References
+  referenceNumber String? // Your internal ref (e.g. BillRefNumber)
+
+  // Cash drawer tracking
+  cashDrawerId String?
+  cashDrawer   CashDrawer? @relation(fields: [cashDrawerId], references: [id], onDelete: SetNull)
+
+  unclaimedSource UnclaimedPayment[] // Relation back to the source if it was recovered
+  processedAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  notes           String?
+
+  @@index([transactionId])
+  @@index([status])
+  @@index([payoutId])
+  @@index([gatewayTxnId]) // Index this for searching M-Pesa receipts
+  @@map("payment")
+}
+
+// 2. The NEW Unclaimed Payment Model (For Paybill/Till orphans)
+model UnclaimedPayment {
+  id             String  @id @default(cuid())
+  organizationId String? // We need to know which store received this money
+
+  // M-Pesa Data
+  transId       String   @unique // The M-Pesa Receipt (e.g., QWE23456)
+  transTime     DateTime // When it hit M-Pesa
+  amount        Decimal  @db.Decimal(12, 2)
+  shortCode     String // The Paybill/Till Number used
+  billRefNumber String? // The Account Number entered (might be wrong)
+  invoiceNumber String?
+
+  // Payer Data
+  msisdn     String // Phone Number
+  firstName  String?
+  middleName String?
+  lastName   String?
+
+  // Status
+  claimed         Boolean   @default(false) // True if later attached to a sale
+  claimedAt       DateTime?
+  claimedByUserId String? // Which staff member recovered this payment?
+
+  // Link to the Payment once claimed (Optional)
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  rawResponse Json? // Store the full C2B payload here for debugging
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([transId])
+  @@index([msisdn])
+  @@index([claimed])
+  @@map("unclaimed_payment")
+}
+
+// ===================================
+// PAYOUT / SETTLEMENT
+// ===================================
+
+model Payout {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  gateway      String
+  payoutNumber String
+  status       PayoutStatus @default(PENDING)
+
+  expectedAmount Decimal @db.Decimal(12, 2)
+  actualAmount   Decimal @db.Decimal(12, 2)
+  totalFees      Decimal @db.Decimal(12, 2)
+  currencyCode   String
+
+  expectedAt DateTime
+  settledAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  payments Payment[]
+
+  @@unique([organizationId, gateway, payoutNumber])
+  @@index([status])
+  @@map("payout")
+}
+
+enum PayoutStatus {
+  PENDING
+  IN_TRANSIT
+  SETTLED
+  FAILED
+  CANCELLED
+}
+
+// ===================================
+// FULFILLMENT MODEL
+// ===================================
+
+enum PodType {
+  DIGITAL_APP // Signed on a tablet screen
+  PHYSICAL_PAPER // Stamped/Signed paper (Offline delivery)
+  TOKEN_EXCHANGE // Code verification
+}
+
+model Fulfillment {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  type   FulfillmentType
+  status FulfillmentStatus @default(PENDING)
+
+  items FulfillmentItem[]
+
+  // --- Address & Location ---
+  shippingAddressId String?
+  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+
+  billingAddressId String?
+  billingAddress   Address? @relation("BillingAddress", fields: [billingAddressId], references: [id])
+
+  pickupLocationId String?
+  pickupLocation   InventoryLocation? @relation(fields: [pickupLocationId], references: [id])
+
+  // --- Logistics & Driver ---
+  driverId String?
+  quantityHandedOver Int?
+  quantityDelivered  Int?
+  isReconciled       Boolean @default(false)
+  driver   Driver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+
+  trackingNumber String?
+  carrier        String?
+  deliveryNotes  String?
+
+  // --- PROOF OF DELIVERY (POD) & RECONCILIATION ---
+
+  podType PodType @default(DIGITAL_APP)
+
+  // The proof itself (Signature image, photo of paper, etc.)
+  proofOfDeliveryUrl String?
+
+  // Who signed for it?
+  receivedBy String?
+
+  // Security for digital/offline handovers
+  confirmationToken     String? // Random code generated on dispatch
+
+
+
+  confirmedByCustomerAt DateTime? // When the code was entered/verified
+
+  // --- RECONCILIATION (Offline/Paper) ---
+  // Tracks when the physical paper was returned to office and verified
+  reconciledAt DateTime?
+  reconciledBy String? // ID of the Member/Staff who verified the paper
+
+  // --- Timestamps ---
+  scheduledAt  DateTime?
+  preparedAt   DateTime?
+  dispatchedAt DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([transactionId])
+  @@index([status])
+  @@index([driverId])
+  @@map("fulfillment")
+}
+
+model FulfillmentItem {
+  id            String      @id @default(cuid())
+  fulfillmentId String
+  fulfillment   Fulfillment @relation(fields: [fulfillmentId], references: [id], onDelete: Cascade)
+
+  transactionItemId String
+  transactionItem   TransactionItem @relation(fields: [transactionItemId], references: [id], onDelete: Cascade)
+
+  quantity Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fulfillmentId])
+  @@index([transactionItemId])
+  @@map("fulfillment_item")
+}
+
+// ===================================
+// DISCOUNTS & RETURNS
+// ===================================
+
+model AppliedDiscount {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  transactionItemId String?
+  transactionItem   TransactionItem? @relation(fields: [transactionItemId], references: [id], onDelete: Cascade)
+
+  name   String
+  type   String
+  value  Decimal @db.Decimal(10, 4)
+  amount Decimal @db.Decimal(12, 2)
+
+  appliedAt DateTime @default(now())
+
+  @@index([transactionId])
+  @@index([transactionItemId])
+  @@map("applied_discount")
+}
+
+model Return {
+  id           String @id @default(cuid())
+  returnNumber String
+
+  transactionId  String
+  transaction    Transaction  @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  reason ReturnReason
+  status ReturnStatus @default(PENDING)
+
+  refundAmount Decimal @db.Decimal(12, 2)
+  restockFee   Decimal @default(0) @db.Decimal(12, 2)
+
+  memberId    String
+  member      Member    @relation(fields: [memberId], references: [id])
+  processedAt DateTime?
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items ReturnItem[]
+
+  @@unique([organizationId, returnNumber])
+  @@index([transactionId])
+  @@index([status])
+  @@map("return")
+}
+
+model ReturnItem {
+  id       String @id @default(cuid())
+  returnId String
+  return   Return @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  transactionItemId String
+  transactionItem   TransactionItem @relation(fields: [transactionItemId], references: [id], onDelete: Restrict)
+
+  quantity Int
+  reason   ReturnReason?
+  status   ReturnItemStatus @default(PENDING)
+
+  unitPrice    Decimal @db.Decimal(10, 2)
+  refundAmount Decimal @db.Decimal(12, 2)
+  notes        String?
+
+  @@index([returnId])
+  @@index([transactionItemId])
+  @@map("return_item")
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+}
+
+enum ReturnItemStatus {
+  PENDING
+  RECEIVED
+  ACCEPTED
+  REJECTED
+  RESTOCKED
+  REFUNDED
+  REPLACED
+}
+
+enum ReturnReason {
+  DEFECTIVE
+  WRONG_ITEM
+  NOT_AS_DESCRIBED
+  CHANGE_OF_MIND
+  SIZE_COLOR_ISSUE
+  ARRIVED_LATE
+  DUPLICATE_ORDER
+  DAMAGED_IN_TRANSIT
+  OTHER
+}
