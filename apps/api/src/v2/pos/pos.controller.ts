@@ -53,6 +53,20 @@ export class PosController {
     return this.posService.getProducts(ctx, query);
   }
 
+  @Get('sale')
+  @Permissions('pos:sale:read')
+  @ApiOperation({ summary: 'List sales history' })
+  async getSalesHistory(@v2Context() ctx: V2ApiContext, @Query() query: any) {
+    return this.posService.getTransactions(ctx, query);
+  }
+
+  @Get('transactions')
+  @Permissions('pos:sale:read')
+  @ApiOperation({ summary: 'List transactions (alias)' })
+  async getTransactions(@v2Context() ctx: V2ApiContext, @Query() query: any) {
+    return this.posService.getTransactions(ctx, query);
+  }
+
   @Post('sale')
   @Permissions('pos:sale:create')
   @ApiOperation({ summary: 'Process a new sale' })
@@ -62,6 +76,13 @@ export class PosController {
     @Query('enableStockTracking') enableStockTracking: string
   ) {
     return this.posSaleService.handleSale(ctx, body, enableStockTracking === 'true');
+  }
+
+  @Post('sale/payments')
+  @Permissions('pos:sale:update')
+  @ApiOperation({ summary: 'Record payment for a sale' })
+  async recordPayment(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.recordPayment(ctx, body);
   }
 
   @Get('incoming')
@@ -103,12 +124,6 @@ export class PosController {
     return this.posService.sync(ctx, query);
   }
 
-  @Get('transactions')
-  @Permissions('pos:sale:read')
-  @ApiOperation({ summary: 'List transactions' })
-  async getTransactions(@v2Context() ctx: V2ApiContext, @Query() query: any) {
-    return this.posService.getTransactions(ctx, query);
-  }
 
   @Get('customers')
   @ApiOperation({ summary: 'POS customer delta sync' })
@@ -155,5 +170,71 @@ export class PosController {
   @ApiOperation({ summary: 'Cancel stock request' })
   async cancelStockRequest(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
     return this.posService.cancelStockRequest(ctx, id);
+  }
+
+  @Get('pricing')
+  @ApiOperation({ summary: 'Get POS pricing data' })
+  async getPricing(@v2Context() ctx: V2ApiContext) {
+    return this.posService.getPricing(ctx);
+  }
+
+  @Get('pricing/sync')
+  @ApiOperation({ summary: 'Sync POS pricing data' })
+  async syncPricing(@v2Context() ctx: V2ApiContext, @Query('lastSync') lastSync: string) {
+    return this.posService.getPricing(ctx, lastSync);
+  }
+
+  @Post('shifts/sync')
+  @ApiOperation({ summary: 'Sync POS shifts' })
+  async syncShifts(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.syncShifts(ctx, body);
+  }
+
+  @Get('waybill/:id')
+  @ApiOperation({ summary: 'Get transaction waybill' })
+  async getWaybill(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+    return this.posService.getWaybill(ctx, id);
+  }
+
+  @Get('inventory/requests')
+  @ApiOperation({ summary: 'List inventory requests' })
+  async listInventoryRequests(@v2Context() ctx: V2ApiContext) {
+    return this.posService.listStockRequests(ctx);
+  }
+
+  @Post('inventory/requests')
+  @ApiOperation({ summary: 'Create inventory request' })
+  async createInventoryRequest(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.createStockRequest(ctx, body);
+  }
+
+  @Post('inventory/process')
+  @ApiOperation({ summary: 'Process inventory adjustments' })
+  async processInventory(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.adjustStock(ctx, body);
+  }
+
+  @Post('purchases/:id/receive')
+  @ApiOperation({ summary: 'Receive purchase order' })
+  async receivePurchase(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() body: any) {
+    return this.posService.receivePurchase(ctx, id, body);
+  }
+
+  @Post('inventory/transfers/:id/receive')
+  @ApiOperation({ summary: 'Receive stock transfer' })
+  async receiveTransfer(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() body: any) {
+    return this.posService.receiveTransfer(ctx, id, body);
+  }
+
+  @Post('orders')
+  @ApiOperation({ summary: 'Create order' })
+  async createOrder(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posSaleService.handleSale(ctx, body, true);
+  }
+
+  @Get('drivers')
+  @ApiOperation({ summary: 'List drivers' })
+  async getDrivers(@v2Context() ctx: V2ApiContext) {
+    return this.posService.getDrivers(ctx);
   }
 }
