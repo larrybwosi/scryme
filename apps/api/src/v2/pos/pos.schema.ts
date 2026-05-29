@@ -53,3 +53,28 @@ export const CreateStockRequestSchema = z.object({
   justification: z.string().optional(),
   items: z.array(StockRequestItemSchema).min(1, 'At least one item is required'),
 });
+
+export const RecordPaymentSchema = z.object({
+  transactionId: z.string().min(1),
+  amount: z.number().positive(),
+  method: z.string().min(1),
+  reference: z.string().optional(),
+  payerPhone: z.string().optional(),
+});
+
+export const ShiftSyncSchema = z.object({
+  location_id: z.string().min(1),
+  shift_id: z.string().min(1),
+  opened_at: z.string(),
+  closed_at: z.string().optional().nullable(),
+  operator_card_id: z.string(),
+  operator_pin: z.string(),
+  starting_float: z.number(),
+  total_cash_sales: z.number(),
+  total_cash_drops: z.number(),
+  actual_cash_count: z.number().optional().nullable(),
+  variance: z.number().optional().nullable(),
+  opening_cash_details: z.any().optional(),
+  closing_cash_details: z.any().optional(),
+  closing_operator_id: z.string().optional().nullable(),
+});
