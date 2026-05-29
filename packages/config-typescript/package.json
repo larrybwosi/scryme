@@ -4,5 +4,9 @@
   "private": true,
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "lint": "echo \"no lint script defined\"",
+    "type-check": "echo \"no type-check script defined\""
   }
 }
