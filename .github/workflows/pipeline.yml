@@ -40,8 +40,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -107,9 +105,11 @@ jobs:
         if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: pnpm --filter dealio-desktop lint:backend
 
-      - name: Run POS Backend Tests
+      - name: Run POS Backend Tests with Coverage
         if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
-        run: pnpm --filter dealio-desktop test:backend
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out Xml
 
       - name: Cache Playwright Browsers
         if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
@@ -128,6 +128,9 @@ jobs:
       - name: Run POS E2E tests
         if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: pnpm --filter dealio-desktop test:e2e
+        env:
+          POSTHOG_API_KEY: mock
+          SENTRY_DSN: mock
 
   release-management:
     needs: [filter, lint-test]
@@ -138,7 +141,6 @@ jobs:
       pull-requests: write
     outputs:
       published: ${{ steps.changesets.outputs.published }}
-      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -151,11 +153,16 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Enter Prerelease Mode (dev/nextgen only)
+        if: github.ref != 'refs/heads/main'
+        run: |
+          if [ ! -f .changeset/pre.json ]; then
+            pnpm changeset pre enter ${{ github.ref_name }}
+          fi
 
       - name: Create Release Pull Request or Publish
         id: changesets
@@ -179,9 +186,7 @@ jobs:
 
   publish-tauri:
     needs: [filter, release-management, set-version]
-    # We build Tauri apps if Changesets published a new version OR if we're on a branch that should auto-build
-    # For now, let's trigger it if pos was updated and we are on main/dev/nextgen
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/nextgen') && (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true')
+    if: needs.release-management.outputs.published == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -207,8 +212,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -259,8 +262,7 @@ jobs:
       - name: Update Version and Updater for Build
         shell: bash
         run: |
-          # Get version from apps/pos/package.json
-          FULL_VERSION=$(jq -r .version apps/pos/package.json)
+          FULL_VERSION="${{ needs.set-version.outputs.version }}"
           BRANCH="${{ github.ref_name }}"
           REPO="${{ github.repository }}"
           VARIANT="${{ matrix.variant }}"
