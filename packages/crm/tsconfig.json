@@ -1,8 +1,9 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "ignoreDeprecations": "6.0",
-    "noEmit": false,
+    "noEmit": true,
     "outDir": "dist",
     "skipLibCheck": true,
     "strict": true,

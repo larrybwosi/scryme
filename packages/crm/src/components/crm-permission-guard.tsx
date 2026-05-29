@@ -237,7 +237,7 @@ export const CrmAccessLevel: React.FC<CrmAccessLevelProps> = ({ className }) => 
     return { label: 'Limited', color: 'bg-zinc-400', icon: Lock };
   }, [isAdmin, hasPermission]);
 
-  const Icon = level.icon;
+  const _Icon = level.icon;
 
   return (
     <div className={cn('flex items-center gap-2', className)}>

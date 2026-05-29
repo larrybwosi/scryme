@@ -38,7 +38,7 @@ interface CrmRecordFormProps {
 }
 
 export function CrmRecordForm({
-  object,
+  object: _object,
   fields,
   initialData,
   onSubmit,
@@ -108,7 +108,7 @@ export function CrmRecordForm({
         form.reset();
       }
       toast.success(`Record ${mode === 'create' ? 'created' : 'updated'} successfully`);
-    } catch (error) {
+    } catch (_error) {
       toast.error(`Failed to ${mode === 'create' ? 'create' : 'update'} record`);
     } finally {
       setIsSubmitting(false);
