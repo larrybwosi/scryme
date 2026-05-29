@@ -6,6 +6,7 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "release": "changeset publish",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:push": "turbo run db:push",
@@ -17,6 +18,7 @@
     "type-check": "turbo run type-check"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "prettier": "^3.2.5",
     "prisma": "latest",
     "tsx": "4.21.0",
