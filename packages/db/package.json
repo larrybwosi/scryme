@@ -13,6 +13,7 @@
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint . --max-warnings 0",
+    "type-check": "tsc --noEmit",
     "prebuild": "npm run generate",
     "predev": "npm run generate",
     "studio": "prisma studio"

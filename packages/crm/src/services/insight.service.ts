@@ -1,5 +1,5 @@
 import 'server-only';
-import { PrismaClient } from '@repo/db';
+import { PrismaClient } from '@repo/db/client';
 
 export class InsightService {
   constructor(private prisma: PrismaClient) {}
