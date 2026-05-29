@@ -1,0 +1,433 @@
+name: Pipeline
+
+on:
+  push:
+    branches: [main, dev, nextgen]
+  pull_request:
+    branches: [main, dev, nextgen]
+
+jobs:
+  filter:
+    runs-on: ubuntu-latest
+    outputs:
+      pos: ${{ steps.changes.outputs.pos }}
+      api: ${{ steps.changes.outputs.api }}
+      workflow: ${{ steps.changes.outputs.workflow }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            pos:
+              - 'apps/pos/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+            api:
+              - 'apps/api/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+            workflow:
+              - '.github/workflows/pipeline.yml'
+
+  lint-test:
+    needs: filter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Turbo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Lint
+        run: pnpm lint
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+      - name: Type Check
+        run: pnpm type-check
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+      - name: Run POS Frontend Tests
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: pnpm --filter dealio-desktop test:frontend
+
+      - name: Install Rust
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Install POS Backend dependencies (Linux)
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libudev-dev \
+            libusb-1.0-0-dev \
+            libpcsclite-dev \
+            pkg-config \
+            patchelf
+
+      - name: Create POS dummy binaries
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: |
+          mkdir -p apps/pos/src-tauri/binaries
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
+          chmod +x apps/pos/src-tauri/binaries/*
+
+      - name: Run POS Backend Linting
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: pnpm --filter dealio-desktop lint:backend
+
+      - name: Run POS Backend Tests with Coverage
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out Xml
+
+      - name: Cache Playwright Browsers
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Browsers
+        if: (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true') && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run POS E2E tests
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: pnpm --filter dealio-desktop test:e2e
+        env:
+          POSTHOG_API_KEY: mock
+          SENTRY_DSN: mock
+
+  release-management:
+    needs: [filter, lint-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/nextgen')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Enter Prerelease Mode (dev/nextgen only)
+        if: github.ref != 'refs/heads/main'
+        run: |
+          if [ ! -f .changeset/pre.json ]; then
+            pnpm changeset pre enter ${{ github.ref_name }}
+          fi
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm changeset version && ./scripts/sync-tauri-version.sh
+          publish: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  set-version:
+    needs: [filter, release-management]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/nextgen') && (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: get-version
+        run: echo "version=$(jq -r .version apps/pos/package.json)" >> $GITHUB_OUTPUT
+
+  publish-tauri:
+    needs: [filter, release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        target_group: [macos-arm, macos-x86, ubuntu, windows]
+        variant: [retail, standalone, restaurant, supermarket, pharmacy]
+        include:
+          - target_group: macos-arm
+            os: macos-latest
+            args: '--target aarch64-apple-darwin'
+          - target_group: macos-x86
+            os: macos-latest
+            args: '--target x86_64-apple-darwin'
+          - target_group: ubuntu
+            os: ubuntu-22.04
+            args: ''
+          - target_group: windows
+            os: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './apps/pos/src-tauri -> target'
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev libusb-1.0-0-dev libgtk-3-dev libpcsclite-dev pkg-config
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create dummy binaries for macOS/Linux
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir -p apps/pos/src-tauri/binaries
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
+          chmod +x apps/pos/src-tauri/binaries/*
+
+      - name: Create dummy binaries for Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path apps/pos/src-tauri/binaries
+          if (!(Test-Path "apps/pos/src-tauri/binaries/sumatrapdf-x86_64-pc-windows-msvc.exe")) {
+            New-Item -ItemType File -Path "apps/pos/src-tauri/binaries/sumatrapdf-x86_64-pc-windows-msvc.exe"
+          }
+          if (!(Test-Path "apps/pos/src-tauri/binaries/sumatrapdf-i686-pc-windows-msvc.exe")) {
+            New-Item -ItemType File -Path "apps/pos/src-tauri/binaries/sumatrapdf-i686-pc-windows-msvc.exe"
+          }
+
+      - name: Update Version and Updater for Build
+        shell: bash
+        run: |
+          FULL_VERSION="${{ needs.set-version.outputs.version }}"
+          BRANCH="${{ github.ref_name }}"
+          REPO="${{ github.repository }}"
+          VARIANT="${{ matrix.variant }}"
+          OS="${{ matrix.os }}"
+
+          echo "Detected version: $FULL_VERSION"
+
+          # Determine config file and updater name
+          if [ "$VARIANT" = "retail" ]; then
+            CONFIG_FILE="apps/pos/src-tauri/tauri.retail.conf.json"
+            UPDATER_NAME="latest"
+          else
+            CONFIG_FILE="apps/pos/src-tauri/tauri.$VARIANT.conf.json"
+            UPDATER_NAME="latest-$VARIANT"
+          fi
+
+          # Determine branch-specific updater endpoint
+          if [ "$BRANCH" = "main" ]; then
+            UPDATER_ENDPOINT="https://github.com/$REPO/releases/latest/download/$UPDATER_NAME.json"
+          elif [ "$BRANCH" = "dev" ]; then
+            UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/dev-latest/$UPDATER_NAME.json"
+          elif [ "$BRANCH" = "nextgen" ]; then
+            UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/nextgen-latest/$UPDATER_NAME.json"
+          else
+             UPDATER_ENDPOINT="https://github.com/$REPO/releases/latest/download/$UPDATER_NAME.json"
+          fi
+
+          echo "Configuring $CONFIG_FILE..."
+
+          # Sanitize version for Windows
+          if [[ "$OS" == "windows-latest" && "$FULL_VERSION" == *"-"* ]]; then
+            VERSION_BASE=$(echo "$FULL_VERSION" | cut -d'-' -f1)
+            PRE_RELEASE=$(echo "$FULL_VERSION" | cut -d'-' -f2-)
+            NUMERIC_PRE=$(echo "$PRE_RELEASE" | grep -oE '[0-9]+(\.[0-9]+)*' | tr '\n' '.' | sed 's/\.$//')
+            TARGET_VERSION="${VERSION_BASE}-${NUMERIC_PRE:-0}"
+            echo "Sanitized version for Windows: $TARGET_VERSION"
+          else
+            TARGET_VERSION="$FULL_VERSION"
+          fi
+
+          # Update version in tauri.conf.json as well because it's usually the base
+          jq --arg v "$TARGET_VERSION" '.version = $v' apps/pos/src-tauri/tauri.conf.json > tmp.json && mv tmp.json apps/pos/src-tauri/tauri.conf.json
+
+          # Unified jq update for variant config
+          jq --arg v "$TARGET_VERSION" \
+             --arg e "$UPDATER_ENDPOINT" \
+             --arg var "$VARIANT" \
+             --arg os "$OS" \
+             '
+             .version = $v |
+             (if $var != "standalone" then .plugins.updater.endpoints = [$e] else . end) |
+             (if $os == "windows-latest" then .bundle.targets = ["nsis"] else . end)
+             ' "$CONFIG_FILE" > tmp.json && mv tmp.json "$CONFIG_FILE"
+
+      - name: Generate .env file for build
+        shell: bash
+        run: |
+          echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> apps/pos/src-tauri/.env
+          echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> apps/pos/src-tauri/.env
+          echo "POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}" >> apps/pos/src-tauri/.env
+
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseDraft: false
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          args: ${{ matrix.args }} ${{ matrix.variant == 'retail' && '--config apps/pos/src-tauri/tauri.retail.conf.json --features retail' || format('--config apps/pos/src-tauri/tauri.{0}.conf.json --features {0}', matrix.variant) }}
+          projectPath: apps/pos
+
+      - name: Extract latest.json
+        if: matrix.variant != 'standalone'
+        shell: bash
+        run: |
+          LATEST_JSON=$(find apps/pos/src-tauri/target -name "latest.json" | head -n 1)
+          if [ -z "$LATEST_JSON" ]; then
+            LATEST_JSON=$(find apps/pos -name "latest.json" | head -n 1)
+          fi
+          if [ -n "$LATEST_JSON" ]; then
+            cp "$LATEST_JSON" "latest-${{ matrix.variant }}-${{ matrix.target_group }}.json"
+          else
+            echo "latest.json not found for ${{ matrix.os }} ${{ matrix.variant }}"
+            exit 1
+          fi
+
+      - name: Upload latest.json artifact
+        if: matrix.variant != 'standalone'
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-json-${{ matrix.variant }}-${{ matrix.target_group }}
+          path: latest-${{ matrix.variant }}-${{ matrix.target_group }}.json
+
+  finalize-release:
+    needs: [publish-tauri, set-version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        variant: [retail, restaurant, supermarket, pharmacy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all latest.json artifacts for ${{ matrix.variant }}
+        if: matrix.variant != 'standalone'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: latest-json-${{ matrix.variant }}-*
+          merge-multiple: true
+
+      - name: Merge latest.json files for ${{ matrix.variant }}
+        if: matrix.variant != 'standalone'
+        shell: bash
+        run: |
+          VERSION="${{ needs.set-version.outputs.version }}"
+          REPO="${{ github.repository }}"
+          TAG="v$VERSION"
+          VARIANT="${{ matrix.variant }}"
+
+          if [ "$VARIANT" = "retail" ]; then
+            FINAL_NAME="latest.json"
+          else
+            FINAL_NAME="latest-$VARIANT.json"
+          fi
+
+          FILES=(latest-${VARIANT}-*.json)
+          if [ ${#FILES[@]} -eq 0 ]; then
+             echo "No artifacts found for $VARIANT"
+             exit 1
+          fi
+
+          jq -s 'reduce .[] as $item ({}; . * $item)' "${FILES[@]}" > "$FINAL_NAME"
+
+          jq --arg repo "$REPO" --arg tag "$TAG" '
+            .platforms |= with_entries(
+              .value.url |= (
+                sub(".*/"; "https://github.com/\($repo)/releases/download/\($tag)/")
+              )
+            )
+          ' "$FINAL_NAME" > tmp.json && mv tmp.json "$FINAL_NAME"
+
+      - name: Upload final latest JSON to release
+        if: matrix.variant != 'standalone'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          VERSION="${{ needs.set-version.outputs.version }}"
+          TAG="v$VERSION"
+          VARIANT="${{ matrix.variant }}"
+          FINAL_NAME=$([ "$VARIANT" = "retail" ] && echo "latest.json" || echo "latest-$VARIANT.json")
+          gh release upload "$TAG" "$FINAL_NAME" --clobber
+
+      - name: Update Rolling Latest Release (Prerelease only)
+        if: github.ref != 'refs/heads/main' && matrix.variant != 'standalone'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          TAG="${BRANCH}-latest"
+          VARIANT="${{ matrix.variant }}"
+          FINAL_NAME=$([ "$VARIANT" = "retail" ] && echo "latest.json" || echo "latest-$VARIANT.json")
+          gh release view "$TAG" || gh release create "$TAG" --prerelease --title "$TAG" --notes "Rolling release for $BRANCH branch"
+          gh release upload "$TAG" "$FINAL_NAME" --clobber
