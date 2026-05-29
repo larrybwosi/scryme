@@ -1,6 +1,5 @@
 import 'server-only';
-import { db } from '@repo/db';
-import { Prisma } from '@repo/db';
+import { prisma, Prisma } from '@repo/db/client';
 import { Decimal } from 'decimal.js';
 import { OpenLoyaltyClient } from '@repo/shared/server';
 
@@ -26,7 +25,7 @@ export class LoyaltyService {
     totalAmount: number,
     tx?: Prisma.TransactionClient
   ): Promise<number> {
-    const client = tx || db;
+    const client = tx || (prisma as any);
 
     const program = await client.loyaltyProgram.findFirst({
       where: { organizationId, isActive: true },
@@ -226,7 +225,7 @@ export class LoyaltyService {
     code: string,
     tx?: Prisma.TransactionClient
   ) {
-    const client = tx || db;
+    const client = tx || (prisma as any);
     const voucher = await client.loyaltyVoucher.findFirst({
       where: {
         code,

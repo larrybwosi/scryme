@@ -148,7 +148,7 @@ export const CrmSearch: React.FC<CrmSearchProps> = ({ onSearch, objects, classNa
   };
 
   // Handle recent search selection
-  const handleRecentSelect = (recent: RecentSearch) => {
+  const handleRecentSelect = (_recent: RecentSearch) => {
     setOpen(false);
     setQuery('');
     setResults([]);
@@ -199,7 +199,7 @@ export const CrmSearch: React.FC<CrmSearchProps> = ({ onSearch, objects, classNa
           {!loading && !query && recentSearches.length > 0 && (
             <CommandGroup heading="Recent Searches">
               {recentSearches.map(recent => {
-                const Icon = getObjectIcon(recent.objectName);
+                const _Icon = getObjectIcon(recent.objectName);
                 return (
                   <CommandItem
                     key={recent.id}

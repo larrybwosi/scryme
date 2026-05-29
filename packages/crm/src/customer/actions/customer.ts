@@ -1,6 +1,6 @@
+import { PrismaClient } from "@repo/db/client";
 import 'server-only';
 import { CustomerService } from '../services/customer.service';
-import { PrismaClient } from '@repo/db';
 
 export function createCustomerActions(prisma: PrismaClient) {
   const service = new CustomerService(prisma);
