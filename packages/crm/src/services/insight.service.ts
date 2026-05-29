@@ -1,5 +1,5 @@
 import 'server-only';
-import { PrismaClient } from '@repo/db';
+import { PrismaClient, type Transaction } from '@repo/db';
 
 export class InsightService {
   constructor(private prisma: PrismaClient) {}
@@ -18,7 +18,7 @@ export class InsightService {
       },
     });
 
-    const totalSpent = transactions.reduce((acc, tx) => acc + Number(tx.finalTotal), 0);
+    const totalSpent = transactions.reduce((acc: number, tx: Pick<Transaction, 'finalTotal'>) => acc + Number(tx.finalTotal), 0);
     const purchaseCount = transactions.length;
     const avgOrderValue = purchaseCount > 0 ? totalSpent / purchaseCount : 0;
 
@@ -44,7 +44,7 @@ export class InsightService {
 
     let recencyScore = 0;
     if (transactions.length > 0) {
-      const lastPurchase = new Date(Math.max(...transactions.map(t => t.createdAt.getTime())));
+      const lastPurchase = new Date(Math.max(...transactions.map((t: Pick<Transaction, 'createdAt'>) => t.createdAt.getTime())));
       const daysSinceLastPurchase = (Date.now() - lastPurchase.getTime()) / (1000 * 60 * 60 * 24);
       recencyScore = Math.max(0, 100 - daysSinceLastPurchase); // Simple decay
     }
@@ -59,7 +59,7 @@ export class InsightService {
       aov: avgOrderValue,
       purchaseCount,
       engagementScore: Math.round(engagementScore),
-      lastPurchaseDate: transactions.length > 0 ? new Date(Math.max(...transactions.map(t => t.createdAt.getTime()))) : null,
+      lastPurchaseDate: transactions.length > 0 ? new Date(Math.max(...transactions.map((t: Pick<Transaction, 'createdAt'>) => t.createdAt.getTime()))) : null,
     };
   }
 }

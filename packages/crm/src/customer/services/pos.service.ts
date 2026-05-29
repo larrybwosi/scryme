@@ -1,5 +1,5 @@
 import 'server-only';
-import { PrismaClient } from '@repo/db';
+import { PrismaClient, type Customer } from '@repo/db';
 
 export interface CreatePosCustomerData {
   name: string;
@@ -33,7 +33,7 @@ export class PosCustomerService {
       },
     });
 
-    const mappedData = customers.map(c => ({
+    const mappedData = customers.map((c: Customer) => ({
       id: c.id,
       name: c.name,
       email: c.email,
@@ -65,7 +65,7 @@ export class PosCustomerService {
       take: 20,
     });
 
-    return customers.map(c => ({
+    return customers.map((c: Customer) => ({
       id: c.id,
       name: c.name,
       email: c.email,
