@@ -13,7 +13,7 @@
     "dev": "tsc --watch",
     "test": "jest --passWithNoTests",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "type-check": "tsc --noEmit"
+    "type-check": "NODE_OPTIONS='--max-old-space-size=4096' tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/sortable": "^10.0.0",

@@ -26,13 +26,16 @@
     },
     "generate": {
       "dependsOn": ["^generate"],
+      "env": ["DATABASE_URL"],
       "cache": false
     },
     "lint": {
-      "dependsOn": ["^generate"]
+      "dependsOn": ["^generate"],
+      "env": ["DATABASE_URL"]
     },
     "type-check": {
-      "dependsOn": ["^generate"]
+      "dependsOn": ["^generate"],
+      "env": ["DATABASE_URL"]
     }
   }
 }
