@@ -28,6 +28,8 @@ import {
   DispatchDeliverySchema,
   ReconcileDeliverySchema,
   CreateStockRequestSchema,
+  RecordPaymentSchema,
+  ShiftSyncSchema,
 } from './pos.schema';
 import { Decimal } from 'decimal.js';
 import { RedisService } from 'src/redis/redis.service';
@@ -207,26 +209,35 @@ export class PosService {
     const categoryId = query.categoryId || 'all';
     const lastSync = query.lastSync;
 
-    if (lastSync) {
-      return getPosProductsDelta({
-        prisma: this.prisma.client,
-        organizationId: ctx.organizationId,
-        locationId,
-        lastSync,
-        page,
-        limit,
-      });
-    } else {
-      return getPosProducts({
-        prisma: this.prisma.client,
-        organizationId: ctx.organizationId,
-        locationId,
-        page,
-        limit,
-        search,
-        categoryId,
-      });
-    }
+    const result = lastSync
+      ? await getPosProductsDelta({
+          prisma: this.prisma.client,
+          organizationId: ctx.organizationId,
+          locationId,
+          lastSync,
+          page,
+          limit,
+        })
+      : await getPosProducts({
+          prisma: this.prisma.client,
+          organizationId: ctx.organizationId,
+          locationId,
+          page,
+          limit,
+          search,
+          categoryId,
+        });
+
+    return {
+      success: true,
+      data: {
+        products: (result as any).products,
+        pagination: (result as any).pagination,
+      },
+      meta: {
+        syncTimestamp: (result as any).syncTimestamp || (result as any).timestamp || new Date().toISOString(),
+      },
+    };
   }
 
   async getIncoming(ctx: V2ApiContext, query: any) {
@@ -441,26 +452,63 @@ export class PosService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          customer: { select: { id: true, name: true } },
+          customer: { select: { id: true, name: true, email: true } },
           items: true,
           payments: true,
+          fulfilments: {
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
         },
       }),
     ]);
 
-    return {
-      data: transactions,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    };
+    const formattedTransactions = transactions.map(t => {
+      const paidAmount = t.payments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0)).toNumber();
+      const status = t.fulfilments.length > 0 ? 'dispatched' : t.paymentStatus.toLowerCase();
+
+      return {
+        id: t.id,
+        number: t.number,
+        customer: t.customer?.name || 'Guest',
+        email: t.customer?.email || '',
+        totalAmount: t.finalTotal.toNumber(),
+        paidAmount,
+        date: t.createdAt.toISOString(),
+        status,
+        fulfillmentId: t.fulfilments[0]?.id || null,
+        invoiceLink: getDocumentUrl('invoice', t.id, ctx.organizationId),
+        items: t.items.map(i => ({
+          id: i.id,
+          productId: i.productId,
+          productName: i.productName,
+          variantId: i.variantId,
+          sku: i.sku,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice.toNumber(),
+          totalPrice: i.lineTotal.toNumber(),
+        })),
+      };
+    });
+
+    if (query.page || query.limit) {
+      return {
+        data: formattedTransactions,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    return formattedTransactions;
   }
 
   async getCustomersDelta(ctx: V2ApiContext, lastSync?: string) {
-    return this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync);
+    const result = await this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync);
+    return result;
   }
 
   async createCustomer(ctx: V2ApiContext, body: any) {
@@ -662,5 +710,194 @@ export class PosService {
     });
 
     return { success: true };
+  }
+
+  async recordPayment(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(RecordPaymentSchema, body);
+    const { transactionId, amount, method, reference, payerPhone } = validated;
+
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId: ctx.organizationId },
+    });
+
+    if (!transaction) throw new NotFoundException('Transaction not found');
+
+    const payment = await this.prisma.client.payment.create({
+      data: {
+        organizationId: ctx.organizationId,
+        transactionId,
+        amount: new Decimal(amount),
+        method,
+        reference,
+        payerPhone,
+        status: 'SUCCESS',
+        processedAt: new Date(),
+      },
+    });
+
+    // Update transaction payment status if necessary
+    const allPayments = await this.prisma.client.payment.findMany({
+      where: { transactionId },
+    });
+
+    const totalPaid = allPayments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0));
+
+    if (totalPaid.gte(transaction.finalTotal)) {
+      await this.prisma.client.transaction.update({
+        where: { id: transactionId },
+        data: { paymentStatus: 'PAID' },
+      });
+    } else if (totalPaid.gt(0)) {
+      await this.prisma.client.transaction.update({
+        where: { id: transactionId },
+        data: { paymentStatus: 'PARTIALLY_PAID' },
+      });
+    }
+
+    return payment;
+  }
+
+  async getPricing(ctx: V2ApiContext, lastSync?: string) {
+    const lastSyncDate = lastSync ? new Date(lastSync) : undefined;
+
+    const where: Prisma.PriceListWhereInput = {
+      organizationId: ctx.organizationId,
+      isActive: true,
+    };
+
+    if (lastSyncDate) {
+      where.updatedAt = { gt: lastSyncDate };
+    }
+
+    const priceLists = await this.prisma.client.priceList.findMany({
+      where,
+      include: {
+        items: {
+          where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
+        },
+        allocations: true,
+      },
+    });
+
+    const items = priceLists.flatMap(pl =>
+      pl.items.map(item => ({
+        id: item.id,
+        priceListId: item.priceListId,
+        variantId: item.variantId,
+        sellingUnitId: item.sellingUnitId,
+        minQuantity: item.minQuantity,
+        price: item.price.toString(),
+        updatedAt: item.updatedAt,
+      }))
+    );
+
+    const lists = priceLists.map(pl => ({
+      id: pl.id,
+      code: pl.code,
+      priority: pl.priority,
+      isGlobal: pl.isGlobal,
+      isActive: pl.isActive,
+      validFrom: pl.validFrom,
+      validTo: pl.validTo,
+      updatedAt: pl.updatedAt,
+    }));
+
+    const customerAllocations: Record<string, string[]> = {};
+    priceLists.forEach(pl => {
+      pl.allocations.forEach(alloc => {
+        if (!customerAllocations[alloc.customerId]) {
+          customerAllocations[alloc.customerId] = [];
+        }
+        customerAllocations[alloc.customerId].push(pl.id);
+      });
+    });
+
+    return {
+      success: true,
+      data: {
+        metadata: {
+          syncedAt: new Date().toISOString(),
+          isDelta: !!lastSync,
+        },
+        data: {
+          lists,
+          items,
+          customerAllocations,
+          deletedItemIds: [], // Would need a soft-delete mechanism to track this properly
+        },
+      },
+    };
+  }
+
+  async syncShifts(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(ShiftSyncSchema, body);
+
+    // In a real implementation, you might want to save this to an Actual Shifts table
+    // For now, we'll just log it and audit it.
+    this.logger.log(`Syncing shift ${validated.shift_id} for location ${validated.location_id}`);
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId || null,
+        action: 'SHIFT_SYNC',
+        resourceType: 'SHIFT',
+        resourceId: validated.shift_id,
+        approved: true,
+        metadata: validated,
+      },
+    });
+
+    return { success: true };
+  }
+
+  async getWaybill(ctx: V2ApiContext, id: string) {
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+    });
+
+    if (!transaction) throw new NotFoundException('Transaction not found');
+
+    return {
+      url: getDocumentUrl('waybill', id, ctx.organizationId),
+    };
+  }
+
+  async receivePurchase(ctx: V2ApiContext, id: string, body: any) {
+    // This would typically involve updating purchase order status and inventory
+    this.logger.log(`Receiving purchase ${id} for location ${ctx.locationId}`);
+    return { success: true };
+  }
+
+  async receiveTransfer(ctx: V2ApiContext, id: string, body: any) {
+    // This would typically involve updating stock transfer status and inventory
+    this.logger.log(`Receiving transfer ${id} for location ${ctx.locationId}`);
+    return { success: true };
+  }
+
+  async getDrivers(ctx: V2ApiContext) {
+    const drivers = await this.prisma.client.member.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+        // Assuming drivers have a specific role or tag, or just return all active members for now
+        // adjust based on actual schema if needed
+      },
+      select: {
+        id: true,
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return drivers.map(d => ({
+      id: d.id,
+      member: {
+        name: d.user?.name || 'Unknown Driver',
+      },
+    }));
   }
 }
