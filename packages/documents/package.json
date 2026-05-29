@@ -1,0 +1,37 @@
+{
+  "name": "@repo/documents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./templates/*": "./src/templates/*.tsx"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "echo \"no lint script defined\"",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "^4.2.1",
+    "@repo/db": "workspace:*",
+    "date-fns": "^4.1.0",
+    "react": "19.0.0",
+    "@types/react": "^19.2.14"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@testing-library/react": "^16.2.0",
+    "@vitest/coverage-v8": "^3.0.7",
+    "jsdom": "^26.0.0",
+    "typescript": "latest",
+    "vitest": "^3.0.7"
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  }
+}

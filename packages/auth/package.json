@@ -1,0 +1,26 @@
+{
+  "name": "@repo/auth",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "echo \"no lint script defined\"",
+    "type-check": "tsc --noEmit",
+    "dev": "echo \"no dev needed\""
+  },
+  "dependencies": {
+    "@repo/db": "workspace:*",
+    "better-auth": "^1.4.19",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^25.6.0",
+    "typescript": "latest"
+  }
+}

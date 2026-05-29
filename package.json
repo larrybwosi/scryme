@@ -25,7 +25,7 @@
     "node": ">=18"
   },
   "packageManager": "pnpm@9.15.1",
-  "name": "with-prisma",
+  "name": "scryme",
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "latest"
