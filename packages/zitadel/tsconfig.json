@@ -1,0 +1,32 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "noEmit": false,
+    "checkJs": false,
+    "types": [
+      "jest",
+      "node"
+    ],
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strict": false,
+    "rootDir": "..",
+    "baseUrl": ".",
+    "paths": {
+      "@repo/db": ["../db/src/index.ts"],
+      "@repo/db/client": ["../db/src/client.ts"],
+      "@repo/shared": ["../shared/src/index.ts"],
+      "@repo/windmill/server": ["../windmill/src/server.ts"],
+      "@repo/windmill": ["../windmill/src/index.ts"]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

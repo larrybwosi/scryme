@@ -1,0 +1,666 @@
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { PrismaService } from '@/prisma/prisma.service';
+import {
+  V2ApiContext,
+  ably,
+  createMemberToken,
+  verifyQRToken,
+  getDocumentUrl,
+  getPosProducts,
+  getPosProductsDelta,
+  performDeliveryDispatch,
+  performReconciliation,
+} from '@repo/shared/server';
+import { ZodError } from 'zod';
+import * as bcrypt from 'bcryptjs';
+import {
+  CheckInSchema,
+  CheckOutSchema,
+  AdjustStockSchema,
+  CreateCustomerSchema,
+  DispatchDeliverySchema,
+  ReconcileDeliverySchema,
+  CreateStockRequestSchema,
+} from './pos.schema';
+import { Decimal } from 'decimal.js';
+import { RedisService } from 'src/redis/redis.service';
+import { InventoryService } from '../inventory/inventory.service';
+import { PosCustomerService } from './pos-customer.service';
+
+@Injectable()
+export class PosService {
+  private readonly logger = new Logger(PosService.name);
+  private readonly MAX_PIN_ATTEMPTS = 3;
+  private readonly LOCKOUT_DURATION_SECONDS = 900;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+    private readonly inventoryService: InventoryService,
+    private readonly posCustomerService: PosCustomerService
+  ) {}
+
+  private validate<T>(schema: any, data: any): T {
+    try {
+      return schema.parse(data);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException({
+          message: 'Validation failed',
+          errors: error.flatten().fieldErrors,
+        });
+      }
+      throw new BadRequestException('Invalid request data');
+    }
+  }
+
+  async checkIn(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(CheckInSchema, body);
+    const { cardId, locationId, pin } = validated;
+
+    const organizationId = ctx.organizationId;
+    const rateLimitKey = `pin_attempts:${organizationId}:${cardId}`;
+    const currentAttempts = (await this.redis.get<number>(rateLimitKey)) || 0;
+
+    if (currentAttempts >= this.MAX_PIN_ATTEMPTS) {
+      const ttl = await this.redis.ttl(rateLimitKey);
+      const minutesLeft = Math.ceil(ttl / 60);
+      throw new BadRequestException(`Account locked. Try again in ${minutesLeft} minutes.`);
+    }
+
+    const member = await this.prisma.client.member.findFirst({
+      where: { cardId, organizationId },
+      select: {
+        id: true,
+        pinHash: true,
+        role: true,
+        isCheckedIn: true,
+        currentAttendanceLogId: true,
+        organizationId: true,
+        user: { select: { id: true, name: true, email: true, image: true } },
+      },
+    });
+
+    if (!member || !member.pinHash) {
+      throw new UnauthorizedException('Invalid credentials or PIN not set.');
+    }
+
+    const isPinValid = await bcrypt.compare(pin, member.pinHash);
+    if (!isPinValid) {
+      const newCount = await this.redis.incr(rateLimitKey);
+      if (newCount === 1) await this.redis.expire(rateLimitKey, this.LOCKOUT_DURATION_SECONDS);
+      throw new UnauthorizedException(`Invalid PIN. ${this.MAX_PIN_ATTEMPTS - newCount} attempts remaining.`);
+    }
+
+    await this.redis.del(rateLimitKey);
+
+    const safeClientMember = { id: member.id, role: member.role, user: member.user };
+
+    if (member.isCheckedIn && member.currentAttendanceLogId) {
+      const token = await createMemberToken(member.id, organizationId, member.currentAttendanceLogId);
+      return { member: safeClientMember, token, restoredSession: true };
+    }
+
+    const attendanceLog = await this.prisma.client.attendanceLog.create({
+      data: {
+        memberId: member.id,
+        organizationId: organizationId,
+        checkInTime: new Date(),
+        checkInLocationId: locationId,
+        notes: ctx.deviceId ? `Checked in via device: ${ctx.deviceId}` : undefined,
+      },
+      select: { id: true },
+    });
+
+    await this.prisma.client.member.update({
+      where: { id: member.id },
+      data: { isCheckedIn: true, currentCheckInLocationId: locationId, currentAttendanceLogId: attendanceLog.id },
+    });
+
+    const token = await createMemberToken(member.id, organizationId, attendanceLog.id);
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: member.id,
+        action: 'POS_CHECK_IN',
+        resourceType: 'ATTENDANCE_LOG',
+        resourceId: attendanceLog.id,
+        approved: true,
+        metadata: { locationId, restoredSession: false },
+      },
+    });
+
+    return { member: safeClientMember, token, restoredSession: false };
+  }
+
+  async checkOut(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(CheckOutSchema, body);
+    const { locationId } = validated;
+    if (!ctx.memberId) throw new UnauthorizedException('Member authentication required.');
+
+    const memberId = ctx.memberId;
+
+    await this.prisma.client.$transaction(async tx => {
+      const member = await tx.member.findUnique({ where: { id: memberId } });
+      if (!member || !member.isCheckedIn || !member.currentAttendanceLogId) {
+        throw new BadRequestException('Member is not checked in.');
+      }
+
+      const attendanceLog = await tx.attendanceLog.findUnique({ where: { id: member.currentAttendanceLogId } });
+      if (!attendanceLog || attendanceLog.checkOutTime)
+        throw new BadRequestException('Active attendance log not found.');
+
+      const checkOutTime = new Date();
+      const durationMs = checkOutTime.getTime() - attendanceLog.checkInTime.getTime();
+      const durationMinutes = Math.round(durationMs / 60000);
+
+      await tx.attendanceLog.update({
+        where: { id: attendanceLog.id },
+        data: { checkOutTime, checkOutLocationId: locationId, durationMinutes },
+      });
+
+      await tx.member.update({
+        where: { id: memberId },
+        data: { isCheckedIn: false, currentCheckInLocationId: null, currentAttendanceLogId: null },
+      });
+
+      await tx.actionAuditLog.create({
+        data: {
+          organizationId: ctx.organizationId,
+          memberId: memberId,
+          action: 'POS_CHECK_OUT',
+          resourceType: 'ATTENDANCE_LOG',
+          resourceId: member.currentAttendanceLogId,
+          approved: true,
+          metadata: { locationId },
+        },
+      });
+    });
+
+    return { message: 'Check-out successful.' };
+  }
+
+  async listLocations(ctx: V2ApiContext) {
+    const locations = await this.prisma.client.inventoryLocation.findMany({
+      where: { organizationId: ctx.organizationId, isActive: true },
+      select: { id: true, name: true, code: true, locationType: true, address: true, isDefault: true },
+      orderBy: { name: 'asc' },
+    });
+    return { locations };
+  }
+
+  async getProducts(ctx: V2ApiContext, query: any) {
+    const locationId = ctx.locationId || query.locationId;
+    if (!locationId) throw new BadRequestException('Location ID is required.');
+
+    const page = parseInt(query.page || '1', 10);
+    const limit = parseInt(query.limit || '50', 10);
+    const search = query.search || '';
+    const categoryId = query.categoryId || 'all';
+    const lastSync = query.lastSync;
+
+    if (lastSync) {
+      return getPosProductsDelta({
+        prisma: this.prisma.client,
+        organizationId: ctx.organizationId,
+        locationId,
+        lastSync,
+        page,
+        limit,
+      });
+    } else {
+      return getPosProducts({
+        prisma: this.prisma.client,
+        organizationId: ctx.organizationId,
+        locationId,
+        page,
+        limit,
+        search,
+        categoryId,
+      });
+    }
+  }
+
+  async getIncoming(ctx: V2ApiContext, query: any) {
+    const locationId = ctx.locationId || query.locationId;
+    if (!locationId) throw new BadRequestException('Location ID is required.');
+
+    const [openPurchases, incomingTransfers] = await Promise.all([
+      this.prisma.client.purchase.findMany({
+        where: { organizationId: ctx.organizationId, status: { in: ['ORDERED', 'PARTIALLY_RECEIVED'] } },
+        include: {
+          supplier: { select: { id: true, name: true } },
+          items: {
+            include: { variant: { select: { id: true, name: true, sku: true, product: { select: { name: true } } } } },
+          },
+        },
+      }),
+      this.prisma.client.stockTransfer.findMany({
+        where: {
+          organizationId: ctx.organizationId,
+          toLocationId: locationId,
+          status: { in: ['PENDING', 'IN_TRANSIT'] },
+        },
+        include: {
+          fromLocation: { select: { id: true, name: true } },
+          items: {
+            include: { variant: { select: { id: true, name: true, sku: true, product: { select: { name: true } } } } },
+          },
+        },
+      }),
+    ]);
+
+    const shipments = [
+      ...openPurchases.map(po => ({
+        id: po.id,
+        type: 'PURCHASE_ORDER',
+        referenceNumber: po.purchaseNumber,
+        source: po.supplier?.name || 'Unknown Supplier',
+        date: po.orderDate,
+        status: po.status,
+        itemCount: po.items.length,
+        items: po.items.map(i => ({
+          ...i,
+          variant: {
+            id: i.variant.id,
+            name: i.variant.name,
+            sku: i.variant.sku,
+          }
+        })),
+        receiveApiUrl: `/api/purchases/${po.id}/receive`,
+      })),
+      ...incomingTransfers.map(trf => ({
+        id: trf.id,
+        type: 'STOCK_TRANSFER',
+        referenceNumber: trf.transferNumber,
+        source: trf.fromLocation?.name || 'Unknown Location',
+        date: trf.requestedDate,
+        status: trf.status,
+        itemCount: trf.items.length,
+        items: trf.items.map(i => ({
+          ...i,
+          variant: {
+            id: i.variant.id,
+            name: i.variant.name,
+            sku: i.variant.sku,
+          }
+        })),
+        receiveApiUrl: `/api/transfers/${trf.id}/receive`,
+      })),
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return { data: shipments };
+  }
+
+  async scanTransaction(ctx: V2ApiContext, code: string) {
+    const payload = verifyQRToken(code);
+    if (!payload || payload.organizationId !== ctx.organizationId)
+      throw new BadRequestException('Invalid or expired QR code');
+
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: payload.transactionId, organizationId: ctx.organizationId },
+      include: { customer: { select: { name: true, email: true, phone: true } }, items: true, payments: true },
+    });
+
+    if (!transaction) throw new NotFoundException('Transaction not found');
+
+    return {
+      id: transaction.id,
+      number: transaction.number,
+      status: transaction.status,
+      total: transaction.finalTotal,
+      paymentStatus: transaction.paymentStatus,
+      customerName: transaction.customer?.name || 'Guest',
+      itemCount: transaction.items.length,
+      items: transaction.items.map(i => ({
+        name: i.productName,
+        sku: i.sku,
+        quantity: i.quantity,
+        total: i.lineTotal,
+      })),
+      createdAt: transaction.createdAt,
+      invoiceUrl: getDocumentUrl('invoice', transaction.id, ctx.organizationId),
+      waybillUrl: getDocumentUrl('waybill', transaction.id, ctx.organizationId),
+    };
+  }
+
+  async ablyAuth(ctx: V2ApiContext) {
+    if (!ctx.memberId || !ctx.organizationId) throw new UnauthorizedException('Missing context');
+
+    const { organizationId, memberId } = ctx;
+    const paymentChannel = `organization:${organizationId}:payments`;
+    const notificationChannel = `organization:${organizationId}:notifications`;
+    const organizationChannel = `organization:${organizationId}:*`;
+
+    const tokenRequest = await ably.auth.requestToken({
+      clientId: memberId,
+      capability: JSON.stringify({
+        'order-*': ['subscribe', 'publish'],
+        'cashier-notifications': ['subscribe'],
+        'channel:*': ['subscribe', 'publish', 'history'],
+        'session:*': ['subscribe', 'publish', 'history'],
+        'system:*': ['subscribe', 'publish', 'history'],
+        'presence:*': ['subscribe', 'publish', 'history', 'presence'],
+        'store:*': ['subscribe', 'publish', 'history', 'presence'],
+        [paymentChannel]: ['subscribe'],
+        [notificationChannel]: ['subscribe'],
+        [organizationChannel]: ['subscribe', 'publish', 'history', 'presence'],
+      }),
+      ttl: 3600 * 1000,
+      timestamp: Date.now(),
+    });
+
+    return { tokenRequest, metadata: { organizationId, paymentChannel } };
+  }
+
+  async getInventory(ctx: V2ApiContext, query: any) {
+    return this.inventoryService.getInventory(ctx, query);
+  }
+
+  async adjustStock(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(AdjustStockSchema, body);
+    const result = await this.inventoryService.adjustStock({ ...validated, userId: ctx.userId || 'system' });
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId || null,
+        action: 'ADJUST_STOCK',
+        resourceType: 'INVENTORY',
+        resourceId: validated.variantId || validated.productId,
+        approved: true,
+        metadata: { ...validated, previousStock: result.previousStock, newStock: result.newStock },
+      },
+    });
+
+    return result;
+  }
+
+  async sync(ctx: V2ApiContext, query: any) {
+    const { lastSync } = query;
+    const locationId = ctx.locationId || query.locationId;
+
+    if (!locationId) throw new BadRequestException('Location ID is required.');
+
+    const [products, customers, categories] = await Promise.all([
+      this.getProducts(ctx, { ...query, locationId }),
+      this.getCustomersDelta(ctx, lastSync),
+      this.prisma.client.category.findMany({
+        where: { organizationId: ctx.organizationId },
+        select: { id: true, name: true, description: true },
+      }),
+    ]);
+
+    return {
+      products,
+      customers,
+      categories,
+      timestamp: new Date(),
+    };
+  }
+
+  async getTransactions(ctx: V2ApiContext, query: any) {
+    const { organizationId, memberId, locationId } = ctx;
+    const { status, type, customerId, startDate, endDate } = query;
+
+    const where: any = { organizationId };
+
+    // Contextual filtering
+    if (locationId) where.locationId = locationId;
+    if (memberId && !ctx.permissions.includes('*')) {
+      where.memberId = memberId;
+    }
+
+    if (status) where.status = status;
+    if (type) where.type = type;
+    if (customerId) where.customerId = customerId;
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    const page = parseInt(query.page || '1', 10);
+    const limit = parseInt(query.limit || '50', 10);
+    const skip = (page - 1) * limit;
+
+    const [total, transactions] = await Promise.all([
+      this.prisma.client.transaction.count({ where }),
+      this.prisma.client.transaction.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          customer: { select: { id: true, name: true } },
+          items: true,
+          payments: true,
+        },
+      }),
+    ]);
+
+    return {
+      data: transactions,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getCustomersDelta(ctx: V2ApiContext, lastSync?: string) {
+    return this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync);
+  }
+
+  async createCustomer(ctx: V2ApiContext, body: any) {
+    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    const validated = this.validate<any>(CreateCustomerSchema, body);
+    return this.posCustomerService.createPosCustomer(ctx.organizationId, validated, ctx.memberId);
+  }
+
+  async dispatchDelivery(ctx: V2ApiContext, transactionId: string, body: any) {
+    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    const validated = this.validate<any>(DispatchDeliverySchema, body);
+    const result = await performDeliveryDispatch(this.prisma.client, {
+      transactionId,
+      organizationId: ctx.organizationId,
+      memberId: ctx.memberId,
+      ...validated,
+    });
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId,
+        action: 'DISPATCH_DELIVERY',
+        resourceType: 'TRANSACTION',
+        resourceId: transactionId,
+        approved: true,
+        metadata: validated,
+      },
+    });
+
+    return result;
+  }
+
+  async reconcileDelivery(ctx: V2ApiContext, body: any, _file?: any) {
+    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    const validated = this.validate<any>(ReconcileDeliverySchema, body);
+    const result = await performReconciliation(this.prisma.client, {
+      fulfilmentId: validated.fulfilmentId,
+      organizationId: ctx.organizationId,
+      reconciledBy: ctx.memberId,
+      outcome: validated.outcome === 'SUCCESS' ? 'DELIVERED' : 'FAILED',
+      proofUrl: validated.proofImage,
+      receivedBy: validated.receivedBy,
+      failureReason: validated.failureReason,
+    });
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId,
+        action: 'RECONCILE_DELIVERY',
+        resourceType: 'FULFILMENT',
+        resourceId: validated.fulfilmentId,
+        approved: true,
+        metadata: validated,
+      },
+    });
+
+    return result;
+  }
+
+  async listStockRequests(ctx: V2ApiContext) {
+    const locationId = ctx.locationId;
+    if (!locationId) throw new BadRequestException('Location ID required');
+
+    const requests = await this.prisma.client.stockRequest.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        OR: [{ fromLocationId: locationId }, { toLocationId: locationId }],
+      },
+      include: {
+        fromLocation: { select: { name: true } },
+        toLocation: { select: { name: true } },
+        items: { include: { variant: { include: { product: { select: { name: true } } } } } },
+        requestedBy: { select: { user: { select: { name: true } } } },
+      },
+      orderBy: { requestDate: 'desc' },
+    });
+
+    return { data: requests };
+  }
+
+  async createStockRequest(ctx: V2ApiContext, body: any) {
+    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    const locationId = ctx.locationId;
+    if (!locationId) throw new BadRequestException('Location ID required');
+
+    const validated = this.validate<any>(CreateStockRequestSchema, body);
+
+    const variantIds = validated.items.map((i: any) => i.variantId);
+    const variants = await this.prisma.client.productVariant.findMany({
+      where: { id: { in: variantIds }, organizationId: ctx.organizationId },
+    });
+
+    let totalEstimatedCost = new Decimal(0);
+    const itemsToCreate = validated.items.map((item: any) => {
+      const variant = variants.find(v => v.id === item.variantId);
+      if (!variant) throw new BadRequestException(`Variant ${item.variantId} not found`);
+      const itemCost = new Decimal(variant.buyingPrice ? Number(variant.buyingPrice) : 0).times(item.requestedQuantity);
+      totalEstimatedCost = totalEstimatedCost.plus(itemCost);
+      return {
+        variantId: item.variantId,
+        requestedQuantity: item.requestedQuantity,
+        reason: item.reason,
+        unitCostAtRequest: variant.buyingPrice || 0,
+      };
+    });
+
+    // Concurrency-safe request number generation with retries
+    let request: any;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    while (attempts < maxAttempts) {
+      try {
+        const lastRequest = await this.prisma.client.stockRequest.findFirst({
+          where: { organizationId: ctx.organizationId },
+          orderBy: { requestDate: 'desc' },
+          select: { requestNumber: true },
+        });
+
+        const lastNumber = lastRequest?.requestNumber ? parseInt(lastRequest.requestNumber.replace('SR-', ''), 10) : 0;
+        const requestNumber = `SR-${(lastNumber + 1).toString().padStart(5, '0')}`;
+
+        request = await this.prisma.client.stockRequest.create({
+          data: {
+            organizationId: ctx.organizationId,
+            requestNumber,
+            fromLocationId: locationId,
+            toLocationId: validated.toLocationId,
+            priority: validated.priority,
+            justification: validated.justification,
+            requestedById: ctx.memberId,
+            totalEstimatedCost,
+            items: { create: itemsToCreate },
+          },
+        });
+        break; // Success
+      } catch (error) {
+        if (error.code === 'P2002' && error.meta?.target?.includes('requestNumber')) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw new InternalServerErrorException(
+              'Failed to generate a unique stock request number after multiple attempts.'
+            );
+          }
+          continue; // Retry
+        }
+        throw error;
+      }
+    }
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId,
+        action: 'CREATE_STOCK_REQUEST',
+        resourceType: 'STOCK_REQUEST',
+        resourceId: request.id,
+        approved: true,
+        metadata: { priority: validated.priority, itemCount: itemsToCreate.length },
+      },
+    });
+
+    return { success: true, data: request };
+  }
+
+  async cancelStockRequest(ctx: V2ApiContext, id: string) {
+    const isAdmin = ctx.permissions.includes('*');
+    if (!ctx.memberId && !isAdmin) throw new UnauthorizedException('Member required');
+
+    const request = await this.prisma.client.stockRequest.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+    });
+
+    if (!request) throw new NotFoundException('Stock request not found');
+
+    // Authorization check: Only the requesting location can cancel
+    if (request.fromLocationId !== ctx.locationId && !isAdmin) {
+      throw new UnauthorizedException('You do not have permission to cancel this stock request');
+    }
+
+    if (request.status !== 'PENDING') throw new BadRequestException('Only pending requests can be cancelled');
+
+    await this.prisma.client.stockRequest.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId || null,
+        action: 'CANCEL_STOCK_REQUEST',
+        resourceType: 'STOCK_REQUEST',
+        resourceId: id,
+        approved: true,
+      },
+    });
+
+    return { success: true };
+  }
+}

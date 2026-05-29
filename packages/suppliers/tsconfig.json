@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@repo/db": [
+        "../db/src/index.ts"
+      ],
+      "@repo/shared": [
+        "../shared/src/index.ts"
+      ],
+      "@repo/windmill/server": [
+        "../windmill/src/server.ts"
+      ],
+      "@repo/ui/*": [
+        "../ui/src/*"
+      ],
+      "@repo/suppliers": [
+        "./src/index.ts"
+      ],
+      "@repo/suppliers/*": [
+        "./src/*"
+      ],
+      "@/*": [
+        "../../apps/main/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

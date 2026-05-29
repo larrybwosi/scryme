@@ -1,0 +1,26 @@
+export class StockBatchEntity {
+  constructor(
+    public readonly id: string,
+    public readonly variantId: string,
+    public readonly batchNumber: string | null,
+    public readonly supplierBatchNumber: string | null,
+    public readonly locationId: string,
+    public readonly initialQuantity: number,
+    public readonly currentQuantity: number,
+    public readonly purchasePrice: number,
+    public readonly expiryDate: Date | null,
+    public readonly receivedDate: Date,
+    public readonly organizationId: string,
+    public readonly supplierId: string | null,
+    public readonly parentId: string | null,
+    public readonly assemblyId: string | null,
+    public readonly isQuarantined: boolean,
+    public readonly isRecalled: boolean,
+    public readonly createdAt: Date,
+    public readonly updatedAt: Date,
+    public readonly children?: StockBatchEntity[],
+    public readonly supplier?: { name: string; email: string | null },
+    public readonly variant?: { name: string; sku: string },
+    public readonly movements?: any[],
+  ) {}
+}
