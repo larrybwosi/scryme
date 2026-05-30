@@ -1,4 +1,4 @@
-import { Search, Filter, ChevronDown, Download, FileSpreadsheet, Plus } from 'lucide-react';
+import { Search, Filter, ChevronDown, Download, FileSpreadsheet } from 'lucide-react';
 
 export function FilterBar() {
   return (
