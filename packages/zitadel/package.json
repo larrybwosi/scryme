@@ -18,7 +18,8 @@
     "@repo/shared": "workspace:*",
     "@types/node": "^20.19.33",
     "@zitadel/node": "^3.0.28",
-    "jose": "^6.2.1"
+    "jose": "^6.2.1",
+    "nice-grpc-common": "^2.0.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
