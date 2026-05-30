@@ -63,7 +63,7 @@ export async function createOrder(
           quantity: item.quantity,
           listPrice: variant.retailPrice ?? 0,
           unitPrice,
-          unitCost: variant.costPrice ?? 0,
+          unitCost: variant.buyingPrice ?? 0,
           subtotal: lineSubtotal,
           lineTotal: lineSubtotal, // Simplified: no line-level tax/discount for now
           sellingUnitId: item.sellingUnitId,
@@ -119,7 +119,7 @@ export async function createOrder(
           where: { id: transaction.id },
           data: {
             totalPaid,
-            paymentStatus: totalPaid.gte(finalTotal) ? PaymentStatus.PAID : PaymentStatus.PARTIAL,
+            paymentStatus: totalPaid.gte(finalTotal) ? PaymentStatus.PAID : PaymentStatus.PARTIALLY_PAID,
           },
         });
       }
