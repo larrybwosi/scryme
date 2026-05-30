@@ -455,8 +455,8 @@ importers:
         specifier: workspace:*
         version: link:../config-typescript
       '@types/pg':
-        specifier: ^8.16.0
-        version: 8.16.0
+        specifier: ^8.11.11
+        version: 8.11.11
       eslint:
         specifier: ^8.57.0
         version: 8.57.1
@@ -847,6 +847,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../config-typescript
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
       '@types/node':
         specifier: ^20.19.33
         version: 20.19.41
@@ -18044,7 +18047,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.2.0
       '@types/keyv': 3.1.4
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
       '@types/responselike': 1.0.3
 
   '@types/chai@5.2.3':
@@ -18054,7 +18057,7 @@ snapshots:
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
 
   '@types/d3-array@3.2.2': {}
 
@@ -18141,7 +18144,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
 
   '@types/linkify-it@5.0.0': {}
 
@@ -18176,14 +18179,14 @@ snapshots:
 
   '@types/pg@8.11.11':
     dependencies:
-      '@types/node': 22.19.19
-      pg-protocol: 1.10.3
+      '@types/node': 20.19.41
+      pg-protocol: 1.14.0
       pg-types: 4.1.0
 
   '@types/pg@8.16.0':
     dependencies:
       '@types/node': 20.19.41
-      pg-protocol: 1.10.3
+      pg-protocol: 1.14.0
       pg-types: 2.2.0
 
   '@types/prismjs@1.26.6': {}
@@ -18209,7 +18212,7 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
 
   '@types/semver@7.7.1': {}
 
@@ -18232,7 +18235,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -18505,7 +18508,7 @@ snapshots:
 
   '@typescript-eslint/utils@8.60.0(typescript@5.9.3)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@8.57.1)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@8.57.0)
       '@typescript-eslint/scope-manager': 8.60.0
       '@typescript-eslint/types': 8.60.0
       '@typescript-eslint/typescript-estree': 8.60.0(typescript@5.9.3)
@@ -20456,7 +20459,7 @@ snapshots:
   engine.io@6.6.8:
     dependencies:
       '@types/cors': 2.8.19
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
       '@types/ws': 8.18.1
       accepts: 1.3.8
       base64id: 2.0.0
@@ -22582,13 +22585,13 @@ snapshots:
 
   jest-message-util@30.4.1:
     dependencies:
-      '@babel/code-frame': 7.27.1
+      '@babel/code-frame': 7.29.7
       '@jest/types': 30.4.1
       '@types/stack-utils': 2.0.3
       chalk: 4.1.2
       graceful-fs: 4.2.11
       jest-util: 30.4.1
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       pretty-format: 30.4.1
       slash: 3.0.0
       stack-utils: 2.0.6
@@ -22828,7 +22831,7 @@ snapshots:
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   jest-validate@29.7.0:
     dependencies:
@@ -22872,7 +22875,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.19.19
+      '@types/node': 20.19.41
       merge-stream: 2.0.0
       supports-color: 8.1.1
 

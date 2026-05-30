@@ -1,7 +1,5 @@
 import 'dotenv/config';
-import { prisma } from "./client";
-
-import type { User } from "../generated/client";
+import { db as prisma } from "./client";
 
 const DEFAULT_USERS = [
   // Add your own user to pre-populate the database with
@@ -9,7 +7,7 @@ const DEFAULT_USERS = [
     name: "Tim Apple",
     email: "tim@apple.com",
   },
-] as Array<Partial<User>>;
+] as any[];
 
 (async () => {
   try {
@@ -20,10 +18,11 @@ const DEFAULT_USERS = [
             email: user.email!,
           },
           update: {
-            ...user,
+            name: user.name,
           },
           create: {
-            ...user,
+            name: user.name,
+            email: user.email,
           },
         })
       )

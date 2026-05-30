@@ -20,9 +20,45 @@ export class InventoryIntegrityService {
 
       if (variants.length === 0) break;
 
-      for (const variant of variants) {
-        const variantIssues = await this.verifyVariantIntegrity(organizationId, variant.id);
-        issues.push(...variantIssues);
+      const variantIds = variants.map(v => v.id);
+
+      // ⚡ Optimization: Fetch all stocks and batches for the variant batch in parallel
+      // This reduces database round-trips from ~300 to 3 per batch of 100 variants.
+      const [allStocks, allBatches] = await Promise.all([
+        this.prisma.client.productVariantStock.findMany({
+          where: { variantId: { in: variantIds } },
+        }),
+        this.prisma.client.stockBatch.findMany({
+          where: {
+            variantId: { in: variantIds },
+            currentQuantity: { gt: 0 },
+          },
+        }),
+      ]);
+
+      // Group data by variant and location for efficient lookup
+      for (const variantId of variantIds) {
+        const variantStocks = allStocks.filter(s => s.variantId === variantId);
+
+        for (const stock of variantStocks) {
+          const batches = allBatches.filter(
+            b => b.variantId === variantId && b.locationId === stock.locationId
+          );
+
+          const totalBatchQty = batches.reduce((acc: number, b: any) => acc + Number(b.currentQuantity), 0);
+          const currentStock = Number(stock.currentStock);
+
+          if (Math.abs(totalBatchQty - currentStock) > 0.001) {
+            issues.push({
+              type: 'STOCK_BATCH_MISMATCH',
+              variantId,
+              locationId: stock.locationId,
+              stockQty: currentStock,
+              batchTotalQty: totalBatchQty,
+              diff: totalBatchQty - currentStock,
+            });
+          }
+        }
       }
 
       skip += batchSize;
