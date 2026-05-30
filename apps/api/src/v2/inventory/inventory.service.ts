@@ -214,16 +214,15 @@ export class InventoryService {
       // 2. Log the movement
       const movement = await tx.stockMovement.create({
         data: {
-          organizationId: (tx as any).organizationId,
-          productId,
+          organization: { connect: { id: (tx as any).organizationId } },
           variantId,
           fromLocationId: quantity < 0 ? locationId : null,
           toLocationId: quantity > 0 ? locationId : null,
           quantity: Math.abs(quantity),
-          movementType: reason.toUpperCase(),
+          movementType: reason.toUpperCase() as any,
           notes,
           memberId: userId !== 'system' ? userId : undefined,
-        },
+        } as any,
       });
 
       return {

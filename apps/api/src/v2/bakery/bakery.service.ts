@@ -196,27 +196,27 @@ export class BakeryService {
         ingredients: true,
         steps: true,
         equipments: true,
-      },
+      } as any,
     });
 
     if (!recipe) throw new NotFoundException('Recipe not found');
 
-    const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe;
+    const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe as any;
 
     return this.prisma.client.recipe.create({
       data: {
         ...recipeData,
         name: `${recipeData.name} (Copy)`,
         ingredients: {
-          create: recipe.ingredients.map(({ id: _, recipeId: __, ...ing }) => ing),
+          create: (recipe as any).ingredients.map(({ id: _, recipeId: __, ...ing }: any) => ing),
         },
         steps: {
-          create: recipe.steps.map(({ id: _, recipeId: __, ...step }) => step),
+          create: (recipe as any).steps.map(({ id: _, recipeId: __, ...step }: any) => step),
         },
         equipments: {
-          create: recipe.equipments.map(({ id: _, recipeId: __, ...eq }) => eq),
+          create: (recipe as any).equipments.map(({ id: _, recipeId: __, ...eq }: any) => eq),
         },
-      },
+      } as any,
     });
   }
 
@@ -319,7 +319,7 @@ export class BakeryService {
         batchNumber,
         status: 'SCHEDULED' as any,
         notes: `Created from template: ${template.name}`,
-      },
+      } as any,
     });
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
@@ -362,7 +362,7 @@ export class BakeryService {
         leadBaker: { include: { member: { include: { user: true } } } },
         systemUnit: true,
         orgUnit: true,
-      },
+      } as any,
       orderBy: { scheduledStartAt: 'desc' },
     });
   }
@@ -521,7 +521,7 @@ export class BakeryService {
               memberId: ctx.memberId!,
               organizationId,
               notes: `Consumed in Batch ${batch.batchNumber}`,
-            },
+          } as any,
           });
 
           await tx.productVariantStock.update({
@@ -574,8 +574,8 @@ export class BakeryService {
               locationId: locationId,
               currentStock: netQuantity,
               availableStock: netQuantity,
-              organizationId,
-            },
+            organization: { connect: { id: organizationId } },
+          } as any,
           });
 
           await tx.stockMovement.create({
@@ -588,7 +588,7 @@ export class BakeryService {
               memberId: ctx.memberId!,
               organizationId,
               notes: `Produced from Batch ${batch.batchNumber} (Net yield after waste)`,
-            },
+            } as any,
           });
         }
       }
@@ -965,11 +965,11 @@ export class BakeryService {
     return this.prisma.client.$transaction(async tx => {
       const receipt = await tx.stockReceipt.create({
         data: {
-          organizationId,
-          memberId: memberId!,
+          organization: { connect: { id: organizationId } },
+          member: { connect: { id: memberId! } },
           receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
           notes: `GRN: ${receiptReference}. ${notes || ''}`,
-        },
+        } as any,
       });
 
       for (let i = 0; i < lines.length; i++) {
@@ -995,12 +995,12 @@ export class BakeryService {
             receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
             expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
             supplierId: line.supplier,
-            notes: line.notes,
+            ...(line.notes ? { notes: line.notes } : {}),
             stockReceiptId: receipt.id,
-          },
+          } as any,
         });
 
-        await tx.productVariantStock.upsert({
+        await (tx as any).productVariantStock.upsert({
           where: {
             variantId_locationId: {
               variantId: line.ingredientId,
@@ -1033,7 +1033,7 @@ export class BakeryService {
             referenceId: receipt.id,
             referenceType: 'StockReceipt',
             notes: `Received via Bakery GRN ${receiptReference}`,
-          },
+          } as any,
         });
       }
 

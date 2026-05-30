@@ -12,7 +12,7 @@ const pool = new Pool({
 });
 
 // 2. Pass the pool to the adapter
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaPg(pool as any);
 
 export const prisma =
   globalForPrisma.prisma ||

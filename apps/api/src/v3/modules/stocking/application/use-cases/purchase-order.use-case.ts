@@ -138,7 +138,7 @@ export class PurchaseOrderUseCase {
           if (batchDto.qcResults) {
             await (tx as any).qCResult.create({
               data: {
-                organizationId,
+                organization: { connect: { id: organizationId } },
                 templateId: batchDto.qcResults.templateId,
                 stockBatchId: batch.id,
                 purchaseItemId: purchaseItem.id,

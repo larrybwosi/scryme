@@ -52,8 +52,8 @@ export class MergeBatchesUseCase {
           purchasePrice: firstBatch.purchasePrice, // Weighted average would be better in production
           receivedDate: new Date(),
           batchNumber: `MERGED-${Date.now()}`,
-          notes: notes || `Merged from ${batches.length} batches`,
-        },
+          ...(notes || `Merged from ${batches.length} batches` ? { notes: notes || `Merged from ${batches.length} batches` } : {}),
+        } as any,
       });
 
       // 2. Deplete and link source batches

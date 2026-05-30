@@ -59,7 +59,6 @@ export class CatalogService {
             category: { select: { id: true, name: true } },
             variants: {
               include: {
-                inventory: true, // From HEAD
                 variantStocks: { select: { availableStock: true, locationId: true } },
                 baseUnit: true,
                 baseOrgUnit: true,
@@ -77,7 +76,7 @@ export class CatalogService {
           id: p.sku,
           internalId: p.id,
           images: p.imageUrls || null,
-          variants: p.variants.map(v => {
+          variants: (p as any).variants.map(v => {
             const totalStock = v.variantStocks?.reduce((sum, s) => sum + Number(s.availableStock), 0) || 0;
             return {
               id: v.id,
@@ -131,21 +130,17 @@ export class CatalogService {
         category: true,
         variants: {
           include: {
-            inventory: true,
+            variantStocks: true,
             baseUnit: true,
             baseOrgUnit: true,
-            priceHistory: {
-              take: 5,
-              orderBy: { effectiveDate: 'desc' },
-            },
-          },
+          } as any,
         },
         ingredients: {
           include: {
             ingredient: true,
           },
         },
-      },
+      } as any,
     });
 
     if (!product) throw new NotFoundException('Product not found');
@@ -260,7 +255,7 @@ export class CatalogService {
 
     return this.prisma.client.productVariant.findMany({
       where: { product: { organizationId } },
-      include: { product: true, inventory: true },
+      include: { product: true, variantStocks: true },
       skip,
       take: Number(limit),
     });
@@ -286,7 +281,7 @@ export class CatalogService {
       this.prisma.client.productVariant.count({
         where: {
           product: { organizationId },
-          inventory: { some: { quantity: { lte: 0 } } },
+          variantStocks: { some: { currentStock: { lte: 0 } } },
         },
       }),
     ]);

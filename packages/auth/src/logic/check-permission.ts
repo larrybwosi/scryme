@@ -84,15 +84,16 @@ export async function checkPermissionLogic(
     db.auditLog
       .create({
         data: {
-          organizationId: organizationId,
-          memberId: memberId,
+          organization: { connect: { id: organizationId } },
+          member: { connect: { id: memberId } },
           action: 'ACCESS_DENIED',
           entityType: 'AUTH_CHECK',
+          entityId: memberId,
           description: `Permission '${permission}' denied for member ${memberId} (Role: ${role}). Attempt ${attempts}/${CONFIG.MAX_FAILED_ATTEMPTS}.`,
           details: {
             requestedPermission: permission,
             heldPermissions: Array.from(context.permissions),
-          },
+          } as any,
         },
       })
       .catch(err => console.error('Failed to create audit log:', err));

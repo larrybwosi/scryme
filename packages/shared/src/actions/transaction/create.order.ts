@@ -4,9 +4,11 @@ import {
   PaymentStatus,
   TransactionStatus,
   TransactionType,
-  Decimal,
+  Prisma,
   db
 } from '@repo/db';
+
+const Decimal = Prisma.Decimal;
 import { CreateOrderInput, CreateOrderInputSchema } from '../../lib/validations/order';
 
 export type CreateOrderResult = {
@@ -30,7 +32,9 @@ export async function createOrder(
       const variants = await tx.productVariant.findMany({
         where: {
           id: { in: variantIds },
-          organizationId,
+          product: {
+            organizationId,
+          },
         },
         include: {
           product: true,
@@ -50,8 +54,8 @@ export async function createOrder(
           throw new Error(`Variant ${item.variantId} not found`);
         }
 
-        const unitPrice = new Decimal(item.unitPrice ?? variant.retailPrice ?? 0);
-        const quantity = new Decimal(item.quantity);
+        const unitPrice = new Decimal((item.unitPrice ?? (variant as any).retailPrice ?? 0) as string | number);
+        const quantity = new Decimal(item.quantity as string | number);
         const lineSubtotal = unitPrice.mul(quantity);
         subtotal = subtotal.add(lineSubtotal);
 
@@ -61,9 +65,9 @@ export async function createOrder(
           variantName: variant.name,
           sku: variant.sku,
           quantity: item.quantity,
-          listPrice: variant.retailPrice ?? 0,
+          listPrice: (variant as any).retailPrice ?? 0,
           unitPrice,
-          unitCost: variant.costPrice ?? 0,
+          unitCost: (variant as any).costPrice ?? 0,
           subtotal: lineSubtotal,
           lineTotal: lineSubtotal, // Simplified: no line-level tax/discount for now
           sellingUnitId: item.sellingUnitId,
@@ -119,7 +123,7 @@ export async function createOrder(
           where: { id: transaction.id },
           data: {
             totalPaid,
-            paymentStatus: totalPaid.gte(finalTotal) ? PaymentStatus.PAID : PaymentStatus.PARTIAL,
+            paymentStatus: totalPaid.gte(finalTotal) ? PaymentStatus.PAID : (PaymentStatus as any).PARTIAL,
           },
         });
       }

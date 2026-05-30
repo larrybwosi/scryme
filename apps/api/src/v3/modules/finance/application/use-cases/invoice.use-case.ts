@@ -73,9 +73,9 @@ export class InvoiceUseCase {
                 create: order.items.map(item => ({
                     itemCode: item.sku || 'N/A',
                     itemName: `${item.productName} ${item.variantName}`,
-                    quantity: item.quantity,
-                    rate: item.unitPrice,
-                    amount: item.lineTotal,
+                    quantity: Number(item.quantity),
+                    rate: Number(item.unitPrice),
+                    amount: Number(item.lineTotal),
                 }))
             }
         }
@@ -146,7 +146,7 @@ export class InvoiceUseCase {
           deleteMany: {},
           create: items,
         },
-      },
+      } as any,
       include: { items: true },
     });
   }

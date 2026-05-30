@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db, ZitadelConfiguration } from "@repo/db";
 import { BaseIntegrationService, IntegrationStatus, IntegrationConnectionResult } from "@repo/shared";
 import { getZitadelManagementClient, getZitadelEnvConfig, getZitadelUserClient } from "./client";

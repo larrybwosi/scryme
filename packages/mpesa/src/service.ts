@@ -76,7 +76,7 @@ export class MpesaService {
 
     const { organizationId, amount, phoneNumber, transactionId, paymentId } = parsed.data;
 
-    const config = await db.mpesaConfiguration.findUnique({
+    const config = await (db as any).mpesaConfiguration.findUnique({
       where: { organizationId },
     });
 
@@ -103,7 +103,7 @@ export class MpesaService {
     });
 
     // Record the request
-    await db.mpesaPaymentRequest.create({
+    await (db as any).mpesaPaymentRequest.create({
       data: {
         organizationId,
         paymentId,

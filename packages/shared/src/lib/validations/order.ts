@@ -14,16 +14,12 @@ export const OrderItemInputSchema = z.object({
 });
 
 export const OrderPaymentInputSchema = z.object({
-  method: z.nativeEnum(PaymentMethod, {
-    errorMap: () => ({ message: 'Invalid payment method' }),
-  }),
+  method: z.nativeEnum(PaymentMethod),
   amount: z.number().positive('Payment amount must be positive'),
 });
 
 export const OrderFulfillmentInputSchema = z.object({
-  type: z.nativeEnum(FulfillmentType, {
-    errorMap: () => ({ message: 'Invalid fulfillment type' }),
-  }),
+  type: z.nativeEnum(FulfillmentType),
   shippingAddressId: z.string().optional(),
   pickupLocationId: z.string().optional(),
   tableNumber: z.string().optional(),
