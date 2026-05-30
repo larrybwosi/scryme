@@ -1,4 +1,4 @@
-import { UnitType, IndustryCategory } from '../src/index';
+import { UnitType, IndustryCategory } from '../generated/client';
 
 // System Units data definition
 const units = [
@@ -143,7 +143,7 @@ async function seedConversions(prisma: any) {
 }
 
 async function main() {
-  const { db } = await import('../src/index.js');
+  const { db } = await import('../src/index');
   const prisma = db;
 
   await seedUnits(prisma);
