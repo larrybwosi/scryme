@@ -74,7 +74,7 @@
     "zod": "latest"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^8.57.1",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
@@ -85,6 +85,7 @@
     "@types/node": "^22.10.7",
     "@types/pg": "8.11.11",
     "@vitest/coverage-v8": "^3.0.7",
+    "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "server-only": "0.0.1",
