@@ -145,7 +145,7 @@ async function seedConversions(prisma: any) {
 }
 
 async function main() {
-  const { db } = await import('../src/index.js');
+  const { db } = await import('../src/index');
   const prisma = db;
 
   await seedUnits(prisma);
