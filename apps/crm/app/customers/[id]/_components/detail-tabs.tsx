@@ -50,7 +50,7 @@ export function DetailTabs({ activeTab, customerId, counts }: DetailTabsProps) {
 
   return (
     <div className="border-b border-border bg-card">
-      <div className="flex items-center overflow-x-auto px-6 custom-scrollbar" style={{ scrollbarHeight: 'none' }}>
+      <div className="flex items-center overflow-x-auto px-6 custom-scrollbar" style={{ msOverflowStyle: 'none' }}>
         {TABS.map((tab) => {
           const isActive = tab.id === activeTab;
           const count = counts?.[tab.id];
