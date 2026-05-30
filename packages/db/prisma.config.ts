@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import "dotenv/config";
 import path from "path";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 // Load .env from root if it exists
 config({ path: path.resolve(__dirname, "../../.env") });
