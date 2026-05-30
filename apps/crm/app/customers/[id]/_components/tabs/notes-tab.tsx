@@ -15,7 +15,7 @@ function NoteCard({
   onTogglePin,
 }: {
   note: Note;
-  onTogglePin: (id: string) => void;
+  onTogglePin: (_id: string) => void;
 }) {
   return (
     <div
