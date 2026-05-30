@@ -1,40 +1,31 @@
-import { Search, Filter, ChevronDown, Download, FileSpreadsheet } from 'lucide-react';
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  Search,
+  Filter,
+} from "lucide-react";
 
 export function FilterBar() {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <button className="flex items-center gap-2 px-3 py-2 bg-white border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors">
-            All Supplier <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-        <div className="relative">
-          <button className="flex items-center gap-2 px-3 py-2 bg-white border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors">
-            Monthly <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </button>
-        </div>
-        <button className="p-2 bg-white border border-border rounded-lg hover:bg-muted transition-colors">
-          <Filter className="w-4 h-4 text-muted-foreground" />
-        </button>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-xl border border-zinc-200 shadow-sm mb-6">
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <input
+          type="text"
+          placeholder="Search purchases..."
+          className="w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/5 transition-all"
+        />
       </div>
-
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
-          />
-        </div>
-        <button className="flex items-center gap-2 px-3 py-2 bg-white border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4 text-muted-foreground" />
-          Export PDF
+      <div className="flex items-center gap-2">
+        <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
+          <Filter className="h-4 w-4" />
+          Filter
         </button>
-        <button className="flex items-center gap-2 px-3 py-2 bg-white border border-border rounded-lg text-sm font-medium hover:bg-muted transition-colors">
-          <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />
-          Export Excel
+        <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors">
+          <ArrowUpDown className="h-4 w-4" />
+          Sort
         </button>
       </div>
     </div>
