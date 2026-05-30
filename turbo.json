@@ -36,6 +36,10 @@
     "type-check": {
       "dependsOn": ["^generate"],
       "env": ["DATABASE_URL"]
+    },
+    "test": {
+      "dependsOn": ["^generate"],
+      "env": ["DATABASE_URL"]
     }
   }
 }

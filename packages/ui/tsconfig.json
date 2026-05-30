@@ -7,12 +7,12 @@
         "./src/*"
       ]
     },
-    "jsx": "react-jsx",
     "skipLibCheck": true,
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strict": false,
     "types": [
+      "jest",
       "node"
     ],
     "rootDir": "src",

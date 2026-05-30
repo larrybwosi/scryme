@@ -45,3 +45,8 @@ jobs:
         run: pnpm type-check
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+      - name: Test
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
