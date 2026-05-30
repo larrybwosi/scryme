@@ -146,7 +146,7 @@ export class ExpenseUseCase {
     await tx.pettyCashTransaction.create({
       data: {
         fundId,
-        type: PettyCashTransactionType.TOP_UP, // Using TOP_UP for simplicity as seen in previous logic, or ideally EXPENSE if it exists
+        type: PettyCashTransactionType.EXPENSE,
         amount,
         description,
         memberId,
@@ -170,6 +170,42 @@ export class ExpenseUseCase {
   async getExpenseCategories(organizationId: string) {
     return await this.prisma.client.expenseCategory.findMany({
       where: { organizationId, isActive: true },
+    });
+  }
+
+  async approveExpense(organizationId: string, memberId: string, expenseId: string) {
+    return await this.prisma.client.$transaction(async tx => {
+      const expense = await tx.expense.findFirst({
+        where: { id: expenseId, organizationId },
+      });
+
+      if (!expense) throw new NotFoundException('Expense not found');
+      if (expense.status !== ExpenseStatus.PENDING && expense.status !== ExpenseStatus.PENDING_APPROVAL) {
+        throw new BadRequestException('Expense is not in a state that can be approved');
+      }
+
+      const updatedExpense = await tx.expense.update({
+        where: { id: expenseId },
+        data: {
+          status: ExpenseStatus.APPROVED,
+          approverId: memberId,
+          approvalDate: new Date(),
+        },
+      });
+
+      await this.handlePostApprovalActions(
+        tx,
+        organizationId,
+        memberId,
+        {
+          description: expense.description,
+          pettyCashFundId: expense.pettyCashFundId,
+          budgetId: expense.budgetId,
+        } as any,
+        expense.amount
+      );
+
+      return updatedExpense;
     });
   }
 }
