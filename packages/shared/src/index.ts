@@ -13,6 +13,7 @@ export * from './api/v2/utils/client/formatting';
 export * from './realtime';
 export * from './types/action-response';
 export * from './lib/validations/sale';
+export * from './lib/validations/order';
 export * from './lib/services/unit-calculation.service';
 export * from './lib/services/conversion.service';
 export * from './redis';
