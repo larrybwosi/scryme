@@ -54,7 +54,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "echo \"no lint script defined\"",
+    "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
     "dev": "echo \"no dev needed\""
   }

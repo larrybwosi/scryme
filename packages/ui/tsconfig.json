@@ -1,6 +1,7 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
+    "target": "es2017",
     "ignoreDeprecations": "6.0",
     "paths": {
       "@repo/ui/*": [
@@ -12,7 +13,6 @@
     "strictNullChecks": false,
     "strict": false,
     "types": [
-      "jest",
       "node"
     ],
     "rootDir": "src",

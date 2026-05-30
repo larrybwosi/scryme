@@ -118,7 +118,7 @@ async function seedUnits(prisma: any) {
 
 async function seedConversions(prisma: any) {
   console.log('Seeding unit conversions...');
-  const unitMap = new Map<string, string>();
+  const unitMap = new global.Map<string, string>();
   const dbUnits = await prisma.systemUnit.findMany();
   dbUnits.forEach((u: any) => unitMap.set(u.symbol, u.id));
 
