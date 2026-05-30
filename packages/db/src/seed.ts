@@ -9,7 +9,7 @@ const DEFAULT_USERS = [
     name: "Tim Apple",
     email: "tim@apple.com",
   },
-] as Array<Partial<User>>;
+] as any[];
 
 (async () => {
   try {
