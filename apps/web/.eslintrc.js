@@ -1,8 +1,34 @@
+const { resolve } = require("node:path");
+
+const project = resolve(__dirname, "tsconfig.json");
+
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
-  extends: ["@repo/eslint-config/next.js"],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: true,
+  extends: [
+    "eslint:recommended",
+    "prettier",
+    "next/core-web-vitals",
+    "turbo",
+  ],
+  globals: {
+    React: true,
+    JSX: true,
   },
+  env: {
+    node: true,
+  },
+  plugins: ["only-warn"],
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project,
+      },
+    },
+  },
+  ignorePatterns: [
+    // Ignore dotfiles
+    ".*.js",
+    "node_modules/",
+  ],
+  overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
 };

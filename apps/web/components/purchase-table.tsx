@@ -1,4 +1,5 @@
 import { MoreHorizontal } from 'lucide-react';
+import Image from 'next/image';
 
 const purchases = [
   { id: '#102121', product: '5 Star Quality Bed Set', image: 'https://api.dicebear.com/7.x/initials/svg?seed=BS', supplier: 'Ikea Store', date: '03/12/2024', quantity: 500, price: '$1,500', total: '$14,000' },
@@ -42,8 +43,8 @@ export function PurchaseTable() {
                 <td className="px-6 py-4 text-sm text-muted-foreground font-medium">{purchase.id}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-border shadow-sm">
-                      <img src={purchase.image} alt="" className="w-full h-full object-cover" />
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-border shadow-sm relative">
+                      <Image src={purchase.image} alt={purchase.product} fill sizes="32px" className="object-cover" />
                     </div>
                     <span className="text-sm font-bold">{purchase.product}</span>
                   </div>
