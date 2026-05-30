@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Bell, Info, CheckCircle, AlertTriangle, XCircle, DollarSign } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/ui/dialog';
+import { Label } from '@repo/ui/components/ui/label';
+import { Switch } from '@repo/ui/components/ui/switch';
+import { Slider } from '@repo/ui/components/ui/slider';
+import { Button } from '@repo/ui/components/ui/button';
+import { Separator } from '@repo/ui/components/ui/separator';
 import { notificationService, type NotificationSettings } from '@/lib/notification-service';
 
 interface NotificationSettingsDialogProps {

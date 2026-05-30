@@ -1,5 +1,5 @@
 import { useKdsStore } from '@/store/kds-store';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { Wifi, WifiOff, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@repo/ui/components/ui/tooltip";
 
 export function NetworkStatusBadge() {
   const status = useKdsStore(state => state.connectionStatus);

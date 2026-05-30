@@ -33,12 +33,12 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command';
+} from '@repo/ui/components/ui/command';
 import { useNavigate } from 'react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { useDebounce } from 'use-debounce';
 import { useAuth } from '@/hooks/use-auth';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { usePosStore } from '@/store/store';
 import { useTheme } from 'next-themes';

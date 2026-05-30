@@ -14,7 +14,7 @@ import {
   XCircle,
   Search,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/ui/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -22,12 +22,12 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
+} from '@repo/ui/components/ui/dialog';
+import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Input } from '@repo/ui/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
+import { Separator } from '@repo/ui/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { notificationService, type AppNotification, type NotificationType } from '@/lib/notification-service';
 import { listen } from '@tauri-apps/api/event';
