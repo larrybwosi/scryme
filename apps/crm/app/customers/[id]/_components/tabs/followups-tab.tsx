@@ -16,7 +16,7 @@ function FollowUpCard({
   onComplete,
 }: {
   followUp: FollowUp;
-  onComplete: (id: string) => void;
+  onComplete: (_id: string) => void;
 }) {
   const isCompleted = followUp.status === 'Completed';
   const isOverdue = followUp.status === 'Overdue';

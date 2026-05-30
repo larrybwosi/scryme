@@ -43,7 +43,7 @@ export function PurchaseTable() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full overflow-hidden border border-border shadow-sm">
-                      <img src={purchase.image} alt="" className="w-full h-full object-cover" />
+                      <img src={purchase.image} alt="Supplier logo" className="w-full h-full object-cover" />
                     </div>
                     <span className="text-sm font-bold">{purchase.product}</span>
                   </div>
