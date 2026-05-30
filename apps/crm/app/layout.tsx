@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="font-sans antialiased text-foreground">
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto custom-scrollbar bg-background">
+          <main className="flex-1 overflow-hidden bg-background">
             {children}
           </main>
         </div>

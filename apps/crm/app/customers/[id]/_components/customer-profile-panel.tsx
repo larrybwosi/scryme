@@ -149,50 +149,50 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           Quick Stats
         </h3>
         <div className="space-y-3.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <DollarSign size={13} className="text-primary" />
               </div>
-              <span className="text-[12.5px] text-muted-foreground">Total Revenue</span>
+              <span className="text-[12.5px] text-muted-foreground truncate">Total Revenue</span>
             </div>
-            <span className="text-[13px] font-bold text-foreground">
+            <span className="text-[13px] font-bold text-foreground flex-shrink-0">
               {formatCurrency(customer.totalRevenue)}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-status-info/10 flex items-center justify-center">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-status-info/10 flex items-center justify-center flex-shrink-0">
                 <ShoppingCart size={13} className="text-status-info" />
               </div>
-              <span className="text-[12.5px] text-muted-foreground">Total Orders</span>
+              <span className="text-[12.5px] text-muted-foreground truncate">Total Orders</span>
             </div>
-            <span className="text-[13px] font-bold text-foreground">{customer.totalOrders}</span>
+            <span className="text-[13px] font-bold text-foreground flex-shrink-0">{customer.totalOrders}</span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-status-warning/10 flex items-center justify-center">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-status-warning/10 flex items-center justify-center flex-shrink-0">
                 <FileText size={13} className="text-status-warning" />
               </div>
-              <span className="text-[12.5px] text-muted-foreground">Open Invoices</span>
+              <span className="text-[12.5px] text-muted-foreground truncate">Open Invoices</span>
             </div>
             <span
               className={cn(
-                'text-[13px] font-bold',
+                'text-[13px] font-bold flex-shrink-0',
                 customer.openInvoices > 0 ? 'text-destructive' : 'text-foreground'
               )}
             >
               {customer.openInvoices}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
                 <Star size={13} className="text-amber-500" />
               </div>
-              <span className="text-[12.5px] text-muted-foreground">Loyalty Points</span>
+              <span className="text-[12.5px] text-muted-foreground truncate">Loyalty Points</span>
             </div>
-            <span className="text-[13px] font-bold text-foreground">
+            <span className="text-[13px] font-bold text-foreground flex-shrink-0">
               {customer.loyaltyPoints.toLocaleString()}
             </span>
           </div>
