@@ -69,7 +69,7 @@ export function CustomersView() {
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
       {/* Page Header */}
       <div className="px-8 pt-7 pb-6">
         <div className="flex items-start justify-between">
