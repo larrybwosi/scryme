@@ -1,9 +1,9 @@
 import { memo, useState, useMemo, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
 import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { UnitSelectionDialog } from './unit-selection-dialog';
 

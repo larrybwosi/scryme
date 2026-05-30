@@ -8,14 +8,14 @@ import {
   getDefaultKitchenTicketConfig,
   getDefaultReceiptConfig,
 } from '@/store/store';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Switch } from '@repo/ui/components/ui/switch';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Button } from '@repo/ui/components/ui/button';
+import { Slider } from '@repo/ui/components/ui/slider';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { ReceiptPdfDocument } from '@/components/receipt-pdf';
 import { PDFKitchenTicket } from '@/components/receipts/pdf-kitchen-ticket';
 import { usePdfActions } from '@/hooks/use-pdf-actions';

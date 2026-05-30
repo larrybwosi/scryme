@@ -1,6 +1,6 @@
 'use client';
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
 import { toast } from 'sonner';
 import CustomerForm from './customer-form';
 import { useCreateCustomer } from '@/hooks/customers';

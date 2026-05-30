@@ -6,10 +6,10 @@ import QRCode from 'qrcode';
 import bwipjs from '@bwip-js/browser';
 
 // UI Components
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@repo/ui/components/ui/dialog';
+import { Button } from '@repo/ui/components/ui/button';
+import { Separator } from '@repo/ui/components/ui/separator';
+import { Badge } from '@repo/ui/components/ui/badge';
 
 import { ReceiptPdfDocument } from '@/components/receipt-pdf';
 import { usePosStore, type Order, type ReceiptConfig } from '@/store/store';

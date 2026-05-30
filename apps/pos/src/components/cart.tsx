@@ -3,12 +3,12 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { usePosStore } from '@/store/store';
 import { useUiStore } from '@/store/ui-store';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -16,12 +16,12 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from '@repo/ui/components/ui/dialog';
 import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck } from 'lucide-react';
 import { Kbd } from '@/components/ui/kbd';
 import PaymentModal from '@/components/pos/payment-dialog';
 import { CustomerSelector } from '@/components/customer-selector';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/ui/toggle-group';
 import { AgeVerificationDialog } from '@/components/age-verification-dialog';
 import type { Order, CartItem, Customer, OrderType } from '@/types';
 import { ReceiptDialog } from '@/components/receipt-dialog';
