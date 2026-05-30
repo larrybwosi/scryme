@@ -16,13 +16,13 @@ import {
 import { useFormattedCurrency, cn } from '@/lib/utils';
 import posthog from 'posthog-js';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Separator } from '@repo/ui/components/ui/separator';
+import { Textarea } from '@repo/ui/components/ui/textarea';
 import { FulfillmentType, TransactionType, useCreateOrder } from '@/hooks/sales';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Button } from '@repo/ui/components/ui/button';
+import { Label } from '@repo/ui/components/ui/label';
+import { Input } from '@repo/ui/components/ui/input';
 import { CreateOrderSchema, OrderFormValues, TransactionStatus } from '@/lib/validation/transactions';
 import {
   Command,
@@ -31,12 +31,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@repo/ui/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@repo/ui/components/ui/popover";
 import { CustomerSelect } from '@/components/customer.select';
 import { usePosProducts } from '@/hooks/products';
 import { useAuthStore } from '@/store/pos-auth-store';

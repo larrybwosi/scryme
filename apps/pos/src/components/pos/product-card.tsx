@@ -1,11 +1,11 @@
 import { memo, useState, useMemo, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
 import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Separator } from '@repo/ui/components/ui/separator';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { UnitSelectionDialog } from './unit-selection-dialog';
 

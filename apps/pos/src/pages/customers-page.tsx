@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import posthog from 'posthog-js'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@repo/ui/components/ui/button"
+import { Input } from "@repo/ui/components/ui/input"
+import { Badge } from "@repo/ui/components/ui/badge"
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar"
 import { Search, Mail, Phone, Edit, User, Plus, RefreshCw, ChevronRight } from "lucide-react"
 import AddCustomerSheet from "@/components/customers/add-customer"
 import { useFormattedCurrency } from "@/lib/utils"

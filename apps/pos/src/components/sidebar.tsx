@@ -30,13 +30,13 @@ import {
   Keyboard,
   Barcode,
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/ui/avatar';
 import { usePosStore } from '@/store/store';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/ui/components/ui/button';
 import { ScanOrderDialog } from './scan-order-dialog';
 import { ShortcutsHelpDialog } from './shortcuts-help-dialog';
 import { useUiStore } from '@/store/ui-store';

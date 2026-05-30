@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Button } from '@repo/ui/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
-import { TableCell, TableRow } from '@/components/ui/table';
+} from '@repo/ui/components/ui/dropdown-menu';
+import { Progress } from '@repo/ui/components/ui/progress';
+import { TableCell, TableRow } from '@repo/ui/components/ui/table';
 import {
   CheckCircle2,
   Download,

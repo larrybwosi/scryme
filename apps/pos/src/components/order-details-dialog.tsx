@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import type { Order } from '@/store/store';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/ui/dialog';
+import { Button } from '@repo/ui/components/ui/button';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Card } from '@repo/ui/components/ui/card';
+import { Separator } from '@repo/ui/components/ui/separator';
 import { Download, Printer, ShoppingBag, Truck, UtensilsCrossed, ChefHat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePosStore } from '@/store/store';
