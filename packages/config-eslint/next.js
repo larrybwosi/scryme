@@ -1,34 +1,11 @@
-const { resolve } = require("node:path");
+import { config as baseConfig } from "./library.js";
+import tseslint from "typescript-eslint";
 
-const project = resolve(process.cwd(), "tsconfig.json");
-
-/** @type {import("eslint").Linter.Config} */
-module.exports = {
-  extends: [
-    "eslint:recommended",
-    "prettier",
-    require.resolve("@vercel/style-guide/eslint/next"),
-    "turbo",
-  ],
-  globals: {
-    React: true,
-    JSX: true,
-  },
-  env: {
-    node: true,
-  },
-  plugins: ["only-warn"],
-  settings: {
-    "import/resolver": {
-      typescript: {
-        project,
-      },
+export const config = tseslint.config(
+  ...baseConfig,
+  {
+    rules: {
+      "no-undef": "off",
     },
-  },
-  ignorePatterns: [
-    // Ignore dotfiles
-    ".*.js",
-    "node_modules/",
-  ],
-  overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
-};
+  }
+);

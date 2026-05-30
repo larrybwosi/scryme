@@ -2,6 +2,7 @@
   "private": true,
   "name": "web",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -24,7 +25,9 @@
     "@types/node": "^20.11.24",
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
-    "eslint": "^8.57.0",
-    "typescript": "5.5.4"
+    "@eslint/js": "9.19.0",
+    "eslint": "9.19.0",
+    "typescript": "5.5.4",
+    "typescript-eslint": "8.21.0"
   }
 }
