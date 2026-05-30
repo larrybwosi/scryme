@@ -1,0 +1,20 @@
+
+> web@1.0.0 dev /app/apps/web
+> next dev
+
+⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.2:300 GET / 200 in 485ms (next.js: 82ms, application-code: 403ms)
+unning.
+
+- Local:        http://localhost:3000
+- PID:          216362
+- Dir:          /app/apps/web
+- Log:          .next/dev/logs/next-development.log
+
+Run kill 216362 to stop it.
+[?25h
+/app/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  web@1.0.0 dev: `next dev`
+Exit status 1

@@ -1,34 +1,11 @@
-const { resolve } = require("node:path");
-
-const project = resolve(__dirname, "tsconfig.json");
-
-/** @type {import("eslint").Linter.Config} */
 module.exports = {
-  extends: [
-    "eslint:recommended",
-    "prettier",
-    "next/core-web-vitals",
-    "turbo",
-  ],
-  globals: {
-    React: true,
-    JSX: true,
-  },
-  env: {
-    node: true,
-  },
-  plugins: ["only-warn"],
+  extends: ['next/core-web-vitals', 'prettier'],
+  plugins: ['only-warn'],
   settings: {
-    "import/resolver": {
+    'import/resolver': {
       typescript: {
-        project,
+        project: __dirname + '/tsconfig.json',
       },
     },
   },
-  ignorePatterns: [
-    // Ignore dotfiles
-    ".*.js",
-    "node_modules/",
-  ],
-  overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
 };
