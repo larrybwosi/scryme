@@ -32,11 +32,18 @@ export type UpdateInvoiceDto = z.infer<typeof updateInvoiceSchema>;
  * Creates a new invoice for a given purchase order.
  */
 export async function createSupplierInvoice(data: CreateInvoiceDto) {
+  const purchase = await prisma.purchase.findUnique({
+    where: { id: data.purchaseId },
+  });
+
+  if (!purchase) throw new Error('Purchase not found');
+
   const invoice = await prisma.supplierInvoice.create({
     data: {
       purchaseId: data.purchaseId,
       invoiceNumber: data.invoiceNumber,
-      supplierId: data.supplierId,
+      supplierId: data.supplierId || purchase.supplierId,
+      organizationId: purchase.organizationId,
       issueDate: data.issueDate,
       dueDate: data.dueDate,
       totalAmount: new Prisma.Decimal(data.totalAmount),
@@ -49,7 +56,7 @@ export async function createSupplierInvoice(data: CreateInvoiceDto) {
 
   await prisma.purchase.update({
     where: { id: data.purchaseId },
-    data: { status: 'INVOICED' },
+    data: { status: 'BILLED' },
   });
 
   return invoice;
@@ -85,6 +92,8 @@ export async function updateSupplierInvoice(invoiceId: string, data: UpdateInvoi
     where: { id: invoiceId },
     data: {
       ...data,
+      notes: data.notes ?? undefined,
+      invoiceUrl: data.invoiceUrl ?? undefined,
       amountPaid: data.amountPaid !== undefined ? new Prisma.Decimal(data.amountPaid) : undefined,
       totalAmount: undefined, // ensure it is not overwritten if not in data
     },

@@ -41,7 +41,7 @@ COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 
 # Generate Prisma Client (if needed by CRM)
-RUN DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres" npx turbo run generate
+RUN npx turbo run generate
 
 # Build the CRM and its internal workspace dependencies
 RUN npx turbo build --filter=crm...

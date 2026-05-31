@@ -42,10 +42,10 @@ COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 
 # Generate Prisma Client
-RUN DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres" npx turbo run db:generate
+RUN npx turbo run generate
 
 # Build the API and its internal workspace dependencies
-RUN DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres" npx turbo build --filter=api...
+RUN npx turbo build --filter=api...
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)

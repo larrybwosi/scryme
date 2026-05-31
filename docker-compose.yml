@@ -3,9 +3,9 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=scryme
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-scryme}
     ports:
       - '5432:5432'
     volumes:
@@ -34,14 +34,14 @@ services:
     image: ghcr.io/larrybwosi/scryme-api:latest
     restart: always
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/scryme?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scryme}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
       # Zitadel configuration placeholders
-      - ZITADEL_API_URL=https://zitadel.example.com
-      - ZITADEL_ORG_ID=your-org-id
-      - ZITADEL_PROJECT_ID=your-project-id
+      - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
+      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-your-org-id}
+      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-your-project-id}
     ports:
       - '3002:4000'
     depends_on:
@@ -55,12 +55,12 @@ services:
     image: ghcr.io/larrybwosi/scryme-crm:latest
     restart: always
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/scryme?schema=public
-      - NEXT_PUBLIC_API_URL=http://localhost:3002
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scryme}?schema=public
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
       - PORT=3001
       # Zitadel configuration placeholders
-      - ZITADEL_API_URL=https://zitadel.example.com
-      - ZITADEL_CLIENT_ID=your-client-id
+      - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
+      - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID:-your-client-id}
     ports:
       - '3001:3001'
     depends_on:
@@ -73,8 +73,8 @@ services:
     image: ghcr.io/larrybwosi/scryme-web:latest
     restart: always
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/scryme?schema=public
-      - NEXT_PUBLIC_API_URL=http://localhost:3002
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scryme}?schema=public
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
       - PORT=3000
     ports:
       - '3000:3000'
