@@ -3,9 +3,9 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-scryme}
+      - POSTGRES_USER=${POSTGRES_USER:-dbuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dbpassword}
+      - POSTGRES_DB=${POSTGRES_DB:-appdb}
     ports:
       - '5432:5432'
     volumes:
@@ -34,7 +34,7 @@ services:
     image: ghcr.io/larrybwosi/scryme-api:latest
     restart: always
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scryme}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-appdb}?schema=public
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
@@ -55,7 +55,7 @@ services:
     image: ghcr.io/larrybwosi/scryme-crm:latest
     restart: always
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scryme}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-appdb}?schema=public
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
       - PORT=3001
       # Zitadel configuration placeholders
@@ -73,7 +73,7 @@ services:
     image: ghcr.io/larrybwosi/scryme-web:latest
     restart: always
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-scryme}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-appdb}?schema=public
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
       - PORT=3000
     ports:
