@@ -3,14 +3,13 @@
 # ---------------------------------------------------------
 FROM node:22-slim AS base
 
-# Prisma needs openssl, and ca-certificates. Slim needs more build tools than alpine for some native modules if they were used,
-# but for runtime it's generally fine.
+# Prisma needs openssl, and ca-certificates.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm (aligned with version 10.33.0)
+# Install pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
@@ -22,7 +21,7 @@ FROM base AS pruner
 WORKDIR /app
 RUN pnpm add -g turbo
 COPY . .
-RUN turbo prune api --docker
+RUN turbo prune web --docker
 
 # ---------------------------------------------------------
 # Stage 3: Installer & Builder
@@ -41,11 +40,15 @@ RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scrip
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 
-# Generate Prisma Client
+# Build-time environment variables
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Generate Prisma Client (if needed by Web)
 RUN npx turbo run generate
 
-# Build the API and its internal workspace dependencies
-RUN npx turbo build --filter=api...
+# Build the Web app and its internal workspace dependencies
+RUN npx turbo build --filter=web...
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -54,37 +57,24 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=4000
+ENV PORT=3000
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs nestjs
+RUN useradd --system --uid 1001 -g nodejs nextjs
 
-# Install Prisma globally for migrations using pnpm to match base
-RUN pnpm add -g prisma@7.8.0
+# Copy built outputs preserving workspace paths
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Set up pnpm and prisma engines permissions for the non-root user
-RUN chown -R nestjs:nodejs /pnpm
-
-# Copy node_modules and built outputs preserving workspace paths
-COPY --from=installer --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=installer --chown=nestjs:nodejs /app/apps/api/dist ./dist
-COPY --from=installer --chown=nestjs:nodejs /app/apps/api/package.json ./package.json
-
-# Copy shared packages if your API depends on them
-COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
-COPY --from=installer --chown=nestjs:nodejs /app/packages/database/prisma ./prisma
-
-# Copy entrypoint script safely from the pruned context
-COPY --from=pruner --chown=nestjs:nodejs /app/apps/api/entrypoint.sh ./entrypoint.sh
+# Copy entrypoint script
+COPY --from=pruner --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-USER nestjs
+USER nextjs
 
-EXPOSE 4000
-
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/v2/health || exit 1
+EXPOSE 3000
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["node", "dist/main"]
+CMD ["node", "apps/web/server.js"]
