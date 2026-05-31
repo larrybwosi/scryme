@@ -47,6 +47,12 @@ export class CatalogService {
           : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(featured ? { isFeatured: true } : {}),
+        /**
+         * ⚡ Bolt: Performance Optimization
+         * Move inStock filtering to the database level.
+         * This improves performance by reducing data transfer and ensures correct pagination.
+         */
+        ...(inStock ? { variants: { some: { variantStocks: { some: { availableStock: { gt: 0 } } } } } } : {}),
       };
 
       const [products, total] = await Promise.all([
@@ -96,10 +102,6 @@ export class CatalogService {
           }),
         };
       });
-
-      if (inStock) {
-        shaped = shaped.filter(p => p.variants.some(v => v.totalStock > 0));
-      }
 
       if (requestedFields && requestedFields.length > 0) {
         shaped = shaped.map(p => {

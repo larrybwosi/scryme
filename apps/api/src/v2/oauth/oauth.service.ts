@@ -3,9 +3,9 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 @Injectable()
 export class OAuthService {
   async issueToken(body: any, contentType: string) {
-    let grant_type: string | null = null;
-    let client_id: string | null = null;
-    let client_secret: string | null = null;
+    let grant_type: string | null;
+    let client_id: string | null;
+    let client_secret: string | null;
 
     if (contentType.includes('application/x-www-form-urlencoded')) {
       // In NestJS, @Body() for urlencoded is already a parsed object

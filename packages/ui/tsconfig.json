@@ -11,8 +11,8 @@
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strict": false,
+    "jsx": "react-jsx",
     "types": [
-      "jest",
       "node"
     ],
     "rootDir": "src",
