@@ -21,19 +21,18 @@ export class InventoryService {
     const offset = (Number(page) - 1) * Number(limit);
 
     try {
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Use direct filters on ProductVariantStock instead of nested relations.
+       * This avoids unnecessary joins and utilizes existing indexes on organizationId and productId.
+       */
       const where: any = {
-        variant: {
-          product: {
-            organizationId,
-          },
-        },
+        organizationId,
       };
 
       if (locationId) where.locationId = locationId;
       if (variantId) where.variantId = variantId;
-      if (productId) {
-        where.variant = { ...where.variant, productId };
-      }
+      if (productId) where.productId = productId;
 
       const result = await paginate(
         this.prisma.client.productVariantStock,
