@@ -1,28 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingBag, TrendingUp, Plus } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@repo/ui/components/ui/select';
-import { Button } from '@repo/ui/components/ui/button';
+import { ShoppingBag, TrendingUp, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Customer, Order, OrderStatus, OrderChannel } from '../../../../../lib/mock-data';
 import { formatCurrency } from '../../../../../lib/mock-data';
 import { StatusBadge } from '../../../../../components/ui/status-badge';
 import { EmptyState } from '../../../../../components/ui/empty-state';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface OrdersTabProps {
   customer: Customer;
@@ -104,7 +87,7 @@ const ORDER_CHANNELS: OrderChannel[] = ['POS', 'Online', 'B2B', 'Phone'];
 
 export function OrdersTab({ customer }: OrdersTabProps) {
   const [orders, setOrders] = useState<Order[]>(customer.orders);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [form, setForm] = useState({
     items: '',
@@ -144,7 +127,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
     };
     setOrders((prev) => [order, ...prev]);
     setForm({ items: '', subtotal: '', discount: '', tax: '', date: new Date().toISOString().split('T')[0], status: 'Processing', type: 'Online' });
-    setIsDialogOpen(false);
+    setShowForm(false);
   };
 
   return (
@@ -158,112 +141,13 @@ export function OrdersTab({ customer }: OrdersTabProps) {
             <span className="font-medium">{formatCurrency(totalRevenue)} total</span>
           </p>
         </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-1.5">
-              <Plus size={13} />
-              New Order
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>New Order</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Items *</label>
-                <input
-                  value={form.items}
-                  onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
-                  placeholder="e.g. Product A x2, Service B"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Subtotal ($)</label>
-                  <input
-                    type="number"
-                    value={form.subtotal}
-                    onChange={(e) => setForm((f) => ({ ...f, subtotal: e.target.value }))}
-                    placeholder="0.00"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Discount ($)</label>
-                  <input
-                    type="number"
-                    value={form.discount}
-                    onChange={(e) => setForm((f) => ({ ...f, discount: e.target.value }))}
-                    placeholder="0.00"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Tax ($)</label>
-                  <input
-                    type="number"
-                    value={form.tax}
-                    onChange={(e) => setForm((f) => ({ ...f, tax: e.target.value }))}
-                    placeholder="0.00"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Date *</label>
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Channel</label>
-                  <Select
-                    value={form.type}
-                    onValueChange={(v) => setForm({ ...form, type: v as OrderChannel })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ORDER_CHANNELS.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select
-                  value={form.status}
-                  onValueChange={(v) => setForm({ ...form, status: v as OrderStatus })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ORDER_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAdd} disabled={!form.items.trim() || !form.date}>
-                Create Order
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
+        >
+          {showForm ? <X size={13} /> : <Plus size={13} />}
+          {showForm ? 'Cancel' : 'New Order'}
+        </button>
       </div>
 
       {/* Summary strip */}
@@ -281,6 +165,57 @@ export function OrdersTab({ customer }: OrdersTabProps) {
           </div>
         ))}
       </div>
+
+      {/* Add form */}
+      {showForm && (
+        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
+          <h4 className="text-[13px] font-bold text-foreground mb-4">New Order</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Items *</label>
+              <input
+                value={form.items}
+                onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
+                placeholder="e.g. Product A x2, Service B"
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Subtotal ($)</label>
+              <input type="number" value={form.subtotal} onChange={(e) => setForm((f) => ({ ...f, subtotal: e.target.value }))} placeholder="0.00" className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Discount ($)</label>
+              <input type="number" value={form.discount} onChange={(e) => setForm((f) => ({ ...f, discount: e.target.value }))} placeholder="0.00" className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Tax ($)</label>
+              <input type="number" value={form.tax} onChange={(e) => setForm((f) => ({ ...f, tax: e.target.value }))} placeholder="0.00" className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Date *</label>
+              <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Channel</label>
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as OrderChannel }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
+                {ORDER_CHANNELS.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Status</label>
+              <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as OrderStatus }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
+                {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button onClick={handleAdd} disabled={!form.items.trim() || !form.date} className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              Create Order
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
