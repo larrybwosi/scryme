@@ -13,9 +13,8 @@ export async function getOrganizationContext() {
   }
 
   // Use the active organization ID from the session, if available.
-  // Better Auth sessions often include activeOrganizationId or similar fields
-  // depending on the plugins enabled (like the organization plugin).
-  const organizationId = session.session.activeOrganizationId || session.user.activeOrganizationId;
+  // We use casting to any to avoid TypeScript errors if the schema isn't perfectly synced
+  const organizationId = (session.session as any).activeOrganizationId || (session.user as any).activeOrganizationId;
 
   return {
     user: session.user,
