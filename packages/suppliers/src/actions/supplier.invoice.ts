@@ -51,10 +51,10 @@ export async function createSupplierInvoice(data: CreateInvoiceDto) {
       subTotal: new Prisma.Decimal(data.subTotal),
       taxAmount: new Prisma.Decimal(data.taxAmount),
       totalAmount: new Prisma.Decimal(data.totalAmount),
-      amountPaid: 0,
+      amountPaid: new Prisma.Decimal(0),
       status: 'UNPAID',
-      notes: data.notes,
-      invoiceUrl: data.invoiceUrl,
+      notes: data.notes ?? undefined,
+      invoiceUrl: data.invoiceUrl ?? undefined,
     },
   });
 
