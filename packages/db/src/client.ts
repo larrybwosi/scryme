@@ -27,4 +27,3 @@ export const db = prisma;
 export * from "../generated/client";
 import { Prisma } from "../generated/client";
 export const Decimal = Prisma.Decimal;
-export type Decimal = Prisma.Decimal;
