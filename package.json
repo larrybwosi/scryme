@@ -32,7 +32,15 @@
   "name": "scryme",
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
-    "@prisma/client": "latest"
+    "@prisma/client": "latest",
+    "@upstash/redis": "^1.38.0",
+    "ably": "^2.21.0",
+    "axios": "^1.16.1",
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.6.0",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "pnpm": {
     "overrides": {

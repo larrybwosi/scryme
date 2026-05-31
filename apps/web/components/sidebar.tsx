@@ -17,7 +17,8 @@ import {
   Bell,
   HelpCircle,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Boxes
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 
@@ -58,6 +59,7 @@ const sidebarConfig: SidebarSection[] = [
         items: []
       },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
+      { title: "Integrations", icon: Boxes, href: "/integrations" },
     ]
   },
   {
