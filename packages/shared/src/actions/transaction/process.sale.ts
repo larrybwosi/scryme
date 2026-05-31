@@ -21,7 +21,7 @@ export async function processSale(organizationId: string, memberId: string, data
                 include: { settings: true }
             });
 
-            const taxRate = organization?.settings?.taxRate ? new Decimal(organization.settings.taxRate as any).div(100) : new Decimal(0.16);
+            const taxRate = organization?.settings?.defaultTaxRate ? new Decimal(organization.settings.defaultTaxRate as any).div(100) : new Decimal(0.16);
             const currencyCode = organization?.settings?.defaultCurrency as string || 'KES';
 
             // 1. Calculate totals

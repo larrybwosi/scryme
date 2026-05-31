@@ -3,6 +3,7 @@
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "noEmit": true,
+    "jsx": "react-jsx",
     "outDir": "dist",
     "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo",
     "noImplicitAny": false,
@@ -10,7 +11,6 @@
     "strict": false,
     "skipLibCheck": true,
     "types": [
-      "jest",
       "node"
     ]
   },

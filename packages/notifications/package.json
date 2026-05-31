@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@repo/db": "workspace:*",
+    "@repo/typescript-config": "workspace:^",
     "axios": "^1.6.2",
     "handlebars": "^4.7.8"
   },
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   }
 }
