@@ -16,7 +16,29 @@ import {
   Globe,
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
-import { customers, getCustomerStats, formatCurrency, type CustomerStatus, type CustomerType } from '../../../lib/mock-data';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@repo/ui/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@repo/ui/components/ui/dropdown-menu';
+import { Button } from '@repo/ui/components/ui/button';
+import { customers as initialCustomers, getCustomerStats, formatCurrency, type CustomerStatus, type CustomerType, type Customer } from '../../../lib/mock-data';
 import { StatCard } from '../../../components/ui/stat-card';
 import { StatusBadge } from '../../../components/ui/status-badge';
 
@@ -28,10 +50,23 @@ const TYPE_OPTIONS: Array<CustomerType | 'All'> = ['All', 'B2C', 'B2B', 'Enterpr
 export function CustomersView() {
   const stats = getCustomerStats();
 
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<CustomerStatus | 'All'>('All');
   const [typeFilter, setTypeFilter] = useState<CustomerType | 'All'>('All');
   const [page, setPage] = useState(1);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    email: '',
+    company: '',
+    industry: '',
+    type: 'B2B' as CustomerType,
+    status: 'Lead' as CustomerStatus,
+    city: '',
+    country: '',
+  });
 
   const filtered = useMemo(() => {
     return customers.filter((c) => {
@@ -44,7 +79,7 @@ export function CustomersView() {
       const matchesType = typeFilter === 'All' || c.type === typeFilter;
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [search, statusFilter, typeFilter]);
+  }, [customers, search, statusFilter, typeFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
@@ -55,18 +90,45 @@ export function CustomersView() {
     setPage(1);
   }
 
-  function handleStatusChange(s: CustomerStatus | 'All') {
-    setStatusFilter(s);
-    setPage(1);
-  }
-
-  function handleTypeChange(t: CustomerType | 'All') {
-    setTypeFilter(t);
-    setPage(1);
-  }
-
   const startItem = filtered.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
+
+  const handleAddCustomer = () => {
+    const customer: Customer = {
+      ...newCustomer,
+      id: `cust-${Date.now()}`,
+      totalRevenue: 0,
+      totalOrders: 0,
+      openInvoices: 0,
+      healthScore: 100,
+      loyaltyPoints: 0,
+      accountManager: 'Marcus Reid',
+      accountManagerInitials: 'MR',
+      createdAt: new Date().toISOString().split('T')[0],
+      lastActivity: new Date().toISOString().split('T')[0],
+      phone: '',
+      tags: [],
+      address: '',
+      conversations: [],
+      orders: [],
+      invoices: [],
+      deliveries: [],
+      notes: [],
+      followUps: [],
+    };
+    setCustomers([customer, ...customers]);
+    setIsAddDialogOpen(false);
+    setNewCustomer({
+      name: '',
+      email: '',
+      company: '',
+      industry: '',
+      type: 'B2B',
+      status: 'Lead',
+      city: '',
+      country: '',
+    });
+  };
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
@@ -79,10 +141,100 @@ export function CustomersView() {
               Manage and track all your customer relationships.
             </p>
           </div>
-          <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-primary/90 transition-colors">
-            <Plus size={15} />
-            Add Customer
-          </button>
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus size={15} />
+                Add Customer
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Add New Customer</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Full Name</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="John Doe"
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="john@example.com"
+                      value={newCustomer.email}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Company</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="Acme Inc"
+                      value={newCustomer.company}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, company: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Industry</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="Technology"
+                      value={newCustomer.industry}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, industry: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Type</label>
+                    <Select
+                      value={newCustomer.type}
+                      onValueChange={(v) => setNewCustomer({ ...newCustomer, type: v as CustomerType })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TYPE_OPTIONS.filter(o => o !== 'All').map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <Select
+                      value={newCustomer.status}
+                      onValueChange={(v) => setNewCustomer({ ...newCustomer, status: v as CustomerStatus })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.filter(o => o !== 'All').map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddCustomer}>Add Customer</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* KPI Cards */}
@@ -141,40 +293,28 @@ export function CustomersView() {
               />
             </div>
 
-            {/* Status Filters */}
-            <div className="flex items-center gap-1.5">
-              {STATUS_OPTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => handleStatusChange(s)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors',
-                    statusFilter === s
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background border border-border text-muted-foreground hover:bg-accent'
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <div className="flex items-center gap-3">
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1); }}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o} value={o}>{o === 'All' ? 'All Statuses' : o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            {/* Type Filter */}
-            <div className="flex items-center gap-1.5 border-l border-border pl-3">
-              {TYPE_OPTIONS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => handleTypeChange(t)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors',
-                    typeFilter === t
-                      ? 'bg-foreground text-background'
-                      : 'bg-background border border-border text-muted-foreground hover:bg-accent'
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
+              <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as any); setPage(1); }}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPE_OPTIONS.map((o) => (
+                    <SelectItem key={o} value={o}>{o === 'All' ? 'All Types' : o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -321,9 +461,19 @@ export function CustomersView() {
                           >
                             View
                           </Link>
-                          <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors opacity-0 group-hover:opacity-100">
-                            <MoreHorizontal size={14} />
-                          </button>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors opacity-0 group-hover:opacity-100">
+                                <MoreHorizontal size={14} />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>Edit Customer</DropdownMenuItem>
+                              <DropdownMenuItem>Send Email</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
