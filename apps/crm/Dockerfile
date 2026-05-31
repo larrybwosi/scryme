@@ -40,6 +40,10 @@ RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scrip
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json turbo.json
 
+# Build-time environment variables
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Generate Prisma Client (if needed by CRM)
 RUN npx turbo run generate
 
