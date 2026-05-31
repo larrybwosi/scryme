@@ -13,7 +13,33 @@ import {
   Globe,
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
+<<<<<<< HEAD
 import { getCustomers, deleteCustomer } from '../../actions/customers';
+=======
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@repo/ui/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@repo/ui/components/ui/dropdown-menu';
+import { Button } from '@repo/ui/components/ui/button';
+import { customers as initialCustomers, getCustomerStats, formatCurrency, type CustomerStatus, type CustomerType, type Customer } from '../../../lib/mock-data';
+>>>>>>> nextgen
 import { StatCard } from '../../../components/ui/stat-card';
 import { useOrg } from '../../../components/org-context';
 import {
@@ -35,12 +61,19 @@ import { Button } from '@repo/ui/components/ui/button';
 const PAGE_SIZE = 10;
 
 export function CustomersView() {
+<<<<<<< HEAD
   const { organizationId } = useOrg();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+=======
+  const stats = getCustomerStats();
+
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+>>>>>>> nextgen
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
   const [page, setPage] = useState(1);
+<<<<<<< HEAD
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
 
@@ -59,6 +92,20 @@ export function CustomersView() {
   useEffect(() => {
     fetchCustomers();
   }, [organizationId]);
+=======
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    email: '',
+    company: '',
+    industry: '',
+    type: 'B2B' as CustomerType,
+    status: 'Lead' as CustomerStatus,
+    city: '',
+    country: '',
+  });
+>>>>>>> nextgen
 
   const filtered = useMemo(() => {
     return customers.filter((c) => {
@@ -75,12 +122,17 @@ export function CustomersView() {
 
       return matchesSearch && matchesStatus;
     });
+<<<<<<< HEAD
   }, [search, statusFilter, customers]);
+=======
+  }, [customers, search, statusFilter, typeFilter]);
+>>>>>>> nextgen
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
   const paged = filtered.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE);
 
+<<<<<<< HEAD
   const startItem = filtered.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
@@ -89,6 +141,51 @@ export function CustomersView() {
       await deleteCustomer(id);
       fetchCustomers();
     }
+=======
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value);
+    setPage(1);
+  }
+
+  const startItem = filtered.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
+
+  const handleAddCustomer = () => {
+    const customer: Customer = {
+      ...newCustomer,
+      id: `cust-${Date.now()}`,
+      totalRevenue: 0,
+      totalOrders: 0,
+      openInvoices: 0,
+      healthScore: 100,
+      loyaltyPoints: 0,
+      accountManager: 'Marcus Reid',
+      accountManagerInitials: 'MR',
+      createdAt: new Date().toISOString().split('T')[0],
+      lastActivity: new Date().toISOString().split('T')[0],
+      phone: '',
+      tags: [],
+      address: '',
+      conversations: [],
+      orders: [],
+      invoices: [],
+      deliveries: [],
+      notes: [],
+      followUps: [],
+    };
+    setCustomers([customer, ...customers]);
+    setIsAddDialogOpen(false);
+    setNewCustomer({
+      name: '',
+      email: '',
+      company: '',
+      industry: '',
+      type: 'B2B',
+      status: 'Lead',
+      city: '',
+      country: '',
+    });
+>>>>>>> nextgen
   };
 
   return (
@@ -101,6 +198,7 @@ export function CustomersView() {
               Manage and track all your customer relationships.
             </p>
           </div>
+<<<<<<< HEAD
           <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <SheetTrigger asChild>
               <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-primary/90 transition-colors">
@@ -120,6 +218,102 @@ export function CustomersView() {
               />
             </SheetContent>
           </Sheet>
+=======
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus size={15} />
+                Add Customer
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Add New Customer</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Full Name</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="John Doe"
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="john@example.com"
+                      value={newCustomer.email}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Company</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="Acme Inc"
+                      value={newCustomer.company}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, company: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Industry</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="Technology"
+                      value={newCustomer.industry}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, industry: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Type</label>
+                    <Select
+                      value={newCustomer.type}
+                      onValueChange={(v) => setNewCustomer({ ...newCustomer, type: v as CustomerType })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TYPE_OPTIONS.filter(o => o !== 'All').map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <Select
+                      value={newCustomer.status}
+                      onValueChange={(v) => setNewCustomer({ ...newCustomer, status: v as CustomerStatus })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.filter(o => o !== 'All').map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddCustomer}>Add Customer</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+>>>>>>> nextgen
         </div>
 
         <div className="grid grid-cols-4 gap-4 mt-6">
@@ -147,6 +341,7 @@ export function CustomersView() {
                 className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
+<<<<<<< HEAD
             <div className="flex items-center gap-1.5">
               {['All', 'Active', 'Inactive'].map((s) => (
                 <button
@@ -162,6 +357,31 @@ export function CustomersView() {
                   {s}
                 </button>
               ))}
+=======
+
+            <div className="flex items-center gap-3">
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPage(1); }}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((o) => (
+                    <SelectItem key={o} value={o}>{o === 'All' ? 'All Statuses' : o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as any); setPage(1); }}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPE_OPTIONS.map((o) => (
+                    <SelectItem key={o} value={o}>{o === 'All' ? 'All Types' : o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+>>>>>>> nextgen
             </div>
           </div>
 
@@ -239,6 +459,7 @@ export function CustomersView() {
                             open={editingCustomer?.id === customer.id}
                             onOpenChange={(open: boolean) => !open && setEditingCustomer(null)}
                           >
+<<<<<<< HEAD
                             <button
                               onClick={() => setEditingCustomer(customer)}
                               className="px-2.5 py-1.5 text-[11.5px] font-medium bg-primary/8 text-primary rounded-md hover:bg-primary/15 transition-colors"
@@ -261,16 +482,30 @@ export function CustomersView() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors">
+=======
+                            View
+                          </Link>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors opacity-0 group-hover:opacity-100">
+>>>>>>> nextgen
                                 <MoreHorizontal size={14} />
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+<<<<<<< HEAD
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => handleDelete(customer.id)}
                               >
                                 Delete
                               </DropdownMenuItem>
+=======
+                              <DropdownMenuItem>Edit Customer</DropdownMenuItem>
+                              <DropdownMenuItem>Send Email</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+>>>>>>> nextgen
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>

@@ -9,9 +9,24 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Plus,
-  X,
   Clock,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@repo/ui/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import { Button } from '@repo/ui/components/ui/button';
 import type {
   Customer,
   Conversation,
@@ -104,7 +119,7 @@ const DIRECTIONS: ConversationDirection[] = ['Inbound', 'Outbound'];
 
 export function ConversationsTab({ customer }: ConversationsTabProps) {
   const [conversations, setConversations] = useState<Conversation[]>(customer.conversations);
-  const [showForm, setShowForm] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [form, setForm] = useState({
     subject: '',
     summary: '',
@@ -130,7 +145,7 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
     };
     setConversations((prev) => [convo, ...prev]);
     setForm({ subject: '', summary: '', channel: 'Phone', direction: 'Outbound', duration: '', date: new Date().toISOString().split('T')[0] });
-    setShowForm(false);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -143,67 +158,102 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
             {conversations.length} logged interactions
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
-        >
-          {showForm ? <X size={13} /> : <Plus size={13} />}
-          {showForm ? 'Cancel' : 'Log Conversation'}
-        </button>
-      </div>
 
-      {/* Add form */}
-      {showForm && (
-        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">Log Conversation</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Subject *</label>
-              <input
-                value={form.subject}
-                onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-                placeholder="e.g. Quarterly review call"
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-1.5">
+              <Plus size={13} />
+              Log Conversation
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Log Conversation</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Subject *</label>
+                <input
+                  value={form.subject}
+                  onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+                  placeholder="e.g. Quarterly review call"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Channel</label>
+                  <Select
+                    value={form.channel}
+                    onValueChange={(v) => setForm({ ...form, channel: v as ConversationChannel })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CHANNELS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Direction</label>
+                  <Select
+                    value={form.direction}
+                    onValueChange={(v) => setForm({ ...form, direction: v as ConversationDirection })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DIRECTIONS.map((d) => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Date</label>
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Duration</label>
+                  <input
+                    value={form.duration}
+                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+                    placeholder="e.g. 25 min"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Summary *</label>
+                <textarea
+                  value={form.summary}
+                  onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+                  placeholder="Summarise what was discussed…"
+                  rows={3}
+                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Channel</label>
-              <select value={form.channel} onChange={(e) => setForm((f) => ({ ...f, channel: e.target.value as ConversationChannel }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
-                {CHANNELS.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Direction</label>
-              <select value={form.direction} onChange={(e) => setForm((f) => ({ ...f, direction: e.target.value as ConversationDirection }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
-                {DIRECTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Date</label>
-              <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Duration</label>
-              <input value={form.duration} onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))} placeholder="e.g. 25 min" className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
-            </div>
-            <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Summary *</label>
-              <textarea
-                value={form.summary}
-                onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-                placeholder="Summarise what was discussed…"
-                rows={3}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors resize-none"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end mt-4">
-            <button onClick={handleAdd} disabled={!form.subject.trim() || !form.summary.trim()} className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              Save Conversation
-            </button>
-          </div>
-        </div>
-      )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAdd} disabled={!form.subject.trim() || !form.summary.trim()}>
+                Save Conversation
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* List */}
       {conversations.length === 0 ? (
