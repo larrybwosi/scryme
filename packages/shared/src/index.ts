@@ -18,3 +18,6 @@ export * from './lib/services/unit-calculation.service';
 export * from './lib/services/conversion.service';
 export * from './redis';
 export * from './services/openloyalty';
+
+// Actions
+export * from './actions/api-management';
