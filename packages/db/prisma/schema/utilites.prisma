@@ -199,6 +199,7 @@ model MpesaPaymentRequest {
   id                 String    @id @default(cuid())
   organizationId     String
   memberId           String
+  paymentId          String?
   checkoutRequestId  String
   merchantRequestId  String
   amount             Decimal
