@@ -1,8 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Receipt, Download, ChevronDown, ChevronUp, Plus, X, AlertCircle } from 'lucide-react';
+import { Receipt, Download, ChevronDown, ChevronUp, Plus, AlertCircle } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@repo/ui/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import { Button } from '@repo/ui/components/ui/button';
 import type { Customer, Invoice, InvoiceStatus } from '../../../../../lib/mock-data';
 import { formatCurrency } from '../../../../../lib/mock-data';
 import { StatusBadge } from '../../../../../components/ui/status-badge';
@@ -137,7 +153,7 @@ const INVOICE_STATUSES: InvoiceStatus[] = ['Draft', 'Sent', 'Paid', 'Overdue', '
 
 export function InvoicesTab({ customer }: InvoicesTabProps) {
   const [invoices, setInvoices] = useState<Invoice[]>(customer.invoices);
-  const [showForm, setShowForm] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [form, setForm] = useState({
     items: '',
@@ -175,7 +191,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
     };
     setInvoices((prev) => [inv, ...prev]);
     setForm({ items: '', subtotal: '', tax: '', date: '', dueDate: '', status: 'Draft' });
-    setShowForm(false);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -192,103 +208,96 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
             )}
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
-        >
-          {showForm ? <X size={13} /> : <Plus size={13} />}
-          {showForm ? 'Cancel' : 'New Invoice'}
-        </button>
-      </div>
 
-      {/* Add form */}
-      {showForm && (
-        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">New Invoice</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Line Items / Description *
-              </label>
-              <input
-                value={form.items}
-                onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
-                placeholder="e.g. 3x Product A, Setup Fee"
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-1.5">
+              <Plus size={13} />
+              New Invoice
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>New Invoice</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Line Items / Description *</label>
+                <input
+                  value={form.items}
+                  onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
+                  placeholder="e.g. 3x Product A, Setup Fee"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Subtotal ($)</label>
+                  <input
+                    type="number"
+                    value={form.subtotal}
+                    onChange={(e) => setForm((f) => ({ ...f, subtotal: e.target.value }))}
+                    placeholder="0.00"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Tax ($)</label>
+                  <input
+                    type="number"
+                    value={form.tax}
+                    onChange={(e) => setForm((f) => ({ ...f, tax: e.target.value }))}
+                    placeholder="0.00"
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Issue Date *</label>
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Due Date *</label>
+                  <input
+                    type="date"
+                    value={form.dueDate}
+                    onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => setForm({ ...form, status: v as InvoiceStatus })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVOICE_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Subtotal ($)
-              </label>
-              <input
-                type="number"
-                value={form.subtotal}
-                onChange={(e) => setForm((f) => ({ ...f, subtotal: e.target.value }))}
-                placeholder="0.00"
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Tax ($)
-              </label>
-              <input
-                type="number"
-                value={form.tax}
-                onChange={(e) => setForm((f) => ({ ...f, tax: e.target.value }))}
-                placeholder="0.00"
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Issue Date *
-              </label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Due Date *
-              </label>
-              <input
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Status
-              </label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as InvoiceStatus }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              >
-                {INVOICE_STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end mt-4">
-            <button
-              onClick={handleAdd}
-              disabled={!form.items.trim() || !form.date || !form.dueDate}
-              className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              Create Invoice
-            </button>
-          </div>
-        </div>
-      )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAdd} disabled={!form.items.trim() || !form.date || !form.dueDate}>
+                Create Invoice
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
