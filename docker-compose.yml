@@ -1,19 +1,92 @@
-version: "3"
-
-volumes:
-  database:
-    driver: local
-
 services:
   db:
-    platform: linux/amd64
-    image: postgres:15 # Use a specific version of Postgres
+    image: postgres:15-alpine
     restart: always
     environment:
-      - POSTGRES_USER=sebi
-      - POSTGRES_PASSWORD=sebi_test_4444
-      - POSTGRES_DB=turborepo
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=scryme
     ports:
-      - '5432:5432' # Expose the Postgres port to your local machine
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - scryme-network
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - scryme-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - scryme-network
+
+  api:
+    image: ghcr.io/larrybwosi/scryme-api:latest
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/scryme?schema=public
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=4000
+      # Zitadel configuration placeholders
+      - ZITADEL_API_URL=https://zitadel.example.com
+      - ZITADEL_ORG_ID=your-org-id
+      - ZITADEL_PROJECT_ID=your-project-id
+    ports:
+      - '3002:4000'
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    networks:
+      - scryme-network
+
+  crm:
+    image: ghcr.io/larrybwosi/scryme-crm:latest
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/scryme?schema=public
+      - NEXT_PUBLIC_API_URL=http://localhost:3002
+      - PORT=3001
+      # Zitadel configuration placeholders
+      - ZITADEL_API_URL=https://zitadel.example.com
+      - ZITADEL_CLIENT_ID=your-client-id
+    ports:
+      - '3001:3001'
+    depends_on:
+      - db
+      - api
+    networks:
+      - scryme-network
+
+  web:
+    image: ghcr.io/larrybwosi/scryme-web:latest
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/scryme?schema=public
+      - NEXT_PUBLIC_API_URL=http://localhost:3002
+      - PORT=3000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+      - api
+    networks:
+      - scryme-network
+
+volumes:
+  postgres_data:
+
+networks:
+  scryme-network:
+    driver: bridge
