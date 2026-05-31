@@ -1,23 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Truck, Package, MapPin, Calendar, Hash, ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@repo/ui/components/ui/select';
-import { Button } from '@repo/ui/components/ui/button';
+import { Truck, Package, MapPin, Calendar, Hash, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import type { Customer, Delivery, DeliveryStatus } from '../../../../../lib/mock-data';
 import { StatusBadge } from '../../../../../components/ui/status-badge';
 import { EmptyState } from '../../../../../components/ui/empty-state';
@@ -128,7 +112,7 @@ const DELIVERY_STATUSES: DeliveryStatus[] = ['Pending', 'In Transit', 'Delivered
 
 export function DeliveriesTab({ customer }: DeliveriesTabProps) {
   const [deliveries, setDeliveries] = useState<Delivery[]>(customer.deliveries);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [form, setForm] = useState({
     orderRef: '',
@@ -164,7 +148,7 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
       driver: '',
       status: 'Pending',
     });
-    setIsDialogOpen(false);
+    setShowForm(false);
   };
 
   return (
@@ -177,93 +161,100 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
             {deliveries.length} total deliveries
           </p>
         </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-1.5">
-              <Plus size={13} />
-              Log Delivery
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>New Delivery</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Order Ref *</label>
-                  <input
-                    value={form.orderRef}
-                    onChange={(e) => setForm((f) => ({ ...f, orderRef: e.target.value }))}
-                    placeholder="ORD-XXXX"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Driver</label>
-                  <input
-                    value={form.driver}
-                    onChange={(e) => setForm((f) => ({ ...f, driver: e.target.value }))}
-                    placeholder="Driver name"
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Scheduled Date *</label>
-                  <input
-                    type="date"
-                    value={form.scheduledDate}
-                    onChange={(e) => setForm((f) => ({ ...f, scheduledDate: e.target.value }))}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select
-                    value={form.status}
-                    onValueChange={(v) => setForm({ ...form, status: v as DeliveryStatus })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DELIVERY_STATUSES.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Items</label>
-                <input
-                  value={form.items}
-                  onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
-                  placeholder="e.g. 2x Widget A, 1x Widget B"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm font-medium">Delivery Address</label>
-                <input
-                  value={form.address}
-                  onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAdd} disabled={!form.orderRef.trim() || !form.scheduledDate}>
-                Log Delivery
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border bg-primary text-white border-primary hover:bg-primary/90 transition-colors"
+        >
+          {showForm ? <X size={13} /> : <Plus size={13} />}
+          {showForm ? 'Cancel' : 'Log Delivery'}
+        </button>
       </div>
+
+      {/* Add form */}
+      {showForm && (
+        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
+          <h4 className="text-[13px] font-bold text-foreground mb-4">New Delivery</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Order Ref *
+              </label>
+              <input
+                value={form.orderRef}
+                onChange={(e) => setForm((f) => ({ ...f, orderRef: e.target.value }))}
+                placeholder="ORD-XXXX"
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Driver
+              </label>
+              <input
+                value={form.driver}
+                onChange={(e) => setForm((f) => ({ ...f, driver: e.target.value }))}
+                placeholder="Driver name"
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Scheduled Date *
+              </label>
+              <input
+                type="date"
+                value={form.scheduledDate}
+                onChange={(e) => setForm((f) => ({ ...f, scheduledDate: e.target.value }))}
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Status
+              </label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as DeliveryStatus }))}
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              >
+                {DELIVERY_STATUSES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Items
+              </label>
+              <input
+                value={form.items}
+                onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
+                placeholder="e.g. 2x Widget A, 1x Widget B"
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Delivery Address
+              </label>
+              <input
+                value={form.address}
+                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={handleAdd}
+              disabled={!form.orderRef.trim() || !form.scheduledDate}
+              className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Log Delivery
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">

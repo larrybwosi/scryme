@@ -107,7 +107,7 @@ export async function processSale(organizationId: string, memberId: string, data
             transactionId: result.id,
             data: result
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error('ProcessSale Error:', error);
         return {
             success: false,
