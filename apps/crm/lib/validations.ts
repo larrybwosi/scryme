@@ -19,3 +19,29 @@ export const businessAccountSchema = z.object({
 });
 
 export type BusinessAccountFormValues = z.infer<typeof businessAccountSchema>;
+
+export const crmNoteSchema = z.object({
+  content: z.string().min(1, 'Content is required'),
+  recordId: z.string().min(1, 'Record ID is required'),
+});
+
+export type CrmNoteFormValues = z.infer<typeof crmNoteSchema>;
+
+export const crmActivitySchema = z.object({
+  type: z.string().min(1, 'Type is required'),
+  description: z.string().optional(),
+  recordId: z.string().min(1, 'Record ID is required'),
+  metadata: z.any().optional(),
+});
+
+export type CrmActivityFormValues = z.infer<typeof crmActivitySchema>;
+
+export const crmObjectDefinitionSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  label: z.string().min(1, 'Label is required'),
+  labelPlural: z.string().min(1, 'Plural label is required'),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+});
+
+export type CrmObjectDefinitionFormValues = z.infer<typeof crmObjectDefinitionSchema>;
