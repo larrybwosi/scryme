@@ -5,10 +5,13 @@ import { z } from 'zod';
 // --- No change to create schema ---
 export const createInvoiceSchema = z.object({
   purchaseId: z.string().cuid(),
+  organizationId: z.string().cuid(),
   invoiceNumber: z.string().min(1, 'Invoice number is required.'),
-  supplierId: z.string().cuid().optional().nullable(),
+  supplierId: z.string().cuid(),
   issueDate: z.coerce.date(),
   dueDate: z.coerce.date(),
+  subTotal: z.number().min(0),
+  taxAmount: z.number().min(0),
   totalAmount: z.number().min(0, 'Total amount must be positive.'),
   invoiceUrl: z.string().url().optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -35,10 +38,13 @@ export async function createSupplierInvoice(data: CreateInvoiceDto) {
   const invoice = await prisma.supplierInvoice.create({
     data: {
       purchaseId: data.purchaseId,
+      organizationId: data.organizationId,
       invoiceNumber: data.invoiceNumber,
       supplierId: data.supplierId,
       issueDate: data.issueDate,
       dueDate: data.dueDate,
+      subTotal: new Prisma.Decimal(data.subTotal),
+      taxAmount: new Prisma.Decimal(data.taxAmount),
       totalAmount: new Prisma.Decimal(data.totalAmount),
       amountPaid: 0,
       status: 'UNPAID',
@@ -49,7 +55,7 @@ export async function createSupplierInvoice(data: CreateInvoiceDto) {
 
   await prisma.purchase.update({
     where: { id: data.purchaseId },
-    data: { status: 'INVOICED' },
+    data: { status: 'BILLED' },
   });
 
   return invoice;
