@@ -1,17 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Pin, PinOff, StickyNote, User, Plus } from 'lucide-react';
+import { Pin, PinOff, StickyNote, User, Plus, X } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
 import type { Customer, Note } from '../../../../../lib/mock-data';
 import { EmptyState } from '../../../../../components/ui/empty-state';
 
@@ -79,7 +70,7 @@ export function NotesTab({ customer }: NotesTabProps) {
   const [notes, setNotes] = useState<Note[]>(
     [...customer.notes].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
   );
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');
 
   const handleTogglePin = (id: string) => {
@@ -102,7 +93,7 @@ export function NotesTab({ customer }: NotesTabProps) {
     };
     setNotes((prev) => [newNote, ...prev]);
     setContent('');
-    setIsDialogOpen(false);
+    setShowForm(false);
   };
 
   return (
@@ -115,47 +106,52 @@ export function NotesTab({ customer }: NotesTabProps) {
             {notes.length} {notes.length === 1 ? 'note' : 'notes'} on this customer
           </p>
         </div>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className={cn(
+            'flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border transition-colors',
+            showForm
+              ? 'bg-muted text-muted-foreground border-border'
+              : 'bg-primary text-white border-primary hover:bg-primary/90'
+          )}
+        >
+          {showForm ? <X size={13} /> : <Plus size={13} />}
+          {showForm ? 'Cancel' : 'Add Note'}
+        </button>
+      </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-1.5">
-              <Plus size={13} />
-              Add Note
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>New Note</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <User size={13} className="text-primary" />
-                </div>
-                <div className="flex-1">
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Write a note about this customer…"
-                    rows={6}
-                    className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none leading-relaxed"
-                    autoFocus
-                  />
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    {content.length} characters
-                  </p>
-                </div>
+      {/* Compose form */}
+      {showForm && (
+        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <User size={13} className="text-primary" />
+            </div>
+            <div className="flex-1">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write a note about this customer…"
+                rows={4}
+                className="w-full bg-transparent text-[13.5px] text-foreground placeholder:text-muted-foreground resize-none outline-none leading-relaxed"
+                autoFocus
+              />
+              <div className="flex items-center justify-between pt-3 border-t border-border mt-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {content.length} characters
+                </span>
+                <button
+                  onClick={handleAdd}
+                  disabled={!content.trim()}
+                  className="text-[12.5px] font-semibold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Save Note
+                </button>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleAdd} disabled={!content.trim()}>
-                Save Note
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Notes list */}
       {notes.length === 0 ? (
