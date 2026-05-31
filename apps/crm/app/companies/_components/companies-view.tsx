@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Building2,
   Search,
@@ -182,9 +183,9 @@ export function CompaniesView() {
                           <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {company.name.charAt(0).toUpperCase()}
                           </div>
-                          <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
+                          <Link href={`/companies/${company.id}`} className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
                             {company.name}
-                          </div>
+                          </Link>
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
