@@ -105,3 +105,16 @@ Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$packages$2f$db$2f$src$2
   45 |         _count: { (app/companies/_components/companies-view.tsx:51:15)
 [browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
 [browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Error: Turbopack build failed with 1 errors:
+./apps/crm/app
+Error: Next.js inferred your workspace root, but it may not be correct.
+    We couldn't find the Next.js package (next/package.json) from the project directory: /app/apps/crm/app
+     To fix this, set turbopack.root in your Next.js config, or ensure the Next.js package is resolvable from this directory.
+    Note: For security and performance reasons, files outside of the project directory will not be compiled.
+    See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+
+    at ignore-listed frames
+[?25h
+/app/apps/crm:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  crm@1.0.0 dev: `next dev --port 3001`
+Exit status 1

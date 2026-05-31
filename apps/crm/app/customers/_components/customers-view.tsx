@@ -85,7 +85,7 @@ export function CustomersView() {
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this customer?')) {
+    if (typeof window !== 'undefined' && global.confirm('Are you sure you want to delete this customer?')) {
       await deleteCustomer(id);
       fetchCustomers();
     }

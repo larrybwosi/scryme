@@ -76,7 +76,7 @@ export function CompaniesView() {
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this company?')) {
+    if (typeof window !== 'undefined' && global.confirm('Are you sure you want to delete this company?')) {
       await deleteCompany(id);
       fetchCompanies();
     }
