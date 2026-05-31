@@ -49,3 +49,28 @@ export async function getCompanies(organizationId: string) {
     orderBy: { name: 'asc' },
   });
 }
+
+export async function getCompany(id: string) {
+    return await db.businessAccount.findUnique({
+      where: { id },
+      include: {
+        customers: true,
+        transactions: {
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+        },
+        crmRecord: {
+            include: {
+                activities: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 10,
+                },
+                notes: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 10,
+                },
+            },
+        },
+      }
+    });
+  }

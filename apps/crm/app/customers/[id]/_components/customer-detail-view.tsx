@@ -15,7 +15,7 @@ import { ConversationsTab } from './tabs/conversations-tab';
 import { FollowUpsTab } from './tabs/followups-tab';
 
 interface CustomerDetailViewProps {
-  customer: Customer;
+  customer: any;
 }
 
 function TabContent({ customer, tab }: { customer: Customer; tab: TabId }) {
@@ -42,12 +42,12 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
   const tab = (searchParams.get('tab') as TabId) ?? 'notes';
 
   const counts: Partial<Record<TabId, number>> = {
-    notes: customer.notes.length,
-    deliveries: customer.deliveries.length,
-    invoices: customer.invoices.length,
-    orders: customer.orders.length,
-    conversations: customer.conversations.length,
-    followups: customer.followUps.length,
+    notes: customer.crmRecord?.notes?.length ?? 0,
+    deliveries: customer.deliveries?.length ?? 0,
+    invoices: customer.invoices?.length ?? 0,
+    orders: (customer.orders?.length ?? 0) || (customer.transactions?.length ?? 0),
+    conversations: customer.crmRecord?.activities?.length ?? 0,
+    followups: customer.followUps?.length ?? 0,
   };
 
   return (
