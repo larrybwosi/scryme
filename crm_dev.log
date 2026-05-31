@@ -1,0 +1,107 @@
+
+> crm@1.0.0 dev /app/apps/crm
+> next dev --port 3001
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.2:3001
+✓ Ready in 566ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+○ Compiling /customers ...
+ GET /customers 200 in 6.8s (next.js: 6.1s, application-code: 611ms)
+⨯ Error [PrismaClientKnownRequestError]:
+Invalid `{imported module ./packages/db/src/client.ts}["db"].customer.findMany()` invocation in
+/app/apps/crm/.next/dev/server/chunks/ssr/apps_crm_08f_.4h._.js:90:177
+
+  87     (0, {imported module ./nodemodules/.pnpm/next@16.2.0_@opentelemetry+api@1.9.1_@playwright+test@1.60.0babel-plugin-react-compiler@1.0.xn6lphohqvedo7px5xkdhml5v4/nodemodules/next/cache.js}["revalidatePath"])('/customers');
+  88 }
+  89 async function getCustomers(organizationId) {
+→ 90     return await {imported module ./packages/db/src/client.ts}["db"].customer.findMany(
+
+    at <unknown> (app/actions/customers.ts:43:28)
+    at async getCustomers (app/actions/customers.ts:43:10)
+  41 |
+  42 | export async function getCustomers(organizationId: string) {
+> 43 |   return await db.customer.findMany({
+     |                            ^
+  44 |     where: { organizationId },
+  45 |     orderBy: { createdAt: 'desc' },
+  46 |   }); {
+  code: 'ECONNREFUSED',
+  meta: { modelName: 'Customer' },
+  clientVersion: '7.8.0',
+  digest: '2243148513'
+}
+ POST /customers 500 in 1859ms (next.js: 5ms, application-code: 1854ms)
+  └─ ƒ getCustomers("default-org-id") in 251ms app/actions/customers.ts
+[browser] Failed to fetch customers PrismaClientKnownRequestError:
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$packages$2f$db$2f$src$2f$client$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$locals$3e$__["db"].customer.findMany()` invocation in
+/app/apps/crm/.next/dev/server/chunks/ssr/apps_crm_08f_.4h._.js:90:177
+
+  87     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$0_$40$opentelemetry$2b$api$40$1$2e$9$2e$1_$40$playwright$2b$test$40$1$2e$60$2e$0_babel$2d$plugin$2d$react$2d$compiler$40$1$2e$0$2e$_xn6lphohqvedo7px5xkdhml5v4$2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])('/customers');
+  88 }
+  89 async function getCustomers(organizationId) {
+→ 90     return await __TURBOPACK__imported__module__$5b$project$5d2f$packages$2f$db$2f$src$2f$client$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$locals$3e$__["db"].customer.findMany(
+
+    at <unknown> (app/actions/customers.ts:43:28)
+    at  getCustomers (app/actions/customers.ts:43:10)
+  41 |
+  42 | export async function getCustomers(organizationId: string) {
+> 43 |   return await db.customer.findMany({
+     |                            ^
+  44 |     where: { organizationId },
+  45 |     orderBy: { createdAt: 'desc' },
+  46 |   }); (app/customers/_components/customers-view.tsx:53:15)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+ GET /companies 200 in 2.1s (next.js: 1937ms, application-code: 138ms)
+⨯ Error [PrismaClientKnownRequestError]:
+Invalid `{imported module ./packages/db/src/client.ts}["db"].businessAccount.findMany()` invocation in
+/app/apps/crm/.next/dev/server/chunks/ssr/apps_crm_0xyod5z._.js:87:184
+
+  84     (0, {imported module ./nodemodules/.pnpm/next@16.2.0_@opentelemetry+api@1.9.1_@playwright+test@1.60.0babel-plugin-react-compiler@1.0.xn6lphohqvedo7px5xkdhml5v4/nodemodules/next/cache.js}["revalidatePath"])('/companies');
+  85 }
+  86 async function getCompanies(organizationId) {
+→ 87     return await {imported module ./packages/db/src/client.ts}["db"].businessAccount.findMany(
+
+    at <unknown> (app/actions/companies.ts:42:35)
+    at async getCompanies (app/actions/companies.ts:42:10)
+  40 |
+  41 | export async function getCompanies(organizationId: string) {
+> 42 |   return await db.businessAccount.findMany({
+     |                                   ^
+  43 |     where: { organizationId },
+  44 |     include: {
+  45 |         _count: { {
+  code: 'ECONNREFUSED',
+  meta: { modelName: 'BusinessAccount' },
+  clientVersion: '7.8.0',
+  digest: '699630572'
+}
+ POST /companies 500 in 573ms (next.js: 4ms, application-code: 569ms)
+  └─ ƒ getCompanies("default-org-id") in 10ms app/actions/companies.ts
+[browser] Failed to fetch companies PrismaClientKnownRequestError:
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$packages$2f$db$2f$src$2f$client$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$locals$3e$__["db"].businessAccount.findMany()` invocation in
+/app/apps/crm/.next/dev/server/chunks/ssr/apps_crm_0xyod5z._.js:87:184
+
+  84     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$0_$40$opentelemetry$2b$api$40$1$2e$9$2e$1_$40$playwright$2b$test$40$1$2e$60$2e$0_babel$2d$plugin$2d$react$2d$compiler$40$1$2e$0$2e$_xn6lphohqvedo7px5xkdhml5v4$2f$node_modules$2f$next$2f$cache$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["revalidatePath"])('/companies');
+  85 }
+  86 async function getCompanies(organizationId) {
+→ 87     return await __TURBOPACK__imported__module__$5b$project$5d2f$packages$2f$db$2f$src$2f$client$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$locals$3e$__["db"].businessAccount.findMany(
+
+    at <unknown> (app/actions/companies.ts:42:35)
+    at  getCompanies (app/actions/companies.ts:42:10)
+  40 |
+  41 | export async function getCompanies(organizationId: string) {
+> 42 |   return await db.businessAccount.findMany({
+     |                                   ^
+  43 |     where: { organizationId },
+  44 |     include: {
+  45 |         _count: { (app/companies/_components/companies-view.tsx:51:15)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
