@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Mail,
   Phone,
@@ -63,6 +64,7 @@ function HealthRing({ score }: { score: number }) {
 }
 
 export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
+  const router = useRouter();
   const initials = customer.name
     .split(' ')
     .map((n: string) => n[0])
@@ -98,9 +100,10 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
                   customerType: customer.customerType || 'B2C',
                   taxId: customer.taxId || '',
                   isActive: customer.isActive ?? true,
+                  deliveryNotes: customer.deliveryNotes || '',
                 }}
                 onSuccess={() => {
-                  window.location.reload();
+                  router.refresh();
                 }}
               />
             </SheetContent>

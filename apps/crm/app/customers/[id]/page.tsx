@@ -67,6 +67,7 @@ export default async function CustomerPage({ params }: CustomerPageProps) {
     totalRevenue: customer.transactions?.reduce((sum: number, tx: any) => sum + Number(tx.total || 0), 0) || 0,
     totalOrders: customer.transactions?.length || 0,
     openInvoices: (customer.invoices as any[])?.filter(inv => inv.status !== 'PAID').length || 0,
+    deliveryNotes: customer.deliveryNotes || '',
   };
 
   return <CustomerDetailView customer={adaptedCustomer as any} />;
