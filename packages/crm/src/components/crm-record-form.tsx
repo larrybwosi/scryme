@@ -83,7 +83,6 @@ export function CrmRecordForm({
   useEffect(() => {
     if (!autoSave || mode !== 'edit') return;
 
-    // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = form.watch(async (value) => {
       if (form.formState.isDirty && !isSubmitting && !autoSaving) {
         setAutoSaving(true);

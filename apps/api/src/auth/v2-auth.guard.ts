@@ -84,7 +84,9 @@ export class V2AuthGuard implements CanActivate {
             };
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        // Ignore errors during member token verification
+      }
     }
 
     // 3. Authenticate Bearer (Zitadel or OAuth)
@@ -147,7 +149,9 @@ export class V2AuthGuard implements CanActivate {
                 };
               }
             }
-          } catch (err) {}
+          } catch (err) {
+            // Ignore errors during Zitadel JWT verification
+          }
         }
       }
     }
