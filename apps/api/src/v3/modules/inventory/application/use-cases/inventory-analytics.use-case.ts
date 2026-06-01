@@ -46,7 +46,7 @@ export class GetWasteAnalysisUseCase {
         },
         adjustment: {
           reason: {
-            in: ['DAMAGED', 'EXPIRED', 'LOST', 'STOLEN', 'QUALITY_REJECTION'],
+            in: ['DAMAGED', 'EXPIRED', 'LOST', 'STOLEN'],
           },
         },
       },
@@ -62,7 +62,7 @@ export class GetWasteAnalysisUseCase {
 
     // Grouping by reason
     const analysis = movements.reduce((acc, m) => {
-      const reason = m.adjustment?.reason || 'OTHER';
+      const reason = (m as any).adjustment?.reason || 'OTHER';
       if (!acc[reason]) acc[reason] = { count: 0, totalQuantity: 0, totalValue: 0 };
 
       acc[reason].count++;

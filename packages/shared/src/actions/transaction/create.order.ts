@@ -30,7 +30,7 @@ export async function createOrder(
       const variants = await tx.productVariant.findMany({
         where: {
           id: { in: variantIds },
-          organizationId,
+          product: { organizationId },
         },
         include: {
           product: true,
@@ -56,7 +56,7 @@ export async function createOrder(
         subtotal = subtotal.add(lineSubtotal);
 
         return {
-          variantId: item.variantId,
+          variant: { connect: { id: item.variantId } },
           productName: variant.product.name,
           variantName: variant.name,
           sku: variant.sku,
@@ -66,7 +66,7 @@ export async function createOrder(
           unitCost: variant.buyingPrice ?? 0,
           subtotal: lineSubtotal,
           lineTotal: lineSubtotal, // Simplified: no line-level tax/discount for now
-          sellingUnitId: item.sellingUnitId,
+          sellingUnit: item.sellingUnitId ? { connect: { id: item.sellingUnitId } } : undefined,
         };
       });
 

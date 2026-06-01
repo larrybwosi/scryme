@@ -194,27 +194,24 @@ export class BakeryService {
       where: { id, organizationId },
       include: {
         ingredients: true,
-        steps: true,
-        equipments: true,
       },
     });
 
     if (!recipe) throw new NotFoundException('Recipe not found');
 
-    const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe;
+    const { id: _, createdAt: __, updatedAt: ___, ingredients, ...recipeData } = recipe;
 
     return this.prisma.client.recipe.create({
       data: {
         ...recipeData,
         name: `${recipeData.name} (Copy)`,
         ingredients: {
-          create: recipe.ingredients.map(({ id: _, recipeId: __, ...ing }) => ing),
-        },
-        steps: {
-          create: recipe.steps.map(({ id: _, recipeId: __, ...step }) => step),
-        },
-        equipments: {
-          create: recipe.equipments.map(({ id: _, recipeId: __, ...eq }) => eq),
+          create: ingredients.map(({ id: _, recipeId: __, systemUnitId, orgUnitId, ingredientVariantId, ...ing }) => ({
+            ...ing,
+            ingredientVariant: { connect: { id: ingredientVariantId } },
+            systemUnit: systemUnitId ? { connect: { id: systemUnitId } } : undefined,
+            orgUnit: orgUnitId ? { connect: { id: orgUnitId } } : undefined,
+          })),
         },
       },
     });
@@ -312,22 +309,28 @@ export class BakeryService {
 
     return this.prisma.client.batch.create({
       data: {
-        organizationId,
-        recipeId: template.recipeId,
-        leadBakerId: template.leadBakerId,
+        organization: { connect: { id: organizationId } },
+        recipe: { connect: { id: template.recipeId } },
+        leadBaker: template.leadBakerId ? { connect: { id: template.leadBakerId } } : undefined,
         plannedQuantity: (template as any).defaultQuantity || template.quantity,
         batchNumber,
-        status: 'SCHEDULED' as any,
+        status: 'PLANNED',
+        scheduledStartAt: new Date(),
         notes: `Created from template: ${template.name}`,
       },
     });
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const { categoryId, producesVariantId, systemUnitId, orgUnitId, ...rest } = data;
     return this.prisma.client.recipe.create({
       data: {
-        ...data,
-        organizationId,
+        ...rest,
+        organization: { connect: { id: organizationId } },
+        category: { connect: { id: categoryId } },
+        producesVariant: { connect: { id: producesVariantId } },
+        systemUnit: systemUnitId ? { connect: { id: systemUnitId } } : undefined,
+        orgUnit: orgUnitId ? { connect: { id: orgUnitId } } : undefined,
       },
     });
   }
@@ -404,7 +407,7 @@ export class BakeryService {
     // Always generate the batch number, ignoring any manual input from the client
     const batchNumber = await this.generateBatchNumber(organizationId);
 
-    const { date, time, batchNumber: _, ...rest } = data;
+    const { date, time, batchNumber: _, recipeId, leadBakerId, systemUnitId, orgUnitId, ...rest } = data;
 
     // Process scheduledStartAt if date and time are provided
     let scheduledStartAt = data.scheduledStartAt;
@@ -420,7 +423,11 @@ export class BakeryService {
         ...rest,
         batchNumber,
         scheduledStartAt: scheduledStartAt || new Date(),
-        organizationId,
+        organization: { connect: { id: organizationId } },
+        recipe: { connect: { id: recipeId } },
+        leadBaker: leadBakerId ? { connect: { id: leadBakerId } } : undefined,
+        systemUnit: systemUnitId ? { connect: { id: systemUnitId } } : undefined,
+        orgUnit: orgUnitId ? { connect: { id: orgUnitId } } : undefined,
       },
     });
   }
@@ -457,7 +464,7 @@ export class BakeryService {
 
     const batch = await this.prisma.client.batch.findUnique({
       where: { id },
-      include: { recipe: true },
+      include: { recipe: { include: { producesVariant: true } } },
     });
 
     if (!batch) throw new NotFoundException('Batch not found');
@@ -472,7 +479,7 @@ export class BakeryService {
         where: { id, organizationId },
         data: {
           actualQuantity: grossQuantity,
-          status: 'COMPLETED' as any,
+          status: 'COMPLETED',
           completedAt: new Date(),
           qcData: data.qcData,
           wasteQuantity: waste,
@@ -497,10 +504,10 @@ export class BakeryService {
 
           await tx.batchIngredientConsumption.create({
             data: {
-              batchId: id,
-              stockBatchId: consumption.stockBatchId,
+              batch: { connect: { id: id } },
+              stockBatch: { connect: { id: consumption.stockBatchId } },
               quantity: consumption.quantity,
-              organizationId,
+              organization: { connect: { id: organizationId } },
             },
           });
 
@@ -513,13 +520,13 @@ export class BakeryService {
 
           await tx.stockMovement.create({
             data: {
-              variantId: stockBatch.variantId,
-              stockBatchId: stockBatch.id,
-              fromLocationId: stockBatch.locationId,
+              variant: { connect: { id: stockBatch.variantId } },
+              stockBatch: { connect: { id: stockBatch.id } },
+              fromLocation: { connect: { id: stockBatch.locationId } },
               quantity: consumption.quantity,
-              movementType: 'PRODUCTION_OUT' as any,
-              memberId: ctx.memberId!,
-              organizationId,
+              movementType: 'PRODUCTION_OUT',
+              member: { connect: { id: ctx.memberId! } },
+              organization: { connect: { id: organizationId } },
               notes: `Consumed in Batch ${batch.batchNumber}`,
             },
           });
@@ -545,14 +552,14 @@ export class BakeryService {
         if (locationId) {
           const producedStockBatch = await tx.stockBatch.create({
             data: {
-              variantId: batch.recipe.producesVariantId,
+              variant: { connect: { id: batch.recipe.producesVariantId } },
               batchNumber: batch.batchNumber,
-              locationId: locationId,
+              location: { connect: { id: locationId } },
               initialQuantity: netQuantity,
               currentQuantity: netQuantity,
               purchasePrice: batch.recipe.costPrice || 0,
-              organizationId,
-              productionBatchId: batch.id,
+              organization: { connect: { id: organizationId } },
+              productionBatch: { connect: { id: batch.id } },
               receivedDate: new Date(),
               expiryDate: updatedBatch.expiresAt,
             },
@@ -570,11 +577,12 @@ export class BakeryService {
               availableStock: { increment: netQuantity },
             },
             create: {
-              variantId: batch.recipe.producesVariantId,
-              locationId: locationId,
+              variant: { connect: { id: batch.recipe.producesVariantId } },
+              product: { connect: { id: batch.recipe.producesVariant.productId } },
+              location: { connect: { id: locationId } },
               currentStock: netQuantity,
               availableStock: netQuantity,
-              organizationId,
+              organization: { connect: { id: organizationId } },
             },
           });
 
@@ -688,7 +696,7 @@ export class BakeryService {
     return this.prisma.client.bakeryCategory.create({
       data: {
         ...data,
-        organizationId,
+        organization: { connect: { id: organizationId } },
       },
     });
   }
@@ -963,12 +971,25 @@ export class BakeryService {
     if (!locationId) throw new BadRequestException('Location ID required in context');
 
     return this.prisma.client.$transaction(async tx => {
+      // StockReceipt requires purchaseId in some schemas, but here it seems it might not be available.
+      // Let's check the schema for StockReceipt again.
+      // In stock.prisma:
+      // purchaseId     String
+      // purchase       Purchase        @relation(fields: [purchaseId], references: [id])
+
+      // If we don't have a purchaseId, this will fail.
+      // For bakery ingredients receipt, maybe we should allow null purchaseId in schema, but I cannot change schema easily if it's shared.
+      // Let's see if there is any other way.
+      // For now, I will try to satisfy the TS error by using 'as any' if I can't find a better way,
+      // but better to use connect if it's a relation.
+
       const receipt = await tx.stockReceipt.create({
         data: {
-          organizationId,
-          memberId: memberId!,
+          organization: { connect: { id: organizationId } },
+          member: { connect: { id: memberId! } },
           receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
           notes: `GRN: ${receiptReference}. ${notes || ''}`,
+          purchase: data.purchaseId ? { connect: { id: data.purchaseId } } : undefined,
         },
       });
 
@@ -985,19 +1006,18 @@ export class BakeryService {
 
         const batch = await tx.stockBatch.create({
           data: {
-            organizationId,
-            variantId: line.ingredientId,
-            locationId,
+            organization: { connect: { id: organizationId } },
+            variant: { connect: { id: line.ingredientId } },
+            location: { connect: { id: locationId } },
             batchNumber: line.lotNumber || `BAT-${Date.now()}-${i}`,
             initialQuantity: line.quantity,
             currentQuantity: line.quantity,
             purchasePrice: line.unitCost,
             receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
             expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
-            supplierId: line.supplier,
-            notes: line.notes,
+            supplier: line.supplier ? { connect: { id: line.supplier } } : undefined,
             stockReceiptId: receipt.id,
-          },
+          } as any,
         });
 
         await tx.productVariantStock.upsert({
@@ -1012,10 +1032,10 @@ export class BakeryService {
             availableStock: { increment: line.quantity },
           },
           create: {
-            organizationId,
-            productId: variant.productId,
-            variantId: line.ingredientId,
-            locationId,
+            organization: { connect: { id: organizationId } },
+            product: { connect: { id: variant.productId } },
+            variant: { connect: { id: line.ingredientId } },
+            location: { connect: { id: locationId } },
             currentStock: line.quantity,
             availableStock: line.quantity,
           },

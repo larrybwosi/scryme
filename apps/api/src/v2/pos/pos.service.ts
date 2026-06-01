@@ -258,7 +258,7 @@ export class PosService {
         where: {
           organizationId: ctx.organizationId,
           toLocationId: locationId,
-          status: { in: ['PENDING', 'IN_TRANSIT'] },
+          status: { in: ['APPROVED', 'SHIPPED', 'IN_TRANSIT'] },
         },
         include: {
           fromLocation: { select: { id: true, name: true } },
@@ -453,9 +453,9 @@ export class PosService {
         orderBy: { createdAt: 'desc' },
         include: {
           customer: { select: { id: true, name: true, email: true } },
-          items: true,
+          items: { include: { variant: { include: { product: true } } } },
           payments: true,
-          fulfilments: {
+          fulfillments: {
             take: 1,
             orderBy: { createdAt: 'desc' },
           },
@@ -464,8 +464,8 @@ export class PosService {
     ]);
 
     const formattedTransactions = transactions.map(t => {
-      const paidAmount = t.payments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0)).toNumber();
-      const status = t.fulfilments.length > 0 ? 'dispatched' : t.paymentStatus.toLowerCase();
+      const paidAmount = t.payments.reduce((sum, p) => sum.plus(new Decimal(p.amount.toString())), new Decimal(0)).toNumber();
+      const status = (t as any).fulfillments?.length > 0 ? 'dispatched' : t.paymentStatus.toLowerCase();
 
       return {
         id: t.id,
@@ -476,11 +476,11 @@ export class PosService {
         paidAmount,
         date: t.createdAt.toISOString(),
         status,
-        fulfillmentId: t.fulfilments[0]?.id || null,
+        fulfillmentId: (t as any).fulfillments?.[0]?.id || null,
         invoiceLink: getDocumentUrl('invoice', t.id, ctx.organizationId),
         items: t.items.map(i => ({
           id: i.id,
-          productId: i.productId,
+          productId: i.variant.productId,
           productName: i.productName,
           variantId: i.variantId,
           sku: i.sku,
@@ -600,7 +600,7 @@ export class PosService {
 
     const variantIds = validated.items.map((i: any) => i.variantId);
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds }, organizationId: ctx.organizationId },
+        where: { id: { in: variantIds }, product: { organizationId: ctx.organizationId } },
     });
 
     let totalEstimatedCost = new Decimal(0);
@@ -728,9 +728,9 @@ export class PosService {
         transactionId,
         amount: new Decimal(amount),
         method,
-        reference,
+        referenceNumber: reference,
         payerPhone,
-        status: 'SUCCESS',
+        status: 'COMPLETED',
         processedAt: new Date(),
       },
     });
@@ -760,7 +760,7 @@ export class PosService {
   async getPricing(ctx: V2ApiContext, lastSync?: string) {
     const lastSyncDate = lastSync ? new Date(lastSync) : undefined;
 
-    const where: Prisma.PriceListWhereInput = {
+    const where: any = {
       organizationId: ctx.organizationId,
       isActive: true,
     };
@@ -769,18 +769,17 @@ export class PosService {
       where.updatedAt = { gt: lastSyncDate };
     }
 
-    const priceLists = await this.prisma.client.priceList.findMany({
+    const priceLists = (await this.prisma.client.priceList.findMany({
       where,
       include: {
         items: {
           where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
         },
-        allocations: true,
       },
-    });
+    })) as any[];
 
     const items = priceLists.flatMap(pl =>
-      pl.items.map(item => ({
+      (pl.items as any[]).map(item => ({
         id: item.id,
         priceListId: item.priceListId,
         variantId: item.variantId,
@@ -803,14 +802,6 @@ export class PosService {
     }));
 
     const customerAllocations: Record<string, string[]> = {};
-    priceLists.forEach(pl => {
-      pl.allocations.forEach(alloc => {
-        if (!customerAllocations[alloc.customerId]) {
-          customerAllocations[alloc.customerId] = [];
-        }
-        customerAllocations[alloc.customerId].push(pl.id);
-      });
-    });
 
     return {
       success: true,

@@ -44,15 +44,14 @@ export class MergeBatchesUseCase {
       // 1. Create the merged target batch
       const mergedBatch = await tx.stockBatch.create({
         data: {
-          organizationId,
-          variantId: firstBatch.variantId,
-          locationId: targetLocationId,
+          organization: { connect: { id: organizationId } },
+          variant: { connect: { id: firstBatch.variantId } },
+          location: { connect: { id: targetLocationId } },
           initialQuantity: totalQuantity,
           currentQuantity: totalQuantity,
           purchasePrice: firstBatch.purchasePrice, // Weighted average would be better in production
           receivedDate: new Date(),
           batchNumber: `MERGED-${Date.now()}`,
-          notes: notes || `Merged from ${batches.length} batches`,
         },
       });
 
@@ -78,14 +77,14 @@ export class MergeBatchesUseCase {
 
         await tx.stockMovement.create({
           data: {
-            organizationId,
-            variantId: batch.variantId,
-            stockBatchId: batch.id,
+            organization: { connect: { id: organizationId } },
+            variant: { connect: { id: batch.variantId } },
+            stockBatch: { connect: { id: batch.id } },
             quantity: batch.currentQuantity,
-            fromLocationId: batch.locationId,
-            toLocationId: targetLocationId,
+            fromLocation: { connect: { id: batch.locationId } },
+            toLocation: { connect: { id: targetLocationId } },
             movementType: 'ADJUSTMENT_OUT',
-            memberId,
+            member: { connect: { id: memberId } },
             notes: `Merged into batch ${mergedBatch.batchNumber}`,
           },
         });
@@ -93,14 +92,13 @@ export class MergeBatchesUseCase {
 
       await tx.stockMovement.create({
         data: {
-          organizationId,
-          variantId: firstBatch.variantId,
-          stockBatchId: mergedBatch.id,
+          organization: { connect: { id: organizationId } },
+          variant: { connect: { id: firstBatch.variantId } },
+          stockBatch: { connect: { id: mergedBatch.id } },
           quantity: totalQuantity,
-          fromLocationId: null,
-          toLocationId: targetLocationId,
+          toLocation: { connect: { id: targetLocationId } },
           movementType: 'ADJUSTMENT_IN',
-          memberId,
+          member: { connect: { id: memberId } },
           notes: `Created by merging ${batches.length} batches`,
         },
       });

@@ -90,13 +90,13 @@ model StockReceipt {
   id             String   @id @default(cuid())
   organizationId String
   memberId       String // The user who received the stock
-  purchaseId     String
+  purchaseId     String?
   receivedDate   DateTime
   notes          String?
   documentUrls   String[]
 
   // Relations
-  purchase       Purchase        @relation(fields: [purchaseId], references: [id])
+  purchase       Purchase?       @relation(fields: [purchaseId], references: [id])
   organization   Organization    @relation(fields: [organizationId], references: [id])
   member         Member          @relation(fields: [memberId], references: [id])
   stockMovements StockMovement[]

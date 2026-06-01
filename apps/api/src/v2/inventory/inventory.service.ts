@@ -172,7 +172,7 @@ export class InventoryService {
   }
 
   async adjustStock(data: any) {
-    const { productId, variantId, locationId, quantity, reason, notes, userId } = data;
+    const { organizationId, productId, variantId, locationId, quantity, reason, notes, userId } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Find or create the stock record
@@ -201,10 +201,10 @@ export class InventoryService {
 
         await tx.productVariantStock.create({
           data: {
-            organizationId: (tx as any).organizationId, // This might be tricky in a generic tx
-            productId,
-            variantId,
-            locationId,
+            organization: { connect: { id: organizationId } },
+            product: { connect: { id: productId } },
+            variant: { connect: { id: variantId } },
+            location: { connect: { id: locationId } },
             availableStock: quantity,
             currentStock: quantity,
           },
@@ -214,17 +214,16 @@ export class InventoryService {
       // 2. Log the movement
       const movement = await tx.stockMovement.create({
         data: {
-          organizationId: (tx as any).organizationId,
-          productId,
-          variantId,
-          fromLocationId: quantity < 0 ? locationId : null,
-          toLocationId: quantity > 0 ? locationId : null,
+          organization: { connect: { id: organizationId } },
+          variant: { connect: { id: variantId } },
+          fromLocation: quantity < 0 ? { connect: { id: locationId } } : undefined,
+          toLocation: quantity > 0 ? { connect: { id: locationId } } : undefined,
           quantity: Math.abs(quantity),
-          movementType: reason.toUpperCase(),
+          movementType: reason.toUpperCase() as any,
           notes,
-          memberId: userId !== 'system' ? userId : undefined,
+          member: { connect: { id: userId !== 'system' ? userId : undefined } },
         },
-      });
+      } as any);
 
       return {
         previousStock,

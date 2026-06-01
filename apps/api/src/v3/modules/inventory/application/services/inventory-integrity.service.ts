@@ -12,7 +12,7 @@ export class InventoryIntegrityService {
 
     while (true) {
       const variants = await this.prisma.client.productVariant.findMany({
-        where: { organizationId },
+        where: { product: { organizationId } },
         select: { id: true },
         take: batchSize,
         skip: skip,
