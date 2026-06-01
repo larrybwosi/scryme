@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Query,
+  Param,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -52,5 +53,12 @@ export class ExpenseController {
   @Permissions('expense:view')
   async getCategories(@Req() req) {
     return this.expenseUseCase.getExpenseCategories(req.organization.id);
+  }
+
+  @Post(':id/approve')
+  @ApiOperation({ summary: 'Approve an expense' })
+  @Permissions('expense:manage')
+  async approveExpense(@Req() req, @Param('id') id: string) {
+    return this.expenseUseCase.approveExpense(req.organization.id, req.user.memberId, id);
   }
 }

@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { usePosStore } from '@/store/store';
 import { usePosPricingSync, useBatchPricing } from '@/hooks/use-pricing-sync';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
 import {
   Search,
   Store,
@@ -23,18 +23,18 @@ import posthog from 'posthog-js';
 import { BarcodeScannerDialog } from '../components/barcode-scanner-dialog';
 import { usePosProducts } from '@/hooks/products';
 import { useNavigate } from 'react-router';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '../components/ui/skeleton';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { ProductCard } from '@/components/pos/product-card';
 import { ProductListItem } from '@/components/pos/product-list-item';
 import { useDebounce } from 'use-debounce';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import PendingOrdersList from '@/components/orders-list';
 import { useScanner } from '@/hooks/use-scanner';
 import { toast } from 'sonner';
 import { TableSelectorDialog } from '@/components/pos/table-selector-dialog';
 import { Kbd } from '@/components/ui/kbd';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import {
   Pagination,
   PaginationContent,
@@ -43,7 +43,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
+} from '@repo/ui/components/ui/pagination';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +53,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@repo/ui/components/ui/alert-dialog';
 
 // --- TAURI IMPORTS ---
 import { invoke } from '@tauri-apps/api/core';

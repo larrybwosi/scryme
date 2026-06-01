@@ -1,5 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/ui/components/ui/button';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import posthog from 'posthog-js';

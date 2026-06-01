@@ -1,11 +1,11 @@
 import { Printer, RefreshCcw, Settings2, FileText, Receipt, ChefHat, ReceiptText, Truck, GlassWater } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@repo/ui/components/ui/button';
+import { Card } from '@repo/ui/components/ui/card';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Switch } from '@repo/ui/components/ui/switch';
+import { Label } from '@repo/ui/components/ui/label';
+import { Separator } from '@repo/ui/components/ui/separator';
 import { usePrinter } from '@/hooks/use-printer';
 import { PrinterJobType } from '@/store/printer-store';
 import { usePosStore } from '@/store/store';

@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { usePosStore } from '@/store/store';
 import { usePosPricingSync } from '@/hooks/use-pricing-sync';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
 import {
   Search,
   X,
@@ -43,7 +43,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@repo/ui/components/ui/alert-dialog';
 import { SettingsDialog } from '@/components/settings-dialog';
 import { useNavigate } from 'react-router';
 import {
@@ -52,7 +52,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@repo/ui/components/ui/sheet";
 import { Virtuoso } from 'react-virtuoso';
 
 export function SupermarketPOS() {

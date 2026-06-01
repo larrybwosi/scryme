@@ -123,7 +123,7 @@ jobs:
 
       - name: Install Playwright Browsers
         if: (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true') && steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps
+        run: pnpm --filter dealio-desktop exec playwright install --with-deps
 
       - name: Run POS E2E tests
         if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'

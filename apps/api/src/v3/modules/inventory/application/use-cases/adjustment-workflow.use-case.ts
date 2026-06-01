@@ -1,8 +1,13 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { ApprovalRequestType, ApprovalStatus } from '@repo/db';
-import { InventoryMovementService } from '../services/inventory-movement.service';
-import { emitStockAdjustment } from '@repo/windmill/server';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ApprovalRequestType, ApprovalStatus } from "@repo/db";
+import { InventoryMovementService } from "../services/inventory-movement.service";
+import { emitStockAdjustment } from "@repo/windmill/server";
 
 @Injectable()
 export class RequestStockAdjustmentUseCase {
@@ -18,9 +23,9 @@ export class RequestStockAdjustmentUseCase {
       reason: any; // StockAdjustmentReason
       notes?: string;
       stockBatchId?: string;
-    }
+    },
   ) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const adjustment = await tx.stockAdjustment.create({
         data: {
           organizationId,
@@ -31,7 +36,7 @@ export class RequestStockAdjustmentUseCase {
           reason: data.reason,
           notes: data.notes,
           stockBatchId: data.stockBatchId,
-          status: 'PENDING',
+          status: "PENDING",
         },
         include: {
           variant: { include: { product: true } },
@@ -55,12 +60,17 @@ export class RequestStockAdjustmentUseCase {
       // Emit Windmill Event
       await emitStockAdjustment(organizationId, {
         adjustmentId: adjustment.id,
-        variantName: `${adjustment.variant.product.name} ${adjustment.variant.name || ''}`,
+        variantName: `${adjustment.variant.product.name} ${adjustment.variant.name || ""}`,
         locationName: adjustment.location.name,
         quantity: Number(adjustment.quantity),
         reason: String(adjustment.reason),
         notes: adjustment.notes || undefined,
-      }).catch(err => console.error('[v3 StockAdjustment] Failed to emit Windmill event:', err));
+      }).catch((err) =>
+        console.error(
+          "[v3 StockAdjustment] Failed to emit Windmill event:",
+          err,
+        ),
+      );
 
       return adjustment;
     });
@@ -71,23 +81,29 @@ export class RequestStockAdjustmentUseCase {
 export class ApproveStockAdjustmentUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryMovementService: InventoryMovementService
+    private readonly inventoryMovementService: InventoryMovementService,
   ) {}
 
-  async execute(organizationId: string, approvalMemberId: string, adjustmentId: string) {
-    return this.prisma.client.$transaction(async tx => {
+  async execute(
+    organizationId: string,
+    approvalMemberId: string,
+    adjustmentId: string,
+  ) {
+    return this.prisma.client.$transaction(async (tx) => {
       const adjustment = await tx.stockAdjustment.findUnique({
         where: { id: adjustmentId, organizationId },
       });
 
-      if (!adjustment) throw new NotFoundException('Adjustment request not found');
-      if (adjustment.status !== 'PENDING') throw new BadRequestException('Adjustment is not in PENDING status');
+      if (!adjustment)
+        throw new NotFoundException("Adjustment request not found");
+      if (adjustment.status !== "PENDING")
+        throw new BadRequestException("Adjustment is not in PENDING status");
 
       // 1. Update adjustment status
       const updatedAdjustment = await tx.stockAdjustment.update({
         where: { id: adjustmentId },
         data: {
-          status: 'APPROVED',
+          status: "APPROVED",
           approvedById: approvalMemberId,
           approvedAt: new Date(),
         },
@@ -95,9 +111,13 @@ export class ApproveStockAdjustmentUseCase {
 
       // 2. Update stock levels
       const isIncrement =
-        ['FOUND', 'ADJUSTMENT_IN', 'INITIAL_STOCK', 'CUSTOMER_RETURN', 'TRANSFER_IN'].includes(
-          adjustment.reason as string
-        ) || adjustment.quantity > 0;
+        [
+          "FOUND",
+          "ADJUSTMENT_IN",
+          "INITIAL_STOCK",
+          "CUSTOMER_RETURN",
+          "TRANSFER_IN",
+        ].includes(adjustment.reason as string) || adjustment.quantity.gt(0);
       const quantityChange = adjustment.quantity;
 
       // Update variant stock summary
@@ -110,7 +130,9 @@ export class ApproveStockAdjustmentUseCase {
         },
         create: {
           organizationId,
-          productId: (await tx.productVariant.findUnique({ where: { id: adjustment.variantId } }))!.productId,
+          productId: (await tx.productVariant.findUnique({
+            where: { id: adjustment.variantId },
+          }))!.productId,
           variantId: adjustment.variantId,
           locationId: adjustment.locationId,
           currentStock: quantityChange,
@@ -140,10 +162,10 @@ export class ApproveStockAdjustmentUseCase {
         quantity: Math.abs(Number(adjustment.quantity)),
         fromLocationId: isIncrement ? null : adjustment.locationId,
         toLocationId: isIncrement ? adjustment.locationId : null,
-        movementType: isIncrement ? 'ADJUSTMENT_IN' : 'ADJUSTMENT_OUT',
+        movementType: isIncrement ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT",
         stockBatchId: adjustment.stockBatchId || undefined,
         referenceId: adjustment.id,
-        referenceType: 'StockAdjustment',
+        referenceType: "StockAdjustment",
         notes: adjustment.notes || undefined,
       });
 

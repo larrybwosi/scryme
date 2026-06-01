@@ -2,7 +2,6 @@ import { Controller, Get, Param, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { PublicService } from './public.service';
 import { AllowPublic } from '../../common/decorators/auth.decorator';
-import { FastifyReply } from 'fastify';
 
 @ApiTags('Public')
 @Controller('public')
@@ -26,6 +25,8 @@ export class PublicController {
     res.header('Content-Disposition', `inline; filename="${result.filename}"`);
     res.header('Cache-Control', 'private, max-age=3600');
 
+    // For Fastify, we can send the stream directly.
+    // In NestJS with Fastify, we should use res.send(stream)
     return res.send(result.stream);
   }
 }

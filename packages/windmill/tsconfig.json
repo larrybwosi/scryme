@@ -1,24 +1,16 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "noEmit": true,
+    "jsx": "react-jsx",
     "outDir": "dist",
     "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo",
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strict": false,
     "skipLibCheck": true,
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

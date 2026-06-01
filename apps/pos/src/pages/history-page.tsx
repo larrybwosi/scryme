@@ -3,11 +3,11 @@
 import { useState, useMemo, useEffect } from "react"
 import posthog from 'posthog-js';
 import { usePosStore } from "@/store/store"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+import { Card } from "@repo/ui/components/ui/card"
+import { Button } from "@repo/ui/components/ui/button"
+import { Input } from "@repo/ui/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
+import { Badge } from "@repo/ui/components/ui/badge"
 import { Search, Download, Eye, Printer, AlertCircle, CheckCircle2, Cloud, RefreshCw, Wifi, WifiOff, Trash2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePendingSales, useNetworkStatus, useRetrySale, useDeleteSale, useOldSalesCheck } from "@/hooks/sales"
@@ -22,7 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@repo/ui/components/ui/alert-dialog"
 
 export function HistoryPage() {
   const { pendingSales: queue, isLoading, error, syncSales, isSyncing } = usePendingSales()

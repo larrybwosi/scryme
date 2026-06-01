@@ -19,9 +19,9 @@ import {
 // import { EnhancedThermalReceiptPDF } from './thermal-receipt';
 import { ReceiptConfig, OrganizationData, PaymentData } from './types';
 import { cn } from '@/lib/utils';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Card } from '../ui/card';
+import { Label } from '@repo/ui/components/ui/label';
+import { Input } from '@repo/ui/components/ui/input';
+import { Card } from '@repo/ui/components/ui/card';
 
 const Select = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
   <div className="relative">

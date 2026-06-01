@@ -17,14 +17,14 @@ import {
   ShieldCheck,
   MapPin,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Label } from '@repo/ui/components/ui/label';
+import { Input } from '@repo/ui/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Switch } from '@repo/ui/components/ui/switch';
+import { Separator } from '@repo/ui/components/ui/separator';
+import { TabsContent } from '@repo/ui/components/ui/tabs';
+import { Button } from '@repo/ui/components/ui/button';
 import { BusinessType, BusinessConfig } from '@/lib/business-configs';
 import { LocationSwitchDialog } from './location-switch-dialog';
 import { useState } from 'react';
