@@ -24,6 +24,7 @@ import {
 import slugify from "slugify";
 import { toast } from "sonner";
 
+import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
@@ -36,11 +37,11 @@ import {
 import {
   createOrganization,
   checkSlugAvailability,
-} from "@/actions/organization";
+} from "@/app/actions/organization";
 import {
   getPendingInvitations,
   acceptInvitationByToken,
-} from "@/actions/invitations";
+} from "@/app/actions/invitations";
 
 // Re-using the schema but focusing on what we need for the simple flow
 const createOrgFormSchema = z.object({

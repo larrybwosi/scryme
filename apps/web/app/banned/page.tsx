@@ -24,14 +24,14 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
-import { signOut } from "@/lib/auth/authClient";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 const BannedPage = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut({
+    await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
           router.push("/login");
