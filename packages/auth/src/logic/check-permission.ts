@@ -86,7 +86,6 @@ export async function checkPermissionLogic(
         data: {
           organizationId: organizationId,
           memberId: memberId,
-          entityId: memberId,
           action: 'ACCESS_DENIED',
           entityType: 'AUTH_CHECK',
           entityId: memberId,

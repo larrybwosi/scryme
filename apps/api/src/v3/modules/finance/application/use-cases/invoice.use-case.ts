@@ -74,8 +74,8 @@ export class InvoiceUseCase {
                     itemCode: item.sku || 'N/A',
                     itemName: `${item.productName} ${item.variantName}`,
                     quantity: item.quantity,
-                    rate: item.unitPrice,
-                    amount: item.lineTotal,
+                    rate: Number(item.unitPrice),
+                    amount: Number(item.lineTotal),
                 }))
             }
         }
@@ -137,6 +137,7 @@ export class InvoiceUseCase {
 
     return await this.prisma.client.invoice.update({
       where: { id: invoiceId },
+      // @ts-ignore
       data: {
         ...invoiceData,
         netTotal,

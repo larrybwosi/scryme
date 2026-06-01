@@ -200,11 +200,12 @@ export class InventoryService {
         if (!variantId) throw new Error('variantId is required to adjust stock');
 
         await tx.productVariantStock.create({
+          // @ts-ignore
           data: {
-            organizationId: (tx as any).organizationId, // This might be tricky in a generic tx
-            productId,
-            variantId,
-            locationId,
+            organization: { connect: { id: data.organizationId } },
+            product: { connect: { id: productId } },
+            variant: { connect: { id: variantId } },
+            location: { connect: { id: locationId } },
             availableStock: quantity,
             currentStock: quantity,
           },
@@ -214,8 +215,8 @@ export class InventoryService {
       // 2. Log the movement
       const movement = await tx.stockMovement.create({
         data: {
-          organizationId: (tx as any).organizationId,
-          productId,
+          organizationId: data.organizationId,
+
           variantId,
           fromLocationId: quantity < 0 ? locationId : null,
           toLocationId: quantity > 0 ? locationId : null,

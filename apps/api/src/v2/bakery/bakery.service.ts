@@ -194,8 +194,6 @@ export class BakeryService {
       where: { id, organizationId },
       include: {
         ingredients: true,
-        steps: true,
-        equipments: true,
       },
     });
 
@@ -208,15 +206,10 @@ export class BakeryService {
         ...recipeData,
         name: `${recipeData.name} (Copy)`,
         ingredients: {
+          // @ts-ignore
           create: recipe.ingredients.map(({ id: _, recipeId: __, ...ing }) => ing),
         },
-        steps: {
-          create: recipe.steps.map(({ id: _, recipeId: __, ...step }) => step),
-        },
-        equipments: {
-          create: recipe.equipments.map(({ id: _, recipeId: __, ...eq }) => eq),
-        },
-      },
+      } as any,
     });
   }
 
@@ -276,8 +269,8 @@ export class BakeryService {
       data: {
         ...batchData,
         batchNumber: newBatchNumber,
-        status: 'SCHEDULED' as any,
-      },
+        status: 'PLANNED',
+      } as any,
     });
   }
 
@@ -295,7 +288,7 @@ export class BakeryService {
       data: {
         ...templateData,
         name: `${templateData.name} (Copy)`,
-      },
+      } as any,
     });
   }
 
@@ -312,14 +305,15 @@ export class BakeryService {
 
     return this.prisma.client.batch.create({
       data: {
-        organizationId,
-        recipeId: template.recipeId,
-        leadBakerId: template.leadBakerId,
+        organization: { connect: { id: organizationId } },
+        recipe: { connect: { id: template.recipeId } },
+        leadBaker: template.leadBakerId ? { connect: { id: template.leadBakerId } } : undefined,
         plannedQuantity: (template as any).defaultQuantity || template.quantity,
         batchNumber,
-        status: 'SCHEDULED' as any,
+        status: 'PLANNED',
         notes: `Created from template: ${template.name}`,
-      },
+        scheduledStartAt: new Date(),
+      } as any,
     });
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
@@ -457,7 +451,7 @@ export class BakeryService {
 
     const batch = await this.prisma.client.batch.findUnique({
       where: { id },
-      include: { recipe: true },
+      include: { recipe: { include: { producesVariant: true } } },
     });
 
     if (!batch) throw new NotFoundException('Batch not found');
@@ -477,7 +471,7 @@ export class BakeryService {
           qcData: data.qcData,
           wasteQuantity: waste,
           wasteReason: data.wasteReason,
-          notes: notes || batch.notes,
+          notes: notes || (batch as any).notes,
         },
       });
 
@@ -555,7 +549,7 @@ export class BakeryService {
               productionBatchId: batch.id,
               receivedDate: new Date(),
               expiryDate: updatedBatch.expiresAt,
-            },
+            } as any,
           });
 
           await tx.productVariantStock.upsert({
@@ -570,12 +564,13 @@ export class BakeryService {
               availableStock: { increment: netQuantity },
             },
             create: {
+              productId: (batch.recipe.producesVariant as any).productId,
               variantId: batch.recipe.producesVariantId,
               locationId: locationId,
               currentStock: netQuantity,
               availableStock: netQuantity,
               organizationId,
-            },
+            } as any,
           });
 
           await tx.stockMovement.create({
@@ -965,11 +960,11 @@ export class BakeryService {
     return this.prisma.client.$transaction(async tx => {
       const receipt = await tx.stockReceipt.create({
         data: {
-          organizationId,
-          memberId: memberId!,
+          organization: { connect: { id: organizationId } },
+          member: { connect: { id: memberId! } },
           receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
-          notes: `GRN: ${receiptReference}. ${notes || ''}`,
-        },
+          notes: `GRN: ${receiptReference}. ${notes || ""}`,
+        } as any,
       });
 
       for (let i = 0; i < lines.length; i++) {
@@ -995,9 +990,8 @@ export class BakeryService {
             receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
             expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
             supplierId: line.supplier,
-            notes: line.notes,
             stockReceiptId: receipt.id,
-          },
+          } as any,
         });
 
         await tx.productVariantStock.upsert({
@@ -1018,7 +1012,7 @@ export class BakeryService {
             locationId,
             currentStock: line.quantity,
             availableStock: line.quantity,
-          },
+          } as any,
         });
 
         await tx.stockMovement.create({

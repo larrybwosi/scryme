@@ -51,26 +51,6 @@ export async function getCustomer(id: string) {
     where: { id },
     include: {
       businessAccount: true,
-      invoices: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      },
-      transactions: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      },
-      crmRecord: {
-        include: {
-          activities: {
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-          },
-          notes: {
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-          },
-        },
-      },
-    },
+    }
   });
 }

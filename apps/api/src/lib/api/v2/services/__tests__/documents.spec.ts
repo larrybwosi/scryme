@@ -33,7 +33,7 @@ vi.mock('@repo/documents/v2/ReceiptTemplate', () => ({
 describe('Documents Service', () => {
   it('should return a stream for an invoice', async () => {
     const { PrismaClient } = await import('@repo/db');
-    const mockPrisma = new PrismaClient();
+    const mockPrisma = new (PrismaClient as any)();
     const mockTransaction = {
       id: 'txn_1',
       number: 'INV-001',
@@ -55,7 +55,7 @@ describe('Documents Service', () => {
 
   it('should throw error if transaction not found', async () => {
     const { PrismaClient } = await import('@repo/db');
-    const mockPrisma = new PrismaClient();
+    const mockPrisma = new (PrismaClient as any)();
     vi.mocked(mockPrisma.transaction.findFirst).mockResolvedValue(null as any);
 
     await expect(getDocumentStream('invoice', 'txn_2', 'org_1')).rejects.toThrow('Transaction not found');

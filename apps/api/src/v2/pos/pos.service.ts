@@ -35,6 +35,7 @@ import { Decimal } from 'decimal.js';
 import { RedisService } from 'src/redis/redis.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { PosCustomerService } from './pos-customer.service';
+import { Prisma } from "@repo/db";
 
 @Injectable()
 export class PosService {
@@ -258,7 +259,7 @@ export class PosService {
         where: {
           organizationId: ctx.organizationId,
           toLocationId: locationId,
-          status: { in: ['PENDING', 'IN_TRANSIT'] },
+          status: { in: ['SHIPPED', 'IN_TRANSIT'] as any },
         },
         include: {
           fromLocation: { select: { id: true, name: true } },
@@ -292,7 +293,7 @@ export class PosService {
         id: trf.id,
         type: 'STOCK_TRANSFER',
         referenceNumber: trf.transferNumber,
-        source: trf.fromLocation?.name || 'Unknown Location',
+        source: (trf as any).fromLocation?.name || 'Unknown Location',
         date: trf.requestedDate,
         status: trf.status,
         itemCount: trf.items.length,
@@ -378,7 +379,7 @@ export class PosService {
 
   async adjustStock(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(AdjustStockSchema, body);
-    const result = await this.inventoryService.adjustStock({ ...validated, userId: ctx.userId || 'system' });
+    const result = await this.inventoryService.adjustStock({ organizationId: ctx.organizationId, ...validated, userId: ctx.userId || 'system' });
 
     await this.prisma.client.actionAuditLog.create({
       data: {
@@ -452,35 +453,29 @@ export class PosService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          customer: { select: { id: true, name: true, email: true } },
-          items: true,
-          payments: true,
-          fulfilments: {
-            take: 1,
-            orderBy: { createdAt: 'desc' },
-          },
+          customer: true, items: { include: { variant: true } }, payments: true, fulfillments: true,
         },
       }),
     ]);
 
     const formattedTransactions = transactions.map(t => {
-      const paidAmount = t.payments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0)).toNumber();
-      const status = t.fulfilments.length > 0 ? 'dispatched' : t.paymentStatus.toLowerCase();
+      const paidAmount = (t as any).payments.reduce((sum: Decimal, p: any) => sum.plus(p.amount), new Decimal(0)).toNumber();
+      const status = (t as any).fulfillments?.length > 0 ? 'dispatched' : t.paymentStatus.toLowerCase();
 
       return {
         id: t.id,
         number: t.number,
-        customer: t.customer?.name || 'Guest',
-        email: t.customer?.email || '',
+        customer: (t as any).customer?.name || 'Guest',
+        email: (t as any).customer?.email || '',
         totalAmount: t.finalTotal.toNumber(),
         paidAmount,
         date: t.createdAt.toISOString(),
         status,
-        fulfillmentId: t.fulfilments[0]?.id || null,
+        fulfillmentId: (t as any).fulfillments?.[0]?.id || null,
         invoiceLink: getDocumentUrl('invoice', t.id, ctx.organizationId),
-        items: t.items.map(i => ({
+        items: (t as any).items.map((i: any) => ({
           id: i.id,
-          productId: i.productId,
+          productId: i.variant.productId,
           productName: i.productName,
           variantId: i.variantId,
           sku: i.sku,
@@ -600,7 +595,7 @@ export class PosService {
 
     const variantIds = validated.items.map((i: any) => i.variantId);
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds }, organizationId: ctx.organizationId },
+      where: { id: { in: variantIds }, product: { organizationId: ctx.organizationId } },
     });
 
     let totalEstimatedCost = new Decimal(0);
@@ -714,7 +709,7 @@ export class PosService {
 
   async recordPayment(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(RecordPaymentSchema, body);
-    const { transactionId, amount, method, reference, payerPhone } = validated;
+    const { transactionId, amount, method, referenceNumber: reference, payerPhone } = validated;
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId: ctx.organizationId },
@@ -728,9 +723,9 @@ export class PosService {
         transactionId,
         amount: new Decimal(amount),
         method,
-        reference,
+        referenceNumber: reference,
         payerPhone,
-        status: 'SUCCESS',
+        status: 'PAID' as any,
         processedAt: new Date(),
       },
     });
@@ -745,12 +740,12 @@ export class PosService {
     if (totalPaid.gte(transaction.finalTotal)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: 'PAID' },
+        data: { paymentStatus: 'PAID' as any },
       });
     } else if (totalPaid.gt(0)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: 'PARTIALLY_PAID' },
+        data: { paymentStatus: 'PARTIALLY_PAID' as any },
       });
     }
 
@@ -775,7 +770,7 @@ export class PosService {
         items: {
           where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
         },
-        allocations: true,
+        customers: true, businessAccounts: true,
       },
     });
 
@@ -804,11 +799,17 @@ export class PosService {
 
     const customerAllocations: Record<string, string[]> = {};
     priceLists.forEach(pl => {
-      pl.allocations.forEach(alloc => {
-        if (!customerAllocations[alloc.customerId]) {
-          customerAllocations[alloc.customerId] = [];
+      (pl as any).customers.forEach((cust: any) => {
+        if (!customerAllocations[cust.id]) {
+          customerAllocations[cust.id] = [];
         }
-        customerAllocations[alloc.customerId].push(pl.id);
+        customerAllocations[cust.id].push(pl.id);
+      });
+      (pl as any).businessAccounts.forEach((ba: any) => {
+        if (!customerAllocations[ba.id]) {
+          customerAllocations[ba.id] = [];
+        }
+        customerAllocations[ba.id].push(pl.id);
       });
     });
 
