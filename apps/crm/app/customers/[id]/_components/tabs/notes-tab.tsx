@@ -68,7 +68,7 @@ function NoteCard({
 
 export function NotesTab({ customer }: NotesTabProps) {
   const [notes, setNotes] = useState<Note[]>(
-    [...(customer.notes || [])].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    [...customer.notes].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
   );
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');

@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "target": "ESNext",
-    "lib": [
-      "ESNext",
-      "DOM"
-    ],
+    "lib": ["ESNext", "DOM"],
     "declaration": true,
     "outDir": "dist",
     "rootDir": "..",
@@ -14,22 +10,14 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "types": [
-      "jest",
-      "node"
-    ],
+    "types": ["jest", "node"],
     "paths": {
-      "@repo/windmill/server": [
-        "../windmill/src/server.ts"
-      ],
-      "@/*": [
-        "./src/*"
-      ]
+      "@repo/windmill/server": ["../windmill/src/server.ts"],
+      "@repo/db": ["../../packages/db/src/index.ts"],
+      "@/*": ["./src/*"]
     },
     "noImplicitAny": false,
     "strictNullChecks": false
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
