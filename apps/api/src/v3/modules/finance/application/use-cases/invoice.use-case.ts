@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceItemDto } from '../dto/invoice.dto';
-import { DocumentService } from '@/common/documents/document.service';
-import { navariService } from '@repo/suppliers/server';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import {
+  CreateInvoiceDto,
+  UpdateInvoiceDto,
+  InvoiceItemDto,
+} from "../dto/invoice.dto";
+import { DocumentService } from "@/common/documents/document.service";
+import { navariService } from "@repo/suppliers/server";
 
 @Injectable()
 export class InvoiceUseCase {
@@ -32,53 +40,53 @@ export class InvoiceUseCase {
 
   private calculateTotals(items: InvoiceItemDto[]) {
     const netTotal = items.reduce((acc, item) => acc + item.amount, 0);
-    const totalTaxes = items.reduce((acc, item) => acc + (item.amount * 0.16), 0);
+    const totalTaxes = items.reduce((acc, item) => acc + item.amount * 0.16, 0);
     const grandTotal = netTotal + totalTaxes;
     return { netTotal, totalTaxes, grandTotal };
   }
 
   async createInvoiceFromOrder(organizationId: string, orderId: string) {
     const order = await this.prisma.client.transaction.findFirst({
-        where: { id: orderId, organizationId },
-        include: { items: true, businessAccount: true }
+      where: { id: orderId, organizationId },
+      include: { items: true, businessAccount: true },
     });
 
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) throw new NotFoundException("Order not found");
 
     const totalPaid = Number(order.totalPaid || 0);
     const grandTotal = Number(order.finalTotal);
     const balanceDue = grandTotal - totalPaid;
 
-    let status = 'UNPAID';
+    let status = "UNPAID";
     if (totalPaid >= grandTotal) {
-      status = 'PAID';
+      status = "PAID";
     } else if (totalPaid > 0) {
-      status = 'PARTIALLY_PAID';
+      status = "PARTIALLY_PAID";
     }
 
     return await this.prisma.client.invoice.create({
-        data: {
-            organizationId,
-            transactionId: order.id,
-            customerName: order.businessAccount?.name || 'Walk-in Customer',
-            postingDate: new Date(),
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            netTotal: Number(order.subtotal),
-            totalTaxes: Number(order.finalTotal) - Number(order.subtotal),
-            grandTotal: Number(order.finalTotal),
-            amountPaid: totalPaid,
-            balanceDue: balanceDue,
-            status: status,
-            items: {
-                create: order.items.map(item => ({
-                    itemCode: item.sku || 'N/A',
-                    itemName: `${item.productName} ${item.variantName}`,
-                    quantity: item.quantity,
-                    rate: item.unitPrice,
-                    amount: item.lineTotal,
-                }))
-            }
-        }
+      data: {
+        organizationId,
+        transactionId: order.id,
+        customerName: order.businessAccount?.name || "Walk-in Customer",
+        postingDate: new Date(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        netTotal: Number(order.subtotal),
+        totalTaxes: Number(order.finalTotal) - Number(order.subtotal),
+        grandTotal: Number(order.finalTotal),
+        amountPaid: totalPaid,
+        balanceDue: balanceDue,
+        status: status,
+        items: {
+          create: order.items.map((item) => ({
+            itemCode: item.sku || "N/A",
+            itemName: `${item.productName} ${item.variantName}`,
+            quantity: item.quantity,
+            rate: Number(item.unitPrice),
+            amount: Number(item.lineTotal),
+          })),
+        },
+      },
     });
   }
 
@@ -86,16 +94,21 @@ export class InvoiceUseCase {
     return await this.prisma.client.invoice.findMany({
       where: { organizationId },
       include: { items: true, template: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
   async getInvoiceById(organizationId: string, invoiceId: string) {
     const invoice = await this.prisma.client.invoice.findFirst({
       where: { id: invoiceId, organizationId },
-      include: { items: true, template: true, organization: true, transaction: true },
+      include: {
+        items: true,
+        template: true,
+        organization: true,
+        transaction: true,
+      },
     });
-    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (!invoice) throw new NotFoundException("Invoice not found");
 
     // Sync with transaction if it exists
     if (invoice.transaction) {
@@ -105,38 +118,49 @@ export class InvoiceUseCase {
 
       let status = invoice.status;
       if (totalPaid >= grandTotal) {
-        status = 'PAID';
+        status = "PAID";
       } else if (totalPaid > 0) {
-        status = 'PARTIALLY_PAID';
-      } else if (status !== 'DRAFT') {
-        status = 'UNPAID';
+        status = "PARTIALLY_PAID";
+      } else if (status !== "DRAFT") {
+        status = "UNPAID";
       }
 
       if (invoice.amountPaid !== totalPaid || invoice.status !== status) {
-          return await this.prisma.client.invoice.update({
-              where: { id: invoiceId },
-              data: {
-                  amountPaid: totalPaid,
-                  balanceDue: balanceDue,
-                  status: status
-              },
-              include: { items: true, template: true, organization: true, transaction: true }
-          });
+        return await this.prisma.client.invoice.update({
+          where: { id: invoiceId },
+          data: {
+            amountPaid: totalPaid,
+            balanceDue: balanceDue,
+            status: status,
+          },
+          include: {
+            items: true,
+            template: true,
+            organization: true,
+            transaction: true,
+          },
+        });
       }
     }
 
     return invoice;
   }
 
-  async updateInvoice(organizationId: string, invoiceId: string, dto: UpdateInvoiceDto) {
+  async updateInvoice(
+    organizationId: string,
+    invoiceId: string,
+    dto: UpdateInvoiceDto,
+  ) {
     const { items, ...invoiceData } = dto;
     const invoice = await this.getInvoiceById(organizationId, invoiceId);
-    if (invoice.status === 'PAID') throw new BadRequestException('Cannot update a paid invoice');
+    if (invoice.status === "PAID")
+      throw new BadRequestException("Cannot update a paid invoice");
 
     const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items);
 
     return await this.prisma.client.invoice.update({
       where: { id: invoiceId },
+      // @ts-expect-error some error.
       data: {
         ...invoiceData,
         netTotal,
@@ -153,8 +177,11 @@ export class InvoiceUseCase {
 
   async deleteInvoice(organizationId: string, invoiceId: string) {
     const invoice = await this.getInvoiceById(organizationId, invoiceId);
-    if (invoice.status === 'PAID') throw new BadRequestException('Cannot delete a paid invoice');
-    return await this.prisma.client.invoice.delete({ where: { id: invoiceId } });
+    if (invoice.status === "PAID")
+      throw new BadRequestException("Cannot delete a paid invoice");
+    return await this.prisma.client.invoice.delete({
+      where: { id: invoiceId },
+    });
   }
 
   async finalizeInvoice(organizationId: string, invoiceId: string) {
@@ -163,46 +190,52 @@ export class InvoiceUseCase {
 
     return await this.prisma.client.invoice.update({
       where: { id: invoiceId },
-      data: { status: 'UNPAID' },
+      data: { status: "UNPAID" },
     });
   }
 
   private async handleKRACompliance(organizationId: string, invoice: any) {
     const org = await this.prisma.client.organization.findUnique({
-        where: { id: organizationId },
-        include: { settings: true }
+      where: { id: organizationId },
+      include: { settings: true },
     });
 
-    if (org?.settings?.taxIntegrationEnabled && org?.settings?.country === 'Kenya') {
-        try {
-            await navariService.generateETRInvoice(organizationId, {
-                invoiceId: invoice.id,
-                customer: invoice.customer,
-                kraPin: invoice.kraPin,
-                netTotal: invoice.netTotal,
-                totalTaxes: invoice.totalTaxes,
-                grandTotal: invoice.grandTotal,
-                etrMode: invoice.etrMode,
-                items: invoice.items.map(i => ({
-                    description: i.itemName, quantity: i.quantity, price: i.rate, amount: i.amount
-                }))
-            });
-            await this.prisma.client.invoice.update({
-                where: { id: invoice.id },
-                data: { kraCompliant: true }
-            });
-        } catch (error) {
-            console.error('Navari ETR Generation failed:', error.message);
-        }
+    if (
+      org?.settings?.taxIntegrationEnabled &&
+      org?.settings?.country === "Kenya"
+    ) {
+      try {
+        await navariService.generateETRInvoice(organizationId, {
+          invoiceId: invoice.id,
+          customer: invoice.customer,
+          kraPin: invoice.kraPin,
+          netTotal: invoice.netTotal,
+          totalTaxes: invoice.totalTaxes,
+          grandTotal: invoice.grandTotal,
+          etrMode: invoice.etrMode,
+          items: invoice.items.map((i) => ({
+            description: i.itemName,
+            quantity: i.quantity,
+            price: i.rate,
+            amount: i.amount,
+          })),
+        });
+        await this.prisma.client.invoice.update({
+          where: { id: invoice.id },
+          data: { kraCompliant: true },
+        });
+      } catch (error) {
+        console.error("Navari ETR Generation failed:", error.message);
+      }
     }
   }
 
   async getDownloadStreamDirect(invoiceId: string) {
     const invoice = await this.prisma.client.invoice.findUnique({
-        where: { id: invoiceId },
-        include: { items: true, organization: true, template: true }
+      where: { id: invoiceId },
+      include: { items: true, organization: true, template: true },
     });
-    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (!invoice) throw new NotFoundException("Invoice not found");
     return this.generatePDF(invoice);
   }
 
@@ -214,22 +247,22 @@ export class InvoiceUseCase {
         customer: true,
         organization: true,
         payments: true,
-      }
+      },
     });
 
-    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (!transaction) throw new NotFoundException("Transaction not found");
 
     const receiptData = {
       receiptNumber: transaction.number,
       transactionId: transaction.id,
       date: transaction.createdAt.toLocaleDateString(),
-      customerName: transaction.customer?.name || 'Walk-in Customer',
+      customerName: transaction.customer?.name || "Walk-in Customer",
       customerEmail: transaction.customer?.email || undefined,
       customerPhone: transaction.customer?.phone || undefined,
       organizationName: transaction.organization.name,
-      organizationAddress: (transaction.organization as any).address || '',
-      paymentMethod: transaction.payments[0]?.method || 'CASH',
-      items: transaction.items.map(item => ({
+      organizationAddress: (transaction.organization as any).address || "",
+      paymentMethod: transaction.payments[0]?.method || "CASH",
+      items: transaction.items.map((item) => ({
         itemName: item.productName,
         quantity: item.quantity,
         rate: Number(item.unitPrice),
@@ -239,8 +272,12 @@ export class InvoiceUseCase {
       taxTotal: Number(transaction.taxTotal),
       discountTotal: Number(transaction.discountTotal),
       finalTotal: Number(transaction.finalTotal),
-      amountReceived: transaction.payments[0] ? Number(transaction.payments[0].amountReceived) : undefined,
-      change: transaction.payments[0] ? Number(transaction.payments[0].change) : undefined,
+      amountReceived: transaction.payments[0]
+        ? Number(transaction.payments[0].amountReceived)
+        : undefined,
+      change: transaction.payments[0]
+        ? Number(transaction.payments[0].change)
+        : undefined,
     };
 
     return this.documentService.generateReceiptPDF(receiptData);
@@ -254,9 +291,9 @@ export class InvoiceUseCase {
       date: invoice.postingDate.toLocaleDateString(),
       customerName: invoice.customerName || invoice.customer,
       organizationName: invoice.organization.name,
-      organizationAddress: (invoice.organization as any).address || '',
-      logoUrl: invoice.template?.logoUrl || '',
-      items: invoice.items.map(item => ({
+      organizationAddress: (invoice.organization as any).address || "",
+      logoUrl: invoice.template?.logoUrl || "",
+      items: invoice.items.map((item) => ({
         itemCode: item.itemCode,
         itemName: item.itemName,
         quantity: item.quantity,

@@ -72,6 +72,7 @@ export async function getCompanies(organizationId: string) {
     throw new Error('Failed to fetch companies');
   }
 }
+<<<<<<< HEAD
 
 export async function getCompany(id: string) {
   try {
@@ -103,3 +104,5 @@ export async function getCompany(id: string) {
     throw new Error('Failed to fetch company');
   }
 }
+=======
+>>>>>>> 7048f951ddcc4cdb080e411a2372192476e7affa

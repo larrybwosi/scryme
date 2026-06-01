@@ -32,7 +32,7 @@
     "lucide-react": "^0.479.0",
     "next": "16.2.1",
     "nuqs": "latest",
-    "react-hook-form": "7.74.0",
+    "react-hook-form": "^7.54.2",
     "recharts": "^3.8.1",
     "sonner": "latest",
     "tailwind-merge": "^3.5.0",
@@ -45,8 +45,8 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "jest": "^30.3.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "ts-jest": "^29.4.9",
     "typescript": "latest"
   }
