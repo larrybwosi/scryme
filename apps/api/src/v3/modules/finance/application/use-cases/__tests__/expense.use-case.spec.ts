@@ -17,6 +17,8 @@ describe('ExpenseUseCase', () => {
     expense: {
       count: vi.fn(),
       create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
     },
     pettyCashFund: {
       findFirst: vi.fn(),
@@ -114,10 +116,44 @@ describe('ExpenseUseCase', () => {
       expect(mockPrismaClient.pettyCashTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            type: PettyCashTransactionType.TOP_UP,
+            type: PettyCashTransactionType.EXPENSE,
           }),
         })
       );
+    });
+  });
+
+  describe('approveExpense', () => {
+    it('should approve a pending expense and trigger petty cash decrement', async () => {
+      const expenseId = 'exp-1';
+      const orgId = 'org-1';
+      const memberId = 'approver-1';
+
+      mockPrismaClient.expense.findFirst.mockResolvedValue({
+        id: expenseId,
+        status: ExpenseStatus.PENDING,
+        amount: 500,
+        description: 'Large purchase',
+        pettyCashFundId: 'fund-1',
+        organizationId: orgId,
+      });
+
+      mockPrismaClient.expense.update.mockResolvedValue({ id: expenseId, status: ExpenseStatus.APPROVED });
+      mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue({
+        id: 'fund-1',
+        amount: { lessThan: () => false },
+      });
+
+      const result = await useCase.approveExpense(orgId, memberId, expenseId);
+
+      expect(result.status).toBe(ExpenseStatus.APPROVED);
+      expect(mockPrismaClient.expense.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: expenseId },
+          data: expect.objectContaining({ status: ExpenseStatus.APPROVED }),
+        })
+      );
+      expect(mockPrismaClient.pettyCashFund.update).toHaveBeenCalled();
     });
   });
 });

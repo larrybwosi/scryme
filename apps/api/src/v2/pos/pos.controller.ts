@@ -229,7 +229,7 @@ export class PosController {
   @Post('orders')
   @ApiOperation({ summary: 'Create order' })
   async createOrder(@v2Context() ctx: V2ApiContext, @Body() body: any) {
-    return this.posSaleService.handleSale(ctx, body, true);
+    return this.posSaleService.handleOrder(ctx, body);
   }
 
   @Get('drivers')

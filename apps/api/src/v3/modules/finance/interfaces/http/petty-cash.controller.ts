@@ -36,6 +36,13 @@ export class PettyCashController {
     return this.pettyCashUseCase.getFunds(req.organization.id);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get petty cash fund details' })
+  @Permissions('expense:view')
+  async getFund(@Req() req, @Param('id') id: string) {
+    return this.pettyCashUseCase.getFundById(req.organization.id, id);
+  }
+
   @Post(':id/top-up')
   @ApiOperation({ summary: 'Top up a petty cash fund' })
   @Permissions('expense:manage')

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "private": true,
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts"
@@ -18,7 +19,8 @@
     "@repo/shared": "workspace:*",
     "@types/node": "^20.19.33",
     "@zitadel/node": "^3.0.28",
-    "jose": "^6.2.1"
+    "jose": "^6.2.1",
+    "nice-grpc-common": "^2.0.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

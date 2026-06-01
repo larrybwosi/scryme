@@ -1,15 +1,23 @@
-import { db as prisma } from '@repo/db';
-import { SupplierInvoice, PaymentStatus, PurchaseStatus, Prisma } from '@repo/db';
-import { z } from 'zod';
+import { db as prisma } from "@repo/db";
+import {
+  SupplierInvoice,
+  PaymentStatus,
+  PurchaseStatus,
+  Prisma,
+} from "@repo/db";
+import { z } from "zod";
 
 // --- No change to create schema ---
 export const createInvoiceSchema = z.object({
   purchaseId: z.string().cuid(),
-  invoiceNumber: z.string().min(1, 'Invoice number is required.'),
-  supplierId: z.string().cuid().optional().nullable(),
+  organizationId: z.string().cuid(),
+  invoiceNumber: z.string().min(1, "Invoice number is required."),
+  supplierId: z.string().cuid(),
   issueDate: z.coerce.date(),
   dueDate: z.coerce.date(),
-  totalAmount: z.number().min(0, 'Total amount must be positive.'),
+  subTotal: z.number().min(0, "Subtotal must be positive."),
+  taxAmount: z.number().min(0, "Tax amount must be positive."),
+  totalAmount: z.number().min(0, "Total amount must be positive."),
   invoiceUrl: z.string().url().optional().nullable(),
   notes: z.string().optional().nullable(),
 });
@@ -32,24 +40,33 @@ export type UpdateInvoiceDto = z.infer<typeof updateInvoiceSchema>;
  * Creates a new invoice for a given purchase order.
  */
 export async function createSupplierInvoice(data: CreateInvoiceDto) {
+  const purchase = await prisma.purchase.findUnique({
+    where: { id: data.purchaseId },
+  });
+
+  if (!purchase) throw new Error("Purchase not found");
+
   const invoice = await prisma.supplierInvoice.create({
     data: {
       purchaseId: data.purchaseId,
+      organizationId: data.organizationId || purchase.organizationId,
       invoiceNumber: data.invoiceNumber,
-      supplierId: data.supplierId,
+      supplierId: data.supplierId || purchase.supplierId,
       issueDate: data.issueDate,
       dueDate: data.dueDate,
+      subTotal: new Prisma.Decimal(data.subTotal),
+      taxAmount: new Prisma.Decimal(data.taxAmount),
       totalAmount: new Prisma.Decimal(data.totalAmount),
-      amountPaid: 0,
-      status: 'UNPAID',
-      notes: data.notes,
-      invoiceUrl: data.invoiceUrl,
+      amountPaid: new Prisma.Decimal(0),
+      status: "UNPAID",
+      notes: data.notes ?? undefined,
+      invoiceUrl: data.invoiceUrl ?? undefined,
     },
   });
 
   await prisma.purchase.update({
     where: { id: data.purchaseId },
-    data: { status: 'INVOICED' },
+    data: { status: "BILLED" },
   });
 
   return invoice;
@@ -67,25 +84,33 @@ export async function getSupplierInvoices(organizationId: string) {
       purchase: true,
       supplier: true,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 }
 
 /**
  * Updates an existing invoice (e.g., partial payment, status change).
  */
-export async function updateSupplierInvoice(invoiceId: string, data: UpdateInvoiceDto) {
+export async function updateSupplierInvoice(
+  invoiceId: string,
+  data: UpdateInvoiceDto,
+) {
   const currentInvoice = await prisma.supplierInvoice.findUnique({
     where: { id: invoiceId },
   });
 
-  if (!currentInvoice) throw new Error('Invoice not found');
+  if (!currentInvoice) throw new Error("Invoice not found");
 
   const updatedInvoice = await prisma.supplierInvoice.update({
     where: { id: invoiceId },
     data: {
       ...data,
-      amountPaid: data.amountPaid !== undefined ? new Prisma.Decimal(data.amountPaid) : undefined,
+      notes: data.notes ?? undefined,
+      invoiceUrl: data.invoiceUrl ?? undefined,
+      amountPaid:
+        data.amountPaid !== undefined
+          ? new Prisma.Decimal(data.amountPaid)
+          : undefined,
       totalAmount: undefined, // ensure it is not overwritten if not in data
     },
   });

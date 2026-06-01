@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 
 // shadcn components
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Label } from '@/components/ui/label';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Progress } from '@repo/ui/components/ui/progress';
+import { Label } from '@repo/ui/components/ui/label';
 
 // hooks
 import { useAuthStore } from '@/store/pos-auth-store';

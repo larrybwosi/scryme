@@ -1,6 +1,7 @@
 {
   "name": "@repo/db",
   "version": "1.0.0",
+  "private": true,
   "exports": {
     ".": "./src/client.ts"
   },
@@ -12,7 +13,7 @@
     "dev": "tsup src/* --watch",
     "format": "prisma format",
     "generate": "prisma generate",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --ignore-pattern generated --max-warnings 0",
     "type-check": "tsc --noEmit",
     "prebuild": "npm run generate",
     "predev": "npm run generate",
@@ -22,12 +23,12 @@
     "@prisma/client": "latest",
     "@prisma/client-runtime-utils": "7.2.0",
     "dotenv": "^17.2.3",
-    "pg": "^8.16.3"
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/pg": "^8.16.0",
+    "@types/pg": "^8.20.0",
     "eslint": "^8.57.0",
     "prisma": "latest",
     "rimraf": "^5.0.5",

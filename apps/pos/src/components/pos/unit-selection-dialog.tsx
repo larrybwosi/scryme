@@ -6,15 +6,15 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+} from '@repo/ui/components/ui/dialog';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/ui/toggle-group';
 import { Minus, Plus, ShoppingCart, Package, Info } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 
 interface Unit {
   unitId: string;

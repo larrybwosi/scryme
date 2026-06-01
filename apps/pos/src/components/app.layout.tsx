@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { GlobalSearch } from './global-search';
 import { Sidebar } from '@/components/sidebar';
 import { Calendar, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/ui/components/ui/button';
 import { NotificationCenter } from '@/components/notification-center';
 import { NetworkStatusBadge } from './network-status-badge';
 import { NotificationSettingsDialog } from '@/components/notification-settings-dialog';
@@ -15,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@repo/ui/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation, useNavigate } from 'react-router';
 import { Cart } from './cart';

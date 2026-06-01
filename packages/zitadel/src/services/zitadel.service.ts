@@ -1,5 +1,8 @@
 import { db, ZitadelConfiguration } from "@repo/db";
 import { BaseIntegrationService, IntegrationStatus, IntegrationConnectionResult } from "@repo/shared";
+import { Metadata } from "nice-grpc-common";
+import { OIDCAuthMethodType, OIDCGrantType, OIDCResponseType } from "@zitadel/node/dist/api/generated/zitadel/app.js";
+import { PrivateLabelingSetting } from "@zitadel/node/dist/api/generated/zitadel/project.js";
 import { getZitadelManagementClient, getZitadelEnvConfig, getZitadelUserClient } from "./client";
 
 export class ZitadelService implements BaseIntegrationService<Partial<ZitadelConfiguration>> {
@@ -64,25 +67,44 @@ export class ZitadelService implements BaseIntegrationService<Partial<ZitadelCon
 
     // 1. Create Zitadel Organization
     const org = await client.addOrg({ name });
-    if (!org.details?.id) throw new Error("Failed to create Zitadel organization");
-    const zitadelOrgId = org.details.id;
+    if (!org.id) throw new Error("Failed to create Zitadel organization");
+    const zitadelOrgId = org.id;
 
     // 2. Create Zitadel Project
-    const project = await client.addProject({ name: `${name} Storefront` }, { headers: { 'x-zitadel-orgid': zitadelOrgId } });
-    if (!project.details?.id) throw new Error("Failed to create Zitadel project");
-    const zitadelProjectId = project.details.id;
+    const project = await client.addProject({
+      name: `${name} Storefront`,
+      projectRoleAssertion: false,
+      projectRoleCheck: false,
+      hasProjectCheck: false,
+      privateLabelingSetting: PrivateLabelingSetting.PRIVATE_LABELING_SETTING_UNSPECIFIED
+    }, { metadata: Metadata({ 'x-zitadel-orgid': zitadelOrgId }) });
+    if (!project.id) throw new Error("Failed to create Zitadel project");
+    const zitadelProjectId = project.id;
 
     // 3. Create OIDC App
     const app = await client.addOIDCApp({
         projectId: zitadelProjectId,
         name: 'Storefront Client',
         redirectUris: [`https://${name.toLowerCase().replace(/\s+/g, '-')}.dealio.app/api/auth/callback`],
-        responseTypes: [0], // CODE
-        grantTypes: [0, 2], // AUTHORIZATION_CODE, REFRESH_TOKEN
-        authMethodType: 0, // BASIC
-    }, { headers: { 'x-zitadel-orgid': zitadelOrgId } });
+        responseTypes: [OIDCResponseType.OIDC_RESPONSE_TYPE_CODE],
+        grantTypes: [OIDCGrantType.OIDC_GRANT_TYPE_AUTHORIZATION_CODE, OIDCGrantType.OIDC_GRANT_TYPE_REFRESH_TOKEN],
+        authMethodType: OIDCAuthMethodType.OIDC_AUTH_METHOD_TYPE_BASIC,
+        appType: 0,
+        postLogoutRedirectUris: [],
+        version: 0,
+        devMode: false,
+        accessTokenType: 0,
+        accessTokenRoleAssertion: false,
+        idTokenRoleAssertion: false,
+        idTokenUserinfoAssertion: false,
+        clockSkew: undefined,
+        additionalOrigins: [],
+        skipNativeAppSuccessPage: false,
+        backChannelLogoutUri: "",
+        loginVersion: undefined
+    }, { metadata: Metadata({ 'x-zitadel-orgid': zitadelOrgId }) });
 
-    const zitadelAppId = app.details?.id ?? null;
+    const zitadelAppId = app.appId ?? null;
 
     await db.zitadelConfiguration.upsert({
       where: { organizationId },
@@ -120,14 +142,27 @@ export class ZitadelService implements BaseIntegrationService<Partial<ZitadelCon
       projectId: config.zitadelProjectId,
       name: storefrontName,
       redirectUris,
-      responseTypes: [0], // CODE
-      grantTypes: [0, 2], // AUTHORIZATION_CODE, REFRESH_TOKEN
-      authMethodType: 0, // BASIC
-    }, { headers: { 'x-zitadel-orgid': config.zitadelOrgId } });
+      responseTypes: [OIDCResponseType.OIDC_RESPONSE_TYPE_CODE],
+      grantTypes: [OIDCGrantType.OIDC_GRANT_TYPE_AUTHORIZATION_CODE, OIDCGrantType.OIDC_GRANT_TYPE_REFRESH_TOKEN],
+      authMethodType: OIDCAuthMethodType.OIDC_AUTH_METHOD_TYPE_BASIC,
+      appType: 0,
+      postLogoutRedirectUris: [],
+      version: 0,
+      devMode: false,
+      accessTokenType: 0,
+      accessTokenRoleAssertion: false,
+      idTokenRoleAssertion: false,
+      idTokenUserinfoAssertion: false,
+      clockSkew: undefined,
+      additionalOrigins: [],
+      skipNativeAppSuccessPage: false,
+      backChannelLogoutUri: "",
+      loginVersion: undefined
+    }, { metadata: Metadata({ 'x-zitadel-orgid': config.zitadelOrgId }) });
 
     return {
-      appId: app.details?.id,
-      clientId: (app as any).clientId, // Some SDK versions might put it in details, others on the object
+      appId: app.appId,
+      clientId: app.clientId,
     };
   }
 
