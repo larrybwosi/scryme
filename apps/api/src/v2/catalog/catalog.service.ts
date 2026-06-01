@@ -51,8 +51,22 @@ export class CatalogService {
          * ⚡ Bolt: Performance Optimization
          * Move inStock filtering to the database level.
          * This improves performance by reducing data transfer and ensures correct pagination.
+         * Added organizationId filter to the nested check to leverage direct-field indexes.
          */
-        ...(inStock ? { variants: { some: { variantStocks: { some: { availableStock: { gt: 0 } } } } } } : {}),
+        ...(inStock
+          ? {
+              variants: {
+                some: {
+                  variantStocks: {
+                    some: {
+                      organizationId,
+                      availableStock: { gt: 0 },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
       };
 
       const [products, total] = await Promise.all([
@@ -61,14 +75,36 @@ export class CatalogService {
           skip,
           take: limit,
           orderBy: { name: 'asc' },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            barcode: true,
+            categoryId: true,
+            isActive: true,
+            imageUrls: true,
+            createdAt: true,
+            updatedAt: true,
+            type: true,
+            isFeatured: true,
+            slug: true,
             category: { select: { id: true, name: true } },
             variants: {
-              include: {
-                inventory: true, // From HEAD
-                variantStocks: { select: { availableStock: true, locationId: true } },
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                retailPrice: true,
+                buyingPrice: true,
+                inventory: true,
                 baseUnit: true,
                 baseOrgUnit: true,
+                variantStocks: {
+                  select: {
+                    availableStock: true,
+                    locationId: true,
+                  },
+                },
               },
             },
           },
@@ -77,11 +113,21 @@ export class CatalogService {
       ]);
 
       let shaped = products.map(p => {
-        const { description: _, detailedDescription: __, organizationId: ___, ...productBase } = p as any;
         return {
-          ...productBase,
           id: p.sku,
           internalId: p.id,
+          name: p.name,
+          sku: p.sku,
+          barcode: p.barcode,
+          categoryId: p.categoryId,
+          isActive: p.isActive,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          type: p.type,
+          isFeatured: p.isFeatured,
+          slug: p.slug,
+          category: p.category,
+          imageUrls: p.imageUrls,
           images: p.imageUrls || null,
           variants: p.variants.map(v => {
             const totalStock = v.variantStocks?.reduce((sum, s) => sum + Number(s.availableStock), 0) || 0;
@@ -93,6 +139,9 @@ export class CatalogService {
               cost: v.buyingPrice,
               retailPrice: v.retailPrice,
               buyingPrice: v.buyingPrice,
+              inventory: v.inventory,
+              baseUnit: v.baseUnit,
+              baseOrgUnit: v.baseOrgUnit,
               totalStock,
               stockByLocation: v.variantStocks?.map(s => ({
                 locationId: s.locationId,
