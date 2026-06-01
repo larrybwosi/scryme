@@ -15,7 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, requestPasswordReset } from "@/lib/auth-client";
+import { signIn, requestPasswordReset, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Input } from "@repo/ui/components/ui/input";
@@ -162,6 +162,12 @@ const LoginPage = () => {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const session = authClient.useSession();
+
+  if (session.data) {
+    router.push("/dashboard");
+  }
 
   const callbackUrl =
     searchParams.get("callbackUrl") ||
@@ -422,7 +428,7 @@ const LoginPage = () => {
                   Reset password
                 </h1>
                 <p className="text-gray-500 text-sm mt-2">
-                  Enter your email and we'll send you a link to reset your
+                  Enter your email and we&apos;ll send you a link to reset your
                   password.
                 </p>
               </div>

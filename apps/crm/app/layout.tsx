@@ -1,5 +1,6 @@
 import './globals.css';
 import { SidebarWrapper } from '../components/sidebar-wrapper';
+import { Toaster } from "@repo/ui/components/ui/sonner";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
             {children}
           </main>
         </div>
+        <Toaster />
       </body>
     </html>
   );

@@ -15,7 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, requestPasswordReset } from "@/lib/auth-client";
+import { signIn, requestPasswordReset, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Input } from "@repo/ui/components/ui/input";
@@ -162,6 +162,12 @@ const LoginPage = () => {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const session = authClient.useSession();
+
+  if (session.data) {
+    router.push("/customers");
+  }
 
   const callbackUrl =
     searchParams.get("callbackUrl") ||

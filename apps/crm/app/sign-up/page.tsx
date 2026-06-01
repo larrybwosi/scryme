@@ -13,8 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signIn, signUp } from "@/lib/auth-client";
-import { getServerAuth } from "@repo/auth/server";
+import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
@@ -188,6 +187,13 @@ export const SignupPage = (props: {
   searchParams: SearchParams;
 }) => {
   const router = useRouter();
+
+  const session = authClient.useSession();
+
+  if (session.data) {
+    router.push("/customers");
+  }
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");

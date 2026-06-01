@@ -1,5 +1,6 @@
 import './globals.css';
 import { SidebarWrapper } from '../components/sidebar-wrapper';
+import { Toaster } from "@repo/ui/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -15,6 +16,7 @@ export default function RootLayout({
             {children}
           </main>
         </div>
+        <Toaster />
       </body>
     </html>
   );
