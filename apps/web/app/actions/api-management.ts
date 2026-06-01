@@ -1,13 +1,28 @@
-'use server';
+"use server";
 
-import { getOrganizationContext } from './auth';
-import * as shared from '@repo/shared';
-import { revalidatePath } from 'next/cache';
+import { getOrganizationContext } from "./auth";
+import {
+  createV3ApiClient,
+  getV3ApiClients,
+  deleteV3ApiClient,
+  updateV3ApiClient,
+  regenerateV3ClientSecret,
+  createWebhookSubscription,
+  getWebhookSubscriptions,
+  deleteWebhookSubscription,
+  createV2ApiKey,
+  getV2ApiKeys,
+  deleteV2ApiKey,
+  createDeviceSetupToken,
+  getDeviceSetupTokens,
+  getDeviceRegistry,
+} from "@repo/shared";
+import { revalidatePath } from "next/cache";
 
 async function ensureOrgContext() {
   const context = await getOrganizationContext();
   if (!context || !context.organizationId) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
   return context;
 }
@@ -20,35 +35,35 @@ export async function createV3ApiClientAction(data: {
   corsOrigins?: string[];
 }) {
   const context = await ensureOrgContext();
-  const result = await shared.createV3ApiClient({
+  const result = await createV3ApiClient({
     ...data,
     organizationId: context.organizationId,
   });
-  revalidatePath('/integrations/apps-api');
+  revalidatePath("/integrations/apps-api");
   return result;
 }
 
 export async function getV3ApiClientsAction() {
   const context = await ensureOrgContext();
-  return shared.getV3ApiClients(context.organizationId);
+  return getV3ApiClients(context.organizationId);
 }
 
 export async function deleteV3ApiClientAction(id: string) {
   const context = await ensureOrgContext();
-  await shared.deleteV3ApiClient(id, context.organizationId);
-  revalidatePath('/integrations/apps-api');
+  await deleteV3ApiClient(id, context.organizationId);
+  revalidatePath("/integrations/apps-api");
 }
 
 export async function updateV3ApiClientAction(id: string, data: any) {
   const context = await ensureOrgContext();
-  await shared.updateV3ApiClient(id, context.organizationId, data);
-  revalidatePath('/integrations/apps-api');
+  await updateV3ApiClient(id, context.organizationId, data);
+  revalidatePath("/integrations/apps-api");
 }
 
 export async function regenerateV3ClientSecretAction(id: string) {
   const context = await ensureOrgContext();
-  const secret = await shared.regenerateV3ClientSecret(id, context.organizationId);
-  revalidatePath('/integrations/apps-api');
+  const secret = await regenerateV3ClientSecret(id, context.organizationId);
+  revalidatePath("/integrations/apps-api");
   return secret;
 }
 
@@ -61,77 +76,82 @@ export async function createWebhookSubscriptionAction(data: {
   apiClientId?: string;
 }) {
   const context = await ensureOrgContext();
-  const result = await shared.createWebhookSubscription({
+  const result = await createWebhookSubscription({
     ...data,
     organizationId: context.organizationId,
   });
-  revalidatePath('/integrations/apps-api');
+  revalidatePath("/integrations/apps-api");
   return result;
 }
 
 export async function getWebhookSubscriptionsAction() {
   const context = await ensureOrgContext();
-  return shared.getWebhookSubscriptions(context.organizationId);
+  return getWebhookSubscriptions(context.organizationId);
 }
 
 export async function deleteWebhookSubscriptionAction(id: string) {
   const context = await ensureOrgContext();
-  await shared.deleteWebhookSubscription(id, context.organizationId);
-  revalidatePath('/integrations/apps-api');
+  await deleteWebhookSubscription(id, context.organizationId);
+  revalidatePath("/integrations/apps-api");
 }
 
 // --- V2 API Keys ---
 
 export async function createV2ApiKeyAction(data: {
   name: string;
-  environment?: 'LIVE' | 'TEST';
-  keyType?: 'POS' | 'CLIENT';
+  environment?: "LIVE" | "TEST";
+  keyType?: "POS" | "CLIENT";
   permissions?: string[];
 }) {
   const context = await ensureOrgContext();
-  const result = await shared.createV2ApiKey({
+  const result = await createV2ApiKey({
     ...data,
     organizationId: context.organizationId,
     createdById: context.user.id,
   });
-  revalidatePath('/integrations/apps-api');
+  revalidatePath("/integrations/apps-api");
   return result;
 }
 
 export async function getV2ApiKeysAction() {
   const context = await ensureOrgContext();
-  return shared.getV2ApiKeys(context.organizationId);
+  return getV2ApiKeys(context.organizationId);
 }
 
 export async function deleteV2ApiKeyAction(id: string) {
   const context = await ensureOrgContext();
-  await shared.deleteV2ApiKey(id, context.organizationId);
-  revalidatePath('/integrations/apps-api');
+  await deleteV2ApiKey(id, context.organizationId);
+  revalidatePath("/integrations/apps-api");
 }
 
 // --- V2 Device Tokens ---
 
 export async function createDeviceSetupTokenAction(data: {
   deviceName: string;
-  deviceType: 'POS_TERMINAL' | 'MOBILE_POS' | 'KIOSK' | 'TABLET' | 'BAKERY_TERMINAL';
+  deviceType:
+    | "POS_TERMINAL"
+    | "MOBILE_POS"
+    | "KIOSK"
+    | "TABLET"
+    | "BAKERY_TERMINAL";
   locationId: string;
 }) {
   const context = await ensureOrgContext();
-  const result = await shared.createDeviceSetupToken({
+  const result = await createDeviceSetupToken({
     ...data,
     organizationId: context.organizationId,
     createdById: context.user.id,
   });
-  revalidatePath('/integrations/apps-api');
+  revalidatePath("/integrations/apps-api");
   return result;
 }
 
 export async function getDeviceSetupTokensAction() {
   const context = await ensureOrgContext();
-  return shared.getDeviceSetupTokens(context.organizationId);
+  return getDeviceSetupTokens(context.organizationId);
 }
 
 export async function getDeviceRegistryAction() {
-    const context = await ensureOrgContext();
-    return shared.getDeviceRegistry(context.organizationId);
+  const context = await ensureOrgContext();
+  return getDeviceRegistry(context.organizationId);
 }
