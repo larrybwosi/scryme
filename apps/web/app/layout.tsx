@@ -1,5 +1,6 @@
 import './globals.css';
-import { Sidebar } from '../components/sidebar';
+import { SidebarWrapper } from '../components/sidebar-wrapper';
+import { Toaster } from "@repo/ui/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -10,11 +11,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-[#f8f9fa] font-sans antialiased">
         <div className="flex h-screen overflow-hidden">
-          <Sidebar />
+          <SidebarWrapper />
           <main className="flex-1 overflow-y-auto custom-scrollbar">
             {children}
           </main>
         </div>
+        <Toaster />
       </body>
     </html>
   );

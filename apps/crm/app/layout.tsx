@@ -1,5 +1,6 @@
 import './globals.css';
-import { Sidebar } from '../components/sidebar';
+import { SidebarWrapper } from '../components/sidebar-wrapper';
+import { Toaster } from "@repo/ui/components/ui/sonner";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -16,11 +17,12 @@ export default function RootLayout({
     <html lang="en" className="bg-background">
       <body className="font-sans antialiased text-foreground">
         <div className="flex h-screen overflow-hidden">
-          <Sidebar />
+          <SidebarWrapper />
           <main className="flex-1 overflow-hidden bg-background">
             {children}
           </main>
         </div>
+        <Toaster />
       </body>
     </html>
   );

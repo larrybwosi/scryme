@@ -24,14 +24,14 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
-import { signOut } from "@/lib/auth/authClient";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 const BannedPage = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut({
+    await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
           router.push("/login");
@@ -89,7 +89,7 @@ const BannedPage = () => {
               How to restore access?
             </AlertTitle>
             <AlertDescription className="text-blue-700/80 dark:text-blue-400/80 text-xs mt-1">
-              Please contact your system administrator or your organization's
+              Please contact your system administrator or your organization&apos;s
               owner to request a review of your account status.
             </AlertDescription>
           </Alert>

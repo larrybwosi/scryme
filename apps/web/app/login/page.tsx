@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  GithubIcon,
   Loader2,
   Eye,
   EyeOff,
@@ -16,7 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, requestPasswordReset } from "@/lib/auth/authClient";
+import { signIn, requestPasswordReset, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Input } from "@repo/ui/components/ui/input";
@@ -35,7 +34,8 @@ const forgotPasswordSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-// Logos
+import { GithubIcon } from "@repo/ui/components/icons";
+
 const DealioLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
@@ -162,6 +162,12 @@ const LoginPage = () => {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const session = authClient.useSession();
+
+  if (session.data) {
+    router.push("/dashboard");
+  }
 
   const callbackUrl =
     searchParams.get("callbackUrl") ||
@@ -306,7 +312,7 @@ const LoginPage = () => {
                   disabled={isLoading}
                 />
                 <SocialButton
-                  icon={<GithubIcon size={16} />}
+                  icon={<GithubIcon className="w-4 h-4" />}
                   label="GitHub"
                   onClick={() => handleSocialLogin("github")}
                   disabled={isLoading}
@@ -422,7 +428,7 @@ const LoginPage = () => {
                   Reset password
                 </h1>
                 <p className="text-gray-500 text-sm mt-2">
-                  Enter your email and we'll send you a link to reset your
+                  Enter your email and we&apos;ll send you a link to reset your
                   password.
                 </p>
               </div>
