@@ -1,7 +1,7 @@
-'use server';
+import "server-only";
 
-import { auth } from '../../lib/auth';
-import { headers } from 'next/headers';
+import { auth } from "../../lib/auth";
+import { headers } from "next/headers";
 
 export async function getOrganizationContext() {
   const session = await auth.api.getSession({
@@ -13,7 +13,9 @@ export async function getOrganizationContext() {
   }
 
   // Use the active organization ID from the session, if available.
-  const organizationId = (session.session as any).activeOrganizationId || (session.user as any).activeOrganizationId;
+  const organizationId =
+    (session.session as any).activeOrganizationId ||
+    (session.user as any).activeOrganizationId;
 
   return {
     user: session.user,
