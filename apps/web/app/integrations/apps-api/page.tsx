@@ -34,6 +34,26 @@ import {
   regenerateV3ClientSecretAction,
   updateV3ApiClientAction,
 } from "../../actions/api-management";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { Switch } from "@repo/ui/components/ui/switch";
 
 function AppsApiContent() {
   const searchParams = useSearchParams();
@@ -188,13 +208,13 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">V3 API Clients</h2>
-            <button
+            <Button
               onClick={() => setShowV3Modal(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              <Plus size={18} />
+              <Plus size={18} className="mr-2" />
               Create Client
-            </button>
+            </Button>
           </div>
 
           <div className="grid gap-4">
@@ -234,14 +254,18 @@ function AppsApiContent() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setEditingV3Client(client)}
-                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      className="text-gray-400 hover:text-blue-600"
                       title="Advanced Settings"
                     >
                       <Zap size={18} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={async () => {
                         const secret = await regenerateV3ClientSecretAction(
                           client.id,
@@ -250,20 +274,22 @@ function AppsApiContent() {
                           `New Secret: ${secret}\nPLEASE COPY THIS NOW, IT WILL NOT BE SHOWN AGAIN.`,
                         );
                       }}
-                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      className="text-gray-400 hover:text-blue-600"
                       title="Regenerate Secret"
                     >
                       <RefreshCw size={18} />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() =>
                         deleteV3ApiClientAction(client.id).then(loadData)
                       }
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      className="text-gray-400 hover:text-red-600"
                       title="Delete"
                     >
                       <Trash2 size={18} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -314,13 +340,13 @@ function AppsApiContent() {
           <section>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">V2 API Keys</h2>
-              <button
+              <Button
                 onClick={() => setShowV2Modal(true)}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                <Plus size={18} />
+                <Plus size={18} className="mr-2" />
                 Create Key
-              </button>
+              </Button>
             </div>
             <div className="grid gap-4">
               {v2Keys.map((key) => (
@@ -337,12 +363,14 @@ function AppsApiContent() {
                       Prefix: {key.keyPrefix}
                     </div>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => deleteV2ApiKeyAction(key.id).then(loadData)}
-                    className="text-red-500 hover:text-red-700 p-2"
+                    className="text-red-500 hover:text-red-700"
                   >
                     <Trash2 size={16} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -351,7 +379,7 @@ function AppsApiContent() {
           <section>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Device Provisioning (POS)</h2>
-              <button
+              <Button
                 onClick={() => {
                   setShowDeviceModal(true);
                   setDeviceTokenResult(null);
@@ -361,11 +389,11 @@ function AppsApiContent() {
                     locationId: "default",
                   });
                 }}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                <Plus size={18} />
+                <Plus size={18} className="mr-2" />
                 Provision Device
-              </button>
+              </Button>
             </div>
             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-6">
               <h3 className="font-bold text-blue-800 mb-2">How it works</h3>
@@ -400,15 +428,17 @@ function AppsApiContent() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => {
                           copyToClipboard(token.rawToken);
                           alert("Token copied!");
                         }}
-                        className="p-2 text-yellow-700 hover:bg-yellow-100 rounded"
+                        className="text-yellow-700 hover:bg-yellow-100"
                       >
                         <Copy size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -456,13 +486,13 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">Webhook Subscriptions</h2>
-            <button
+            <Button
               onClick={() => setShowWebhookModal(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              <Plus size={18} />
+              <Plus size={18} className="mr-2" />
               Add Webhook
-            </button>
+            </Button>
           </div>
           {webhooks.length === 0 ? (
             <div className="bg-gray-50 rounded-xl p-12 text-center border border-dashed">
@@ -497,14 +527,16 @@ function AppsApiContent() {
                       ))}
                     </div>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() =>
                       deleteWebhookSubscriptionAction(wh.id).then(loadData)
                     }
-                    className="text-red-400 hover:text-red-600 p-2 transition-colors"
+                    className="text-red-400 hover:text-red-600"
                   >
                     <Trash2 size={18} />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -515,22 +547,24 @@ function AppsApiContent() {
       {/* --- MODALS --- */}
 
       {/* V3 Client Advanced Settings Modal */}
-      {editingV3Client && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-lg shadow-2xl">
-            <h2 className="text-2xl font-bold mb-2">Client Settings</h2>
-            <p className="text-gray-500 text-sm mb-6">{editingV3Client.name}</p>
-
-            <div className="space-y-6">
+      <Dialog open={!!editingV3Client} onOpenChange={(open) => !open && setEditingV3Client(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Client Settings</DialogTitle>
+            <DialogDescription>{editingV3Client?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">
+                <Label className="text-sm font-bold uppercase tracking-tight mb-2 block">
                   Scopes
-                </label>
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   {["read", "write", "admin", "inventory", "orders"].map(
                     (scope) => (
-                      <button
+                      <Button
                         key={scope}
+                        variant={editingV3Client?.scopes.includes(scope) ? "default" : "outline"}
+                        size="sm"
                         onClick={() => {
                           const scopes = editingV3Client.scopes.includes(scope)
                             ? editingV3Client.scopes.filter(
@@ -539,28 +573,22 @@ function AppsApiContent() {
                             : [...editingV3Client.scopes, scope];
                           setEditingV3Client({ ...editingV3Client, scopes });
                         }}
-                        className={cn(
-                          "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
-                          editingV3Client.scopes.includes(scope)
-                            ? "bg-blue-600 border-blue-600 text-white"
-                            : "bg-white text-gray-500 hover:border-gray-300",
-                        )}
+                        className="rounded-full h-7 px-3 text-xs"
                       >
                         {scope}
-                      </button>
+                      </Button>
                     ),
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-tight">
+                <Label className="text-sm font-bold uppercase tracking-tight mb-2 block">
                   CORS Origins
-                </label>
-                <input
-                  type="text"
+                </Label>
+                <Input
                   placeholder="https://myapp.com, http://localhost:3000"
-                  value={editingV3Client.corsOrigins.join(", ")}
+                  value={editingV3Client?.corsOrigins.join(", ")}
                   onChange={(e) =>
                     setEditingV3Client({
                       ...editingV3Client,
@@ -570,7 +598,7 @@ function AppsApiContent() {
                         .filter(Boolean),
                     })
                   }
-                  className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-xl"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">
                   Comma-separated list of allowed origins.
@@ -584,182 +612,126 @@ function AppsApiContent() {
                     Enable or disable all access for this client.
                   </div>
                 </div>
-                <button
-                  onClick={() =>
-                    setEditingV3Client({
-                      ...editingV3Client,
-                      isActive: !editingV3Client.isActive,
-                    })
-                  }
-                  className={cn(
-                    "w-12 h-6 rounded-full transition-colors relative",
-                    editingV3Client.isActive ? "bg-green-500" : "bg-gray-300",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
-                      editingV3Client.isActive ? "right-1" : "left-1",
-                    )}
-                  />
-                </button>
+                <Switch
+                   checked={editingV3Client?.isActive}
+                   onCheckedChange={(checked) => setEditingV3Client({ ...editingV3Client, isActive: checked })}
+                />
               </div>
             </div>
-
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => setEditingV3Client(null)}
-                className="flex-1 border py-2.5 rounded-xl font-medium hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateV3}
-                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <DialogFooter className="gap-2">
+               <Button variant="outline" onClick={() => setEditingV3Client(null)} className="flex-1 rounded-xl">Cancel</Button>
+               <Button onClick={handleUpdateV3} className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl">Save Changes</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Webhook Modal */}
-      {showWebhookModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6">Add Webhook</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Friendly Name
-                </label>
-                <input
-                  type="text"
+      <Dialog open={showWebhookModal} onOpenChange={setShowWebhookModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>Add Webhook</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label>Friendly Name</Label>
+                <Input
                   value={newWebhook.name}
                   onChange={(e) =>
                     setNewWebhook({ ...newWebhook, name: e.target.value })
                   }
-                  className="w-full border rounded-xl px-4 py-2 outline-none"
+                  className="rounded-xl"
                   placeholder="My Production Webhook"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Payload URL
-                </label>
-                <input
-                  type="text"
+              <div className="grid gap-2">
+                <Label>Payload URL</Label>
+                <Input
                   value={newWebhook.url}
                   onChange={(e) =>
                     setNewWebhook({ ...newWebhook, url: e.target.value })
                   }
-                  className="w-full border rounded-xl px-4 py-2 outline-none"
+                  className="rounded-xl"
                   placeholder="https://api.myapp.com/webhooks"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Events to Subscribe
-                </label>
+                <Label className="mb-2 block">Events to Subscribe</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {availableEvents.map((ev) => (
-                    <label
+                    <Label
                       key={ev}
                       className="flex items-center gap-2 text-xs cursor-pointer bg-gray-50 p-2 rounded-lg hover:bg-gray-100"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={newWebhook.events.includes(ev)}
-                        onChange={() => {
-                          const events = newWebhook.events.includes(ev)
-                            ? newWebhook.events.filter((e) => e !== ev)
-                            : [...newWebhook.events, ev];
+                        onCheckedChange={(checked) => {
+                          const events = checked
+                            ? [...newWebhook.events, ev]
+                            : newWebhook.events.filter((e) => e !== ev);
                           setNewWebhook({ ...newWebhook, events });
                         }}
                       />
                       {ev}
-                    </label>
+                    </Label>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => setShowWebhookModal(false)}
-                className="flex-1 border py-2.5 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateWebhook}
-                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl"
-              >
-                Add Webhook
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowWebhookModal(false)} className="flex-1 rounded-xl">Cancel</Button>
+              <Button onClick={handleCreateWebhook} className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl">Add Webhook</Button>
+            </DialogFooter>
+          </DialogContent>
+      </Dialog>
 
       {/* Device Provisioning Modal */}
-      {showDeviceModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6">Provision Device</h2>
+      <Dialog open={showDeviceModal} onOpenChange={setShowDeviceModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>Provision Device</DialogTitle>
+            </DialogHeader>
             {!deviceTokenResult ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Device Name
-                  </label>
-                  <input
-                    type="text"
+              <div className="space-y-4 py-4">
+                <div className="grid gap-2">
+                  <Label>Device Name</Label>
+                  <Input
                     value={newDevice.deviceName}
                     onChange={(e) =>
                       setNewDevice({ ...newDevice, deviceName: e.target.value })
                     }
-                    className="w-full border rounded-xl px-4 py-2 outline-none"
+                    className="rounded-xl"
                     placeholder="Front Desk Terminal"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Device Type
-                  </label>
-                  <select
+                <div className="grid gap-2">
+                  <Label>Device Type</Label>
+                  <Select
                     value={newDevice.deviceType}
-                    onChange={(e) =>
+                    onValueChange={(value) =>
                       setNewDevice({
                         ...newDevice,
-                        deviceType: e.target.value as any,
+                        deviceType: value as any,
                       })
                     }
-                    className="w-full border rounded-xl px-4 py-2 outline-none bg-white"
                   >
-                    <option value="POS_TERMINAL">POS Terminal</option>
-                    <option value="MOBILE_POS">Mobile POS</option>
-                    <option value="KIOSK">Self-Service Kiosk</option>
-                    <option value="TABLET">Service Tablet</option>
-                  </select>
+                    <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="POS_TERMINAL">POS Terminal</SelectItem>
+                        <SelectItem value="MOBILE_POS">Mobile POS</SelectItem>
+                        <SelectItem value="KIOSK">Self-Service Kiosk</SelectItem>
+                        <SelectItem value="TABLET">Service Tablet</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex gap-4 mt-8">
-                  <button
-                    onClick={() => setShowDeviceModal(false)}
-                    className="flex-1 border py-2.5 rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleProvisionDevice}
-                    className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl"
-                  >
-                    Generate Token
-                  </button>
-                </div>
+                <DialogFooter className="gap-2 pt-4">
+                   <Button variant="outline" onClick={() => setShowDeviceModal(false)} className="flex-1 rounded-xl">Cancel</Button>
+                   <Button onClick={handleProvisionDevice} className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl">Generate Token</Button>
+                </DialogFooter>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6 py-4">
                 <div className="p-4 bg-green-50 text-green-800 rounded-lg text-sm border border-green-200">
                   Setup token generated successfully.
                 </div>
@@ -770,184 +742,162 @@ function AppsApiContent() {
                   <div className="text-2xl font-mono tracking-widest text-blue-600 break-all">
                     {deviceTokenResult.rawToken}
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => copyToClipboard(deviceTokenResult.rawToken)}
-                    className="mt-4 flex items-center gap-2 mx-auto text-blue-600 font-bold text-sm"
+                    className="mt-4 text-blue-600 font-bold text-sm h-auto p-0 hover:bg-transparent"
                   >
-                    <Copy size={14} /> Copy Token
-                  </button>
+                    <Copy size={14} className="mr-2" /> Copy Token
+                  </Button>
                 </div>
                 <p className="text-[10px] text-center text-gray-400">
                   Enter this token on the device within 24 hours.
                 </p>
-                <button
+                <Button
                   onClick={() => setShowDeviceModal(false)}
-                  className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold"
+                  className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold h-12"
                 >
                   Done
-                </button>
+                </Button>
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
 
       {/* V3 Creation Modal */}
-      {showV3Modal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6">Create V3 Client</h2>
+      <Dialog open={showV3Modal} onOpenChange={setShowV3Modal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>Create V3 Client</DialogTitle>
+            </DialogHeader>
             {!v3Result ? (
-              <>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Client Name
-                  </label>
-                  <input
-                    type="text"
+              <div className="py-4 space-y-4">
+                <div className="grid gap-2">
+                  <Label>Client Name</Label>
+                  <Input
                     value={newClientName}
                     onChange={(e) => setNewClientName(e.target.value)}
-                    className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="rounded-xl"
                     placeholder="e.g., My Mobile App"
                   />
                 </div>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setShowV3Modal(false)}
-                    className="flex-1 border py-2 rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateV3}
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-xl"
-                  >
-                    Create
-                  </button>
-                </div>
-              </>
+                <DialogFooter className="gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setShowV3Modal(false)} className="flex-1 rounded-xl">Cancel</Button>
+                  <Button onClick={handleCreateV3} className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl">Create</Button>
+                </DialogFooter>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div className="p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-200">
                   <strong>Important:</strong> Copy your Client Secret now. It
                   will never be shown again.
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase">
+                <div className="grid gap-2">
+                  <Label className="text-xs font-bold text-gray-400 uppercase">
                     Client ID
-                  </label>
-                  <div className="flex gap-2 mt-1">
-                    <code className="flex-1 bg-gray-50 p-2 rounded text-sm">
+                  </Label>
+                  <div className="flex gap-2">
+                    <code className="flex-1 bg-gray-50 p-2 rounded text-sm overflow-x-auto">
                       {v3Result.clientId}
                     </code>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => copyToClipboard(v3Result.clientId)}
-                      className="p-2 border rounded"
                     >
                       <Copy size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase">
+                <div className="grid gap-2">
+                  <Label className="text-xs font-bold text-gray-400 uppercase">
                     Client Secret
-                  </label>
-                  <div className="flex gap-2 mt-1">
-                    <code className="flex-1 bg-gray-50 p-2 rounded text-sm">
+                  </Label>
+                  <div className="flex gap-2">
+                    <code className="flex-1 bg-gray-50 p-2 rounded text-sm overflow-x-auto">
                       {v3Result.clientSecret}
                     </code>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => copyToClipboard(v3Result.clientSecret)}
-                      className="p-2 border rounded"
                     >
                       <Copy size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={() => {
                     setShowV3Modal(false);
                     setV3Result(null);
                   }}
-                  className="w-full bg-gray-900 text-white py-2 rounded-xl mt-4"
+                  className="w-full bg-gray-900 text-white rounded-xl mt-4 h-12"
                 >
                   Done
-                </button>
+                </Button>
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
 
       {/* V2 Key Modal */}
-      {showV2Modal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-2xl w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Create V2 API Key</h2>
+      <Dialog open={showV2Modal} onOpenChange={setShowV2Modal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+                <DialogTitle>Create V2 API Key</DialogTitle>
+            </DialogHeader>
             {!v2Result ? (
-              <>
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Key Name
-                  </label>
-                  <input
-                    type="text"
+              <div className="py-4 space-y-4">
+                <div className="grid gap-2">
+                  <Label>Key Name</Label>
+                  <Input
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
-                    className="w-full border rounded-xl px-4 py-2 outline-none"
+                    className="rounded-xl"
                     placeholder="e.g., Development Key"
                   />
                 </div>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setShowV2Modal(false)}
-                    className="flex-1 border py-2 rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCreateV2}
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-xl"
-                  >
-                    Create
-                  </button>
-                </div>
-              </>
+                <DialogFooter className="gap-2 pt-4">
+                   <Button variant="outline" onClick={() => setShowV2Modal(false)} className="flex-1 rounded-xl">Cancel</Button>
+                   <Button onClick={handleCreateV2} className="flex-1 bg-blue-600 hover:bg-blue-700 rounded-xl">Create</Button>
+                </DialogFooter>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 py-4">
                 <div className="p-4 bg-green-50 text-green-800 rounded-lg text-sm border border-green-200">
                   Key created successfully.
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase">
+                <div className="grid gap-2">
+                  <Label className="text-xs font-bold text-gray-400 uppercase">
                     Full API Key
-                  </label>
-                  <div className="flex gap-2 mt-1">
+                  </Label>
+                  <div className="flex gap-2">
                     <code className="flex-1 bg-gray-50 p-2 rounded text-sm break-all">
                       {v2Result.fullKey}
                     </code>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => copyToClipboard(v2Result.fullKey)}
-                      className="p-2 border rounded shrink-0"
+                      className="shrink-0"
                     >
                       <Copy size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={() => {
                     setShowV2Modal(false);
                     setV2Result(null);
                   }}
-                  className="w-full bg-gray-900 text-white py-2 rounded-xl mt-4"
+                  className="w-full bg-gray-900 text-white rounded-xl mt-4 h-12"
                 >
                   Done
-                </button>
+                </Button>
               </div>
             )}
-          </div>
-        </div>
-      )}
+          </DialogContent>
+      </Dialog>
     </>
   );
 }

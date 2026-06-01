@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Sidebar } from './sidebar';
+import { AppSidebar } from './app-sidebar';
 
 export function SidebarWrapper() {
   const pathname = usePathname();
@@ -11,5 +11,5 @@ export function SidebarWrapper() {
 
   if (!showSidebar) return null;
 
-  return <Sidebar />;
+  return <AppSidebar />;
 }
