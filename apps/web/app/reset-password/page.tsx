@@ -18,7 +18,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { resetPassword } from "@/lib/auth/authClient";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
 
@@ -141,7 +141,7 @@ const PasswordResetPage = () => {
     setMessage("");
 
     try {
-      const { data: result, error } = await resetPassword({
+      const { data: result, error } = await authClient.resetPassword({
         newPassword: data.password,
         token,
       });

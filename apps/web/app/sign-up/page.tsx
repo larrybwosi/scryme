@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  GithubIcon,
   Loader2,
   Eye,
   EyeOff,
@@ -14,8 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signIn, signUp } from "@/lib/auth/authClient";
-import { getServerAuth } from "@/actions/auth.server";
+import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
@@ -63,7 +61,8 @@ function getPasswordStrength(password: string): {
   return { score: 4, label: "Strong", color: "bg-emerald-500" };
 }
 
-// Logos
+import { GithubIcon } from "@repo/ui/components/icons";
+
 const DealioLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
@@ -188,6 +187,13 @@ export const SignupPage = (props: {
   searchParams: SearchParams;
 }) => {
   const router = useRouter();
+
+  const session = authClient.useSession();
+
+  if (session.data) {
+    router.push("/dashboard");
+  }
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
@@ -228,25 +234,18 @@ export const SignupPage = (props: {
   const handleEmailSignup = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
-      const { data: res } = await signUp.email({
+      const res = await signUp.email({
         email: data.email,
         password: data.password,
         name: `${data.firstName} ${data.lastName}`,
         callbackURL: callbackURL || undefined,
       });
 
-      if (callbackURL) {
-        router.push(callbackURL);
-      } else {
-        try {
-          const authContext = await getServerAuth();
-          if (res?.user && authContext?.organizationId) {
-            router.push("/dashboard");
-          } else if (res?.user) {
-            router.push("/create-org");
-          }
-        } catch {
-          if (res?.user) router.push("/create-org");
+      if (res.data?.user) {
+        if (callbackURL) {
+          router.push(callbackURL);
+        } else {
+          router.push("/create-org");
         }
       }
     } catch (error) {
@@ -305,7 +304,7 @@ export const SignupPage = (props: {
               disabled={isLoading}
             />
             <SocialButton
-              icon={<GithubIcon size={16} />}
+              icon={<GithubIcon className="w-4 h-4" />}
               label="GitHub"
               onClick={() => handleSocialLogin("github")}
               disabled={isLoading}
