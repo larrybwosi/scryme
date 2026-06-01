@@ -39,5 +39,6 @@
     "noFallthroughCasesInSwitch": false,
     "strict": false,
     "types": ["node"]
-  }
+  },
+  "exclude": ["node_modules", "dist"]
 }

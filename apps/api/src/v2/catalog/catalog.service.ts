@@ -1,16 +1,20 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { RedisService } from '../../redis/redis.service';
-import type { V2ApiContext } from '@repo/shared/server';
-import { SupplierService } from '@repo/suppliers/server';
-import { ProductType } from '@repo/db';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "../../redis/redis.service";
+import type { V2ApiContext } from "@repo/shared/server";
+import { SupplierService } from "@repo/suppliers/server";
+import { ProductType } from "@repo/db";
 
 @Injectable()
 export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly supplierService: SupplierService,
-    private readonly redis: RedisService
+    private readonly redis: RedisService,
   ) {}
 
   async getProducts(ctx: V2ApiContext, query: any) {
@@ -20,14 +24,16 @@ export class CatalogService {
     const cached = await this.redis.get<any>(cacheKey);
     if (cached) return cached;
 
-    const page = Math.max(1, parseInt(query.page || '1', 10));
-    const limit = Math.min(100, Math.max(1, parseInt(query.limit || '10', 10)));
-    const search = query.search || '';
+    const page = Math.max(1, parseInt(query.page || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(query.limit || "10", 10)));
+    const search = query.search || "";
     const categoryId = query.categoryId;
     const status = query.status;
-    const inStock = query.inStock === 'true';
-    const featured = query.isFeatured === 'true';
-    const requestedFields = query.fields ? (query.fields as string).split(',').map(f => f.trim()) : null;
+    const inStock = query.inStock === "true";
+    const featured = query.isFeatured === "true";
+    const requestedFields = query.fields
+      ? (query.fields as string).split(",").map((f) => f.trim())
+      : null;
 
     const skip = (page - 1) * limit;
 
@@ -39,9 +45,13 @@ export class CatalogService {
         ...(search
           ? {
               OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { sku: { contains: search, mode: 'insensitive' } },
-                { variants: { some: { sku: { contains: search, mode: 'insensitive' } } } },
+                { name: { contains: search, mode: "insensitive" } },
+                { sku: { contains: search, mode: "insensitive" } },
+                {
+                  variants: {
+                    some: { sku: { contains: search, mode: "insensitive" } },
+                  },
+                },
               ],
             }
           : {}),
@@ -54,13 +64,14 @@ export class CatalogService {
           where,
           skip,
           take: limit,
-          orderBy: { name: 'asc' },
+          orderBy: { name: "asc" },
           include: {
             category: { select: { id: true, name: true } },
             variants: {
               include: {
-                inventory: true, // From HEAD
-                variantStocks: { select: { availableStock: true, locationId: true } },
+                variantStocks: {
+                  select: { availableStock: true, locationId: true },
+                },
                 baseUnit: true,
                 baseOrgUnit: true,
               },
@@ -70,15 +81,24 @@ export class CatalogService {
         this.prisma.client.product.count({ where }),
       ]);
 
-      let shaped = products.map(p => {
-        const { description: _, detailedDescription: __, organizationId: ___, ...productBase } = p as any;
+      let shaped = products.map((p) => {
+        const {
+          description: _,
+          detailedDescription: __,
+          organizationId: ___,
+          ...productBase
+        } = p as any;
         return {
           ...productBase,
           id: p.sku,
           internalId: p.id,
           images: p.imageUrls || null,
-          variants: p.variants.map(v => {
-            const totalStock = v.variantStocks?.reduce((sum, s) => sum + Number(s.availableStock), 0) || 0;
+          variants: p.variants.map((v) => {
+            const totalStock =
+              v.variantStocks?.reduce(
+                (sum, s) => sum + Number(s.availableStock),
+                0,
+              ) || 0;
             return {
               id: v.id,
               name: v.name,
@@ -88,7 +108,7 @@ export class CatalogService {
               retailPrice: v.retailPrice,
               buyingPrice: v.buyingPrice,
               totalStock,
-              stockByLocation: v.variantStocks?.map(s => ({
+              stockByLocation: v.variantStocks?.map((s) => ({
                 locationId: s.locationId,
                 stock: s.availableStock,
               })),
@@ -98,13 +118,13 @@ export class CatalogService {
       });
 
       if (inStock) {
-        shaped = shaped.filter(p => p.variants.some(v => v.totalStock > 0));
+        shaped = shaped.filter((p) => p.variants.some((v) => v.totalStock > 0));
       }
 
       if (requestedFields && requestedFields.length > 0) {
-        shaped = shaped.map(p => {
+        shaped = shaped.map((p) => {
           const filteredProduct: any = {};
-          requestedFields.forEach(field => {
+          requestedFields.forEach((field) => {
             if (field in p) filteredProduct[field] = (p as any)[field];
           });
           return filteredProduct;
@@ -113,13 +133,18 @@ export class CatalogService {
 
       const result = {
         products: shaped,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       };
 
       await this.redis.setex(cacheKey, 300, result);
       return result;
     } catch (error) {
-      throw new InternalServerErrorException('Failed to fetch products');
+      throw new InternalServerErrorException("Failed to fetch products");
     }
   }
 
@@ -131,24 +156,23 @@ export class CatalogService {
         category: true,
         variants: {
           include: {
-            inventory: true,
             baseUnit: true,
             baseOrgUnit: true,
-            priceHistory: {
-              take: 5,
-              orderBy: { effectiveDate: 'desc' },
-            },
+            // priceHistory: {
+            //   take: 5,
+            //   orderBy: { effectiveDate: 'desc' },
+            // },
           },
         },
-        ingredients: {
-          include: {
-            ingredient: true,
-          },
-        },
+        // ingredients: {
+        //   include: {
+        //     ingredient: true,
+        //   },
+        // },
       },
     });
 
-    if (!product) throw new NotFoundException('Product not found');
+    if (!product) throw new NotFoundException("Product not found");
     return product;
   }
 
@@ -192,7 +216,7 @@ export class CatalogService {
           code: true,
           _count: { select: { products: true } },
         },
-        orderBy: { name: 'asc' },
+        orderBy: { name: "asc" },
       });
 
       const map = new Map<string, any>();
@@ -218,7 +242,7 @@ export class CatalogService {
       await this.redis.setex(cacheKey, 3600, result);
       return result;
     } catch (error) {
-      throw new InternalServerErrorException('Failed to fetch categories');
+      throw new InternalServerErrorException("Failed to fetch categories");
     }
   }
 
@@ -227,7 +251,7 @@ export class CatalogService {
     const category = await this.prisma.client.category.findFirst({
       where: { id, organizationId },
     });
-    if (!category) throw new NotFoundException('Category not found');
+    if (!category) throw new NotFoundException("Category not found");
     return { data: category };
   }
 
@@ -260,7 +284,7 @@ export class CatalogService {
 
     return this.prisma.client.productVariant.findMany({
       where: { product: { organizationId } },
-      include: { product: true, inventory: true },
+      include: { product: true },
       skip,
       take: Number(limit),
     });
@@ -271,7 +295,10 @@ export class CatalogService {
     return this.prisma.client.product.findMany({
       where: {
         organizationId,
-        OR: [{ name: { contains: query, mode: 'insensitive' } }, { sku: { contains: query, mode: 'insensitive' } }],
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { sku: { contains: query, mode: "insensitive" } },
+        ],
       },
       take: 5,
       select: { id: true, name: true, sku: true },
@@ -286,7 +313,7 @@ export class CatalogService {
       this.prisma.client.productVariant.count({
         where: {
           product: { organizationId },
-          inventory: { some: { quantity: { lte: 0 } } },
+          // inventory: { some: { quantity: { lte: 0 } } },
         },
       }),
     ]);
@@ -306,7 +333,11 @@ export class CatalogService {
     return this.supplierService.getSupplier(ctx, id);
   }
 
-  async createSupplierDocument(ctx: V2ApiContext, supplierId: string, data: any) {
+  async createSupplierDocument(
+    ctx: V2ApiContext,
+    supplierId: string,
+    data: any,
+  ) {
     return this.supplierService.createSupplierDocument(ctx, supplierId, data);
   }
 

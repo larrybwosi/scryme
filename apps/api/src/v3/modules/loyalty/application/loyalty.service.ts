@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { db, LoyaltyTransactionType, VoucherStatus } from '@repo/db';
-import { emitLoyaltyPointsAwarded, emitLoyaltyVoucherCreated } from '@repo/windmill/server';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { db, LoyaltyTransactionType, VoucherStatus } from "@repo/db";
+import {
+  emitLoyaltyPointsAwarded,
+  emitLoyaltyVoucherCreated,
+} from "@repo/windmill/server";
 
 @Injectable()
 export class LoyaltyService {
@@ -35,7 +38,11 @@ export class LoyaltyService {
       },
     });
 
-    if (!transaction || !transaction.customer || !transaction.organization.loyaltyPrograms.length) {
+    if (
+      !transaction ||
+      !transaction.customer ||
+      !transaction.organization.loyaltyPrograms.length
+    ) {
       return 0;
     }
 
@@ -47,20 +54,24 @@ export class LoyaltyService {
       let itemPoints = 0;
 
       // Check for variant-specific override in our DB (legacy field)
-      const variantOverride = item.variant.loyaltyPointsOverride ?? item.variant.product.loyaltyPointsOverride;
+      const variantOverride =
+        item.variant.loyaltyPointsOverride ??
+        item.variant.product.loyaltyPointsOverride;
 
       if (variantOverride) {
         itemPoints = variantOverride * item.quantity;
       } else {
         // Apply Program Rules
         for (const rule of program.rules) {
-          if (rule.ruleType === 'POINTS_PER_ITEM') {
+          if (rule.ruleType === "POINTS_PER_ITEM") {
             if (
               rule.variantId === item.variantId ||
-              rule.productId === item.productId ||
               rule.categoryId === item.variant.product.categoryId
             ) {
-              itemPoints = Math.max(itemPoints, rule.pointsValue * item.quantity);
+              itemPoints = Math.max(
+                itemPoints,
+                rule.pointsValue * item.quantity,
+              );
             }
           }
         }
@@ -69,22 +80,28 @@ export class LoyaltyService {
     }
 
     // 2. Process Currency-based points (General rule)
-    const currencyRule = program.rules.find(r => r.ruleType === 'POINTS_PER_CURRENCY');
+    const currencyRule = program.rules.find(
+      (r) => r.ruleType === "POINTS_PER_CURRENCY",
+    );
     if (currencyRule && currencyRule.currencyAmount) {
       const spendPoints =
-        Math.floor(transaction.finalTotal.toNumber() / currencyRule.currencyAmount.toNumber()) *
-        currencyRule.pointsValue;
+        Math.floor(
+          transaction.finalTotal.toNumber() /
+            currencyRule.currencyAmount.toNumber(),
+        ) * currencyRule.pointsValue;
       totalPoints += spendPoints;
     }
 
     // 3. Apply Tier Multiplier
     const customerBalance = transaction.customer.loyaltyPoints;
     const applicableTier = program.tiers
-      .filter(t => customerBalance >= t.minPoints)
+      .filter((t) => customerBalance >= t.minPoints)
       .sort((a, b) => b.minPoints - a.minPoints)[0];
 
     if (applicableTier) {
-      totalPoints = Math.floor(totalPoints * applicableTier.multiplier.toNumber());
+      totalPoints = Math.floor(
+        totalPoints * applicableTier.multiplier.toNumber(),
+      );
     }
 
     return totalPoints;
@@ -95,7 +112,7 @@ export class LoyaltyService {
     points: number,
     organizationId: string,
     description: string,
-    referenceId?: string
+    referenceId?: string,
   ) {
     if (points === 0) return;
 
@@ -105,7 +122,7 @@ export class LoyaltyService {
 
     if (!program) return;
 
-    return await db.$transaction(async tx => {
+    return await db.$transaction(async (tx) => {
       const customer = await tx.customer.update({
         where: { id: customerId },
         data: {
@@ -120,12 +137,15 @@ export class LoyaltyService {
           programId: program.id,
           customerId,
           organizationId,
-          type: points > 0 ? LoyaltyTransactionType.EARNED : LoyaltyTransactionType.REDEEMED,
+          type:
+            points > 0
+              ? LoyaltyTransactionType.EARNED
+              : LoyaltyTransactionType.REDEEMED,
           points,
           balanceAfter: customer.loyaltyPoints,
           description,
           referenceId,
-          referenceType: 'TRANSACTION',
+          referenceType: "TRANSACTION",
         },
       });
 
@@ -135,29 +155,36 @@ export class LoyaltyService {
         points,
         balanceAfter: customer.loyaltyPoints,
         description,
-      }).catch(err => console.error('[Loyalty] Failed to emit Windmill event:', err));
+      }).catch((err) =>
+        console.error("[Loyalty] Failed to emit Windmill event:", err),
+      );
 
       return customer;
     });
   }
 
-  async redeemPointsForVoucher(customerId: string, rewardId: string, organizationId: string) {
+  async redeemPointsForVoucher(
+    customerId: string,
+    rewardId: string,
+    organizationId: string,
+  ) {
     const reward = await db.loyaltyReward.findUnique({
       where: { id: rewardId },
       include: { program: true },
     });
 
-    if (!reward || !reward.isActive) throw new Error('Reward not found or inactive');
+    if (!reward || !reward.isActive)
+      throw new Error("Reward not found or inactive");
 
     const customer = await db.customer.findUnique({
       where: { id: customerId },
     });
 
     if (!customer || customer.loyaltyPoints < reward.pointsRequired) {
-      throw new Error('Insufficient points');
+      throw new Error("Insufficient points");
     }
 
-    return await db.$transaction(async tx => {
+    return await db.$transaction(async (tx) => {
       // 1. Deduct points
       const updatedCustomer = await tx.customer.update({
         where: { id: customerId },
@@ -179,12 +206,15 @@ export class LoyaltyService {
           balanceAfter: updatedCustomer.loyaltyPoints,
           description: `Redeemed for ${reward.name}`,
           referenceId: rewardId,
-          referenceType: 'REWARD',
+          referenceType: "REWARD",
         },
       });
 
       // 3. Create Voucher
-      const voucherCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const voucherCode = Math.random()
+        .toString(36)
+        .substring(2, 10)
+        .toUpperCase();
       const voucher = await tx.loyaltyVoucher.create({
         data: {
           code: voucherCode,
@@ -204,7 +234,9 @@ export class LoyaltyService {
         voucherCode: voucher.code,
         rewardName: reward.name,
         expiresAt: voucher.expiresAt.toISOString(),
-      }).catch(err => console.error('[Loyalty] Failed to emit Windmill event:', err));
+      }).catch((err) =>
+        console.error("[Loyalty] Failed to emit Windmill event:", err),
+      );
 
       return voucher;
     });
@@ -222,7 +254,11 @@ export class LoyaltyService {
     });
   }
 
-  async validateVoucher(code: string, customerId: string, organizationId: string) {
+  async validateVoucher(
+    code: string,
+    customerId: string,
+    organizationId: string,
+  ) {
     const voucher = await db.loyaltyVoucher.findUnique({
       where: { code },
       include: {
@@ -232,15 +268,15 @@ export class LoyaltyService {
     });
 
     if (!voucher || voucher.status !== VoucherStatus.ACTIVE) {
-      throw new Error('Invalid or expired voucher');
+      throw new Error("Invalid or expired voucher");
     }
 
     if (voucher.expiresAt < new Date()) {
-      throw new Error('Voucher has expired');
+      throw new Error("Voucher has expired");
     }
 
     if (voucher.customerId !== customerId) {
-      throw new Error('Voucher does not belong to this customer');
+      throw new Error("Voucher does not belong to this customer");
     }
 
     return {

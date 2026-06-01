@@ -1,10 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PosController } from '../pos.controller';
-import { PosService } from '../pos.service';
-import { PosSaleService } from '../pos-sale.service';
-import { V2ApiContext } from '@repo/shared/server';
+import { Test, TestingModule } from "@nestjs/testing";
+import { PosController } from "../pos.controller";
+import { PosService } from "../pos.service";
+import { PosSaleService } from "../pos-sale.service";
+import { V2ApiContext } from "@repo/shared/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-describe('PosController', () => {
+describe("PosController", () => {
   let controller: PosController;
   let posSaleService: PosSaleService;
 
@@ -29,21 +30,27 @@ describe('PosController', () => {
     posSaleService = module.get<PosSaleService>(PosSaleService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 
-  describe('processSale', () => {
-    it('should call handleSale on PosSaleService', async () => {
-      const mockCtx: any = { organizationId: 'org_1' };
+  describe("processSale", () => {
+    it("should call handleSale on PosSaleService", async () => {
+      const mockCtx: any = { organizationId: "org_1" };
       const mockBody = { cartItems: [] };
 
-      vi.mocked(posSaleService.handleSale).mockResolvedValue({ success: true } as any);
+      vi.mocked(posSaleService.handleSale).mockResolvedValue({
+        success: true,
+      } as any);
 
-      const result = await controller.processSale(mockCtx, mockBody, 'true');
+      const result = await controller.processSale(mockCtx, mockBody, "true");
 
       expect(result).toEqual({ success: true });
-      expect(posSaleService.handleSale).toHaveBeenCalledWith(mockCtx, mockBody, true);
+      expect(posSaleService.handleSale).toHaveBeenCalledWith(
+        mockCtx,
+        mockBody,
+        true,
+      );
     });
   });
 });

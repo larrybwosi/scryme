@@ -1,13 +1,18 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
-import { IStockBatchRepository } from '../../domain/repositories/stock-batch-repository.interface';
-import { PrismaService } from '@/prisma/prisma.service';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { IStockBatchRepository } from "../../domain/repositories/stock-batch-repository.interface";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class MergeBatchesUseCase {
   constructor(
     @Inject(IStockBatchRepository)
     private readonly stockBatchRepository: IStockBatchRepository,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute(
@@ -15,13 +20,17 @@ export class MergeBatchesUseCase {
     memberId: string,
     batchIds: string[],
     targetLocationId: string,
-    notes?: string
+    notes?: string,
   ) {
     if (batchIds.length < 2) {
-      throw new BadRequestException('At least two batches are required for merging');
+      throw new BadRequestException(
+        "At least two batches are required for merging",
+      );
     }
 
-    const batches = await Promise.all(batchIds.map(id => this.stockBatchRepository.findById(id)));
+    const batches = await Promise.all(
+      batchIds.map((id) => this.stockBatchRepository.findById(id)),
+    );
 
     // Validation
     const firstBatch = batches[0];
@@ -34,13 +43,18 @@ export class MergeBatchesUseCase {
         throw new NotFoundException(`Batch ${batch.id} not found`);
       }
       if (batch.variantId !== firstBatch.variantId) {
-        throw new BadRequestException('All batches must be of the same product variant');
+        throw new BadRequestException(
+          "All batches must be of the same product variant",
+        );
       }
     }
 
-    const totalQuantity = batches.reduce((sum, b) => sum + b.currentQuantity, 0);
+    const totalQuantity = batches.reduce(
+      (sum, b) => sum + b.currentQuantity,
+      0,
+    );
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       // 1. Create the merged target batch
       const mergedBatch = await tx.stockBatch.create({
         data: {
@@ -52,7 +66,7 @@ export class MergeBatchesUseCase {
           purchasePrice: firstBatch.purchasePrice, // Weighted average would be better in production
           receivedDate: new Date(),
           batchNumber: `MERGED-${Date.now()}`,
-          notes: notes || `Merged from ${batches.length} batches`,
+          // notes: notes || `Merged from ${batches.length} batches`,
         },
       });
 
@@ -84,7 +98,7 @@ export class MergeBatchesUseCase {
             quantity: batch.currentQuantity,
             fromLocationId: batch.locationId,
             toLocationId: targetLocationId,
-            movementType: 'ADJUSTMENT_OUT',
+            movementType: "ADJUSTMENT_OUT",
             memberId,
             notes: `Merged into batch ${mergedBatch.batchNumber}`,
           },
@@ -99,7 +113,7 @@ export class MergeBatchesUseCase {
           quantity: totalQuantity,
           fromLocationId: null,
           toLocationId: targetLocationId,
-          movementType: 'ADJUSTMENT_IN',
+          movementType: "ADJUSTMENT_IN",
           memberId,
           notes: `Created by merging ${batches.length} batches`,
         },
