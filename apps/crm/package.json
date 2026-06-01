@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.0",
+    "@repo/auth": "workspace:*",
     "@repo/db": "workspace:^",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/pg": "^8.20.0",
+    "better-auth": "^1.4.19",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.454.0",

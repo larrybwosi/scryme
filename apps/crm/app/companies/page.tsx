@@ -1,12 +1,19 @@
 import { CompaniesView } from './_components/companies-view';
 import { OrgProvider } from '../../components/org-context';
+import { getOrganizationContext } from '../actions/auth';
+import { redirect } from 'next/navigation';
 
-export default function CompaniesPage() {
-  // TODO: Get real organizationId from auth/session
-  const organizationId = 'default-org-id';
+export default async function CompaniesPage() {
+  const context = await getOrganizationContext();
+
+  if (!context) {
+    redirect('/login');
+  }
+
+  const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId}>
+    <OrgProvider organizationId={organizationId || 'default-org-id'}>
       <CompaniesView />
     </OrgProvider>
   );

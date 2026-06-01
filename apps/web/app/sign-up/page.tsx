@@ -279,6 +279,7 @@ export const SignupPage = (props: {
               </button>
             </p>
           </div>
+
           {/* Headline */}
           <div className="mb-8">
             <h1 className="text-[1.75rem] font-bold text-gray-900 leading-tight tracking-tight">
@@ -288,6 +289,7 @@ export const SignupPage = (props: {
               Join thousands of teams hiring the world&#39;s best dev shops.
             </p>
           </div>
+
           {/* Social buttons */}
           <div className="flex gap-2 mb-6">
             <SocialButton
@@ -309,6 +311,7 @@ export const SignupPage = (props: {
               disabled={isLoading}
             />
           </div>
+
           {/* Divider */}
           <div className="relative flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-gray-100" />
@@ -317,6 +320,7 @@ export const SignupPage = (props: {
             </span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
+
           {/* Form */}
           <form
             onSubmit={handleSubmit(handleEmailSignup)}
@@ -496,6 +500,7 @@ export const SignupPage = (props: {
               )}
             </Button>
           </form>
+
           {/* Trust badge */}
           <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
             <Shield className="h-3.5 w-3.5 text-gray-300" />
@@ -503,7 +508,6 @@ export const SignupPage = (props: {
               SOC 2 Type II certified · 256-bit encryption · GDPR compliant
             </span>
           </div>
-          -
         </div>
       </div>
 
