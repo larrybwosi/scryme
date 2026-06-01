@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Mail,
   Phone,
@@ -20,17 +19,9 @@ import { cn } from '@repo/ui/lib/utils';
 import type { Customer } from '../../../../lib/mock-data';
 import { formatCurrency } from '../../../../lib/mock-data';
 import { StatusBadge } from '../../../../components/ui/status-badge';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@repo/ui/components/ui/sheet';
-import { CustomerForm } from '../../_components/customer-form';
 
 interface CustomerProfilePanelProps {
-  customer: any;
+  customer: Customer;
 }
 
 function HealthRing({ score }: { score: number }) {
@@ -64,10 +55,9 @@ function HealthRing({ score }: { score: number }) {
 }
 
 export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
-  const router = useRouter();
   const initials = customer.name
     .split(' ')
-    .map((n: string) => n[0])
+    .map((n) => n[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
@@ -80,47 +70,22 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl">
             {initials}
           </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
-                <Edit2 size={13} className="text-muted-foreground" />
-              </button>
-            </SheetTrigger>
-            <SheetContent className="sm:max-w-[440px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Edit Customer</SheetTitle>
-              </SheetHeader>
-              <CustomerForm
-                initialData={{
-                  id: customer.id,
-                  name: customer.name,
-                  email: customer.email || '',
-                  phone: customer.phone || '',
-                  company: customer.company || customer.businessAccount?.name || '',
-                  customerType: customer.customerType || 'B2C',
-                  taxId: customer.taxId || '',
-                  isActive: customer.isActive ?? true,
-                  deliveryNotes: customer.deliveryNotes || '',
-                }}
-                onSuccess={() => {
-                  router.refresh();
-                }}
-              />
-            </SheetContent>
-          </Sheet>
+          <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
+            <Edit2 size={13} className="text-muted-foreground" />
+          </button>
         </div>
 
         <div className="mb-3">
           <h2 className="text-[16px] font-bold text-foreground">{customer.name}</h2>
           <div className="flex items-center gap-1.5 mt-1">
             <Building2 size={12} className="text-muted-foreground" />
-            <span className="text-[12.5px] text-muted-foreground">{customer.company || customer.businessAccount?.name || 'Individual'}</span>
+            <span className="text-[12.5px] text-muted-foreground">{customer.company}</span>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5 mb-4">
-          <StatusBadge status={customer.isActive ? 'Active' : 'Inactive'} dot />
-          <StatusBadge status={customer.customerType || 'B2C'} />
+          <StatusBadge status={customer.status} dot />
+          <StatusBadge status={customer.type} />
         </div>
 
         <div className="space-y-2.5">
@@ -156,7 +121,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
         </div>
 
         {/* Tags */}
-        {customer.tags && customer.tags.length > 0 && (
+        {customer.tags.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center gap-1.5 mb-2">
               <Tag size={11} className="text-muted-foreground" />
@@ -165,7 +130,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {customer.tags.map((tag: string) => (
+              {customer.tags.map((tag) => (
                 <span
                   key={tag}
                   className="text-[10.5px] font-medium bg-accent text-accent-foreground border border-border px-2 py-0.5 rounded-md"
@@ -192,7 +157,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               <span className="text-[12.5px] text-muted-foreground truncate">Total Revenue</span>
             </div>
             <span className="text-[13px] font-bold text-foreground flex-shrink-0">
-              {formatCurrency(customer.totalRevenue || 0)}
+              {formatCurrency(customer.totalRevenue)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
@@ -202,7 +167,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               </div>
               <span className="text-[12.5px] text-muted-foreground truncate">Total Orders</span>
             </div>
-            <span className="text-[13px] font-bold text-foreground flex-shrink-0">{customer.totalOrders || customer.transactions?.length || 0}</span>
+            <span className="text-[13px] font-bold text-foreground flex-shrink-0">{customer.totalOrders}</span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -214,10 +179,10 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
             <span
               className={cn(
                 'text-[13px] font-bold flex-shrink-0',
-                (customer.openInvoices || 0) > 0 ? 'text-destructive' : 'text-foreground'
+                customer.openInvoices > 0 ? 'text-destructive' : 'text-foreground'
               )}
             >
-              {customer.openInvoices || 0}
+              {customer.openInvoices}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
@@ -228,7 +193,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               <span className="text-[12.5px] text-muted-foreground truncate">Loyalty Points</span>
             </div>
             <span className="text-[13px] font-bold text-foreground flex-shrink-0">
-              {(customer.loyaltyPoints || 0).toLocaleString()}
+              {customer.loyaltyPoints.toLocaleString()}
             </span>
           </div>
         </div>
@@ -240,14 +205,14 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           Account Health
         </h3>
         <div className="flex items-center gap-4">
-          <HealthRing score={customer.healthScore || 70} />
+          <HealthRing score={customer.healthScore} />
           <div>
             <p className="text-[13px] font-semibold text-foreground">
-              {(customer.healthScore || 70) >= 80
+              {customer.healthScore >= 80
                 ? 'Excellent'
-                : (customer.healthScore || 70) >= 65
+                : customer.healthScore >= 65
                 ? 'Good'
-                : (customer.healthScore || 70) >= 50
+                : customer.healthScore >= 50
                 ? 'Fair'
                 : 'At Risk'}
             </p>
@@ -260,18 +225,18 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           <div className="flex items-center justify-between text-[11.5px]">
             <span className="text-muted-foreground">Engagement</span>
             <span className="font-medium text-foreground">
-              {(customer.healthScore || 70) >= 80 ? 'High' : (customer.healthScore || 70) >= 50 ? 'Medium' : 'Low'}
+              {customer.healthScore >= 80 ? 'High' : customer.healthScore >= 50 ? 'Medium' : 'Low'}
             </span>
           </div>
           <div className="flex items-center justify-between text-[11.5px]">
             <span className="text-muted-foreground">Payment Risk</span>
-            <span className={cn('font-medium', (customer.openInvoices || 0) > 0 ? 'text-status-warning' : 'text-status-success')}>
-              {(customer.openInvoices || 0) > 0 ? 'Moderate' : 'Low'}
+            <span className={cn('font-medium', customer.openInvoices > 0 ? 'text-status-warning' : 'text-status-success')}>
+              {customer.openInvoices > 0 ? 'Moderate' : 'Low'}
             </span>
           </div>
           <div className="flex items-center justify-between text-[11.5px]">
             <span className="text-muted-foreground">Industry</span>
-            <span className="font-medium text-foreground">{customer.industry || 'N/A'}</span>
+            <span className="font-medium text-foreground">{customer.industry}</span>
           </div>
         </div>
       </div>
@@ -283,10 +248,10 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
         </h3>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-foreground/10 flex items-center justify-center text-foreground font-bold text-[12px]">
-            {customer.accountManagerInitials || 'UN'}
+            {customer.accountManagerInitials}
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-foreground">{customer.accountManager || 'Unassigned'}</p>
+            <p className="text-[13px] font-semibold text-foreground">{customer.accountManager}</p>
             <div className="flex items-center gap-1">
               <User size={10} className="text-muted-foreground" />
               <p className="text-[11px] text-muted-foreground">Senior Account Manager</p>

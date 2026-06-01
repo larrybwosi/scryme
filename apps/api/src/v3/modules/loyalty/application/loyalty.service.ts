@@ -66,6 +66,7 @@ export class LoyaltyService {
           if (rule.ruleType === "POINTS_PER_ITEM") {
             if (
               rule.variantId === item.variantId ||
+              rule.productId === item.variant.productId ||
               rule.categoryId === item.variant.product.categoryId
             ) {
               itemPoints = Math.max(

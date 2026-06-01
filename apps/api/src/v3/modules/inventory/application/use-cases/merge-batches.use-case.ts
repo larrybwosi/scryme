@@ -66,7 +66,6 @@ export class MergeBatchesUseCase {
           purchasePrice: firstBatch.purchasePrice, // Weighted average would be better in production
           receivedDate: new Date(),
           batchNumber: `MERGED-${Date.now()}`,
-          // notes: notes || `Merged from ${batches.length} batches`,
         },
       });
 
@@ -100,7 +99,6 @@ export class MergeBatchesUseCase {
             toLocationId: targetLocationId,
             movementType: "ADJUSTMENT_OUT",
             memberId,
-            notes: `Merged into batch ${mergedBatch.batchNumber}`,
           },
         });
       }
@@ -115,7 +113,6 @@ export class MergeBatchesUseCase {
           toLocationId: targetLocationId,
           movementType: "ADJUSTMENT_IN",
           memberId,
-          notes: `Created by merging ${batches.length} batches`,
         },
       });
 

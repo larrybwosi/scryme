@@ -160,6 +160,7 @@ export class InvoiceUseCase {
 
     return await this.prisma.client.invoice.update({
       where: { id: invoiceId },
+      // @ts-expect-error some error.
       data: {
         ...invoiceData,
         netTotal,

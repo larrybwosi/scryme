@@ -156,12 +156,9 @@ export class CatalogService {
         category: true,
         variants: {
           include: {
+            variantStocks: true,
             baseUnit: true,
             baseOrgUnit: true,
-            // priceHistory: {
-            //   take: 5,
-            //   orderBy: { effectiveDate: 'desc' },
-            // },
           },
         },
         // ingredients: {
@@ -284,7 +281,7 @@ export class CatalogService {
 
     return this.prisma.client.productVariant.findMany({
       where: { product: { organizationId } },
-      include: { product: true },
+      include: { product: true, variantStocks: true },
       skip,
       take: Number(limit),
     });
@@ -313,7 +310,7 @@ export class CatalogService {
       this.prisma.client.productVariant.count({
         where: {
           product: { organizationId },
-          // inventory: { some: { quantity: { lte: 0 } } },
+          variantStocks: { some: { availableStock: { lte: 0 } } },
         },
       }),
     ]);

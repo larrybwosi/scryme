@@ -38,7 +38,12 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": false,
+<<<<<<< HEAD
     "types": ["node"]
   },
   "exclude": ["node_modules", "dist"]
+=======
+    "types": ["node", "vitest/globals"]
+  }
+>>>>>>> 7048f951ddcc4cdb080e411a2372192476e7affa
 }

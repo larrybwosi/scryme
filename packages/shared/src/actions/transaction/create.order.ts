@@ -30,7 +30,7 @@ export async function createOrder(
       const variants = await tx.productVariant.findMany({
         where: {
           id: { in: variantIds },
-          organizationId,
+          product: { organizationId },
         },
         include: {
           product: true,
@@ -57,7 +57,7 @@ export async function createOrder(
 
         return {
           variantId: item.variantId,
-          productName: variant.product.name,
+          productId: variant.productId, productName: variant.product.name,
           variantName: variant.name,
           sku: variant.sku,
           quantity: item.quantity,
@@ -110,7 +110,7 @@ export async function createOrder(
             method: p.method,
             amount: p.amount,
             status: PaymentStatus.COMPLETED, // Assume POS-entered payments are completed
-            organizationId,
+            product: { organizationId },
           })),
         });
 

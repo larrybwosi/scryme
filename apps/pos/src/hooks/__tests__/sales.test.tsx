@@ -28,7 +28,7 @@ describe('useProcessSale Hook', () => {
   });
 
   it('should call process_sale_command and return success', async () => {
-    mockInvoke.mockImplementation(async (cmd, args) => {
+    mockInvoke.mockImplementation(async (cmd, _args) => {
       if (cmd === 'process_sale_command') {
         return {
           success: true,

@@ -117,8 +117,7 @@ export class ApproveStockAdjustmentUseCase {
           "INITIAL_STOCK",
           "CUSTOMER_RETURN",
           "TRANSFER_IN",
-        ].includes(adjustment.reason as string) ||
-        Number(adjustment.quantity) > 0;
+        ].includes(adjustment.reason as string) || adjustment.quantity.gt(0);
       const quantityChange = adjustment.quantity;
 
       // Update variant stock summary
