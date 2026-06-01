@@ -1,8 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PublicController } from '../public.controller';
-import { PublicService } from '../public.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { PublicController } from "../public.controller";
+import { PublicService } from "../public.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-describe('PublicController', () => {
+describe("PublicController", () => {
   let controller: PublicController;
   let service: PublicService;
 
@@ -23,16 +24,16 @@ describe('PublicController', () => {
     service = module.get<PublicService>(PublicService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 
-  describe('getDocument', () => {
-    it('should stream the document successfully', async () => {
+  describe("getDocument", () => {
+    it("should stream the document successfully", async () => {
       const mockResult = {
-        stream: 'mock-stream',
-        contentType: 'application/pdf',
-        filename: 'invoice.pdf',
+        stream: "mock-stream",
+        contentType: "application/pdf",
+        filename: "invoice.pdf",
       };
 
       vi.mocked(service.getDocument).mockResolvedValue(mockResult as any);
@@ -42,10 +43,20 @@ describe('PublicController', () => {
         send: vi.fn(),
       };
 
-      await controller.getDocument('invoice', '123', 'token', 'pdf', 'template', mockRes as any);
+      await controller.getDocument(
+        "invoice",
+        "123",
+        "token",
+        "pdf",
+        "template",
+        mockRes as any,
+      );
 
-      expect(mockRes.header).toHaveBeenCalledWith('Content-Type', 'application/pdf');
-      expect(mockRes.send).toHaveBeenCalledWith('mock-stream');
+      expect(mockRes.header).toHaveBeenCalledWith(
+        "Content-Type",
+        "application/pdf",
+      );
+      expect(mockRes.send).toHaveBeenCalledWith("mock-stream");
     });
   });
 });

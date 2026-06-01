@@ -5,8 +5,8 @@ import {
   Logger,
   NotFoundException,
   InternalServerErrorException,
-} from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   V2ApiContext,
   ably,
@@ -17,9 +17,9 @@ import {
   getPosProductsDelta,
   performDeliveryDispatch,
   performReconciliation,
-} from '@repo/shared/server';
-import { ZodError } from 'zod';
-import * as bcrypt from 'bcryptjs';
+} from "@repo/shared/server";
+import { ZodError } from "zod";
+import * as bcrypt from "bcryptjs";
 import {
   CheckInSchema,
   CheckOutSchema,
@@ -30,11 +30,12 @@ import {
   CreateStockRequestSchema,
   RecordPaymentSchema,
   ShiftSyncSchema,
-} from './pos.schema';
-import { Decimal } from 'decimal.js';
-import { RedisService } from 'src/redis/redis.service';
-import { InventoryService } from '../inventory/inventory.service';
-import { PosCustomerService } from './pos-customer.service';
+} from "./pos.schema";
+import { Decimal } from "decimal.js";
+import { RedisService } from "src/redis/redis.service";
+import { InventoryService } from "../inventory/inventory.service";
+import { PosCustomerService } from "./pos-customer.service";
+import { Prisma } from "@repo/db";
 
 @Injectable()
 export class PosService {
@@ -46,7 +47,7 @@ export class PosService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly inventoryService: InventoryService,
-    private readonly posCustomerService: PosCustomerService
+    private readonly posCustomerService: PosCustomerService,
   ) {}
 
   private validate<T>(schema: any, data: any): T {
@@ -55,11 +56,11 @@ export class PosService {
     } catch (error) {
       if (error instanceof ZodError) {
         throw new BadRequestException({
-          message: 'Validation failed',
+          message: "Validation failed",
           errors: error.flatten().fieldErrors,
         });
       }
-      throw new BadRequestException('Invalid request data');
+      throw new BadRequestException("Invalid request data");
     }
   }
 
@@ -74,7 +75,9 @@ export class PosService {
     if (currentAttempts >= this.MAX_PIN_ATTEMPTS) {
       const ttl = await this.redis.ttl(rateLimitKey);
       const minutesLeft = Math.ceil(ttl / 60);
-      throw new BadRequestException(`Account locked. Try again in ${minutesLeft} minutes.`);
+      throw new BadRequestException(
+        `Account locked. Try again in ${minutesLeft} minutes.`,
+      );
     }
 
     const member = await this.prisma.client.member.findFirst({
@@ -91,22 +94,33 @@ export class PosService {
     });
 
     if (!member || !member.pinHash) {
-      throw new UnauthorizedException('Invalid credentials or PIN not set.');
+      throw new UnauthorizedException("Invalid credentials or PIN not set.");
     }
 
     const isPinValid = await bcrypt.compare(pin, member.pinHash);
     if (!isPinValid) {
       const newCount = await this.redis.incr(rateLimitKey);
-      if (newCount === 1) await this.redis.expire(rateLimitKey, this.LOCKOUT_DURATION_SECONDS);
-      throw new UnauthorizedException(`Invalid PIN. ${this.MAX_PIN_ATTEMPTS - newCount} attempts remaining.`);
+      if (newCount === 1)
+        await this.redis.expire(rateLimitKey, this.LOCKOUT_DURATION_SECONDS);
+      throw new UnauthorizedException(
+        `Invalid PIN. ${this.MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+      );
     }
 
     await this.redis.del(rateLimitKey);
 
-    const safeClientMember = { id: member.id, role: member.role, user: member.user };
+    const safeClientMember = {
+      id: member.id,
+      role: member.role,
+      user: member.user,
+    };
 
     if (member.isCheckedIn && member.currentAttendanceLogId) {
-      const token = await createMemberToken(member.id, organizationId, member.currentAttendanceLogId);
+      const token = await createMemberToken(
+        member.id,
+        organizationId,
+        member.currentAttendanceLogId,
+      );
       return { member: safeClientMember, token, restoredSession: true };
     }
 
@@ -116,24 +130,34 @@ export class PosService {
         organizationId: organizationId,
         checkInTime: new Date(),
         checkInLocationId: locationId,
-        notes: ctx.deviceId ? `Checked in via device: ${ctx.deviceId}` : undefined,
+        notes: ctx.deviceId
+          ? `Checked in via device: ${ctx.deviceId}`
+          : undefined,
       },
       select: { id: true },
     });
 
     await this.prisma.client.member.update({
       where: { id: member.id },
-      data: { isCheckedIn: true, currentCheckInLocationId: locationId, currentAttendanceLogId: attendanceLog.id },
+      data: {
+        isCheckedIn: true,
+        currentCheckInLocationId: locationId,
+        currentAttendanceLogId: attendanceLog.id,
+      },
     });
 
-    const token = await createMemberToken(member.id, organizationId, attendanceLog.id);
+    const token = await createMemberToken(
+      member.id,
+      organizationId,
+      attendanceLog.id,
+    );
 
     await this.prisma.client.actionAuditLog.create({
       data: {
         organizationId: ctx.organizationId,
         memberId: member.id,
-        action: 'POS_CHECK_IN',
-        resourceType: 'ATTENDANCE_LOG',
+        action: "POS_CHECK_IN",
+        resourceType: "ATTENDANCE_LOG",
         resourceId: attendanceLog.id,
         approved: true,
         metadata: { locationId, restoredSession: false },
@@ -146,22 +170,26 @@ export class PosService {
   async checkOut(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(CheckOutSchema, body);
     const { locationId } = validated;
-    if (!ctx.memberId) throw new UnauthorizedException('Member authentication required.');
+    if (!ctx.memberId)
+      throw new UnauthorizedException("Member authentication required.");
 
     const memberId = ctx.memberId;
 
-    await this.prisma.client.$transaction(async tx => {
+    await this.prisma.client.$transaction(async (tx) => {
       const member = await tx.member.findUnique({ where: { id: memberId } });
       if (!member || !member.isCheckedIn || !member.currentAttendanceLogId) {
-        throw new BadRequestException('Member is not checked in.');
+        throw new BadRequestException("Member is not checked in.");
       }
 
-      const attendanceLog = await tx.attendanceLog.findUnique({ where: { id: member.currentAttendanceLogId } });
+      const attendanceLog = await tx.attendanceLog.findUnique({
+        where: { id: member.currentAttendanceLogId },
+      });
       if (!attendanceLog || attendanceLog.checkOutTime)
-        throw new BadRequestException('Active attendance log not found.');
+        throw new BadRequestException("Active attendance log not found.");
 
       const checkOutTime = new Date();
-      const durationMs = checkOutTime.getTime() - attendanceLog.checkInTime.getTime();
+      const durationMs =
+        checkOutTime.getTime() - attendanceLog.checkInTime.getTime();
       const durationMinutes = Math.round(durationMs / 60000);
 
       await tx.attendanceLog.update({
@@ -171,15 +199,19 @@ export class PosService {
 
       await tx.member.update({
         where: { id: memberId },
-        data: { isCheckedIn: false, currentCheckInLocationId: null, currentAttendanceLogId: null },
+        data: {
+          isCheckedIn: false,
+          currentCheckInLocationId: null,
+          currentAttendanceLogId: null,
+        },
       });
 
       await tx.actionAuditLog.create({
         data: {
           organizationId: ctx.organizationId,
           memberId: memberId,
-          action: 'POS_CHECK_OUT',
-          resourceType: 'ATTENDANCE_LOG',
+          action: "POS_CHECK_OUT",
+          resourceType: "ATTENDANCE_LOG",
           resourceId: member.currentAttendanceLogId,
           approved: true,
           metadata: { locationId },
@@ -187,26 +219,33 @@ export class PosService {
       });
     });
 
-    return { message: 'Check-out successful.' };
+    return { message: "Check-out successful." };
   }
 
   async listLocations(ctx: V2ApiContext) {
     const locations = await this.prisma.client.inventoryLocation.findMany({
       where: { organizationId: ctx.organizationId, isActive: true },
-      select: { id: true, name: true, code: true, locationType: true, address: true, isDefault: true },
-      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        locationType: true,
+        address: true,
+        isDefault: true,
+      },
+      orderBy: { name: "asc" },
     });
     return { locations };
   }
 
   async getProducts(ctx: V2ApiContext, query: any) {
     const locationId = ctx.locationId || query.locationId;
-    if (!locationId) throw new BadRequestException('Location ID is required.');
+    if (!locationId) throw new BadRequestException("Location ID is required.");
 
-    const page = parseInt(query.page || '1', 10);
-    const limit = parseInt(query.limit || '50', 10);
-    const search = query.search || '';
-    const categoryId = query.categoryId || 'all';
+    const page = parseInt(query.page || "1", 10);
+    const limit = parseInt(query.limit || "50", 10);
+    const search = query.search || "";
+    const categoryId = query.categoryId || "all";
     const lastSync = query.lastSync;
 
     const result = lastSync
@@ -235,22 +274,37 @@ export class PosService {
         pagination: (result as any).pagination,
       },
       meta: {
-        syncTimestamp: (result as any).syncTimestamp || (result as any).timestamp || new Date().toISOString(),
+        syncTimestamp:
+          (result as any).syncTimestamp ||
+          (result as any).timestamp ||
+          new Date().toISOString(),
       },
     };
   }
 
   async getIncoming(ctx: V2ApiContext, query: any) {
     const locationId = ctx.locationId || query.locationId;
-    if (!locationId) throw new BadRequestException('Location ID is required.');
+    if (!locationId) throw new BadRequestException("Location ID is required.");
 
     const [openPurchases, incomingTransfers] = await Promise.all([
       this.prisma.client.purchase.findMany({
-        where: { organizationId: ctx.organizationId, status: { in: ['ORDERED', 'PARTIALLY_RECEIVED'] } },
+        where: {
+          organizationId: ctx.organizationId,
+          status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
+        },
         include: {
           supplier: { select: { id: true, name: true } },
           items: {
-            include: { variant: { select: { id: true, name: true, sku: true, product: { select: { name: true } } } } },
+            include: {
+              variant: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  product: { select: { name: true } },
+                },
+              },
+            },
           },
         },
       }),
@@ -258,51 +312,60 @@ export class PosService {
         where: {
           organizationId: ctx.organizationId,
           toLocationId: locationId,
-          status: { in: ['PENDING', 'IN_TRANSIT'] },
+          status: { in: ["SHIPPED", "IN_TRANSIT"] as any },
         },
         include: {
           fromLocation: { select: { id: true, name: true } },
           items: {
-            include: { variant: { select: { id: true, name: true, sku: true, product: { select: { name: true } } } } },
+            include: {
+              variant: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  product: { select: { name: true } },
+                },
+              },
+            },
           },
         },
       }),
     ]);
 
     const shipments = [
-      ...openPurchases.map(po => ({
+      ...openPurchases.map((po) => ({
         id: po.id,
-        type: 'PURCHASE_ORDER',
+        type: "PURCHASE_ORDER",
         referenceNumber: po.purchaseNumber,
-        source: po.supplier?.name || 'Unknown Supplier',
+        source: po.supplier?.name || "Unknown Supplier",
         date: po.orderDate,
         status: po.status,
         itemCount: po.items.length,
-        items: po.items.map(i => ({
+        items: po.items.map((i) => ({
           ...i,
           variant: {
             id: i.variant.id,
             name: i.variant.name,
             sku: i.variant.sku,
-          }
+          },
         })),
         receiveApiUrl: `/api/purchases/${po.id}/receive`,
       })),
-      ...incomingTransfers.map(trf => ({
+      ...incomingTransfers.map((trf) => ({
         id: trf.id,
-        type: 'STOCK_TRANSFER',
+        type: "STOCK_TRANSFER",
         referenceNumber: trf.transferNumber,
-        source: trf.fromLocation?.name || 'Unknown Location',
+        source: (trf as any).fromLocation?.name || "Unknown Location",
         date: trf.requestedDate,
         status: trf.status,
         itemCount: trf.items.length,
-        items: trf.items.map(i => ({
+        items: trf.items.map((i) => ({
           ...i,
           variant: {
             id: i.variant.id,
             name: i.variant.name,
             sku: i.variant.sku,
-          }
+          },
         })),
         receiveApiUrl: `/api/transfers/${trf.id}/receive`,
       })),
@@ -314,14 +377,18 @@ export class PosService {
   async scanTransaction(ctx: V2ApiContext, code: string) {
     const payload = verifyQRToken(code);
     if (!payload || payload.organizationId !== ctx.organizationId)
-      throw new BadRequestException('Invalid or expired QR code');
+      throw new BadRequestException("Invalid or expired QR code");
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: payload.transactionId, organizationId: ctx.organizationId },
-      include: { customer: { select: { name: true, email: true, phone: true } }, items: true, payments: true },
+      include: {
+        customer: { select: { name: true, email: true, phone: true } },
+        items: true,
+        payments: true,
+      },
     });
 
-    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (!transaction) throw new NotFoundException("Transaction not found");
 
     return {
       id: transaction.id,
@@ -329,22 +396,23 @@ export class PosService {
       status: transaction.status,
       total: transaction.finalTotal,
       paymentStatus: transaction.paymentStatus,
-      customerName: transaction.customer?.name || 'Guest',
+      customerName: transaction.customer?.name || "Guest",
       itemCount: transaction.items.length,
-      items: transaction.items.map(i => ({
+      items: transaction.items.map((i) => ({
         name: i.productName,
         sku: i.sku,
         quantity: i.quantity,
         total: i.lineTotal,
       })),
       createdAt: transaction.createdAt,
-      invoiceUrl: getDocumentUrl('invoice', transaction.id, ctx.organizationId),
-      waybillUrl: getDocumentUrl('waybill', transaction.id, ctx.organizationId),
+      invoiceUrl: getDocumentUrl("invoice", transaction.id, ctx.organizationId),
+      waybillUrl: getDocumentUrl("waybill", transaction.id, ctx.organizationId),
     };
   }
 
   async ablyAuth(ctx: V2ApiContext) {
-    if (!ctx.memberId || !ctx.organizationId) throw new UnauthorizedException('Missing context');
+    if (!ctx.memberId || !ctx.organizationId)
+      throw new UnauthorizedException("Missing context");
 
     const { organizationId, memberId } = ctx;
     const paymentChannel = `organization:${organizationId}:payments`;
@@ -354,16 +422,16 @@ export class PosService {
     const tokenRequest = await ably.auth.requestToken({
       clientId: memberId,
       capability: JSON.stringify({
-        'order-*': ['subscribe', 'publish'],
-        'cashier-notifications': ['subscribe'],
-        'channel:*': ['subscribe', 'publish', 'history'],
-        'session:*': ['subscribe', 'publish', 'history'],
-        'system:*': ['subscribe', 'publish', 'history'],
-        'presence:*': ['subscribe', 'publish', 'history', 'presence'],
-        'store:*': ['subscribe', 'publish', 'history', 'presence'],
-        [paymentChannel]: ['subscribe'],
-        [notificationChannel]: ['subscribe'],
-        [organizationChannel]: ['subscribe', 'publish', 'history', 'presence'],
+        "order-*": ["subscribe", "publish"],
+        "cashier-notifications": ["subscribe"],
+        "channel:*": ["subscribe", "publish", "history"],
+        "session:*": ["subscribe", "publish", "history"],
+        "system:*": ["subscribe", "publish", "history"],
+        "presence:*": ["subscribe", "publish", "history", "presence"],
+        "store:*": ["subscribe", "publish", "history", "presence"],
+        [paymentChannel]: ["subscribe"],
+        [notificationChannel]: ["subscribe"],
+        [organizationChannel]: ["subscribe", "publish", "history", "presence"],
       }),
       ttl: 3600 * 1000,
       timestamp: Date.now(),
@@ -378,17 +446,25 @@ export class PosService {
 
   async adjustStock(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(AdjustStockSchema, body);
-    const result = await this.inventoryService.adjustStock({ ...validated, userId: ctx.userId || 'system' });
+    const result = await this.inventoryService.adjustStock({
+      organizationId: ctx.organizationId,
+      ...validated,
+      userId: ctx.userId || "system",
+    });
 
     await this.prisma.client.actionAuditLog.create({
       data: {
         organizationId: ctx.organizationId,
         memberId: ctx.memberId || null,
-        action: 'ADJUST_STOCK',
-        resourceType: 'INVENTORY',
+        action: "ADJUST_STOCK",
+        resourceType: "INVENTORY",
         resourceId: validated.variantId || validated.productId,
         approved: true,
-        metadata: { ...validated, previousStock: result.previousStock, newStock: result.newStock },
+        metadata: {
+          ...validated,
+          previousStock: result.previousStock,
+          newStock: result.newStock,
+        },
       },
     });
 
@@ -399,7 +475,7 @@ export class PosService {
     const { lastSync } = query;
     const locationId = ctx.locationId || query.locationId;
 
-    if (!locationId) throw new BadRequestException('Location ID is required.');
+    if (!locationId) throw new BadRequestException("Location ID is required.");
 
     const [products, customers, categories] = await Promise.all([
       this.getProducts(ctx, { ...query, locationId }),
@@ -426,7 +502,7 @@ export class PosService {
 
     // Contextual filtering
     if (locationId) where.locationId = locationId;
-    if (memberId && !ctx.permissions.includes('*')) {
+    if (memberId && !ctx.permissions.includes("*")) {
       where.memberId = memberId;
     }
 
@@ -440,8 +516,8 @@ export class PosService {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
-    const page = parseInt(query.page || '1', 10);
-    const limit = parseInt(query.limit || '50', 10);
+    const page = parseInt(query.page || "1", 10);
+    const limit = parseInt(query.limit || "50", 10);
     const skip = (page - 1) * limit;
 
     const [total, transactions] = await Promise.all([
@@ -450,37 +526,39 @@ export class PosService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
-          customer: { select: { id: true, name: true, email: true } },
-          items: true,
+          customer: true,
+          items: { include: { variant: true } },
           payments: true,
-          fulfilments: {
-            take: 1,
-            orderBy: { createdAt: 'desc' },
-          },
+          fulfillments: true,
         },
       }),
     ]);
 
-    const formattedTransactions = transactions.map(t => {
-      const paidAmount = t.payments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0)).toNumber();
-      const status = t.fulfilments.length > 0 ? 'dispatched' : t.paymentStatus.toLowerCase();
+    const formattedTransactions = transactions.map((t) => {
+      const paidAmount = (t as any).payments
+        .reduce((sum: Decimal, p: any) => sum.plus(p.amount), new Decimal(0))
+        .toNumber();
+      const status =
+        (t as any).fulfillments?.length > 0
+          ? "dispatched"
+          : t.paymentStatus.toLowerCase();
 
       return {
         id: t.id,
         number: t.number,
-        customer: t.customer?.name || 'Guest',
-        email: t.customer?.email || '',
+        customer: (t as any).customer?.name || "Guest",
+        email: (t as any).customer?.email || "",
         totalAmount: t.finalTotal.toNumber(),
         paidAmount,
         date: t.createdAt.toISOString(),
         status,
-        fulfillmentId: t.fulfilments[0]?.id || null,
-        invoiceLink: getDocumentUrl('invoice', t.id, ctx.organizationId),
-        items: t.items.map(i => ({
+        fulfillmentId: (t as any).fulfillments?.[0]?.id || null,
+        invoiceLink: getDocumentUrl("invoice", t.id, ctx.organizationId),
+        items: (t as any).items.map((i: any) => ({
           id: i.id,
-          productId: i.productId,
+          productId: i.variant.productId,
           productName: i.productName,
           variantId: i.variantId,
           sku: i.sku,
@@ -507,18 +585,25 @@ export class PosService {
   }
 
   async getCustomersDelta(ctx: V2ApiContext, lastSync?: string) {
-    const result = await this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync);
+    const result = await this.posCustomerService.getCustomersDelta(
+      ctx.organizationId,
+      lastSync,
+    );
     return result;
   }
 
   async createCustomer(ctx: V2ApiContext, body: any) {
-    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
     const validated = this.validate<any>(CreateCustomerSchema, body);
-    return this.posCustomerService.createPosCustomer(ctx.organizationId, validated, ctx.memberId);
+    return this.posCustomerService.createPosCustomer(
+      ctx.organizationId,
+      validated,
+      ctx.memberId,
+    );
   }
 
   async dispatchDelivery(ctx: V2ApiContext, transactionId: string, body: any) {
-    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
     const validated = this.validate<any>(DispatchDeliverySchema, body);
     const result = await performDeliveryDispatch(this.prisma.client, {
       transactionId,
@@ -531,8 +616,8 @@ export class PosService {
       data: {
         organizationId: ctx.organizationId,
         memberId: ctx.memberId,
-        action: 'DISPATCH_DELIVERY',
-        resourceType: 'TRANSACTION',
+        action: "DISPATCH_DELIVERY",
+        resourceType: "TRANSACTION",
         resourceId: transactionId,
         approved: true,
         metadata: validated,
@@ -543,13 +628,13 @@ export class PosService {
   }
 
   async reconcileDelivery(ctx: V2ApiContext, body: any, _file?: any) {
-    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
     const validated = this.validate<any>(ReconcileDeliverySchema, body);
     const result = await performReconciliation(this.prisma.client, {
       fulfilmentId: validated.fulfilmentId,
       organizationId: ctx.organizationId,
       reconciledBy: ctx.memberId,
-      outcome: validated.outcome === 'SUCCESS' ? 'DELIVERED' : 'FAILED',
+      outcome: validated.outcome === "SUCCESS" ? "DELIVERED" : "FAILED",
       proofUrl: validated.proofImage,
       receivedBy: validated.receivedBy,
       failureReason: validated.failureReason,
@@ -559,8 +644,8 @@ export class PosService {
       data: {
         organizationId: ctx.organizationId,
         memberId: ctx.memberId,
-        action: 'RECONCILE_DELIVERY',
-        resourceType: 'FULFILMENT',
+        action: "RECONCILE_DELIVERY",
+        resourceType: "FULFILMENT",
         resourceId: validated.fulfilmentId,
         approved: true,
         metadata: validated,
@@ -572,7 +657,7 @@ export class PosService {
 
   async listStockRequests(ctx: V2ApiContext) {
     const locationId = ctx.locationId;
-    if (!locationId) throw new BadRequestException('Location ID required');
+    if (!locationId) throw new BadRequestException("Location ID required");
 
     const requests = await this.prisma.client.stockRequest.findMany({
       where: {
@@ -582,32 +667,42 @@ export class PosService {
       include: {
         fromLocation: { select: { name: true } },
         toLocation: { select: { name: true } },
-        items: { include: { variant: { include: { product: { select: { name: true } } } } } },
+        items: {
+          include: {
+            variant: { include: { product: { select: { name: true } } } },
+          },
+        },
         requestedBy: { select: { user: { select: { name: true } } } },
       },
-      orderBy: { requestDate: 'desc' },
+      orderBy: { requestDate: "desc" },
     });
 
     return { data: requests };
   }
 
   async createStockRequest(ctx: V2ApiContext, body: any) {
-    if (!ctx.memberId) throw new UnauthorizedException('Member required');
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
     const locationId = ctx.locationId;
-    if (!locationId) throw new BadRequestException('Location ID required');
+    if (!locationId) throw new BadRequestException("Location ID required");
 
     const validated = this.validate<any>(CreateStockRequestSchema, body);
 
     const variantIds = validated.items.map((i: any) => i.variantId);
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds }, organizationId: ctx.organizationId },
+      where: {
+        id: { in: variantIds },
+        product: { organizationId: ctx.organizationId },
+      },
     });
 
     let totalEstimatedCost = new Decimal(0);
     const itemsToCreate = validated.items.map((item: any) => {
-      const variant = variants.find(v => v.id === item.variantId);
-      if (!variant) throw new BadRequestException(`Variant ${item.variantId} not found`);
-      const itemCost = new Decimal(variant.buyingPrice ? Number(variant.buyingPrice) : 0).times(item.requestedQuantity);
+      const variant = variants.find((v) => v.id === item.variantId);
+      if (!variant)
+        throw new BadRequestException(`Variant ${item.variantId} not found`);
+      const itemCost = new Decimal(
+        variant.buyingPrice ? Number(variant.buyingPrice) : 0,
+      ).times(item.requestedQuantity);
       totalEstimatedCost = totalEstimatedCost.plus(itemCost);
       return {
         variantId: item.variantId,
@@ -626,12 +721,14 @@ export class PosService {
       try {
         const lastRequest = await this.prisma.client.stockRequest.findFirst({
           where: { organizationId: ctx.organizationId },
-          orderBy: { requestDate: 'desc' },
+          orderBy: { requestDate: "desc" },
           select: { requestNumber: true },
         });
 
-        const lastNumber = lastRequest?.requestNumber ? parseInt(lastRequest.requestNumber.replace('SR-', ''), 10) : 0;
-        const requestNumber = `SR-${(lastNumber + 1).toString().padStart(5, '0')}`;
+        const lastNumber = lastRequest?.requestNumber
+          ? parseInt(lastRequest.requestNumber.replace("SR-", ""), 10)
+          : 0;
+        const requestNumber = `SR-${(lastNumber + 1).toString().padStart(5, "0")}`;
 
         request = await this.prisma.client.stockRequest.create({
           data: {
@@ -648,11 +745,14 @@ export class PosService {
         });
         break; // Success
       } catch (error) {
-        if (error.code === 'P2002' && error.meta?.target?.includes('requestNumber')) {
+        if (
+          error.code === "P2002" &&
+          error.meta?.target?.includes("requestNumber")
+        ) {
           attempts++;
           if (attempts >= maxAttempts) {
             throw new InternalServerErrorException(
-              'Failed to generate a unique stock request number after multiple attempts.'
+              "Failed to generate a unique stock request number after multiple attempts.",
             );
           }
           continue; // Retry
@@ -665,11 +765,14 @@ export class PosService {
       data: {
         organizationId: ctx.organizationId,
         memberId: ctx.memberId,
-        action: 'CREATE_STOCK_REQUEST',
-        resourceType: 'STOCK_REQUEST',
+        action: "CREATE_STOCK_REQUEST",
+        resourceType: "STOCK_REQUEST",
         resourceId: request.id,
         approved: true,
-        metadata: { priority: validated.priority, itemCount: itemsToCreate.length },
+        metadata: {
+          priority: validated.priority,
+          itemCount: itemsToCreate.length,
+        },
       },
     });
 
@@ -677,33 +780,37 @@ export class PosService {
   }
 
   async cancelStockRequest(ctx: V2ApiContext, id: string) {
-    const isAdmin = ctx.permissions.includes('*');
-    if (!ctx.memberId && !isAdmin) throw new UnauthorizedException('Member required');
+    const isAdmin = ctx.permissions.includes("*");
+    if (!ctx.memberId && !isAdmin)
+      throw new UnauthorizedException("Member required");
 
     const request = await this.prisma.client.stockRequest.findFirst({
       where: { id, organizationId: ctx.organizationId },
     });
 
-    if (!request) throw new NotFoundException('Stock request not found');
+    if (!request) throw new NotFoundException("Stock request not found");
 
     // Authorization check: Only the requesting location can cancel
     if (request.fromLocationId !== ctx.locationId && !isAdmin) {
-      throw new UnauthorizedException('You do not have permission to cancel this stock request');
+      throw new UnauthorizedException(
+        "You do not have permission to cancel this stock request",
+      );
     }
 
-    if (request.status !== 'PENDING') throw new BadRequestException('Only pending requests can be cancelled');
+    if (request.status !== "PENDING")
+      throw new BadRequestException("Only pending requests can be cancelled");
 
     await this.prisma.client.stockRequest.update({
       where: { id },
-      data: { status: 'CANCELLED' },
+      data: { status: "CANCELLED" },
     });
 
     await this.prisma.client.actionAuditLog.create({
       data: {
         organizationId: ctx.organizationId,
         memberId: ctx.memberId || null,
-        action: 'CANCEL_STOCK_REQUEST',
-        resourceType: 'STOCK_REQUEST',
+        action: "CANCEL_STOCK_REQUEST",
+        resourceType: "STOCK_REQUEST",
         resourceId: id,
         approved: true,
       },
@@ -714,13 +821,19 @@ export class PosService {
 
   async recordPayment(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(RecordPaymentSchema, body);
-    const { transactionId, amount, method, reference, payerPhone } = validated;
+    const {
+      transactionId,
+      amount,
+      method,
+      referenceNumber: reference,
+      payerPhone,
+    } = validated;
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId: ctx.organizationId },
     });
 
-    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (!transaction) throw new NotFoundException("Transaction not found");
 
     const payment = await this.prisma.client.payment.create({
       data: {
@@ -728,9 +841,9 @@ export class PosService {
         transactionId,
         amount: new Decimal(amount),
         method,
-        reference,
+        referenceNumber: reference,
         payerPhone,
-        status: 'SUCCESS',
+        status: "PAID" as any,
         processedAt: new Date(),
       },
     });
@@ -740,17 +853,20 @@ export class PosService {
       where: { transactionId },
     });
 
-    const totalPaid = allPayments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0));
+    const totalPaid = allPayments.reduce(
+      (sum, p) => sum.plus(p.amount),
+      new Decimal(0),
+    );
 
     if (totalPaid.gte(transaction.finalTotal)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: 'PAID' },
+        data: { paymentStatus: "PAID" },
       });
     } else if (totalPaid.gt(0)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: 'PARTIALLY_PAID' },
+        data: { paymentStatus: "PARTIALLY_PAID" },
       });
     }
 
@@ -775,12 +891,13 @@ export class PosService {
         items: {
           where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
         },
-        allocations: true,
+        customers: true,
+        businessAccounts: true,
       },
     });
 
-    const items = priceLists.flatMap(pl =>
-      pl.items.map(item => ({
+    const items = priceLists.flatMap((pl) =>
+      pl.items.map((item) => ({
         id: item.id,
         priceListId: item.priceListId,
         variantId: item.variantId,
@@ -788,10 +905,10 @@ export class PosService {
         minQuantity: item.minQuantity,
         price: item.price.toString(),
         updatedAt: item.updatedAt,
-      }))
+      })),
     );
 
-    const lists = priceLists.map(pl => ({
+    const lists = priceLists.map((pl) => ({
       id: pl.id,
       code: pl.code,
       priority: pl.priority,
@@ -803,12 +920,18 @@ export class PosService {
     }));
 
     const customerAllocations: Record<string, string[]> = {};
-    priceLists.forEach(pl => {
-      pl.allocations.forEach(alloc => {
-        if (!customerAllocations[alloc.customerId]) {
-          customerAllocations[alloc.customerId] = [];
+    priceLists.forEach((pl) => {
+      (pl as any).customers.forEach((cust: any) => {
+        if (!customerAllocations[cust.id]) {
+          customerAllocations[cust.id] = [];
         }
-        customerAllocations[alloc.customerId].push(pl.id);
+        customerAllocations[cust.id].push(pl.id);
+      });
+      (pl as any).businessAccounts.forEach((ba: any) => {
+        if (!customerAllocations[ba.id]) {
+          customerAllocations[ba.id] = [];
+        }
+        customerAllocations[ba.id].push(pl.id);
       });
     });
 
@@ -834,14 +957,16 @@ export class PosService {
 
     // In a real implementation, you might want to save this to an Actual Shifts table
     // For now, we'll just log it and audit it.
-    this.logger.log(`Syncing shift ${validated.shift_id} for location ${validated.location_id}`);
+    this.logger.log(
+      `Syncing shift ${validated.shift_id} for location ${validated.location_id}`,
+    );
 
     await this.prisma.client.actionAuditLog.create({
       data: {
         organizationId: ctx.organizationId,
         memberId: ctx.memberId || null,
-        action: 'SHIFT_SYNC',
-        resourceType: 'SHIFT',
+        action: "SHIFT_SYNC",
+        resourceType: "SHIFT",
         resourceId: validated.shift_id,
         approved: true,
         metadata: validated,
@@ -856,10 +981,10 @@ export class PosService {
       where: { id, organizationId: ctx.organizationId },
     });
 
-    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (!transaction) throw new NotFoundException("Transaction not found");
 
     return {
-      url: getDocumentUrl('waybill', id, ctx.organizationId),
+      url: getDocumentUrl("waybill", id, ctx.organizationId),
     };
   }
 
@@ -893,10 +1018,10 @@ export class PosService {
       },
     });
 
-    return drivers.map(d => ({
+    return drivers.map((d) => ({
       id: d.id,
       member: {
-        name: d.user?.name || 'Unknown Driver',
+        name: d.user?.name || "Unknown Driver",
       },
     }));
   }

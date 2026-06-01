@@ -1,7 +1,11 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
-import { paginate } from '../../v3/common/utils/pagination';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/server";
+import { paginate } from "../../v3/common/utils/pagination";
 
 @Injectable()
 export class InventoryService {
@@ -9,13 +13,13 @@ export class InventoryService {
 
   async getInventory(ctx: V2ApiContext, query: any) {
     const { organizationId } = ctx;
-    const { 
-      page = 1, 
-      limit = 100, 
-      locationId, 
-      productId, 
-      variantId, 
-      lowStock = 'false' 
+    const {
+      page = 1,
+      limit = 100,
+      locationId,
+      productId,
+      variantId,
+      lowStock = "false",
     } = query;
 
     const offset = (Number(page) - 1) * Number(limit);
@@ -39,7 +43,7 @@ export class InventoryService {
         this.prisma.client.productVariantStock,
         { offset: Number(offset), limit: Number(limit) },
         where,
-        { updatedAt: 'desc' },
+        { updatedAt: "desc" },
         {
           /**
            * ⚡ Bolt: Performance Optimization
@@ -86,12 +90,13 @@ export class InventoryService {
         availableStock: s.availableStock,
         reorderPoint: s.reorderPoint,
         reorderQty: s.reorderQty,
-        isLowStock: s.reorderPoint !== null 
-          ? Number(s.availableStock) <= Number(s.reorderPoint) 
-          : false,
+        isLowStock:
+          s.reorderPoint !== null
+            ? Number(s.availableStock) <= Number(s.reorderPoint)
+            : false,
       }));
 
-      if (lowStock === 'true') {
+      if (lowStock === "true") {
         shaped = shaped.filter((item: any) => item.isLowStock);
       }
 
@@ -104,13 +109,13 @@ export class InventoryService {
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException('Failed to fetch inventory');
+      throw new InternalServerErrorException("Failed to fetch inventory");
     }
   }
 
   async createInventoryItem(ctx: V2ApiContext, data: any) {
     return this.prisma.client.productVariantStock.create({
-      data: { ...data }
+      data: { ...data },
     });
   }
 
@@ -119,60 +124,73 @@ export class InventoryService {
       where: { id },
       include: {
         variant: { include: { product: true } },
-        location: true
-      }
+        location: true,
+      },
     });
-    if (!stock) throw new NotFoundException('Inventory item not found');
+    if (!stock) throw new NotFoundException("Inventory item not found");
     return { data: stock };
   }
 
   async updateInventoryItem(ctx: V2ApiContext, id: string, data: any) {
     return this.prisma.client.productVariantStock.update({
       where: { id },
-      data
+      data,
     });
   }
 
   async deleteInventoryItem(ctx: V2ApiContext, id: string) {
     return this.prisma.client.productVariantStock.delete({
-      where: { id }
+      where: { id },
     });
   }
 
   async getInventoryMovements(ctx: V2ApiContext, inventoryId: string) {
     return this.prisma.client.stockMovement.findMany({
       where: {
-        OR: [
-          { fromLocationId: inventoryId },
-          { toLocationId: inventoryId }
-        ]
+        OR: [{ fromLocationId: inventoryId }, { toLocationId: inventoryId }],
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     });
   }
 
-  async createInventoryMovement(ctx: V2ApiContext, inventoryId: string, data: any) {
+  async createInventoryMovement(
+    ctx: V2ApiContext,
+    inventoryId: string,
+    data: any,
+  ) {
     return this.prisma.client.stockMovement.create({
-      data: { ...data }
+      data: { ...data },
     });
   }
 
   async getInventoryAdjustments(ctx: V2ApiContext, inventoryId: string) {
     return this.prisma.client.stockAdjustment.findMany({
       where: { variantId: inventoryId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     });
   }
 
-  async approveInventoryAdjustment(ctx: V2ApiContext, inventoryId: string, adjustmentId: string) {
+  async approveInventoryAdjustment(
+    ctx: V2ApiContext,
+    inventoryId: string,
+    adjustmentId: string,
+  ) {
     return this.prisma.client.stockAdjustment.update({
       where: { id: adjustmentId },
-      data: { status: 'APPROVED' as any }
+      data: { status: "APPROVED" as any },
     });
   }
 
   async adjustStock(data: any) {
-    const { productId, variantId, locationId, quantity, reason, notes, userId } = data;
+    const {
+      productId,
+      variantId,
+      locationId,
+      quantity,
+      reason,
+      notes,
+      userId,
+    } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Find or create the stock record
@@ -183,7 +201,9 @@ export class InventoryService {
         },
       });
 
-      const previousStock = stockRecord ? Number(stockRecord.availableStock) : 0;
+      const previousStock = stockRecord
+        ? Number(stockRecord.availableStock)
+        : 0;
       const newStock = previousStock + quantity;
 
       if (stockRecord) {
@@ -197,14 +217,15 @@ export class InventoryService {
       } else {
         // If variantId is not provided, we might have an issue since productVariantStock needs it.
         // But for POS we usually have variantId.
-        if (!variantId) throw new Error('variantId is required to adjust stock');
+        if (!variantId)
+          throw new Error("variantId is required to adjust stock");
 
         await tx.productVariantStock.create({
           data: {
-            organizationId: (tx as any).organizationId, // This might be tricky in a generic tx
-            productId,
-            variantId,
-            locationId,
+            organization: { connect: { id: data.organizationId } },
+            product: { connect: { id: productId } },
+            variant: { connect: { id: variantId } },
+            location: { connect: { id: locationId } },
             availableStock: quantity,
             currentStock: quantity,
           },
@@ -214,15 +235,15 @@ export class InventoryService {
       // 2. Log the movement
       const movement = await tx.stockMovement.create({
         data: {
-          organizationId: (tx as any).organizationId,
-          productId,
+          organizationId: data.organizationId,
+
           variantId,
           fromLocationId: quantity < 0 ? locationId : null,
           toLocationId: quantity > 0 ? locationId : null,
           quantity: Math.abs(quantity),
           movementType: reason.toUpperCase(),
           notes,
-          memberId: userId !== 'system' ? userId : undefined,
+          memberId: userId !== "system" ? userId : undefined,
         },
       });
 
@@ -239,7 +260,7 @@ export class InventoryService {
     const { organizationId } = ctx;
     const locations = await this.prisma.client.inventoryLocation.findMany({
       where: { organizationId, isActive: true },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
     return { data: locations };
   }
@@ -250,7 +271,7 @@ export class InventoryService {
       data: {
         ...data,
         organizationId,
-      }
+      },
     });
   }
 
@@ -259,7 +280,7 @@ export class InventoryService {
     const location = await this.prisma.client.inventoryLocation.findFirst({
       where: { id, organizationId },
     });
-    if (!location) throw new NotFoundException('Location not found');
+    if (!location) throw new NotFoundException("Location not found");
     return { data: location };
   }
 
@@ -267,14 +288,14 @@ export class InventoryService {
     const { organizationId } = ctx;
     return this.prisma.client.inventoryLocation.update({
       where: { id, organizationId },
-      data
+      data,
     });
   }
 
   async deleteLocation(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
     return this.prisma.client.inventoryLocation.delete({
-      where: { id, organizationId }
+      where: { id, organizationId },
     });
   }
 
@@ -286,8 +307,14 @@ export class InventoryService {
       this.prisma.client.stockRequest,
       { offset: Number(offset), limit: Number(limit) },
       { organizationId: ctx.organizationId },
-      { requestDate: 'desc' },
-      { include: { fromLocation: true, toLocation: true, requestedBy: { include: { user: true } } } }
+      { requestDate: "desc" },
+      {
+        include: {
+          fromLocation: true,
+          toLocation: true,
+          requestedBy: { include: { user: true } },
+        },
+      },
     );
   }
 
@@ -299,8 +326,14 @@ export class InventoryService {
       this.prisma.client.stockTransfer,
       { offset: Number(offset), limit: Number(limit) },
       { organizationId: ctx.organizationId },
-      { requestedDate: 'desc' },
-      { include: { fromLocation: true, toLocation: true, requestedBy: { include: { user: true } } } }
+      { requestedDate: "desc" },
+      {
+        include: {
+          fromLocation: true,
+          toLocation: true,
+          requestedBy: { include: { user: true } },
+        },
+      },
     );
   }
 
@@ -325,7 +358,7 @@ export class InventoryService {
       },
     });
 
-    if (!request) throw new NotFoundException('Stock request not found');
+    if (!request) throw new NotFoundException("Stock request not found");
     return request;
   }
 
@@ -352,7 +385,7 @@ export class InventoryService {
       },
     });
 
-    if (!transfer) throw new NotFoundException('Stock transfer not found');
+    if (!transfer) throw new NotFoundException("Stock transfer not found");
     return transfer;
   }
 }

@@ -16,8 +16,6 @@ import {
 } from '@repo/ui/components/ui/form';
 import { Input } from '@repo/ui/components/ui/input';
 import { Button } from '@repo/ui/components/ui/button';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Switch } from '@repo/ui/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -145,40 +143,6 @@ export function CustomerForm({ initialData, onSuccess }: CustomerFormProps) {
               <FormLabel>Tax ID (PIN)</FormLabel>
               <FormControl>
                 <Input placeholder="KRA PIN" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }: { field: any }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel>Active Status</FormLabel>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="deliveryNotes"
-          render={({ field }: { field: any }) => (
-            <FormItem>
-              <FormLabel>Delivery Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Specific delivery instructions..."
-                  className="resize-none"
-                  {...field}
-                />
               </FormControl>
               <FormMessage />
             </FormItem>
