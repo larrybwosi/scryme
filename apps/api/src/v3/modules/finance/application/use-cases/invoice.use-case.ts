@@ -74,8 +74,8 @@ export class InvoiceUseCase {
                     itemCode: item.sku || 'N/A',
                     itemName: `${item.productName} ${item.variantName}`,
                     quantity: item.quantity,
-                    rate: item.unitPrice,
-                    amount: item.lineTotal,
+                    rate: Number(item.unitPrice),
+                    amount: Number(item.lineTotal),
                 }))
             }
         }
@@ -135,16 +135,23 @@ export class InvoiceUseCase {
 
     const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items);
 
+    const { templateId, customer, ...rest } = invoiceData;
     return await this.prisma.client.invoice.update({
       where: { id: invoiceId },
       data: {
-        ...invoiceData,
+        ...rest,
+        customerName: customer,
+        template: templateId ? { connect: { id: templateId } } : undefined,
         netTotal,
         totalTaxes,
         grandTotal,
         items: {
           deleteMany: {},
-          create: items,
+          create: items.map(item => ({
+            ...item,
+            rate: Number(item.rate),
+            amount: Number(item.amount),
+          })),
         },
       },
       include: { items: true },

@@ -38,6 +38,6 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": false,
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   }
 }

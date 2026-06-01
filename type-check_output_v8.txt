@@ -1,0 +1,9 @@
+
+> api@0.1.0 type-check /app/apps/api
+> tsc --noEmit
+
+src/lib/api/v2/services/__tests__/documents.spec.ts(36,24): error TS2554: Expected 1 arguments, but got 0.
+src/lib/api/v2/services/__tests__/documents.spec.ts(58,24): error TS2554: Expected 1 arguments, but got 0.
+/app/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  api@0.1.0 type-check: `tsc --noEmit`
+Exit status 2

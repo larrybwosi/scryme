@@ -1,0 +1,15 @@
+
+> api@0.1.0 type-check /app/apps/api
+> tsc --noEmit
+
+src/lib/api/v2/services/__tests__/documents.spec.ts(3,27): error TS2307: Cannot find module '@react-pdf/renderer' or its corresponding type declarations.
+src/lib/api/v2/services/__tests__/documents.spec.ts(36,24): error TS2554: Expected 1 arguments, but got 0.
+src/lib/api/v2/services/__tests__/documents.spec.ts(58,24): error TS2554: Expected 1 arguments, but got 0.
+src/lib/api/v2/services/documents.ts(3,32): error TS2307: Cannot find module '@react-pdf/renderer' or its corresponding type declarations.
+src/v3/modules/finance/application/use-cases/invoice.use-case.ts(141,7): error TS2322: Type '{ template: { connect: { id: string; }; }; netTotal: number; totalTaxes: number; grandTotal: number; items: { deleteMany: {}; create: { rate: number; amount: number; itemCode: string; itemName: string; quantity: number; taxTemplate?: string; }[]; }; ... 5 more ...; etrMode?: boolean; }' is not assignable to type '(Without<InvoiceUpdateInput, InvoiceUncheckedUpdateInput> & InvoiceUncheckedUpdateInput) | (Without<...> & InvoiceUpdateInput)'.
+  Type '{ template: { connect: { id: string; }; }; netTotal: number; totalTaxes: number; grandTotal: number; items: { deleteMany: {}; create: { rate: number; amount: number; itemCode: string; itemName: string; quantity: number; taxTemplate?: string; }[]; }; ... 5 more ...; etrMode?: boolean; }' is not assignable to type 'Without<InvoiceUncheckedUpdateInput, InvoiceUpdateInput> & InvoiceUpdateInput'.
+    Types of property 'customer' are incompatible.
+      Type 'string' has no properties in common with type 'CustomerUpdateOneWithoutInvoicesNestedInput'.
+/app/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  api@0.1.0 type-check: `tsc --noEmit`
+Exit status 2
