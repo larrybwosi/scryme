@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class InventoryIntegrityService {
@@ -12,7 +12,7 @@ export class InventoryIntegrityService {
 
     while (true) {
       const variants = await this.prisma.client.productVariant.findMany({
-        where: { organizationId },
+        where: { product: { organizationId } },
         select: { id: true },
         take: batchSize,
         skip: skip,
@@ -21,7 +21,10 @@ export class InventoryIntegrityService {
       if (variants.length === 0) break;
 
       for (const variant of variants) {
-        const variantIssues = await this.verifyVariantIntegrity(organizationId, variant.id);
+        const variantIssues = await this.verifyVariantIntegrity(
+          organizationId,
+          variant.id,
+        );
         issues.push(...variantIssues);
       }
 
@@ -29,7 +32,7 @@ export class InventoryIntegrityService {
     }
 
     return {
-      status: issues.length === 0 ? 'HEALTHY' : 'UNHEALTHY',
+      status: issues.length === 0 ? "HEALTHY" : "UNHEALTHY",
       issuesCount: issues.length,
       issues,
     };
@@ -45,15 +48,22 @@ export class InventoryIntegrityService {
 
     for (const stock of stocks) {
       const batches = await this.prisma.client.stockBatch.findMany({
-        where: { variantId, locationId: stock.locationId, currentQuantity: { gt: 0 } },
+        where: {
+          variantId,
+          locationId: stock.locationId,
+          currentQuantity: { gt: 0 },
+        },
       });
 
-      const totalBatchQty = batches.reduce((acc: number, b: any) => acc + Number(b.currentQuantity), 0);
+      const totalBatchQty = batches.reduce(
+        (acc: number, b: any) => acc + Number(b.currentQuantity),
+        0,
+      );
       const currentStock = Number(stock.currentStock);
 
       if (Math.abs(totalBatchQty - currentStock) > 0.001) {
         issues.push({
-          type: 'STOCK_BATCH_MISMATCH',
+          type: "STOCK_BATCH_MISMATCH",
           variantId,
           locationId: stock.locationId,
           stockQty: currentStock,
@@ -66,12 +76,19 @@ export class InventoryIntegrityService {
     return issues;
   }
 
-  async fixVariantIntegrity(organizationId: string, variantId: string, locationId: string) {
+  async fixVariantIntegrity(
+    organizationId: string,
+    variantId: string,
+    locationId: string,
+  ) {
     const batches = await this.prisma.client.stockBatch.findMany({
       where: { variantId, locationId, currentQuantity: { gt: 0 } },
     });
 
-    const totalBatchQty = batches.reduce((acc: number, b: any) => acc + Number(b.currentQuantity), 0);
+    const totalBatchQty = batches.reduce(
+      (acc: number, b: any) => acc + Number(b.currentQuantity),
+      0,
+    );
 
     await this.prisma.client.productVariantStock.update({
       where: { variantId_locationId: { variantId, locationId } },

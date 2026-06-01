@@ -69,6 +69,7 @@ export async function getCustomers(organizationId: string) {
 }
 
 export async function getCustomer(id: string) {
+<<<<<<< HEAD
   try {
     const customer = await db.customer.findUnique({
       where: { id },
@@ -101,4 +102,12 @@ export async function getCustomer(id: string) {
     console.error('Error fetching customer:', error);
     throw new Error('Failed to fetch customer');
   }
+=======
+  return await db.customer.findUnique({
+    where: { id },
+    include: {
+      businessAccount: true,
+    }
+  });
+>>>>>>> 7048f951ddcc4cdb080e411a2372192476e7affa
 }

@@ -21,7 +21,7 @@
     "@react-pdf/renderer": "^4.2.1",
     "@repo/db": "workspace:*",
     "date-fns": "^4.1.0",
-    "react": "19.0.0",
+    "react": "^19.2.6",
     "@types/react": "^19.2.14"
   },
   "devDependencies": {

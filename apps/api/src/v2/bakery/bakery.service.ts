@@ -1,10 +1,20 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AuthService } from '../../auth/auth.service';
-import { validateDeviceKey, createMemberToken, type V2ApiContext } from '@repo/shared/server';
-import { FastifyRequest } from 'fastify';
-import { CookieSerializeOptions } from '@fastify/cookie';
-import axios from 'axios';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { AuthService } from "../../auth/auth.service";
+import {
+  validateDeviceKey,
+  createMemberToken,
+  type V2ApiContext,
+} from "@repo/shared/server";
+import { FastifyRequest } from "fastify";
+import { CookieSerializeOptions } from "@fastify/cookie";
+import axios from "axios";
 
 @Injectable()
 export class BakeryService {
@@ -12,7 +22,7 @@ export class BakeryService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {}
 
   async getCategory(ctx: V2ApiContext, id: string) {
@@ -33,11 +43,16 @@ export class BakeryService {
       this.prisma.client.batch.findMany({
         where: { organizationId },
         take: 5,
-        orderBy: { scheduledStartAt: 'desc' },
-        include: { recipe: true, leadBaker: { include: { member: { include: { user: true } } } } },
+        orderBy: { scheduledStartAt: "desc" },
+        include: {
+          recipe: true,
+          leadBaker: { include: { member: { include: { user: true } } } },
+        },
       }),
       this.prisma.client.recipe.count({ where: { organizationId } }),
-      this.prisma.client.bakeryBaker.count({ where: { bakerySettings: { organizationId } } }),
+      this.prisma.client.bakeryBaker.count({
+        where: { bakerySettings: { organizationId } },
+      }),
     ]);
 
     return {
@@ -49,8 +64,10 @@ export class BakeryService {
       totalInventoryValue: 0,
       summary: {
         totalBatches: batches.length,
-        activeBatches: batches.filter((b: any) => b.status === 'IN_PROGRESS').length,
-        completedToday: batches.filter((b: any) => b.status === 'COMPLETED').length,
+        activeBatches: batches.filter((b: any) => b.status === "IN_PROGRESS")
+          .length,
+        completedToday: batches.filter((b: any) => b.status === "COMPLETED")
+          .length,
         lowStockItems: 0,
       },
     };
@@ -65,7 +82,7 @@ export class BakeryService {
       where: {
         product: {
           organizationId,
-          type: 'RAW_MATERIAL' as any,
+          type: "RAW_MATERIAL" as any,
         },
       },
       select: {
@@ -184,7 +201,7 @@ export class BakeryService {
         },
       },
     });
-    if (!recipe) throw new NotFoundException('Recipe not found');
+    if (!recipe) throw new NotFoundException("Recipe not found");
     return recipe;
   }
 
@@ -194,12 +211,12 @@ export class BakeryService {
       where: { id, organizationId },
       include: {
         ingredients: true,
-        steps: true,
-        equipments: true,
+        // steps: true,
+        // equipments: true,
       },
     });
 
-    if (!recipe) throw new NotFoundException('Recipe not found');
+    if (!recipe) throw new NotFoundException("Recipe not found");
 
     const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe;
 
@@ -208,14 +225,16 @@ export class BakeryService {
         ...recipeData,
         name: `${recipeData.name} (Copy)`,
         ingredients: {
-          create: recipe.ingredients.map(({ id: _, recipeId: __, ...ing }) => ing),
+          create: recipe.ingredients.map(
+            ({ id: _, recipeId: __, ...ing }) => ing,
+          ),
         },
-        steps: {
-          create: recipe.steps.map(({ id: _, recipeId: __, ...step }) => step),
-        },
-        equipments: {
-          create: recipe.equipments.map(({ id: _, recipeId: __, ...eq }) => eq),
-        },
+        // steps: {
+        //   create: recipe.steps.map(({ id: _, recipeId: __, ...step }) => step),
+        // },
+        // equipments: {
+        //   create: recipe.equipments.map(({ id: _, recipeId: __, ...eq }) => eq),
+        // },
       },
     });
   }
@@ -225,7 +244,7 @@ export class BakeryService {
     // For now, it returns a mock recipe or could call an AI service
     this.logger.log(`Generating recipe for prompt: ${prompt}`);
     return {
-      name: 'AI Generated Recipe',
+      name: "AI Generated Recipe",
       description: `Generated based on: ${prompt}`,
       ingredients: [],
       steps: [],
@@ -239,21 +258,23 @@ export class BakeryService {
       where: { organizationId },
     });
 
-    const prefix = settings?.batchPrefix || 'BAT';
-    const separator = settings?.batchSeparator || '-';
-    const dateFormat = settings?.batchDateFormat || 'YYYYMMDD';
-    const sequenceLength = parseInt(settings?.batchSequence || '4');
+    const prefix = settings?.batchPrefix || "BAT";
+    const separator = settings?.batchSeparator || "-";
+    const dateFormat = settings?.batchDateFormat || "YYYYMMDD";
+    const sequenceLength = parseInt(settings?.batchSequence || "4");
 
-    let dateStr = '';
+    let dateStr = "";
     const now = new Date();
-    if (dateFormat === 'YYYYMMDD') {
-      dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
-    } else if (dateFormat === 'YYMM') {
-      dateStr = now.getFullYear().toString().slice(-2) + (now.getMonth() + 1).toString().padStart(2, '0');
+    if (dateFormat === "YYYYMMDD") {
+      dateStr = now.toISOString().split("T")[0].replace(/-/g, "");
+    } else if (dateFormat === "YYMM") {
+      dateStr =
+        now.getFullYear().toString().slice(-2) +
+        (now.getMonth() + 1).toString().padStart(2, "0");
     }
 
     const count = await prisma.batch.count({ where: { organizationId } });
-    const sequence = (count + 1).toString().padStart(sequenceLength, '0');
+    const sequence = (count + 1).toString().padStart(sequenceLength, "0");
 
     const parts = [prefix, dateStr, sequence].filter(Boolean);
     return parts.join(separator);
@@ -265,9 +286,17 @@ export class BakeryService {
       where: { id, organizationId },
     });
 
-    if (!batch) throw new NotFoundException('Batch not found');
+    if (!batch) throw new NotFoundException("Batch not found");
 
-    const { id: _, batchNumber: __, status: ___, startedAt: ____, completedAt: _____, cancelledAt: ______, ...batchData } = batch;
+    const {
+      id: _,
+      batchNumber: __,
+      status: ___,
+      startedAt: ____,
+      completedAt: _____,
+      cancelledAt: ______,
+      ...batchData
+    } = batch;
 
     // Generate a new batch number
     const newBatchNumber = await this.generateBatchNumber(organizationId);
@@ -276,8 +305,8 @@ export class BakeryService {
       data: {
         ...batchData,
         batchNumber: newBatchNumber,
-        status: 'SCHEDULED' as any,
-      },
+        status: "PLANNED",
+      } as any,
     });
   }
 
@@ -287,7 +316,7 @@ export class BakeryService {
       where: { id, organizationId },
     });
 
-    if (!template) throw new NotFoundException('Template not found');
+    if (!template) throw new NotFoundException("Template not found");
 
     const { id: _, createdAt: __, updatedAt: ___, ...templateData } = template;
 
@@ -295,7 +324,7 @@ export class BakeryService {
       data: {
         ...templateData,
         name: `${templateData.name} (Copy)`,
-      },
+      } as any,
     });
   }
 
@@ -305,21 +334,24 @@ export class BakeryService {
       where: { id, organizationId },
     });
 
-    if (!template) throw new NotFoundException('Template not found');
+    if (!template) throw new NotFoundException("Template not found");
 
     // Generate a new batch number
     const batchNumber = await this.generateBatchNumber(organizationId);
 
     return this.prisma.client.batch.create({
       data: {
-        organizationId,
-        recipeId: template.recipeId,
-        leadBakerId: template.leadBakerId,
+        organization: { connect: { id: organizationId } },
+        recipe: { connect: { id: template.recipeId } },
+        leadBaker: template.leadBakerId
+          ? { connect: { id: template.leadBakerId } }
+          : undefined,
         plannedQuantity: (template as any).defaultQuantity || template.quantity,
         batchNumber,
-        status: 'SCHEDULED' as any,
+        status: "PLANNED",
         notes: `Created from template: ${template.name}`,
-      },
+        scheduledStartAt: new Date(),
+      } as any,
     });
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
@@ -363,7 +395,7 @@ export class BakeryService {
         systemUnit: true,
         orgUnit: true,
       },
-      orderBy: { scheduledStartAt: 'desc' },
+      orderBy: { scheduledStartAt: "desc" },
     });
   }
 
@@ -381,7 +413,7 @@ export class BakeryService {
                     product: true,
                     stockBatches: {
                       where: { currentQuantity: { gt: 0 } },
-                      orderBy: { expiryDate: 'asc' },
+                      orderBy: { expiryDate: "asc" },
                     },
                   },
                 },
@@ -394,7 +426,7 @@ export class BakeryService {
         assistantBakers: { include: { member: { include: { user: true } } } },
       },
     });
-    if (!batch) throw new NotFoundException('Batch not found');
+    if (!batch) throw new NotFoundException("Batch not found");
     return batch;
   }
 
@@ -409,7 +441,7 @@ export class BakeryService {
     // Process scheduledStartAt if date and time are provided
     let scheduledStartAt = data.scheduledStartAt;
     if (!scheduledStartAt && date && time) {
-      const [hours, minutes] = time.split(':').map(Number);
+      const [hours, minutes] = time.split(":").map(Number);
       const d = new Date(date);
       d.setHours(hours, minutes, 0, 0);
       scheduledStartAt = d;
@@ -445,7 +477,7 @@ export class BakeryService {
     return this.prisma.client.batch.update({
       where: { id, organizationId },
       data: {
-        status: 'IN_PROGRESS' as any,
+        status: "IN_PROGRESS" as any,
         startedAt: new Date(),
       },
     });
@@ -453,31 +485,32 @@ export class BakeryService {
 
   async completeBatch(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } = data;
+    const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
+      data;
 
     const batch = await this.prisma.client.batch.findUnique({
       where: { id },
-      include: { recipe: true },
+      include: { recipe: { include: { producesVariant: true } } },
     });
 
-    if (!batch) throw new NotFoundException('Batch not found');
+    if (!batch) throw new NotFoundException("Batch not found");
 
     const grossQuantity = Number(actualQuantity || 0);
     const waste = Number(wasteQuantity || 0);
     const netQuantity = Math.max(0, grossQuantity - waste);
 
-    return await this.prisma.client.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       // 1. Update batch status
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
         data: {
           actualQuantity: grossQuantity,
-          status: 'COMPLETED' as any,
+          status: "COMPLETED" as any,
           completedAt: new Date(),
           qcData: data.qcData,
           wasteQuantity: waste,
           wasteReason: data.wasteReason,
-          notes: notes || batch.notes,
+          notes: notes || (batch as any).notes,
         },
       });
 
@@ -488,11 +521,16 @@ export class BakeryService {
             where: { id: consumption.stockBatchId },
           });
 
-          if (!stockBatch) throw new NotFoundException(`Stock batch ${consumption.stockBatchId} not found`);
+          if (!stockBatch)
+            throw new NotFoundException(
+              `Stock batch ${consumption.stockBatchId} not found`,
+            );
 
           // Assuming currentQuantity is a Prisma Decimal
           if (stockBatch.currentQuantity.lt(consumption.quantity)) {
-            throw new BadRequestException(`Insufficient stock in batch ${stockBatch.batchNumber || stockBatch.id}`);
+            throw new BadRequestException(
+              `Insufficient stock in batch ${stockBatch.batchNumber || stockBatch.id}`,
+            );
           }
 
           await tx.batchIngredientConsumption.create({
@@ -517,7 +555,7 @@ export class BakeryService {
               stockBatchId: stockBatch.id,
               fromLocationId: stockBatch.locationId,
               quantity: consumption.quantity,
-              movementType: 'PRODUCTION_OUT' as any,
+              movementType: "PRODUCTION_OUT" as any,
               memberId: ctx.memberId!,
               organizationId,
               notes: `Consumed in Batch ${batch.batchNumber}`,
@@ -555,7 +593,7 @@ export class BakeryService {
               productionBatchId: batch.id,
               receivedDate: new Date(),
               expiryDate: updatedBatch.expiresAt,
-            },
+            } as any,
           });
 
           await tx.productVariantStock.upsert({
@@ -570,12 +608,13 @@ export class BakeryService {
               availableStock: { increment: netQuantity },
             },
             create: {
+              productId: (batch.recipe.producesVariant as any).productId,
               variantId: batch.recipe.producesVariantId,
               locationId: locationId,
               currentStock: netQuantity,
               availableStock: netQuantity,
               organizationId,
-            },
+            } as any,
           });
 
           await tx.stockMovement.create({
@@ -584,7 +623,7 @@ export class BakeryService {
               stockBatchId: producedStockBatch.id,
               toLocationId: locationId,
               quantity: netQuantity,
-              movementType: 'PRODUCTION_IN' as any,
+              movementType: "PRODUCTION_IN" as any,
               memberId: ctx.memberId!,
               organizationId,
               notes: `Produced from Batch ${batch.batchNumber} (Net yield after waste)`,
@@ -620,7 +659,7 @@ export class BakeryService {
       },
     });
 
-    if (!batch) throw new NotFoundException('Batch not found');
+    if (!batch) throw new NotFoundException("Batch not found");
     return batch;
   }
 
@@ -629,7 +668,7 @@ export class BakeryService {
     return this.prisma.client.batch.update({
       where: { id, organizationId },
       data: {
-        status: 'CANCELLED' as any,
+        status: "CANCELLED" as any,
         cancelledAt: new Date(),
       },
     });
@@ -770,7 +809,7 @@ export class BakeryService {
     const baker = await this.prisma.client.bakeryBaker.findFirst({
       where: { id, bakerySettings: { organizationId } },
     });
-    if (!baker) throw new NotFoundException('Baker not found');
+    if (!baker) throw new NotFoundException("Baker not found");
 
     return this.prisma.client.bakeryBaker.delete({
       where: { id },
@@ -784,9 +823,9 @@ export class BakeryService {
   getCookieOptions(maxAgeSeconds: number): CookieSerializeOptions {
     return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
       maxAge: maxAgeSeconds,
       domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
     };
@@ -827,7 +866,9 @@ export class BakeryService {
     });
 
     if (!member || !member.user.email) {
-      throw new UnauthorizedException('Member not found or incomplete profile.');
+      throw new UnauthorizedException(
+        "Member not found or incomplete profile.",
+      );
     }
 
     let attendanceLogId = member.currentAttendanceLogId;
@@ -843,7 +884,7 @@ export class BakeryService {
       }
 
       if (!targetLocationId) {
-        throw new BadRequestException('No valid location found for check-in.');
+        throw new BadRequestException("No valid location found for check-in.");
       }
 
       const newLog = await this.prisma.client.attendanceLog.create({
@@ -852,7 +893,7 @@ export class BakeryService {
           organizationId: organizationId,
           checkInTime: new Date(),
           checkInLocationId: targetLocationId,
-          notes: 'Checked in via Bakery SSO',
+          notes: "Checked in via Bakery SSO",
         },
         select: { id: true },
       });
@@ -869,9 +910,15 @@ export class BakeryService {
       attendanceLogId = newLog.id;
     }
 
-    const token = await createMemberToken(member.id, organizationId, attendanceLogId!);
+    const token = await createMemberToken(
+      member.id,
+      organizationId,
+      attendanceLogId!,
+    );
 
-    this.logger.log(`Member ${member.id} authenticated via SSO for org ${organizationId}`);
+    this.logger.log(
+      `Member ${member.id} authenticated via SSO for org ${organizationId}`,
+    );
 
     return { token, member };
   }
@@ -952,7 +999,10 @@ export class BakeryService {
         status: { in: ["PENDING", "IN_TRANSIT"] },
         type: "DELIVERY",
       },
-      include: { transaction: { include: { customer: true, deliveryPartner: true } }, driver: true },
+      include: {
+        transaction: { include: { customer: true, deliveryPartner: true } },
+        driver: true,
+      },
     });
   }
 
@@ -960,16 +1010,17 @@ export class BakeryService {
     const { organizationId, memberId, locationId } = ctx;
     const { lines, receiptReference, receiptDate, notes } = data;
 
-    if (!locationId) throw new BadRequestException('Location ID required in context');
+    if (!locationId)
+      throw new BadRequestException("Location ID required in context");
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const receipt = await tx.stockReceipt.create({
         data: {
-          organizationId,
-          memberId: memberId!,
+          organization: { connect: { id: organizationId } },
+          member: { connect: { id: memberId! } },
           receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
-          notes: `GRN: ${receiptReference}. ${notes || ''}`,
-        },
+          notes: `GRN: ${receiptReference}. ${notes || ""}`,
+        } as any,
       });
 
       for (let i = 0; i < lines.length; i++) {
@@ -980,7 +1031,9 @@ export class BakeryService {
         });
 
         if (!variant) {
-          throw new NotFoundException(`Ingredient with ID ${line.ingredientId} not found`);
+          throw new NotFoundException(
+            `Ingredient with ID ${line.ingredientId} not found`,
+          );
         }
 
         const batch = await tx.stockBatch.create({
@@ -995,9 +1048,8 @@ export class BakeryService {
             receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
             expiryDate: line.expiryDate ? new Date(line.expiryDate) : null,
             supplierId: line.supplier,
-            notes: line.notes,
             stockReceiptId: receipt.id,
-          },
+          } as any,
         });
 
         await tx.productVariantStock.upsert({
@@ -1018,7 +1070,7 @@ export class BakeryService {
             locationId,
             currentStock: line.quantity,
             availableStock: line.quantity,
-          },
+          } as any,
         });
 
         await tx.stockMovement.create({
@@ -1028,10 +1080,10 @@ export class BakeryService {
             stockBatchId: batch.id,
             quantity: line.quantity,
             toLocationId: locationId,
-            movementType: 'PURCHASE_RECEIPT' as any,
+            movementType: "PURCHASE_RECEIPT" as any,
             memberId: memberId!,
             referenceId: receipt.id,
-            referenceType: 'StockReceipt',
+            referenceType: "StockReceipt",
             notes: `Received via Bakery GRN ${receiptReference}`,
           },
         });
@@ -1042,28 +1094,32 @@ export class BakeryService {
   }
 
   async getUpdate(target: string, currentVersion: string) {
-    const owner = process.env.GITHUB_OWNER || 'larrybwosi';
-    const repo = process.env.GITHUB_REPO || 'dealio';
+    const owner = process.env.GITHUB_OWNER || "larrybwosi";
+    const repo = process.env.GITHUB_REPO || "dealio";
     const token = process.env.GITHUB_TOKEN;
 
     const headers: any = {
-      'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Dealio-API',
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "Dealio-API",
     };
     if (token) {
-      headers['Authorization'] = `token ${token}`;
+      headers["Authorization"] = `token ${token}`;
     }
 
     try {
       const { data: release } = await axios.get(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
-        { headers }
+        { headers },
       );
 
       // Tauri updater expects 204 if already on the latest version
       // Remove 'v' prefix if present for comparison
-      const latestVersion = release.tag_name.startsWith('v') ? release.tag_name.substring(1) : release.tag_name;
-      const normalizedCurrentVersion = currentVersion.startsWith('v') ? currentVersion.substring(1) : currentVersion;
+      const latestVersion = release.tag_name.startsWith("v")
+        ? release.tag_name.substring(1)
+        : release.tag_name;
+      const normalizedCurrentVersion = currentVersion.startsWith("v")
+        ? currentVersion.substring(1)
+        : currentVersion;
 
       if (latestVersion === normalizedCurrentVersion) {
         return null;
@@ -1074,27 +1130,36 @@ export class BakeryService {
 
       for (const a of release.assets) {
         const name = a.name as string;
-        if (name.endsWith('.sig')) continue;
+        if (name.endsWith(".sig")) continue;
 
         let matches = false;
-        if (target === 'windows-x86_64') {
-          matches = name.includes('.msi.zip') || name.includes('.exe.zip');
-        } else if (target === 'darwin-x86_64') {
-          matches = (name.includes('.app.tar.gz') && !name.includes('aarch64') && !name.includes('arm64')) || name.includes('universal');
-        } else if (target === 'darwin-aarch64') {
-          matches = (name.includes('.app.tar.gz') && (name.includes('aarch64') || name.includes('arm64'))) || name.includes('universal');
-        } else if (target === 'linux-x86_64') {
-          matches = name.includes('.AppImage.tar.gz');
+        if (target === "windows-x86_64") {
+          matches = name.includes(".msi.zip") || name.includes(".exe.zip");
+        } else if (target === "darwin-x86_64") {
+          matches =
+            (name.includes(".app.tar.gz") &&
+              !name.includes("aarch64") &&
+              !name.includes("arm64")) ||
+            name.includes("universal");
+        } else if (target === "darwin-aarch64") {
+          matches =
+            (name.includes(".app.tar.gz") &&
+              (name.includes("aarch64") || name.includes("arm64"))) ||
+            name.includes("universal");
+        } else if (target === "linux-x86_64") {
+          matches = name.includes(".AppImage.tar.gz");
         }
 
         if (matches) {
-          const sigAsset = release.assets.find((s: any) => s.name === `${name}.sig`);
+          const sigAsset = release.assets.find(
+            (s: any) => s.name === `${name}.sig`,
+          );
           if (sigAsset) {
             asset = a;
             // Fetch signature with auth headers if needed
             const sigResponse = await axios.get(sigAsset.browser_download_url, {
               headers,
-              responseType: 'text'
+              responseType: "text",
             });
             signature = sigResponse.data.trim();
             break;
