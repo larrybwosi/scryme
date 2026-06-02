@@ -6,7 +6,7 @@ pub mod routes {
     pub const CHECK_OUT: &str = "api/v2/pos/check-out";
     pub const LOCATIONS: &str = "api/v2/pos/locations";
     pub const ABLY_AUTH: &str = "api/v2/pos/ably-auth";
-    pub const MPESA_INITIATE: &str = "api/mpesa/initiate";
+    pub const MPESA_INITIATE: &str = "api/v2/payments/mpesa/stkpush";
     // pub const DEVICE_REGISTER: &str = "api/v2/devices/register";
 
     // --- Inventory / Stock ---
@@ -42,7 +42,7 @@ pub mod routes {
     pub const SHIFT_SYNC: &str = "api/v2/pos/shifts/sync";
 
     // --- Delivery ---
-    pub const DRIVERS: &str = "api/v2/drivers";
+    pub const DRIVERS: &str = "api/v2/pos/drivers";
     pub const DELIVERY_DISPATCH: &str = "api/v2/pos/deliveries/dispatch";
     pub const DELIVERY_RECONCILE: &str = "api/v2/pos/deliveries/reconcile-pod";
 }

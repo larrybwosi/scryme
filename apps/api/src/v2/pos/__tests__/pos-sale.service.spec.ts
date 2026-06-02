@@ -2,8 +2,9 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PosSaleService } from "../pos-sale.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { BadRequestException } from "@nestjs/common";
-import * as sharedActions from "@repo/shared/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ProcessSaleInputSchema } from "@repo/shared";
+import { processSale } from "@repo/shared/server";
 
 vi.mock("@repo/shared/server", () => ({
   processSale: vi.fn(),
@@ -63,27 +64,19 @@ describe("PosSaleService", () => {
     };
 
     it("should process a cash sale successfully", async () => {
-      vi.mocked(sharedActions.ProcessSaleInputSchema.safeParse).mockReturnValue(
-        {
-          success: true,
-          data: {
-            ...mockBody,
-            locationId: "loc_1",
-            enableStockTracking: true,
-          } as any,
-        } as any,
-      );
-
-      vi.mocked(sharedActions.processSale).mockResolvedValue({
+      vi.mocked(ProcessSaleInputSchema.safeParse).mockReturnValue({
         success: true,
-        transactionId: "txn_1",
-        data: { id: "txn_1", payments: [] },
+        data: {
+          ...mockBody,
+          locationId: "loc_1",
+          enableStockTracking: true,
+        } as any,
       } as any);
 
       const result = await service.handleSale(mockCtx, mockBody, true);
 
       expect(result.success).toBe(true);
-      expect(sharedActions.processSale).toHaveBeenCalledWith(
+      expect(processSale).toHaveBeenCalledWith(
         "org_1",
         "member_1",
         expect.any(Object),
@@ -91,14 +84,12 @@ describe("PosSaleService", () => {
     });
 
     it("should throw BadRequestException if validation fails", async () => {
-      vi.mocked(sharedActions.ProcessSaleInputSchema.safeParse).mockReturnValue(
-        {
-          success: false,
-          error: {
-            flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
-          },
-        } as any,
-      );
+      vi.mocked(ProcessSaleInputSchema.safeParse).mockReturnValue({
+        success: false,
+        error: {
+          flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
+        },
+      } as any);
 
       await expect(service.handleSale(mockCtx, mockBody, true)).rejects.toThrow(
         BadRequestException,

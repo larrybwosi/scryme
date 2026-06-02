@@ -14,12 +14,10 @@ export function PartnerManager() {
   const formatCurrency = useFormattedCurrency();
   const { data: partners, isLoading } = useQuery({
     queryKey: ['delivery-partners'],
-    queryFn: () => sdk.client.get('/bakery/partners').then(res => res.data)
+    queryFn: () => sdk.client.get('/bakery/partners')
   });
 
   if (isLoading) return <Skeleton className="h-[400px] w-full" />;
-
-  const partnerList = (partners as any) || [];
 
   return (
     <div className="space-y-6">
@@ -45,7 +43,7 @@ export function PartnerManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {partnerList.map((partner: any) => (
+              {(partners as any[])?.map((partner) => (
                 <TableRow key={partner.id}>
                   <TableCell className="font-medium">
                     <div>

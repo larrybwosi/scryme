@@ -29,9 +29,9 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
-packages/database/.env
+packages/db/.env
 apps/web/.env
-#!packages/database/.env
+#!packages/db/.env
 
 # turbo
 .turbo

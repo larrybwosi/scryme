@@ -237,4 +237,10 @@ export class PosController {
   async getDrivers(@v2Context() ctx: V2ApiContext) {
     return this.posService.getDrivers(ctx);
   }
+
+  @Post('inventory/transfers')
+  @ApiOperation({ summary: 'Create stock transfer' })
+  async createStockTransfer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.createStockTransfer(ctx, body);
+  }
 }

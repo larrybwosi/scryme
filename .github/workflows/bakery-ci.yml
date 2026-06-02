@@ -44,7 +44,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
-        run: pnpm --filter @repo/db db:generate
+        run: pnpm --filter @repo/db generate
 
       - name: Build shared packages
         run: |

@@ -17,7 +17,6 @@ import {
   getDeviceSetupTokens,
   getDeviceRegistry,
 } from "@repo/shared";
-import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 
 async function ensureOrgContext() {
@@ -155,18 +154,4 @@ export async function getDeviceSetupTokensAction() {
 export async function getDeviceRegistryAction() {
   const context = await ensureOrgContext();
   return getDeviceRegistry(context.organizationId);
-}
-
-export async function getLocationsAction() {
-  const context = await ensureOrgContext();
-  return db.inventoryLocation.findMany({
-    where: {
-      organizationId: context.organizationId,
-      isActive: true,
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
 }

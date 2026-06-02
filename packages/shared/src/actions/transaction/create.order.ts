@@ -1,13 +1,8 @@
+import { FulfillmentStatus, Decimal, db, PaymentStatus } from "@repo/db";
 import {
-  FulfillmentStatus,
-  FulfillmentType,
-  PaymentStatus,
-  TransactionStatus,
-  TransactionType,
-  Decimal,
-  db
-} from '@repo/db';
-import { CreateOrderInput, CreateOrderInputSchema } from '../../lib/validations/order';
+  CreateOrderInput,
+  CreateOrderInputSchema,
+} from "../../lib/validations/order";
 
 export type CreateOrderResult = {
   success: boolean;
@@ -18,7 +13,7 @@ export type CreateOrderResult = {
 export async function createOrder(
   organizationId: string,
   memberId: string,
-  input: CreateOrderInput
+  input: CreateOrderInput,
 ): Promise<CreateOrderResult> {
   try {
     // 1. Validate Input
@@ -45,19 +40,21 @@ export async function createOrder(
       // 4. Calculate Item Totals
       let subtotal = new Decimal(0);
       const transactionItemsData = validated.items.map((item) => {
-        const variant = variantMap.get(item.variantId);
+        const variant: any = variantMap.get(item.variantId);
         if (!variant) {
           throw new Error(`Variant ${item.variantId} not found`);
         }
 
-        const unitPrice = new Decimal(item.unitPrice ?? variant.retailPrice ?? 0);
+        const unitPrice = new Decimal(
+          item.unitPrice ?? variant.retailPrice ?? 0,
+        );
         const quantity = new Decimal(item.quantity);
         const lineSubtotal = unitPrice.mul(quantity);
         subtotal = subtotal.add(lineSubtotal);
 
         return {
           variantId: item.variantId,
-          productId: variant.productId, productName: variant.product.name,
+          productName: variant.product.name,
           variantName: variant.name,
           sku: variant.sku,
           quantity: item.quantity,
@@ -74,7 +71,10 @@ export async function createOrder(
       const shippingTotal = new Decimal(validated.shippingFee);
       // Simplified tax calculation: assume tax is 0 or handled at the end
       const taxTotal = new Decimal(0);
-      const finalTotal = subtotal.sub(discountTotal).add(shippingTotal).add(taxTotal);
+      const finalTotal = subtotal
+        .sub(discountTotal)
+        .add(shippingTotal)
+        .add(taxTotal);
 
       // 5. Create Transaction
       const transaction = await tx.transaction.create({
@@ -102,15 +102,18 @@ export async function createOrder(
       });
 
       // 6. Create Payments (if any)
-      const totalPaid = validated.payments.reduce((acc, p) => acc.add(new Decimal(p.amount)), new Decimal(0));
+      const totalPaid = validated.payments.reduce(
+        (acc, p) => acc.add(new Decimal(p.amount)),
+        new Decimal(0),
+      );
       if (validated.payments.length > 0) {
         await tx.payment.createMany({
           data: validated.payments.map((p) => ({
             transactionId: transaction.id,
-            method: p.method,
+            organizationId,
+            method: p.method as any,
             amount: p.amount,
             status: PaymentStatus.COMPLETED, // Assume POS-entered payments are completed
-            product: { organizationId },
           })),
         });
 
@@ -119,7 +122,9 @@ export async function createOrder(
           where: { id: transaction.id },
           data: {
             totalPaid,
-            paymentStatus: totalPaid.gte(finalTotal) ? PaymentStatus.PAID : PaymentStatus.PARTIALLY_PAID,
+            paymentStatus: totalPaid.gte(finalTotal)
+              ? "PAID"
+              : "PARTIALLY_PAID",
           },
         });
       }
@@ -128,10 +133,11 @@ export async function createOrder(
       await tx.fulfillment.create({
         data: {
           transactionId: transaction.id,
-          type: validated.fulfillment.type,
+          type: validated.fulfillment.type as any,
           status: FulfillmentStatus.PENDING,
           shippingAddressId: validated.fulfillment.shippingAddressId,
           pickupLocationId: validated.fulfillment.pickupLocationId,
+          organizationId,
         },
       });
 
@@ -140,14 +146,14 @@ export async function createOrder(
 
     return {
       success: true,
-      message: 'Order created successfully',
+      message: "Order created successfully",
       data: result,
     };
   } catch (error: any) {
-    console.error('Error in createOrder shared action:', error);
+    console.error("Error in createOrder shared action:", error);
     return {
       success: false,
-      message: error.message || 'Failed to create order',
+      message: error.message || "Failed to create order",
     };
   }
 }
