@@ -1,8 +1,9 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "target": "ESNext",
     "useDefineForClassFields": true,
     "lib": [
