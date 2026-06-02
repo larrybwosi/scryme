@@ -1,16 +1,9 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -22,31 +15,17 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
-    "types": [
-      "vite/client",
-      "node"
-    ],
+    "types": ["vite/client"],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@repo/auth": [
-        "../../packages/auth/src/index.ts"
-      ],
-      "@repo/ui/*": [
-        "../../packages/ui/src/*"
-      ],
-      "@repo/sdk": [
-        "../../packages/sdk/src/index.ts"
-      ],
-      "@repo/sdk/*": [
-        "../../packages/sdk/src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@repo/auth": ["../../packages/auth/src/index.ts"],
+      "@repo/ui/*": ["../../packages/ui/src/*"],
+      "@repo/sdk": ["../../packages/sdk/src/index.ts"],
+      "@repo/sdk/*": ["../../packages/sdk/src/*"]
     }
   },
-  "include": [
-    "src"
-  ],
+  "include": ["src"],
+  "exclude": ["node_modules"],
   "references": [
     {
       "path": "./tsconfig.node.json"

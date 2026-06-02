@@ -1056,7 +1056,7 @@ export class PosService {
             fromLocationId: validated.fromLocationId,
             toLocationId: validated.toLocationId,
             requestedById: ctx.memberId,
-            status: "PENDING",
+            status: "PENDING_APPROVAL",
             notes: validated.notes,
             items: {
               create: validated.items.map((item: any) => ({

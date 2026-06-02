@@ -137,7 +137,7 @@ export async function createOrder(
           status: FulfillmentStatus.PENDING,
           shippingAddressId: validated.fulfillment.shippingAddressId,
           pickupLocationId: validated.fulfillment.pickupLocationId,
-          organizationId,
+          // organizationId,
         },
       });
 
