@@ -107,5 +107,30 @@ describe('CatalogService', () => {
       expect(result).toEqual(cacheValue);
       expect(mockDb.product.findMany).not.toHaveBeenCalled();
     });
+
+    it('should include inStock filter in where clause when requested', async () => {
+      const orgId = 'org-1';
+      (mockDb.product.findMany as any).mockResolvedValue([]);
+      (mockDb.product.count as any).mockResolvedValue(0);
+      (redis.get as any).mockResolvedValue(null);
+
+      await service.getProducts({ organizationId: orgId } as V2ApiContext, { inStock: 'true' });
+
+      expect(mockDb.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            variants: {
+              some: {
+                variantStocks: {
+                  some: {
+                    availableStock: { gt: 0 },
+                  },
+                },
+              },
+            },
+          }),
+        }),
+      );
+    });
   });
 });
