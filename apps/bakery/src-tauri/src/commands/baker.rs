@@ -1,10 +1,38 @@
 use crate::commands::{log_activity, serde_json_to_string};
 use crate::error::{BackendError, BackendResult};
 use crate::models::{Baker, User};
+use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::Utc;
 use sqlx::SqlitePool;
 use tauri::State;
 use uuid::Uuid;
+
+#[tauri::command]
+pub async fn login_staff(
+    pool: State<'_, SqlitePool>,
+    card_id: String,
+    pin: String,
+) -> BackendResult<Baker> {
+    let baker = sqlx::query_as::<_, Baker>("SELECT * FROM bakers WHERE card_id = ? LIMIT 1")
+        .bind(&card_id)
+        .fetch_optional(&*pool)
+        .await?
+        .ok_or_else(|| BackendError::Auth("Invalid card ID or PIN".to_string()))?;
+
+    let pin_hash = baker.pin_hash.as_ref().ok_or_else(|| {
+        BackendError::Auth("Baker does not have a PIN set".to_string())
+    })?;
+
+    if !verify(&pin, pin_hash).map_err(|e| BackendError::Internal(e.to_string()))? {
+        return Err(BackendError::Auth("Invalid card ID or PIN".to_string()));
+    }
+
+    if !baker.is_active {
+        return Err(BackendError::Auth("Baker account is inactive".to_string()));
+    }
+
+    Ok(baker)
+}
 
 #[tauri::command]
 pub async fn get_bakers(pool: State<'_, SqlitePool>) -> BackendResult<Vec<Baker>> {
@@ -33,14 +61,21 @@ pub async fn create_baker(
     baker.created_at = Utc::now();
     baker.updated_at = Utc::now();
 
+    if let Some(pin) = &baker.pin {
+        let hashed = hash(pin, DEFAULT_COST).map_err(|e| BackendError::Internal(e.to_string()))?;
+        baker.pin_hash = Some(hashed);
+    }
+
     sqlx::query(
-        "INSERT INTO bakers (id, name, role, member_id, email, is_active, bakery_settings_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO bakers (id, name, role, member_id, card_id, pin_hash, email, is_active, bakery_settings_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&baker.id)
     .bind(&baker.name)
     .bind(&baker.role)
     .bind(&baker.member_id)
+    .bind(&baker.card_id)
+    .bind(&baker.pin_hash)
     .bind(&baker.email)
     .bind(baker.is_active)
     .bind(&baker.bakery_settings_id)
@@ -81,11 +116,19 @@ pub async fn update_baker(
         .as_str()
         .ok_or_else(|| BackendError::Validation("Missing baker ID".to_string()))?;
 
+    let pin_hash = if let Some(pin) = baker.get("pin").and_then(|v| v.as_str()) {
+        Some(hash(pin, DEFAULT_COST).map_err(|e| BackendError::Internal(e.to_string()))?)
+    } else {
+        None
+    };
+
     sqlx::query(
         "UPDATE bakers SET
          name = COALESCE(?, name),
          role = COALESCE(?, role),
          member_id = COALESCE(?, member_id),
+         card_id = COALESCE(?, card_id),
+         pin_hash = COALESCE(?, pin_hash),
          email = COALESCE(?, email),
          is_active = COALESCE(?, is_active),
          updated_at = ?
@@ -94,6 +137,8 @@ pub async fn update_baker(
     .bind(baker.get("name").and_then(|v| v.as_str()))
     .bind(baker.get("role").and_then(|v| v.as_str()))
     .bind(baker.get("memberId").and_then(|v| v.as_str()))
+    .bind(baker.get("cardId").and_then(|v| v.as_str()))
+    .bind(pin_hash)
     .bind(baker.get("email").and_then(|v| v.as_str()))
     .bind(baker.get("isActive").and_then(|v| v.as_bool()))
     .bind(Utc::now())
