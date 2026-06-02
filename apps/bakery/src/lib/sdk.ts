@@ -14,10 +14,21 @@ export const isOfflineMode = () => {
 };
 
 // Initialize SDK with proper baseURL and global error handler
+const getBaseURL = () => {
+  if (!isTauri()) return '/api/v2';
+
+  let url = localStorage.getItem('bakery_api_url') || import.meta.env.VITE_API_URL || 'https://api.scryme.app';
+
+  // Ensure we have the api/v2 suffix if it's a full URL
+  if (url.startsWith('http') && !url.includes('/api/v2')) {
+    url = `${url.replace(/\/$/, '')}/api/v2`;
+  }
+
+  return url;
+};
+
 const sdk = getSDK({
-  baseURL: isTauri()
-    ? (localStorage.getItem('bakery_api_url') || import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2')
-    : '/api/v2',
+  baseURL: getBaseURL(),
   onUnauthorized: () => {
     // Trigger a window event that the AuthGuard can listen to
     window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
