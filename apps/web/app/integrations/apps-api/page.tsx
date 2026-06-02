@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Key,
@@ -75,11 +75,7 @@ function AppsApiContent() {
   });
   const [deviceTokenResult, setDeviceTokenResult] = useState<any>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [v3, v2, wh, tokens, regs, locs] = await Promise.all([
         getV3ApiClientsAction(),
@@ -101,7 +97,11 @@ function AppsApiContent() {
     } catch (error) {
       console.error("Failed to load data", error);
     }
-  };
+  }, [newDevice.locationId]);
+
+  useEffect(() => {
+    loadData();
+  }, [activeTab, loadData]);
 
   const handleCreateV3 = async () => {
     const res = await createV3ApiClientAction({ name: newClientName });
