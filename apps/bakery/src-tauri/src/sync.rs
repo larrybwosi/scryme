@@ -12,6 +12,15 @@ pub async fn start_sync_worker(pool: SqlitePool, api_base_url: String) {
     let min_delay = Duration::from_secs(60);
     let max_delay = Duration::from_secs(3600);
 
+    // Refine V3 API URL construction
+    let v3_api_url = if api_base_url.ends_with("/api/v2") {
+        api_base_url.replace("/api/v2", "/api/v3")
+    } else if api_base_url.contains("/api/v2/") {
+         api_base_url.replace("/api/v2/", "/api/v3/")
+    } else {
+        api_base_url.clone()
+    };
+
     loop {
         let api_key = match get_api_key(&pool).await {
             Ok(Some(key)) => key,
@@ -69,14 +78,6 @@ pub async fn start_sync_worker(pool: SqlitePool, api_base_url: String) {
 
         // Periodic units sync
         if let Ok(Some(api_key)) = get_api_key(&pool).await {
-            let v3_api_url = if api_base_url.ends_with("/api/v2") {
-                api_base_url.replace("/api/v2", "/api/v3")
-            } else if api_base_url.contains("/api/v2/") {
-                api_base_url.replace("/api/v2/", "/api/v3/")
-            } else {
-                api_base_url.clone()
-            };
-
             if let Err(e) = sync_units(&client, &v3_api_url, &pool, &api_key).await {
                 log::warn!("Periodic units sync failed: {}", e);
             }
@@ -284,8 +285,8 @@ async fn sync_item(
         }
     }
 
-    // Skip syncing for SETTINGS
-    if item.entity_type == "SETTINGS" {
+    // Skip syncing for SETTINGS and UNIT types
+    if item.entity_type == "SETTINGS" || item.entity_type == "UNIT" {
         return Ok(());
     }
 

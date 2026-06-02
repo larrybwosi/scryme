@@ -1,0 +1,82 @@
+name: Bakery CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - 'apps/bakery/**'
+      - 'packages/sdk/**'
+      - 'packages/ui/**'
+      - 'packages/shared/**'
+      - '.github/workflows/bakery-ci.yml'
+
+jobs:
+  test-and-build:
+    name: Test and Build Bakery
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/bakery/src-tauri
+
+      - name: Install dependencies (ubuntu only)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @repo/db generate
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @repo/shared build
+          pnpm --filter @repo/sdk build
+
+      - name: Type Check
+        run: pnpm --filter bakery type-check
+
+      - name: Inject Environment Variables
+        shell: bash
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.scryme.app/api/v2' }}
+          BAKERY_UPDATE_URL: ${{ secrets.BAKERY_UPDATE_URL || 'https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}' }}
+          TAURI_PUBLIC_KEY: ${{ secrets.TAURI_PUBLIC_KEY || 'dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg==' }}
+        run: |
+          # Inject VITE_API_URL into .env for the frontend build
+          echo "VITE_API_URL=$VITE_API_URL" > apps/bakery/.env
+
+          # Replace the update URL and public key in tauri.conf.json
+          # Use node for cross-platform JSON editing
+          node -e "
+            const fs = require('fs');
+            const path = 'apps/bakery/src-tauri/tauri.conf.json';
+            const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+            config.plugins.updater.endpoints = [process.env.BAKERY_UPDATE_URL];
+            config.plugins.updater.pubkey = process.env.TAURI_PUBLIC_KEY;
+            fs.writeFileSync(path, JSON.stringify(config, null, 2));
+          "
+
+      - name: Build Tauri App
+        run: pnpm --filter bakery tauri build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.scryme.app/api/v2' }}

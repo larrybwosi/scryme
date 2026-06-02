@@ -110,7 +110,7 @@ pub async fn create_baker(
 pub async fn update_baker(
     pool: State<'_, SqlitePool>,
     user_id: String,
-    baker: serde_json.Value,
+    baker: serde_json::Value,
 ) -> BackendResult<()> {
     let id = baker["id"]
         .as_str()
