@@ -23,7 +23,22 @@ export async function processSale(
 ): Promise<ProcessSaleResult> {
   try {
     const result = await db.$transaction(async (tx) => {
-      // 0. Fetch organization settings for tax and currency
+      // 0. Idempotency Check
+      if (data.saleNumber) {
+        const existing = await tx.transaction.findFirst({
+          where: { organizationId, number: data.saleNumber },
+          include: {
+            items: true,
+            payments: true,
+            customer: true,
+          },
+        });
+        if (existing) {
+          return existing;
+        }
+      }
+
+      // 1. Fetch organization settings for tax and currency
       const organization = await tx.organization.findUnique({
         where: { id: organizationId },
         include: { settings: true },
@@ -35,7 +50,7 @@ export async function processSale(
       const currencyCode =
         (organization?.settings?.defaultCurrency as string) || "KES";
 
-      // 1. Calculate totals
+      // 2. Calculate totals and handle stock
       let subtotal = new Decimal(0);
       const itemsToCreate = [];
 
@@ -66,6 +81,54 @@ export async function processSale(
           lineTotal: lineSubtotal,
           sellingUnitId: item.sellingUnitId,
         });
+
+        // Stock Deduction Logic
+        if (data.enableStockTracking) {
+          // Update location-specific stock
+          const stockRecord = await tx.productVariantStock.findUnique({
+            where: {
+              variantId_locationId: {
+                variantId: item.variantId,
+                locationId: data.locationId,
+              },
+            },
+          });
+
+          if (stockRecord) {
+            await tx.productVariantStock.update({
+              where: { id: stockRecord.id },
+              data: {
+                availableStock: { decrement: item.quantity },
+                currentStock: { decrement: item.quantity },
+              },
+            });
+          } else {
+            // Create if missing (though it should ideally exist)
+            await tx.productVariantStock.create({
+              data: {
+                organizationId,
+                productId: variant.productId,
+                variantId: item.variantId,
+                locationId: data.locationId,
+                availableStock: -item.quantity,
+                currentStock: -item.quantity,
+              },
+            });
+          }
+
+          // Log Stock Movement
+          await tx.stockMovement.create({
+            data: {
+              organizationId,
+              variantId: item.variantId,
+              fromLocationId: data.locationId,
+              quantity: item.quantity,
+              movementType: MovementType.SALE,
+              memberId: memberId !== "api" ? memberId : undefined as any,
+              notes: `Sale ${data.saleNumber || "POS"}`,
+            },
+          });
+        }
       }
 
       const taxTotal = subtotal.mul(taxRate);
@@ -73,7 +136,7 @@ export async function processSale(
         .plus(taxTotal)
         .minus(data.discountAmount || 0);
 
-      // 2. Create Transaction
+      // 3. Create Transaction
       const transaction = await tx.transaction.create({
         data: {
           number: data.saleNumber || `SALE-${Date.now()}`,

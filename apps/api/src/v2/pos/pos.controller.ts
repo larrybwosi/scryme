@@ -243,4 +243,10 @@ export class PosController {
   async createStockTransfer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockTransfer(ctx, body);
   }
+
+  @Get('inventory/transfers')
+  @ApiOperation({ summary: 'List stock transfers' })
+  async listStockTransfers(@v2Context() ctx: V2ApiContext, @Query() query: any) {
+    return this.posService.listStockTransfers(ctx, query);
+  }
 }

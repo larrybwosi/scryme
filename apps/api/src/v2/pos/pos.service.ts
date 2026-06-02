@@ -990,15 +990,160 @@ export class PosService {
   }
 
   async receivePurchase(ctx: V2ApiContext, id: string, body: any) {
-    // This would typically involve updating purchase order status and inventory
-    this.logger.log(`Receiving purchase ${id} for location ${ctx.locationId}`);
-    return { success: true };
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
+    const locationId = ctx.locationId || body.locationId;
+    if (!locationId) throw new BadRequestException("Location ID required");
+
+    return this.prisma.client.$transaction(async (tx) => {
+      const purchase = await tx.purchase.findFirst({
+        where: { id, organizationId: ctx.organizationId },
+        include: { items: true },
+      });
+
+      if (!purchase) throw new NotFoundException("Purchase order not found");
+
+      // For simplicity, we assume full receipt for now. In a real app, we'd use body.items
+      for (const item of purchase.items) {
+        const receivedQty = item.quantity; // Default to full quantity if not specified in body
+
+        // Update stock
+        const stockRecord = await tx.productVariantStock.findUnique({
+          where: {
+            variantId_locationId: {
+              variantId: item.variantId,
+              locationId,
+            },
+          },
+        });
+
+        if (stockRecord) {
+          await tx.productVariantStock.update({
+            where: { id: stockRecord.id },
+            data: {
+              availableStock: { increment: receivedQty },
+              currentStock: { increment: receivedQty },
+            },
+          });
+        } else {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
+          await tx.productVariantStock.create({
+            data: {
+              organizationId: ctx.organizationId,
+              productId: variant!.productId,
+              variantId: item.variantId,
+              locationId,
+              availableStock: receivedQty,
+              currentStock: receivedQty,
+            },
+          });
+        }
+
+        // Log movement
+        await tx.stockMovement.create({
+          data: {
+            organizationId: ctx.organizationId,
+            variantId: item.variantId,
+            toLocationId: locationId,
+            quantity: receivedQty,
+            movementType: "PURCHASE_RECEIPT" as any,
+            memberId: ctx.memberId!,
+            referenceId: id,
+            referenceType: "PURCHASE_ORDER",
+          },
+        });
+      }
+
+      await tx.purchase.update({
+        where: { id },
+        data: { status: "RECEIVED" as any },
+      });
+
+      return { success: true };
+    });
   }
 
   async receiveTransfer(ctx: V2ApiContext, id: string, body: any) {
-    // This would typically involve updating stock transfer status and inventory
-    this.logger.log(`Receiving transfer ${id} for location ${ctx.locationId}`);
-    return { success: true };
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
+    const locationId = ctx.locationId || body.locationId;
+    if (!locationId) throw new BadRequestException("Location ID required");
+
+    return this.prisma.client.$transaction(async (tx) => {
+      const transfer = await tx.stockTransfer.findFirst({
+        where: { id, organizationId: ctx.organizationId },
+        include: { items: true },
+      });
+
+      if (!transfer) throw new NotFoundException("Stock transfer not found");
+      if (transfer.toLocationId !== locationId) {
+        throw new BadRequestException("This transfer is not destined for this location");
+      }
+
+      for (const item of transfer.items) {
+        const receivedQty = item.requestedQuantity;
+
+        // Increment stock at destination
+        const stockRecord = await tx.productVariantStock.findUnique({
+          where: {
+            variantId_locationId: {
+              variantId: item.variantId,
+              locationId,
+            },
+          },
+        });
+
+        if (stockRecord) {
+          await tx.productVariantStock.update({
+            where: { id: stockRecord.id },
+            data: {
+              availableStock: { increment: receivedQty },
+              currentStock: { increment: receivedQty },
+            },
+          });
+        } else {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
+          await tx.productVariantStock.create({
+            data: {
+              organizationId: ctx.organizationId,
+              productId: variant!.productId,
+              variantId: item.variantId,
+              locationId,
+              availableStock: receivedQty,
+              currentStock: receivedQty,
+            },
+          });
+        }
+
+        // Log movement
+        await tx.stockMovement.create({
+          data: {
+            organizationId: ctx.organizationId,
+            variantId: item.variantId,
+            fromLocationId: transfer.fromLocationId,
+            toLocationId: locationId,
+            quantity: receivedQty,
+            movementType: "TRANSFER" as any,
+            memberId: ctx.memberId!,
+            referenceId: id,
+            referenceType: "STOCK_TRANSFER",
+          },
+        });
+      }
+
+      await tx.stockTransfer.update({
+        where: { id },
+        data: {
+          status: "COMPLETED",
+          receivedDate: new Date(),
+          receivedById: ctx.memberId,
+        },
+      });
+
+      return { success: true };
+    });
   }
 
   async getDrivers(ctx: V2ApiContext) {
@@ -1096,5 +1241,60 @@ export class PosService {
     });
 
     return { success: true, data: transfer };
+  }
+
+  async listStockTransfers(ctx: V2ApiContext, query: any) {
+    const locationId = ctx.locationId || query.locationId;
+    if (!locationId) throw new BadRequestException("Location ID is required.");
+
+    const page = parseInt(query.page || "1", 10);
+    const limit = parseInt(query.limit || "50", 10);
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      organizationId: ctx.organizationId,
+      OR: [{ fromLocationId: locationId }, { toLocationId: locationId }],
+    };
+
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    const [total, transfers] = await Promise.all([
+      this.prisma.client.stockTransfer.count({ where }),
+      this.prisma.client.stockTransfer.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { requestedDate: "desc" },
+        include: {
+          fromLocation: { select: { id: true, name: true } },
+          toLocation: { select: { id: true, name: true } },
+          items: {
+            include: {
+              variant: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  product: { select: { name: true } },
+                },
+              },
+            },
+          },
+          requestedBy: { select: { id: true, user: { select: { name: true } } } },
+        },
+      }),
+    ]);
+
+    return {
+      data: transfers,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    };
   }
 }
