@@ -155,7 +155,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
     setIsProvisioning(true);
     try {
       // 1. Provision via Rust backend (handles keyring storage)
-      let finalApiUrl = showApiUrl ? apiUrl : (import.meta.env.VITE_API_URL || 'https://api.scryme.app');
+      const finalApiUrl = showApiUrl ? apiUrl : (import.meta.env.VITE_API_URL || 'https://api.scryme.app');
 
       // Ensure we have the api/v2 suffix for the backend call if it's a full URL
       let apiUrlForBackend = finalApiUrl;
