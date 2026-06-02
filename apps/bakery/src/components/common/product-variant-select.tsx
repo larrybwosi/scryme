@@ -1,17 +1,35 @@
-'use client';
+"use client";
 
-import { Check, ChevronsUpDown, Loader2, Package, AlertCircle } from 'lucide-react';
-import { FC, useMemo, useState, useEffect } from 'react'; // Added useEffect
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { cn } from '@/lib/utils';
-import { Button } from '@repo/ui/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
-import { useProductVariants } from '@/lib/api/products';
-import { ProductType } from '@/types/bakery-fix';
+import {
+  Check,
+  ChevronsUpDown,
+  Loader2,
+  Package,
+  AlertCircle,
+} from "lucide-react";
+import { FC, useMemo, useState, useEffect } from "react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@repo/ui/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import { useProductVariants } from "@/lib/api/products";
+import { ProductType } from "@/types/bakery-fix";
 
 // --- Custom Debounce Hook ---
-// Prevents API spamming by waiting until the user stops typing
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -51,7 +69,7 @@ interface ProductVariantsSelectProps {
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
-  productType?: ProductType | 'ALL';
+  productType?: ProductType | "ALL";
   includeLocation?: boolean;
   showLocationInfo?: boolean;
   excludeVariant?: string;
@@ -63,10 +81,9 @@ interface ProductVariantsSelectProps {
 export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a product variant...',
+  placeholder = "Select a product variant...",
   disabled = false,
-  required = false,
-  productType = 'FINISHED_GOOD',
+  productType = "FINISHED_GOOD",
   includeLocation = true,
   showLocationInfo = true,
   excludeVariant,
@@ -75,46 +92,48 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   const [open, setOpen] = useState(false);
 
   // --- Search State ---
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300); // 300ms delay
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const {
     data: productVariants,
     isLoading,
-    isFetching, // Helpful for showing a spinner while typing
+    isFetching,
     error,
   } = useProductVariants({
     includeLocation,
     isActive: true,
     productType: (productType === "ALL" ? undefined : productType) as any,
-    search: debouncedSearchTerm, // Pass the debounced search to the API
-  });
+    search: debouncedSearchTerm,
+  }) as any;
 
   // Combine excluded variant IDs
   const allExcludedIds = useMemo(
     () => [...(excludeVariant ? [excludeVariant] : []), ...excludeVariantIds],
-    [excludeVariant, excludeVariantIds]
+    [excludeVariant, excludeVariantIds],
   );
 
   // Filter out excluded variants
   const filteredVariants = useMemo(() => {
     if (!productVariants) return [];
     return allExcludedIds.length > 0
-      ? productVariants.filter(variant => !allExcludedIds.includes(variant.id))
+      ? productVariants.filter(
+          (variant: any) => !allExcludedIds.includes(variant.id),
+        )
       : productVariants;
   }, [productVariants, allExcludedIds]);
 
   // Find the currently selected variant object for display
   const selectedVariant = useMemo(() => {
-    return filteredVariants.find(v => v.id === value);
+    return filteredVariants.find((v: any) => v.id === value);
   }, [filteredVariants, value]);
 
   // Group variants by product type if type is 'ALL'
   const groupedVariants = useMemo(() => {
-    if (productType !== 'ALL') return null;
+    if (productType !== "ALL") return null;
 
     return filteredVariants.reduce(
-      (acc, variant) => {
+      (acc: any, variant: any) => {
         const type = variant.productType as ProductType;
         if (!acc[type]) {
           acc[type] = [];
@@ -122,29 +141,31 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
         acc[type].push(variant);
         return acc;
       },
-      {} as Record<ProductType, ProductVariant[]>
+      {} as Record<ProductType, ProductVariant[]>,
     );
   }, [filteredVariants, productType]);
 
   // Helper function to format location info
   const formatLocationInfo = (variant: ProductVariant): string => {
-    if (!variant.location) return 'No location';
+    if (!variant.location) return "No location";
 
     const location = variant.location;
     if (location.address) {
       const { city, state, country } = location.address;
       const parts = [city, state, country].filter(Boolean);
-      return parts.length > 0 ? parts.join(', ') : location.name;
+      return parts.length > 0 ? parts.join(", ") : location.name;
     }
     return location.name;
   };
 
   // --- Initial Loading State ---
-  // Adjusted: Only show this full-width blocker if we are loading for the very first time.
-  // Otherwise, the dropdown will unmount and close itself every time you type a letter.
   if (isLoading && !productVariants?.length) {
     return (
-      <Button variant="outline" disabled className="w-full justify-between cursor-not-allowed opacity-70">
+      <Button
+        variant="outline"
+        disabled
+        className="w-full justify-between cursor-not-allowed opacity-70"
+      >
         <span className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading variants...
@@ -173,7 +194,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   const VariantItem = ({ variant }: { variant: ProductVariant }) => (
     <CommandItem
       key={variant.id}
-      value={variant.id} // We can simplify value to ID now, since backend handles searching
+      value={variant.id}
       onSelect={() => {
         onValueChange?.(variant.id, variant);
         setOpen(false);
@@ -184,12 +205,16 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{variant.name}</span>
-            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{variant.sku}</span>
+            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              {variant.sku}
+            </span>
           </div>
           {value === variant.id && <Check className="h-4 w-4 text-primary" />}
         </div>
         {showLocationInfo && variant.location && (
-          <span className="text-xs text-muted-foreground mt-1 truncate">Location: {formatLocationInfo(variant)}</span>
+          <span className="text-xs text-muted-foreground mt-1 truncate">
+            Location: {formatLocationInfo(variant)}
+          </span>
         )}
       </div>
     </CommandItem>
@@ -204,8 +229,8 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            'w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground h-auto min-h-[40px] py-2',
-            !value && 'text-muted-foreground'
+            "w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground h-auto min-h-[40px] py-2",
+            !value && "text-muted-foreground",
           )}
         >
           {selectedVariant ? (
@@ -214,7 +239,9 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
                 <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
                 {selectedVariant.name}
               </span>
-              <span className="text-xs text-muted-foreground ml-6">SKU: {selectedVariant.sku}</span>
+              <span className="text-xs text-muted-foreground ml-6">
+                SKU: {selectedVariant.sku}
+              </span>
             </div>
           ) : (
             <span className="flex items-center gap-2">{placeholder}</span>
@@ -224,32 +251,34 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
       </PopoverTrigger>
 
       <PopoverContent className="w-[400px] p-0" align="start">
-        {/* CRITICAL: shouldFilter={false} prevents client-side filtering conflicts */}
         <Command shouldFilter={false}>
           <div className="flex items-center border-b px-3">
             <CommandInput
               placeholder="Search by name, SKU, or location..."
               className="h-9 flex-1"
               value={searchTerm}
-              onValueChange={setSearchTerm} // Bind input state
+              onValueChange={setSearchTerm}
             />
-            {/* Show a mini spinner next to the search bar when the API is fetching */}
-            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />}
+            {isFetching && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+            )}
           </div>
           <CommandList>
-            <CommandEmpty>{isFetching ? 'Searching...' : 'No product found.'}</CommandEmpty>
+            <CommandEmpty>
+              {isFetching ? "Searching..." : "No product found."}
+            </CommandEmpty>
 
-            {productType === 'ALL' && groupedVariants ? (
-              Object.entries(groupedVariants).map(([type, variants]) => (
-                <CommandGroup key={type} heading={type.replace('_', ' ')}>
-                  {variants?.map(variant => (
+            {productType === "ALL" && groupedVariants ? (
+              Object.entries(groupedVariants).map(([type, variants]: any) => (
+                <CommandGroup key={type} heading={type.replace("_", " ")}>
+                  {variants?.map((variant: any) => (
                     <VariantItem key={variant.id} variant={variant} />
                   ))}
                 </CommandGroup>
               ))
             ) : (
               <CommandGroup heading="Available Variants">
-                {filteredVariants.map(variant => (
+                {filteredVariants.map((variant: any) => (
                   <VariantItem key={variant.id} variant={variant} />
                 ))}
               </CommandGroup>
