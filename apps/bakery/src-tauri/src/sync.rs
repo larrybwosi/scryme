@@ -78,7 +78,6 @@ pub async fn start_sync_worker(pool: SqlitePool, api_base_url: String) {
 
         // Periodic units sync
         if let Ok(Some(api_key)) = get_api_key(&pool).await {
-            let v3_api_url = api_base_url.replace("/api/v2", "/api/v3");
             if let Err(e) = sync_units(&client, &v3_api_url, &pool, &api_key).await {
                 log::warn!("Periodic units sync failed: {}", e);
             }
@@ -111,13 +110,11 @@ async fn sync_units(
     };
 
     // 1. Get last sync time
-    let last_sync: Option<(Option<String>,)> = sqlx::query_as(
+    let last_sync_time: Option<String> = sqlx::query_scalar(
         "SELECT MAX(updated_at) FROM (SELECT updated_at FROM system_units UNION SELECT updated_at FROM organization_units)"
     )
     .fetch_optional(pool)
     .await?;
-
-    let last_sync_time = last_sync.and_then(|(s,)| s);
 
     let url = match last_sync_time {
         Some(ts) => format!(
@@ -146,14 +143,14 @@ async fn sync_units(
 
     for unit in sync_data.system_units {
         sqlx::query(
-            "INSERT INTO system_units (id, name, symbol, abbreviation, plural_name, type, category, is_base_unit, is_metric, description, is_active, sort_order, created_at, updated_at)
+            "INSERT INTO system_units (id, name, symbol, abbreviation, plural_name, \"type\", category, is_base_unit, is_metric, description, is_active, sort_order, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(id) DO UPDATE SET
                 name = excluded.name,
                 symbol = excluded.symbol,
                 abbreviation = excluded.abbreviation,
                 plural_name = excluded.plural_name,
-                type = excluded.type,
+                \"type\" = excluded.\"type\",
                 category = excluded.category,
                 is_base_unit = excluded.is_base_unit,
                 is_metric = excluded.is_metric,
@@ -182,14 +179,14 @@ async fn sync_units(
 
     for unit in sync_data.organization_units {
         sqlx::query(
-            "INSERT INTO organization_units (id, organization_id, name, symbol, abbreviation, plural_name, type, category, description, is_active, base_system_unit_id, conversion_factor, conversion_offset, created_at, updated_at)
+            "INSERT INTO organization_units (id, organization_id, name, symbol, abbreviation, plural_name, \"type\", category, description, is_active, base_system_unit_id, conversion_factor, conversion_offset, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(id) DO UPDATE SET
                 name = excluded.name,
                 symbol = excluded.symbol,
                 abbreviation = excluded.abbreviation,
                 plural_name = excluded.plural_name,
-                type = excluded.type,
+                \"type\" = excluded.\"type\",
                 category = excluded.category,
                 description = excluded.description,
                 is_active = excluded.is_active,

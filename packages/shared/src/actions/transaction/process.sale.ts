@@ -16,8 +16,8 @@ import {
   ProcessSaleInputSchema,
 } from "../../lib/validations/sale";
 
-import { navariService } from "@/lib/services/navari.service";
-import { unitCalculationService } from "@/lib/services/unit-calculation.service";
+import { navariService } from "../../lib/services/navari.service";
+import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 
 // ==========================================
 // HELPER: TAX & COMPLIANCE CALCULATOR
@@ -98,6 +98,9 @@ export async function processSale(
   memberId: string | null | undefined,
   inputData: unknown,
 ): Promise<ProcessSaleResult> {
+  let subtotalBeforeTax: Prisma.Decimal = new Prisma.Decimal(0);
+  let taxTotal: Prisma.Decimal = new Prisma.Decimal(0);
+
   // 1. Input Validation
   const validation = ProcessSaleInputSchema.safeParse(inputData);
   if (!validation.success) {
@@ -302,7 +305,11 @@ export async function processSale(
         }
 
         // --- 4. Tax & Compliance Calculation (Extracted Function) ---
-        const {
+        let finalTotal: Prisma.Decimal;
+        let discountTotal: Prisma.Decimal;
+        let taxBreakdown: any[];
+
+        ({
           finalTotal,
           taxTotal,
           discountTotal,
@@ -314,7 +321,7 @@ export async function processSale(
           transactionSubTotal,
           discountAmount,
           taxIds,
-        );
+        ));
 
         // --- 5. Payment Logic ---
         const paymentRecordsCreateData: Prisma.PaymentCreateWithoutTransactionInput[] =
@@ -328,7 +335,7 @@ export async function processSale(
           // M-Pesa STK Pushes are initially PENDING
           if (
             paymentSplit.method === PaymentMethod.MPESA &&
-            paymentSplit.mpesaFlowType === "STK_PUSH"
+            paymentSplit.mpFlowType === "STK_PUSH"
           ) {
             splitStatus = PaymentStatus.PENDING;
           }
@@ -577,13 +584,15 @@ export async function processSale(
           );
         }
 
-        return newTransaction;
+        return { ...newTransaction, subtotalBeforeTax, taxTotal };
       },
       { maxWait: 15000, timeout: 20000 },
     );
 
     // --- 10. Post-Transaction Background Tasks ---
     if ((result as any)._postProcessTax) {
+      const capturedSubtotal = (result as any).subtotalBeforeTax;
+      const capturedTaxTotal = (result as any).taxTotal;
       const postProcessTax = async () => {
         try {
           const customer = customerId
@@ -594,8 +603,8 @@ export async function processSale(
           await navariService.generateETRInvoice(organizationId, {
             invoiceId: result.id,
             kraPin,
-            netTotal: subtotalBeforeTax.toNumber(),
-            totalTaxes: taxTotal.toNumber(),
+            netTotal: capturedSubtotal.toNumber(),
+            totalTaxes: capturedTaxTotal.toNumber(),
             items: result.items.map((item: any) => ({
               itemCode: item.sku,
               quantity: item.quantity,

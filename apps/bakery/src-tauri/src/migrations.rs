@@ -261,6 +261,15 @@ pub fn get_migrations() -> Vec<Migration> {
                 ALTER TABLE bakery_settings ADD COLUMN api_endpoint_url TEXT;
             ",
             kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 5,
+            description: "add_card_id_and_pin_to_bakers",
+            sql: "
+                ALTER TABLE bakers ADD COLUMN card_id TEXT;
+                ALTER TABLE bakers ADD COLUMN pin_hash TEXT;
+            ",
+            kind: MigrationKind::Up,
         }
     ]
 }

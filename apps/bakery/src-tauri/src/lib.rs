@@ -53,6 +53,7 @@ pub fn run() {
             commands::update_baker,
             commands::delete_baker,
             commands::login_user,
+            commands::login_staff,
             commands::scale_recipe,
             commands::get_overview,
             commands::login_local,
@@ -90,13 +91,18 @@ pub fn run() {
             app.manage(db_pool.clone());
 
             // Start sync worker
-            let api_url = if cfg!(debug_assertions) {
-                "http://localhost:3001/api/v2"
+            let base_api_url = if cfg!(debug_assertions) {
+                "http://localhost:3001"
             } else {
                 option_env!("VITE_API_URL")
-                    .unwrap_or("https://api.scryme.app/api/v2")
+                    .unwrap_or("https://api.scryme.app")
             };
-            tauri::async_runtime::spawn(sync::start_sync_worker(db_pool, api_url.to_string()));
+            let api_url = if base_api_url.ends_with("/api/v2") {
+                base_api_url.to_string()
+            } else {
+                format!("{}/api/v2", base_api_url.trim_end_matches('/'))
+            };
+            tauri::async_runtime::spawn(sync::start_sync_worker(db_pool, api_url));
 
             // Set up tray icon
             let icon = app.default_window_icon().cloned();

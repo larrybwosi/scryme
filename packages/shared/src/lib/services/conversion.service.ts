@@ -75,7 +75,7 @@ class ConversionService {
     };
 
     // 1. System (Lowest Priority: 1)
-    systemConversions.forEach((c) => {
+    systemConversions.forEach((c: any) => {
       const f = Number(c.factor);
       const o = Number(c.offset);
       addEdge(c.fromUnitId, c.toUnitId, f, o, 1);
@@ -83,7 +83,7 @@ class ConversionService {
     });
 
     // 2. Org (Medium Priority: 2)
-    orgConversions.forEach((c) => {
+    orgConversions.forEach((c: any) => {
       const f = Number(c.factor);
       const o = Number(c.offset);
       addEdge(c.fromUnitId, c.toUnitId, f, o, 2);
@@ -91,7 +91,7 @@ class ConversionService {
     });
 
     // 3. Product (Highest Priority: 3+)
-    productConversions.forEach((c) => {
+    productConversions.forEach((c: any) => {
       const f = Number(c.factor);
       const o = Number(c.offset);
       const p = 3 + (c.priority || 0);

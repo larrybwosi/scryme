@@ -56,12 +56,17 @@ pub async fn provision_device_with_token(
 ) -> BackendResult<()> {
     let client = reqwest::Client::new();
     let default_api_url = if cfg!(debug_assertions) {
-        "http://localhost:3001/api/v2"
+        "http://localhost:3001"
     } else {
-        "https://api.scryme.app/api/v2"
+        "https://api.scryme.app"
     };
 
-    let api_url = api_url_override.as_deref().unwrap_or(default_api_url);
+    let base_api_url = api_url_override.as_deref().unwrap_or(default_api_url);
+    let api_url = if base_api_url.ends_with("/api/v2") {
+        base_api_url.to_string()
+    } else {
+        format!("{}/api/v2", base_api_url.trim_end_matches('/'))
+    };
 
     let response = client
         .post(format!("{}/devices/provision", api_url))
@@ -104,31 +109,4 @@ pub async fn provision_device_with_token(
     Ok(())
 }
 
-#[tauri::command]
-pub fn get_provisioned_api_key() -> BackendResult<Option<String>> {
-    let entry = Entry::new("scryme-bakery", "device-api-key")
-        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
-
-    match entry.get_password() {
-        Ok(pw) => Ok(Some(pw)),
-        Err(keyring::Error::NoEntry) => Ok(None),
-        Err(e) => Err(BackendError::Internal(format!(
-            "Failed to retrieve API Key: {}",
-            e
-        ))),
-    }
-}
-
-#[tauri::command]
-pub fn clear_provisioned_api_key() -> BackendResult<()> {
-    let entry = Entry::new("scryme-bakery", "device-api-key")
-        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
-
-    match entry.delete_credential() {
-        Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(BackendError::Internal(format!(
-            "Failed to delete API Key: {}",
-            e
-        ))),
-    }
-}
+#

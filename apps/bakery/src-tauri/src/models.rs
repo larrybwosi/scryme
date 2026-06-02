@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct User {
     pub id: String,
     pub name: String,
@@ -14,6 +15,7 @@ pub struct User {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct BakeryCategory {
     pub id: String,
     pub name: String,
@@ -259,6 +261,7 @@ pub struct CreateBatchInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
 pub struct ActivityLog {
     pub id: String,
@@ -271,6 +274,7 @@ pub struct ActivityLog {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct SyncItem {
     pub id: String,
     pub action: String,
@@ -290,6 +294,7 @@ pub struct UnitsSyncResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct Template {
     pub id: String,
     pub name: String,
@@ -324,12 +329,17 @@ pub struct BakerySettings {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
 pub struct Baker {
     pub id: String,
     pub name: String,
     pub role: Option<String>,
     pub member_id: Option<String>,
-    pub pin: Option<String>,
+    pub card_id: Option<String>,
+    pub pin_hash: Option<String>,
+    #[serde(skip_serializing)]
+    #[sqlx(skip)]
+    pub pin: Option<String>, // Keep for potential legacy use or temporary input
     pub email: Option<String>,
     pub is_active: bool,
     pub bakery_settings_id: Option<String>,
