@@ -1,11 +1,8 @@
 import {
   FulfillmentStatus,
-  FulfillmentType,
-  PaymentStatus,
-  TransactionStatus,
-  TransactionType,
   Decimal,
-  db
+  db,
+  PaymentStatus
 } from '@repo/db';
 import { CreateOrderInput, CreateOrderInputSchema } from '../../lib/validations/order';
 
@@ -45,7 +42,7 @@ export async function createOrder(
       // 4. Calculate Item Totals
       let subtotal = new Decimal(0);
       const transactionItemsData = validated.items.map((item) => {
-        const variant = variantMap.get(item.variantId);
+        const variant: any = variantMap.get(item.variantId);
         if (!variant) {
           throw new Error(`Variant ${item.variantId} not found`);
         }
@@ -57,7 +54,7 @@ export async function createOrder(
 
         return {
           variantId: item.variantId,
-          productId: variant.productId, productName: variant.product.name,
+          productName: variant.product.name,
           variantName: variant.name,
           sku: variant.sku,
           quantity: item.quantity,
@@ -107,10 +104,10 @@ export async function createOrder(
         await tx.payment.createMany({
           data: validated.payments.map((p) => ({
             transactionId: transaction.id,
-            method: p.method,
+            organizationId,
+            method: p.method as any,
             amount: p.amount,
             status: PaymentStatus.COMPLETED, // Assume POS-entered payments are completed
-            product: { organizationId },
           })),
         });
 
@@ -119,7 +116,7 @@ export async function createOrder(
           where: { id: transaction.id },
           data: {
             totalPaid,
-            paymentStatus: totalPaid.gte(finalTotal) ? PaymentStatus.PAID : PaymentStatus.PARTIALLY_PAID,
+            paymentStatus: totalPaid.gte(finalTotal) ? 'PAID' : 'PARTIALLY_PAID',
           },
         });
       }
@@ -128,10 +125,11 @@ export async function createOrder(
       await tx.fulfillment.create({
         data: {
           transactionId: transaction.id,
-          type: validated.fulfillment.type,
+          type: validated.fulfillment.type as any,
           status: FulfillmentStatus.PENDING,
           shippingAddressId: validated.fulfillment.shippingAddressId,
           pickupLocationId: validated.fulfillment.pickupLocationId,
+          organizationId,
         },
       });
 

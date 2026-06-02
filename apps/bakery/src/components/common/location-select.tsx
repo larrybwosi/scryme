@@ -63,16 +63,16 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
   // Filter out excluded locations
   const filteredLocations = useMemo(() => {
     if (!locations?.locations) return [];
-    return excludeLocation ? locations.locations.filter((loc: any) => loc.id !== excludeLocation) : locations.locations;
+    return excludeLocation ? locations.locations.filter(loc => loc.id !== excludeLocation) : locations.locations;
   }, [locations, excludeLocation]);
 
   // Find the currently selected location object for display
   const selectedLocation = useMemo(() => {
-    return filteredLocations.find((loc: any) => loc.id === value);
+    return filteredLocations.find(loc => loc.id === value);
   }, [filteredLocations, value]);
 
   // Helper to format address
-  const formatAddress = (location: any): string => {
+  const formatAddress = (location: Location): string => {
     if (location.address) {
       const { street, city, state, country } = location.address;
       // Shorter address format for the dropdown list to save space
@@ -142,7 +142,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
             <CommandEmpty>No location found.</CommandEmpty>
 
             <CommandGroup heading="Available Locations">
-              {filteredLocations.map((location: any) => (
+              {filteredLocations.map(location => (
                 <CommandItem
                   key={location.id}
                   value={location.name} // Used for search filtering

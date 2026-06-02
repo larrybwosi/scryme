@@ -15,7 +15,6 @@ import {
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
-import * as argon2 from "argon2";
 
 @Injectable()
 export class BakeryService {
@@ -843,83 +842,6 @@ export class BakeryService {
     });
 
     return this.authService.auth.api.getSession({ headers: request.headers });
-  }
-
-  async loginBaker(
-    body: { cardId: string; pin: string; locationId: string },
-    ctx: V2ApiContext,
-  ) {
-    const { cardId, pin, locationId } = body;
-    const organizationId = ctx.organizationId;
-
-    if (!cardId || !pin) {
-      throw new BadRequestException("Card ID and PIN are required");
-    }
-
-    const member = await this.prisma.client.member.findFirst({
-      where: {
-        cardId: cardId,
-        organizationId: organizationId,
-        isActive: true,
-      },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, image: true },
-        },
-      },
-    });
-
-    if (!member || !member.pinHash) {
-      throw new UnauthorizedException("Invalid Card ID or PIN");
-    }
-
-    const isPinValid = await argon2.verify(member.pinHash, pin);
-
-    if (!isPinValid) {
-      throw new UnauthorizedException("Invalid Card ID or PIN");
-    }
-
-    // Process check-in
-    let targetLocationId = locationId || ctx.locationId;
-    if (!targetLocationId) {
-      const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: { organizationId: organizationId, isActive: true },
-        select: { id: true },
-      });
-      targetLocationId = location?.id;
-    }
-
-    if (!targetLocationId) {
-      throw new BadRequestException("No valid location found for check-in.");
-    }
-
-    const newLog = await this.prisma.client.attendanceLog.create({
-      data: {
-        memberId: member.id,
-        organizationId: organizationId,
-        checkInTime: new Date(),
-        checkInLocationId: targetLocationId,
-        notes: "Checked in via Bakery Login",
-      },
-      select: { id: true },
-    });
-
-    await this.prisma.client.member.update({
-      where: { id: member.id },
-      data: {
-        isCheckedIn: true,
-        currentCheckInLocationId: targetLocationId,
-        currentAttendanceLogId: newLog.id,
-      },
-    });
-
-    const token = await createMemberToken(
-      member.id,
-      organizationId,
-      newLog.id,
-    );
-
-    return { token, member };
   }
 
   async processSSO(session: any, ctx: V2ApiContext) {

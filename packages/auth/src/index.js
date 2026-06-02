@@ -32,5 +32,5 @@ export * from "./validations/approval";
 export * from "./logic/permissions";
 export * from "./logic/check-permission";
 export * from "./logic/has-member-permission";
-// Export Approvals (explicitly export everything except WorkflowResult which is duplicated in validations)
+// Export Approvals
 export { createApprovalWorkflow, updateApprovalWorkflowInfo, setActiveWorkflow, getWorkflowDetails } from "./approvals";

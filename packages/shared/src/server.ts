@@ -11,7 +11,8 @@ export * from './lib/validations/order';
 export * from './redis';
 export * from './services/openloyalty';
 export * from './services/customer';
-export * from './actions/transaction/process.sale';
-export * from './actions/transaction/create.order';
+// Avoid duplication with index.ts exports if they are already there
+// export * from './actions/transaction/process.sale';
+// export * from './actions/transaction/create.order';
 export * from './actions/organization/mpesa-trigger.service';
 export * from './lib/services/navari.service';

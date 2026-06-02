@@ -9,9 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
     "typescript": "latest"
-  },
-  "dependencies": {
-    "axios": "latest"
   }
 }

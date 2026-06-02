@@ -12,12 +12,10 @@ import { Skeleton } from '@repo/ui/components/ui/skeleton';
 export function DeliveryTracker() {
   const { data: deliveries, isLoading } = useQuery({
     queryKey: ['active-deliveries'],
-    queryFn: () => sdk.client.get('/bakery/deliveries/active').then(res => res.data)
+    queryFn: () => sdk.client.get('/bakery/deliveries/active')
   });
 
   if (isLoading) return <Skeleton className="h-[400px] w-full" />;
-
-  const deliveryList = (deliveries as any) || [];
 
   return (
     <div className="space-y-6">
@@ -28,7 +26,7 @@ export function DeliveryTracker() {
               <Truck className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">In Transit</p>
-                <h3 className="text-2xl font-bold">{deliveryList.length || 0}</h3>
+                <h3 className="text-2xl font-bold">{(deliveries as any[])?.length || 0}</h3>
               </div>
             </div>
           </CardContent>
@@ -51,7 +49,7 @@ export function DeliveryTracker() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {deliveryList.map((delivery: any) => (
+              {(deliveries as any[])?.map((delivery) => (
                 <TableRow key={delivery.id}>
                   <TableCell className="font-mono font-bold">
                     #{delivery.transaction.number}
