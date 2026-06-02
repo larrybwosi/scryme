@@ -9,12 +9,12 @@ import {
   StockAdjustmentReason,
   AllocationStatus,
 } from "@repo/db";
-import { createAuditLog } from "@/lib/logs/logger";
+import { createAuditLog } from "../../lib/logs/logger";
 import z from "zod";
-import { CreateOrderSchema, OrderFilterSchema } from "@/lib/validations/orders";
+import { CreateOrderSchema, OrderFilterSchema } from "../../lib/validations/order";
 import { randomBytes } from "crypto";
 import { Prisma, ProductUnitConversion } from "@repo/db";
-import { unitCalculationService } from "@/lib/services/unit-calculation.service";
+import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 
 // --- STATS FUNCTION ---
 export async function getOrderStats(organizationId: string) {

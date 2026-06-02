@@ -35,17 +35,6 @@ pub async fn login_local(
     Ok(user)
 }
 
-#[tauri::command]
-pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
-    let client = reqwest::Client::new();
-    let response = client
-        .get(format!("{}/health", api_url))
-        .send()
-        .await
-        .map_err(BackendError::Network)?;
-
-    Ok(response.status().is_success())
-}
 
 #[tauri::command]
 pub async fn provision_device_with_token(

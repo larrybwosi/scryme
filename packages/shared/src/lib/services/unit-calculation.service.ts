@@ -93,7 +93,8 @@ class UnitCalculationService {
 
     // 1. Manual Override
     if (manualPrice !== undefined && manualPrice !== null) {
-      return { price: new Decimal(manualPrice), source: "MANUAL_OVERRIDE" };
+      const price = new Decimal(manualPrice);
+      return { price, defaultPrice: price, source: "MANUAL_OVERRIDE" };
     }
 
     const now = new Date();

@@ -16,8 +16,8 @@ import {
   ProcessSaleInputSchema,
 } from "../../lib/validations/sale";
 
-import { navariService } from "@/lib/services/navari.service";
-import { unitCalculationService } from "@/lib/services/unit-calculation.service";
+import { navariService } from "../../lib/services/navari.service";
+import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 
 // ==========================================
 // HELPER: TAX & COMPLIANCE CALCULATOR
@@ -474,8 +474,8 @@ export async function processSale(
               await navariService.generateETRInvoice(organizationId, {
                 invoiceId: newTransaction.id,
                 kraPin,
-                netTotal: subtotalBeforeTax.toNumber(),
-                totalTaxes: taxTotal.toNumber(),
+                netTotal: capturedSubtotal.toNumber(),
+                totalTaxes: capturedTaxTotal.toNumber(),
                 items: newTransaction.items.map((item) => ({
                   itemCode: item.sku,
                   quantity: item.quantity,
@@ -584,6 +584,8 @@ export async function processSale(
 
     // --- 10. Post-Transaction Background Tasks ---
     if ((result as any)._postProcessTax) {
+      const capturedSubtotal = subtotalBeforeTax;
+      const capturedTaxTotal = taxTotal;
       const postProcessTax = async () => {
         try {
           const customer = customerId
@@ -594,8 +596,8 @@ export async function processSale(
           await navariService.generateETRInvoice(organizationId, {
             invoiceId: result.id,
             kraPin,
-            netTotal: subtotalBeforeTax.toNumber(),
-            totalTaxes: taxTotal.toNumber(),
+            netTotal: capturedSubtotal.toNumber(),
+            totalTaxes: capturedTaxTotal.toNumber(),
             items: result.items.map((item: any) => ({
               itemCode: item.sku,
               quantity: item.quantity,

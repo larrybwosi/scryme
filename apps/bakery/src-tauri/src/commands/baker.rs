@@ -225,6 +225,8 @@ pub async fn login_user(pool: State<'_, SqlitePool>, email: String) -> BackendRe
                 id: id.clone(),
                 name,
                 email: email.clone(),
+                password_hash: None,
+                password_hash: None,
                 role: Some("ADMIN".to_string()),
                 last_login: Some(Utc::now()),
             };
