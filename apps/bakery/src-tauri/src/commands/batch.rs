@@ -200,7 +200,7 @@ pub async fn update_batch(
     .bind(input.get("plannedQuantity").and_then(|v| v.as_f64()))
     .bind(input.get("actualQuantity").and_then(|v| v.as_f64()))
     .bind(input.get("status").and_then(|v| v.as_str()))
-    .bind(input.get("notes").and_then(|v| v.as_str()).or_else(|| input.get("name").and_then(|v| v.as_str())))
+    .bind(input.get("name").and_then(|v| v.as_str()))
     .bind(now)
     .bind(id)
     .execute(&*pool)

@@ -41,9 +41,9 @@ pub async fn scale_recipe_logic(
     for row in ingredients_data {
         let variant_id: String = row.get(0);
         let quantity: f64 = row.get(1);
-        let unit: String = match row.try_get(2) {
-            Ok(u) => u,
-            Err(_) => "".to_string(),
+        let unit: String = match row.try_get::<Option<String>, _>(2) {
+            Ok(Some(u)) => u,
+            _ => "".to_string(),
         };
 
         ingredients.push(ScaledIngredient {
