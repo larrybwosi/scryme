@@ -68,6 +68,7 @@ export type TransactionWithDetails = any;
 export type ProcessSaleResult = {
     success: boolean;
     message: string;
-    transactionId: string;
-    data: any;
+    transactionId?: string;
+    data?: any;
+    error?: any;
 };

@@ -93,7 +93,11 @@ class UnitCalculationService {
 
     // 1. Manual Override
     if (manualPrice !== undefined && manualPrice !== null) {
-      return { price: new Decimal(manualPrice), source: "MANUAL_OVERRIDE" };
+      return {
+        price: new Decimal(manualPrice),
+        defaultPrice: new Decimal(manualPrice),
+        source: "MANUAL_OVERRIDE"
+      };
     }
 
     const now = new Date();
@@ -118,7 +122,7 @@ class UnitCalculationService {
       ? variant.sellingUnits.find((u: any) => u.id === sellingUnitId)
       : null;
 
-    let defaultPrice: Decimal;
+    let defaultPrice: Decimal = new Decimal(0);
     if (isWholesale) {
       defaultPrice =
         (selectedSellingUnit?.wholesalePrice
@@ -303,14 +307,14 @@ class UnitCalculationService {
       }
       // If negative stock allowed, assume cost is current buying price
       totalCostForLineItem = totalCostForLineItem.add(
-        new Decimal(buyingPrice).mul(stockDeductionNeeded),
+        new Decimal(buyingPrice as any).mul(stockDeductionNeeded),
       );
     }
 
     const unitCost =
       quantityToFulfill > 0
         ? totalCostForLineItem.dividedBy(quantityToFulfill)
-        : new Decimal(buyingPrice);
+        : new Decimal(buyingPrice as any);
 
     return {
       allocations,

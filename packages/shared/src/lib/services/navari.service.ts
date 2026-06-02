@@ -1,80 +1,86 @@
-import axios, { AxiosInstance } from "axios";
 import { prisma as db } from "@repo/db";
+import axios from "axios";
 
-function getNavariBaseUrl() {
-  return process.env.NAVARI_API_URL || "https://api.navari.co.ke/v1";
+export interface NavariConfig {
+  apiKey: string;
+  apiSecret: string;
+  baseUrl: string;
 }
 
-export class NavariService {
-  private _client: AxiosInstance | null = null;
+export interface NavariInvoiceInput {
+  invoiceId: string;
+  kraPin: string;
+  netTotal: number;
+  totalTaxes: number;
+  items: Array<{
+    itemCode: string;
+    quantity: number;
+    rate: number;
+  }>;
+}
 
-  private get client(): AxiosInstance {
-    if (!this._client) {
-      this._client = axios.create({
-        baseURL: getNavariBaseUrl(),
-        timeout: 30000,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    }
-    return this._client;
-  }
-
-  /**
-   * Check if Navari is globally disabled
-   */
-  private async isGloballyDisabled(): Promise<boolean> {
-    try {
-      const setting = await db.globalSetting.findUnique({
-        where: { key: "navari_emergency_disable" },
-      });
-      return setting?.value === "true";
-    } catch (error) {
-      // If the table doesn't exist yet or other error, assume not disabled
-      return false;
-    }
-  }
-
-  /**
-   * Validate if Navari can be used for an organization
-   */
-  private async validateAccess(
-    organizationId: string,
-    options: { taxOnly?: boolean } = {},
-  ) {
-    // 1. Global Check
-    if (await this.isGloballyDisabled()) {
-      throw new Error(
-        "Navari service is temporarily disabled by system administrator",
-      );
-    }
-
-    // 2. Organization Check
-    const org = await db.organization.findUnique({
-      where: { id: organizationId },
-      include: { settings: true },
+class NavariService {
+  private async getConfig(organizationId: string): Promise<NavariConfig | null> {
+    const integration = await db.organizationIntegration.findFirst({
+      where: {
+        organizationId,
+        integrationDefinition: { slug: "navari" },
+        isActive: true,
+      },
     });
 
-    if (!org) throw new Error("Organization not found");
+    if (!integration || !integration.credentials) return null;
 
-    const settings = org.settings;
+    const credentials = integration.credentials as any;
+    const settings = (integration.settings as any) || {};
 
-    // 3. Country Check (Tax services are Kenya-only)
-    if (options.taxOnly && settings?.country !== "Kenya") {
-      throw new Error(
-        "Navari tax integration is only available for Kenyan organizations",
+    return {
+      apiKey: credentials.apiKey,
+      apiSecret: credentials.apiSecret,
+      baseUrl: settings.baseUrl || "https://api.navari.io/v1",
+    };
+  }
+
+  /**
+   * Generates an ETR invoice with Navari (KRA compliance)
+   */
+  async generateETRInvoice(
+    organizationId: string,
+    input: NavariInvoiceInput,
+  ): Promise<any> {
+    const config = await this.getConfig(organizationId);
+    if (!config) {
+      console.warn(`Navari integration not configured for org ${organizationId}`);
+      return null;
+    }
+
+    try {
+      const response = await axios.post(
+        `${config.baseUrl}/invoices`,
+        {
+          external_id: input.invoiceId,
+          customer_pin: input.kraPin,
+          amount_net: input.netTotal,
+          amount_tax: input.totalTaxes,
+          items: input.items.map((item) => ({
+            code: item.itemCode,
+            quantity: item.quantity,
+            unit_price: item.rate,
+          })),
+        },
+        {
+          headers: {
+            "X-API-KEY": config.apiKey,
+            "X-API-SECRET": config.apiSecret,
+          },
+        },
       );
-    }
 
-    // 4. Integration Enabled Check
-    if (options.taxOnly && !settings?.taxIntegrationEnabled) {
-      throw new Error("Tax integration is not enabled for this organization");
+      return response.data;
+    } catch (error: any) {
+      console.error("Navari API Error:", error.response?.data || error.message);
+      throw new Error("Failed to generate ETR invoice via Navari");
     }
-
-    // 5. Credentials Check
-    const credentials = await this.getAuthToken(organizationId);
-    return credentials;
   }
 
   /**
@@ -84,7 +90,7 @@ export class NavariService {
   async setupOrganization(
     organizationId: string,
     credentials: { apiKey: string; apiSecret: string },
-  ) {
+  ): Promise<any> {
     const definition = await db.integrationDefinition.upsert({
       where: { slug: "navari" },
       update: { isActive: true },
@@ -93,6 +99,7 @@ export class NavariService {
         slug: "navari",
         category: "OTHER",
         authType: "API_KEY",
+        isActive: true,
       },
     });
 
@@ -104,257 +111,16 @@ export class NavariService {
         },
       },
       update: {
-        credentials: {
-          apiKey: credentials.apiKey,
-          apiSecret: credentials.apiSecret,
-        } as any,
+        credentials: credentials as any,
         isActive: true,
       },
       create: {
         organizationId,
         integrationDefinitionId: definition.id,
-        credentials: {
-          apiKey: credentials.apiKey,
-          apiSecret: credentials.apiSecret,
-        } as any,
+        credentials: credentials as any,
         isActive: true,
       },
     });
-  }
-
-  private async getAuthToken(organizationId: string) {
-    const integration = await db.organizationIntegration.findFirst({
-      where: {
-        organizationId,
-        integrationDefinition: { slug: "navari" },
-        isActive: true,
-      },
-    });
-
-    if (!integration || !integration.credentials) {
-      throw new Error(
-        "Navari integration not configured for this organization",
-      );
-    }
-
-    const { apiKey, apiSecret } = integration.credentials as any;
-    return { apiKey, apiSecret };
-  }
-
-  /**
-   * Validate KRA PIN format and existence
-   */
-  async validateKRAPin(organizationId: string, kraPin: string) {
-    const { apiKey, apiSecret } = await this.validateAccess(organizationId, {
-      taxOnly: true,
-    });
-
-    try {
-      const response = await this.client.post(
-        "/kra/validate-pin",
-        {
-          kraPin,
-        },
-        {
-          headers: {
-            "X-API-KEY": apiKey,
-            "X-API-SECRET": apiSecret,
-          },
-        },
-      );
-
-      return response.data;
-    } catch (error: any) {
-      console.error("[Navari Service] PIN Validation failed:", error.message);
-      const isValidFormat = /^[A-Z]\d{9}[A-Z]$/.test(kraPin.toUpperCase());
-      return {
-        valid: isValidFormat,
-        message: isValidFormat
-          ? "KRA PIN format is valid"
-          : "Invalid KRA PIN format",
-      };
-    }
-  }
-
-  /**
-   * Submit an invoice to KRA via Navari for ETR compliance
-   */
-  async generateETRInvoice(organizationId: string, invoiceData: any) {
-    const { apiKey, apiSecret } = await this.validateAccess(organizationId, {
-      taxOnly: true,
-    });
-
-    try {
-      const response = await this.client.post("/kra/etr/invoice", invoiceData, {
-        headers: {
-          "X-API-KEY": apiKey,
-          "X-API-SECRET": apiSecret,
-        },
-      });
-
-      // Log compliance
-      await db.kRAComplianceLog.create({
-        data: {
-          organizationId,
-          invoiceId: invoiceData.invoiceId || "N/A",
-          kraPin: invoiceData.kraPin,
-          taxType: "VAT",
-          taxRate: 16.0,
-          taxableAmount: invoiceData.netTotal,
-          taxAmount: invoiceData.totalTaxes,
-          etrMode: true,
-          status: "SUBMITTED",
-        },
-      });
-
-      return response.data;
-    } catch (error: any) {
-      console.error("[Navari Service] ETR submission failed:", error.message);
-      // Differentiate between "Down" and "Bad Request"
-      const isDown = !error.response || error.response.status >= 500;
-      const navariError = new Error(
-        `Failed to generate ETR invoice: ${error.message}`,
-      );
-      (navariError as any).isServiceDown = isDown;
-      (navariError as any).statusCode = error.response?.status;
-      throw navariError;
-    }
-  }
-
-  /**
-   * Submit purchase details to KRA (Input Tax)
-   */
-  async submitPurchaseToKRA(organizationId: string, purchaseData: any) {
-    const { apiKey, apiSecret } = await this.validateAccess(organizationId, {
-      taxOnly: true,
-    });
-
-    try {
-      const response = await this.client.post(
-        "/kra/purchase/submit",
-        purchaseData,
-        {
-          headers: {
-            "X-API-KEY": apiKey,
-            "X-API-SECRET": apiSecret,
-          },
-        },
-      );
-
-      // Log compliance
-      await db.kRAComplianceLog.create({
-        data: {
-          organizationId,
-          invoiceId: purchaseData.purchaseId || "N/A",
-          kraPin: purchaseData.supplierPin,
-          taxType: "VAT",
-          taxRate: 16.0,
-          taxableAmount: purchaseData.subTotal,
-          taxAmount: purchaseData.taxTotal,
-          etrMode: false, // Purchase is usually not ETR generated by us
-          status: "SUBMITTED",
-        },
-      });
-
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        "[Navari Service] Purchase submission failed:",
-        error.message,
-      );
-      throw new Error(`Failed to submit purchase to KRA: ${error.message}`);
-    }
-  }
-
-  /**
-   * Get VAT return report from Navari
-   */
-  async getVATReturn(
-    organizationId: string,
-    params: { startDate: string; endDate: string },
-  ) {
-    const { apiKey, apiSecret } = await this.validateAccess(organizationId, {
-      taxOnly: true,
-    });
-
-    try {
-      const response = await this.client.get("/kra/reports/vat-return", {
-        params,
-        headers: {
-          "X-API-KEY": apiKey,
-          "X-API-SECRET": apiSecret,
-        },
-      });
-
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        "[Navari Service] VAT return report failed:",
-        error.message,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * File VAT return to KRA
-   */
-  async fileVATReturn(organizationId: string, returnData: any) {
-    const { apiKey, apiSecret } = await this.validateAccess(organizationId, {
-      taxOnly: true,
-    });
-
-    try {
-      const response = await this.client.post(
-        "/kra/filing/vat-return",
-        returnData,
-        {
-          headers: {
-            "X-API-KEY": apiKey,
-            "X-API-SECRET": apiSecret,
-          },
-        },
-      );
-
-      return response.data;
-    } catch (error: any) {
-      console.error("[Navari Service] VAT filing failed:", error.message);
-      throw error;
-    }
-  }
-
-  /**
-   * Verify M-Pesa transaction status
-   */
-  async verifyMpesaTransaction(organizationId: string, transactionId: string) {
-    // M-Pesa verification is not strictly tax-only, but it is Kenya-specific.
-    // We check for global disable and credentials.
-    if (await this.isGloballyDisabled()) {
-      throw new Error(
-        "Navari service is temporarily disabled by system administrator",
-      );
-    }
-    const { apiKey, apiSecret } = await this.getAuthToken(organizationId);
-
-    try {
-      const response = await this.client.get(
-        `/mpesa/transaction/${transactionId}`,
-        {
-          headers: {
-            "X-API-KEY": apiKey,
-            "X-API-SECRET": apiSecret,
-          },
-        },
-      );
-
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        "[Navari Service] Transaction verification failed:",
-        error.message,
-      );
-      throw error;
-    }
   }
 }
 

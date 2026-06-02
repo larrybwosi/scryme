@@ -13,11 +13,11 @@
     "types": ["jest", "node"],
     "paths": {
       "@repo/windmill/server": ["../windmill/src/server.ts"],
-      "@repo/db": ["../../packages/db/src/index.ts"],
+      "@repo/db": ["../../packages/db/src/client.ts"],
       "@/*": ["./src/*"]
     },
     "noImplicitAny": false,
     "strictNullChecks": false
   },
-  "include": ["src"]
+  "include": ["src/**/*"]
 }

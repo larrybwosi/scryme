@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import type { V2ApiContext } from '@repo/shared/server';
 // Proxy to the shared actions in @repo/shared/server
-import { processSale, triggerStkPush, ProcessSaleInputSchema, createOrder, CreateOrderInputSchema } from '@repo/shared/server';
+import { processSale, triggerStkPush, ProcessSaleInputSchema, createOrder, CreateOrderSchema } from '@repo/shared/server';
 
 @Injectable()
 export class PosSaleService {
@@ -77,7 +77,7 @@ export class PosSaleService {
     }
 
     // 1. Validate Input
-    const preCheck = CreateOrderInputSchema.safeParse({ ...body, locationId });
+    const preCheck = CreateOrderSchema.safeParse({ ...body, locationId });
     if (!preCheck.success) {
       this.logger.error(`Order Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`);
       throw new BadRequestException({

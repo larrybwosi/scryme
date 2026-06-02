@@ -9,10 +9,10 @@
     "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --rootDir ..",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --rootDir ../..",
     "dev": "echo \"no dev needed\""
   },
   "dependencies": {

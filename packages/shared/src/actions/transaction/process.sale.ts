@@ -16,8 +16,8 @@ import {
   ProcessSaleInputSchema,
 } from "../../lib/validations/sale";
 
-import { navariService } from "@/lib/services/navari.service";
-import { unitCalculationService } from "@/lib/services/unit-calculation.service";
+import { navariService } from "../../lib/services/navari.service";
+import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 
 // ==========================================
 // HELPER: TAX & COMPLIANCE CALCULATOR
@@ -109,6 +109,8 @@ export async function processSale(
     return {
       success: false,
       message: "Invalid sale data provided. Please check the fields.",
+      transactionId: undefined,
+      data: undefined
     };
   }
 
@@ -148,6 +150,9 @@ export async function processSale(
     const country = inputCountry ?? orgData?.settings?.country ?? "Kenya";
     const highValueThreshold =
       orgData?.settings?.highValueTaxThreshold ?? new Prisma.Decimal(100000);
+
+    let subtotalBeforeTaxOuter: Prisma.Decimal = new Prisma.Decimal(0);
+    let taxTotalOuter: Prisma.Decimal = new Prisma.Decimal(0);
 
     const result = await db.$transaction(
       async (tx) => {
@@ -202,9 +207,10 @@ export async function processSale(
             },
           }),
         ]);
+
         const variantsMap = new Map(allVariants.map((v) => [v.id, v]));
 
-        // --- 2. Line Items & Stock Logic ---
+        // --- 2. Build Transaction Items & Deduct Stock ---
         let transactionSubTotal = new Prisma.Decimal(0);
         const transactionItemsCreateData: Prisma.TransactionItemCreateWithoutTransactionInput[] =
           [];
@@ -214,11 +220,11 @@ export async function processSale(
           const variant = variantsMap.get(item.variantId);
           if (!variant) {
             throw new Error(
-              `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
+              `Product variant ${item.variantId} not found or inactive.`,
             );
           }
 
-          // A. Resolve Price using Service
+          // --- Resolve Price (Enterprise Engine) ---
           const { price: resolvedPrice, defaultPrice } =
             await unitCalculationService.resolvePrice({
               variantId: item.variantId,
@@ -233,20 +239,17 @@ export async function processSale(
               preFetchedPriceLists: activePriceLists,
             });
 
-          // B. Calculate Line Totals
           const itemTotal = resolvedPrice.mul(item.quantity);
           transactionSubTotal = transactionSubTotal.add(itemTotal);
 
-          // C. Stock Allocation using Service
-          let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
+          // --- Stock Allocation & Batch Logic ---
           const allocationsCreateData: Prisma.InventoryAllocationCreateWithoutTransactionItemInput[] =
             [];
+          let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
 
           if (enableStockTracking) {
             const selectedSellingUnit = item.sellingUnitId
-              ? variant.sellingUnits.find(
-                  (u: any) => u.id === item.sellingUnitId,
-                )
+              ? variant.sellingUnits.find((su: any) => su.id === item.sellingUnitId)
               : null;
             const conversionMultiplier =
               selectedSellingUnit?.conversionMultiplier
@@ -302,13 +305,7 @@ export async function processSale(
         }
 
         // --- 4. Tax & Compliance Calculation (Extracted Function) ---
-        const {
-          finalTotal,
-          taxTotal,
-          discountTotal,
-          subtotalBeforeTax,
-          taxBreakdown,
-        } = await calculateTaxAndCompliance(
+        const taxCalculation = await calculateTaxAndCompliance(
           tx,
           organizationId,
           transactionSubTotal,
@@ -316,66 +313,56 @@ export async function processSale(
           taxIds,
         );
 
+        const {
+          finalTotal,
+          discountTotal,
+          taxBreakdown,
+          subtotalBeforeTax,
+          taxTotal,
+        } = taxCalculation;
+
+        // Update outer variables for background tasks
+        subtotalBeforeTaxOuter = subtotalBeforeTax;
+        taxTotalOuter = taxTotal;
+
         // --- 5. Payment Logic ---
         const paymentRecordsCreateData: Prisma.PaymentCreateWithoutTransactionInput[] =
           [];
         let totalPaidAmount = new Prisma.Decimal(0);
 
-        for (const paymentSplit of payments) {
-          const splitAmount = new Prisma.Decimal(paymentSplit.amount);
-          let splitStatus: PaymentStatus = PaymentStatus.COMPLETED;
-
-          // M-Pesa STK Pushes are initially PENDING
-          if (
-            paymentSplit.method === PaymentMethod.MPESA &&
-            paymentSplit.mpesaFlowType === "STK_PUSH"
-          ) {
-            splitStatus = PaymentStatus.PENDING;
-          }
-
-          // Only add to "Paid" total if the status is immediately COMPLETED
-          if (splitStatus === PaymentStatus.COMPLETED) {
-            totalPaidAmount = totalPaidAmount.add(splitAmount);
-          }
-
-          const splitReceived = paymentSplit.amountReceived
-            ? new Prisma.Decimal(paymentSplit.amountReceived)
-            : splitAmount;
-          const splitChange = paymentSplit.change
-            ? new Prisma.Decimal(paymentSplit.change)
-            : new Prisma.Decimal(0);
+        for (const p of payments) {
+          const amount = new Prisma.Decimal(p.amount);
+          totalPaidAmount = totalPaidAmount.add(amount);
 
           paymentRecordsCreateData.push({
-            method: paymentSplit.method,
-            status: splitStatus,
-            amount: splitAmount,
-            amountReceived: splitReceived,
-            change: splitChange,
-            referenceNumber: paymentSplit.reference || null,
-            payerPhone: paymentSplit.mpesaPhoneNumber || null,
-            processedAt:
-              splitStatus === PaymentStatus.COMPLETED ? new Date() : undefined,
+            organizationId,
+            method: p.method,
+            amount,
+            status:
+              p.method === PaymentMethod.CASH
+                ? PaymentStatus.COMPLETED
+                : PaymentStatus.PENDING,
+            amountReceived: p.amountReceived
+              ? new Prisma.Decimal(p.amountReceived)
+              : undefined,
+            change: p.change ? new Prisma.Decimal(p.change) : undefined,
+            referenceNumber: p.reference,
           });
         }
 
-        // --- 6. Transaction Status ---
-        let overallPaymentStatus: PaymentStatus = PaymentStatus.PENDING;
+        // --- 6. Status Determination ---
+        const overallPaymentStatus = totalPaidAmount.greaterThanOrEqualTo(
+          finalTotal,
+        )
+          ? PaymentStatus.COMPLETED
+          : totalPaidAmount.greaterThan(0)
+            ? PaymentStatus.PARTIALLY_PAID
+            : PaymentStatus.PENDING;
 
-        if (finalTotal.equals(0)) {
-          overallPaymentStatus = PaymentStatus.COMPLETED;
-        } else if (totalPaidAmount.greaterThanOrEqualTo(finalTotal)) {
-          overallPaymentStatus = PaymentStatus.COMPLETED;
-        } else if (totalPaidAmount.greaterThan(0)) {
-          overallPaymentStatus = PaymentStatus.PARTIALLY_PAID;
-        } else {
-          // No payments completed yet (e.g. only STK push pending)
-          overallPaymentStatus = PaymentStatus.PENDING;
-        }
-
-        // --- 7. Create Transaction ---
+        // Generate Sale Number (if not provided)
         const newTransactionNumber =
-          saleNumber ||
-          `SALE-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+          saleNumber || `SALE-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+
         const transactionDate = saleDate || new Date();
 
         // Transaction is considered "Complete" operationally if full payment is received
@@ -454,95 +441,11 @@ export async function processSale(
               },
             },
             payments: true,
+            fulfillments: { include: { items: true } },
           },
         });
 
-        // --- 8. Navari/KRA Compliance ---
-        if (taxIntegrationEnabled && country === "Kenya") {
-          const isHighValue =
-            finalTotal.greaterThanOrEqualTo(highValueThreshold);
-          const forceOverride =
-            (validatedData as any).forceTaxOverride === true;
-
-          const executeKRACompliance = async (isBlocking: boolean) => {
-            try {
-              const customer = customerId
-                ? await db.customer.findUnique({ where: { id: customerId } })
-                : null;
-              const kraPin = customer?.taxId || "A000000000X";
-
-              await navariService.generateETRInvoice(organizationId, {
-                invoiceId: newTransaction.id,
-                kraPin,
-                netTotal: subtotalBeforeTax.toNumber(),
-                totalTaxes: taxTotal.toNumber(),
-                items: newTransaction.items.map((item) => ({
-                  itemCode: item.sku,
-                  quantity: item.quantity,
-                  rate: item.unitPrice.toNumber(),
-                })),
-              });
-
-              await tx.transaction.update({
-                where: { id: newTransaction.id },
-                data: {
-                  metadata: {
-                    ...((newTransaction.metadata as any) || {}),
-                    kraCompliant: true,
-                    etrGenerated: true,
-                  },
-                },
-              });
-            } catch (kraError: any) {
-              console.error(
-                `KRA Compliance failed for sale ${newTransaction.id}:`,
-                kraError.message,
-              );
-
-              if (isBlocking && !forceOverride) {
-                // If it's high value and Navari is down, block the sale unless forced
-                if (kraError.isServiceDown) {
-                  throw new Error(
-                    `High-value sale blocked: KRA integration (Navari) is currently unavailable. Use override to proceed.`,
-                  );
-                }
-                // If it's a bad request (e.g. invalid PIN), we still block high-value sales
-                throw new Error(
-                  `High-value sale blocked: KRA compliance error: ${kraError.message}`,
-                );
-              }
-
-              // Non-blocking or Forced: Log error and continue
-              await tx.transaction.update({
-                where: { id: newTransaction.id },
-                data: {
-                  metadata: {
-                    ...((newTransaction.metadata as any) || {}),
-                    kraCompliant: false,
-                    kraError: kraError.message,
-                    kraOverride: forceOverride,
-                  },
-                },
-              });
-
-              // For non-high-value, we could still retry in background, but per requirements
-              // we focus on the hybrid blocking logic.
-            }
-          };
-
-          if (isHighValue) {
-            // Blocking execution for high-value
-            await executeKRACompliance(true);
-          } else {
-            // Non-blocking execution for regular value
-            // We use a separate DB call outside the transaction to avoid closure issues
-            // but for simplicity in this POS context, we can just run it after the transaction
-            // by returning it as a post-process task.
-            (newTransaction as any)._postProcessTax = true;
-          }
-        }
-
-        // --- 9. Fulfillment ---
+        // --- 8. Auto-Create Fulfillment (POS is usually immediate) ---
         const fulfillment = await tx.fulfillment.create({
           data: {
             transactionId: newTransaction.id,
@@ -594,8 +497,8 @@ export async function processSale(
           await navariService.generateETRInvoice(organizationId, {
             invoiceId: result.id,
             kraPin,
-            netTotal: subtotalBeforeTax.toNumber(),
-            totalTaxes: taxTotal.toNumber(),
+            netTotal: subtotalBeforeTaxOuter.toNumber(),
+            totalTaxes: taxTotalOuter.toNumber(),
             items: result.items.map((item: any) => ({
               itemCode: item.sku,
               quantity: item.quantity,
@@ -622,72 +525,23 @@ export async function processSale(
                 metadata: {
                   ...((result.metadata as any) || {}),
                   kraCompliant: false,
-                  kraError: e.message,
+                  etrError: e.message,
                 },
               },
             })
-            .catch((err) => console.error("Failed to log KRA error:", err));
+            .catch(() => {});
         }
       };
-      postProcessTax().catch((e) =>
-        console.error("Critical background task failure:", e),
-      );
-    }
 
-    // Re-fetch for clean relations (fulfillments, etc.)
-    const completeTransaction = await db.transaction.findUnique({
-      where: { id: result.id },
-      include: {
-        items: {
-          include: {
-            variant: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    category: { select: { name: true } },
-                  },
-                },
-              },
-            },
-            stockAllocations: {
-              include: {
-                stockBatch: { select: { id: true, batchNumber: true } },
-              },
-            },
-          },
-        },
-        customer: true,
-        businessAccount: true,
-        member: { select: { id: true, user: { select: { name: true } } } },
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-            settings: { select: { defaultCurrency: true } },
-          },
-        },
-        location: { select: { id: true, name: true } },
-        taxes: {
-          include: {
-            taxRate: { select: { id: true, name: true, rate: true } },
-          },
-        },
-        payments: true,
-        fulfillments: { include: { items: true } },
-      },
-    });
+      // In a real environment, this might be a queue job.
+      postProcessTax();
+    }
 
     return {
       success: true,
       message: `Sale ${result.number} processed successfully.`,
       transactionId: result.id,
-      data: completeTransaction as TransactionWithDetails,
+      data: result as TransactionWithDetails,
     };
   } catch (error: unknown) {
     console.error("--- POS Sale Processing CRITICAL ERROR ---");
@@ -714,6 +568,8 @@ export async function processSale(
     return {
       success: false,
       message: errorMessage,
+      transactionId: undefined,
+      data: undefined,
       error:
         errorDetails ??
         (error instanceof Error ? error.message : "Unknown error."),
