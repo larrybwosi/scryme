@@ -110,7 +110,7 @@ pub async fn create_baker(
 pub async fn update_baker(
     pool: State<'_, SqlitePool>,
     user_id: String,
-    baker: serde_json::Value,
+    baker: serde_json.Value,
 ) -> BackendResult<()> {
     let id = baker["id"]
         .as_str()
@@ -225,7 +225,6 @@ pub async fn login_user(pool: State<'_, SqlitePool>, email: String) -> BackendRe
                 id: id.clone(),
                 name,
                 email: email.clone(),
-                password_hash: None,
                 password_hash: None,
                 role: Some("ADMIN".to_string()),
                 last_login: Some(Utc::now()),

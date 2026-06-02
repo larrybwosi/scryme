@@ -6,10 +6,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProcessSaleInputSchema } from "@repo/shared";
 import { processSale } from "@repo/shared/server";
 
+vi.mock("@repo/shared", () => ({
+  ProcessSaleInputSchema: {
+    safeParse: vi.fn(),
+  },
+}));
+
 vi.mock("@repo/shared/server", () => ({
   processSale: vi.fn(),
   ProcessSaleInputSchema: {
-    safeParse: vi.fn(),
   },
   triggerStkPush: vi.fn(),
 }));
@@ -64,7 +69,7 @@ describe("PosSaleService", () => {
     };
 
     it("should process a cash sale successfully", async () => {
-      vi.mocked(ProcessSaleInputSchema.safeParse).mockReturnValue({
+      ((ProcessSaleInputSchema.safeParse as any) as any).mockReturnValue as any({
         success: true,
         data: {
           ...mockBody,
@@ -84,7 +89,7 @@ describe("PosSaleService", () => {
     });
 
     it("should throw BadRequestException if validation fails", async () => {
-      vi.mocked(ProcessSaleInputSchema.safeParse).mockReturnValue({
+      ((ProcessSaleInputSchema.safeParse as any) as any).mockReturnValue as any({
         success: false,
         error: {
           flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),

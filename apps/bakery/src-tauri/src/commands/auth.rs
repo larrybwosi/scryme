@@ -35,7 +35,6 @@ pub async fn login_local(
     Ok(user)
 }
 
-
 #[tauri::command]
 pub async fn provision_device_with_token(
     setup_token: String,
@@ -78,7 +77,7 @@ pub async fn provision_device_with_token(
         )));
     }
 
-    let result: serde_json::Value = response
+    let result: serde_json.Value = response
         .json()
         .await
         .map_err(BackendError::Network)?;

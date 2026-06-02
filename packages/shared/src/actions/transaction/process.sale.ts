@@ -34,7 +34,7 @@ async function calculateTaxAndCompliance(
   taxIds: string[] | undefined,
 ) {
   // 1. Fetch Applicable Taxes
-  const applicableTaxes = await tx.taxRate.findMany({
+  const applicableTaxes = await tx.taxRate.findMany        ({
     where: {
       id: { in: taxIds && taxIds.length > 0 ? taxIds : undefined },
       isDefault: taxIds && taxIds.length > 0 ? undefined : true,
@@ -71,7 +71,7 @@ async function calculateTaxAndCompliance(
   const totalCalculatedTax = finalAmount.sub(totalAmountBeforeTax);
 
   // 4. Generate Tax Breakdown for DB Creation
-  const taxBreakdown = applicableTaxes.map((tax) => ({
+  const taxBreakdown = applicableTaxes.map((tax) =>         ({
     taxRateId: tax.id,
     name: tax.name,
     rate: tax.rate,
@@ -98,6 +98,8 @@ export async function processSale(
   memberId: string | null | undefined,
   inputData: unknown,
 ): Promise<ProcessSaleResult> {
+  let subtotalBeforeTax: Prisma.Decimal = new Prisma.Decimal(0);
+  let taxTotal: Prisma.Decimal = new Prisma.Decimal(0);
   // 1. Input Validation
   const validation = ProcessSaleInputSchema.safeParse(inputData);
   if (!validation.success) {
@@ -113,7 +115,7 @@ export async function processSale(
   }
 
   const validatedData = validation.data;
-  const {
+          ({
     cartItems,
     locationId,
     customerId,
@@ -131,7 +133,7 @@ export async function processSale(
   } = validatedData;
 
   try {
-    const orgData = await db.organization.findUnique({
+    const orgData = await db.organization.findUnique        ({
       where: { id: organizationId },
       select: {
         settings: true,
@@ -157,7 +159,7 @@ export async function processSale(
         // --- 1. ENTERPRISE PRICING ENGINE: Fetch Price Lists & Variants ---
         const now = new Date();
         const [allVariants, activePriceLists] = await Promise.all([
-          tx.productVariant.findMany({
+          tx.productVariant.findMany        ({
             where: {
               id: { in: variantIds },
               isActive: true,
@@ -172,7 +174,7 @@ export async function processSale(
               },
             },
           }),
-          tx.priceList.findMany({
+          tx.priceList.findMany        ({
             where: {
               organizationId,
               isActive: true,
@@ -219,8 +221,8 @@ export async function processSale(
           }
 
           // A. Resolve Price using Service
-          const { price: resolvedPrice, defaultPrice } =
-            await unitCalculationService.resolvePrice({
+                  ({ price: resolvedPrice, defaultPrice } =
+            await unitCalculationService.resolvePrice        ({
               variantId: item.variantId,
               sellingUnitId: item.sellingUnitId,
               quantity: item.quantity,
@@ -254,7 +256,7 @@ export async function processSale(
                 : 1;
 
             const allocationResult =
-              await unitCalculationService.calculateStockAllocation({
+              await unitCalculationService.calculateStockAllocation        ({
                 tx,
                 variantId: item.variantId,
                 locationId,
@@ -281,7 +283,7 @@ export async function processSale(
             );
           }
 
-          transactionItemsCreateData.push({
+          transactionItemsCreateData.push        ({
             variant: { connect: { id: variant.id } },
             productName: variant.product.name,
             variantName: variant.name,
@@ -302,7 +304,10 @@ export async function processSale(
         }
 
         // --- 4. Tax & Compliance Calculation (Extracted Function) ---
-        const {
+        let finalTotal: Prisma.Decimal;
+        let discountTotal: Prisma.Decimal;
+        let taxBreakdown: any[];
+                ({
           finalTotal,
           taxTotal,
           discountTotal,
@@ -345,7 +350,7 @@ export async function processSale(
             ? new Prisma.Decimal(paymentSplit.change)
             : new Prisma.Decimal(0);
 
-          paymentRecordsCreateData.push({
+          paymentRecordsCreateData.push        ({
             method: paymentSplit.method,
             status: splitStatus,
             amount: splitAmount,
@@ -382,7 +387,7 @@ export async function processSale(
         // or if you allow credit (but for POS_SALE, usually requires payment)
         const isCompleted = overallPaymentStatus === PaymentStatus.COMPLETED;
 
-        const newTransaction = await tx.transaction.create({
+        const newTransaction = await tx.transaction.create        ({
           data: {
             number: newTransactionNumber,
             type: TransactionType.POS_SALE,
@@ -467,23 +472,23 @@ export async function processSale(
           const executeKRACompliance = async (isBlocking: boolean) => {
             try {
               const customer = customerId
-                ? await db.customer.findUnique({ where: { id: customerId } })
+                ? await db.customer.findUnique        ({ where: { id: customerId } })
                 : null;
               const kraPin = customer?.taxId || "A000000000X";
 
               await navariService.generateETRInvoice(organizationId, {
                 invoiceId: newTransaction.id,
                 kraPin,
-                netTotal: capturedSubtotal.toNumber(),
-                totalTaxes: capturedTaxTotal.toNumber(),
-                items: newTransaction.items.map((item) => ({
+                netTotal: subtotalBeforeTax.toNumber(),
+                totalTaxes: taxTotal.toNumber(),
+                items: newTransaction.items.map((item) =>         ({
                   itemCode: item.sku,
                   quantity: item.quantity,
                   rate: item.unitPrice.toNumber(),
                 })),
               });
 
-              await tx.transaction.update({
+              await tx.transaction.update        ({
                 where: { id: newTransaction.id },
                 data: {
                   metadata: {
@@ -513,7 +518,7 @@ export async function processSale(
               }
 
               // Non-blocking or Forced: Log error and continue
-              await tx.transaction.update({
+              await tx.transaction.update        ({
                 where: { id: newTransaction.id },
                 data: {
                   metadata: {
@@ -543,7 +548,7 @@ export async function processSale(
         }
 
         // --- 9. Fulfillment ---
-        const fulfillment = await tx.fulfillment.create({
+        const fulfillment = await tx.fulfillment.create        ({
           data: {
             transactionId: newTransaction.id,
             type: FulfillmentType.IMMEDIATE,
@@ -553,8 +558,8 @@ export async function processSale(
           },
         });
 
-        await tx.fulfillmentItem.createMany({
-          data: newTransaction.items.map((item) => ({
+        await tx.fulfillmentItem.createMany        ({
+          data: newTransaction.items.map((item) =>         ({
             fulfillmentId: fulfillment.id,
             transactionItemId: item.id,
             quantity: item.quantity,
@@ -566,7 +571,7 @@ export async function processSale(
           await Promise.all(
             Array.from(variantStockUpdates.entries()).map(
               ([variantId, quantityChange]) =>
-                tx.productVariantStock.updateMany({
+                tx.productVariantStock.updateMany        ({
                   where: { variantId, locationId, organizationId },
                   data: {
                     currentStock: { decrement: quantityChange },
@@ -577,19 +582,19 @@ export async function processSale(
           );
         }
 
-        return newTransaction;
+        return { ...newTransaction, subtotalBeforeTax, taxTotal };
       },
       { maxWait: 15000, timeout: 20000 },
     );
 
     // --- 10. Post-Transaction Background Tasks ---
     if ((result as any)._postProcessTax) {
-      const capturedSubtotal = subtotalBeforeTax;
-      const capturedTaxTotal = taxTotal;
+      const capturedSubtotal = (result as any).subtotalBeforeTax;
+      const capturedTaxTotal = (result as any).taxTotal;
       const postProcessTax = async () => {
         try {
           const customer = customerId
-            ? await db.customer.findUnique({ where: { id: customerId } })
+            ? await db.customer.findUnique        ({ where: { id: customerId } })
             : null;
           const kraPin = customer?.taxId || "A000000000X";
 
@@ -598,14 +603,14 @@ export async function processSale(
             kraPin,
             netTotal: capturedSubtotal.toNumber(),
             totalTaxes: capturedTaxTotal.toNumber(),
-            items: result.items.map((item: any) => ({
+            items: result.items.map((item: any) =>         ({
               itemCode: item.sku,
               quantity: item.quantity,
               rate: item.unitPrice.toNumber(),
             })),
           });
 
-          await db.transaction.update({
+          await db.transaction.update        ({
             where: { id: result.id },
             data: {
               metadata: {
@@ -618,7 +623,7 @@ export async function processSale(
         } catch (e: any) {
           console.error("Background KRA compliance failed:", e.message);
           await db.transaction
-            .update({
+            .update        ({
               where: { id: result.id },
               data: {
                 metadata: {
@@ -637,7 +642,7 @@ export async function processSale(
     }
 
     // Re-fetch for clean relations (fulfillments, etc.)
-    const completeTransaction = await db.transaction.findUnique({
+    const completeTransaction = await db.transaction.findUnique        ({
       where: { id: result.id },
       include: {
         items: {
