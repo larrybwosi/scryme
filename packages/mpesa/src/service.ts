@@ -442,7 +442,7 @@ export class MpesaService {
   /**
    * Legacy validate method - redirects to verifyPayment
    */
-  async validate(input: { transactionCode: string; organizationId: string; saleId?: string; userId?: string }) {
+  async validate(input: { transactionCode: string; organizationId: string; saleId?: string; userId?: string }): Promise<any> {
     if (input.saleId) {
       return this.verifyPayment(input.saleId);
     }

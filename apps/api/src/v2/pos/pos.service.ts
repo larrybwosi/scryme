@@ -36,7 +36,12 @@ import { Decimal } from "decimal.js";
 import { RedisService } from "src/redis/redis.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { PosCustomerService } from "./pos-customer.service";
-import { Prisma } from "@repo/db";
+import {
+  Prisma,
+  MovementType,
+  PurchaseStatus,
+  StockTransferStatus,
+} from "@repo/db";
 
 @Injectable()
 export class PosService {
@@ -879,35 +884,64 @@ export class PosService {
 
     const where: Prisma.PriceListWhereInput = {
       organizationId: ctx.organizationId,
-      isActive: true,
     };
 
-    if (lastSyncDate) {
+    // For full sync, we only want active lists. For delta, we might need to know if a list was deactivated.
+    if (!lastSyncDate) {
+      where.isActive = true;
+    } else {
       where.updatedAt = { gt: lastSyncDate };
     }
 
-    const priceLists = await this.prisma.client.priceList.findMany({
-      where,
-      include: {
-        items: {
-          where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
+    const [priceLists, deletedItems] = await Promise.all([
+      this.prisma.client.priceList.findMany({
+        where,
+        include: {
+          items: {
+            where: lastSyncDate
+              ? {
+                  OR: [
+                    { updatedAt: { gt: lastSyncDate } },
+                    { deletedAt: { gt: lastSyncDate } },
+                  ],
+                }
+              : { isActive: true },
+          },
+          customers: true,
+          businessAccounts: true,
         },
-        customers: true,
-        businessAccounts: true,
-      },
-    });
+      }),
+      lastSyncDate
+        ? this.prisma.client.priceListItem.findMany({
+            where: {
+              priceList: { organizationId: ctx.organizationId },
+              deletedAt: { gt: lastSyncDate },
+            },
+            select: { id: true },
+          })
+        : Promise.resolve([]),
+    ]);
 
-    const items = priceLists.flatMap((pl) =>
-      pl.items.map((item) => ({
-        id: item.id,
-        priceListId: item.priceListId,
-        variantId: item.variantId,
-        sellingUnitId: item.sellingUnitId,
-        minQuantity: item.minQuantity,
-        price: item.price.toString(),
-        updatedAt: item.updatedAt,
-      })),
+    const activeItems = priceLists.flatMap((pl) =>
+      pl.items
+        .filter((item) => !(item as any).deletedAt && item.isActive)
+        .map((item) => ({
+          id: item.id,
+          priceListId: item.priceListId,
+          variantId: item.variantId,
+          sellingUnitId: item.sellingUnitId,
+          minQuantity: item.minQuantity,
+          price: item.price.toString(),
+          updatedAt: item.updatedAt,
+        })),
     );
+
+    const deletedItemIds = [
+      ...deletedItems.map((i) => i.id),
+      ...priceLists.flatMap((pl) =>
+        pl.items.filter((i) => (i as any).deletedAt || !i.isActive).map((i) => i.id),
+      ),
+    ];
 
     const lists = priceLists.map((pl) => ({
       id: pl.id,
@@ -945,9 +979,9 @@ export class PosService {
         },
         data: {
           lists,
-          items,
+          items: activeItems,
           customerAllocations,
-          deletedItemIds: [], // Would need a soft-delete mechanism to track this properly
+          deletedItemIds,
         },
       },
     };
@@ -1004,7 +1038,7 @@ export class PosService {
 
       // For simplicity, we assume full receipt for now. In a real app, we'd use body.items
       for (const item of purchase.items) {
-        const receivedQty = item.quantity; // Default to full quantity if not specified in body
+        const receivedQty = item.orderedQuantity;
 
         // Update stock
         const stockRecord = await tx.productVariantStock.findUnique({
@@ -1025,13 +1059,13 @@ export class PosService {
             },
           });
         } else {
-          const variant = await tx.productVariant.findUnique({
+          const variant = await tx.productVariant.findUniqueOrThrow({
             where: { id: item.variantId },
           });
           await tx.productVariantStock.create({
             data: {
               organizationId: ctx.organizationId,
-              productId: variant!.productId,
+              productId: variant.productId,
               variantId: item.variantId,
               locationId,
               availableStock: receivedQty,
@@ -1047,7 +1081,7 @@ export class PosService {
             variantId: item.variantId,
             toLocationId: locationId,
             quantity: receivedQty,
-            movementType: "PURCHASE_RECEIPT" as any,
+            movementType: MovementType.PURCHASE_RECEIPT,
             memberId: ctx.memberId!,
             referenceId: id,
             referenceType: "PURCHASE_ORDER",
@@ -1057,7 +1091,7 @@ export class PosService {
 
       await tx.purchase.update({
         where: { id },
-        data: { status: "RECEIVED" as any },
+        data: { status: PurchaseStatus.RECEIVED },
       });
 
       return { success: true };
@@ -1102,13 +1136,13 @@ export class PosService {
             },
           });
         } else {
-          const variant = await tx.productVariant.findUnique({
+          const variant = await tx.productVariant.findUniqueOrThrow({
             where: { id: item.variantId },
           });
           await tx.productVariantStock.create({
             data: {
               organizationId: ctx.organizationId,
-              productId: variant!.productId,
+              productId: variant.productId,
               variantId: item.variantId,
               locationId,
               availableStock: receivedQty,
@@ -1125,7 +1159,7 @@ export class PosService {
             fromLocationId: transfer.fromLocationId,
             toLocationId: locationId,
             quantity: receivedQty,
-            movementType: "TRANSFER" as any,
+            movementType: MovementType.TRANSFER,
             memberId: ctx.memberId!,
             referenceId: id,
             referenceType: "STOCK_TRANSFER",
@@ -1136,7 +1170,7 @@ export class PosService {
       await tx.stockTransfer.update({
         where: { id },
         data: {
-          status: "COMPLETED",
+          status: StockTransferStatus.COMPLETED,
           receivedDate: new Date(),
           receivedById: ctx.memberId,
         },

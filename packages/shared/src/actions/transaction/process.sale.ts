@@ -6,6 +6,7 @@ import {
   FulfillmentStatus,
   AllocationStatus,
   PaymentMethod,
+  MovementType,
   prisma as db,
   Prisma,
 } from "@repo/db";
