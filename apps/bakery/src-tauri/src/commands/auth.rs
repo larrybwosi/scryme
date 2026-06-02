@@ -56,12 +56,17 @@ pub async fn provision_device_with_token(
 ) -> BackendResult<()> {
     let client = reqwest::Client::new();
     let default_api_url = if cfg!(debug_assertions) {
-        "http://localhost:3001/api/v2"
+        "http://localhost:3001"
     } else {
-        "https://api.scryme.app/api/v2"
+        "https://api.scryme.app"
     };
 
-    let api_url = api_url_override.as_deref().unwrap_or(default_api_url);
+    let base_api_url = api_url_override.as_deref().unwrap_or(default_api_url);
+    let api_url = if base_api_url.ends_with("/api/v2") {
+        base_api_url.to_string()
+    } else {
+        format!("{}/api/v2", base_api_url.trim_end_matches('/'))
+    };
 
     let response = client
         .post(format!("{}/devices/provision", api_url))
