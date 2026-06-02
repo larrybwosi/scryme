@@ -13,8 +13,7 @@ export async function getServerAuth() {
         return null;
     }
 
-    const organizationId =
-        (session.session as any).activeOrganizationId ||
+    const organizationId = (session.session as any).activeOrganizationId ||
         (session.user as any).activeOrganizationId;
 
     return {
