@@ -304,6 +304,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@repo/windmill':
+        specifier: workspace:*
+        version: link:../../packages/windmill
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.3.0
