@@ -14,7 +14,6 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@internationalized/date": "^3.12.1",
-
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.100.7",
     "@tauri-apps/api": "^2.10.1",
@@ -51,6 +50,7 @@
     "@repo/typescript-config": "workspace:*",
     "@tauri-apps/cli": "^2.10.1",
     "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
