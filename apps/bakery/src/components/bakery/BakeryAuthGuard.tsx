@@ -32,7 +32,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
   const [hardwareInfo, setHardwareInfo] = useState<{ macAddress?: string; serialNumber?: string } | null>(null);
   const [isDetectingHardware, setIsDetectingHardware] = useState(false);
   const [showApiUrl, setShowApiUrl] = useState(false);
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2');
+  const [apiUrl, setApiUrl] = useState(localStorage.getItem('bakery_api_url') || import.meta.env.VITE_API_URL || 'https://api.scryme.app');
   const [isValidatingApi, setIsValidatingApi] = useState(false);
 
   const [cardId, setCardId] = useState('');
@@ -155,18 +155,24 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
     setIsProvisioning(true);
     try {
       // 1. Provision via Rust backend (handles keyring storage)
+      const finalApiUrl = showApiUrl ? apiUrl : (import.meta.env.VITE_API_URL || 'https://api.scryme.app');
+
+      // Ensure we have the api/v2 suffix for the backend call if it's a full URL
+      let apiUrlForBackend = finalApiUrl;
+      if (apiUrlForBackend.startsWith('http') && !apiUrlForBackend.includes('/api/v2')) {
+        apiUrlForBackend = `${apiUrlForBackend.replace(/\/$/, '')}/api/v2`;
+      }
+
       await invoke('provision_device_with_token', {
         setupToken,
         macAddress: hardwareInfo?.macAddress || null,
         serialNumber: hardwareInfo?.serialNumber || null,
-        apiUrlOverride: showApiUrl ? apiUrl : null,
+        apiUrlOverride: apiUrlForBackend,
       });
 
-      // Update SDK base URL immediately if override was used
-      if (showApiUrl && apiUrl) {
-        sdk.client.setBaseURL(apiUrl);
-        localStorage.setItem('bakery_api_url', apiUrl);
-      }
+      // Update SDK base URL immediately
+      sdk.client.setBaseURL(apiUrlForBackend);
+      localStorage.setItem('bakery_api_url', finalApiUrl);
 
       // If custom API URL was used, save it to settings
       if (showApiUrl && apiUrl) {
@@ -237,12 +243,31 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
         toast.error('Please select a production location');
         return;
     }
+    if (!cardId || !pin) {
+        toast.error('Please enter your Card ID and PIN');
+        return;
+    }
+
     setIsLoggingIn(true);
     try {
-        setHasMemberToken(true);
-        toast.success('Access granted to production');
-    } catch (error) {
-        toast.error('Authentication failed');
+        const response = await sdk.client.post('/bakery/auth/login', {
+            cardId,
+            pin,
+            locationId
+        });
+
+        const data = (response as any).data || response;
+        if (data.token) {
+            sdk.setApiKey(data.token);
+            setHasMemberToken(true);
+            toast.success('Access granted to production');
+        } else {
+            throw new Error('No token received');
+        }
+    } catch (error: any) {
+        console.error('Login failed:', error);
+        const message = error.response?.data?.message || error.message || 'Authentication failed';
+        toast.error(message);
     } finally {
         setIsLoggingIn(false);
     }

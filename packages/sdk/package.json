@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "typescript": "latest"
+  },
+  "dependencies": {
+    "axios": "latest"
   }
 }

@@ -1,1 +1,1 @@
-export * from '@repo/db';
+export * from '../prisma/enums';

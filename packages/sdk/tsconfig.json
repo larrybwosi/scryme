@@ -1,8 +1,9 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "../packages/config-typescript/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "lib": ["es2015", "dom"]
   },
   "include": ["src"]
 }
