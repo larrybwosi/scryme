@@ -57,23 +57,63 @@ export class CatalogService {
           : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(featured ? { isFeatured: true } : {}),
+        ...(inStock
+          ? {
+              variants: {
+                some: {
+                  variantStocks: {
+                    some: {
+                      availableStock: { gt: 0 },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
       };
 
+      // PERFORMANCE OPTIMIZATION:
+      // 1. Database-level filtering for 'inStock' improves query speed and fixes pagination totals.
+      // 2. Targeted 'select' block avoids fetching large text fields (description, detailedDescription)
+      //    reducing database payload and memory usage.
       const [products, total] = await Promise.all([
         this.prisma.client.product.findMany({
           where,
           skip,
           take: limit,
           orderBy: { name: "asc" },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            barcode: true,
+            imageUrls: true,
+            isActive: true,
+            type: true,
+            brand: true,
+            rating: true,
+            lowStockThreshold: true,
+            isNew: true,
+            isFeatured: true,
+            slug: true,
+            description: true, // Included to support dynamic 'requestedFields' filtering
+            detailedDescription: true, // Included to support dynamic 'requestedFields' filtering
+            createdAt: true,
+            updatedAt: true,
             category: { select: { id: true, name: true } },
             variants: {
-              include: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                retailPrice: true,
+                buyingPrice: true,
+                wholesalePrice: true,
                 variantStocks: {
                   select: { availableStock: true, locationId: true },
                 },
-                baseUnit: true,
-                baseOrgUnit: true,
+                baseUnit: { select: { id: true, name: true } },
+                baseOrgUnit: { select: { id: true, name: true } },
               },
             },
           },
@@ -81,11 +121,10 @@ export class CatalogService {
         this.prisma.client.product.count({ where }),
       ]);
 
-      let shaped = products.map((p) => {
+      const shaped = products.map((p) => {
         const {
           description: _,
           detailedDescription: __,
-          organizationId: ___,
           ...productBase
         } = p as any;
         return {
@@ -116,10 +155,6 @@ export class CatalogService {
           }),
         };
       });
-
-      if (inStock) {
-        shaped = shaped.filter((p) => p.variants.some((v) => v.totalStock > 0));
-      }
 
       if (requestedFields && requestedFields.length > 0) {
         shaped = shaped.map((p) => {
