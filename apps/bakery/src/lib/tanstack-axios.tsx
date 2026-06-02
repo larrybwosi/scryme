@@ -2,7 +2,13 @@ import axios, { AxiosInstance } from 'axios';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ReactNode } from 'react';
-import type { InventoryLocation } from '@repo/db';
+
+export interface InventoryLocation {
+    id: string;
+    name: string;
+    isActive: boolean;
+    [key: string]: any;
+}
 
 export interface ProductSupplier {
   id: string;

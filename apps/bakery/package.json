@@ -51,6 +51,7 @@
     "@repo/typescript-config": "workspace:*",
     "@tauri-apps/cli": "^2.10.1",
     "@types/jest": "^30.0.0",
+    "@types/node": "^25.9.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react-swc": "^3.5.0",

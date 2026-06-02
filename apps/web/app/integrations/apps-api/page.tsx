@@ -33,6 +33,7 @@ import {
   deleteWebhookSubscriptionAction,
   regenerateV3ClientSecretAction,
   updateV3ApiClientAction,
+  getLocationsAction,
 } from "../../actions/api-management";
 
 function AppsApiContent() {
@@ -65,6 +66,7 @@ function AppsApiContent() {
   // Device Tokens State
   const [deviceTokens, setDeviceTokens] = useState<any[]>([]);
   const [registries, setRegistries] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
   const [newDevice, setNewDevice] = useState({
     deviceName: "",
@@ -79,18 +81,23 @@ function AppsApiContent() {
 
   const loadData = async () => {
     try {
-      const [v3, v2, wh, tokens, regs] = await Promise.all([
+      const [v3, v2, wh, tokens, regs, locs] = await Promise.all([
         getV3ApiClientsAction(),
         getV2ApiKeysAction(),
         getWebhookSubscriptionsAction(),
         getDeviceSetupTokensAction(),
         getDeviceRegistryAction(),
+        getLocationsAction(),
       ]);
       setV3Clients(v3);
       setV2Keys(v2);
       setWebhooks(wh);
       setDeviceTokens(tokens);
       setRegistries(regs);
+      setLocations(locs);
+      if (locs.length > 0 && !newDevice.locationId) {
+        setNewDevice(prev => ({ ...prev, locationId: locs[0].id }));
+      }
     } catch (error) {
       console.error("Failed to load data", error);
     }
@@ -741,6 +748,29 @@ function AppsApiContent() {
                     <option value="MOBILE_POS">Mobile POS</option>
                     <option value="KIOSK">Self-Service Kiosk</option>
                     <option value="TABLET">Service Tablet</option>
+                    <option value="BAKERY_TERMINAL">Bakery Terminal</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Location
+                  </label>
+                  <select
+                    value={newDevice.locationId}
+                    onChange={(e) =>
+                      setNewDevice({
+                        ...newDevice,
+                        locationId: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-xl px-4 py-2 outline-none bg-white"
+                  >
+                    <option value="">Select Location</option>
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex gap-4 mt-8">
