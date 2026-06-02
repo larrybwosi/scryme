@@ -1,1 +1,3 @@
-export const auth = {};
+export const auth = {
+    options: {}
+};

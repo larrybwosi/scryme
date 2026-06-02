@@ -84,6 +84,32 @@ export class BakeryAuthController {
     });
   }
 
+  @AllowPublic()
+  @Post('login')
+  @ApiOperation({ summary: 'Login as a baker using card ID and PIN' })
+  async login(
+    @v2Context() ctx: V2ApiContext,
+    @Body() body: { cardId: string; pin: string; locationId: string },
+    @Res() res: any,
+  ) {
+    const { token, member } = await this.bakeryService.loginBaker(body, ctx);
+
+    const cookieOptions = this.bakeryService.getCookieOptions(60 * 60 * 12); // 12 hours
+    res.setCookie('dealio_member_token', token, cookieOptions);
+
+    return res.send({
+      success: true,
+      data: {
+        member: {
+          id: member.id,
+          role: member.role,
+          user: member.user,
+        },
+        token,
+      },
+    });
+  }
+
   @Post('sso')
   @ApiOperation({ summary: 'SSO login for dashboard users into bakery app' })
   async sso(
