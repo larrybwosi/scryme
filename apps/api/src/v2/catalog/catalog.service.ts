@@ -57,6 +57,19 @@ export class CatalogService {
           : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(featured ? { isFeatured: true } : {}),
+        ...(inStock
+          ? {
+              variants: {
+                some: {
+                  variantStocks: {
+                    some: {
+                      availableStock: { gt: 0 },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
       };
 
       const [products, total] = await Promise.all([
@@ -65,15 +78,54 @@ export class CatalogService {
           skip,
           take: limit,
           orderBy: { name: "asc" },
-          include: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            barcode: true,
+            categoryId: true,
+            isActive: true,
+            imageUrls: true,
+            createdAt: true,
+            updatedAt: true,
+            type: true,
+            pointsOnPurchase: true,
+            brand: true,
+            rating: true,
+            lowStockThreshold: true,
+            isNew: true,
+            tags: true,
+            isFeatured: true,
+            slug: true,
+            defaultLocationId: true,
+            loyaltyPointsOverride: true,
             category: { select: { id: true, name: true } },
             variants: {
-              include: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                barcode: true,
+                attributes: true,
+                isActive: true,
+                reorderPoint: true,
+                reorderQty: true,
+                lowStockAlert: true,
+                buyingPrice: true,
+                wholesalePrice: true,
+                retailPrice: true,
+                isPopular: true,
+                isNew: true,
+                promotionalPrice: true,
+                pointsOnPurchase: true,
+                loyaltyPointsOverride: true,
+                baseUnitId: true,
+                baseOrgUnitId: true,
+                baseUnit: true,
+                baseOrgUnit: true,
                 variantStocks: {
                   select: { availableStock: true, locationId: true },
                 },
-                baseUnit: true,
-                baseOrgUnit: true,
               },
             },
           },
@@ -82,14 +134,8 @@ export class CatalogService {
       ]);
 
       let shaped = products.map((p) => {
-        const {
-          description: _,
-          detailedDescription: __,
-          organizationId: ___,
-          ...productBase
-        } = p as any;
         return {
-          ...productBase,
+          ...p,
           id: p.sku,
           internalId: p.id,
           images: p.imageUrls || null,
@@ -116,10 +162,6 @@ export class CatalogService {
           }),
         };
       });
-
-      if (inStock) {
-        shaped = shaped.filter((p) => p.variants.some((v) => v.totalStock > 0));
-      }
 
       if (requestedFields && requestedFields.length > 0) {
         shaped = shaped.map((p) => {
