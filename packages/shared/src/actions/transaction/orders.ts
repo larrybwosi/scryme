@@ -1,5 +1,6 @@
-import prisma, { db } from "@repo/db";
 import {
+  prisma,
+  db,
   TransactionStatus,
   TransactionType,
   PaymentStatus,
@@ -8,13 +9,12 @@ import {
   FulfillmentStatus,
   StockAdjustmentReason,
   AllocationStatus,
+  Prisma,
 } from "@repo/db";
 import { createAuditLog } from "../../lib/logs/logger";
-import z from "zod";
-import { CreateOrderSchema, OrderFilterSchema } from "../../lib/validations/order";
-import { randomBytes } from "crypto";
-import { Prisma, ProductUnitConversion } from "@repo/db";
+import { CreateOrderSchema, OrderFilterSchema, CreateOrderInput } from "../../lib/validations/order";
 import { unitCalculationService } from "../../lib/services/unit-calculation.service";
+import { z } from "zod";
 
 // --- STATS FUNCTION ---
 export async function getOrderStats(organizationId: string) {
@@ -62,7 +62,7 @@ export async function getOrderStats(organizationId: string) {
         }),
       ]);
 
-    const totalRevenue = completedStats._sum.finalTotal || 0;
+    const totalRevenue = completedStats._sum.finalTotal ? (completedStats._sum.finalTotal as Prisma.Decimal).toNumber() : 0;
     const totalCompletedOrders = completedStats._count._all;
 
     return {
@@ -85,7 +85,7 @@ export async function getOrderStats(organizationId: string) {
 export async function createOrder(
   organizationId: string,
   memberId: string,
-  inputData: unknown,
+  inputData: CreateOrderInput,
 ) {
   let auditLogWritten = false;
   let transactionId: string | undefined;
@@ -342,7 +342,7 @@ export async function createOrder(
         const calculatedFinalTotal = goodsTotalInclusive.add(inputShipping);
 
         // 6. --- Payment Status ---
-        const totalPaidAmount = payments.reduce(
+        const totalPaidAmount = (payments || []).reduce(
           (sum: Prisma.Decimal, payment: any) =>
             sum.add(new Prisma.Decimal(payment.amount)),
           new Prisma.Decimal(0),
@@ -380,7 +380,13 @@ export async function createOrder(
             exchangeRate: 1,
 
             items: { create: transactionItemsCreateData },
-            payments: { create: payments },
+            payments: {
+              create: (payments || []).map((p: any) => ({
+                amount: p.amount,
+                method: p.method,
+                organizationId,
+              })),
+            },
             taxes: { create: appliedTaxesCreateData },
 
             fulfillments: fulfillment
@@ -534,7 +540,7 @@ export async function getPaginatedOrders(
       ];
     }
     if (status) {
-      where.status = status;
+      where.status = status as TransactionStatus;
     }
     if (dateFrom || dateTo) {
       where.createdAt = {};
@@ -734,7 +740,7 @@ export async function confirmOrder(
             );
           }
 
-          if (pool.availableStock < totalBaseNeeded) {
+          if (new Prisma.Decimal(pool.availableStock as any).lt(totalBaseNeeded)) {
             throw new Error(
               `Insufficient stock for ${variantName}. Required: ${totalBaseNeeded}, Available: ${pool.availableStock}`,
             );
@@ -758,12 +764,12 @@ export async function confirmOrder(
             organizationId,
             memberId,
             variantId,
-            locationId: order.locationId,
-            referenceNumber: refItem?.id || transactionId, // Link to line item or transaction
-            reason: StockAdjustmentReason.ORDER_COMMIT || "RESERVATION",
+            locationId: order.locationId!,
+            referenceNumber: refItem?.id || transactionId!, // Link to line item or transaction
+            reason: StockAdjustmentReason.ORDER_COMMIT,
             quantity: -totalBaseNeeded, // Negative indicates it's leaving "Available" pool
             notes: `Order ${order.number} confirmed (Stock Reserved)`,
-          });
+          } as any);
 
           // C. Soft Allocate Batches (FEFO/LIFO)
           // This tells the warehouse exactly WHICH batches to pick.
@@ -791,7 +797,7 @@ export async function confirmOrder(
 
             const takeFromBatch = Math.min(
               remainingToAllocateForVariant,
-              batch.currentQuantity,
+              new Prisma.Decimal(batch.currentQuantity as any).toNumber(),
             );
 
             // Assign this batch quantity to specific line items
@@ -813,8 +819,8 @@ export async function confirmOrder(
               allocationCreations.push({
                 transactionItemId: item.id,
                 stockBatchId: batch.id,
-                inventoryLocationId: order.locationId,
-                quantity: allocateAmount,
+                inventoryLocationId: order.locationId!,
+                quantity: allocateAmount as any,
                 status: AllocationStatus.RESERVED,
               });
 
@@ -1000,7 +1006,7 @@ export async function cancelOrder(
                   fromUnitId: sellingUnitId,
                   toUnitId: baseUnitId,
                   organizationId,
-                  productId: item.variant.productId,
+                  productId: (item.variant.product as any).id as any,
                 });
               } catch (e) {
                 console.warn(`Conversion failed for variant ${variantId}:`, e);
@@ -1037,7 +1043,7 @@ export async function cancelOrder(
               continue;
             }
 
-            const quantityToRestock = Math.min(quantity, stock.reservedStock);
+            const quantityToRestock = Math.min(quantity, new Prisma.Decimal(stock.reservedStock as any).toNumber());
 
             if (quantityToRestock > 0) {
               stockUpdates.push(

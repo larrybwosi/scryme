@@ -335,7 +335,7 @@ export async function processSale(
           // M-Pesa STK Pushes are initially PENDING
           if (
             paymentSplit.method === PaymentMethod.MPESA &&
-            paymentSplit.mpFlowType === "STK_PUSH"
+            paymentSplit.mpesaFlowType === "STK_PUSH"
           ) {
             splitStatus = PaymentStatus.PENDING;
           }
