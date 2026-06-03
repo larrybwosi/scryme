@@ -59,7 +59,7 @@ pub fn run() {
             commands::login_local,
             commands::update_local_admin,
             commands::get_hardware_identifiers,
-            commands::validate_api_endpoint,
+            commands::validate_api_health,
             commands::provision_device_with_token,
             commands::get_provisioned_api_key,
             commands::clear_provisioned_api_key,

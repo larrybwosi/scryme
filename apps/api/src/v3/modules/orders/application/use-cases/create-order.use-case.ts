@@ -1,11 +1,11 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { IOrderRepository } from '../../domain/repositories/order-repository.interface';
 import { CreateOrderDto } from '../dto/create-order.dto';
-import { Order } from '../../domain/entities/order.entity';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WebhookService } from '../../../webhooks/infrastructure/services/webhook.service';
 import { V3RealtimeGateway } from '../../../../common/realtime/v3-realtime.gateway';
 import { emitOrderPlaced } from '@repo/windmill/server';
+import { createOrder, CreateOrderInput } from '@repo/shared/server';
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -17,59 +17,24 @@ export class CreateOrderUseCase {
     private readonly realtimeGateway: V3RealtimeGateway
   ) {}
 
-  async execute(organizationId: string, dto: CreateOrderDto) {
-    // 1. Validate variants and calculate totals
-    const variantIds = dto.items.map(i => i.variantId);
-    const variants = await this.prisma.client.productVariant.findMany({
-      where: {
-        id: { in: variantIds },
-        product: { organizationId },
-      },
-      include: {
-        product: true,
-      },
-    });
+  async execute(organizationId: string, dto: CreateOrderDto, memberId: string) {
+    // We use the shared consolidated business logic from @repo/shared
+    const result = await createOrder(organizationId, memberId, {
+      customerId: dto.customerId,
+      locationId: dto.locationId,
+      items: dto.items,
+      type: dto.channel as any, // Map channel to transaction type
+      notes: dto.notes,
+    } as CreateOrderInput);
 
-    if (variants.length !== variantIds.length) {
-      throw new BadRequestException('One or more variants not found or do not belong to this organization');
+    if (!result.success) {
+      throw new BadRequestException(result.error || 'Failed to create order');
     }
 
-    const itemsData = dto.items.map(item => {
-      const variant = variants.find(v => v.id === item.variantId)!;
-      const unitPrice = item.unitPrice || variant.retailPrice?.toNumber() || 0;
-      const subtotal = unitPrice * item.quantity;
-
-      return {
-        variantId: item.variantId,
-        quantity: item.quantity,
-        productName: variant.product.name,
-        variantName: variant.name,
-        sku: variant.sku,
-        unitPrice,
-        unitCost: variant.buyingPrice.toNumber(),
-        subtotal,
-        lineTotal: subtotal, // Simplification: no discounts/taxes for now
-      };
-    });
-
-    const totalAmount = itemsData.reduce((sum, item) => sum + item.lineTotal, 0);
-
-    // 2. Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-    // 3. Create order
-    const order = await this.orderRepository.create({
-      number: orderNumber,
-      organizationId,
-      locationId: dto.locationId,
-      customerId: dto.customerId,
-      subtotal: totalAmount,
-      finalTotal: totalAmount,
-      notes: dto.notes,
-      channel: dto.channel,
-      items: itemsData,
-      shippingAddress: dto.shippingAddress,
-    });
+    const order = result.data;
+    if (!order) {
+        throw new InternalServerErrorException('Order created but no data returned');
+    }
 
     // 4. Trigger events
     this.realtimeGateway.sendToOrder(order.id, 'order.created', order);
@@ -80,9 +45,9 @@ export class CreateOrderUseCase {
       orderId: order.id,
       orderNumber: order.number,
       customerId: order.customerId,
-      totalAmount: Number(order.totalAmount),
-      currency: 'KES', // Default for V3 for now
-      items: order.items.map(i => ({
+      totalAmount: Number(order.finalTotal),
+      currency: order.currencyCode || 'KES',
+      items: order.items.map((i: any) => ({
         productName: i.productName,
         quantity: Number(i.quantity),
         lineTotal: Number(i.lineTotal),

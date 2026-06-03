@@ -3,20 +3,18 @@ import { PosSaleService } from "../pos-sale.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { BadRequestException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ProcessSaleInputSchema } from "@repo/shared";
-import { processSale } from "@repo/shared/server";
-
-vi.mock("@repo/shared", () => ({
-  ProcessSaleInputSchema: {
-    safeParse: vi.fn(),
-  },
-}));
+import { ProcessSaleInputSchema, CreateOrderSchema, processSale } from "@repo/shared/server";
 
 vi.mock("@repo/shared/server", () => ({
   processSale: vi.fn(),
-  ProcessSaleInputSchema: {
-  },
   triggerStkPush: vi.fn(),
+  createOrder: vi.fn(),
+  ProcessSaleInputSchema: {
+    safeParse: vi.fn(),
+  },
+  CreateOrderSchema: {
+    safeParse: vi.fn(),
+  },
 }));
 
 describe("PosSaleService", () => {
@@ -69,14 +67,18 @@ describe("PosSaleService", () => {
     };
 
     it("should process a cash sale successfully", async () => {
-      ((ProcessSaleInputSchema.safeParse as any) as any).mockReturnValue as any({
+      (ProcessSaleInputSchema.safeParse as any).mockReturnValue({
         success: true,
         data: {
           ...mockBody,
           locationId: "loc_1",
           enableStockTracking: true,
-        } as any,
-      } as any);
+        },
+      });
+      (processSale as any).mockResolvedValue({
+        success: true,
+        data: { id: "txn_1", ...mockBody },
+      });
 
       const result = await service.handleSale(mockCtx, mockBody, true);
 
@@ -89,12 +91,12 @@ describe("PosSaleService", () => {
     });
 
     it("should throw BadRequestException if validation fails", async () => {
-      ((ProcessSaleInputSchema.safeParse as any) as any).mockReturnValue as any({
+      (ProcessSaleInputSchema.safeParse as any).mockReturnValue({
         success: false,
         error: {
           flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
         },
-      } as any);
+      });
 
       await expect(service.handleSale(mockCtx, mockBody, true)).rejects.toThrow(
         BadRequestException,

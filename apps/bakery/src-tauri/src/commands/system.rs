@@ -21,23 +21,6 @@ pub async fn get_hardware_identifiers() -> BackendResult<HardwareIdentifiers> {
     })
 }
 
-#[tauri::command]
-pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()?;
-
-    let res = client.get(api_url).send().await;
-
-    match res {
-        Ok(response) => {
-            // We consider the endpoint valid if it's reachable and not a 404/500
-            // Even a 401 Unauthorized is a good sign that the endpoint exists
-            Ok(response.status().is_success() || response.status().as_u16() == 401)
-        }
-        Err(_) => Ok(false),
-    }
-}
 
 fn get_system_serial() -> Option<String> {
     #[cfg(target_os = "linux")]
