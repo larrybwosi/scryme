@@ -35,17 +35,6 @@ pub async fn login_local(
     Ok(user)
 }
 
-#[tauri::command]
-pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
-    let client = reqwest::Client::new();
-    let response = client
-        .get(format!("{}/health", api_url))
-        .send()
-        .await
-        .map_err(BackendError::Network)?;
-
-    Ok(response.status().is_success())
-}
 
 #[tauri::command]
 pub async fn provision_device_with_token(
@@ -109,3 +98,26 @@ pub async fn provision_device_with_token(
     Ok(())
 }
 
+
+#[tauri::command]
+pub async fn get_provisioned_api_key() -> BackendResult<Option<String>> {
+    let entry = Entry::new("scryme-bakery", "device-api-key")
+        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
+
+    match entry.get_password() {
+        Ok(pw) => Ok(Some(pw)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(BackendError::Internal(format!("Failed to retrieve API Key: {}", e))),
+    }
+}
+
+#[tauri::command]
+pub async fn clear_provisioned_api_key() -> BackendResult<()> {
+    let entry = Entry::new("scryme-bakery", "device-api-key")
+        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
+
+    match entry.delete_password() {
+        Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(BackendError::Internal(format!("Failed to clear API Key: {}", e))),
+    }
+}
