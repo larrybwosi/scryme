@@ -69,14 +69,14 @@ describe("PosSaleService", () => {
     };
 
     it("should process a cash sale successfully", async () => {
-      ((ProcessSaleInputSchema.safeParse as any) as any).mockReturnValue as any({
+      (ProcessSaleInputSchema.safeParse as any).mockReturnValue({
         success: true,
         data: {
           ...mockBody,
           locationId: "loc_1",
           enableStockTracking: true,
-        } as any,
-      } as any);
+        },
+      });
 
       const result = await service.handleSale(mockCtx, mockBody, true);
 
@@ -89,12 +89,12 @@ describe("PosSaleService", () => {
     });
 
     it("should throw BadRequestException if validation fails", async () => {
-      ((ProcessSaleInputSchema.safeParse as any) as any).mockReturnValue as any({
+      (ProcessSaleInputSchema.safeParse as any).mockReturnValue({
         success: false,
         error: {
           flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
         },
-      } as any);
+      });
 
       await expect(service.handleSale(mockCtx, mockBody, true)).rejects.toThrow(
         BadRequestException,

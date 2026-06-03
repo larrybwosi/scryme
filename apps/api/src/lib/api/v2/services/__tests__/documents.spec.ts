@@ -42,6 +42,7 @@ describe("Documents Service", () => {
       payments: [],
       location: {},
     };
+    (prisma.transaction.findFirst as any).mockResolvedValue(mockTransaction);
 
     const result = await getDocumentStream("invoice", "txn_1", "org_1");
 
@@ -51,6 +52,7 @@ describe("Documents Service", () => {
   });
 
   it("should throw error if transaction not found", async () => {
+    (prisma.transaction.findFirst as any).mockResolvedValue(null);
     await expect(
       getDocumentStream("invoice", "txn_2", "org_1"),
     ).rejects.toThrow("Transaction not found");

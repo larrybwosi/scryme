@@ -41,7 +41,7 @@ export class OrderController {
   @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: 'Invalid input' })
   @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: 'Unauthorized' })
   async createOrder(@Req() req: any, @Body() dto: CreateOrderDto) {
-    return this.createOrderUseCase.execute(req.organization.id, dto);
+    return this.createOrderUseCase.execute(req.organization.id, dto, req.user?.memberId || req.user?.id);
   }
 
   @Get()

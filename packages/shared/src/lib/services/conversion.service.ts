@@ -1,4 +1,4 @@
-import prisma from "@repo/db";
+import { prisma } from "@repo/db";
 import { Decimal } from "decimal.js";
 
 /**
