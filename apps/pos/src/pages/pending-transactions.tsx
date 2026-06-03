@@ -10,11 +10,11 @@ import { usePrinter } from '@/hooks/use-printer';
 import { usePosStore } from '@/store/store';
 import { useAuthStore } from '@/store/pos-auth-store';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
 import { PaymentDialog } from '@/components/pending-page/payment';
 import { ReconciliationDialog } from '@/components/pending-page/reconcile';
 import { DispatchDialog } from '@/components/pending-page/dispatch-dialog';

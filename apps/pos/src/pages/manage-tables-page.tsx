@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import { usePosStore, type Table } from '@/store/store';
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardDescription } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@repo/ui/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@repo/ui/components/ui/dropdown-menu';
+import { Textarea } from '@repo/ui/components/ui/textarea';
 import { Plus, Edit2, Trash2, Users, MapPin, CheckCircle2, Clock, Ban, Search, MoreHorizontal, LayoutGrid, SlidersHorizontal, History as HistoryIcon, UserCircle, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 

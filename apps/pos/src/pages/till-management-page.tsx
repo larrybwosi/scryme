@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import { usePosStore } from '@/store/store';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Lock, Unlock, Plus, Minus, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import posthog from 'posthog-js';

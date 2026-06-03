@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Label } from '@repo/ui/components/ui/label';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import { Key, ShieldCheck } from 'lucide-react';

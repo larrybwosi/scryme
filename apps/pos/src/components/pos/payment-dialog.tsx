@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@repo/ui/components/ui/dialog';
 import {
   CreditCard,
   Smartphone,
@@ -32,11 +32,11 @@ import { toast } from 'sonner';
 import { useFormattedCurrency } from '@/lib/utils';
 import { getCurrentPhoneConfig } from '@/lib/phone.config';
 import { CartItem, Customer, Order, OrderType } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Button } from '@repo/ui/components/ui/button';
+import { Label } from '@repo/ui/components/ui/label';
+import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
+import { Input } from '@repo/ui/components/ui/input';
 import { usePosStore } from '@/store/store';
 import { PaymentMethod, PaymentStatus, useProcessSale } from '@/hooks/sales';
 import { useAuthStore } from '@/store/pos-auth-store';

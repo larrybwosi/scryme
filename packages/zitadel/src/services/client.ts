@@ -1,4 +1,11 @@
-// import { createManagementClient, createUserServiceClient } from '@zitadel/node';
+import {
+  createManagementClient,
+  createUserClient,
+} from "@zitadel/node/dist/api/clients.js";
+import {
+  createServiceAccountInterceptor,
+} from "@zitadel/node/dist/api/interceptors.js";
+import { ServiceAccount } from "@zitadel/node/dist/credentials/service-account.js";
 
 export interface ZitadelEnvConfig {
   domain: string;
@@ -15,7 +22,7 @@ export function getZitadelEnvConfig(): ZitadelEnvConfig {
 
   if (!domain || !clientId || !keyId || !key) {
     throw new Error(
-      'Missing required Zitadel env vars: ZITADEL_DOMAIN, ZITADEL_CLIENT_ID, ZITADEL_KEY_ID, ZITADEL_KEY'
+      "Missing required Zitadel env vars: ZITADEL_DOMAIN, ZITADEL_CLIENT_ID, ZITADEL_KEY_ID, ZITADEL_KEY"
     );
   }
 
@@ -24,26 +31,28 @@ export function getZitadelEnvConfig(): ZitadelEnvConfig {
 
 export async function getZitadelManagementClient() {
   const config = getZitadelEnvConfig();
-  return;
+  const sa = ServiceAccount.fromJson({
+    userId: config.clientId,
+    keyId: config.keyId,
+    key: config.key,
+  });
 
-  // return createManagementClient(config.domain, {
-  //   authConfig: {
-  //     clientId: config.clientId,
-  //     keyId: config.keyId,
-  //     key: config.key,
-  //   },
-  // });
+  return createManagementClient(
+    config.domain,
+    createServiceAccountInterceptor(config.domain, sa, { apiAccess: true })
+  );
 }
 
 export async function getZitadelUserClient() {
   const config = getZitadelEnvConfig();
-  return;
+  const sa = ServiceAccount.fromJson({
+    userId: config.clientId,
+    keyId: config.keyId,
+    key: config.key,
+  });
 
-  // return createUserServiceClient(config.domain, {
-  //   authConfig: {
-  //     clientId: config.clientId,
-  //     keyId: config.keyId,
-  //     key: config.key,
-  //   },
-  // });
+  return createUserClient(
+    config.domain,
+    createServiceAccountInterceptor(config.domain, sa, { apiAccess: true })
+  );
 }

@@ -7,7 +7,7 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "prettier",
-    require.resolve("@vercel/style-guide/eslint/next"),
+    "plugin:@next/next/recommended-legacy",
     "turbo",
   ],
   globals: {
@@ -18,6 +18,11 @@ module.exports = {
     node: true,
   },
   plugins: ["only-warn"],
+  rules: {
+    "@next/next/no-img-element": "off",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+  },
   settings: {
     "import/resolver": {
       typescript: {

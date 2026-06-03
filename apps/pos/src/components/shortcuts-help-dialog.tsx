@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from '@repo/ui/components/ui/dialog';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@repo/ui/components/ui/separator';
 
 interface ShortcutsHelpDialogProps {
   open: boolean;

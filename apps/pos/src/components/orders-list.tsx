@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { usePosStore } from '@/store/store';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card } from '@repo/ui/components/ui/card';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Button } from '@repo/ui/components/ui/button';
 import { ShoppingBag, Truck, UtensilsCrossed, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { OrderDetailsDialog } from '@/components/order-details-dialog';

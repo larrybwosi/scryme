@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@repo/ui/components/ui/input';
 import { Calendar, Search, LogOut, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@repo/ui/components/ui/button';
 import { NotificationCenter } from '@/components/notification-center';
 import { NotificationSettingsDialog } from '@/components/notification-settings-dialog';
 import {
@@ -13,7 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@repo/ui/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function Home() {

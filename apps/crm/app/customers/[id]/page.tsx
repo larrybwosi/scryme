@@ -1,0 +1,17 @@
+import { notFound } from 'next/navigation';
+import { getCustomer } from '../../actions/customers';
+import { CustomerDetailView } from './_components/customer-detail-view';
+
+interface CustomerPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function CustomerPage({ params }: CustomerPageProps) {
+  const { id } = await params;
+  const customer = await getCustomer(id);
+  if (!customer) notFound();
+
+  // Adapt Prisma model to the view's expected format if necessary
+  // For now, we'll pass it through and see if the view needs adaptation
+  return <CustomerDetailView customer={customer as any} />;
+}

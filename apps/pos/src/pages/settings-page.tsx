@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { usePosStore } from '@/store/store';
 import { businessConfigs, getDefaultSidebarItems, type BusinessType } from '@/lib/business-configs';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Switch } from '@repo/ui/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Separator } from '@repo/ui/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
 import {
   ScanBarcode,
   Play,
@@ -45,7 +45,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@repo/ui/components/ui/alert-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 import { useScanner } from '@/hooks/use-scanner';
@@ -55,7 +55,7 @@ import { toast } from 'sonner';
 import posthog from 'posthog-js';
 import GeneralSettings from '@/components/settings/general-tab';
 import LogsTab from '@/components/settings/logs-tab';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { motion } from 'framer-motion';
 
 interface HidDevice {
