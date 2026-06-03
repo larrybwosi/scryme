@@ -1,26 +1,11 @@
-import { PrismaClient } from '@repo/db';
-import { decrypt } from './encryption';
+import { PrismaClient } from '@repo/db/client';
+import { decrypt } from '@repo/shared/server';
 
 // --- Types ---
 
 export interface TwentyCrmClientConfig {
   serverUrl: string;
   apiKey: string;
-}
-
-export interface CreatePosCustomerData {
-  name: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-  address?: {
-    street1: string;
-    street2?: string;
-    city: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  };
 }
 
 // --- Shared Helpers ---
