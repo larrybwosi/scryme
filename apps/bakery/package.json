@@ -1,7 +1,7 @@
 {
   "name": "bakery",
   "private": true,
-  "version": "0.0.0",
+  "version": "3.3.0-nextgen.22",
   "type": "module",
   "scripts": {
     "dev": "vite",

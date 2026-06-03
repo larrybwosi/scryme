@@ -1,0 +1,249 @@
+name: Test
+
+on:
+  push:
+    branches: [dev, nextgen]
+  pull_request:
+    branches: [dev, nextgen]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  filter:
+    runs-on: ubuntu-latest
+    outputs:
+      pos: ${{ steps.changes.outputs.pos }}
+      pos_rust: ${{ steps.changes.outputs.pos_rust }}
+      bakery: ${{ steps.changes.outputs.bakery }}
+      bakery_rust: ${{ steps.changes.outputs.bakery_rust }}
+      api: ${{ steps.changes.outputs.api }}
+      crm: ${{ steps.changes.outputs.crm }}
+      web: ${{ steps.changes.outputs.web }}
+      packages: ${{ steps.changes.outputs.packages }}
+      workflow: ${{ steps.changes.outputs.workflow }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            pos:
+              - 'apps/pos/**'
+            pos_rust:
+              - 'apps/pos/src-tauri/**'
+            bakery:
+              - 'apps/bakery/**'
+            bakery_rust:
+              - 'apps/bakery/src-tauri/**'
+            api:
+              - 'apps/api/**'
+            crm:
+              - 'apps/crm/**'
+            web:
+              - 'apps/web/**'
+            packages:
+              - 'packages/**'
+            workflow:
+              - '.github/workflows/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+
+  validation-needed:
+    needs: filter
+    runs-on: ubuntu-latest
+    outputs:
+      needed: ${{ steps.check.outputs.needed }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.bakery }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.api }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.web }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.packages }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "needed=false" >> $GITHUB_OUTPUT
+          fi
+
+  lint-typecheck:
+    needs: [filter, validation-needed]
+    if: needs.validation-needed.outputs.needed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm generate
+
+      - name: Turbo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-lint-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-lint-
+
+      - name: Lint and Type Check
+        run: |
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+            pnpm turbo lint type-check
+          else
+            FILTER=""
+            if [ "${{ needs.filter.outputs.pos }}" == "true" ]; then FILTER="$FILTER --filter=pos..."; fi
+            if [ "${{ needs.filter.outputs.bakery }}" == "true" ]; then FILTER="$FILTER --filter=bakery..."; fi
+            if [ "${{ needs.filter.outputs.api }}" == "true" ]; then FILTER="$FILTER --filter=api..."; fi
+            if [ "${{ needs.filter.outputs.crm }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
+            if [ "${{ needs.filter.outputs.web }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
+            if [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=@repo/*..."; fi
+
+            if [ -n "$FILTER" ]; then
+              pnpm turbo lint type-check $FILTER
+            else
+              echo "No JS/TS changes detected, skipping lint and type-check"
+            fi
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+  rust-pos:
+    needs: filter
+    if: needs.filter.outputs.pos_rust == 'true' || needs.filter.outputs.workflow == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/pos/src-tauri
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
+            libudev-dev libusb-1.0-0-dev libpcsclite-dev pkg-config patchelf
+      - name: Create dummy binaries
+        run: |
+          mkdir -p apps/pos/src-tauri/binaries
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
+          chmod +x apps/pos/src-tauri/binaries/*
+      - name: Lint Backend
+        run: cd apps/pos && pnpm lint:backend
+      - name: Install cargo-tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
+      - name: Test Backend
+        run: cd apps/pos/src-tauri && cargo tarpaulin --ignore-tests --out Xml
+
+  rust-bakery:
+    needs: filter
+    if: needs.filter.outputs.bakery_rust == 'true' || needs.filter.outputs.workflow == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/bakery/src-tauri
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
+            libssl-dev libayatana-appindicator3-dev librsvg2-dev pkg-config
+      - name: Lint Backend
+        run: cd apps/bakery && pnpm lint:backend
+      - name: Test Backend
+        run: cd apps/bakery && pnpm test:backend
+
+  frontend-tests:
+    needs: [filter, validation-needed]
+    if: needs.validation-needed.outputs.needed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma Client
+        run: pnpm generate
+      - name: Run Tests
+        run: |
+          FILTER=""
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+            pnpm --filter pos test:frontend
+          fi
+          if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+            pnpm --filter api test
+          fi
+
+  e2e-tests:
+    needs: [filter]
+    if: needs.filter.outputs.pos == 'true' || (needs.filter.outputs.packages == 'true' && github.event_name == 'push') || needs.filter.outputs.workflow == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter pos exec playwright install --with-deps
+      - name: Run E2E tests
+        run: pnpm --filter pos test:e2e
+        env:
+          POSTHOG_API_KEY: mock
+          SENTRY_DSN: mock

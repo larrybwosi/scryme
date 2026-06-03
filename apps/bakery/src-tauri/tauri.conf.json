@@ -1,6 +1,6 @@
 {
   "productName": "Scryme Bakery",
-  "version": "0.1.0",
+  "version": "3.3.0-nextgen.22",
   "identifier": "app.scryme.bakery",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -21,17 +21,32 @@
   "plugins": {
     "updater": {
       "active": true,
-      "endpoints": ["https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}"],
+      "endpoints": [
+        "https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}"
+      ],
       "pubkey": "dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg=="
     },
     "sql": {
-      "preload": ["sqlite:bakery.db"],
+      "preload": [
+        "sqlite:bakery.db"
+      ],
       "default": "sqlite:bakery.db"
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "nsis", "deb", "dmg"],
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+    "targets": [
+      "msi",
+      "nsis",
+      "deb",
+      "dmg"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }
