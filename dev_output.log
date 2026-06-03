@@ -1,0 +1,91 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@1.0.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 576ms
+(node:213109) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/apps/web/next.config.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /app/apps/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+○ Compiling /dashboard ...
+⚠ ./packages/db/generated/client.js
+unexpected export *
+export * used with module [project]/packages/db/generated/client.js [app-rsc] (ecmascript) which is a CommonJS module with exports only available at runtime
+List all export names manually (`export { a, b, c } from "...") or rewrite the module to ESM, to avoid the additional runtime code.`
+
+Import trace:
+  Server Component:
+    ./packages/db/generated/client.js
+    ./packages/db/src/client.ts
+    ./apps/web/app/actions/dashboard.ts
+    ./apps/web/app/dashboard/page.tsx
+
+
+[2m2026-06-03T15:04:28.133Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly.
+[2m2026-06-03T15:04:28.139Z[0m [33mWARN[0m [1m[Better Auth]:[0m Social provider github is missing clientId or clientSecret
+[2m2026-06-03T15:04:28.140Z[0m [33mWARN[0m [1m[Better Auth]:[0m Social provider google is missing clientId or clientSecret
+ GET /dashboard 307 in 10.9s (next.js: 9.9s, application-code: 942ms)
+⚠ ./packages/db/generated/client.js
+unexpected export *
+export * used with module [project]/packages/db/generated/client.js [app-rsc] (ecmascript) which is a CommonJS module with exports only available at runtime
+List all export names manually (`export { a, b, c } from "...") or rewrite the module to ESM, to avoid the additional runtime code.`
+
+Import trace:
+  Server Component:
+    ./packages/db/generated/client.js
+    ./packages/db/src/client.ts
+    ./apps/web/app/actions/dashboard.ts
+    ./apps/web/app/dashboard/page.tsx
+
+
+ GET /verify-dashboard 200 in 3.1s (next.js: 1850ms, application-code: 1205ms)
+⚠ ./packages/db/generated/client.js
+unexpected export *
+export * used with module [project]/packages/db/generated/client.js [app-rsc] (ecmascript) which is a CommonJS module with exports only available at runtime
+List all export names manually (`export { a, b, c } from "...") or rewrite the module to ESM, to avoid the additional runtime code.`
+
+Import trace:
+  Server Component:
+    ./packages/db/generated/client.js
+    ./packages/db/src/client.ts
+    ./apps/web/app/actions/dashboard.ts
+    ./apps/web/app/dashboard/page.tsx
+
+
+✓ Compiled in 116ms
+⚠ ./packages/db/generated/client.js
+unexpected export *
+export * used with module [project]/packages/db/generated/client.js [app-rsc] (ecmascript) which is a CommonJS module with exports only available at runtime
+List all export names manually (`export { a, b, c } from "...") or rewrite the module to ESM, to avoid the additional runtime code.`
+
+Import trace:
+  Server Component:
+    ./packages/db/generated/client.js
+    ./packages/db/src/client.ts
+    ./apps/web/app/actions/dashboard.ts
+    ./apps/web/app/dashboard/page.tsx
+
+
+ GET /verify-dashboard 404 in 960ms (next.js: 774ms, application-code: 187ms)
+⚠ ./packages/db/generated/client.js
+unexpected export *
+export * used with module [project]/packages/db/generated/client.js [app-rsc] (ecmascript) which is a CommonJS module with exports only available at runtime
+List all export names manually (`export { a, b, c } from "...") or rewrite the module to ESM, to avoid the additional runtime code.`
+
+Import trace:
+  Server Component:
+    ./packages/db/generated/client.js
+    ./packages/db/src/client.ts
+    ./apps/web/app/actions/dashboard.ts
+    ./apps/web/app/dashboard/page.tsx
+
+
+[?25h
+/app/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  web@1.0.0 dev: `next dev`
+Exit status 143
