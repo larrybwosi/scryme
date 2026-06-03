@@ -16,14 +16,14 @@ pub async fn login_local(
         .bind(&email)
         .fetch_optional(&*pool)
         .await?
-        .ok_or_else(|| BackendError::Internal("Invalid email or password".to_string()))?;
+        .ok_or_else(|| BackendError::Auth("Invalid email or password".to_string()))?;
 
     let password_hash = user.password_hash.as_ref().ok_or_else(|| {
-        BackendError::Internal("User does not have a local password set".to_string())
+        BackendError::Auth("User does not have a local password set".to_string())
     })?;
 
     if !verify(&password, password_hash).map_err(|e| BackendError::Internal(e.to_string()))? {
-        return Err(BackendError::Internal("Invalid email or password".to_string()));
+        return Err(BackendError::Auth("Invalid email or password".to_string()));
     }
 
     sqlx::query("UPDATE users SET last_login = ? WHERE id = ?")
@@ -126,7 +126,7 @@ pub async fn clear_provisioned_api_key() -> BackendResult<()> {
     let entry = Entry::new("scryme-bakery", "device-api-key")
         .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
 
-    match entry.delete_password() {
+    match entry.delete_credential() {
         Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
         Err(e) => Err(BackendError::Internal(format!("Failed to clear API Key: {}", e))),
     }

@@ -27,7 +27,7 @@ pub async fn init(app: &AppHandle) -> BackendResult<SqlitePool> {
         .await?;
 
     // Seed system units
-    let units_count: (i32,) = sqlx::query_as("SELECT COUNT(*) FROM system_units")
+    let units_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM system_units")
         .fetch_one(&pool)
         .await?;
 
@@ -42,7 +42,7 @@ pub async fn init(app: &AppHandle) -> BackendResult<SqlitePool> {
 
         for (id, name, symbol, unit_type, category, is_base) in units {
             sqlx::query(
-                "INSERT INTO system_units (id, name, symbol, type, category, is_base_unit) VALUES (?, ?, ?, ?, ?, ?)"
+                "INSERT INTO system_units (id, name, symbol, \"type\", category, is_base_unit) VALUES (?, ?, ?, ?, ?, ?)"
             )
             .bind(id)
             .bind(name)

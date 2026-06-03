@@ -39,7 +39,7 @@ pub async fn create_organization_unit(
     unit.updated_at = Utc::now();
 
     sqlx::query(
-        "INSERT INTO organization_units (id, organization_id, name, symbol, abbreviation, plural_name, type, category, description, is_active, base_system_unit_id, conversion_factor, conversion_offset, created_at, updated_at)
+        "INSERT INTO organization_units (id, organization_id, name, symbol, abbreviation, plural_name, \"type\", category, description, is_active, base_system_unit_id, conversion_factor, conversion_offset, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&unit.id)
@@ -89,7 +89,7 @@ pub async fn update_organization_unit(
     unit: OrganizationUnit,
 ) -> BackendResult<()> {
     sqlx::query(
-        "UPDATE organization_units SET name = ?, symbol = ?, abbreviation = ?, plural_name = ?, type = ?, category = ?, description = ?, is_active = ?, base_system_unit_id = ?, conversion_factor = ?, conversion_offset = ?, updated_at = ?
+        "UPDATE organization_units SET name = ?, symbol = ?, abbreviation = ?, plural_name = ?, \"type\" = ?, category = ?, description = ?, is_active = ?, base_system_unit_id = ?, conversion_factor = ?, conversion_offset = ?, updated_at = ?
          WHERE id = ?"
     )
     .bind(&unit.name)
