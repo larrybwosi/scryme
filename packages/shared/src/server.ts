@@ -8,6 +8,7 @@ export * from "./api/v2/utils/encryption";
 export * from "./api/v2/utils/crypto";
 export * from "./api/v2/utils/tokens";
 export * from "./lib/validations/order";
+export * from "./lib/validations/sale";
 export * from "./redis";
 export * from "./services/openloyalty";
 export * from "./services/customer";

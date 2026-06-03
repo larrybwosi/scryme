@@ -25,7 +25,6 @@ export class CreateOrderUseCase {
       items: dto.items,
       type: dto.channel as any, // Map channel to transaction type
       notes: dto.notes,
-      fulfillment: dto.fulfillment as any,
     } as CreateOrderInput);
 
     if (!result.success) {
