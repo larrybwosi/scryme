@@ -14,11 +14,11 @@ import {
   Settings,
   Keyboard,
 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@repo/ui/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePosStore } from '@/store/store';

@@ -115,7 +115,7 @@ describe('Stocking Flow Verification', () => {
         createMany: vi.fn(),
         updateMany: vi.fn(),
       },
-      qcResult: {
+      qCResult: {
         create: vi.fn(),
       },
       productVariantStock: {
@@ -231,7 +231,7 @@ describe('Stocking Flow Verification', () => {
 
     await purchaseOrderUseCase.receive(mockOrgId, mockMemberId, 'po-1', receivePoDto);
 
-    expect(mockTx.qcResult.create).toHaveBeenCalledTimes(2);
+    expect(mockTx.qCResult.create).toHaveBeenCalledTimes(2);
 
     // 3. Stock Transfer (Full Workflow)
     const createTransferDto = {

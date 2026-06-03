@@ -1,5 +1,5 @@
-import { db } from '@repo/db';
-import { Permission } from '../permissions/types';
+import { db } from "@repo/db";
+import { Permission } from "../permissions/types";
 
 // These should be imported from a config file or passed in
 const CONFIG = {
@@ -12,10 +12,10 @@ export class PermissionError extends Error {
   constructor(
     public message: string,
     public attempts?: number,
-    public isBanned?: boolean
+    public isBanned?: boolean,
   ) {
     super(message);
-    this.name = 'PermissionError';
+    this.name = "PermissionError";
   }
 }
 
@@ -36,7 +36,7 @@ export async function checkPermissionLogic(
     hasPermission: (permission: string) => boolean;
   },
   permission: Permission,
-  redisClient: any // Passing redis client to avoid direct import issues in the package if not configured
+  redisClient: any, // Passing redis client to avoid direct import issues in the package if not configured
 ): Promise<void> {
   const { memberId, organizationId, userId, role } = context;
 
@@ -44,9 +44,9 @@ export async function checkPermissionLogic(
   const banKey = `auth:ban:${memberId}`;
   if (await redisClient.get(banKey)) {
     throw new PermissionError(
-      'Access blocked: Too many failed authorization attempts.',
+      "Access blocked: Too many failed authorization attempts.",
       CONFIG.MAX_FAILED_ATTEMPTS,
-      true
+      true,
     );
   }
 
@@ -63,20 +63,25 @@ export async function checkPermissionLogic(
 
     // 3. Handle ban
     if (attempts >= CONFIG.MAX_FAILED_ATTEMPTS) {
-      await redisClient.setex(banKey, CONFIG.BAN_TTL, 'banned');
+      await redisClient.setex(banKey, CONFIG.BAN_TTL, "banned");
 
       // We can run this in the background
       db.user
         .update({
           where: { id: userId },
-          data: { banned: true, banReason: 'Exceeded permission request limit.' },
+          data: {
+            banned: true,
+            banReason: "Exceeded permission request limit.",
+          },
         })
-        .catch(err => console.error('Failed to update user ban status:', err));
+        .catch((err) =>
+          console.error("Failed to update user ban status:", err),
+        );
 
       throw new PermissionError(
         `Forbidden: Permission '${permission}' denied. Your account is now temporarily blocked.`,
         attempts,
-        true
+        true,
       );
     }
 
@@ -86,8 +91,9 @@ export async function checkPermissionLogic(
         data: {
           organizationId: organizationId,
           memberId: memberId,
-          action: 'ACCESS_DENIED',
-          entityType: 'AUTH_CHECK',
+          action: "ACCESS_DENIED",
+          entityType: "AUTH_CHECK",
+          entityId: memberId,
           description: `Permission '${permission}' denied for member ${memberId} (Role: ${role}). Attempt ${attempts}/${CONFIG.MAX_FAILED_ATTEMPTS}.`,
           details: {
             requestedPermission: permission,
@@ -95,13 +101,21 @@ export async function checkPermissionLogic(
           },
         },
       })
-      .catch(err => console.error('Failed to create audit log:', err));
+      .catch((err) => console.error("Failed to create audit log:", err));
 
     // 5. Throw standard denial
-    throw new PermissionError(`Forbidden: You do not have the required permission: '${permission}'`, attempts, false);
+    throw new PermissionError(
+      `Forbidden: You do not have the required permission: '${permission}'`,
+      attempts,
+      false,
+    );
   }
 
   // 6. On success, reset failure counter for this specific permission
   const failedAttemptsKey = `auth:failed-attempts:${memberId}:${permission}`;
-  redisClient.del(failedAttemptsKey).catch((err: any) => console.error('Failed to clear failed attempts key:', err));
+  redisClient
+    .del(failedAttemptsKey)
+    .catch((err: any) =>
+      console.error("Failed to clear failed attempts key:", err),
+    );
 }

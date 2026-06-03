@@ -18,6 +18,7 @@ export default tseslint.config(
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
       "@typescript-eslint/no-wrapper-object-types": "off",
+      "no-constant-condition": "off",
     },
   }
 );

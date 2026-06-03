@@ -83,6 +83,30 @@ export class PettyCashUseCase {
     });
   }
 
+  async getFundById(organizationId: string, fundId: string) {
+    const fund = await this.prisma.client.pettyCashFund.findFirst({
+      where: { id: fundId, organizationId },
+      include: {
+        responsibleMember: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!fund) {
+      throw new NotFoundException('Petty cash fund not found');
+    }
+
+    return fund;
+  }
+
   async getFundTransactions(organizationId: string, fundId: string) {
     const fund = await this.prisma.client.pettyCashFund.findFirst({
       where: { id: fundId, organizationId },

@@ -18,15 +18,15 @@ import {
   Stethoscope,
   ShieldCheck,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import { Button } from '@repo/ui/components/ui/button';
+import { Calendar } from '@repo/ui/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
+import { Card, CardContent } from '@repo/ui/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { z } from 'zod';

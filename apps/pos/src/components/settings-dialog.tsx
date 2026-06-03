@@ -1,8 +1,8 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui/components/ui/dialog';
 import SettingsPage from '@/pages/settings-page';
-import { ScrollArea } from './ui/scroll-area';
+import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 
 interface SettingsDialogProps {
   open: boolean;

@@ -3,9 +3,9 @@ import { CheckCircle2, ExternalLink, Loader2, Plus, Printer, ArrowRight, Copy, C
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { Button } from './ui/button';
+import { Button } from '@repo/ui/components/ui/button';
 import { processFileDownload } from '@/lib/utils';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@repo/ui/components/ui/card';
 import { usePrinter } from '@/hooks/use-printer';
 import { usePosStore } from '@/store/store';
 import { useAuthStore } from '@/store/pos-auth-store';

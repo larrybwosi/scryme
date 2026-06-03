@@ -6,10 +6,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from '@repo/ui/components/ui/dialog';
+import { Button } from '@repo/ui/components/ui/button';
 import { AlertCircle, Printer, RefreshCcw, Clock } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
 
 interface PrintRetryDialogProps {
   isOpen: boolean;

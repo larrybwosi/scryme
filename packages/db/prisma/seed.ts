@@ -1,4 +1,4 @@
-import { UnitType, IndustryCategory } from '../src/index';
+import { UnitType, IndustryCategory } from '../generated/client';
 
 // System Units data definition
 const units = [
@@ -118,7 +118,7 @@ async function seedUnits(prisma: any) {
 
 async function seedConversions(prisma: any) {
   console.log('Seeding unit conversions...');
-  const unitMap = new Map<string, string>();
+  const unitMap = new global.Map<string, string>();
   const dbUnits = await prisma.systemUnit.findMany();
   dbUnits.forEach((u: any) => unitMap.set(u.symbol, u.id));
 
@@ -143,8 +143,7 @@ async function seedConversions(prisma: any) {
 }
 
 async function main() {
-  const { db } = await import('../src/index.js');
-  const prisma = db;
+  const { prisma } = await import('../src/client');
 
   await seedUnits(prisma);
   await seedConversions(prisma);

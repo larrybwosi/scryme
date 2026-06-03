@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import type { V2ApiContext } from '@repo/shared/server';
 // Proxy to the shared actions in @repo/shared/server
-import { processSale, triggerStkPush, ProcessSaleInputSchema } from '@repo/shared/server';
+import { processSale, triggerStkPush, ProcessSaleInputSchema, createOrder, CreateOrderInputSchema } from '@repo/shared/server';
 
 @Injectable()
 export class PosSaleService {
@@ -63,6 +63,34 @@ export class PosSaleService {
           }
         }
       }
+    }
+
+    return result;
+  }
+
+  async handleOrder(ctx: V2ApiContext, body: any) {
+    const { organizationId, memberId, locationId: ctxLocationId } = ctx;
+    const locationId = ctxLocationId || body.locationId;
+
+    if (!locationId) {
+      throw new BadRequestException('locationId is required');
+    }
+
+    // 1. Validate Input
+    const preCheck = CreateOrderInputSchema.safeParse({ ...body, locationId });
+    if (!preCheck.success) {
+      this.logger.error(`Order Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`);
+      throw new BadRequestException({
+        message: 'Invalid order data',
+        details: preCheck.error.flatten().fieldErrors,
+      });
+    }
+
+    // 2. Process Order via Shared Action
+    const result = await createOrder(organizationId, memberId ?? 'api', preCheck.data);
+
+    if (!result.success) {
+      throw new BadRequestException(result.message || 'Failed to process order');
     }
 
     return result;

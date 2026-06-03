@@ -76,21 +76,21 @@ export class MpesaService {
 
     const { organizationId, amount, phoneNumber, transactionId, paymentId } = parsed.data;
 
-    const config = await db.mpesaConfiguration.findUnique({
+    const config = await db.paymentCredentials.findUnique({
       where: { organizationId },
     });
 
-    if (!config || !config.isActive) {
+    if (!config) {
       throw new Error('M-Pesa is not configured for this organization');
     }
 
     const credentials: MpesaCredentials = {
-      mpesaConsumerKey: decrypt(config.consumerKey),
-      mpesaConsumerSecret: decrypt(config.consumerSecret),
-      mpesaShortCode: config.shortCode,
-      mpesaPassKey: decrypt(config.passKey),
-      mpesaType: 'PAYBILL',
-      environment: 'SANDBOX',
+      mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
+      mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
+      mpesaShortCode: config.mpesaShortCode,
+      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : '',
+      mpesaType: config.mpesaType as any,
+      environment: config.environment as any,
     };
 
     const client = new MpesaClient(credentials);
@@ -106,11 +106,13 @@ export class MpesaService {
     await db.mpesaPaymentRequest.create({
       data: {
         organizationId,
+        memberId: input.userId || 'system',
         paymentId,
         checkoutRequestId: response.CheckoutRequestID,
         merchantRequestId: response.MerchantRequestID,
         amount,
         phoneNumber,
+        reference: transactionId,
         status: 'PENDING',
         saleNumber: transactionId, // Using transactionId as reference
       },

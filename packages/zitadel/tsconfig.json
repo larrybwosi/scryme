@@ -5,22 +5,17 @@
     "skipLibCheck": true,
     "noEmit": false,
     "checkJs": false,
+    "jsx": "react-jsx",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "types": [
-      "jest",
       "node"
     ],
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strict": false,
-    "rootDir": "..",
-    "baseUrl": ".",
-    "paths": {
-      "@repo/db": ["../db/src/index.ts"],
-      "@repo/db/client": ["../db/src/client.ts"],
-      "@repo/shared": ["../shared/src/index.ts"],
-      "@repo/windmill/server": ["../windmill/src/server.ts"],
-      "@repo/windmill": ["../windmill/src/index.ts"]
-    }
+    "rootDir": "src",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src"
