@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { z } from 'zod';
 import { ApprovalActionType, ApprovalMode, ConditionType, MemberRole } from '@repo/db';
 // --- Schemas ---

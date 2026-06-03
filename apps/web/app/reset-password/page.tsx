@@ -101,7 +101,21 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
   </div>
 );
 
+import { Suspense } from "react";
+
 const PasswordResetPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+      </div>
+    }>
+      <PasswordResetForm />
+    </Suspense>
+  );
+};
+
+const PasswordResetForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");

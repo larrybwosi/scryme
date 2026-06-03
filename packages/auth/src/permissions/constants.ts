@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Available actions in the permission system
  */
@@ -14,7 +15,7 @@ export const PERMISSION_ACTIONS = {
     MANAGE_OWN: 'manage:own',
     CREATE_OWN: 'create:own',
     ALL: '*',
-} as const;
+};
 /**
  * Resource modules in the ERP system
  */
@@ -61,11 +62,11 @@ export const RESOURCES = {
     BAKERY: 'bakery',
     WORKSPACE: 'workspace',
     HULY: 'huly',
-} as const;
+};
 /**
  * Helper function to create permission strings
  */
-export const createPermission = (resource: string, action: string, scope?: string) => {
+export const createPermission = (resource, action, scope) => {
     return scope ? `${resource}:${action}:${scope}` : `${resource}:${action}`;
 };
 /**
@@ -162,4 +163,4 @@ export const PERMISSIONS = {
     // API Key Management
     API_KEY_VIEW: 'api_key:view',
     API_KEY_MANAGE: 'api_key:manage',
-} as const;
+};

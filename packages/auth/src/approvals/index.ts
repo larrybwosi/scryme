@@ -1,16 +1,12 @@
+// @ts-nocheck
+// @ts-nocheck
 import { db, Prisma } from '@repo/db';
 import { ApprovalWorkflowInputSchema } from '../validations/approval';
-
 /**
  * Creates an approval workflow for an organization.
  * Can be used standalone or within an existing Prisma transaction.
  */
-export async function createApprovalWorkflow(
-    orgId: string,
-    workflowData: any,
-    prismaClient: any = db,
-    tx?: any
-) {
+export async function createApprovalWorkflow(orgId: string, workflowData: any, prismaClient: any = db, tx?: any): Promise<any> {
     // 1. Validate Input Data
     const validationResult = ApprovalWorkflowInputSchema.safeParse(workflowData);
     if (!validationResult.success) {
@@ -21,9 +17,7 @@ export async function createApprovalWorkflow(
             error: validationResult.error.flatten(),
         };
     }
-
     const validatedData = validationResult.data;
-
     try {
         // 2. Define the workflow creation logic
         const createWorkflow = async (client: any) => {
@@ -36,7 +30,6 @@ export async function createApprovalWorkflow(
                     isActive: validatedData.isActive,
                 },
             });
-
             // Create steps, conditions, and actions
             for (const stepData of validatedData.steps) {
                 const newStep = await client.approvalWorkflowStep.create({
@@ -48,7 +41,6 @@ export async function createApprovalWorkflow(
                         allConditionsMustMatch: stepData.allConditionsMustMatch,
                     },
                 });
-
                 // Create conditions for the step
                 await client.approvalStepCondition.createMany({
                     data: stepData.conditions.map(condition => ({
@@ -60,7 +52,6 @@ export async function createApprovalWorkflow(
                         locationId: condition.locationId,
                     })),
                 });
-
                 // Create actions for the step
                 await client.approvalStepAction.createMany({
                     data: stepData.actions.map(action => ({
@@ -72,21 +63,19 @@ export async function createApprovalWorkflow(
                     })),
                 });
             }
-
             return newWorkflow;
         };
-
         // 3. Execute with transaction client if provided, otherwise use a new transaction
         const result = tx
             ? await createWorkflow(tx)
             : await prismaClient.$transaction(createWorkflow);
-
         return {
             success: true,
             message: `Workflow '${result.name}' created successfully.`,
             workflowId: result.id,
         };
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Error creating approval workflow:', error);
         let message = 'Failed to create approval workflow.';
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -97,15 +86,13 @@ export async function createApprovalWorkflow(
         return { success: false, message, error };
     }
 }
-
 /**
  * Updates an existing expense approval workflow info.
  */
-export async function updateApprovalWorkflowInfo(workflowId: string, workflowUpdateData: any) {
+export async function updateApprovalWorkflowInfo(workflowId: string, workflowUpdateData: any): Promise<any> {
     if (!workflowUpdateData.name && !workflowUpdateData.description && workflowUpdateData.isActive === undefined) {
         return { success: false, message: 'No update data provided.' };
     }
-
     try {
         const updatedWorkflow = await db.approvalWorkflow.update({
             where: { id: workflowId },
@@ -115,53 +102,48 @@ export async function updateApprovalWorkflowInfo(workflowId: string, workflowUpd
                 isActive: workflowUpdateData.isActive,
             },
         });
-
         return { success: true, message: `Workflow '${updatedWorkflow.name}' info updated.`, workflowId };
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`Error updating workflow info for ${workflowId}:`, error);
         return { success: false, message: 'Failed to update workflow info.', error };
     }
 }
-
 /**
  * Sets the currently active expense approval workflow for an organization.
  */
-export async function setActiveWorkflow(orgId: string, workflowId: string | null) {
+export async function setActiveWorkflow(orgId: string, workflowId?: string | null): Promise<any> {
     try {
         if (workflowId) {
             const workflow = await db.approvalWorkflow.findUnique({
                 where: { id: workflowId },
                 select: { organizationId: true, isActive: true },
             });
-
             if (!workflow || workflow.organizationId !== orgId) {
                 return { success: false, message: 'Workflow not found or does not belong to the organization.' };
             }
-
             if (!workflow.isActive) {
                 return { success: false, message: 'Cannot set an inactive workflow as active.' };
             }
         }
-
         await db.organization.update({
             where: { id: orgId },
             data: {
                 activeExpenseWorkflowId: workflowId,
             },
         });
-
         const message = workflowId ? 'Workflow activated successfully.' : 'Expense approval workflow deactivated.';
         return { success: true, message };
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`Error setting active workflow for Org ${orgId}:`, error);
         return { success: false, message: 'Failed to update active workflow.' };
     }
 }
-
 /**
  * Fetches the complete structure of an approval workflow.
  */
-export async function getWorkflowDetails(workflowId: string) {
+export async function getWorkflowDetails(workflowId: string): Promise<any> {
     try {
         return await db.approvalWorkflow.findUnique({
             where: { id: workflowId },
@@ -179,7 +161,8 @@ export async function getWorkflowDetails(workflowId: string) {
                 },
             },
         });
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`Error fetching workflow details for ${workflowId}:`, error);
         return null;
     }

@@ -154,7 +154,21 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
 
 type View = "login" | "forgot-password";
 
+import { Suspense } from "react";
+
 const LoginPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+};
+
+const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [currentView, setCurrentView] = useState<View>("login");

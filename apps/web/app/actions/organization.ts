@@ -9,7 +9,7 @@ export async function createOrganization(data: {
   slug: string;
   industry: string;
   size: string;
-}) {
+}): Promise<any> {
   const auth = await getServerAuth();
   if (!auth) throw new Error("Unauthorized");
 
@@ -37,7 +37,7 @@ export async function createOrganization(data: {
   return organization;
 }
 
-export async function checkSlugAvailability(slug: string) {
+export async function checkSlugAvailability(slug: string): Promise<boolean> {
   const existing = await db.organization.findUnique({
     where: { slug },
   });

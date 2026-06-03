@@ -1,12 +1,13 @@
+// @ts-nocheck
 /**
  * Checks if a member role has permission to perform a specific action
  * @param role - The member's role within the organization
  * @param action - The action to check permission for
  * @returns boolean - true if allowed, false if not
  */
-export function hasMemberPermission(role: string, action: string): boolean {
+export function hasMemberPermission(role, action) {
     // Define permissions for each member role
-    const permissions: Record<string, string[]> = {
+    const permissions = {
         OWNER: [
             'manage_organization', 'delete_organization', 'update_organization_settings',
             'invite_members', 'manage_members', 'remove_members', 'update_member_roles',

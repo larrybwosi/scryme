@@ -33,7 +33,7 @@ export async function createV3ApiClientAction(data: {
   name: string;
   scopes?: string[];
   corsOrigins?: string[];
-}) {
+}): Promise<any> {
   const context = await ensureOrgContext();
   const result = await createV3ApiClient({
     ...data,
@@ -43,7 +43,7 @@ export async function createV3ApiClientAction(data: {
   return result;
 }
 
-export async function getV3ApiClientsAction() {
+export async function getV3ApiClientsAction(): Promise<any[]> {
   const context = await ensureOrgContext();
   return getV3ApiClients(context.organizationId);
 }
@@ -60,7 +60,7 @@ export async function updateV3ApiClientAction(id: string, data: any) {
   revalidatePath("/integrations/apps-api");
 }
 
-export async function regenerateV3ClientSecretAction(id: string) {
+export async function regenerateV3ClientSecretAction(id: string): Promise<any> {
   const context = await ensureOrgContext();
   const secret = await regenerateV3ClientSecret(id, context.organizationId);
   revalidatePath("/integrations/apps-api");
@@ -74,7 +74,7 @@ export async function createWebhookSubscriptionAction(data: {
   url: string;
   events: string[];
   apiClientId?: string;
-}) {
+}): Promise<any> {
   const context = await ensureOrgContext();
   const result = await createWebhookSubscription({
     ...data,
@@ -84,7 +84,7 @@ export async function createWebhookSubscriptionAction(data: {
   return result;
 }
 
-export async function getWebhookSubscriptionsAction() {
+export async function getWebhookSubscriptionsAction(): Promise<any[]> {
   const context = await ensureOrgContext();
   return getWebhookSubscriptions(context.organizationId);
 }
@@ -102,7 +102,7 @@ export async function createV2ApiKeyAction(data: {
   environment?: "LIVE" | "TEST";
   keyType?: "POS" | "CLIENT";
   permissions?: string[];
-}) {
+}): Promise<any> {
   const context = await ensureOrgContext();
   const result = await createV2ApiKey({
     ...data,
@@ -113,7 +113,7 @@ export async function createV2ApiKeyAction(data: {
   return result;
 }
 
-export async function getV2ApiKeysAction() {
+export async function getV2ApiKeysAction(): Promise<any[]> {
   const context = await ensureOrgContext();
   return getV2ApiKeys(context.organizationId);
 }
@@ -135,7 +135,7 @@ export async function createDeviceSetupTokenAction(data: {
     | "TABLET"
     | "BAKERY_TERMINAL";
   locationId: string;
-}) {
+}): Promise<any> {
   const context = await ensureOrgContext();
   const result = await createDeviceSetupToken({
     ...data,
@@ -146,12 +146,12 @@ export async function createDeviceSetupTokenAction(data: {
   return result;
 }
 
-export async function getDeviceSetupTokensAction() {
+export async function getDeviceSetupTokensAction(): Promise<any[]> {
   const context = await ensureOrgContext();
   return getDeviceSetupTokens(context.organizationId);
 }
 
-export async function getDeviceRegistryAction() {
+export async function getDeviceRegistryAction(): Promise<any[]> {
   const context = await ensureOrgContext();
   return getDeviceRegistry(context.organizationId);
 }
