@@ -31,7 +31,7 @@ export interface NotifyOptions {
 }
 
 export class NotificationEngine {
-  async notify(options: NotifyOptions) {
+  async notify(options: NotifyOptions): Promise<any> {
     const {
       organizationId,
       templateName,
@@ -127,7 +127,7 @@ export class NotificationEngine {
     return Array.from(userIds);
   }
 
-  async deliver(dispatchId: string) {
+  async deliver(dispatchId: string): Promise<void> {
     const dispatch = await db.notificationDispatch.findUnique({
       where: { id: dispatchId },
       include: { organization: true },

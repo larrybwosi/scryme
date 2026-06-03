@@ -109,4 +109,3 @@ pub async fn provision_device_with_token(
     Ok(())
 }
 
-#
