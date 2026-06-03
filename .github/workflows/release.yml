@@ -32,6 +32,106 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'turbo.json'
 
+  lint-test:
+    needs: filter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Turbo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Lint
+        run: pnpm lint
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+      - name: Type Check
+        run: pnpm type-check
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+      - name: Run POS Frontend Tests
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: pnpm --filter dealio-desktop test:frontend
+
+      - name: Install Rust
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Install POS Backend dependencies (Linux)
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libudev-dev \
+            libusb-1.0-0-dev \
+            libpcsclite-dev \
+            pkg-config \
+            patchelf
+
+      - name: Create POS dummy binaries
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: |
+          mkdir -p apps/pos/src-tauri/binaries
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
+          chmod +x apps/pos/src-tauri/binaries/*
+
+      - name: Run POS Backend Linting
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: pnpm --filter dealio-desktop lint:backend
+
+      - name: Run POS Backend Tests with Coverage
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out Xml
+
+      - name: Cache Playwright Browsers
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Browsers
+        if: (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true') && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter dealio-desktop exec playwright install --with-deps
+
+      - name: Run POS E2E tests
+        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
+        run: pnpm --filter dealio-desktop test:e2e
+        env:
+          POSTHOG_API_KEY: mock
+          SENTRY_DSN: mock
+
   release-management:
     runs-on: ubuntu-latest
     permissions:
@@ -48,7 +148,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -92,16 +192,16 @@ jobs:
         include:
           - target_group: macos-arm
             os: macos-latest
-            args: '--target aarch64-apple-darwin'
+            args: "--target aarch64-apple-darwin"
           - target_group: macos-x86
             os: macos-latest
-            args: '--target x86_64-apple-darwin'
+            args: "--target x86_64-apple-darwin"
           - target_group: ubuntu
             os: ubuntu-22.04
-            args: ''
+            args: ""
           - target_group: windows
             os: windows-latest
-            args: ''
+            args: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -110,7 +210,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -118,7 +218,7 @@ jobs:
       - name: Rust Cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './apps/pos/src-tauri -> target'
+          workspaces: "./apps/pos/src-tauri -> target"
       - name: install dependencies (ubuntu only)
         if: matrix.os == 'ubuntu-22.04'
         run: |
@@ -237,13 +337,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Rust Cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './apps/bakery/src-tauri -> target'
+          workspaces: "./apps/bakery/src-tauri -> target"
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |

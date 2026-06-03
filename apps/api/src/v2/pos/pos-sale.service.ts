@@ -1,8 +1,14 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/server";
 // Proxy to the shared actions in @repo/shared/server
-import { processSale, triggerStkPush, ProcessSaleInputSchema, createOrder, CreateOrderSchema } from '@repo/shared/server';
+import {
+  processSale,
+  triggerStkPush,
+  ProcessSaleInputSchema,
+  createOrder,
+  CreateOrderInputSchema,
+} from "@repo/shared/server";
 
 @Injectable()
 export class PosSaleService {
@@ -15,41 +21,57 @@ export class PosSaleService {
     const locationId = ctxLocationId || body.locationId;
 
     if (!locationId) {
-      throw new BadRequestException('locationId is required (set on the device API key or pass it in the request body)');
+      throw new BadRequestException(
+        "locationId is required (set on the device API key or pass it in the request body)",
+      );
     }
 
     // 1. Validate Input
-    const preCheck = ProcessSaleInputSchema.safeParse({ ...body, enableStockTracking, locationId });
+    const preCheck = ProcessSaleInputSchema.safeParse({
+      ...body,
+      enableStockTracking,
+      locationId,
+    });
     if (!preCheck.success) {
-      this.logger.error(`Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`);
+      this.logger.error(
+        `Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`,
+      );
       throw new BadRequestException({
-        message: 'Invalid sale data',
+        message: "Invalid sale data",
         details: preCheck.error.flatten().fieldErrors,
       });
     }
 
     // 2. Process Sale via Shared Action
-    const result = await processSale(organizationId, memberId ?? 'api', preCheck.data);
+    const result = await processSale(
+      organizationId,
+      memberId ?? "api",
+      preCheck.data,
+    );
 
     if (!result.success || !result.data) {
-      throw new BadRequestException(result.message || 'Failed to process sale');
+      throw new BadRequestException(result.message || "Failed to process sale");
     }
 
     const transaction = result.data;
     const payments = (transaction as any).payments || [];
 
     // 3. Handle M-Pesa STK Pushes
-    const mpesaPayments = payments.filter((p: any) => p.method === 'MPESA' && p.status === 'PENDING');
+    const mpesaPayments = payments.filter(
+      (p: any) => p.method === "MPESA" && p.status === "PENDING",
+    );
 
     for (const payment of mpesaPayments) {
       if (payment.payerPhone) {
         const mpesaInput = (preCheck.data as any).payments.find(
-          (p: any) => p.method === 'MPESA' && Math.abs(Number(p.amount) - Number(payment.amount)) < 0.01
+          (p: any) =>
+            p.method === "MPESA" &&
+            Math.abs(Number(p.amount) - Number(payment.amount)) < 0.01,
         );
 
-        const flowType = mpesaInput?.mpesaFlowType || 'STK_PUSH';
+        const flowType = mpesaInput?.mpesaFlowType || "STK_PUSH";
 
-        if (flowType === 'STK_PUSH') {
+        if (flowType === "STK_PUSH") {
           try {
             await triggerStkPush({
               organizationId,
@@ -59,7 +81,9 @@ export class PosSaleService {
               paymentId: payment.id,
             });
           } catch (stkError: any) {
-            this.logger.error(`STK Push Failed for payment ${payment.id}: ${stkError.message}`);
+            this.logger.error(
+              `STK Push Failed for payment ${payment.id}: ${stkError.message}`,
+            );
           }
         }
       }
@@ -73,24 +97,30 @@ export class PosSaleService {
     const locationId = ctxLocationId || body.locationId;
 
     if (!locationId) {
-      throw new BadRequestException('locationId is required');
+      throw new BadRequestException("locationId is required");
     }
 
     // 1. Validate Input
-    const preCheck = CreateOrderSchema.safeParse({ ...body, locationId });
+    const preCheck = CreateOrderInputSchema.safeParse({ ...body, locationId });
     if (!preCheck.success) {
-      this.logger.error(`Order Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`);
+      this.logger.error(
+        `Order Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`,
+      );
       throw new BadRequestException({
-        message: 'Invalid order data',
+        message: "Invalid order data",
         details: preCheck.error.flatten().fieldErrors,
       });
     }
 
     // 2. Process Order via Shared Action
-    const result = await createOrder(organizationId, memberId ?? 'api', preCheck.data as any);
+    const result = await createOrder(
+      organizationId,
+      memberId ?? "api",
+      preCheck.data,
+    );
 
     if (!result.success) {
-      throw new BadRequestException((result as any).error || 'Failed to process order');
+      throw new BadRequestException(result.error || "Failed to process order");
     }
 
     return result;

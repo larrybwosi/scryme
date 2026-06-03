@@ -76,4 +76,14 @@ export class ScrymeChatApiClient {
   async getWorkspace(slug: string): Promise<ScrymeChatWorkspace> {
     return this.request<ScrymeChatWorkspace>('GET', `/api/v2/workspaces/${slug}`);
   }
+
+  /**
+   * Send a message to a Scryme Chat channel.
+   */
+  async sendMessage(workspaceSlug: string, channelSlug: string, message: {
+    content: string;
+    attachments?: any[];
+  }): Promise<any> {
+    return this.request('POST', `/api/v2/workspaces/${workspaceSlug}/channels/${channelSlug}/messages`, message);
+  }
 }

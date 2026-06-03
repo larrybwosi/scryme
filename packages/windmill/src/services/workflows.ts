@@ -10,26 +10,99 @@ export interface WorkflowTriggerData {
   [key: string]: any;
 }
 
-// fallow-ignore-next-line complexity
 function evaluateCondition(condition: any, context: any): boolean {
   switch (condition.type) {
     case 'AMOUNT_RANGE':
-      const amount = parseFloat(context.amount?.toString() || '0');
-      if (condition.minAmount && amount < Number(condition.minAmount)) return false;
-      if (condition.maxAmount && amount > Number(condition.maxAmount)) return false;
-      return true;
+      return evaluateAmountRange(condition, context);
     case 'LOCATION':
-      if (condition.locationId && context.locationId !== condition.locationId) return false;
-      return true;
+      return evaluateLocation(condition, context);
     case 'EXPENSE_CATEGORY':
-      if (condition.expenseCategoryId && context.expenseCategoryId !== condition.expenseCategoryId) return false;
-      return true;
+      return evaluateExpenseCategory(condition, context);
     default:
       return true;
   }
 }
 
-// fallow-ignore-next-line complexity
+function evaluateAmountRange(condition: any, context: any): boolean {
+  const amount = parseFloat(context.amount?.toString() || '0');
+  if (condition.minAmount && amount < Number(condition.minAmount)) return false;
+  if (condition.maxAmount && amount > Number(condition.maxAmount)) return false;
+  return true;
+}
+
+function evaluateLocation(condition: any, context: any): boolean {
+  if (condition.locationId && context.locationId !== condition.locationId) return false;
+  return true;
+}
+
+function evaluateExpenseCategory(condition: any, context: any): boolean {
+  if (condition.expenseCategoryId && context.expenseCategoryId !== condition.expenseCategoryId) return false;
+  return true;
+}
+
+async function executeWorkflowActions(
+  organizationId: string,
+  event: string,
+  data: WorkflowTriggerData,
+  workflow: any,
+  step: any
+) {
+  for (const action of step.actions) {
+    switch (action.type) {
+      case 'WINDMILL_SCRIPT':
+        if (action.windmillScriptPath) {
+          await runAutomation({
+            organizationId,
+            scriptPath: action.windmillScriptPath,
+            data: {
+              ...data,
+              workflowId: workflow.id,
+              stepId: step.id
+            },
+            dealioEventType: `workflow.${event.toLowerCase()}`,
+          });
+        }
+        break;
+
+      case 'NOTIFICATION_ONLY':
+        await notificationEngine.notify({
+          organizationId,
+          templateName: `WORKFLOW_STEP_${step.id}`,
+          data: {
+            ...data,
+            workflowName: workflow.name,
+            stepName: step.name
+          },
+          recipients: {
+            memberIds: action.specificMemberId ? [action.specificMemberId] : [],
+            roles: action.approverRole ? [action.approverRole] : []
+          }
+        });
+        break;
+
+      default:
+        console.warn(`Action type ${action.type} not yet implemented in generic workflow engine`);
+        break;
+    }
+  }
+}
+
+function checkStepMatches(step: any, data: WorkflowTriggerData): boolean {
+  if (!step.conditions || step.conditions.length === 0) return true;
+
+  for (const condition of step.conditions) {
+    const conditionMatch = evaluateCondition(condition, data);
+
+    if (step.allConditionsMustMatch && !conditionMatch) {
+      return false;
+    } else if (!step.allConditionsMustMatch && conditionMatch) {
+      return true;
+    }
+  }
+
+  return step.allConditionsMustMatch;
+}
+
 export async function triggerWorkflow(organizationId: string, event: string, data: WorkflowTriggerData) {
   const workflows = await db.approvalWorkflow.findMany({
     where: {
@@ -73,66 +146,12 @@ export async function triggerWorkflow(organizationId: string, event: string, dat
             },
             dealioEventType: `workflow.${event.toLowerCase()}`,
         });
-        continue; // Script workflows usually don't have manual steps
+        continue;
     }
 
     for (const step of workflow.steps) {
-      let matches = true;
-      if (step.conditions.length > 0) {
-        for (const condition of step.conditions) {
-          const conditionMatch = evaluateCondition(condition, data);
-
-          if (step.allConditionsMustMatch && !conditionMatch) {
-            matches = false;
-            break;
-          } else if (!step.allConditionsMustMatch && conditionMatch) {
-            matches = true;
-            break;
-          }
-        }
-      }
-
-      if (!matches) continue;
-
-      // Execute actions
-      for (const action of step.actions) {
-        switch (action.type) {
-          case 'WINDMILL_SCRIPT':
-            if (action.windmillScriptPath) {
-              await runAutomation({
-                organizationId,
-                scriptPath: action.windmillScriptPath,
-                data: {
-                  ...data,
-                  workflowId: workflow.id,
-                  stepId: step.id
-                },
-                dealioEventType: `workflow.${event.toLowerCase()}`,
-              });
-            }
-            break;
-
-          case 'NOTIFICATION_ONLY':
-            await notificationEngine.notify({
-              organizationId,
-              templateName: `WORKFLOW_STEP_${step.id}`,
-              data: {
-                ...data,
-                workflowName: workflow.name,
-                stepName: step.name
-              },
-              recipients: {
-                memberIds: action.specificMemberId ? [action.specificMemberId] : [],
-                roles: action.approverRole ? [action.approverRole] : []
-              }
-            });
-            break;
-
-          default:
-            console.warn(`Action type ${action.type} not yet implemented in generic workflow engine`);
-            break;
-        }
-      }
+      if (!checkStepMatches(step, data)) continue;
+      await executeWorkflowActions(organizationId, event, data, workflow, step);
     }
   }
 }
@@ -242,7 +261,6 @@ export async function reorderSteps(workflowId: string, stepIds: string[]) {
     );
 }
 
-// fallow-ignore-next-line complexity
 export async function testWorkflow(organizationId: string, workflowId: string, testData: any) {
   const workflow = await db.approvalWorkflow.findUnique({
     where: { id: workflowId },
@@ -265,28 +283,7 @@ export async function testWorkflow(organizationId: string, workflowId: string, t
   const simulationResults = [];
 
   for (const step of workflow.steps) {
-    let matches = true;
-    const stepConditions = [];
-
-    for (const condition of step.conditions) {
-      const conditionMatch = evaluateCondition(condition, testData);
-
-      stepConditions.push({
-        type: condition.type,
-        match: conditionMatch
-      });
-
-      if (step.allConditionsMustMatch && !conditionMatch) {
-        matches = false;
-      } else if (!step.allConditionsMustMatch && conditionMatch) {
-        matches = true;
-        break;
-      }
-    }
-
-    if (step.conditions.length > 0 && !step.allConditionsMustMatch) {
-        matches = stepConditions.some(c => c.match);
-    }
+    const { matches, stepConditions } = simulateStep(step, testData);
 
     simulationResults.push({
       stepNumber: step.stepNumber,
@@ -300,6 +297,37 @@ export async function testWorkflow(organizationId: string, workflowId: string, t
   }
 
   return simulationResults;
+}
+
+function simulateStep(step: any, testData: any) {
+  let matches = true;
+  const stepConditions = [];
+
+  if (step.conditions.length === 0) {
+    return { matches: true, stepConditions: [] };
+  }
+
+  for (const condition of step.conditions) {
+    const conditionMatch = evaluateCondition(condition, testData);
+
+    stepConditions.push({
+      type: condition.type,
+      match: conditionMatch
+    });
+
+    if (step.allConditionsMustMatch && !conditionMatch) {
+      matches = false;
+    } else if (!step.allConditionsMustMatch && conditionMatch) {
+      matches = true;
+      break;
+    }
+  }
+
+  if (step.conditions.length > 0 && !step.allConditionsMustMatch) {
+    matches = stepConditions.some(c => c.match);
+  }
+
+  return { matches, stepConditions };
 }
 
 export async function upsertStepCondition(stepId: string, conditionData: {
