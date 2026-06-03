@@ -285,6 +285,33 @@ export class CustomerService {
           // Internal loyalty referral
           await LoyaltyService.processReferral(this.prisma, organizationId, customer.id, customer.id, 'SIGNUP');
 
+          // Trigger CRM Sync (New Master) - Merged from shared
+          try {
+            const personObject = await this.prisma.crmObjectDefinition.findFirst({
+              where: { organizationId, name: 'person' }
+            });
+
+            if (personObject) {
+              const crmRecord = await this.prisma.crmRecord.create({
+                data: {
+                  objectId: personObject.id,
+                  organizationId,
+                  data: {
+                    firstName: customer.name,
+                    email: customer.email,
+                    phone: customer.phone,
+                  }
+                }
+              });
+              await this.prisma.customer.update({
+                where: { id: customer.id },
+                data: { crmRecordId: crmRecord.id }
+              });
+            }
+          } catch (crmError) {
+            console.error('[CustomerService] CRM Record creation failed:', crmError);
+          }
+
           await runAutomation({
             organizationId,
             scriptPath: 'f/dealio/customer-registration-alert',

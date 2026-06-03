@@ -40,3 +40,9 @@ export interface CreateRecordInput {
   data: Record<string, any>;
   ownerId?: string;
 }
+
+export interface ActionResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}

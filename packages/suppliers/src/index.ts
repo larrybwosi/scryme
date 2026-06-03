@@ -9,3 +9,4 @@ export type { SupplierFormValues } from './lib/validations/suppliers';
 export { createPurchaseSchema } from './lib/validations/purchase';
 export type { CreatePurchaseInput } from './lib/validations/purchase';
 export { cn, formatDate, useFormattedCurrency } from './lib/utils';
+export * from './lib/utils/deliveries';

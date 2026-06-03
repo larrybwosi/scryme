@@ -1,11 +1,15 @@
 import { Injectable, InternalServerErrorException, BadGatewayException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import type { V2ApiContext } from '@repo/shared/server';
-import { CustomerService as SharedCustomerService } from '@repo/shared/server';
+import { CustomerService } from '@repo/crm/server';
 
 @Injectable()
 export class CustomersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private customerService: CustomerService;
+
+  constructor(private readonly prisma: PrismaService) {
+    this.customerService = new CustomerService(this.prisma.client);
+  }
 
   async getCustomers(ctx: V2ApiContext, query: any) {
     const q = query.q ?? '';
@@ -13,7 +17,7 @@ export class CustomersService {
     const limit = Math.min(60, Math.max(1, parseInt(query.limit ?? '25', 10)));
 
     try {
-      const result = await SharedCustomerService.getCustomers(ctx.organizationId, {
+      const result = await this.customerService.getCustomers(ctx.organizationId, {
         query: q,
         page,
         pageSize: limit,
@@ -49,7 +53,7 @@ export class CustomersService {
 
   async getCustomer(ctx: V2ApiContext, customerId: string) {
     try {
-      const result = await SharedCustomerService.getCustomerById(ctx.organizationId, customerId);
+      const result = await this.customerService.getCustomerById(ctx.organizationId, customerId);
 
       if (!result.success) {
         throw new BadGatewayException(result.message || 'Customer not found');
@@ -82,7 +86,7 @@ export class CustomersService {
 
   async createCustomer(ctx: V2ApiContext, body: any) {
     try {
-      const result = await SharedCustomerService.saveCustomer(ctx.organizationId, ctx.memberId ?? 'api', body);
+      const result = await this.customerService.saveCustomer(ctx.organizationId, ctx.memberId ?? 'api', body);
 
       if (!result.success) {
         throw new BadGatewayException(result.message || 'Failed to create customer in CRM');
