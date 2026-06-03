@@ -1,5 +1,5 @@
 import Handlebars from "handlebars";
-import { db } from "@repo/db";
+import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
 
 // Register helpers for report construction
@@ -31,7 +31,7 @@ export interface NotifyOptions {
 }
 
 export class NotificationEngine {
-  async notify(options: NotifyOptions) {
+  async notify(options: NotifyOptions): Promise<NotificationDispatch> {
     const {
       organizationId,
       templateName,

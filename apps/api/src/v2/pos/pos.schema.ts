@@ -54,6 +54,16 @@ export const CreateStockRequestSchema = z.object({
   items: z.array(StockRequestItemSchema).min(1, 'At least one item is required'),
 });
 
+export const CreateStockTransferSchema = z.object({
+  fromLocationId: z.string().min(1, 'From location ID is required'),
+  toLocationId: z.string().min(1, 'To location ID is required'),
+  items: z.array(z.object({
+    variantId: z.string().min(1),
+    quantity: z.number().positive(),
+  })).min(1),
+  notes: z.string().optional(),
+});
+
 export const RecordPaymentSchema = z.object({
   transactionId: z.string().min(1),
   amount: z.number().positive(),

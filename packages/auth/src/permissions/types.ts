@@ -1,2 +1,7 @@
-export type Permission = string;
-export type RoleName = string;
+export type PermissionAction = 'create' | 'view' | 'edit' | 'delete' | 'manage' | 'approve' | 'submit' | 'generate' | '*' | 'view:own' | 'manage:own' | 'create:own';
+
+export interface Permission {
+  resource: string;
+  action: PermissionAction;
+  scope?: string;
+}

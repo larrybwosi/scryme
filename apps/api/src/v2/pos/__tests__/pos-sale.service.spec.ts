@@ -7,10 +7,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@repo/shared/server", () => ({
   processSale: vi.fn(),
+  triggerStkPush: vi.fn(),
+  createOrder: vi.fn(),
   ProcessSaleInputSchema: {
     safeParse: vi.fn(),
   },
-  triggerStkPush: vi.fn(),
+  CreateOrderSchema: {
+    safeParse: vi.fn(),
+  },
 }));
 
 describe("PosSaleService", () => {
