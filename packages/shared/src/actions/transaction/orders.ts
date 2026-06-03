@@ -12,7 +12,11 @@ import {
   Prisma,
 } from "@repo/db";
 import { createAuditLog } from "../../lib/logs/logger";
-import { CreateOrderSchema, OrderFilterSchema, CreateOrderInput } from "../../lib/validations/order";
+import {
+  OrderFilterSchema,
+  CreateOrderInput,
+  CreateOrderInputSchema,
+} from "../../lib/validations/order";
 import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 import { z } from "zod";
 
@@ -62,7 +66,9 @@ export async function getOrderStats(organizationId: string) {
         }),
       ]);
 
-    const totalRevenue = completedStats._sum.finalTotal ? (completedStats._sum.finalTotal as Prisma.Decimal).toNumber() : 0;
+    const totalRevenue = completedStats._sum.finalTotal
+      ? (completedStats._sum.finalTotal as Prisma.Decimal).toNumber()
+      : 0;
     const totalCompletedOrders = completedStats._count._all;
 
     return {
@@ -92,7 +98,7 @@ export async function createOrder(
 
   try {
     // 1. --- Validation ---
-    const validation = CreateOrderSchema.safeParse(inputData);
+    const validation = CreateOrderInputSchema.safeParse(inputData);
     if (!validation.success) {
       console.log("Validation errors:", validation.error.flatten().fieldErrors);
       return {
@@ -740,7 +746,9 @@ export async function confirmOrder(
             );
           }
 
-          if (new Prisma.Decimal(pool.availableStock as any).lt(totalBaseNeeded)) {
+          if (
+            new Prisma.Decimal(pool.availableStock as any).lt(totalBaseNeeded)
+          ) {
             throw new Error(
               `Insufficient stock for ${variantName}. Required: ${totalBaseNeeded}, Available: ${pool.availableStock}`,
             );
@@ -1043,7 +1051,10 @@ export async function cancelOrder(
               continue;
             }
 
-            const quantityToRestock = Math.min(quantity, new Prisma.Decimal(stock.reservedStock as any).toNumber());
+            const quantityToRestock = Math.min(
+              quantity,
+              new Prisma.Decimal(stock.reservedStock as any).toNumber(),
+            );
 
             if (quantityToRestock > 0) {
               stockUpdates.push(
