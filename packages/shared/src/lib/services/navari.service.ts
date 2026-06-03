@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { prisma as db } from "@repo/db";
+import { prisma as db, Prisma } from "@repo/db";
 
 function getNavariBaseUrl() {
   return process.env.NAVARI_API_URL || "https://api.navari.co.ke/v1";
@@ -84,7 +84,7 @@ export class NavariService {
   async setupOrganization(
     organizationId: string,
     credentials: { apiKey: string; apiSecret: string },
-  ) {
+  ): Promise<any> {
     const definition = await db.integrationDefinition.upsert({
       where: { slug: "navari" },
       update: { isActive: true },

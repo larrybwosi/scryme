@@ -1,4 +1,4 @@
-import { FulfillmentType, PaymentMethod, TransactionType } from '@repo/db';
+import { FulfillmentType, PaymentMethod, TransactionStatus, TransactionType } from '@repo/db';
 import { z } from 'zod';
 
 export enum OrderTransactionStatus {
@@ -27,6 +27,7 @@ export const OrderFulfillmentInputSchema = z.object({
 
 export const CreateOrderInputSchema = z.object({
   customerId: z.string(),
+  businessAccountId: z.string().optional().nullable(),
   locationId: z.string(),
   type: z.nativeEnum(TransactionType).refine(type => type !== TransactionType.POS_SALE, {
     message: 'Use the POS sale endpoint for POS transactions',
@@ -39,6 +40,18 @@ export const CreateOrderInputSchema = z.object({
   shippingFee: z.number().nonnegative().default(0),
   discountAmount: z.number().nonnegative().default(0),
   taxIds: z.array(z.string()).optional(),
+  enableStockTracking: z.boolean().optional().default(true),
+  isWholesale: z.boolean().optional().default(false),
 });
 
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;
+
+export const OrderFilterSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(10),
+  searchTerm: z.string().optional(),
+  status: z.nativeEnum(TransactionStatus).optional(),
+  dateFrom: z.date().optional(),
+  dateTo: z.date().optional(),
+  sortBy: z.string().optional(),
+});

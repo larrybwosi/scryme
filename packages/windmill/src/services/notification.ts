@@ -31,7 +31,7 @@ export interface NotifyOptions {
 }
 
 export class NotificationEngine {
-  async notify(options: NotifyOptions) {
+  async notify(options: NotifyOptions): Promise<any> {
     const {
       organizationId,
       templateName,

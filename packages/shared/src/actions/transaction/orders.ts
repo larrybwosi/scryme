@@ -1,5 +1,6 @@
-import prisma, { db } from "@repo/db";
 import {
+  prisma,
+  db,
   TransactionStatus,
   TransactionType,
   PaymentStatus,
@@ -8,12 +9,11 @@ import {
   FulfillmentStatus,
   StockAdjustmentReason,
   AllocationStatus,
+  Prisma,
 } from "@repo/db";
 import { createAuditLog } from "../../lib/logs/logger";
 import z from "zod";
-import { CreateOrderSchema, OrderFilterSchema } from "../../lib/validations/order";
-import { randomBytes } from "crypto";
-import { Prisma, ProductUnitConversion } from "@repo/db";
+import { CreateOrderInputSchema, OrderFilterSchema } from "../../lib/validations/order";
 import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 
 // --- STATS FUNCTION ---
@@ -92,7 +92,7 @@ export async function createOrder(
 
   try {
     // 1. --- Validation ---
-    const validation = CreateOrderSchema.safeParse(inputData);
+    const validation = CreateOrderInputSchema.safeParse(inputData);
     if (!validation.success) {
       console.log("Validation errors:", validation.error.flatten().fieldErrors);
       return {
@@ -296,7 +296,7 @@ export async function createOrder(
 
             listPrice: defaultPrice as unknown as Prisma.Decimal, // Store the original base price
             unitPrice: resolvedPrice as unknown as Prisma.Decimal, // Store the actual applied price
-            unitCost: unitCost,
+            unitCost: unitCost as unknown as Prisma.Decimal,
             subtotal: lineSubtotal,
             lineTotal: lineSubtotal,
 
@@ -380,7 +380,7 @@ export async function createOrder(
             exchangeRate: 1,
 
             items: { create: transactionItemsCreateData },
-            payments: { create: payments },
+            payments: { create: payments as any },
             taxes: { create: appliedTaxesCreateData },
 
             fulfillments: fulfillment
@@ -734,7 +734,7 @@ export async function confirmOrder(
             );
           }
 
-          if (pool.availableStock < totalBaseNeeded) {
+          if (new Prisma.Decimal(pool.availableStock).lt(totalBaseNeeded)) {
             throw new Error(
               `Insufficient stock for ${variantName}. Required: ${totalBaseNeeded}, Available: ${pool.availableStock}`,
             );
@@ -760,7 +760,7 @@ export async function confirmOrder(
             variantId,
             locationId: order.locationId,
             referenceNumber: refItem?.id || transactionId, // Link to line item or transaction
-            reason: StockAdjustmentReason.ORDER_COMMIT || "RESERVATION",
+            reason: StockAdjustmentReason.ORDER_COMMIT,
             quantity: -totalBaseNeeded, // Negative indicates it's leaving "Available" pool
             notes: `Order ${order.number} confirmed (Stock Reserved)`,
           });
@@ -791,7 +791,7 @@ export async function confirmOrder(
 
             const takeFromBatch = Math.min(
               remainingToAllocateForVariant,
-              batch.currentQuantity,
+              Number(batch.currentQuantity),
             );
 
             // Assign this batch quantity to specific line items
@@ -943,6 +943,8 @@ export async function cancelOrder(
                 sellingUnit: true,
                 variant: {
                   select: {
+                    id: true,
+                    productId: true,
                     baseUnitId: true,
                     product: {
                       select: {
@@ -1037,7 +1039,7 @@ export async function cancelOrder(
               continue;
             }
 
-            const quantityToRestock = Math.min(quantity, stock.reservedStock);
+            const quantityToRestock = Math.min(quantity, Number(stock.reservedStock));
 
             if (quantityToRestock > 0) {
               stockUpdates.push(
