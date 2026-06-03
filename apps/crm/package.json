@@ -14,6 +14,7 @@
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:^",
     "@repo/ui": "workspace:*",
+    "@repo/windmill": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/pg": "^8.20.0",
     "better-auth": "^1.4.19",
