@@ -72,6 +72,17 @@ export class WindmillApiClient {
   }
 
   /**
+   * Run a flow asynchronously.
+   */
+  async runFlow(path: string, args: any): Promise<string> {
+    const res = await this.request<{ job_id: string }>(`/flows/run/${path}`, {
+      method: 'POST',
+      body: JSON.stringify(args),
+    });
+    return res.job_id;
+  }
+
+  /**
    * Get job status and result.
    */
   async getJob(jobId: string): Promise<WindmillJob> {
@@ -95,6 +106,60 @@ export class WindmillApiClient {
         summary: summary ?? `Auto-deployed from Dealio`,
         language: 'typescript',
       }),
+    });
+  }
+
+  /**
+   * Upsert a flow (create or update).
+   */
+  async upsertFlow(path: string, value: any): Promise<void> {
+    await this.request(`/flows/update/${path}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        value,
+      }),
+    });
+  }
+
+  /**
+   * Manage Schedules (Crons).
+   */
+  async upsertSchedule(path: string, schedule: {
+    schedule: string; // Cron expression
+    script_path?: string;
+    flow_path?: string;
+    args: any;
+    enabled?: boolean;
+  }): Promise<void> {
+    await this.request(`/schedules/update/${path}`, {
+      method: 'POST',
+      body: JSON.stringify(schedule),
+    });
+  }
+
+  /**
+   * Manage Variables.
+   */
+  async setVariable(path: string, value: string, isSecret: boolean = false): Promise<void> {
+    await this.request(`/variables/update/${path}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        value,
+        is_secret: isSecret,
+      }),
+    });
+  }
+
+  /**
+   * Manage Resources.
+   */
+  async upsertResource(path: string, resource: {
+    resource_type: string;
+    value: any;
+  }): Promise<void> {
+    await this.request(`/resources/update/${path}`, {
+      method: 'POST',
+      body: JSON.stringify(resource),
     });
   }
 
