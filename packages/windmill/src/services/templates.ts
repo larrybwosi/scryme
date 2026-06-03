@@ -1,4 +1,5 @@
 import { getWindmillClientForOrg, WindmillApiClient } from './client';
+import { ScrymeChatApiClient } from './scryme-chat';
 import * as fs from 'fs/promises';
 import { Dirent } from 'fs';
 import * as path from 'path';
@@ -16,9 +17,30 @@ export class WindmillTemplateService {
     const client = await getWindmillClientForOrg(organizationId);
     const templatesDir = path.join(__dirname, '../templates');
 
-    await this.walkTemplates(templatesDir, '', async (scriptPath, content) => {
-      console.log(`Deploying template to Windmill: ${scriptPath}`);
-      await client.upsertScript(`f/dealio/${scriptPath}`, content);
+    await this.walkTemplates(templatesDir, '', async (scriptPath, content, entry) => {
+      const normalizedPath = `f/dealio/${scriptPath.replace(/^(flows|schedules|resources|variables)\//, '')}`;
+
+      try {
+        if (scriptPath.startsWith('flows/')) {
+          console.log(`Deploying Flow to Windmill: ${scriptPath}`);
+          await client.upsertFlow(normalizedPath, JSON.parse(content));
+        } else if (scriptPath.startsWith('schedules/')) {
+          console.log(`Deploying Schedule to Windmill: ${scriptPath}`);
+          await client.upsertSchedule(normalizedPath, JSON.parse(content));
+        } else if (scriptPath.startsWith('resources/')) {
+          console.log(`Deploying Resource to Windmill: ${scriptPath}`);
+          await client.upsertResource(normalizedPath, JSON.parse(content));
+        } else if (scriptPath.startsWith('variables/')) {
+          console.log(`Deploying Variable to Windmill: ${scriptPath}`);
+          const { value, isSecret } = JSON.parse(content);
+          await client.setVariable(normalizedPath, value, isSecret);
+        } else {
+          console.log(`Deploying Script to Windmill: ${scriptPath}`);
+          await client.upsertScript(`f/dealio/${scriptPath}`, content);
+        }
+      } catch (e) {
+        console.error(`Failed to deploy ${scriptPath}:`, e);
+      }
     });
   }
 
@@ -26,7 +48,7 @@ export class WindmillTemplateService {
    * Provisions a new workspace for an organization and deploys templates.
    */
   static async provisionAndDeploy(organizationId: string, orgName: string, orgSlug: string) {
-    const config = await prisma.windmillConfiguration.findUnique({
+    let config = await prisma.windmillConfiguration.findUnique({
       where: { organizationId },
     });
 
@@ -45,15 +67,33 @@ export class WindmillTemplateService {
         workspaceSlug
       );
 
-      await prisma.windmillConfiguration.update({
+      // Also provision Scryme Chat if credentials exist
+      let scrymeChatWorkspaceId = config.scrymeChatWorkspaceId;
+      let scrymeChatWorkspaceSlug = config.scrymeChatWorkspaceSlug;
+
+      if (!scrymeChatWorkspaceId && process.env.SCRYME_CHAT_CLIENT_ID && process.env.SCRYME_CHAT_CLIENT_SECRET) {
+        try {
+            const scrymeClient = new ScrymeChatApiClient();
+            const scrymeWorkspace = await scrymeClient.createWorkspace(orgName, workspaceSlug);
+            scrymeChatWorkspaceId = scrymeWorkspace.id;
+            scrymeChatWorkspaceSlug = scrymeWorkspace.slug;
+        } catch (e) {
+            console.error('Failed to provision Scryme Chat workspace:', e);
+        }
+      }
+
+      config = await prisma.windmillConfiguration.update({
         where: { organizationId },
         data: {
           workspaceId: workspaceSlug,
           workspaceName: orgName,
+          scrymeChatWorkspaceId,
+          scrymeChatWorkspaceSlug,
         },
       });
     }
 
+    // Ensure we deploy to the now-provisioned workspace
     await this.deployTemplatesToOrg(organizationId);
   }
 
@@ -90,7 +130,7 @@ export class WindmillTemplateService {
     const templates: WindmillTemplate[] = [];
 
     await this.walkTemplates(templatesDir, '', async (scriptPath, content, entry, currentPath) => {
-      const name = this.extractMetadata(content, 'name') || entry.name.replace(/\.(ts|js)$/, '');
+      const name = this.extractMetadata(content, 'name') || entry.name.replace(/\.(ts|js|json|yaml|yml)$/, '');
       const description = this.extractMetadata(content, 'description');
       const category = currentPath.split('/')[0] || 'Uncategorized';
       const parameters = this.parseParameters(content);
@@ -116,14 +156,21 @@ export class WindmillTemplateService {
 
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
+      // Use forward slashes for Windmill paths regardless of OS
       const windmillPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
 
       if (entry.isDirectory()) {
         await this.walkTemplates(fullPath, windmillPath, callback);
-      } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.js'))) {
-        const content = await fs.readFile(fullPath, 'utf-8');
-        const scriptPath = windmillPath.replace(/\.(ts|js)$/, '');
-        await callback(scriptPath, content, entry, currentPath);
+      } else if (entry.isFile()) {
+        const isScript = entry.name.endsWith('.ts') || entry.name.endsWith('.js');
+        const isJson = entry.name.endsWith('.json');
+        const isYaml = entry.name.endsWith('.yaml') || entry.name.endsWith('.yml');
+
+        if (isScript || isJson || isYaml) {
+          const content = await fs.readFile(fullPath, 'utf-8');
+          const scriptPath = windmillPath.replace(/\.(ts|js|json|yaml|yml)$/, '');
+          await callback(scriptPath, content, entry, currentPath);
+        }
       }
     }
   }
@@ -134,33 +181,39 @@ export class WindmillTemplateService {
     return match ? match[1].trim() : undefined;
   }
 
-  // fallow-ignore-next-line complexity
   private static parseParameters(content: string): any[] {
-    const params: any[] = [];
     const interfaceMatch = content.match(/data:\s*{([\s\S]*?)}/);
-    if (interfaceMatch) {
-      const fields = interfaceMatch[1].split(/[,\n]/).map(s => s.trim()).filter(Boolean);
-      for (const field of fields) {
-        const [nameAndOptional, typeAndComment] = field.split(':').map(s => s.trim());
-        if (!nameAndOptional) continue;
+    if (!interfaceMatch) return [];
 
-        const isOptional = nameAndOptional.endsWith('?');
-        const name = nameAndOptional.replace('?', '');
-        if (name === 'organizationId') continue;
+    const fields = interfaceMatch[1].split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+    return fields
+      .map(field => this.parseField(field))
+      .filter((p): p is any => p !== null);
+  }
 
-        let type: any = 'string';
-        if (typeAndComment?.includes('number')) type = 'number';
-        else if (typeAndComment?.includes('boolean')) type = 'boolean';
-        else if (typeAndComment?.includes("'") || typeAndComment?.includes('"')) type = 'select';
+  private static parseField(field: string): any | null {
+    const [nameAndOptional, typeAndComment] = field.split(':').map(s => s.trim());
+    if (!nameAndOptional) return null;
 
-        params.push({
-          name,
-          label: name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1'),
-          type,
-          required: !isOptional
-        });
-      }
-    }
-    return params;
+    const isOptional = nameAndOptional.endsWith('?');
+    const name = nameAndOptional.replace('?', '');
+    if (name === 'organizationId') return null;
+
+    const type = this.inferType(typeAndComment);
+
+    return {
+      name,
+      label: name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1'),
+      type,
+      required: !isOptional
+    };
+  }
+
+  private static inferType(typeAndComment?: string): string {
+    if (!typeAndComment) return 'string';
+    if (typeAndComment.includes('number')) return 'number';
+    if (typeAndComment.includes('boolean')) return 'boolean';
+    if (typeAndComment.includes("'") || typeAndComment.includes('"')) return 'select';
+    return 'string';
   }
 }

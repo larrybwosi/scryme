@@ -30,12 +30,12 @@ import {
   CreateStockRequestSchema,
   RecordPaymentSchema,
   ShiftSyncSchema,
-} from './pos.schema';
-import { Decimal } from 'decimal.js';
-import { RedisService } from 'src/redis/redis.service';
-import { InventoryService } from '../inventory/inventory.service';
-import { PosCustomerService } from './pos-customer.service';
-import { Prisma } from "@repo/db/client";
+} from "./pos.schema";
+import { Decimal } from "decimal.js";
+import { RedisService } from "src/redis/redis.service";
+import { InventoryService } from "../inventory/inventory.service";
+import { PosCustomerService } from "./pos-customer.service";
+import { Prisma } from "@repo/db";
 
 @Injectable()
 export class PosService {
@@ -274,7 +274,10 @@ export class PosService {
         pagination: (result as any).pagination,
       },
       meta: {
-        syncTimestamp: (result as any).syncTimestamp || (result as any).timestamp || new Date().toISOString(),
+        syncTimestamp:
+          (result as any).syncTimestamp ||
+          (result as any).timestamp ||
+          new Date().toISOString(),
       },
     };
   }
@@ -545,8 +548,8 @@ export class PosService {
       return {
         id: t.id,
         number: t.number,
-        customer: t.customer?.name || 'Guest',
-        email: t.customer?.email || '',
+        customer: (t as any).customer?.name || "Guest",
+        email: (t as any).customer?.email || "",
         totalAmount: t.finalTotal.toNumber(),
         paidAmount,
         date: t.createdAt.toISOString(),
@@ -582,7 +585,10 @@ export class PosService {
   }
 
   async getCustomersDelta(ctx: V2ApiContext, lastSync?: string) {
-    const result = await this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync);
+    const result = await this.posCustomerService.getCustomersDelta(
+      ctx.organizationId,
+      lastSync,
+    );
     return result;
   }
 
@@ -815,13 +821,19 @@ export class PosService {
 
   async recordPayment(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(RecordPaymentSchema, body);
-    const { transactionId, amount, method, reference, payerPhone } = validated;
+    const {
+      transactionId,
+      amount,
+      method,
+      referenceNumber: reference,
+      payerPhone,
+    } = validated;
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId: ctx.organizationId },
     });
 
-    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (!transaction) throw new NotFoundException("Transaction not found");
 
     const payment = await this.prisma.client.payment.create({
       data: {
@@ -841,17 +853,20 @@ export class PosService {
       where: { transactionId },
     });
 
-    const totalPaid = allPayments.reduce((sum, p) => sum.plus(p.amount), new Decimal(0));
+    const totalPaid = allPayments.reduce(
+      (sum, p) => sum.plus(p.amount),
+      new Decimal(0),
+    );
 
     if (totalPaid.gte(transaction.finalTotal)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: 'PAID' },
+        data: { paymentStatus: "PAID" },
       });
     } else if (totalPaid.gt(0)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: 'PARTIALLY_PAID' },
+        data: { paymentStatus: "PARTIALLY_PAID" },
       });
     }
 
@@ -966,10 +981,10 @@ export class PosService {
       where: { id, organizationId: ctx.organizationId },
     });
 
-    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (!transaction) throw new NotFoundException("Transaction not found");
 
     return {
-      url: getDocumentUrl('waybill', id, ctx.organizationId),
+      url: getDocumentUrl("waybill", id, ctx.organizationId),
     };
   }
 
@@ -1003,10 +1018,10 @@ export class PosService {
       },
     });
 
-    return drivers.map(d => ({
+    return drivers.map((d) => ({
       id: d.id,
       member: {
-        name: d.user?.name || 'Unknown Driver',
+        name: d.user?.name || "Unknown Driver",
       },
     }));
   }
