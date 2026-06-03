@@ -486,15 +486,14 @@ mod tests {
     async fn setup_db() -> BackendResult<SqlitePool> {
         let pool = SqlitePoolOptions::new().connect("sqlite::memory:").await?;
 
-        let migration = crate::migrations::get_migrations()
-            .into_iter()
-            .find(|m| m.version == 1)
-            .ok_or_else(|| BackendError::Internal("Migration not found".to_string()))?;
+        let migrations = crate::migrations::get_migrations();
 
-        for statement in migration.sql.split(';') {
-            let trimmed = statement.trim();
-            if !trimmed.is_empty() {
-                sqlx::query(trimmed).execute(&pool).await?;
+        for migration in migrations {
+            for statement in migration.sql.split(';') {
+                let trimmed = statement.trim();
+                if !trimmed.is_empty() {
+                    sqlx::query(trimmed).execute(&pool).await?;
+                }
             }
         }
 
