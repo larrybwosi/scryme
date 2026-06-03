@@ -1,4 +1,3 @@
-import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@repo/db";
 
@@ -12,15 +11,15 @@ export const authOptions = {
     },
     socialProviders: {
         github: {
-            clientId: process.env.GITHUB_CLIENT_ID!,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+            clientId: process.env.GITHUB_CLIENT_ID,
+            clientSecret: process.env.GITHUB_CLIENT_SECRET,
         },
         google: {
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         },
     },
-} satisfies Parameters<typeof betterAuth>[0];
+};
 
 // Export Permissions
 export * from "./permissions/constants";
@@ -39,10 +38,5 @@ export * from "./logic/permissions";
 export * from "./logic/check-permission";
 export * from "./logic/has-member-permission";
 
-// Export Approvals (explicitly export everything except WorkflowResult which is duplicated in validations)
-export {
-    createApprovalWorkflow,
-    updateApprovalWorkflowInfo,
-    setActiveWorkflow,
-    getWorkflowDetails
-} from "./approvals";
+// Export Approvals
+export { createApprovalWorkflow, updateApprovalWorkflowInfo, setActiveWorkflow, getWorkflowDetails } from "./approvals";

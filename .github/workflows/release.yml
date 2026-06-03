@@ -1,17 +1,19 @@
-name: Pipeline
+name: Release
 
 on:
   push:
-    branches: [main, dev, nextgen]
-  pull_request:
-    branches: [main, dev, nextgen]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   filter:
     runs-on: ubuntu-latest
     outputs:
       pos: ${{ steps.changes.outputs.pos }}
-      api: ${{ steps.changes.outputs.api }}
+      bakery: ${{ steps.changes.outputs.bakery }}
       workflow: ${{ steps.changes.outputs.workflow }}
     steps:
       - uses: actions/checkout@v4
@@ -21,18 +23,14 @@ jobs:
           filters: |
             pos:
               - 'apps/pos/**'
-              - 'packages/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-            api:
-              - 'apps/api/**'
-              - 'packages/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
+            bakery:
+              - 'apps/bakery/**'
             workflow:
-              - '.github/workflows/pipeline.yml'
+              - '.github/workflows/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
 
   lint-test:
     needs: filter
@@ -40,11 +38,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -133,8 +133,6 @@ jobs:
           SENTRY_DSN: mock
 
   release-management:
-    needs: [filter, lint-test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/nextgen')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -145,20 +143,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      - uses: pnpm/action-setup@v4
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Enter Prerelease Mode (dev/nextgen only)
-        if: github.ref != 'refs/heads/main'
+      # Pre-release logic is currently skipped as requested.
+      # To re-enable, change 'if: false' to check for dev/nextgen branches.
+      - name: Enter Prerelease Mode
+        if: false # github.ref != 'refs/heads/main'
         run: |
           if [ ! -f .changeset/pre.json ]; then
             pnpm changeset pre enter ${{ github.ref_name }}
@@ -174,8 +171,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   set-version:
-    needs: [filter, release-management]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/nextgen') && (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true')
+    needs: [release-management]
+    if: needs.release-management.outputs.published == 'true'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-version.outputs.version }}
@@ -184,9 +181,9 @@ jobs:
       - id: get-version
         run: echo "version=$(jq -r .version apps/pos/package.json)" >> $GITHUB_OUTPUT
 
-  publish-tauri:
+  publish-pos:
     needs: [filter, release-management, set-version]
-    if: needs.release-management.outputs.published == 'true'
+    if: needs.release-management.outputs.published == 'true' && (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true')
     strategy:
       fail-fast: false
       matrix:
@@ -195,49 +192,40 @@ jobs:
         include:
           - target_group: macos-arm
             os: macos-latest
-            args: '--target aarch64-apple-darwin'
+            args: "--target aarch64-apple-darwin"
           - target_group: macos-x86
             os: macos-latest
-            args: '--target x86_64-apple-darwin'
+            args: "--target x86_64-apple-darwin"
           - target_group: ubuntu
             os: ubuntu-22.04
-            args: ''
+            args: ""
           - target_group: windows
             os: windows-latest
-            args: ''
-
+            args: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
+      - uses: pnpm/action-setup@v4
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
-
+          cache: "pnpm"
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
       - name: Rust Cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './apps/pos/src-tauri -> target'
-
+          workspaces: "./apps/pos/src-tauri -> target"
       - name: install dependencies (ubuntu only)
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev libusb-1.0-0-dev libgtk-3-dev libpcsclite-dev pkg-config
-
       - name: install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Create dummy binaries for macOS/Linux
         if: matrix.os != 'windows-latest'
         run: |
@@ -246,7 +234,6 @@ jobs:
           touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
           touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
           chmod +x apps/pos/src-tauri/binaries/*
-
       - name: Create dummy binaries for Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -258,7 +245,6 @@ jobs:
           if (!(Test-Path "apps/pos/src-tauri/binaries/sumatrapdf-i686-pc-windows-msvc.exe")) {
             New-Item -ItemType File -Path "apps/pos/src-tauri/binaries/sumatrapdf-i686-pc-windows-msvc.exe"
           }
-
       - name: Update Version and Updater for Build
         shell: bash
         run: |
@@ -267,10 +253,6 @@ jobs:
           REPO="${{ github.repository }}"
           VARIANT="${{ matrix.variant }}"
           OS="${{ matrix.os }}"
-
-          echo "Detected version: $FULL_VERSION"
-
-          # Determine config file and updater name
           if [ "$VARIANT" = "retail" ]; then
             CONFIG_FILE="apps/pos/src-tauri/tauri.retail.conf.json"
             UPDATER_NAME="latest"
@@ -278,35 +260,20 @@ jobs:
             CONFIG_FILE="apps/pos/src-tauri/tauri.$VARIANT.conf.json"
             UPDATER_NAME="latest-$VARIANT"
           fi
-
-          # Determine branch-specific updater endpoint
           if [ "$BRANCH" = "main" ]; then
             UPDATER_ENDPOINT="https://github.com/$REPO/releases/latest/download/$UPDATER_NAME.json"
-          elif [ "$BRANCH" = "dev" ]; then
-            UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/dev-latest/$UPDATER_NAME.json"
-          elif [ "$BRANCH" = "nextgen" ]; then
-            UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/nextgen-latest/$UPDATER_NAME.json"
           else
-             UPDATER_ENDPOINT="https://github.com/$REPO/releases/latest/download/$UPDATER_NAME.json"
+            UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/${BRANCH}-latest/$UPDATER_NAME.json"
           fi
-
-          echo "Configuring $CONFIG_FILE..."
-
-          # Sanitize version for Windows
           if [[ "$OS" == "windows-latest" && "$FULL_VERSION" == *"-"* ]]; then
             VERSION_BASE=$(echo "$FULL_VERSION" | cut -d'-' -f1)
             PRE_RELEASE=$(echo "$FULL_VERSION" | cut -d'-' -f2-)
             NUMERIC_PRE=$(echo "$PRE_RELEASE" | grep -oE '[0-9]+(\.[0-9]+)*' | tr '\n' '.' | sed 's/\.$//')
             TARGET_VERSION="${VERSION_BASE}-${NUMERIC_PRE:-0}"
-            echo "Sanitized version for Windows: $TARGET_VERSION"
           else
             TARGET_VERSION="$FULL_VERSION"
           fi
-
-          # Update version in tauri.conf.json as well because it's usually the base
           jq --arg v "$TARGET_VERSION" '.version = $v' apps/pos/src-tauri/tauri.conf.json > tmp.json && mv tmp.json apps/pos/src-tauri/tauri.conf.json
-
-          # Unified jq update for variant config
           jq --arg v "$TARGET_VERSION" \
              --arg e "$UPDATER_ENDPOINT" \
              --arg var "$VARIANT" \
@@ -316,14 +283,12 @@ jobs:
              (if $var != "standalone" then .plugins.updater.endpoints = [$e] else . end) |
              (if $os == "windows-latest" then .bundle.targets = ["nsis"] else . end)
              ' "$CONFIG_FILE" > tmp.json && mv tmp.json "$CONFIG_FILE"
-
       - name: Generate .env file for build
         shell: bash
         run: |
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> apps/pos/src-tauri/.env
           echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> apps/pos/src-tauri/.env
           echo "POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}" >> apps/pos/src-tauri/.env
-
       - name: Build Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
@@ -336,7 +301,6 @@ jobs:
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           args: ${{ matrix.args }} ${{ matrix.variant == 'retail' && '--config apps/pos/src-tauri/tauri.retail.conf.json --features retail' || format('--config apps/pos/src-tauri/tauri.{0}.conf.json --features {0}', matrix.variant) }}
           projectPath: apps/pos
-
       - name: Extract latest.json
         if: matrix.variant != 'standalone'
         shell: bash
@@ -351,7 +315,6 @@ jobs:
             echo "latest.json not found for ${{ matrix.os }} ${{ matrix.variant }}"
             exit 1
           fi
-
       - name: Upload latest.json artifact
         if: matrix.variant != 'standalone'
         uses: actions/upload-artifact@v4
@@ -359,8 +322,71 @@ jobs:
           name: latest-json-${{ matrix.variant }}-${{ matrix.target_group }}
           path: latest-${{ matrix.variant }}-${{ matrix.target_group }}.json
 
+  publish-bakery:
+    needs: [filter, release-management, set-version]
+    if: needs.release-management.outputs.published == 'true' && (needs.filter.outputs.bakery == 'true' || needs.filter.outputs.workflow == 'true')
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./apps/bakery/src-tauri -> target"
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma Client
+        run: pnpm generate
+      - name: Build shared packages
+        run: |
+          pnpm --filter @repo/shared build
+          pnpm --filter @repo/sdk build
+      - name: Inject Environment Variables
+        shell: bash
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.scryme.app/api/v2' }}
+          BAKERY_UPDATE_URL: ${{ secrets.BAKERY_UPDATE_URL || 'https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}' }}
+          TAURI_PUBLIC_KEY: ${{ secrets.TAURI_PUBLIC_KEY || 'dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg==' }}
+        run: |
+          echo "VITE_API_URL=$VITE_API_URL" > apps/bakery/.env
+          node -e "
+            const fs = require('fs');
+            const path = 'apps/bakery/src-tauri/tauri.conf.json';
+            const config = JSON.parse(fs.readFileSync(path, 'utf8'));
+            config.plugins.updater.endpoints = [process.env.BAKERY_UPDATE_URL];
+            config.plugins.updater.pubkey = process.env.TAURI_PUBLIC_KEY;
+            fs.writeFileSync(path, JSON.stringify(config, null, 2));
+          "
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseDraft: false
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          projectPath: apps/bakery
+
   finalize-release:
-    needs: [publish-tauri, set-version]
+    needs: [publish-pos, set-version]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -375,30 +401,24 @@ jobs:
         with:
           pattern: latest-json-${{ matrix.variant }}-*
           merge-multiple: true
-
       - name: Merge latest.json files for ${{ matrix.variant }}
-        if: matrix.variant != 'standalone'
         shell: bash
         run: |
           VERSION="${{ needs.set-version.outputs.version }}"
           REPO="${{ github.repository }}"
           TAG="v$VERSION"
           VARIANT="${{ matrix.variant }}"
-
           if [ "$VARIANT" = "retail" ]; then
             FINAL_NAME="latest.json"
           else
             FINAL_NAME="latest-$VARIANT.json"
           fi
-
           FILES=(latest-${VARIANT}-*.json)
           if [ ${#FILES[@]} -eq 0 ]; then
              echo "No artifacts found for $VARIANT"
              exit 1
           fi
-
           jq -s 'reduce .[] as $item ({}; . * $item)' "${FILES[@]}" > "$FINAL_NAME"
-
           jq --arg repo "$REPO" --arg tag "$TAG" '
             .platforms |= with_entries(
               .value.url |= (
@@ -406,9 +426,7 @@ jobs:
               )
             )
           ' "$FINAL_NAME" > tmp.json && mv tmp.json "$FINAL_NAME"
-
       - name: Upload final latest JSON to release
-        if: matrix.variant != 'standalone'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -417,17 +435,4 @@ jobs:
           TAG="v$VERSION"
           VARIANT="${{ matrix.variant }}"
           FINAL_NAME=$([ "$VARIANT" = "retail" ] && echo "latest.json" || echo "latest-$VARIANT.json")
-          gh release upload "$TAG" "$FINAL_NAME" --clobber
-
-      - name: Update Rolling Latest Release (Prerelease only)
-        if: github.ref != 'refs/heads/main' && matrix.variant != 'standalone'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          BRANCH="${{ github.ref_name }}"
-          TAG="${BRANCH}-latest"
-          VARIANT="${{ matrix.variant }}"
-          FINAL_NAME=$([ "$VARIANT" = "retail" ] && echo "latest.json" || echo "latest-$VARIANT.json")
-          gh release view "$TAG" || gh release create "$TAG" --prerelease --title "$TAG" --notes "Rolling release for $BRANCH branch"
           gh release upload "$TAG" "$FINAL_NAME" --clobber

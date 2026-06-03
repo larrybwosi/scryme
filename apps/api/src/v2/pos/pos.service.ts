@@ -28,6 +28,7 @@ import {
   DispatchDeliverySchema,
   ReconcileDeliverySchema,
   CreateStockRequestSchema,
+  CreateStockTransferSchema,
   RecordPaymentSchema,
   ShiftSyncSchema,
 } from "./pos.schema";
@@ -1024,5 +1025,76 @@ export class PosService {
         name: d.user?.name || "Unknown Driver",
       },
     }));
+  }
+
+  async createStockTransfer(ctx: V2ApiContext, body: any) {
+    if (!ctx.memberId) throw new UnauthorizedException("Member required");
+    const validated = this.validate<any>(CreateStockTransferSchema, body);
+
+    // Concurrency-safe transfer number generation
+    let transfer: any;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    while (attempts < maxAttempts) {
+      try {
+        const lastTransfer = await this.prisma.client.stockTransfer.findFirst({
+          where: { organizationId: ctx.organizationId },
+          orderBy: { requestedDate: "desc" },
+          select: { transferNumber: true },
+        });
+
+        const lastNumber = lastTransfer?.transferNumber
+          ? parseInt(lastTransfer.transferNumber.replace("ST-", ""), 10)
+          : 0;
+        const transferNumber = `ST-${(lastNumber + 1).toString().padStart(5, "0")}`;
+
+        transfer = await this.prisma.client.stockTransfer.create({
+          data: {
+            organizationId: ctx.organizationId,
+            transferNumber,
+            fromLocationId: validated.fromLocationId,
+            toLocationId: validated.toLocationId,
+            requestedById: ctx.memberId,
+            status: "PENDING_APPROVAL",
+            notes: validated.notes,
+            items: {
+              create: validated.items.map((item: any) => ({
+                variantId: item.variantId,
+                requestedQuantity: item.quantity,
+              })),
+            },
+          },
+        });
+        break;
+      } catch (error) {
+        if (
+          error.code === "P2002" &&
+          error.meta?.target?.includes("transferNumber")
+        ) {
+          attempts++;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId,
+        action: "CREATE_STOCK_TRANSFER",
+        resourceType: "STOCK_TRANSFER",
+        resourceId: transfer.id,
+        approved: true,
+        metadata: {
+          fromLocationId: validated.fromLocationId,
+          toLocationId: validated.toLocationId,
+          itemCount: validated.items.length,
+        },
+      },
+    });
+
+    return { success: true, data: transfer };
   }
 }

@@ -1,0 +1,11 @@
+{
+  "extends": "../config-typescript/base.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
+    "outDir": "dist",
+    "rootDir": "src",
+    "target": "es2020",
+    "lib": ["es2020", "dom"]
+  },
+  "include": ["src"]
+}

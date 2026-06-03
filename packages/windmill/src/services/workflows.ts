@@ -1,4 +1,4 @@
-import { db } from '@repo/db';
+import { db, ApprovalWorkflow } from '@repo/db';
 import { runAutomation } from './service';
 import { notificationEngine } from '@repo/notifications';
 import { ApprovalActionType, ApprovalMode, ConditionType } from '@repo/db';
@@ -156,7 +156,7 @@ export async function triggerWorkflow(organizationId: string, event: string, dat
   }
 }
 
-export async function getWorkflows(organizationId: string) {
+export async function getWorkflows(organizationId: string): Promise<ApprovalWorkflow[]> {
   return db.approvalWorkflow.findMany({
     where: { organizationId },
     include: {
@@ -188,7 +188,7 @@ export async function createWorkflow(organizationId: string, data: {
   name: string;
   description?: string;
   triggerEvent?: string;
-}) {
+}): Promise<ApprovalWorkflow> {
   return db.approvalWorkflow.create({
     data: {
       organizationId,
@@ -206,14 +206,14 @@ export async function updateWorkflow(workflowId: string, data: {
   triggerEvent?: string;
   isActive?: boolean;
   settings?: any;
-}) {
+}): Promise<ApprovalWorkflow> {
   return db.approvalWorkflow.update({
     where: { id: workflowId },
     data
   });
 }
 
-export async function deleteWorkflow(workflowId: string) {
+export async function deleteWorkflow(workflowId: string): Promise<ApprovalWorkflow> {
   return db.approvalWorkflow.delete({
     where: { id: workflowId }
   });

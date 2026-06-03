@@ -1,0 +1,19 @@
+services:
+  bakery:
+    build:
+      context: ../..
+      dockerfile: apps/bakery/Dockerfile
+    image: ghcr.io/larrybwosi/dealio-bakery:latest
+    container_name: dealio-bakery
+    restart: always
+    ports:
+      - "3002:80"
+    networks:
+      - dealio-network
+    # Note: depends_on is omitted here because dealio-app is expected to be
+    # managed by a different compose file (e.g. docker-compose.vps.yml)
+    # in the target environment.
+
+networks:
+  dealio-network:
+    external: true

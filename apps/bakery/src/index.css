@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "@repo/ui/globals.css";
+@source "../../packages/ui/src/**/*.tsx";
+
+@theme {
+  --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif;
+
+  /* Scryme Bakery Colors - Refined for Enterprise */
+  --color-primary: #5c3d2e; /* Scryme Brown */
+  --color-primary-foreground: #f5f2e9; /* Scryme Cream */
+
+  --color-background: #fdfcf9; /* Slightly brighter Cream for better contrast */
+  --color-foreground: #1a1513;
+
+  --color-sidebar: #f5f2e9;
+  --color-sidebar-foreground: #5c3d2e;
+  --color-sidebar-primary: #5c3d2e;
+  --color-sidebar-primary-foreground: #f5f2e9;
+  --color-sidebar-accent: rgba(92, 61, 46, 0.05);
+  --color-sidebar-accent-foreground: #5c3d2e;
+  --color-sidebar-border: rgba(92, 61, 46, 0.1);
+  --color-sidebar-ring: #5c3d2e;
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+:root {
+  --radius: 0.5rem;
+  --primary: #5c3d2e;
+  --background: #fdfcf9;
+  --foreground: #1a1513;
+
+  --sidebar-background: #f5f2e9;
+  --sidebar-foreground: #5c3d2e;
+  --sidebar-primary: #5c3d2e;
+  --sidebar-primary-foreground: #f5f2e9;
+  --sidebar-accent: rgba(92, 61, 46, 0.05);
+  --sidebar-accent-foreground: #5c3d2e;
+  --sidebar-border: rgba(92, 61, 46, 0.1);
+  --sidebar-ring: #5c3d2e;
+}
+
+.dark {
+  --primary: #5c3d2e;
+  /* Keep dark mode relatively neutral but could slightly warm up the background if needed */
+  --background: oklch(0.14 0.01 60);
+}

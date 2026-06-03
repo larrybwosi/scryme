@@ -1,4 +1,6 @@
 import { db } from "@repo/db";
+import { PERMISSION_ACTIONS } from "../permissions/constants";
+import { parsePermission } from "./permissions";
 import { Permission } from "../permissions/types";
 
 // These should be imported from a config file or passed in
@@ -20,12 +22,36 @@ export class PermissionError extends Error {
 }
 
 /**
- * Performs the heavy-lifting of permission checking, including ban checks,
- * rate limiting, and audit logging.
- *
- * Note: Redis client and other dependencies should ideally be passed in or
- * handled via a provider, but for now we follow the requirement to use dependencies.
+ * Validates if a user with a set of permissions can perform an action
  */
+export function checkPermission(
+  userPermissions: string[],
+  requiredPermission: string,
+): boolean {
+  if (userPermissions.includes("*") || userPermissions.includes("*:*")) {
+    return true;
+  }
+
+  const required = parsePermission(requiredPermission);
+
+  return userPermissions.some((p) => {
+    const user = parsePermission(p);
+
+    // Exact match
+    if (p === requiredPermission) return true;
+
+    // Resource wildcard
+    if (
+      user.resource === required.resource &&
+      user.action === PERMISSION_ACTIONS.ALL
+    ) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
 export async function checkPermissionLogic(
   context: {
     memberId: string;
@@ -51,7 +77,7 @@ export async function checkPermissionLogic(
   }
 
   // 2. Check permission
-  if (!context.hasPermission(permission)) {
+  if (!context.hasPermission(permission.resource)) {
     const failedAttemptsKey = `auth:failed-attempts:${memberId}:${permission}`;
 
     // Increment failure count atomically
@@ -95,10 +121,10 @@ export async function checkPermissionLogic(
           entityType: "AUTH_CHECK",
           entityId: memberId,
           description: `Permission '${permission}' denied for member ${memberId} (Role: ${role}). Attempt ${attempts}/${CONFIG.MAX_FAILED_ATTEMPTS}.`,
-          details: {
+          details: JSON.stringify({
             requestedPermission: permission,
             heldPermissions: Array.from(context.permissions),
-          },
+          }),
         },
       })
       .catch((err) => console.error("Failed to create audit log:", err));
