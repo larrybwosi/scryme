@@ -285,8 +285,8 @@ async fn sync_item(
         }
     }
 
-    // Skip syncing for SETTINGS and UNIT types
-    if item.entity_type == "SETTINGS" || item.entity_type == "UNIT" {
+    // Skip syncing for SETTINGS types
+    if item.entity_type == "SETTINGS" {
         return Ok(());
     }
 

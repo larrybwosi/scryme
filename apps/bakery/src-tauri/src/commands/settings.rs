@@ -60,6 +60,7 @@ pub async fn update_settings(
 
     sqlx::query(
         "UPDATE bakery_settings SET
+         organization_id = COALESCE(?, organization_id),
          is_enabled = COALESCE(?, is_enabled),
          default_location_id = COALESCE(?, default_location_id),
          default_baker_id = COALESCE(?, default_baker_id),
@@ -75,6 +76,7 @@ pub async fn update_settings(
          updated_at = ?
          WHERE id = ?",
     )
+    .bind(settings.get("organizationId").and_then(|v| v.as_str()))
     .bind(settings.get("isEnabled").and_then(|v| v.as_bool()))
     .bind(settings.get("defaultLocationId").and_then(|v| v.as_str()))
     .bind(settings.get("defaultBakerId").and_then(|v| v.as_str()))
