@@ -126,7 +126,7 @@ pub async fn clear_provisioned_api_key() -> BackendResult<()> {
     let entry = Entry::new("scryme-bakery", "device-api-key")
         .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
 
-    match entry.delete_password() {
+    match entry.delete_credential() {
         Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
         Err(e) => Err(BackendError::Internal(format!("Failed to clear API Key: {}", e))),
     }
