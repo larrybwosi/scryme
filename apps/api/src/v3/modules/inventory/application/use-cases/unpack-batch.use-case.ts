@@ -4,6 +4,7 @@ import { InventoryMovementService } from '../services/inventory-movement.service
 import { MovementType, StockAdjustmentReason } from '@repo/db';
 import { Decimal } from 'decimal.js';
 import { UnpackBatchDto } from '../dto/unpack-batch.dto';
+export { UnpackBatchDto };
 
 @Injectable()
 export class UnpackBatchUseCase {

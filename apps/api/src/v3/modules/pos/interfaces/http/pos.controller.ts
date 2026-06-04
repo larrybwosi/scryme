@@ -293,7 +293,7 @@ export class PosController {
   @Permissions('finance:write')
   @ApiOperation({ summary: 'Top up a petty cash fund', operationId: 'POS_TopUpPettyCash' })
   async topUpPettyCash(@v3Context() ctx: V3ApiContext, @Param('id') id: string, @Body() body: TopUpPettyCashFundDto) {
-    return this.pettyCashUseCase.topUpFund(ctx.organizationId, id, body);
+    return this.pettyCashUseCase.topUpFund(ctx.organizationId, id, body, ctx.memberId!);
   }
 
   @Post('petty-cash/:id/expense')
@@ -302,7 +302,7 @@ export class PosController {
   @Permissions('finance:write')
   @ApiOperation({ summary: 'Record an expense from petty cash', operationId: 'POS_CreatePettyCashExpense' })
   async createPettyCashExpense(@v3Context() ctx: V3ApiContext, @Param('id') id: string, @Body() body: CreateExpenseDto) {
-    return this.expenseUseCase.createExpense(ctx.organizationId, {
+    return this.expenseUseCase.createExpense(ctx.organizationId, ctx.memberId!, {
       ...body,
       pettyCashFundId: id,
     });
