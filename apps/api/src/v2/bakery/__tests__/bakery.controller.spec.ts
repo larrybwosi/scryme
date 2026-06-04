@@ -62,12 +62,12 @@ describe('BakeryController', () => {
     memberId: 'mem-1',
     locationId: 'loc-1',
     permissions: [],
-    authType: 'API_KEY',
+    authType: 'device',
     scopes: [],
     correlationId: 'test-id',
     ipAddress: '127.0.0.1',
     userAgent: 'test-agent',
-    isPublic: false,
+    requestStartTime: Date.now(),
   };
 
   beforeEach(async () => {
