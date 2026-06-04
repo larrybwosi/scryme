@@ -3,12 +3,25 @@
 import React, { useState } from 'react';
 import { CalendarClock, CheckCircle2, Circle, Clock, Plus, X, AlertTriangle } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
-import type { Customer, FollowUp, FollowUpPriority, FollowUpStatus } from '../../../../../lib/mock-data';
 import { StatusBadge } from '../../../../../components/ui/status-badge';
 import { EmptyState } from '../../../../../components/ui/empty-state';
+import type { CustomerWithRelations } from '../customer-detail-view';
 
 interface FollowUpsTabProps {
-  customer: Customer;
+  customer: CustomerWithRelations;
+}
+
+// Mocked for now since not in DB
+interface FollowUp {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  priority: string;
+  status: string;
+  assignedTo: string;
+  assignedToInitials: string;
+  completedDate?: string;
 }
 
 function FollowUpCard({
@@ -108,26 +121,17 @@ function FollowUpCard({
   );
 }
 
-const PRIORITIES: FollowUpPriority[] = ['High', 'Medium', 'Low'];
-const STATUSES: FollowUpStatus[] = ['Pending', 'Completed', 'Overdue', 'Cancelled'];
+const STATUSES = ['Pending', 'Completed', 'Overdue', 'Cancelled'];
 
 export function FollowUpsTab({ customer }: FollowUpsTabProps) {
-  const [followUps, setFollowUps] = useState<FollowUp[]>(
-    [...customer.followUps].sort((a, b) => {
-      const order: Record<FollowUpStatus, number> = { Overdue: 0, Pending: 1, Cancelled: 2, Completed: 3 };
-      const byStatus = order[a.status] - order[b.status];
-      if (byStatus !== 0) return byStatus;
-      const priorityOrder: Record<FollowUpPriority, number> = { High: 0, Medium: 1, Low: 2 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    })
-  );
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [form, setForm] = useState({
     title: '',
     description: '',
     dueDate: '',
-    priority: 'Medium' as FollowUpPriority,
+    priority: 'Medium',
     assignedTo: 'You',
   });
 
@@ -151,7 +155,6 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
     if (!form.title.trim() || !form.dueDate) return;
     const fu: FollowUp = {
       id: `fu-new-${Date.now()}`,
-      customerId: customer.id,
       title: form.title.trim(),
       description: form.description.trim(),
       dueDate: form.dueDate,
@@ -209,8 +212,8 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
             </div>
             <div>
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Priority</label>
-              <select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as FollowUpPriority }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
-                {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+              <select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
+                {['High', 'Medium', 'Low'].map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div>
