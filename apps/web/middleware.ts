@@ -39,7 +39,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Check if user is banned
-  if (session.user.banned && pathname !== "/banned") {
+  if ((session.user as any).banned && pathname !== "/banned") {
     return NextResponse.redirect(new URL("/banned", request.url));
   }
 
