@@ -76,6 +76,123 @@ export class BakeryService {
   /**
    * List all ingredients (raw materials) for the bakery.
    */
+  async createIngredient(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
+    const {
+      name,
+      categoryId,
+      description,
+      sku,
+      buyingPrice,
+      reorderPoint,
+      baseUnitId,
+      baseOrgUnitId,
+      stockingUnitId,
+      stockingOrgUnitId,
+    } = data;
+
+    return this.prisma.client.$transaction(async (tx) => {
+      // 1. Create Product
+      const product = await tx.product.create({
+        data: {
+          name,
+          description,
+          type: "RAW_MATERIAL" as any,
+          categoryId,
+          organizationId,
+          sku: sku || `RM-${Date.now()}`,
+          isActive: true,
+        },
+      });
+
+      // 2. Create Default Variant
+      return tx.productVariant.create({
+        data: {
+          productId: product.id,
+          name: "Standard",
+          sku: sku || `RMV-${Date.now()}`,
+          buyingPrice: buyingPrice || 0,
+          reorderPoint: reorderPoint || 0,
+          baseUnitId,
+          baseOrgUnitId,
+          stockingUnitId,
+          stockingOrgUnitId,
+          attributes: {},
+        },
+      });
+    });
+  }
+
+  async updateIngredient(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const {
+      name,
+      categoryId,
+      description,
+      sku,
+      buyingPrice,
+      reorderPoint,
+      baseUnitId,
+      baseOrgUnitId,
+      stockingUnitId,
+      stockingOrgUnitId,
+    } = data;
+
+    // The 'id' passed from the frontend is actually the variantId (see IngredientFormDialog and raw-materials hook)
+    const variant = await this.prisma.client.productVariant.findUnique({
+      where: { id },
+      include: { product: true },
+    });
+
+    if (!variant || variant.product.organizationId !== organizationId) {
+      throw new NotFoundException("Ingredient not found");
+    }
+
+    return this.prisma.client.$transaction(async (tx) => {
+      // 1. Update Product
+      await tx.product.update({
+        where: { id: variant.productId },
+        data: {
+          name: name || undefined,
+          description: description || undefined,
+          categoryId: categoryId || undefined,
+          sku: sku || undefined,
+        },
+      });
+
+      // 2. Update Variant
+      return tx.productVariant.update({
+        where: { id },
+        data: {
+          sku: sku || undefined,
+          buyingPrice: buyingPrice !== undefined ? buyingPrice : undefined,
+          reorderPoint: reorderPoint !== undefined ? reorderPoint : undefined,
+          baseUnitId: baseUnitId || undefined,
+          baseOrgUnitId: baseOrgUnitId || undefined,
+          stockingUnitId: stockingUnitId || undefined,
+          stockingOrgUnitId: stockingOrgUnitId || undefined,
+        },
+      });
+    });
+  }
+
+  async deleteIngredient(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+
+    const variant = await this.prisma.client.productVariant.findUnique({
+      where: { id },
+      include: { product: true },
+    });
+
+    if (!variant || variant.product.organizationId !== organizationId) {
+      throw new NotFoundException("Ingredient not found");
+    }
+
+    return this.prisma.client.product.delete({
+      where: { id: variant.productId },
+    });
+  }
+
   async getIngredients(ctx: V2ApiContext) {
     const { organizationId } = ctx;
     return this.prisma.client.productVariant.findMany({

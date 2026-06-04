@@ -17,4 +17,6 @@ export const PERMISSION_DEFINITIONS: Record<string, string[]> = {
   reports: [PERMISSION_ACTIONS.VIEW, PERMISSION_ACTIONS.GENERATE],
   hr: [PERMISSION_ACTIONS.VIEW, PERMISSION_ACTIONS.MANAGE],
   communication: [PERMISSION_ACTIONS.VIEW, PERMISSION_ACTIONS.MANAGE],
+  logistics: [],
+  automation: [],
 };

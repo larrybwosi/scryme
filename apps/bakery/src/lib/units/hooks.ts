@@ -51,21 +51,21 @@ interface OrganizationUnit {
   conversionOffset?: number | null;
 }
 
+import sdk from '@/lib/sdk';
+
 // API functions
 const fetchSystemUnits = async (): Promise<SystemUnit[]> => {
   if (isTauri() || isOfflineMode()) {
     return tauriInvoke<SystemUnit[]>('get_system_units');
   }
-  const response = await axios.get('/api/units/system');
-  return response.data;
+  return sdk.units.getSystemUnits();
 };
 
 const fetchOrganizationUnits = async (): Promise<OrganizationUnit[]> => {
   if (isTauri() || isOfflineMode()) {
     return tauriInvoke<OrganizationUnit[]>('get_organization_units', { organizationId: 'local-org' });
   }
-  const response = await axios.get(`/api/units/organization`);
-  return response.data;
+  return sdk.units.getOrganizationUnits();
 };
 
 const createOrganizationUnit = async (data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
@@ -75,8 +75,7 @@ const createOrganizationUnit = async (data: Partial<OrganizationUnit>): Promise<
         unit: { ...data, organizationId: 'local-org', isActive: true }
     });
   }
-  const response = await axios.post('/api/units/organization', data);
-  return response.data;
+  return sdk.units.createOrganizationUnit(data);
 };
 
 const updateOrganizationUnit = async (unitId: string, data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
@@ -87,8 +86,7 @@ const updateOrganizationUnit = async (unitId: string, data: Partial<Organization
     });
     return { id: unitId, ...data } as OrganizationUnit;
   }
-  const response = await axios.patch(`/api/units/organization/${unitId}`, data);
-  return response.data;
+  return sdk.units.updateOrganizationUnit(unitId, data);
 };
 
 const deleteOrganizationUnit = async (unitId: string): Promise<void> => {
@@ -96,7 +94,7 @@ const deleteOrganizationUnit = async (unitId: string): Promise<void> => {
     await tauriInvoke('delete_organization_unit', { userId: 'local-user', id: unitId });
     return;
   }
-  await axios.delete(`/api/units/organization/${unitId}`);
+  return sdk.units.deleteOrganizationUnit(unitId);
 };
 
 // Main hook
