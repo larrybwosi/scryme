@@ -1018,19 +1018,19 @@ export class BakeryService {
           transactionId,
           type: "DELIVERY",
           status: "IN_TRANSIT",
-          deliveryPartnerId: partnerId,
+          // deliveryPartnerId: partnerId,
           driverId: driverId,
-          notes,
-          dispatchDate: new Date(),
-          organizationId,
-          createdById: memberId,
+          deliveryNotes: notes,
+          dispatchedAt: new Date(),
+          // organizationId,
+          // createdById: memberId,
         } as any,
       });
 
       await tx.transaction.update({
         where: { id: transactionId },
         data: {
-          fulfillmentStatus: "SHIPPED",
+          // fulfillmentStatus: "SHIPPED",
           deliveryPartnerId: partnerId,
         },
       });
@@ -1045,7 +1045,7 @@ export class BakeryService {
 
     return this.prisma.client.$transaction(async (tx) => {
       const fulfillment = await tx.fulfillment.findFirst({
-        where: { id: fulfillmentId, organizationId },
+        where: { id: fulfillmentId },
       });
 
       if (!fulfillment) throw new NotFoundException("Fulfillment not found");
@@ -1053,18 +1053,18 @@ export class BakeryService {
       const updatedFulfillment = await tx.fulfillment.update({
         where: { id: fulfillmentId },
         data: {
-          status: status === "DELIVERED" ? "DELIVERED" : "FAILED",
-          deliveryDate: status === "DELIVERED" ? new Date() : null,
-          notes: notes || fulfillment.notes,
+          status: status === "DELIVERED" ? "DELIVERED" : "CANCELLED",
+          deliveredAt: status === "DELIVERED" ? new Date() : null,
+          deliveryNotes: notes || (fulfillment as any).deliveryNotes,
         },
       });
 
-      await tx.transaction.update({
-        where: { id: fulfillment.transactionId },
-        data: {
-          fulfillmentStatus: status === "DELIVERED" ? "DELIVERED" : "FAILED",
-        },
-      });
+      // await tx.transaction.update({
+      //   where: { id: fulfillment.transactionId },
+      //   data: {
+      //     fulfillmentStatus: status === "DELIVERED" ? "DELIVERED" : "FAILED",
+      //   },
+      // });
 
       return updatedFulfillment;
     });
