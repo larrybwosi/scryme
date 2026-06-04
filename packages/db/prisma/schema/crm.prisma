@@ -103,6 +103,7 @@ model CrmRecord {
 
   activities         CrmActivity[]
   notes              CrmNote[]
+  followUps          CrmFollowUp[]
 
   @@index([objectId, organizationId])
   @@index([organizationId])
@@ -201,4 +202,49 @@ model CrmNote {
   @@index([organizationId])
   @@index([timelineDate])
   @@map("crm_notes")
+}
+
+enum CrmFollowUpStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  CANCELLED
+
+  @@map("CrmFollowUpStatus")
+}
+
+enum CrmFollowUpPriority {
+  HIGH
+  MEDIUM
+  LOW
+
+  @@map("CrmFollowUpPriority")
+}
+
+model CrmFollowUp {
+  id               String       @id @default(cuid())
+  recordId         String
+  record           CrmRecord    @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  organizationId   String
+  organization     Organization @relation("OrgCrmFollowUps", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  title            String
+  description      String?      @db.Text
+  dueDate          DateTime
+  priority         CrmFollowUpPriority @default(MEDIUM)
+  status           CrmFollowUpStatus   @default(PENDING)
+
+  assignedToId     String?
+  assignedTo       Member?      @relation("CrmFollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  completedAt      DateTime?
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([recordId])
+  @@index([organizationId])
+  @@index([assignedToId])
+  @@map("crm_follow_ups")
 }

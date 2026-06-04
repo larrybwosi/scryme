@@ -190,6 +190,7 @@ model Organization {
   crmRelationshipDefinitions CrmRelationshipDefinition[] @relation("OrgCrmRelationships")
   crmActivities            CrmActivity[]             @relation("OrgCrmActivities")
   crmNotes                 CrmNote[]                 @relation("OrgCrmNotes")
+  crmFollowUps             CrmFollowUp[]             @relation("OrgCrmFollowUps")
 
   @@index([slug])
   @@map("organization")
@@ -326,6 +327,7 @@ model Member {
   ownedCrmRecords        CrmRecord[]    @relation("CrmRecordOwner")
   crmActivities          CrmActivity[]  @relation("CrmActivityMember")
   crmNotes               CrmNote[]      @relation("CrmNoteCreator")
+  crmFollowUps           CrmFollowUp[]  @relation("CrmFollowUpAssignedTo")
 
   // Purchase Relations
   createdPurchases Purchase[]        @relation("PurchaseCreator")

@@ -11,7 +11,8 @@ import type {
   Member,
   TransactionItem,
   User,
-  Address
+  Address,
+  CrmFollowUp
 } from '@repo/db';
 
 export type CustomerWithRelations = Customer & {
@@ -24,5 +25,6 @@ export type CustomerWithRelations = Customer & {
   crmRecord: (CrmRecord & {
     activities: (CrmActivity & { member: (Member & { user: User }) | null })[];
     notes: (CrmNote & { createdBy: (Member & { user: User }) | null })[];
+    followUps: (CrmFollowUp & { assignedTo: (Member & { user: User }) | null })[];
   }) | null;
 };
