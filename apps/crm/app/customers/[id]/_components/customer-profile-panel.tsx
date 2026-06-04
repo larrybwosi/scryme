@@ -15,13 +15,13 @@ import {
   Building2,
   Tag,
 } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import type { Customer, Transaction, Invoice, Address } from '@repo/db';
-import { StatusBadge } from '../../../../components/ui/status-badge';
-import { formatCurrency } from '../../../../lib/utils';
+import { cn } from '@/lib/utils';
+import type { CustomerWithRelations } from '@/lib/types';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { formatCurrency } from '@/lib/utils';
 
 interface CustomerProfilePanelProps {
-  customer: Customer & { transactions: Transaction[], invoices: Invoice[], addresses: Address[] };
+  customer: CustomerWithRelations;
 }
 
 function HealthRing({ score }: { score: number }) {
@@ -65,7 +65,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
   const totalRevenue = customer.transactions.reduce((sum, t) => sum + Number(t.finalTotal), 0);
   const totalOrders = customer.transactions.length;
   const openInvoices = customer.invoices.filter(i => i.status !== 'PAID' && i.status !== 'VOID').length;
-  const healthScore = 85; // Static for now as it's not in DB
+  const healthScore = 85;
 
   const defaultAddress = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
   const addressString = defaultAddress
@@ -101,7 +101,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
         <div className="space-y-2.5">
           <div className="flex items-center gap-2.5 text-[12.5px]">
             <Mail size={13} className="text-muted-foreground flex-shrink-0" />
-            <a href={`mailto:${customer.email}`} className="text-primary hover:underline truncate">
+            <a href={`mailto:${customer.email || ''}`} className="text-primary hover:underline truncate">
               {customer.email || 'N/A'}
             </a>
           </div>

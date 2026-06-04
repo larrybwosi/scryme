@@ -12,19 +12,15 @@ import {
   X,
   Clock,
 } from 'lucide-react';
-import { StatusBadge } from '../../../../../components/ui/status-badge';
-import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, CrmRecord, CrmActivity, Member, User } from '@repo/db';
-import { createActivity } from '../../../../actions/activities';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import type { CustomerWithRelations } from '@/lib/types';
+import { createActivity } from '@/app/actions/activities';
 import { toast } from 'sonner';
-import { formatDate } from '../../../../lib/utils';
+import { formatDate } from '@/lib/utils';
 
 interface ConversationsTabProps {
-  customer: Customer & {
-    crmRecord: (CrmRecord & {
-      activities: (CrmActivity & { member: (Member & { user: User }) | null })[]
-    }) | null
-  };
+  customer: CustomerWithRelations;
 }
 
 function channelIcon(channel: string) {
@@ -36,7 +32,7 @@ function channelIcon(channel: string) {
   }
 }
 
-function ConversationCard({ convo }: { convo: CrmActivity & { member: (Member & { user: User }) | null } }) {
+function ConversationCard({ convo }: { convo: any }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = channelIcon(convo.type);
 

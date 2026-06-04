@@ -1,25 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingBag, TrendingUp, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { StatusBadge } from '../../../../../components/ui/status-badge';
-import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, Transaction, TransactionItem } from '@repo/db';
+import { ShoppingBag, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { formatCurrency } from '@/lib/utils';
+import type { CustomerWithRelations } from '@/lib/types';
 
 interface OrdersTabProps {
-  customer: Customer & { transactions: (Transaction & { items: TransactionItem[] })[] };
+  customer: CustomerWithRelations;
 }
 
-function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function OrderRow({ order }: { order: Transaction & { items: TransactionItem[] } }) {
+function OrderRow({ order }: { order: any }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -40,7 +32,7 @@ function OrderRow({ order }: { order: Transaction & { items: TransactionItem[] }
             <StatusBadge status={order.type} size="sm" />
           </div>
           <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
-            {order.items.map(i => `${i.quantity}x ${i.productName}`).join(', ')}
+            {order.items.map((i: any) => `${i.quantity}x ${i.productName}`).join(', ')}
           </p>
         </div>
 
@@ -100,10 +92,10 @@ export function OrdersTab({ customer }: OrdersTabProps) {
   const orders = customer.transactions || [];
 
   const filtered =
-    filterStatus === 'All' ? orders : orders.filter((o) => o.status === filterStatus);
+    filterStatus === 'All' ? orders : orders.filter((o: any) => o.status === filterStatus);
 
-  const totalRevenue = orders.reduce((s, o) => s + Number(o.finalTotal), 0);
-  const completedCount = orders.filter((o) => o.status === 'COMPLETED').length;
+  const totalRevenue = orders.reduce((s: number, o: any) => s + Number(o.finalTotal), 0);
+  const completedCount = orders.filter((o: any) => o.status === 'COMPLETED').length;
 
   return (
     <div className="max-w-3xl">
@@ -136,19 +128,22 @@ export function OrdersTab({ customer }: OrdersTabProps) {
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {['All', ...ORDER_STATUSES].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(s)}
-            className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
-              filterStatus === s
-                ? 'bg-primary text-white border-primary'
-                : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
+        {['All', ...ORDER_STATUSES].map((s) => {
+          const isActive = filterStatus === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
+                isActive
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+              }`}
+            >
+              {s}
+            </button>
+          );
+        })}
       </div>
 
       {/* List */}
@@ -156,7 +151,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
         <EmptyState icon={ShoppingBag} title="No orders found" description={filterStatus === 'All' ? 'No orders placed by this customer yet.' : `No orders with status "${filterStatus}".`} />
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((o) => <OrderRow key={o.id} order={o} />)}
+          {filtered.map((o: any) => <OrderRow key={o.id} order={o} />)}
         </div>
       )}
     </div>

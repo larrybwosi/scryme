@@ -35,7 +35,7 @@ export async function createInvoiceAction(data: CreateInvoiceInput) {
         dueDate: validatedData.dueDate,
         status: validatedData.status,
         netTotal: netTotal,
-        grandTotal: netTotal, // Simplified for now, no taxes
+        grandTotal: netTotal,
         balanceDue: netTotal,
         items: {
           create: validatedData.items,

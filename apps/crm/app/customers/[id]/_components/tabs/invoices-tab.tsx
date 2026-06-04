@@ -2,19 +2,19 @@
 
 import React, { useState } from 'react';
 import { Receipt, Download, ChevronDown, ChevronUp, Plus, X, AlertCircle } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import { StatusBadge } from '../../../../../components/ui/status-badge';
-import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, Invoice, InvoiceItem } from '@repo/db';
-import { createInvoiceAction } from '../../../../actions/invoices';
+import { cn } from '@/lib/utils';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { createInvoiceAction } from '@/app/actions/invoices';
 import { toast } from 'sonner';
-import { formatCurrency, formatDate } from '../../../../lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import type { CustomerWithRelations } from '@/lib/types';
 
 interface InvoicesTabProps {
-  customer: Customer & { invoices: (Invoice & { items: InvoiceItem[] })[] };
+  customer: CustomerWithRelations;
 }
 
-function InvoiceRow({ invoice }: { invoice: Invoice & { items: InvoiceItem[] } }) {
+function InvoiceRow({ invoice }: { invoice: any }) {
   const [expanded, setExpanded] = useState(false);
   const balance = invoice.balanceDue;
   const isOverdue = invoice.status === 'OVERDUE';
@@ -58,7 +58,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice & { items: InvoiceItem[] } }
             <StatusBadge status={invoice.status} size="sm" />
           </div>
           <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
-            {invoice.items.map(i => i.itemName).join(', ')}
+            {invoice.items.map((i: any) => i.itemName).join(', ')}
           </p>
         </div>
 
@@ -158,12 +158,12 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
   const invoices = customer.invoices;
 
   const filtered =
-    filterStatus === 'All' ? invoices : invoices.filter((inv) => inv.status === filterStatus);
+    filterStatus === 'All' ? invoices : invoices.filter((inv: any) => inv.status === filterStatus);
 
-  const overdueCount = invoices.filter((inv) => inv.status === 'OVERDUE').length;
+  const overdueCount = invoices.filter((inv: any) => inv.status === 'OVERDUE').length;
   const totalOpen = invoices
-    .filter((inv) => inv.status !== 'PAID' && inv.status !== 'VOID')
-    .reduce((sum, inv) => sum + inv.balanceDue, 0);
+    .filter((inv: any) => inv.status !== 'PAID' && inv.status !== 'VOID')
+    .reduce((sum: number, inv: any) => sum + inv.balanceDue, 0);
 
   const handleAdd = async () => {
     const amount = parseFloat(form.amount) || 0;
@@ -299,19 +299,22 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {['All', ...INVOICE_STATUSES].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(s)}
-            className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
-              filterStatus === s
-                ? 'bg-primary text-white border-primary'
-                : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
+        {['All', ...INVOICE_STATUSES].map((s) => {
+          const isActive = filterStatus === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
+                isActive
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+              }`}
+            >
+              {s}
+            </button>
+          );
+        })}
       </div>
 
       {/* List */}
@@ -327,7 +330,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
         />
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((inv) => (
+          {filtered.map((inv: any) => (
             <InvoiceRow key={inv.id} invoice={inv} />
           ))}
         </div>

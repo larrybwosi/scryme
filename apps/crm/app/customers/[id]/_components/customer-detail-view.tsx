@@ -12,34 +12,7 @@ import { InvoicesTab } from './tabs/invoices-tab';
 import { OrdersTab } from './tabs/orders-tab';
 import { ConversationsTab } from './tabs/conversations-tab';
 import { FollowUpsTab } from './tabs/followups-tab';
-import type {
-  Customer,
-  Invoice,
-  InvoiceItem,
-  Transaction,
-  Fulfillment,
-  FulfillmentItem,
-  CrmRecord,
-  CrmActivity,
-  CrmNote,
-  Member,
-  TransactionItem,
-  User,
-  Address
-} from '@repo/db';
-
-export type CustomerWithRelations = Customer & {
-  addresses: Address[];
-  invoices: (Invoice & { items: InvoiceItem[] })[];
-  transactions: (Transaction & {
-    fulfillments: (Fulfillment & { items: FulfillmentItem[] })[];
-    items: TransactionItem[];
-  })[];
-  crmRecord: (CrmRecord & {
-    activities: (CrmActivity & { member: (Member & { user: User }) | null })[];
-    notes: (CrmNote & { createdBy: (Member & { user: User }) | null })[];
-  }) | null;
-};
+import type { CustomerWithRelations } from '@/lib/types';
 
 interface CustomerDetailViewProps {
   customer: CustomerWithRelations;
@@ -70,7 +43,7 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
 
   const counts: Partial<Record<TabId, number>> = {
     notes: customer.crmRecord?.notes?.length || 0,
-    deliveries: customer.transactions?.reduce((sum: number, t) => sum + (t.fulfillments?.length || 0), 0) || 0,
+    deliveries: customer.transactions?.reduce((sum: number, t: any) => sum + (t.fulfillments?.length || 0), 0) || 0,
     invoices: customer.invoices?.length || 0,
     orders: customer.transactions?.length || 0,
     conversations: customer.crmRecord?.activities?.length || 0,

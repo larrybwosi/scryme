@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { CalendarClock, CheckCircle2, Circle, Clock, Plus, X, AlertTriangle } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import { StatusBadge } from '../../../../../components/ui/status-badge';
-import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { CustomerWithRelations } from '../customer-detail-view';
+import { cn } from '@/lib/utils';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { formatDate } from "@/lib/utils";
+import type { CustomerWithRelations } from '@/lib/types';
 
 interface FollowUpsTabProps {
   customer: CustomerWithRelations;
@@ -95,14 +96,14 @@ function FollowUpCard({
                 )}
               >
                 {isCompleted
-                  ? `Completed ${followUp.completedDate ? new Date(followUp.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}`
+                  ? `Completed ${followUp.completedDate ? formatDate(followUp.completedDate) : ''}`
                   : isOverdue
-                  ? `Overdue · ${new Date(followUp.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                  ? `Overdue · ${formatDate(followUp.dueDate)}`
                   : daysUntilDue === 0
                   ? 'Due today'
                   : daysUntilDue === 1
                   ? 'Due tomorrow'
-                  : `Due ${new Date(followUp.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                  : `Due ${formatDate(followUp.dueDate)}`
                 }
               </span>
             </div>

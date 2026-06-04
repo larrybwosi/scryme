@@ -2,22 +2,18 @@
 
 import React, { useState } from 'react';
 import { Truck, Package, MapPin, Calendar, Hash, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
-import { StatusBadge } from '../../../../../components/ui/status-badge';
-import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, Fulfillment, Transaction, FulfillmentItem } from '@repo/db';
-import { createFulfillmentAction } from '../../../../actions/fulfillments';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import type { CustomerWithRelations } from '@/lib/types';
+import { createFulfillmentAction } from '@/app/actions/fulfillments';
 import { toast } from 'sonner';
-import { formatDate } from '../../../../lib/utils';
+import { formatDate } from '@/lib/utils';
 
 interface DeliveriesTabProps {
-  customer: Customer & {
-    transactions: (Transaction & {
-      fulfillments: (Fulfillment & { items: FulfillmentItem[] })[]
-    })[]
-  };
+  customer: CustomerWithRelations;
 }
 
-function DeliveryRow({ delivery, transaction }: { delivery: Fulfillment & { items: FulfillmentItem[] }, transaction: Transaction }) {
+function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: any }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -292,19 +288,22 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {['All', ...FULFILLMENT_STATUSES].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(s)}
-            className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
-              filterStatus === s
-                ? 'bg-primary text-white border-primary'
-                : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
+        {['All', ...FULFILLMENT_STATUSES].map((s) => {
+          const isActive = filterStatus === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
+                isActive
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+              }`}
+            >
+              {s}
+            </button>
+          );
+        })}
       </div>
 
       {/* List */}

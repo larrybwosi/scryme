@@ -1,22 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Pin, PinOff, StickyNote, User, Plus, X } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, CrmNote, Member, CrmRecord, User as UserType } from '@repo/db';
-import { createNote } from '../../../../actions/notes';
+import { StickyNote, User, Plus, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/empty-state';
+import type { CustomerWithRelations } from '@/lib/types';
+import { createNote } from '@/app/actions/notes';
 import { toast } from 'sonner';
-import { formatDate } from '../../../../lib/utils';
+import { formatDate } from '@/lib/utils';
 
 interface NotesTabProps {
-  customer: Customer & { crmRecord: (CrmRecord & { notes: (CrmNote & { createdBy: (Member & { user: UserType }) | null })[] }) | null };
+  customer: CustomerWithRelations;
 }
 
 function NoteCard({
   note,
 }: {
-  note: CrmNote & { createdBy: (Member & { user: UserType }) | null };
+  note: any;
 }) {
   const authorName = note.createdBy?.user?.name || note.createdBy?.email || 'System';
   const initials = authorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);

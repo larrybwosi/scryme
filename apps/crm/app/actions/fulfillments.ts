@@ -35,7 +35,9 @@ export async function createFulfillmentAction(data: CreateFulfillmentInput) {
       }
     });
 
-    revalidatePath(`/customers/${fulfillment.transaction.customerId}`);
+    if (fulfillment.transaction?.customerId) {
+      revalidatePath(`/customers/${fulfillment.transaction.customerId}`);
+    }
     return { success: true, data: fulfillment };
   } catch (error: any) {
     console.error('Error creating fulfillment:', error);
