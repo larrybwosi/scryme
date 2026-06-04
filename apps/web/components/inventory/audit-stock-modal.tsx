@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -49,37 +50,37 @@ export function AuditStockModal({ isOpen, onClose, product }: AuditStockModalPro
 
   const discrepancy = (parseInt(physicalCount) || 0) - availableAtLocation;
 
-  useEffect(() => {
-    if (isOpen) {
-      loadHistory();
-      loadLocations();
-    }
-  }, [isOpen, product.variantId]);
-
-  useEffect(() => {
-    if (selectedLocation) {
-      updateLocationStock(selectedLocation);
-    }
-  }, [selectedLocation, product.variantId]);
-
-  async function updateLocationStock(locId: string) {
+  const updateLocationStock = useCallback(async (locId: string) => {
     const stock = await getVariantStockByLocation(product.variantId, locId);
     setAvailableAtLocation(stock);
     setPhysicalCount(stock.toString());
-  }
+  }, [product.variantId]);
 
-  async function loadLocations() {
+  const loadLocations = useCallback(async () => {
     const data = await getInventoryLocations();
     setLocations(data);
     if (data.length > 0 && !selectedLocation) {
       setSelectedLocation(data[0].id);
     }
-  }
+  }, [selectedLocation]);
 
-  async function loadHistory() {
+  const loadHistory = useCallback(async () => {
     const data = await getStockAdjustmentHistory(product.variantId);
     setHistory(data);
-  }
+  }, [product.variantId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadHistory();
+      loadLocations();
+    }
+  }, [isOpen, loadHistory, loadLocations]);
+
+  useEffect(() => {
+    if (selectedLocation) {
+      updateLocationStock(selectedLocation);
+    }
+  }, [selectedLocation, updateLocationStock]);
 
   async function handleSave() {
     setIsSubmitting(true);
@@ -259,9 +260,9 @@ export function AuditStockModal({ isOpen, onClose, product }: AuditStockModalPro
             <div className="mb-8">
               <h3 className="text-sm font-bold mb-4">Product detail</h3>
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded bg-white border flex items-center justify-center p-1">
+                <div className="w-12 h-12 rounded bg-white border flex items-center justify-center p-1 relative overflow-hidden">
                   {product.image ? (
-                    <img src={product.image} alt={product.name} className="object-contain w-full h-full" />
+                    <Image src={product.image} alt={product.name} fill className="object-contain p-1" />
                   ) : (
                     <Package className="w-6 h-6 text-gray-400" />
                   )}
@@ -288,12 +289,12 @@ export function AuditStockModal({ isOpen, onClose, product }: AuditStockModalPro
                     </div>
                     <div className="text-[11px] font-bold text-gray-800">{format(new Date(item.adjustmentDate), "dd MMM yyyy")}</div>
                     <div className="text-[11px] text-gray-500 mt-0.5">
-                      Adjust Stock <span className="text-gray-900 font-medium">"{item.quantity.toString()} Unit"</span>
+                      Adjust Stock <span className="text-gray-900 font-medium">&quot;{item.quantity.toString()} Unit&quot;</span>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                      <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
                         {item.member?.user?.image ? (
-                           <img src={item.member.user.image} className="w-full h-full object-cover" />
+                           <Image src={item.member.user.image} alt={item.member?.user?.name || "User"} fill className="object-cover" />
                         ) : (
                           <User className="w-3 h-3 text-gray-400" />
                         )}

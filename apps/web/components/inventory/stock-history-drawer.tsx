@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   Sheet,
   SheetContent,
@@ -24,13 +25,7 @@ export function StockHistoryDrawer({ isOpen, onClose, product }: StockHistoryDra
   const [history, setHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadHistory();
-    }
-  }, [isOpen, product.variantId]);
-
-  async function loadHistory() {
+  const loadHistory = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await getStockAdjustmentHistory(product.variantId);
@@ -40,7 +35,13 @@ export function StockHistoryDrawer({ isOpen, onClose, product }: StockHistoryDra
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [product.variantId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadHistory();
+    }
+  }, [isOpen, loadHistory]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -63,12 +64,12 @@ export function StockHistoryDrawer({ isOpen, onClose, product }: StockHistoryDra
                     Adjusted <span className="text-gray-900 font-medium">{item.quantity.toString()} Units</span> ({item.reason})
                   </div>
                   {item.notes && (
-                    <div className="text-xs text-gray-400 mt-1 italic">"{item.notes}"</div>
+                    <div className="text-xs text-gray-400 mt-1 italic">&quot;{item.notes}&quot;</div>
                   )}
                   <div className="flex items-center gap-2 mt-3">
-                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
                       {item.member?.user?.image ? (
-                         <img src={item.member.user.image} className="w-full h-full object-cover" />
+                         <Image src={item.member.user.image} alt={item.member?.user?.name || "User"} fill className="object-cover" />
                       ) : (
                         <User className="w-4 h-4 text-gray-400" />
                       )}

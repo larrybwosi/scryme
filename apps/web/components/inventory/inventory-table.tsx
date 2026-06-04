@@ -16,15 +16,16 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
-import { MoreHorizontal, Package, AlertCircle, History, RotateCw } from "lucide-react";
+import { MoreHorizontal, AlertCircle, History, RotateCw } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { AuditStockModal } from "./audit-stock-modal";
 import { StockAlertModal } from "./stock-alert-modal";
 import { StockHistoryDrawer } from "./stock-history-drawer";
 import { type InventoryProduct, reorderProduct } from "../../app/actions/inventory";
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowUpDown, Loader2 } from "lucide-react";
+import { ArrowUpDown, Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
+import Image from 'next/image';
 
 interface InventoryTableProps {
   data: InventoryProduct[];
@@ -95,9 +96,9 @@ export function InventoryTable({ data }: InventoryTableProps) {
               <TableRow key={item.variantId}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center overflow-hidden relative">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
+                        <Image src={item.image} alt={item.name} fill className="object-cover" />
                       ) : (
                         <Package className="w-5 h-5 text-gray-400" />
                       )}

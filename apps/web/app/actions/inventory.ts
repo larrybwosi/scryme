@@ -1,11 +1,11 @@
 "use server";
 
-import { db, StockAdjustmentReason, MovementType, AdjustmentStatus, Decimal } from "@repo/db";
+import { db, StockAdjustmentReason, MovementType, AdjustmentStatus, Decimal, StockAdjustment, ProductVariant } from "@repo/db";
 import { Prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 
-export async function getInventoryLocations() {
+export async function getInventoryLocations(): Promise<{ id: string; name: string }[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -21,7 +21,7 @@ export async function getInventoryLocations() {
   });
 }
 
-export async function getCategories() {
+export async function getCategories(): Promise<{ id: string; name: string }[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -36,7 +36,7 @@ export async function getCategories() {
   });
 }
 
-export async function getSuppliers() {
+export async function getSuppliers(): Promise<{ id: string; name: string }[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -60,7 +60,7 @@ export async function getInventoryProducts(params: {
   stockLevel?: "low" | "out" | "normal" | "all";
   sortBy?: string;
   sortOrder?: "asc" | "desc";
-}) {
+}): Promise<InventoryProduct[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -176,7 +176,7 @@ export async function getInventoryProducts(params: {
   return results;
 }
 
-export async function getVariantStockByLocation(variantId: string, locationId: string) {
+export async function getVariantStockByLocation(variantId: string, locationId: string): Promise<number> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return 0;
 
@@ -201,7 +201,7 @@ export async function adjustStock(data: {
   quantity: number;
   reason: StockAdjustmentReason;
   notes?: string;
-}) {
+}): Promise<StockAdjustment | null> {
   const context = await getOrganizationContext();
   if (!context?.organizationId || !context.user.id) {
     throw new Error("Unauthorized");
@@ -209,7 +209,7 @@ export async function adjustStock(data: {
 
   const { variantId, locationId, quantity, reason, notes } = data;
 
-  if (isNaN(quantity) || quantity === 0) return;
+  if (isNaN(quantity) || quantity === 0) return null;
 
   // Start a transaction
   return db.$transaction(async (tx) => {
@@ -289,7 +289,7 @@ export async function updateValue(data: {
   variantId: string;
   retailPrice?: number;
   buyingPrice?: number;
-}) {
+}): Promise<ProductVariant> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -310,7 +310,7 @@ export async function updateValue(data: {
 export async function updateStockAlert(data: {
   variantId: string;
   reorderPoint: number;
-}) {
+}): Promise<ProductVariant> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -325,7 +325,7 @@ export async function updateStockAlert(data: {
   return result;
 }
 
-export async function reorderProduct(variantId: string) {
+export async function reorderProduct(variantId: string): Promise<{ success: boolean; message: string }> {
   const context = await getOrganizationContext();
   if (!context?.organizationId || !context.user.id) {
     throw new Error("Unauthorized");
@@ -391,7 +391,7 @@ export type InventoryProduct = {
   image?: string;
 };
 
-export async function getStockAdjustmentHistory(variantId: string) {
+export async function getStockAdjustmentHistory(variantId: string): Promise<(StockAdjustment & { member: { user: { name: string | null; image: string | null } } })[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
