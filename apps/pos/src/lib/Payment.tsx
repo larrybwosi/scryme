@@ -3,7 +3,7 @@
 import { useEffect, createContext } from 'react';
 import Ably from 'ably';
 import { toast } from 'sonner';
-import { useAblyStore } from '@/store/ablyStore';
+import { useRealtimeStore } from '@/store/realtimeStore';
 
 interface PaymentNotificationContextType {
   lastPayment: any;
@@ -18,17 +18,16 @@ export function PaymentNotificationProvider({
   children: React.ReactNode;
   organizationId: string;
 }) {
-  const client = useAblyStore(state => state.client);
+  const subscribe = useRealtimeStore(state => state.subscribe);
 
   useEffect(() => {
     if (!organizationId) return;
 
-    // Subscribe to the Organization Channel
-    const channel = client?.channels.get(`organization:${organizationId}:payments`);
+    const channelName = `organization:${organizationId}:payments`;
 
     // 2. Handle Matched Payments (STK Success or C2B Matched)
-    const onPaymentUpdate = (message: Ably.Message) => {
-      const { transactionId, status, data } = message.data;
+    const onPaymentUpdate = (dataUpdate: any) => {
+      const { transactionId, status, data } = dataUpdate;
       console.log('[Payment] Update received:', { transactionId, status, data });
 
       if (status === 'COMPLETED' || status === 'PAID') {
@@ -47,8 +46,8 @@ export function PaymentNotificationProvider({
     };
 
     // 3. Handle Unclaimed Payments (Buy Goods / Typo in Paybill)
-    const onUnclaimed = (message: Ably.Message) => {
-      const { amount, phone, accountRef, receipt } = message.data;
+    const onUnclaimed = (data: any) => {
+      const { amount, phone, accountRef, receipt } = data;
 
       // This creates a "Manual Action" toast for the Cashier
       toast.info('Unclaimed Payment Received', {
@@ -64,21 +63,15 @@ export function PaymentNotificationProvider({
       });
     };
 
-    if (channel) {
-      console.log('[Payment] Subscribing to channel:', channel.name);
-      channel.subscribe('payment-update', onPaymentUpdate);
-      channel.subscribe('payment-unclaimed', onUnclaimed);
-    }
+    const unsubUpdate = subscribe(channelName, 'payment-update', onPaymentUpdate);
+    const unsubUnclaimed = subscribe(channelName, 'payment-unclaimed', onUnclaimed);
 
     // Cleanup
     return () => {
-      if (channel) {
-        console.log('[Payment] Unsubscribing from channel:', channel.name);
-        channel.unsubscribe('payment-update', onPaymentUpdate);
-        channel.unsubscribe('payment-unclaimed', onUnclaimed);
-      }
+      unsubUpdate();
+      unsubUnclaimed();
     };
-  }, [organizationId, client]);
+  }, [organizationId, subscribe]);
 
   return (
     <PaymentNotificationContext.Provider value={{ lastPayment: null }}>{children}</PaymentNotificationContext.Provider>
