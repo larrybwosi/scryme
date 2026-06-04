@@ -57,6 +57,18 @@ export class CatalogService {
           : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(featured ? { isFeatured: true } : {}),
+        // Move inStock filter to database level for correct pagination and performance
+        ...(inStock
+          ? {
+              variants: {
+                some: {
+                  variantStocks: {
+                    some: { availableStock: { gt: 0 } },
+                  },
+                },
+              },
+            }
+          : {}),
       };
 
       const [products, total] = await Promise.all([
@@ -65,10 +77,34 @@ export class CatalogService {
           skip,
           take: limit,
           orderBy: { name: "asc" },
-          include: {
+          // Optimization: Use select instead of include to reduce payload size
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            barcode: true,
+            categoryId: true,
+            isActive: true,
+            imageUrls: true,
+            createdAt: true,
+            updatedAt: true,
+            type: true,
+            pointsOnPurchase: true,
+            brand: true,
+            rating: true,
+            lowStockThreshold: true,
+            isNew: true,
+            tags: true,
+            isFeatured: true,
+            slug: true,
             category: { select: { id: true, name: true } },
             variants: {
-              include: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                retailPrice: true,
+                buyingPrice: true,
                 variantStocks: {
                   select: { availableStock: true, locationId: true },
                 },
@@ -82,24 +118,20 @@ export class CatalogService {
       ]);
 
       let shaped = products.map((p) => {
-        const {
-          description: _,
-          detailedDescription: __,
-          organizationId: ___,
-          ...productBase
-        } = p as any;
         return {
-          ...productBase,
+          ...p,
           id: p.sku,
           internalId: p.id,
           images: p.imageUrls || null,
           variants: p.variants.map((v) => {
+            const { variantStocks, ...variantBase } = v;
             const totalStock =
-              v.variantStocks?.reduce(
+              variantStocks?.reduce(
                 (sum, s) => sum + Number(s.availableStock),
                 0,
               ) || 0;
             return {
+              ...variantBase,
               id: v.id,
               name: v.name,
               sku: v.sku,
@@ -108,7 +140,7 @@ export class CatalogService {
               retailPrice: v.retailPrice,
               buyingPrice: v.buyingPrice,
               totalStock,
-              stockByLocation: v.variantStocks?.map((s) => ({
+              stockByLocation: variantStocks?.map((s) => ({
                 locationId: s.locationId,
                 stock: s.availableStock,
               })),
@@ -116,10 +148,6 @@ export class CatalogService {
           }),
         };
       });
-
-      if (inStock) {
-        shaped = shaped.filter((p) => p.variants.some((v) => v.totalStock > 0));
-      }
 
       if (requestedFields && requestedFields.length > 0) {
         shaped = shaped.map((p) => {

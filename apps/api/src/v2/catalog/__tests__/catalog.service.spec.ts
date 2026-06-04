@@ -107,5 +107,54 @@ describe('CatalogService', () => {
       expect(result).toEqual(cacheValue);
       expect(mockDb.product.findMany).not.toHaveBeenCalled();
     });
+
+    it('should correctly paginate when inStock=true', async () => {
+      const orgId = 'org-1';
+      // Mock only the in-stock product being returned by the DB
+      const products = [
+        {
+          id: '1',
+          sku: 'S1',
+          name: 'In Stock',
+          variants: [
+            {
+              id: 'v1',
+              variantStocks: [{ availableStock: 10 }],
+            },
+          ],
+        },
+      ];
+      (mockDb.product.findMany as any).mockResolvedValue(products);
+      // Mock the count being 1 (only in-stock products)
+      (mockDb.product.count as any).mockResolvedValue(1);
+      (redis.get as any).mockResolvedValue(null);
+
+      const result = await service.getProducts(
+        { organizationId: orgId } as V2ApiContext,
+        { inStock: 'true' },
+      );
+
+      // Verified behavior: products are filtered by the DB
+      expect(result.products).toHaveLength(1);
+      expect(result.products[0].internalId).toBe('1');
+
+      // Verified fix: pagination.total is 1, matching the returned products
+      expect(result.pagination.total).toBe(1);
+
+      // Verify DB query had the correct filter
+      expect(mockDb.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            variants: {
+              some: {
+                variantStocks: {
+                  some: { availableStock: { gt: 0 } },
+                },
+              },
+            },
+          }),
+        }),
+      );
+    });
   });
 });
