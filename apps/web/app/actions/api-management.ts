@@ -43,18 +43,18 @@ export async function createV3ApiClientAction(data: {
   return result;
 }
 
-export async function getV3ApiClientsAction(): Promise<any[]> {
+export async function getV3ApiClientsAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getV3ApiClients(context.organizationId);
 }
 
-export async function deleteV3ApiClientAction(id: string) {
+export async function deleteV3ApiClientAction(id: string): Promise<any> {
   const context = await ensureOrgContext();
   await deleteV3ApiClient(id, context.organizationId);
   revalidatePath("/integrations/apps-api");
 }
 
-export async function updateV3ApiClientAction(id: string, data: any) {
+export async function updateV3ApiClientAction(id: string, data: any): Promise<any> {
   const context = await ensureOrgContext();
   await updateV3ApiClient(id, context.organizationId, data);
   revalidatePath("/integrations/apps-api");
@@ -84,12 +84,12 @@ export async function createWebhookSubscriptionAction(data: {
   return result;
 }
 
-export async function getWebhookSubscriptionsAction(): Promise<any[]> {
+export async function getWebhookSubscriptionsAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getWebhookSubscriptions(context.organizationId);
 }
 
-export async function deleteWebhookSubscriptionAction(id: string) {
+export async function deleteWebhookSubscriptionAction(id: string): Promise<any> {
   const context = await ensureOrgContext();
   await deleteWebhookSubscription(id, context.organizationId);
   revalidatePath("/integrations/apps-api");
@@ -113,12 +113,12 @@ export async function createV2ApiKeyAction(data: {
   return result;
 }
 
-export async function getV2ApiKeysAction(): Promise<any[]> {
+export async function getV2ApiKeysAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getV2ApiKeys(context.organizationId);
 }
 
-export async function deleteV2ApiKeyAction(id: string) {
+export async function deleteV2ApiKeyAction(id: string): Promise<any> {
   const context = await ensureOrgContext();
   await deleteV2ApiKey(id, context.organizationId);
   revalidatePath("/integrations/apps-api");
@@ -146,12 +146,12 @@ export async function createDeviceSetupTokenAction(data: {
   return result;
 }
 
-export async function getDeviceSetupTokensAction(): Promise<any[]> {
+export async function getDeviceSetupTokensAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getDeviceSetupTokens(context.organizationId);
 }
 
-export async function getDeviceRegistryAction(): Promise<any[]> {
+export async function getDeviceRegistryAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getDeviceRegistry(context.organizationId);
 }
