@@ -18,6 +18,7 @@ import {
 import { AssemblyUseCase } from './application/use-cases/assembly.use-case';
 import { CheckB2BAvailabilityUseCase } from './application/use-cases/check-b2b-availability.use-case';
 import { UnpackBatchUseCase } from './application/use-cases/unpack-batch.use-case';
+import { PackBatchUseCase } from './application/use-cases/pack-batch.use-case';
 import { ScanUnpackBatchUseCase } from './application/use-cases/scan-unpack-batch.use-case';
 import { InventoryMovementService } from './application/services/inventory-movement.service';
 import { InventoryIntegrityService } from './application/services/inventory-integrity.service';
@@ -47,6 +48,7 @@ import { CatalogModule } from '../catalog/catalog.module';
     AssemblyUseCase,
     CheckB2BAvailabilityUseCase,
     UnpackBatchUseCase,
+    PackBatchUseCase,
     ScanUnpackBatchUseCase,
     InventoryMovementService,
     InventoryIntegrityService,
@@ -60,6 +62,6 @@ import { CatalogModule } from '../catalog/catalog.module';
       useClass: PrismaStockBatchRepository,
     },
   ],
-  exports: [GetInventoryUseCase, InventoryMovementService, InventoryIntegrityService],
+  exports: [GetInventoryUseCase, InventoryMovementService, InventoryIntegrityService, UnpackBatchUseCase, PackBatchUseCase, ScanUnpackBatchUseCase],
 })
 export class InventoryModule {}

@@ -14,7 +14,8 @@ import {
   GetWasteAnalysisUseCase,
 } from '../../application/use-cases/inventory-analytics.use-case';
 import { CheckB2BAvailabilityUseCase } from '../../application/use-cases/check-b2b-availability.use-case';
-import { UnpackBatchUseCase, UnpackBatchDto } from '../../application/use-cases/unpack-batch.use-case';
+import { UnpackBatchUseCase } from '../../application/use-cases/unpack-batch.use-case';
+import { PackBatchUseCase } from '../../application/use-cases/pack-batch.use-case';
 import { ScanUnpackBatchUseCase } from '../../application/use-cases/scan-unpack-batch.use-case';
 import { InventoryIntegrityService } from '../../application/services/inventory-integrity.service';
 import { QuickStockInquiryUseCase } from '../../application/use-cases/quick-stock-inquiry.use-case';
@@ -25,6 +26,8 @@ import { StandardResponseInterceptor } from '@/v3/common/interceptors/standard-r
 import { Permissions } from '@/v3/common/decorators/permissions.decorator';
 import { InventoryResponseDto } from '../../application/dto/inventory.dto';
 import { CheckB2BAvailabilityDto } from '../../application/dto/check-b2b-availability.dto';
+import { UnpackBatchDto } from '../../application/dto/unpack-batch.dto';
+import { PackBatchDto } from '../../application/dto/pack-batch.dto';
 import { ApiErrorResponseDto } from '@/v3/common/dto/response.dto';
 import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
 import { PaginationQueryDto } from '@/v3/common/utils/pagination';
@@ -49,6 +52,7 @@ export class InventoryController {
     private readonly integrityService: InventoryIntegrityService,
     private readonly quickStockInquiryUseCase: QuickStockInquiryUseCase,
     private readonly unpackBatchUseCase: UnpackBatchUseCase,
+    private readonly packBatchUseCase: PackBatchUseCase,
     private readonly scanUnpackBatchUseCase: ScanUnpackBatchUseCase
   ) {}
 
@@ -174,6 +178,16 @@ export class InventoryController {
   @ApiOperation({ summary: 'Unpack a bulk batch into base units', operationId: 'Inventory_UnpackBatch' })
   async unpackBatch(@Req() req: any, @Param('id') id: string, @Body() body: Omit<UnpackBatchDto, 'batchId'>) {
     return this.unpackBatchUseCase.execute(req.organization.id, req.user.memberId, {
+      ...body,
+      batchId: id,
+    });
+  }
+
+  @Post('batches/:id/pack')
+  @Permissions('inventory:write')
+  @ApiOperation({ summary: 'Pack base units into a bulk batch', operationId: 'Inventory_PackBatch' })
+  async packBatch(@Req() req: any, @Param('id') id: string, @Body() body: Omit<PackBatchDto, 'batchId'>) {
+    return this.packBatchUseCase.execute(req.organization.id, req.user.memberId, {
       ...body,
       batchId: id,
     });

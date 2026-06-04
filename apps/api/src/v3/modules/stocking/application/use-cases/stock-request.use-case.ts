@@ -8,6 +8,34 @@ import { FulfillFromTransferDto, FulfillFromPurchaseDto } from '../dto/stock-req
 export class StockRequestUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
+  async create(organizationId: string, memberId: string, dto: any) {
+    return this.prisma.client.$transaction(async (tx) => {
+      const requestCount = await tx.stockRequest.count({ where: { organizationId } });
+      const requestNumber = `SRQ-${(requestCount + 1).toString().padStart(5, '0')}`;
+
+      return tx.stockRequest.create({
+        data: {
+          organizationId,
+          requestNumber,
+          requestedById: memberId,
+          toLocationId: dto.toLocationId,
+          fromLocationId: dto.fromLocationId,
+          priority: dto.priority || 'MEDIUM',
+          justification: dto.justification,
+          totalEstimatedCost: dto.totalEstimatedCost || 0,
+          items: {
+            create: dto.items.map((item: any) => ({
+              variantId: item.variantId,
+              requestedQuantity: item.requestedQuantity,
+              unitCostAtRequest: item.unitCost || 0,
+              reason: item.reason,
+            })),
+          },
+        },
+      });
+    });
+  }
+
   async findAll(organizationId: string, pagination: PaginationQueryDto) {
     return paginate(
       this.prisma.client.stockRequest,
