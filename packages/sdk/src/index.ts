@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 export interface SDKConfig {
   baseURL?: string;
@@ -43,28 +43,28 @@ export const getSDK = (config: SDKConfig) => {
 
     bakery: {
       getOverview: () => sdk.client.get('/bakery'),
-      getIngredients: () => sdk.client.get('/bakery/ingredients'),
-      createIngredient: (data: any) => sdk.client.post('/bakery/ingredients', data),
-      updateIngredient: (id: string, data: any) => sdk.client.patch(`/bakery/ingredients/${id}`, data),
+      getIngredients: (): Promise<any> => sdk.client.get('/bakery/ingredients'),
+      createIngredient: (data: any): Promise<any> => sdk.client.post('/bakery/ingredients', data),
+      updateIngredient: (id: string, data: any): Promise<any> => sdk.client.patch(`/bakery/ingredients/${id}`, data),
       deleteIngredient: (id: string) => sdk.client.delete(`/bakery/ingredients/${id}`),
 
-      getRecipes: () => sdk.client.get('/bakery/recipes'),
-      getRecipe: (id: string) => sdk.client.get(`/bakery/recipes/${id}`),
-      createRecipe: (data: any) => sdk.client.post('/bakery/recipes', data),
-      updateRecipe: (id: string, data: any) => sdk.client.patch(`/bakery/recipes/${id}`, data),
+      getRecipes: (): Promise<any> => sdk.client.get('/bakery/recipes'),
+      getRecipe: (id: string): Promise<any> => sdk.client.get(`/bakery/recipes/${id}`),
+      createRecipe: (data: any): Promise<any> => sdk.client.post('/bakery/recipes', data),
+      updateRecipe: (id: string, data: any): Promise<any> => sdk.client.patch(`/bakery/recipes/${id}`, data),
       deleteRecipe: (id: string) => sdk.client.delete(`/bakery/recipes/${id}`),
-      duplicateRecipe: (id: string) => sdk.client.post(`/bakery/recipes/${id}/duplicate`),
+      duplicateRecipe: (id: string): Promise<any> => sdk.client.post(`/bakery/recipes/${id}/duplicate`),
       generateRecipeAi: (prompt: string) => sdk.client.post('/bakery/recipes/generate', { prompt }),
 
-      getBatches: (params?: any) => sdk.client.get('/bakery/batches', { params }),
-      getBatch: (id: string) => sdk.client.get(`/bakery/batches/${id}`),
-      createBatch: (data: any) => sdk.client.post('/bakery/batches', data),
-      updateBatch: (id: string, data: any) => sdk.client.patch(`/bakery/batches/${id}`, data),
+      getBatches: (params?: any): Promise<any> => sdk.client.get('/bakery/batches', { params }),
+      getBatch: (id: string): Promise<any> => sdk.client.get(`/bakery/batches/${id}`),
+      createBatch: (data: any): Promise<any> => sdk.client.post('/bakery/batches', data),
+      updateBatch: (id: string, data: any): Promise<any> => sdk.client.patch(`/bakery/batches/${id}`, data),
       deleteBatch: (id: string) => sdk.client.delete(`/bakery/batches/${id}`),
-      startBatch: (id: string) => sdk.client.post(`/bakery/batches/${id}/start`),
-      completeBatch: (id: string, data: any) => sdk.client.post(`/bakery/batches/${id}/complete`, data),
-      cancelBatch: (id: string) => sdk.client.post(`/bakery/batches/${id}/cancel`),
-      duplicateBatch: (id: string) => sdk.client.post(`/bakery/batches/${id}/duplicate`),
+      startBatch: (id: string): Promise<any> => sdk.client.post(`/bakery/batches/${id}/start`),
+      completeBatch: (id: string, data: any): Promise<any> => sdk.client.post(`/bakery/batches/${id}/complete`, data),
+      cancelBatch: (id: string): Promise<any> => sdk.client.post(`/bakery/batches/${id}/cancel`),
+      duplicateBatch: (id: string): Promise<any> => sdk.client.post(`/bakery/batches/${id}/duplicate`),
       getBatchTraceability: (id: string) => sdk.client.get(`/bakery/batches/${id}/traceability`),
 
       getTemplates: () => sdk.client.get('/bakery/templates'),
@@ -74,9 +74,9 @@ export const getSDK = (config: SDKConfig) => {
       duplicateTemplate: (id: string) => sdk.client.post(`/bakery/templates/${id}/duplicate`),
       createBatchFromTemplate: (id: string) => sdk.client.post(`/bakery/templates/${id}/create-batch`),
 
-      getCategories: () => sdk.client.get('/bakery/categories'),
-      createCategory: (data: any) => sdk.client.post('/bakery/categories', data),
-      updateCategory: (id: string, data: any) => sdk.client.put(`/bakery/categories/${id}`, data),
+      getCategories: (): Promise<any> => sdk.client.get('/bakery/categories'),
+      createCategory: (data: any): Promise<any> => sdk.client.post('/bakery/categories', data),
+      updateCategory: (id: string, data: any): Promise<any> => sdk.client.put(`/bakery/categories/${id}`, data),
       deleteCategory: (id: string) => sdk.client.delete(`/bakery/categories/${id}`),
 
       getSettings: () => sdk.client.get('/bakery/settings'),
@@ -93,19 +93,33 @@ export const getSDK = (config: SDKConfig) => {
     },
 
     units: {
-      getSystemUnits: () => sdk.client.get('/units/system'),
-      getOrganizationUnits: () => sdk.client.get('/units/organization'),
-      createOrganizationUnit: (data: any) => sdk.client.post('/units/organization', data),
-      updateOrganizationUnit: (id: string, data: any) => sdk.client.patch(`/units/organization/${id}`, data),
+      getSystemUnits: (): Promise<any> => sdk.client.get('/units/system'),
+      getOrganizationUnits: (): Promise<any> => sdk.client.get('/units/organization'),
+      createOrganizationUnit: (data: any): Promise<any> => sdk.client.post('/units/organization', data),
+      updateOrganizationUnit: (id: string, data: any): Promise<any> => sdk.client.patch(`/units/organization/${id}`, data),
       deleteOrganizationUnit: (id: string) => sdk.client.delete(`/units/organization/${id}`),
     },
 
     catalog: {
-      getProducts: (params?: any) => sdk.client.get('/catalog/products', { params }),
-      createProduct: (data: any) => sdk.client.post('/catalog/products', data),
-      updateProduct: (id: string, data: any) => sdk.client.patch(`/catalog/products/${id}`, data),
+      getProducts: (params?: any): Promise<any> => sdk.client.get('/catalog/products', { params }),
+      createProduct: (data: any): Promise<any> => sdk.client.post('/catalog/products', data),
+      getProduct: (id: string): Promise<any> => sdk.client.get(`/catalog/products/${id}`),
+      updateProduct: (id: string, data: any): Promise<any> => sdk.client.patch(`/catalog/products/${id}`, data),
       deleteProduct: (id: string) => sdk.client.delete(`/catalog/products/${id}`),
-      getCategories: () => sdk.client.get('/catalog/categories'),
+      getCategories: (): Promise<any> => sdk.client.get('/catalog/categories'),
+      getCategory: (id: string): Promise<any> => sdk.client.get(`/catalog/categories/${id}`),
+      createCategory: (data: any): Promise<any> => sdk.client.post('/catalog/categories', data),
+      updateCategory: (id: string, data: any): Promise<any> => sdk.client.patch(`/catalog/categories/${id}`, data),
+      deleteCategory: (id: string) => sdk.client.delete(`/catalog/categories/${id}`),
+      getVariants: (params?: any): Promise<any> => sdk.client.get('/catalog/variants', { params }),
+    },
+
+    inventory: {
+      list: (): Promise<any> => sdk.client.get('/inventory'),
+    },
+
+    pos: {
+      listLocations: (): Promise<any> => sdk.client.get('/catalog/locations'),
     }
   };
 
@@ -113,8 +127,8 @@ export const getSDK = (config: SDKConfig) => {
 };
 
 export type BakeryBatchListResponse = { data: any[] };
+export type MemberRole = any;
+export type BakeryBranding = any;
 export type Product = any;
 export type ProductType = any;
 export type ProductVariant = any;
-export type MemberRole = any;
-export type BakeryBranding = any;
