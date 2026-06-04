@@ -4,11 +4,7 @@ import { getOrganizationContext } from '../actions/auth';
 import { redirect } from 'next/navigation';
 
 export default async function CustomersPage() {
-  const context = await getOrganizationContext();
-
-  if (!context) {
-    redirect('/login');
-  }
+  const context = (await getOrganizationContext())!;
 
   const { organizationId } = context;
 

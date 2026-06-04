@@ -15,15 +15,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ tim
   const searchParams = await props.searchParams;
   const timeframe = searchParams.timeframe || "month";
 
-  const auth = await getServerAuth();
-
-  if (!auth) {
-    redirect("/login");
-  }
-
-  if (!auth.organizationId) {
-    redirect("/create-org");
-  }
+  const auth = (await getServerAuth())!;
 
   const data = await getDashboardData(timeframe);
   const today = format(new Date(), "EEEE, dd MMMM yyyy");
