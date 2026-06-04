@@ -15,13 +15,13 @@ import {
   Building2,
   Tag,
 } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import type { Customer } from '../../../../lib/mock-data';
-import { formatCurrency } from '../../../../lib/mock-data';
-import { StatusBadge } from '../../../../components/ui/status-badge';
+import { cn } from '@/lib/utils';
+import type { CustomerWithRelations } from '@/lib/types';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { formatCurrency } from '@/lib/utils';
 
 interface CustomerProfilePanelProps {
-  customer: Customer;
+  customer: CustomerWithRelations;
 }
 
 function HealthRing({ score }: { score: number }) {
@@ -62,6 +62,16 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
     .slice(0, 2)
     .toUpperCase();
 
+  const totalRevenue = customer.transactions.reduce((sum, t) => sum + Number(t.finalTotal), 0);
+  const totalOrders = customer.transactions.length;
+  const openInvoices = customer.invoices.filter(i => i.status !== 'PAID' && i.status !== 'VOID').length;
+  const healthScore = 85;
+
+  const defaultAddress = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
+  const addressString = defaultAddress
+    ? `${defaultAddress.street1}${defaultAddress.street2 ? `, ${defaultAddress.street2}` : ''}, ${defaultAddress.city}, ${defaultAddress.country}`
+    : 'No address provided';
+
   return (
     <aside className="w-[300px] flex-shrink-0 flex flex-col gap-4">
       {/* Identity Card */}
@@ -79,43 +89,30 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           <h2 className="text-[16px] font-bold text-foreground">{customer.name}</h2>
           <div className="flex items-center gap-1.5 mt-1">
             <Building2 size={12} className="text-muted-foreground" />
-            <span className="text-[12.5px] text-muted-foreground">{customer.company}</span>
+            <span className="text-[12.5px] text-muted-foreground">{customer.company || 'Private'}</span>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5 mb-4">
-          <StatusBadge status={customer.status} dot />
-          <StatusBadge status={customer.type} />
+          <StatusBadge status={customer.isActive ? 'Active' : 'Inactive'} dot />
+          <StatusBadge status={customer.customerType || 'B2C'} />
         </div>
 
         <div className="space-y-2.5">
           <div className="flex items-center gap-2.5 text-[12.5px]">
             <Mail size={13} className="text-muted-foreground flex-shrink-0" />
-            <a href={`mailto:${customer.email}`} className="text-primary hover:underline truncate">
-              {customer.email}
+            <a href={`mailto:${customer.email || ''}`} className="text-primary hover:underline truncate">
+              {customer.email || 'N/A'}
             </a>
           </div>
           <div className="flex items-center gap-2.5 text-[12.5px]">
             <Phone size={13} className="text-muted-foreground flex-shrink-0" />
-            <span className="text-foreground">{customer.phone}</span>
+            <span className="text-foreground">{customer.phone || 'N/A'}</span>
           </div>
-          {customer.website && (
-            <div className="flex items-center gap-2.5 text-[12.5px]">
-              <Globe size={13} className="text-muted-foreground flex-shrink-0" />
-              <a
-                href={`https://${customer.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline truncate"
-              >
-                {customer.website}
-              </a>
-            </div>
-          )}
           <div className="flex items-start gap-2.5 text-[12.5px]">
             <MapPin size={13} className="text-muted-foreground flex-shrink-0 mt-0.5" />
             <span className="text-muted-foreground">
-              {customer.address}, {customer.city}, {customer.country}
+              {addressString}
             </span>
           </div>
         </div>
@@ -157,7 +154,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               <span className="text-[12.5px] text-muted-foreground truncate">Total Revenue</span>
             </div>
             <span className="text-[13px] font-bold text-foreground flex-shrink-0">
-              {formatCurrency(customer.totalRevenue)}
+              {formatCurrency(totalRevenue)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
@@ -167,7 +164,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               </div>
               <span className="text-[12.5px] text-muted-foreground truncate">Total Orders</span>
             </div>
-            <span className="text-[13px] font-bold text-foreground flex-shrink-0">{customer.totalOrders}</span>
+            <span className="text-[13px] font-bold text-foreground flex-shrink-0">{totalOrders}</span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -179,10 +176,10 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
             <span
               className={cn(
                 'text-[13px] font-bold flex-shrink-0',
-                customer.openInvoices > 0 ? 'text-destructive' : 'text-foreground'
+                openInvoices > 0 ? 'text-destructive' : 'text-foreground'
               )}
             >
-              {customer.openInvoices}
+              {openInvoices}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
@@ -205,14 +202,14 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           Account Health
         </h3>
         <div className="flex items-center gap-4">
-          <HealthRing score={customer.healthScore} />
+          <HealthRing score={healthScore} />
           <div>
             <p className="text-[13px] font-semibold text-foreground">
-              {customer.healthScore >= 80
+              {healthScore >= 80
                 ? 'Excellent'
-                : customer.healthScore >= 65
+                : healthScore >= 65
                 ? 'Good'
-                : customer.healthScore >= 50
+                : healthScore >= 50
                 ? 'Fair'
                 : 'At Risk'}
             </p>
@@ -225,47 +222,15 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           <div className="flex items-center justify-between text-[11.5px]">
             <span className="text-muted-foreground">Engagement</span>
             <span className="font-medium text-foreground">
-              {customer.healthScore >= 80 ? 'High' : customer.healthScore >= 50 ? 'Medium' : 'Low'}
+              {healthScore >= 80 ? 'High' : healthScore >= 50 ? 'Medium' : 'Low'}
             </span>
           </div>
           <div className="flex items-center justify-between text-[11.5px]">
             <span className="text-muted-foreground">Payment Risk</span>
-            <span className={cn('font-medium', customer.openInvoices > 0 ? 'text-status-warning' : 'text-status-success')}>
-              {customer.openInvoices > 0 ? 'Moderate' : 'Low'}
+            <span className={cn('font-medium', openInvoices > 0 ? 'text-status-warning' : 'text-status-success')}>
+              {openInvoices > 0 ? 'Moderate' : 'Low'}
             </span>
           </div>
-          <div className="flex items-center justify-between text-[11.5px]">
-            <span className="text-muted-foreground">Industry</span>
-            <span className="font-medium text-foreground">{customer.industry}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Account Manager */}
-      <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-          Account Manager
-        </h3>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-foreground/10 flex items-center justify-center text-foreground font-bold text-[12px]">
-            {customer.accountManagerInitials}
-          </div>
-          <div>
-            <p className="text-[13px] font-semibold text-foreground">{customer.accountManager}</p>
-            <div className="flex items-center gap-1">
-              <User size={10} className="text-muted-foreground" />
-              <p className="text-[11px] text-muted-foreground">Senior Account Manager</p>
-            </div>
-          </div>
-        </div>
-        <div className="mt-3 pt-3 border-t border-border text-[11.5px] text-muted-foreground">
-          Customer since{' '}
-          <span className="font-medium text-foreground">
-            {new Date(customer.createdAt).toLocaleDateString('en-US', {
-              month: 'long',
-              year: 'numeric',
-            })}
-          </span>
         </div>
       </div>
     </aside>

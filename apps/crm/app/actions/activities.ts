@@ -4,7 +4,7 @@ import { db } from '@repo/db';
 import { crmActivitySchema, type CrmActivityFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
 
-export async function createActivity(data: CrmActivityFormValues, organizationId: string, memberId?: string) {
+export async function createActivity(data: CrmActivityFormValues, organizationId: string, memberId?: string | null) {
   const validatedData = crmActivitySchema.parse(data);
 
   const activity = await db.crmActivity.create({
@@ -25,7 +25,11 @@ export async function getActivities(recordId: string) {
     where: { recordId },
     orderBy: { createdAt: 'desc' },
     include: {
-      member: true,
+      member: {
+        include: {
+          user: true,
+        },
+      },
     },
   });
 }

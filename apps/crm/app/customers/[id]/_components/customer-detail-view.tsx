@@ -4,7 +4,6 @@ import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import type { Customer } from '../../../../lib/mock-data';
 import { CustomerProfilePanel } from './customer-profile-panel';
 import { DetailTabs, type TabId } from './detail-tabs';
 import { NotesTab } from './tabs/notes-tab';
@@ -13,12 +12,13 @@ import { InvoicesTab } from './tabs/invoices-tab';
 import { OrdersTab } from './tabs/orders-tab';
 import { ConversationsTab } from './tabs/conversations-tab';
 import { FollowUpsTab } from './tabs/followups-tab';
+import type { CustomerWithRelations } from '@/lib/types';
 
 interface CustomerDetailViewProps {
-  customer: Customer;
+  customer: CustomerWithRelations;
 }
 
-function TabContent({ customer, tab }: { customer: Customer; tab: TabId }) {
+function TabContent({ customer, tab }: { customer: CustomerWithRelations; tab: TabId }) {
   switch (tab) {
     case 'notes':
       return <NotesTab customer={customer} />;
@@ -42,12 +42,12 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
   const tab = (searchParams.get('tab') as TabId) ?? 'notes';
 
   const counts: Partial<Record<TabId, number>> = {
-    notes: customer.notes.length,
-    deliveries: customer.deliveries.length,
-    invoices: customer.invoices.length,
-    orders: customer.orders.length,
-    conversations: customer.conversations.length,
-    followups: customer.followUps.length,
+    notes: customer.crmRecord?.notes?.length || 0,
+    deliveries: customer.transactions?.reduce((sum: number, t: any) => sum + (t.fulfillments?.length || 0), 0) || 0,
+    invoices: customer.invoices?.length || 0,
+    orders: customer.transactions?.length || 0,
+    conversations: customer.crmRecord?.activities?.length || 0,
+    followups: 0,
   };
 
   return (

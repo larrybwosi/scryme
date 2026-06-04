@@ -4,7 +4,7 @@ import { db } from '@repo/db';
 import { crmNoteSchema, type CrmNoteFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
 
-export async function createNote(data: CrmNoteFormValues, organizationId: string, memberId?: string) {
+export async function createNote(data: CrmNoteFormValues, organizationId: string, memberId?: string | null) {
   const validatedData = crmNoteSchema.parse(data);
 
   const note = await db.crmNote.create({
@@ -25,7 +25,11 @@ export async function getNotes(recordId: string) {
     where: { recordId },
     orderBy: { createdAt: 'desc' },
     include: {
-      createdBy: true,
+      createdBy: {
+        include: {
+          user: true,
+        },
+      },
     },
   });
 }
