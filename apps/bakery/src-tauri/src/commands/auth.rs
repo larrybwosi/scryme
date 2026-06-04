@@ -36,10 +36,17 @@ pub async fn login_local(
 }
 
 #[tauri::command]
-pub async fn validate_api_health(api_url: String) -> BackendResult<bool> {
+pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
     let client = reqwest::Client::new();
+
+    let base_url = if api_url.ends_with("/api/v2") {
+        api_url
+    } else {
+        format!("{}/api/v2", api_url.trim_end_matches('/'))
+    };
+
     let response = client
-        .get(format!("{}/health", api_url))
+        .get(format!("{}/health", base_url))
         .send()
         .await
         .map_err(BackendError::Network)?;
