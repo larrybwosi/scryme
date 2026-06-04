@@ -60,4 +60,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.server.to(data.channel).emit(data.event, data.data);
     console.log(`Published event "${data.event}" to channel "${data.channel}"`);
   }
+
+  /**
+   * Helper to send messages from the server side
+   */
+  sendToChannel(channel: string, event: string, data: any) {
+    this.server.to(channel).emit(event, data);
+  }
 }
