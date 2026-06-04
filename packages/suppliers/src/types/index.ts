@@ -38,8 +38,15 @@ export interface SupplierUI {
   id: string;
   name: string;
   code: string;
-  type: 'manufacturer' | 'distributor' | 'wholesaler' | 'service_provider';
+  type: string;
   status: 'active' | 'inactive' | 'pending' | 'suspended' | 'on_hold';
+  rating?: number;
+  totalReviews?: number;
+  joinedDate?: string;
+  lastLogged?: string;
+  description?: string;
+  shippingCarriers?: string[];
+  stockStatus?: string;
   contact: {
     primaryContact: string;
     phone: string;
@@ -65,22 +72,23 @@ export interface SupplierUI {
     onTimeDelivery: number;
     qualityScore: number;
     totalOrders: number;
-    totalValue: number;
-    averageOrderValue: number;
-    responseTime: number;
+    totalValue?: number;
+    averageOrderValue?: number;
+    responseTime?: number;
+    leadTimeDays?: number;
   };
-  deliveryLocations: string[];
+  deliveryLocations?: string[];
   categories: string[];
   customBadges?: string[];
   riskLevel?: 'low' | 'medium' | 'high';
   lastOrderDate?: string;
-  products: Array<{
+  products?: Array<{
     id: string;
     name: string;
     sku: string;
     category: string;
   }>;
-  recentOrders: Array<{
+  recentOrders?: Array<{
     id: string;
     date: string;
     value: number;

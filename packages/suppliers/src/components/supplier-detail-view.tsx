@@ -66,16 +66,26 @@ import {
   useGetSupplierDeliveries,
   useDeleteSupplierProduct,
   useListSupplierProducts,
-  useGetSupplierAnalytics
+  useGetSupplierAnalytics,
+  useGetSupplier
 } from '../lib/api/suppliers';
 import { toast } from 'sonner';
+import { mockReviews } from '../mock-data';
+import { Star, ChevronDown } from 'lucide-react';
 
 interface SupplierDetailViewProps {
-  supplier: Supplier;
+  supplierId: string;
 }
 
-export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier: initialSupplier }) => {
-  const [supplier, setSupplier] = useState<Supplier>(initialSupplier);
+export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplierId }) => {
+  const { data: supplierData, isLoading: isLoadingSupplier } = useGetSupplier(supplierId);
+  const [supplier, setSupplier] = useState<Supplier | null>(null);
+
+  React.useEffect(() => {
+    if (supplierData) {
+      setSupplier(supplierData);
+    }
+  }, [supplierData]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addProductDialogOpen, setAddProductDialogOpen] = useState(false);
   const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
@@ -94,12 +104,16 @@ export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier
   });
 
   const router = useRouter();
-  const formatCurrency = useFormattedCurrency(supplier.businessInfo.currency);
+  const formatCurrency = useFormattedCurrency(supplier?.businessInfo.currency);
 
-  const { data: deliveries, isLoading: isLoadingDeliveries } = useGetSupplierDeliveries(supplier.id);
-  const { data: products, isLoading: isLoadingProducts, refetch: refetchProducts } = useListSupplierProducts(supplier.id);
-  const { data: analytics, isLoading: isLoadingAnalytics } = useGetSupplierAnalytics(supplier.id);
-  const deleteProductMutation = useDeleteSupplierProduct(supplier.id);
+  const { data: deliveries, isLoading: isLoadingDeliveries } = useGetSupplierDeliveries(supplierId);
+  const { data: products, isLoading: isLoadingProducts, refetch: refetchProducts } = useListSupplierProducts(supplierId);
+  const { data: analytics, isLoading: isLoadingAnalytics } = useGetSupplierAnalytics(supplierId);
+  const deleteProductMutation = useDeleteSupplierProduct(supplierId);
+
+  if (isLoadingSupplier || !supplier) {
+    return <div className="p-8 text-center">Loading supplier details...</div>;
+  }
 
   const handleDeleteProduct = async (productId: string) => {
     if (confirm('Are you sure you want to remove this product from this supplier?')) {
@@ -240,11 +254,9 @@ export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier
         <div className="lg:col-span-3">
           <Tabs defaultValue="products" className="w-full">
             <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent p-0 mb-6">
-              <TabsTrigger value="products" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6">Products</TabsTrigger>
-              <TabsTrigger value="deliveries" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6">Deliveries & POs</TabsTrigger>
-              <TabsTrigger value="performance" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6">Performance</TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6">Analytics</TabsTrigger>
-              <TabsTrigger value="documents" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6">Documents</TabsTrigger>
+              <TabsTrigger value="products" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6 text-slate-500 data-[state=active]:text-slate-900 font-medium">Product Catalog <span className="ml-1.5 text-xs text-slate-400">{products?.length || 0}</span></TabsTrigger>
+              <TabsTrigger value="transactions" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6 text-slate-500 data-[state=active]:text-slate-900 font-medium">Transaction</TabsTrigger>
+              <TabsTrigger value="reviews" className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-6 text-slate-500 data-[state=active]:text-slate-900 font-medium">Customer Review <span className="ml-1.5 text-xs text-slate-400">{supplier?.totalReviews || 0}</span></TabsTrigger>
             </TabsList>
 
             <TabsContent value="products" className="mt-0 space-y-4">
@@ -352,7 +364,7 @@ export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier
               </Card>
             </TabsContent>
 
-            <TabsContent value="deliveries" className="mt-0">
+            <TabsContent value="transactions" className="mt-0">
               <DeliveriesTab deliveries={deliveries || []} isLoading={isLoadingDeliveries} />
             </TabsContent>
 
@@ -360,12 +372,38 @@ export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier
               <PerformanceScorecard supplier={supplier} />
             </TabsContent>
 
-            <TabsContent value="analytics" className="mt-0">
-              <SupplierAnalyticsTab analytics={analytics} isLoading={isLoadingAnalytics} />
-            </TabsContent>
+            <TabsContent value="reviews" className="mt-0 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="relative w-64">
+                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                   <input type="text" placeholder="Search" className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary" />
+                </div>
+                <div className="flex gap-2">
+                   <Button variant="outline" size="sm" className="gap-2">Date Posted <ChevronDown className="h-4 w-4" /></Button>
+                   <Button variant="outline" size="sm" className="gap-2">Rating <ChevronDown className="h-4 w-4" /></Button>
+                </div>
+              </div>
 
-            <TabsContent value="documents" className="mt-0">
-              <SupplierDocumentsTab documents={[]} />
+              <div className="space-y-6">
+                {mockReviews.map((review) => (
+                  <div key={review.id} className="flex gap-4 p-4 border-b last:border-0">
+                    <img src={review.avatar} alt={review.author} className="w-10 h-10 rounded-full bg-slate-100" />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-slate-900">{review.author}</h4>
+                        <span className="text-xs text-slate-400">{review.date}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-amber-400">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} size={14} fill={i < review.rating ? "currentColor" : "none"} />
+                        ))}
+                        <span className="ml-1.5 text-sm font-bold text-slate-900">{review.title}</span>
+                      </div>
+                      <p className="text-sm text-slate-600 leading-relaxed">{review.comment}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </TabsContent>
           </Tabs>
         </div>

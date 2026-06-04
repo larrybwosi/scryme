@@ -1,6 +1,4 @@
-import type { Linter } from 'eslint';
-
-const config: Linter.Config = {
+module.exports = {
   extends: ['next/core-web-vitals', 'prettier'],
   plugins: ['only-warn'],
   settings: {
@@ -11,5 +9,3 @@ const config: Linter.Config = {
     },
   },
 };
-
-export default config;

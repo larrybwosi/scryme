@@ -1,5 +1,3 @@
-// @ts-nocheck
-// @ts-nocheck
 import { createPermission, PERMISSION_ACTIONS, RESOURCES } from '../permissions/constants';
 import { PERMISSION_DEFINITIONS } from '../permissions/definitions';
 /**
@@ -298,13 +296,13 @@ export const ROLE_TEMPLATES = [
 /**
  * Get role templates by category
  */
-export const getRoleTemplatesByCategory = (category) => {
+export const getRoleTemplatesByCategory =  (category: any) => {
     return ROLE_TEMPLATES.filter(template => template.category === category);
 };
 /**
  * Get a specific role template by id
  */
-export const getRoleTemplateById = (id) => {
+export const getRoleTemplateById =  (id: any) => {
     return ROLE_TEMPLATES.find(template => template.id === id);
 };
 /**

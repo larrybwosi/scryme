@@ -42,10 +42,7 @@ import {
 } from '@repo/ui/components/ui/dropdown-menu';
 import Link from 'next/link';
 
-// Mocked search functionality
-const useListSuppliers = () => {
-    return { data: [], isLoading: false, error: null };
-};
+import { useListSuppliers } from '../lib/api/suppliers';
 
 interface SupplierRowProps {
   supplier: any;
@@ -193,9 +190,7 @@ export default function SupplierManagement() {
   const [isScheduleDeliveryOpen, setIsScheduleDeliveryOpen] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
 
-  // Fallback if data is not provided via props
-  const suppliers: Supplier[] = [];
-  const isLoading = false;
+  const { data: suppliers = [], isLoading } = useListSuppliers();
 
   const filteredSuppliers = useMemo(() => {
     let result = [...suppliers];

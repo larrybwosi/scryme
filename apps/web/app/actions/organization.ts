@@ -1,13 +1,9 @@
+"use server";
+
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 
-/**
- * Creates a new organization for the authenticated user.
- *
- * NOTE: Returning 'any' to avoid portability issues with generated Prisma types in this monorepo structure.
- * The underlying return value is a 'Organization' object.
- */
 export async function createOrganization(data: {
   name: string;
   slug: string;
@@ -41,7 +37,7 @@ export async function createOrganization(data: {
   return organization;
 }
 
-export async function checkSlugAvailability(slug: string): Promise<boolean> {
+export async function checkSlugAvailability(slug: string) {
   const existing = await db.organization.findUnique({
     where: { slug },
   });

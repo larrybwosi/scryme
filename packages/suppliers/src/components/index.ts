@@ -1,4 +1,4 @@
-export * from './supplier-management';
+export { default as SupplierManagement } from './supplier-management';
 export * from './supplier-create-modal';
 export * from './supplier-delete-modal';
 export * from './supplier-detail-view';

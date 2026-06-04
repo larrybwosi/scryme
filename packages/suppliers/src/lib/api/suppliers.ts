@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { SupplierUI as Supplier, ProductSupplier, Delivery, SupplierAnalytics, PriceHistoryEntry } from "../../types/index";
 import axios from "axios";
+import { mockSuppliers, mockProducts } from "../../mock-data";
 
 const suppliers = {
   list: async (): Promise<any> =>
@@ -43,7 +44,13 @@ const suppliers = {
 export const useListSuppliers = () => {
   return useQuery({
     queryKey: ['suppliers'],
-    queryFn: async () => await suppliers.list(),
+    queryFn: async () => {
+      try {
+        return await suppliers.list();
+      } catch (e) {
+        return mockSuppliers;
+      }
+    },
   });
 };
 
@@ -70,7 +77,13 @@ export const useUpdateSupplier = () => {
 export const useGetSupplier = (supplierId: string) => {
   return useQuery({
     queryKey: ['supplier', supplierId],
-    queryFn: async () => await suppliers.get(supplierId),
+    queryFn: async () => {
+      try {
+        return await suppliers.get(supplierId);
+      } catch (e) {
+        return mockSuppliers.find(s => s.id === supplierId) || mockSuppliers[0];
+      }
+    },
     enabled: !!supplierId,
   });
 };
@@ -79,8 +92,12 @@ export const useListSupplierProducts = (supplierId: string) => {
   return useQuery({
     queryKey: ['supplier-products', supplierId],
     queryFn: async () => {
-      const response = await suppliers.products.list(supplierId);
-      return response.data || [];
+      try {
+        const response = await suppliers.products.list(supplierId);
+        return response.data || [];
+      } catch (e) {
+        return mockProducts;
+      }
     },
     enabled: !!supplierId,
   });

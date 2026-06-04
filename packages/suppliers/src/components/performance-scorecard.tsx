@@ -47,8 +47,8 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(p.qualityScore * 100).toFixed(1)}%</div>
-            <Progress value={p.qualityScore * 100} className="h-2 mt-2" />
+            <div className="text-2xl font-bold">{(p.qualityScore || 0).toFixed(1)}%</div>
+            <Progress value={p.qualityScore || 0} className="h-2 mt-2" />
           </CardContent>
         </Card>
         <Card>
@@ -57,8 +57,8 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(p.onTimeDelivery * 100).toFixed(1)}%</div>
-            <Progress value={p.onTimeDelivery * 100} className="h-2 mt-2" />
+            <div className="text-2xl font-bold">{(p.onTimeDelivery || 0).toFixed(1)}%</div>
+            <Progress value={p.onTimeDelivery || 0} className="h-2 mt-2" />
           </CardContent>
         </Card>
         <Card>
@@ -67,8 +67,8 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(p.responseTime * 100).toFixed(1)}%</div>
-            <Progress value={p.responseTime * 100} className="h-2 mt-2" />
+            <div className="text-2xl font-bold">{(p.responseTime || 0).toFixed(1)}%</div>
+            <Progress value={p.responseTime || 0} className="h-2 mt-2" />
           </CardContent>
         </Card>
         <Card>

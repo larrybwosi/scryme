@@ -63,6 +63,21 @@ const sidebarConfig: SidebarSection[] = [
     ]
   },
   {
+    title: "INVENTORY",
+    items: [
+      {
+        title: "Supplier",
+        icon: Users,
+        href: "/inventory/supplier"
+      },
+      {
+        title: "Purchasing",
+        icon: Boxes,
+        href: "/inventory/purchasing"
+      },
+    ]
+  },
+  {
     title: "ACCOUNTING",
     items: [
       {
