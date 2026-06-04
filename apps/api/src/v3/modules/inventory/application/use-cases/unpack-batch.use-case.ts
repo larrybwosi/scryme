@@ -3,16 +3,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { InventoryMovementService } from '../services/inventory-movement.service';
 import { MovementType, StockAdjustmentReason } from '@repo/db';
 import { Decimal } from 'decimal.js';
-
-export interface UnpackBatchDto {
-  batchId: string;
-  quantityToUnpack: number; // Number of bulk units to unpack (e.g., 2 Cartons)
-  unitsPerPackage: number; // Conversion factor (e.g., 24 pieces/carton)
-  damagedQuantity?: number; // Optional: Number of base units found damaged inside
-  notes?: string;
-  targetSystemUnitId?: string;
-  targetOrgUnitId?: string;
-}
+import { UnpackBatchDto } from '../dto/unpack-batch.dto';
 
 @Injectable()
 export class UnpackBatchUseCase {

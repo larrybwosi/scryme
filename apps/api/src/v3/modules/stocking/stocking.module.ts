@@ -25,6 +25,13 @@ import { DocumentModule } from '../../../common/documents/document.module';
     PhysicalReconciliationUseCase,
     CycleCountingService,
   ],
-  exports: [PurchaseOrderUseCase],
+  exports: [
+    PurchaseOrderUseCase,
+    StockTransferUseCase,
+    StockRequestUseCase,
+    DeliveryReconciliationUseCase,
+    DeliveryPartnerUseCase,
+    PhysicalReconciliationUseCase,
+  ],
 })
 export class StockingModule {}

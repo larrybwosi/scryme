@@ -374,6 +374,8 @@ enum MovementType {
   QUALITY_REJECTION // Stock rejected during quality check
   UNPACK_OUT // Stock leaving bulk unit
   UNPACK_IN // Stock entering base unit
+  PACK_OUT // Stock leaving base unit
+  PACK_IN // Stock entering bulk unit
 }
 
 model StockRequest {
