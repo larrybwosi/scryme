@@ -4,22 +4,22 @@ import React, { useState } from 'react';
 import { Pin, PinOff, StickyNote, User, Plus, X } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, CrmNote, Member, CrmRecord } from '@repo/db';
+import type { Customer, CrmNote, Member, CrmRecord, User as UserType } from '@repo/db';
 import { createNote } from '../../../../actions/notes';
 import { toast } from 'sonner';
 import { formatDate } from '../../../../lib/utils';
 
 interface NotesTabProps {
-  customer: Customer & { crmRecord: (CrmRecord & { notes: (CrmNote & { createdBy: Member | null })[] }) | null };
+  customer: Customer & { crmRecord: (CrmRecord & { notes: (CrmNote & { createdBy: (Member & { user: UserType }) | null })[] }) | null };
 }
 
 function NoteCard({
   note,
 }: {
-  note: CrmNote & { createdBy: Member | null };
+  note: CrmNote & { createdBy: (Member & { user: UserType }) | null };
 }) {
-  const initials = note.createdBy?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'SYS';
-  const author = note.createdBy?.name || 'System';
+  const authorName = note.createdBy?.user?.name || note.createdBy?.email || 'System';
+  const initials = authorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <div
@@ -35,7 +35,7 @@ function NoteCard({
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
             {initials}
           </div>
-          <span className="text-[11.5px] text-muted-foreground">{author}</span>
+          <span className="text-[11.5px] text-muted-foreground">{authorName}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">

@@ -98,14 +98,22 @@ export async function getCustomer(id: string) {
           include: {
             activities: {
               include: {
-                member: true,
+                member: {
+                  include: {
+                    user: true,
+                  },
+                },
               },
               orderBy: { createdAt: 'desc' },
               take: 20,
             },
             notes: {
               include: {
-                createdBy: true,
+                createdBy: {
+                  include: {
+                    user: true,
+                  },
+                },
               },
               orderBy: { createdAt: 'desc' },
               take: 20,

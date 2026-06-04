@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '../../../../../components/ui/status-badge';
 import { EmptyState } from '../../../../../components/ui/empty-state';
-import type { Customer, CrmRecord, CrmActivity, Member } from '@repo/db';
+import type { Customer, CrmRecord, CrmActivity, Member, User } from '@repo/db';
 import { createActivity } from '../../../../actions/activities';
 import { toast } from 'sonner';
 import { formatDate } from '../../../../lib/utils';
@@ -22,7 +22,7 @@ import { formatDate } from '../../../../lib/utils';
 interface ConversationsTabProps {
   customer: Customer & {
     crmRecord: (CrmRecord & {
-      activities: (CrmActivity & { member: Member | null })[]
+      activities: (CrmActivity & { member: (Member & { user: User }) | null })[]
     }) | null
   };
 }
@@ -36,7 +36,7 @@ function channelIcon(channel: string) {
   }
 }
 
-function ConversationCard({ convo }: { convo: CrmActivity & { member: Member | null } }) {
+function ConversationCard({ convo }: { convo: CrmActivity & { member: (Member & { user: User }) | null } }) {
   const [expanded, setExpanded] = useState(false);
   const Icon = channelIcon(convo.type);
 
@@ -44,6 +44,9 @@ function ConversationCard({ convo }: { convo: CrmActivity & { member: Member | n
   const metadata = convo.metadata as any || {};
   const direction = metadata.direction || 'Outbound';
   const duration = metadata.duration;
+
+  const authorName = convo.member?.user?.name || convo.member?.email || 'System';
+  const initials = authorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -91,10 +94,10 @@ function ConversationCard({ convo }: { convo: CrmActivity & { member: Member | n
         <div className="border-t border-border bg-muted/30 px-5 py-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-              {convo.member?.name?.slice(0, 2).toUpperCase() || 'SYS'}
+              {initials}
             </div>
             <span className="text-[11.5px] text-muted-foreground">
-              Logged by <span className="font-semibold text-foreground">{convo.member?.name || 'System'}</span>
+              Logged by <span className="font-semibold text-foreground">{authorName}</span>
             </span>
           </div>
           <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">{convo.description}</p>
