@@ -15,8 +15,7 @@ export const useRawMaterials = () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke<Ingredient[]>('get_ingredients');
       }
-      const data = await sdk.bakery.getIngredients();
-      return data as Ingredient[];
+      return sdk.bakery.getIngredients();
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

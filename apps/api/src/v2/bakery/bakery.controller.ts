@@ -4,6 +4,7 @@ import { BakeryService } from './bakery.service';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
 import { RequirePermission, AllowPublic } from '../../common/decorators/auth.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
+import { CreateIngredientDto, UpdateIngredientDto } from './dto/bakery.dto';
 
 @ApiTags('Bakery')
 @Controller('bakery')
@@ -21,6 +22,24 @@ export class BakeryController {
   @RequirePermission('bakery:recipe:view')
   async getIngredients(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getIngredients(ctx);
+  }
+
+  @Post('ingredients')
+  @RequirePermission('bakery:recipe:manage')
+  async createIngredient(@v2Context() ctx: V2ApiContext, @Body() data: CreateIngredientDto) {
+    return this.bakeryService.createIngredient(ctx, data);
+  }
+
+  @Patch('ingredients/:id')
+  @RequirePermission('bakery:recipe:manage')
+  async updateIngredient(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: UpdateIngredientDto) {
+    return this.bakeryService.updateIngredient(ctx, id, data);
+  }
+
+  @Delete('ingredients/:id')
+  @RequirePermission('bakery:recipe:manage')
+  async deleteIngredient(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+    return this.bakeryService.deleteIngredient(ctx, id);
   }
 
   @Get('ingredients/records')
