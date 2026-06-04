@@ -45,3 +45,15 @@ export const crmObjectDefinitionSchema = z.object({
 });
 
 export type CrmObjectDefinitionFormValues = z.infer<typeof crmObjectDefinitionSchema>;
+
+export const crmFollowUpSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  dueDate: z.coerce.date(),
+  priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
+  status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'CANCELLED']).default('PENDING'),
+  recordId: z.string().min(1, 'Record ID is required'),
+  assignedToId: z.string().optional().nullable(),
+});
+
+export type CrmFollowUpFormValues = z.infer<typeof crmFollowUpSchema>;

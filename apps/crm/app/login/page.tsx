@@ -154,7 +154,9 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
 
 type View = "login" | "forgot-password";
 
-const LoginPage = () => {
+import { Suspense } from "react";
+
+const LoginContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [currentView, setCurrentView] = useState<View>("login");
@@ -551,6 +553,14 @@ const LoginPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const LoginPage = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 };
 
