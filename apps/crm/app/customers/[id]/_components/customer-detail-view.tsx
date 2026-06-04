@@ -47,7 +47,7 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
     invoices: customer.invoices?.length || 0,
     orders: customer.transactions?.length || 0,
     conversations: customer.crmRecord?.activities?.length || 0,
-    followups: 0,
+    followups: customer.crmRecord?.followUps?.length || 0,
   };
 
   return (

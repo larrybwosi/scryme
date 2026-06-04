@@ -21,7 +21,7 @@ const invoiceSchema = z.object({
 
 export type CreateInvoiceInput = z.infer<typeof invoiceSchema>;
 
-export async function createInvoiceAction(data: CreateInvoiceInput) {
+export async function createInvoiceAction(data: CreateInvoiceInput): Promise<any> {
   try {
     const validatedData = invoiceSchema.parse(data);
 
