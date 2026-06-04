@@ -18,7 +18,7 @@ export async function createObjectDefinition(data: CrmObjectDefinitionFormValues
   return definition;
 }
 
-export async function getObjectDefinitions(organizationId: string) {
+export async function getObjectDefinitions(organizationId: string): Promise<any[]> {
   return await db.crmObjectDefinition.findMany({
     where: { organizationId },
     include: {
@@ -28,7 +28,7 @@ export async function getObjectDefinitions(organizationId: string) {
   });
 }
 
-export async function getObjectDefinition(id: string) {
+export async function getObjectDefinition(id: string): Promise<any> {
   return await db.crmObjectDefinition.findUnique({
     where: { id },
     include: {

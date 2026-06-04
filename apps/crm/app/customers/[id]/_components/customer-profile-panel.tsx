@@ -65,7 +65,28 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
   const totalRevenue = customer.transactions.reduce((sum, t) => sum + Number(t.finalTotal), 0);
   const totalOrders = customer.transactions.length;
   const openInvoices = customer.invoices.filter(i => i.status !== 'PAID' && i.status !== 'VOID').length;
-  const healthScore = 85;
+
+  // Calculate Health Score based on order frequency
+  // Logic:
+  // - More than 5 orders in the last 30 days: 100
+  // - More than 2 orders in the last 30 days: 85
+  // - More than 1 order in the last 90 days: 60
+  // - Otherwise: 40
+  // - Deduct 10 points for each open invoice
+  const last30Days = new Date();
+  last30Days.setDate(last30Days.getDate() - 30);
+  const last90Days = new Date();
+  last90Days.setDate(last90Days.getDate() - 90);
+
+  const ordersLast30Days = customer.transactions.filter(t => new Date(t.createdAt) >= last30Days).length;
+  const ordersLast90Days = customer.transactions.filter(t => new Date(t.createdAt) >= last90Days).length;
+
+  let baseScore = 40;
+  if (ordersLast30Days >= 5) baseScore = 100;
+  else if (ordersLast30Days >= 2) baseScore = 85;
+  else if (ordersLast90Days >= 1) baseScore = 60;
+
+  const healthScore = Math.max(0, baseScore - (openInvoices * 10));
 
   const defaultAddress = customer.addresses.find(a => a.isDefault) || customer.addresses[0];
   const addressString = defaultAddress

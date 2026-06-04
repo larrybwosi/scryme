@@ -16,7 +16,7 @@ const fulfillmentSchema = z.object({
 
 export type CreateFulfillmentInput = z.infer<typeof fulfillmentSchema>;
 
-export async function createFulfillmentAction(data: CreateFulfillmentInput) {
+export async function createFulfillmentAction(data: CreateFulfillmentInput): Promise<any> {
   try {
     const validatedData = fulfillmentSchema.parse(data);
 
