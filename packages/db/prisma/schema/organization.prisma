@@ -151,6 +151,8 @@ model Organization {
   ecommerceWebhookLogs      EcommerceWebhookLog[]
   favorites                 Favorite[]
   productReviews            ProductReview[]
+  supplierReviews           SupplierReview[]
+  favoriteSuppliers         FavoriteSupplier[]
   apiKeyUsageLogs           ApiKeyUsageLog[]
   v3ApiClients              V3ApiClient[]
   webhookSubscriptions      WebhookSubscription[]
@@ -316,6 +318,9 @@ model Member {
   generatedBudgetReports BudgetReport[] @relation("BudgetReportGenerator")
   qualityIncidents       QualityIncident[] @relation("IncidentReporter")
   qcResults              QCResult[] @relation("QCPerformer")
+
+  supplierReviews        SupplierReview[] @relation("SupplierReviewer")
+  favoriteSuppliers      FavoriteSupplier[] @relation("MemberFavoriteSuppliers")
 
   // CRM Relations
   ownedCrmRecords        CrmRecord[]    @relation("CrmRecordOwner")
