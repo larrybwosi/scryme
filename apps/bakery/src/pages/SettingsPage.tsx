@@ -142,10 +142,15 @@ export default function SettingsPage() {
     }
     setIsValidatingApi(true);
     try {
-      const isValid = await invoke<boolean>('validate_api_endpoint', { apiUrl: formData.apiEndpointUrl });
-      if (isValid) {
-        setApiTested(true);
-        toast.success('API Endpoint is valid and reachable');
+      const response = await fetch(`${formData.apiEndpointUrl}/health/ping`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.message === 'pong') {
+          setApiTested(true);
+          toast.success('API Endpoint is valid and reachable');
+        } else {
+          throw new Error('Invalid response');
+        }
       } else {
         setApiTested(false);
         toast.error('API Endpoint returned an error');

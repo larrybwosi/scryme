@@ -31,6 +31,13 @@ export class HealthController {
   }
 
   @AllowPublic()
+  @Get('ping')
+  @ApiOperation({ summary: 'Simple ping' })
+  async ping() {
+    return { message: 'pong', timestamp: new Date().toISOString() };
+  }
+
+  @AllowPublic()
   @Get('enhanced')
   @ApiOperation({ summary: 'Comprehensive system health check' })
   async getEnhanced() {

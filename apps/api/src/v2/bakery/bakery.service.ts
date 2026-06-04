@@ -34,8 +34,26 @@ export class BakeryService {
 
   async getIngredientRecords(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    // This is a placeholder for actual records logic
-    return [];
+    return this.prisma.client.stockMovement.findMany({
+      where: {
+        organizationId,
+        variant: {
+          product: {
+            type: "RAW_MATERIAL" as any,
+          },
+        },
+      },
+      include: {
+        variant: {
+          include: { product: true },
+        },
+        fromLocation: true,
+        toLocation: true,
+        member: { include: { user: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
   }
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
@@ -797,7 +815,13 @@ export class BakeryService {
     });
   }
 
-  async updateBaker(id: string, data: any) {
+  async updateBaker(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const baker = await this.prisma.client.bakeryBaker.findFirst({
+      where: { id, bakerySettings: { organizationId } },
+    });
+    if (!baker) throw new NotFoundException("Baker not found");
+
     return this.prisma.client.bakeryBaker.update({
       where: { id },
       data,
@@ -980,15 +1004,70 @@ export class BakeryService {
 
   async dispatchDelivery(ctx: V2ApiContext, data: any) {
     const { organizationId, memberId } = ctx;
-    // We should ideally reuse the V3 UseCase logic but for V2 simplicity:
-    // ... logic to create fulfillment and update transaction ...
-    return { success: true };
+    const { transactionId, partnerId, driverId, notes } = data;
+
+    return this.prisma.client.$transaction(async (tx) => {
+      const transaction = await tx.transaction.findFirst({
+        where: { id: transactionId, organizationId },
+      });
+
+      if (!transaction) throw new NotFoundException("Transaction not found");
+
+      const fulfillment = await tx.fulfillment.create({
+        data: {
+          transactionId,
+          type: "DELIVERY",
+          status: "IN_TRANSIT",
+          deliveryPartnerId: partnerId,
+          driverId: driverId,
+          notes,
+          dispatchDate: new Date(),
+          organizationId,
+          createdById: memberId,
+        } as any,
+      });
+
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          fulfillmentStatus: "SHIPPED",
+          deliveryPartnerId: partnerId,
+        },
+      });
+
+      return fulfillment;
+    });
   }
 
   async reconcileDelivery(ctx: V2ApiContext, data: any) {
     const { organizationId, memberId } = ctx;
-    // ... logic to reconcile fulfillment ...
-    return { success: true };
+    const { fulfillmentId, status, notes } = data;
+
+    return this.prisma.client.$transaction(async (tx) => {
+      const fulfillment = await tx.fulfillment.findFirst({
+        where: { id: fulfillmentId, organizationId },
+      });
+
+      if (!fulfillment) throw new NotFoundException("Fulfillment not found");
+
+      const updatedFulfillment = await tx.fulfillment.update({
+        where: { id: fulfillmentId },
+        data: {
+          status: status === "DELIVERED" ? "DELIVERED" : "FAILED",
+          deliveryDate: status === "DELIVERED" ? new Date() : null,
+          notes: notes || fulfillment.notes,
+        },
+      });
+
+      await tx.transaction.update({
+        where: { id: fulfillment.transactionId },
+        data: {
+          fulfillmentStatus: status === "DELIVERED" ? "DELIVERED" : "FAILED",
+        },
+      });
+
+      return updatedFulfillment;
+    });
   }
 
   async getActiveDeliveries(ctx: V2ApiContext) {
