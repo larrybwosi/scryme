@@ -74,23 +74,41 @@ export async function getCustomer(id: string) {
       where: { id },
       include: {
         businessAccount: true,
+        addresses: true,
         invoices: {
+          include: {
+            items: true,
+          },
           orderBy: { createdAt: 'desc' },
-          take: 10,
+          take: 20,
         },
         transactions: {
+          include: {
+            items: true,
+            fulfillments: {
+              include: {
+                items: true,
+              },
+            },
+          },
           orderBy: { createdAt: 'desc' },
-          take: 10,
+          take: 20,
         },
         crmRecord: {
           include: {
             activities: {
+              include: {
+                member: true,
+              },
               orderBy: { createdAt: 'desc' },
-              take: 10,
+              take: 20,
             },
             notes: {
+              include: {
+                createdBy: true,
+              },
               orderBy: { createdAt: 'desc' },
-              take: 10,
+              take: 20,
             },
           },
         },

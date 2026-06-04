@@ -3,63 +3,44 @@
 import React, { useState } from 'react';
 import { Pin, PinOff, StickyNote, User, Plus, X } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
-import type { Customer, Note } from '../../../../../lib/mock-data';
 import { EmptyState } from '../../../../../components/ui/empty-state';
+import type { Customer, CrmNote, Member, CrmRecord } from '@repo/db';
+import { createNote } from '../../../../actions/notes';
+import { toast } from 'sonner';
+import { formatDate } from '../../../../lib/utils';
 
 interface NotesTabProps {
-  customer: Customer;
+  customer: Customer & { crmRecord: (CrmRecord & { notes: (CrmNote & { createdBy: Member | null })[] }) | null };
 }
 
 function NoteCard({
   note,
-  onTogglePin,
 }: {
-  note: Note;
-  onTogglePin: (_id: string) => void;
+  note: CrmNote & { createdBy: Member | null };
 }) {
+  const initials = note.createdBy?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'SYS';
+  const author = note.createdBy?.name || 'System';
+
   return (
     <div
       className={cn(
-        'relative bg-card rounded-xl border p-4 group transition-shadow hover:shadow-sm',
-        note.pinned ? 'border-primary/30 bg-primary/[0.02]' : 'border-border'
+        'relative bg-card rounded-xl border p-4 group transition-shadow hover:shadow-sm border-border'
       )}
     >
-      {note.pinned && (
-        <div className="absolute top-3 right-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md">
-            Pinned
-          </span>
-        </div>
-      )}
-      <p className="text-[13.5px] text-foreground leading-relaxed whitespace-pre-wrap pr-16">
+      <p className="text-[13.5px] text-foreground leading-relaxed whitespace-pre-wrap">
         {note.content}
       </p>
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-            {note.authorInitials}
+            {initials}
           </div>
-          <span className="text-[11.5px] text-muted-foreground">{note.author}</span>
+          <span className="text-[11.5px] text-muted-foreground">{author}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">
-            {new Date(note.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {formatDate(note.createdAt)}
           </span>
-          <button
-            onClick={() => onTogglePin(note.id)}
-            className="p-1 rounded hover:bg-accent transition-colors opacity-0 group-hover:opacity-100"
-            aria-label={note.pinned ? 'Unpin note' : 'Pin note'}
-          >
-            {note.pinned ? (
-              <PinOff size={12} className="text-primary" />
-            ) : (
-              <Pin size={12} className="text-muted-foreground" />
-            )}
-          </button>
         </div>
       </div>
     </div>
@@ -67,33 +48,30 @@ function NoteCard({
 }
 
 export function NotesTab({ customer }: NotesTabProps) {
-  const [notes, setNotes] = useState<Note[]>(
-    [...customer.notes].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
-  );
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleTogglePin = (id: string) => {
-    setNotes((prev) => {
-      const updated = prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n));
-      return [...updated].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    });
-  };
+  const notes = customer.crmRecord?.notes || [];
 
-  const handleAdd = () => {
-    if (!content.trim()) return;
-    const newNote: Note = {
-      id: `note-new-${Date.now()}`,
-      customerId: customer.id,
-      content: content.trim(),
-      author: 'You',
-      authorInitials: 'YO',
-      createdAt: new Date().toISOString(),
-      pinned: false,
-    };
-    setNotes((prev) => [newNote, ...prev]);
-    setContent('');
-    setShowForm(false);
+  const handleAdd = async () => {
+    if (!content.trim() || !customer.crmRecordId) return;
+
+    setLoading(true);
+    try {
+      await createNote({
+        content: content.trim(),
+        recordId: customer.crmRecordId,
+      }, customer.organizationId);
+
+      toast.success('Note added successfully');
+      setContent('');
+      setShowForm(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add note');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -142,10 +120,10 @@ export function NotesTab({ customer }: NotesTabProps) {
                 </span>
                 <button
                   onClick={handleAdd}
-                  disabled={!content.trim()}
+                  disabled={loading || !content.trim()}
                   className="text-[12.5px] font-semibold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Save Note
+                  {loading ? 'Saving...' : 'Save Note'}
                 </button>
               </div>
             </div>
@@ -163,7 +141,7 @@ export function NotesTab({ customer }: NotesTabProps) {
       ) : (
         <div className="flex flex-col gap-3">
           {notes.map((note) => (
-            <NoteCard key={note.id} note={note} onTogglePin={handleTogglePin} />
+            <NoteCard key={note.id} note={note} />
           ))}
         </div>
       )}

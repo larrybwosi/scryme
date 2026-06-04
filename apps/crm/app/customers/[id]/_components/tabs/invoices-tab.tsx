@@ -3,19 +3,26 @@
 import React, { useState } from 'react';
 import { Receipt, Download, ChevronDown, ChevronUp, Plus, X, AlertCircle } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
-import type { Customer, Invoice, InvoiceStatus } from '../../../../../lib/mock-data';
-import { formatCurrency } from '../../../../../lib/mock-data';
 import { StatusBadge } from '../../../../../components/ui/status-badge';
 import { EmptyState } from '../../../../../components/ui/empty-state';
+import type { Customer, Invoice, InvoiceItem } from '@repo/db';
+import { createInvoiceAction } from '../../../../actions/invoices';
+import { toast } from 'sonner';
+import { formatCurrency, formatDate } from '../../../../lib/utils';
 
 interface InvoicesTabProps {
-  customer: Customer;
+  customer: Customer & { invoices: (Invoice & { items: InvoiceItem[] })[] };
 }
 
-function InvoiceRow({ invoice }: { invoice: Invoice }) {
+function InvoiceRow({ invoice }: { invoice: Invoice & { items: InvoiceItem[] } }) {
   const [expanded, setExpanded] = useState(false);
-  const balance = invoice.total - invoice.amountPaid;
-  const isOverdue = invoice.status === 'Overdue';
+  const balance = invoice.balanceDue;
+  const isOverdue = invoice.status === 'OVERDUE';
+
+  const downloadInvoice = () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.scryme.app';
+    window.open(`${apiUrl}/public-invoices/${invoice.id}/download`, '_blank');
+  };
 
   return (
     <div
@@ -46,17 +53,19 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[13.5px] font-semibold text-foreground font-mono">
-              {invoice.invoiceNumber}
+              INV-{invoice.id.slice(-6).toUpperCase()}
             </span>
             <StatusBadge status={invoice.status} size="sm" />
           </div>
-          <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{invoice.items}</p>
+          <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
+            {invoice.items.map(i => i.itemName).join(', ')}
+          </p>
         </div>
 
         {/* Amount */}
         <div className="text-right flex-shrink-0">
-          <p className="text-[13.5px] font-bold text-foreground">{formatCurrency(invoice.total)}</p>
-          {balance > 0 && invoice.status !== 'Void' && (
+          <p className="text-[13.5px] font-bold text-foreground">{formatCurrency(invoice.grandTotal)}</p>
+          {balance > 0 && invoice.status !== 'VOID' && (
             <p className="text-[11px] text-destructive font-medium">
               {formatCurrency(balance)} due
             </p>
@@ -77,9 +86,7 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
                 Issue Date
               </p>
               <p className="text-[12.5px] text-foreground">
-                {new Date(invoice.date).toLocaleDateString('en-US', {
-                  month: 'short', day: 'numeric', year: 'numeric',
-                })}
+                {formatDate(invoice.postingDate)}
               </p>
             </div>
             <div>
@@ -87,22 +94,20 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
                 Due Date
               </p>
               <p className={cn('text-[12.5px]', isOverdue ? 'text-destructive font-semibold' : 'text-foreground')}>
-                {new Date(invoice.dueDate).toLocaleDateString('en-US', {
-                  month: 'short', day: 'numeric', year: 'numeric',
-                })}
+                {formatDate(invoice.dueDate)}
               </p>
             </div>
             <div>
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Subtotal
+                Net Total
               </p>
-              <p className="text-[12.5px] text-foreground">{formatCurrency(invoice.subtotal)}</p>
+              <p className="text-[12.5px] text-foreground">{formatCurrency(invoice.netTotal)}</p>
             </div>
             <div>
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Tax
               </p>
-              <p className="text-[12.5px] text-foreground">{formatCurrency(invoice.tax)}</p>
+              <p className="text-[12.5px] text-foreground">{formatCurrency(invoice.totalTaxes)}</p>
             </div>
             <div>
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
@@ -122,7 +127,10 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
             </div>
           </div>
           <div className="flex justify-end mt-4">
-            <button className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-accent transition-colors">
+            <button
+              onClick={downloadInvoice}
+              className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-accent transition-colors"
+            >
               <Download size={12} />
               Download PDF
             </button>
@@ -133,49 +141,60 @@ function InvoiceRow({ invoice }: { invoice: Invoice }) {
   );
 }
 
-const INVOICE_STATUSES: InvoiceStatus[] = ['Draft', 'Sent', 'Paid', 'Overdue', 'Void'];
+const INVOICE_STATUSES = ['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'VOID'];
 
 export function InvoicesTab({ customer }: InvoicesTabProps) {
-  const [invoices, setInvoices] = useState<Invoice[]>(customer.invoices);
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [form, setForm] = useState({
-    items: '',
-    subtotal: '',
-    tax: '',
-    date: '',
+    itemName: '',
+    amount: '',
+    postingDate: new Date().toISOString().split('T')[0],
     dueDate: '',
-    status: 'Draft' as InvoiceStatus,
+    status: 'DRAFT',
   });
+  const [loading, setLoading] = useState(false);
+
+  const invoices = customer.invoices;
 
   const filtered =
     filterStatus === 'All' ? invoices : invoices.filter((inv) => inv.status === filterStatus);
 
-  const overdueCount = invoices.filter((inv) => inv.status === 'Overdue').length;
+  const overdueCount = invoices.filter((inv) => inv.status === 'OVERDUE').length;
   const totalOpen = invoices
-    .filter((inv) => inv.status !== 'Paid' && inv.status !== 'Void')
-    .reduce((sum, inv) => sum + (inv.total - inv.amountPaid), 0);
+    .filter((inv) => inv.status !== 'PAID' && inv.status !== 'VOID')
+    .reduce((sum, inv) => sum + inv.balanceDue, 0);
 
-  const handleAdd = () => {
-    const sub = parseFloat(form.subtotal) || 0;
-    const tax = parseFloat(form.tax) || 0;
-    if (!form.items.trim() || !form.date || !form.dueDate) return;
-    const inv: Invoice = {
-      id: `inv-new-${Date.now()}`,
+  const handleAdd = async () => {
+    const amount = parseFloat(form.amount) || 0;
+    if (!form.itemName.trim() || !form.postingDate || amount <= 0) return;
+
+    setLoading(true);
+    const result = await createInvoiceAction({
       customerId: customer.id,
-      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
-      date: form.date,
-      dueDate: form.dueDate,
-      items: form.items.trim(),
-      subtotal: sub,
-      tax: tax,
-      total: sub + tax,
-      amountPaid: 0,
+      organizationId: customer.organizationId,
+      postingDate: new Date(form.postingDate),
+      dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
       status: form.status,
-    };
-    setInvoices((prev) => [inv, ...prev]);
-    setForm({ items: '', subtotal: '', tax: '', date: '', dueDate: '', status: 'Draft' });
-    setShowForm(false);
+      items: [
+        {
+          itemCode: 'GENERIC',
+          itemName: form.itemName.trim(),
+          quantity: 1,
+          rate: amount,
+          amount: amount,
+        }
+      ]
+    });
+    setLoading(false);
+
+    if (result.success) {
+      toast.success('Invoice created successfully');
+      setForm({ itemName: '', amount: '', postingDate: new Date().toISOString().split('T')[0], dueDate: '', status: 'DRAFT' });
+      setShowForm(false);
+    } else {
+      toast.error(result.error || 'Failed to create invoice');
+    }
   };
 
   return (
@@ -211,55 +230,21 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
                 Line Items / Description *
               </label>
               <input
-                value={form.items}
-                onChange={(e) => setForm((f) => ({ ...f, items: e.target.value }))}
+                value={form.itemName}
+                onChange={(e) => setForm((f) => ({ ...f, itemName: e.target.value }))}
                 placeholder="e.g. 3x Product A, Setup Fee"
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
             </div>
             <div>
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Subtotal ($)
+                Total Amount ($) *
               </label>
               <input
                 type="number"
-                value={form.subtotal}
-                onChange={(e) => setForm((f) => ({ ...f, subtotal: e.target.value }))}
+                value={form.amount}
+                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
                 placeholder="0.00"
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Tax ($)
-              </label>
-              <input
-                type="number"
-                value={form.tax}
-                onChange={(e) => setForm((f) => ({ ...f, tax: e.target.value }))}
-                placeholder="0.00"
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Issue Date *
-              </label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                Due Date *
-              </label>
-              <input
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
             </div>
@@ -269,7 +254,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               </label>
               <select
                 value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as InvoiceStatus }))}
+                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
                 {INVOICE_STATUSES.map((s) => (
@@ -277,14 +262,36 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Issue Date *
+              </label>
+              <input
+                type="date"
+                value={form.postingDate}
+                onChange={(e) => setForm((f) => ({ ...f, postingDate: e.target.value }))}
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Due Date
+              </label>
+              <input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
+                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              />
+            </div>
           </div>
           <div className="flex justify-end mt-4">
             <button
               onClick={handleAdd}
-              disabled={!form.items.trim() || !form.date || !form.dueDate}
+              disabled={loading || !form.itemName.trim() || !form.postingDate || !form.amount}
               className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Create Invoice
+              {loading ? 'Creating...' : 'Create Invoice'}
             </button>
           </div>
         </div>
