@@ -13,7 +13,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const { data: session } = await betterFetch<Session>(
+  const { data: session } = await betterFetch<any>(
     "/api/auth/get-session",
     {
       baseURL: request.nextUrl.origin,
@@ -39,7 +39,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Check if user is banned
-  if ((session.user as any).banned && pathname !== "/banned") {
+  if (session.user.banned && pathname !== "/banned") {
     return NextResponse.redirect(new URL("/banned", request.url));
   }
 

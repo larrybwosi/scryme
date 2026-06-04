@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-fetch/fetch": "^1.1.21",
     "@hookform/resolvers": "^5.4.0",
     "@repo/auth": "workspace:^",
     "@repo/db": "workspace:*",
