@@ -1,6 +1,7 @@
 "use server";
 
 import { getOrganizationContext } from "./auth";
+import * as crypto from "crypto";
 import {
   createV3ApiClient,
   getV3ApiClients,
@@ -13,11 +14,11 @@ import {
   createV2ApiKey,
   getV2ApiKeys,
   deleteV2ApiKey,
-  createDeviceSetupToken,
   getDeviceSetupTokens,
   getDeviceRegistry,
 } from "@repo/shared";
 import { revalidatePath } from "next/cache";
+import { db } from "@repo/db";
 
 async function ensureOrgContext() {
   const context = await getOrganizationContext();
@@ -54,7 +55,10 @@ export async function deleteV3ApiClientAction(id: string): Promise<any> {
   revalidatePath("/integrations/apps-api");
 }
 
-export async function updateV3ApiClientAction(id: string, data: any): Promise<any> {
+export async function updateV3ApiClientAction(
+  id: string,
+  data: any,
+): Promise<any> {
   const context = await ensureOrgContext();
   await updateV3ApiClient(id, context.organizationId, data);
   revalidatePath("/integrations/apps-api");
@@ -89,7 +93,9 @@ export async function getWebhookSubscriptionsAction(): Promise<any> {
   return getWebhookSubscriptions(context.organizationId);
 }
 
-export async function deleteWebhookSubscriptionAction(id: string): Promise<any> {
+export async function deleteWebhookSubscriptionAction(
+  id: string,
+): Promise<any> {
   const context = await ensureOrgContext();
   await deleteWebhookSubscription(id, context.organizationId);
   revalidatePath("/integrations/apps-api");
@@ -154,4 +160,36 @@ export async function getDeviceSetupTokensAction(): Promise<any> {
 export async function getDeviceRegistryAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getDeviceRegistry(context.organizationId);
+}
+
+async function createDeviceSetupToken(data: {
+  organizationId: string;
+  createdById: string;
+  deviceName: string;
+  deviceType:
+    | "POS_TERMINAL"
+    | "MOBILE_POS"
+    | "KIOSK"
+    | "TABLET"
+    | "BAKERY_TERMINAL";
+  locationId: string;
+}) {
+  const jti = crypto.randomUUID();
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  const setupToken = await db.deviceSetupToken.create({
+    data: {
+      organizationId: data.organizationId,
+      createdById: data.createdById,
+      deviceName: data.deviceName,
+      deviceType: data.deviceType,
+      locationId: data.locationId,
+      jti,
+      tokenHash,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    },
+  });
+
+  return { ...setupToken, rawToken };
 }
