@@ -6,22 +6,32 @@ use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::time::sleep;
 
-pub async fn start_sync_worker(pool: SqlitePool, api_base_url: String) {
+pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
     let client = reqwest::Client::new();
     let mut current_delay = Duration::from_secs(60);
     let min_delay = Duration::from_secs(60);
     let max_delay = Duration::from_secs(3600);
 
-    // Refine V3 API URL construction
-    let v3_api_url = if api_base_url.ends_with("/api/v2") {
-        api_base_url.replace("/api/v2", "/api/v3")
-    } else if api_base_url.contains("/api/v2/") {
-         api_base_url.replace("/api/v2/", "/api/v3/")
-    } else {
-        api_base_url.clone()
-    };
-
     loop {
+        // Fetch current API URL from settings
+        let api_base_url = match sqlx::query_scalar::<_, Option<String>>(
+            "SELECT api_endpoint_url FROM bakery_settings WHERE id = 'default-settings' LIMIT 1"
+        )
+        .fetch_optional(&pool)
+        .await {
+            Ok(Some(Some(url))) if !url.is_empty() => url,
+            _ => default_api_base_url.clone(),
+        };
+
+        let api_base_url = if api_base_url.ends_with("/api/v2") {
+            api_base_url
+        } else {
+            format!("{}/api/v2", api_base_url.trim_end_matches('/'))
+        };
+
+        // Refine V3 API URL construction
+        let v3_api_url = api_base_url.replace("/api/v2", "/api/v3");
+
         let api_key = match get_api_key(&pool).await {
             Ok(Some(key)) => key,
             _ => {

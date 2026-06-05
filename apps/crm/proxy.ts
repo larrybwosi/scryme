@@ -1,28 +1,22 @@
-import { betterFetch } from "@better-fetch/fetch";
+// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
-import type { Session } from "better-auth/types";
+import { auth } from "@/lib/auth"; // Adjust this path to where your Better Auth instance is exported
 
 const authRoutes = ["/login", "/sign-up"];
 const publicRoutes = ["/api/auth"];
 
-export default async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for public routes and auth API
+  // Skip proxy processing for public routes and auth API
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  const { data: session } = await betterFetch<any>(
-    "/api/auth/get-session",
-    {
-      baseURL: request.nextUrl.origin,
-      headers: {
-        //get the cookie from the request
-        cookie: request.headers.get("cookie") || "",
-      },
-    }
-  );
+  // Next.js 16 Proxy natively supports the Node.js runtime, allowing direct session evaluation
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
   const isAuthRoute = authRoutes.includes(pathname);
 
@@ -44,12 +38,15 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Check for organization
-  const organizationId = (session.session as any).activeOrganizationId || (session.user as any).activeOrganizationId;
+  const organizationId =
+    (session.session as any).activeOrganizationId ||
+    (session.user as any).activeOrganizationId;
+
   const isExcludedFromOrgCheck = ["/banned", "/forbidden"].includes(pathname);
 
   if (!organizationId && !isExcludedFromOrgCheck) {
-     const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
-     return NextResponse.redirect(new URL("/create-org", webUrl));
+    const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
+    return NextResponse.redirect(new URL("/create-org", webUrl));
   }
 
   return NextResponse.next();

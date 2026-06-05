@@ -15,7 +15,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "postinstall": "pnpm generate"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
