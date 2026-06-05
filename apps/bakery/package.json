@@ -28,6 +28,8 @@
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-sql": "~2.4.0",
+    "@tauri-apps/plugin-store": "~2.4.3",
+    "@vitejs/plugin-react-oxc": "^0.4.3",
     "axios": "latest",
     "better-auth": "^1.6.9",
     "class-variance-authority": "^0.7.1",

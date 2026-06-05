@@ -15,6 +15,7 @@ pub fn run() {
     let migrations = migrations::get_migrations();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:bakery.db", migrations)
@@ -94,8 +95,7 @@ pub fn run() {
             let base_api_url = if cfg!(debug_assertions) {
                 "http://localhost:3001"
             } else {
-                option_env!("VITE_API_URL")
-                    .unwrap_or("https://api.scryme.app")
+                option_env!("VITE_API_URL").unwrap_or("https://api.scryme.app")
             };
             let api_url = if base_api_url.ends_with("/api/v2") {
                 base_api_url.to_string()
@@ -105,11 +105,11 @@ pub fn run() {
             tauri::async_runtime::spawn(sync::start_sync_worker(db_pool, api_url));
 
             // Set up tray icon
-            let icon = app.default_window_icon().cloned();
-            let mut tray_builder = TrayIconBuilder::new();
-            if let Some(i) = icon {
-                tray_builder = tray_builder.icon(i);
-            }
+            let icon = app.default_window_icon().cloned().unwrap_or_else(|| {
+                tauri::image::Image::from_bytes(include_bytes!("../icons/128x128.png"))
+                    .expect("failed to load default icon")
+            });
+            let tray_builder = TrayIconBuilder::new().icon(icon);
 
             let _tray = tray_builder
                 .on_menu_event(|app, event| match event.id.as_ref() {

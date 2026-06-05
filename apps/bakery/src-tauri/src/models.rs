@@ -20,17 +20,17 @@ pub struct BakeryCategory {
     // 1. Mark 'id' with default so it can be generated in the backend
     #[serde(default)]
     pub id: String,
-    
+
     pub name: String,
     pub description: Option<String>,
-    
+
     // Note: The frontend must send this as "organizationId" due to camelCase mapping
-    pub organization_id: String, 
-    
+    pub organization_id: String,
+
     // 2. Mark timestamps with default so they don't cause deserialization errors
     #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
-    
+
     #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
 }

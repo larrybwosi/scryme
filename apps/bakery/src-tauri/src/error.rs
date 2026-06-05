@@ -22,6 +22,7 @@ pub enum BackendError {
     Config(String),
 
     #[error("Not found: {0}")]
+    #[allow(dead_code)]
     NotFound(String),
 
     #[error("Validation error: {0}")]

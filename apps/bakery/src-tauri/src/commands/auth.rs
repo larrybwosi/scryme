@@ -1,10 +1,10 @@
 use crate::error::{BackendError, BackendResult};
 use crate::models::User;
+use bcrypt::verify;
+use chrono::Utc;
 use keyring::Entry;
 use sqlx::SqlitePool;
 use tauri::State;
-use bcrypt::verify;
-use chrono::Utc;
 
 #[tauri::command]
 pub async fn login_local(
@@ -18,9 +18,10 @@ pub async fn login_local(
         .await?
         .ok_or_else(|| BackendError::Auth("Invalid email or password".to_string()))?;
 
-    let password_hash = user.password_hash.as_ref().ok_or_else(|| {
-        BackendError::Auth("User does not have a local password set".to_string())
-    })?;
+    let password_hash = user
+        .password_hash
+        .as_ref()
+        .ok_or_else(|| BackendError::Auth("User does not have a local password set".to_string()))?;
 
     if !verify(&password, password_hash).map_err(|e| BackendError::Internal(e.to_string()))? {
         return Err(BackendError::Auth("Invalid email or password".to_string()));
@@ -88,18 +89,17 @@ pub async fn provision_device_with_token(
 
     if !response.status().is_success() {
         let status = response.status();
-        let err_body = response.text().await.unwrap_or_else(|_| "Unknown error body".to_string());
+        let err_body = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unknown error body".to_string());
         return Err(BackendError::Internal(format!(
             "Provisioning failed ({}): {}",
-            status,
-            err_body
+            status, err_body
         )));
     }
 
-    let result: serde_json::Value = response
-        .json()
-        .await
-        .map_err(BackendError::Network)?;
+    let result: serde_json::Value = response.json().await.map_err(BackendError::Network)?;
 
     let api_key = result["apiKey"]
         .as_str()
@@ -124,7 +124,10 @@ pub async fn get_provisioned_api_key() -> BackendResult<Option<String>> {
     match entry.get_password() {
         Ok(pw) => Ok(Some(pw)),
         Err(keyring::Error::NoEntry) => Ok(None),
-        Err(e) => Err(BackendError::Internal(format!("Failed to retrieve API Key: {}", e))),
+        Err(e) => Err(BackendError::Internal(format!(
+            "Failed to retrieve API Key: {}",
+            e
+        ))),
     }
 }
 
@@ -135,6 +138,9 @@ pub async fn clear_provisioned_api_key() -> BackendResult<()> {
 
     match entry.delete_credential() {
         Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
-        Err(e) => Err(BackendError::Internal(format!("Failed to clear API Key: {}", e))),
+        Err(e) => Err(BackendError::Internal(format!(
+            "Failed to clear API Key: {}",
+            e
+        ))),
     }
 }

@@ -19,9 +19,10 @@ pub async fn login_staff(
         .await?
         .ok_or_else(|| BackendError::Auth("Invalid card ID or PIN".to_string()))?;
 
-    let pin_hash = baker.pin_hash.as_ref().ok_or_else(|| {
-        BackendError::Auth("Baker does not have a PIN set".to_string())
-    })?;
+    let pin_hash = baker
+        .pin_hash
+        .as_ref()
+        .ok_or_else(|| BackendError::Auth("Baker does not have a PIN set".to_string()))?;
 
     if !verify(&pin, pin_hash).map_err(|e| BackendError::Internal(e.to_string()))? {
         return Err(BackendError::Auth("Invalid card ID or PIN".to_string()));

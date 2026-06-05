@@ -1,6 +1,8 @@
 use crate::commands::{log_activity, serde_json_to_string};
 use crate::error::{BackendError, BackendResult};
-use crate::models::{BakerySettings, Batch, BatchIngredient, BatchProcessLog, BatchQualityCheck, BatchTraceability};
+use crate::models::{
+    BakerySettings, Batch, BatchIngredient, BatchProcessLog, BatchQualityCheck, BatchTraceability,
+};
 use chrono::Utc;
 use sqlx::SqlitePool;
 use tauri::State;
@@ -23,7 +25,9 @@ pub async fn get_batches(
         .into_iter()
         .map(|row| {
             use sqlx::Row;
-            let yield_unit = row.get::<Option<String>, _>("yield_unit").unwrap_or_else(|| "units".to_string());
+            let yield_unit = row
+                .get::<Option<String>, _>("yield_unit")
+                .unwrap_or_else(|| "units".to_string());
             crate::models::FormattedBatch {
                 id: row.get("id"),
                 batch_number: row.get("number"),
@@ -89,7 +93,10 @@ pub async fn create_batch(
     create_batch_inner(&*pool, user_id, batch).await
 }
 
-pub async fn generate_batch_number(pool: &SqlitePool, organization_id: &str) -> BackendResult<String> {
+pub async fn generate_batch_number(
+    pool: &SqlitePool,
+    organization_id: &str,
+) -> BackendResult<String> {
     let settings = sqlx::query_as::<_, BakerySettings>(
         "SELECT * FROM bakery_settings WHERE organization_id = ? OR organization_id = 'local-org' LIMIT 1"
     )
@@ -346,8 +353,7 @@ pub async fn get_batch_traceability(
 #[tauri::command]
 pub async fn get_overview(
     pool: State<'_, SqlitePool>,
-    #[allow(non_snake_case)]
-    organizationId: String,
+    #[allow(non_snake_case)] organizationId: String,
 ) -> BackendResult<serde_json::Value> {
     let rows_result = sqlx::query(
         "SELECT b.*, r.name as recipe_name, r.yield_quantity, r.yield_unit
