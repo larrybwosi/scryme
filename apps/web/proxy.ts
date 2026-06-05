@@ -1,28 +1,22 @@
-import { betterFetch } from "@better-fetch/fetch";
+// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
-import type { Session } from "better-auth/types";
+import { auth } from "@/lib/auth"; // Adjust this path to your actual Better Auth instance instance
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
 const publicRoutes = ["/api/auth"];
 
-export default async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for public routes and auth API
+  // Skip proxy processing for public routes and auth API
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  const { data: session } = await betterFetch<any>(
-    "/api/auth/get-session",
-    {
-      baseURL: request.nextUrl.origin,
-      headers: {
-        //get the cookie from the request
-        cookie: request.headers.get("cookie") || "",
-      },
-    }
-  );
+  // Natively fetch the session using the direct auth API via incoming request headers
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
 
   const isAuthRoute = authRoutes.includes(pathname);
 
@@ -39,16 +33,24 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Check if user is banned
-  if (session.user.banned && pathname !== "/banned") {
+  if ((session.user as any).banned && pathname !== "/banned") {
     return NextResponse.redirect(new URL("/banned", request.url));
   }
 
   // Check for organization (except on /create-org and error pages)
-  const organizationId = (session.session as any).activeOrganizationId || (session.user as any).activeOrganizationId;
-  const isExcludedFromOrgCheck = ["/create-org", "/banned", "/forbidden", "/unauthorized"].includes(pathname);
+  const organizationId =
+    (session.session as any).activeOrganizationId ||
+    (session.user as any).activeOrganizationId;
+
+  const isExcludedFromOrgCheck = [
+    "/create-org",
+    "/banned",
+    "/forbidden",
+    "/unauthorized",
+  ].includes(pathname);
 
   if (!organizationId && !isExcludedFromOrgCheck) {
-     return NextResponse.redirect(new URL("/create-org", request.url));
+    return NextResponse.redirect(new URL("/create-org", request.url));
   }
 
   return NextResponse.next();
