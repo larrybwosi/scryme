@@ -111,26 +111,31 @@ export function Sidebar() {
       )}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between p-6 h-[80px]">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">F</span>
+      <div className={cn(
+        "flex items-center h-[80px] px-6",
+        isCollapsed ? "justify-center" : "justify-between"
+      )}>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
+          >
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">F</span>
+              </div>
+              <span className="font-bold text-xl text-[#1D1D1F]">Fixoria <sup className="text-[10px] font-medium">TM</sup></span>
             </div>
-            <span className="font-bold text-xl text-[#1D1D1F]">Fixoria <sup className="text-[10px] font-medium">TM</sup></span>
-          </div>
-        )}
+          )}
+        </div>
         {isCollapsed && (
-          <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center mx-auto">
+          <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">F</span>
           </div>
         )}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-md border bg-white hover:bg-gray-50 absolute -right-3 top-8 z-10"
-        >
-          {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
       </div>
 
       {/* Org Switcher */}
