@@ -19,9 +19,10 @@ pub async fn login_staff(
         .await?
         .ok_or_else(|| BackendError::Auth("Invalid card ID or PIN".to_string()))?;
 
-    let pin_hash = baker.pin_hash.as_ref().ok_or_else(|| {
-        BackendError::Auth("Baker does not have a PIN set".to_string())
-    })?;
+    let pin_hash = baker
+        .pin_hash
+        .as_ref()
+        .ok_or_else(|| BackendError::Auth("Baker does not have a PIN set".to_string()))?;
 
     if !verify(&pin, pin_hash).map_err(|e| BackendError::Internal(e.to_string()))? {
         return Err(BackendError::Auth("Invalid card ID or PIN".to_string()));
@@ -67,8 +68,8 @@ pub async fn create_baker(
     }
 
     sqlx::query(
-        "INSERT INTO bakers (id, name, role, member_id, card_id, pin_hash, email, is_active, bakery_settings_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO bakers (id, name, role, member_id, card_id, pin_hash, email, is_active, bakery_settings_id, organization_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&baker.id)
     .bind(&baker.name)
@@ -79,6 +80,7 @@ pub async fn create_baker(
     .bind(&baker.email)
     .bind(baker.is_active)
     .bind(&baker.bakery_settings_id)
+    .bind(&baker.organization_id)
     .bind(baker.created_at)
     .bind(baker.updated_at)
     .execute(&*pool)

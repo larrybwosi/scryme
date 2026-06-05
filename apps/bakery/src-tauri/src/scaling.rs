@@ -5,6 +5,7 @@ use sqlx::Row;
 use sqlx::SqlitePool;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScaledIngredient {
     pub variant_id: String,
     pub original_quantity: f64,
@@ -13,6 +14,7 @@ pub struct ScaledIngredient {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScaledRecipe {
     pub recipe_id: String,
     pub multiplier: f64,

@@ -1,6 +1,6 @@
 use crate::commands::{log_activity, serde_json_to_string};
 use crate::error::{BackendError, BackendResult};
-use crate::models::{Recipe, CreateRecipeInput};
+use crate::models::{CreateRecipeInput, Recipe};
 use crate::scaling::ScaledRecipe;
 use chrono::Utc;
 use sqlx::SqlitePool;

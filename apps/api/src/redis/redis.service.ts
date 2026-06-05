@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { Redis as UpstashRedis } from '@upstash/redis';
+import { env } from '@repo/env';
 
 export interface IRedisClient {
   get: <T>(key: string) => Promise<T | null>;
@@ -17,12 +18,12 @@ export class RedisService implements OnModuleInit {
   private client: IRedisClient;
 
   onModuleInit() {
-    const useIoredis = process.env.NODE_ENV !== 'production' || process.env.USE_IOREDIS_IN_PROD === 'true';
+    const useIoredis = env.NODE_ENV !== 'production' || env.USE_IOREDIS_IN_PROD;
 
-    if (!useIoredis) {
+    if (!useIoredis && env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
       const upstash = new UpstashRedis({
-        url: process.env.UPSTASH_REDIS_REST_URL!,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+        url: env.UPSTASH_REDIS_REST_URL,
+        token: env.UPSTASH_REDIS_REST_TOKEN,
       });
       this.client = {
         get: async <T>(key: string): Promise<T | null> => {
@@ -40,7 +41,7 @@ export class RedisService implements OnModuleInit {
         ttl: (key: string) => upstash.ttl(key),
       };
     } else {
-      const ioredis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+      const ioredis = new Redis(env.REDIS_URL || `redis://${env.REDIS_HOST}:${env.REDIS_PORT}`);
       this.client = {
         get: async <T>(key: string): Promise<T | null> => {
           const value = await ioredis.get(key);

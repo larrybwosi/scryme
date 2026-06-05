@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { env } from '@repo/env';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
@@ -78,9 +79,7 @@ export class V3AuthService {
   }
 
   private getJwtSecret(): string {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error('JWT_SECRET is not defined');
-    return secret;
+    return env.JWT_SECRET;
   }
 
   async generateToken(client: any, member?: any) {

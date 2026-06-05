@@ -17,11 +17,21 @@ pub struct User {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct BakeryCategory {
+    // 1. Mark 'id' with default so it can be generated in the backend
+    #[serde(default)]
     pub id: String,
+
     pub name: String,
     pub description: Option<String>,
+
+    // Note: The frontend must send this as "organizationId" due to camelCase mapping
     pub organization_id: String,
+
+    // 2. Mark timestamps with default so they don't cause deserialization errors
+    #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+
+    #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
 }
 
@@ -40,6 +50,7 @@ pub struct RestockData {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Ingredient {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     pub sku: Option<String>,
@@ -50,10 +61,14 @@ pub struct Ingredient {
     pub unit_id: Option<String>,
     pub unit_price: f64,
     pub last_restocked: Option<DateTime<Utc>>,
+    #[serde(default)]
     pub total_used: f64,
+    #[serde(default)]
     pub average_usage_per_week: f64,
     pub organization_id: String,
+    #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
 }
 
@@ -121,6 +136,7 @@ pub struct SystemUnit {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct OrganizationUnit {
+    #[serde(default)]
     pub id: String,
     pub organization_id: String,
     pub name: String,
@@ -128,14 +144,25 @@ pub struct OrganizationUnit {
     pub abbreviation: Option<String>,
     pub plural_name: Option<String>,
     pub r#type: String,
+    #[serde(default = "default_category")]
     pub category: String,
     pub description: Option<String>,
+    #[serde(default = "default_true")]
     pub is_active: bool,
     pub base_system_unit_id: Option<String>,
     pub conversion_factor: Option<f64>,
     pub conversion_offset: Option<f64>,
+    #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
+}
+
+fn default_category() -> String {
+    "UNIVERSAL".to_string()
+}
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -177,6 +204,7 @@ pub struct FormattedBatchUnit {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Recipe {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     pub description: Option<String>,
@@ -189,7 +217,9 @@ pub struct Recipe {
     pub difficulty: Option<String>,
     pub instructions: Option<String>,
     pub organization_id: String,
+    #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
 }
 
@@ -296,14 +326,18 @@ pub struct UnitsSyncResponse {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Template {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     pub description: Option<String>,
     pub recipe_id: String,
     pub quantity: f64,
+    #[serde(default = "default_true")]
     pub is_active: bool,
     pub organization_id: String,
+    #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
 }
 
@@ -331,6 +365,7 @@ pub struct BakerySettings {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Baker {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     pub role: Option<String>,
@@ -341,8 +376,12 @@ pub struct Baker {
     #[sqlx(skip)]
     pub pin: Option<String>, // Keep for potential legacy use or temporary input
     pub email: Option<String>,
+    #[serde(default = "default_true")]
     pub is_active: bool,
     pub bakery_settings_id: Option<String>,
+    pub organization_id: String,
+    #[serde(default = "Utc::now")]
     pub created_at: DateTime<Utc>,
+    #[serde(default = "Utc::now")]
     pub updated_at: DateTime<Utc>,
 }

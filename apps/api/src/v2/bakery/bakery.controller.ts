@@ -1,9 +1,30 @@
-import { Controller, Get, Query, Param, Post, Body, Patch, Delete, Put, Res } from '@nestjs/common';
+import { Controller, Get, Query, Param, Post, Body, Patch, Delete, Put, Res, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BakeryService } from './bakery.service';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
 import { RequirePermission, AllowPublic } from '../../common/decorators/auth.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import {
+  CreateRecipeSchema,
+  UpdateRecipeSchema,
+  CreateBatchSchema,
+  UpdateBatchSchema,
+  CompleteBatchSchema,
+  CreateTemplateSchema,
+  UpdateTemplateSchema,
+  CreateBakeryCategorySchema,
+  UpdateBakeryCategorySchema,
+  UpdateBakerySettingsSchema,
+  AddBakerSchema,
+  UpdateBakerSchema,
+  CreateDeliveryPartnerSchema,
+  UpdateDeliveryPartnerSchema,
+  AdjustPartnerWalletSchema,
+  ReceiveIngredientsSchema,
+  DispatchDeliverySchema,
+  ReconcileDeliverySchema
+} from './bakery.schema';
 
 @ApiTags('Bakery')
 @Controller('bakery')
@@ -44,12 +65,14 @@ export class BakeryController {
 
   @Post('recipes')
   @RequirePermission('bakery:recipe:manage')
+  @UsePipes(new ZodValidationPipe(CreateRecipeSchema))
   async createRecipe(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createRecipe(ctx, data);
   }
 
   @Patch('recipes/:id')
   @RequirePermission('bakery:recipe:manage')
+  @UsePipes(new ZodValidationPipe(UpdateRecipeSchema))
   async updateRecipe(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
     return this.bakeryService.updateRecipe(ctx, id, data);
   }
@@ -93,12 +116,14 @@ export class BakeryController {
 
   @Post('batches')
   @RequirePermission('bakery:batch:manage')
+  @UsePipes(new ZodValidationPipe(CreateBatchSchema))
   async createBatch(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createBatch(ctx, data);
   }
 
   @Patch('batches/:id')
   @RequirePermission('bakery:batch:manage')
+  @UsePipes(new ZodValidationPipe(UpdateBatchSchema))
   async updateBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
     return this.bakeryService.updateBatch(ctx, id, data);
   }
@@ -117,6 +142,7 @@ export class BakeryController {
 
   @Post('batches/:id/complete')
   @RequirePermission('bakery:batch:manage')
+  @UsePipes(new ZodValidationPipe(CompleteBatchSchema))
   async completeBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
     return this.bakeryService.completeBatch(ctx, id, data);
   }
@@ -142,12 +168,14 @@ export class BakeryController {
 
   @Post('templates')
   @RequirePermission('bakery:template:manage')
+  @UsePipes(new ZodValidationPipe(CreateTemplateSchema))
   async createTemplate(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createTemplate(ctx, data);
   }
 
   @Patch('templates/:id')
   @RequirePermission('bakery:template:manage')
+  @UsePipes(new ZodValidationPipe(UpdateTemplateSchema))
   async updateTemplate(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
     return this.bakeryService.updateTemplate(ctx, id, data);
   }
@@ -185,12 +213,14 @@ export class BakeryController {
 
   @Post('categories')
   @RequirePermission('bakery:recipe:manage')
+  @UsePipes(new ZodValidationPipe(CreateBakeryCategorySchema))
   async createCategory(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createCategory(ctx, data);
   }
 
   @Put('categories/:id')
   @RequirePermission('bakery:recipe:manage')
+  @UsePipes(new ZodValidationPipe(UpdateBakeryCategorySchema))
   async updateCategory(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
     return this.bakeryService.updateCategory(ctx, id, data);
   }
@@ -210,6 +240,7 @@ export class BakeryController {
 
   @Put('settings')
   @RequirePermission('bakery:settings:manage')
+  @UsePipes(new ZodValidationPipe(UpdateBakerySettingsSchema))
   async updateSettings(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.updateSettings(ctx, data);
   }
@@ -222,14 +253,16 @@ export class BakeryController {
 
   @Post('bakers')
   @RequirePermission('bakery:settings:manage')
+  @UsePipes(new ZodValidationPipe(AddBakerSchema))
   async addBaker(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.addBaker(ctx, data);
   }
 
   @Patch('bakers/:id')
   @RequirePermission('bakery:settings:manage')
+  @UsePipes(new ZodValidationPipe(UpdateBakerSchema))
   async updateBaker(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
-    return this.bakeryService.updateBaker(id, data);
+    return this.bakeryService.updateBaker(ctx, id, data);
   }
 
   @Delete('bakers/:id')
@@ -247,6 +280,7 @@ export class BakeryController {
 
   @Post("partners")
   @RequirePermission("bakery:batch:manage")
+  @UsePipes(new ZodValidationPipe(CreateDeliveryPartnerSchema))
   async createPartner(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createPartner(ctx, data);
   }
@@ -259,24 +293,28 @@ export class BakeryController {
 
   @Patch("partners/:id")
   @RequirePermission("bakery:batch:manage")
+  @UsePipes(new ZodValidationPipe(UpdateDeliveryPartnerSchema))
   async updatePartner(@v2Context() ctx: V2ApiContext, @Param("id") id: string, @Body() data: any) {
     return this.bakeryService.updatePartner(ctx, id, data);
   }
 
   @Post("partners/:id/wallet/adjust")
   @RequirePermission("bakery:batch:manage")
+  @UsePipes(new ZodValidationPipe(AdjustPartnerWalletSchema))
   async adjustPartnerWallet(@v2Context() ctx: V2ApiContext, @Param("id") id: string, @Body() data: any) {
     return this.bakeryService.adjustPartnerWallet(ctx, id, data);
   }
 
   @Post("deliveries/dispatch")
   @RequirePermission("bakery:batch:manage")
+  @UsePipes(new ZodValidationPipe(DispatchDeliverySchema))
   async dispatchDelivery(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.dispatchDelivery(ctx, data);
   }
 
   @Post("deliveries/reconcile")
   @RequirePermission("bakery:batch:manage")
+  @UsePipes(new ZodValidationPipe(ReconcileDeliverySchema))
   async reconcileDelivery(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.reconcileDelivery(ctx, data);
   }
@@ -289,6 +327,7 @@ export class BakeryController {
 
   @Post('ingredients/receive')
   @RequirePermission('bakery:batch:manage')
+  @UsePipes(new ZodValidationPipe(ReceiveIngredientsSchema))
   async receiveIngredients(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.receiveIngredients(ctx, data);
   }

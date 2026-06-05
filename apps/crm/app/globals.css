@@ -1,5 +1,7 @@
 @import "@repo/ui/globals.css";
 
+@source "../../../packages/ui/src";
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 5px;

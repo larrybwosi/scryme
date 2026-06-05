@@ -151,6 +151,8 @@ model Organization {
   ecommerceWebhookLogs      EcommerceWebhookLog[]
   favorites                 Favorite[]
   productReviews            ProductReview[]
+  supplierReviews           SupplierReview[]
+  favoriteSuppliers         FavoriteSupplier[]
   apiKeyUsageLogs           ApiKeyUsageLog[]
   v3ApiClients              V3ApiClient[]
   webhookSubscriptions      WebhookSubscription[]
@@ -188,6 +190,7 @@ model Organization {
   crmRelationshipDefinitions CrmRelationshipDefinition[] @relation("OrgCrmRelationships")
   crmActivities            CrmActivity[]             @relation("OrgCrmActivities")
   crmNotes                 CrmNote[]                 @relation("OrgCrmNotes")
+  crmFollowUps             CrmFollowUp[]             @relation("OrgCrmFollowUps")
 
   @@index([slug])
   @@map("organization")
@@ -317,10 +320,14 @@ model Member {
   qualityIncidents       QualityIncident[] @relation("IncidentReporter")
   qcResults              QCResult[] @relation("QCPerformer")
 
+  supplierReviews        SupplierReview[] @relation("SupplierReviewer")
+  favoriteSuppliers      FavoriteSupplier[] @relation("MemberFavoriteSuppliers")
+
   // CRM Relations
   ownedCrmRecords        CrmRecord[]    @relation("CrmRecordOwner")
   crmActivities          CrmActivity[]  @relation("CrmActivityMember")
   crmNotes               CrmNote[]      @relation("CrmNoteCreator")
+  crmFollowUps           CrmFollowUp[]  @relation("CrmFollowUpAssignedTo")
 
   // Purchase Relations
   createdPurchases Purchase[]        @relation("PurchaseCreator")

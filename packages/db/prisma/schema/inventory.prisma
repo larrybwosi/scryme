@@ -300,6 +300,8 @@ model Supplier {
   stockBatches      StockBatch[]
   qualityIncidents  QualityIncident[]
   recalls           Recall[]
+  reviews           SupplierReview[] @relation("SupplierReviews")
+  favorites         FavoriteSupplier[] @relation("SupplierFavorites")
 
   @@unique([organizationId, name])
   @@unique([organizationId, email])
@@ -580,6 +582,50 @@ model QCResult {
   @@index([organizationId])
   @@index([stockBatchId])
   @@index([purchaseItemId])
+}
+
+model SupplierReview {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  memberId       String
+  member         Member       @relation("SupplierReviewer", fields: [memberId], references: [id], onDelete: Cascade)
+
+  supplierId     String
+  supplier       Supplier     @relation("SupplierReviews", fields: [supplierId], references: [id], onDelete: Cascade)
+
+  rating         Int      @default(5)
+  comment        String?  @db.Text
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([memberId])
+  @@index([supplierId])
+  @@map("supplier_review")
+}
+
+model FavoriteSupplier {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  memberId       String
+  member         Member       @relation("MemberFavoriteSuppliers", fields: [memberId], references: [id], onDelete: Cascade)
+
+  supplierId     String
+  supplier       Supplier     @relation("SupplierFavorites", fields: [supplierId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([memberId, supplierId])
+  @@index([organizationId])
+  @@index([memberId])
+  @@index([supplierId])
+  @@map("favorite_supplier")
 }
 
 model StoragePosition {
