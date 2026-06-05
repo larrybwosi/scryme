@@ -25,6 +25,9 @@ export type {
   Recipe
 } from '@repo/db';
 
+// Export Prisma to avoid "non-portable type" errors in consumers
+export { Prisma } from '@repo/db';
+
 export class Scryme {
   private readonly client: ScrymeClient;
   public readonly v2: ScrymeV2;
@@ -45,6 +48,8 @@ export class Scryme {
     // Return a proxy that combines v2 and client methods for legacy support
     return {
       ...scryme.v2,
+      v2: scryme.v2,
+      v3: scryme.v3,
       client: {
         getBaseURL: () => scryme.client.getBaseURL(),
         setBaseURL: (url: string) => {
@@ -57,7 +62,6 @@ export class Scryme {
         delete: scryme.client.delete.bind(scryme.client),
       },
       setApiKey: scryme.client.setApiKey.bind(scryme.client),
-      v3: scryme.v3
     };
   }
 }

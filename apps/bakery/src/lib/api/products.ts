@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, UseMutationResult, useQuery, UseQueryResult, useQueryClient } from '@tanstack/react-query';
 import { Product, ProductType, ProductVariant } from '@repo/sdk/src/index';
 import sdk from '@/lib/sdk';
 
@@ -23,46 +23,46 @@ interface ExtendedProduct extends Product {
 
 const products = {
   list: async (locationId?: string): Promise<ExtendedProduct[]> => {
-    const res = await sdk.catalog.getProducts({ locationId });
+    const res = await sdk.v2.catalog.getProducts({ locationId });
     return res.data;
   },
   create: (data: Partial<Product>): Promise<Product> =>
-    sdk.catalog.createProduct(data),
+    sdk.v2.catalog.createProduct(data),
   get: (productId: string): Promise<Product> =>
-    sdk.catalog.getProduct(productId),
+    sdk.v2.catalog.getProduct(productId),
   update: (productId: string, data: Partial<Product>): Promise<Product> =>
-    sdk.catalog.updateProduct(productId, data),
+    sdk.v2.catalog.updateProduct(productId, data),
   delete: (productId: string): Promise<void> =>
-    sdk.catalog.deleteProduct(productId),
+    sdk.v2.catalog.deleteProduct(productId),
 
   variants: {
     // Search method for the complex hook
     search: (params: URLSearchParams): Promise<PaginatedResponse<ProductVariant>> =>
-      sdk.catalog.getVariants(Object.fromEntries(params.entries())),
+      sdk.v2.catalog.getVariants(Object.fromEntries(params.entries())),
 
     list: (productId: string): Promise<ProductVariant[]> =>
-      sdk.client.get(`/catalog/products/${productId}/variants`),
+      sdk.client.get(`/v2/catalog/products/${productId}/variants`),
     create: (
       productId: string,
       data: Partial<ProductVariant>
     ): Promise<ProductVariant> =>
-      sdk.client.post(`/catalog/products/${productId}/variants`, data),
+      sdk.client.post(`/v2/catalog/products/${productId}/variants`, data),
     get: (productId: string, variantId: string): Promise<ProductVariant> =>
-      sdk.client.get(`/catalog/products/${productId}/variants/${variantId}`),
+      sdk.client.get(`/v2/catalog/products/${productId}/variants/${variantId}`),
     restock: (
       productId: string,
       variantId: string,
       data: unknown
     ): Promise<ProductVariant> =>
-      sdk.client.post(`/catalog/products/${productId}/variants/${variantId}/restock`, data),
+      sdk.client.post(`/v2/catalog/products/${productId}/variants/${variantId}/restock`, data),
     update: (
       productId: string,
       variantId: string,
       data: Partial<ProductVariant>
     ): Promise<ProductVariant> =>
-      sdk.client.patch(`/catalog/products/${productId}/variants/${variantId}`, data),
+      sdk.client.patch(`/v2/catalog/products/${productId}/variants/${variantId}`, data),
     delete: (productId: string, variantId: string): Promise<void> =>
-      sdk.client.delete(`/catalog/products/${productId}/variants/${variantId}`),
+      sdk.client.delete(`/v2/catalog/products/${productId}/variants/${variantId}`),
   },
 };
 
@@ -96,7 +96,20 @@ interface UseProductVariantsOptions {
   includeLocation?: boolean;
 }
 
-export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
+interface UseProductVariantsResult {
+  data: ProductVariant[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+  limit: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  error: any;
+  refetch: any;
+}
+
+export const useProductVariants = (options: UseProductVariantsOptions = {}): UseProductVariantsResult => {
 
   const {
     page = 1,
@@ -147,7 +160,7 @@ export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
   });
 
   return {
-    data: data?.data || [],
+    data: (data?.data || []) as ProductVariant[],
     totalCount: data?.totalCount || 0,
     currentPage: data?.currentPage || page,
     totalPages: data?.totalPages || 0,
@@ -160,7 +173,7 @@ export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
   };
 };
 
-export const useCreateProduct = () => {
+export const useCreateProduct = (): UseMutationResult<Product, Error, Partial<Product>> => {
   const queryClient = useQueryClient();
 
   return useMutation<Product, Error, Partial<Product>>({
@@ -171,7 +184,7 @@ export const useCreateProduct = () => {
   });
 };
 
-export const useUpdateProduct = (productId: string) => {
+export const useUpdateProduct = (productId: string): UseMutationResult<Product, Error, Partial<Product>> => {
   const queryClient = useQueryClient();
 
   return useMutation<Product, Error, Partial<Product>>({
@@ -183,7 +196,41 @@ export const useUpdateProduct = (productId: string) => {
   });
 };
 
-export const useDeleteProduct = () => {
+export const useCreateProductVariant = (productId: string): UseMutationResult<ProductVariant, Error, Partial<ProductVariant>> => {
+  const queryClient = useQueryClient();
+
+  return useMutation<ProductVariant, Error, Partial<ProductVariant>>({
+    mutationFn: async data => await products.variants.create(productId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
+    },
+  });
+};
+
+export const useUpdateProductVariant = (productId: string, variantId: string): UseMutationResult<ProductVariant, Error, Partial<ProductVariant>> => {
+  const queryClient = useQueryClient();
+
+  return useMutation<ProductVariant, Error, Partial<ProductVariant>>({
+    mutationFn: async data => await products.variants.update(productId, variantId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
+      queryClient.invalidateQueries({ queryKey: ['product-variant', productId, variantId] });
+    },
+  });
+};
+
+export const useDeleteProductVariant = (productId: string): UseMutationResult<void, Error, string> => {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async variantId => await products.variants.delete(productId, variantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
+    },
+  });
+};
+
+export const useDeleteProduct = (): UseMutationResult<void, Error, string> => {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
@@ -213,7 +260,15 @@ export const useGetProduct = (productId?: string) => {
 
 // --- Product Variants Hooks ---
 
-export const useListProductVariants = (productId: string) => {
+interface UseListProductVariantsResult {
+  data: ProductVariant[];
+  isLoading: boolean;
+  isError: boolean;
+  error: any;
+  refetch: any;
+}
+
+export const useListProductVariants = (productId: string): UseListProductVariantsResult => {
   const { data, refetch, error, isLoading } = useQuery<ProductVariant[], Error>({
     queryKey: ['product-variants', productId],
     queryFn: async () => await products.variants.list(productId),
@@ -221,7 +276,7 @@ export const useListProductVariants = (productId: string) => {
   });
 
   return {
-    data: data || [],
+    data: (data || []) as ProductVariant[],
     isLoading,
     isError: !!error,
     error,
@@ -229,41 +284,7 @@ export const useListProductVariants = (productId: string) => {
   };
 };
 
-export const useCreateProductVariant = (productId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation<ProductVariant, Error, Partial<ProductVariant>>({
-    mutationFn: async data => await products.variants.create(productId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
-    },
-  });
-};
-
-export const useUpdateProductVariant = (productId: string, variantId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation<ProductVariant, Error, Partial<ProductVariant>>({
-    mutationFn: async data => await products.variants.update(productId, variantId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
-      queryClient.invalidateQueries({ queryKey: ['product-variant', productId, variantId] });
-    },
-  });
-};
-
-export const useDeleteProductVariant = (productId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, string>({
-    mutationFn: async variantId => await products.variants.delete(productId, variantId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product-variants', productId] });
-    },
-  });
-};
-
-export const useGetProductVariant = (productId: string, variantId: string) => {
+export const useGetProductVariant = (productId: string, variantId: string): UseQueryResult<ProductVariant, Error> => {
   return useQuery<ProductVariant, Error>({
     queryKey: ['product-variant', productId, variantId],
     queryFn: async () => await products.variants.get(productId, variantId),
