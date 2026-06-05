@@ -154,7 +154,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -172,7 +172,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          version: pnpm changeset version && ./scripts/sync-tauri-version.sh
+          version: pnpm version-packages
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -218,7 +218,7 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: "pnpm"
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -347,7 +347,7 @@ jobs:
       - name: setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: "pnpm"
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
