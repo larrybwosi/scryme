@@ -5,8 +5,9 @@ import { PageHeader } from "../../../components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Search, Filter, Truck } from "lucide-react";
+import { Search, Filter, Truck } from "lucide-react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { RegisterSupplierModal } from "../../../components/supplier/register-supplier-modal";
 
 interface SupplierPageProps {
   searchParams: {
@@ -15,10 +16,11 @@ interface SupplierPageProps {
   };
 }
 
-async function SupplierList({ tab }: { tab?: string }) {
+async function SupplierList({ tab, q }: { tab?: string; q?: string }) {
   const options = {
     featured: tab === "featured",
     favorite: tab === "favorites",
+    search: q,
   };
 
   const suppliers = await getSuppliers(options);
@@ -69,10 +71,7 @@ export default async function SupplierListPage({ searchParams }: SupplierPagePro
           subtitle="Manage your global network of suppliers and product catalogs"
           icon={<Truck className="w-6 h-6" />}
         />
-        <Button className="rounded-full px-6 gap-2 bg-primary hover:bg-primary/90">
-          <Plus size={18} />
-          <span className="font-bold">Register Supplier</span>
-        </Button>
+        <RegisterSupplierModal />
       </div>
 
       <Tabs defaultValue={currentTab} className="w-full space-y-6">
@@ -112,17 +111,17 @@ export default async function SupplierListPage({ searchParams }: SupplierPagePro
 
         <TabsContent value="all" className="m-0 pt-2">
           <Suspense fallback={<SupplierSkeleton />}>
-            <SupplierList tab="all" />
+            <SupplierList tab="all" q={resolvedSearchParams.q} />
           </Suspense>
         </TabsContent>
         <TabsContent value="featured" className="m-0 pt-2">
           <Suspense fallback={<SupplierSkeleton />}>
-            <SupplierList tab="featured" />
+            <SupplierList tab="featured" q={resolvedSearchParams.q} />
           </Suspense>
         </TabsContent>
         <TabsContent value="favorites" className="m-0 pt-2">
           <Suspense fallback={<SupplierSkeleton />}>
-            <SupplierList tab="favorites" />
+            <SupplierList tab="favorites" q={resolvedSearchParams.q} />
           </Suspense>
         </TabsContent>
       </Tabs>
