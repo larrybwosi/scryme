@@ -18,7 +18,8 @@ import {
   HelpCircle,
   LogOut,
   ChevronDown,
-  Boxes
+  Boxes,
+  Package
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 
@@ -59,6 +60,15 @@ const sidebarConfig: SidebarSection[] = [
         items: []
       },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
+      {
+        title: "Inventory",
+        icon: Package,
+        href: "/inventory",
+        items: [
+          { title: "Product List", href: "/inventory" },
+          { title: "Suppliers", href: "/inventory/supplier" },
+        ]
+      },
       { title: "Integrations", icon: Boxes, href: "/integrations" },
     ]
   },
