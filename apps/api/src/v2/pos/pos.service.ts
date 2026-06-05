@@ -528,11 +528,29 @@ export class PosService {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
-          customer: true,
-          items: { include: { variant: true } },
-          payments: true,
-          fulfillments: true,
+        // ⚡ Bolt: Use select instead of include to reduce payload size and speed up serialization.
+        // All fields required for the response shaping below are explicitly selected.
+        select: {
+          id: true,
+          number: true,
+          finalTotal: true,
+          createdAt: true,
+          paymentStatus: true,
+          customer: { select: { name: true, email: true } },
+          payments: { select: { amount: true } },
+          fulfillments: { select: { id: true } },
+          items: {
+            select: {
+              id: true,
+              productName: true,
+              variantId: true,
+              sku: true,
+              quantity: true,
+              unitPrice: true,
+              lineTotal: true,
+              variant: { select: { productId: true } },
+            },
+          },
         },
       }),
     ]);
