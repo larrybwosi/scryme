@@ -1324,9 +1324,15 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../db
       axios:
         specifier: ^1.17.0
         version: 1.17.0
+      axios-retry:
+        specifier: ^4.5.0
+        version: 4.5.0(axios@1.17.0)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -8092,6 +8098,11 @@ packages:
   axe-core@4.11.4:
     resolution: {integrity: sha512-KunSNx+TVpkAw/6ULfhnx+HWRecjqZGTOyquAoWHYLRSdK1tB5Ihce1ZW+UY3fj33bYAFWPu7W/GRSmmrCGuxA==}
     engines: {node: '>=4'}
+
+  axios-retry@4.5.0:
+    resolution: {integrity: sha512-aR99oXhpEDGo0UuAlYcn2iGRds30k366Zfa05XWScR9QaQD4JYiP3/1Qt1u7YlefUOK+cn0CcwoL1oefavQUlQ==}
+    peerDependencies:
+      axios: 0.x || 1.x
 
   axios@1.13.2:
     resolution: {integrity: sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA==}
@@ -22572,6 +22583,11 @@ snapshots:
   aws4@1.13.2: {}
 
   axe-core@4.11.4: {}
+
+  axios-retry@4.5.0(axios@1.17.0):
+    dependencies:
+      axios: 1.17.0
+      is-retry-allowed: 2.2.0
 
   axios@1.13.2:
     dependencies:
