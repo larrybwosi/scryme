@@ -34,7 +34,7 @@ export async function createOrganization(data: {
   });
 
   // Update user's active organization
-  await db.user.update({
+  const user = await db.user.update({
     where: { id: auth.user.id },
     data: { activeOrganizationId: organization.id },
   });

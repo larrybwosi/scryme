@@ -1,5 +1,7 @@
+@import "tailwindcss";
 @import "@repo/ui/globals.css";
 
+/* Your custom utilities */
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

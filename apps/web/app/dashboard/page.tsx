@@ -11,17 +11,24 @@ import { TotalSessionsChart } from "../../components/dashboard/total-sessions-ch
 import { format } from "date-fns";
 import { Suspense } from "react";
 
-export default async function DashboardPage(props: { searchParams: Promise<{ timeframe?: string }> }) {
+export default async function DashboardPage(props: {
+  searchParams: Promise<{ timeframe?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const timeframe = searchParams.timeframe || "month";
 
   const auth = (await getServerAuth())!;
+  console.log(auth);
 
   const data = await getDashboardData(timeframe);
   const today = format(new Date(), "EEEE, dd MMMM yyyy");
 
   const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(val);
 
   return (
     <div className="p-8 max-w-(--breakpoint-2xl) mx-auto">
