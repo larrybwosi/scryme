@@ -17,13 +17,13 @@ pub async fn get_system_units(pool: State<'_, SqlitePool>) -> BackendResult<Vec<
 #[tauri::command]
 pub async fn get_organization_units(
     pool: State<'_, SqlitePool>,
-    #[serde(rename = "organizationId")]
-    organization_id: String,
+    #[allow(non_snake_case)]
+    organizationId: String,
 ) -> BackendResult<Vec<OrganizationUnit>> {
     sqlx::query_as::<_, OrganizationUnit>(
         "SELECT * FROM organization_units WHERE organization_id = ? AND is_active = 1",
     )
-    .bind(organization_id)
+    .bind(organizationId)
     .fetch_all(&*pool)
     .await
     .map_err(BackendError::from)
@@ -49,7 +49,7 @@ pub async fn create_organization_unit(
     .bind(&unit.symbol)
     .bind(&unit.abbreviation)
     .bind(&unit.plural_name)
-    .bind(&unit.r#type)
+    .bind(&unit.r#[allow(non_snake_case)]ype)
     .bind(&unit.category)
     .bind(&unit.description)
     .bind(unit.is_active)
@@ -97,7 +97,7 @@ pub async fn update_organization_unit(
     .bind(&unit.symbol)
     .bind(&unit.abbreviation)
     .bind(&unit.plural_name)
-    .bind(&unit.r#type)
+    .bind(&unit.r#[allow(non_snake_case)]ype)
     .bind(&unit.category)
     .bind(&unit.description)
     .bind(unit.is_active)
