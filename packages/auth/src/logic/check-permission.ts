@@ -11,7 +11,7 @@ export class PermissionError extends Error {
     message;
     attempts;
     isBanned;
-    constructor(message, attempts, isBanned) {
+    constructor(message: string, attempts: number, isBanned: boolean) {
         super(message);
         this.message = message;
         this.attempts = attempts;
@@ -22,12 +22,12 @@ export class PermissionError extends Error {
 /**
  * Validates if a user with a set of permissions can perform an action
  */
-export function checkPermission(userPermissions, requiredPermission) {
+export function checkPermission(userPermissions: string[], requiredPermission: string) {
     if (userPermissions.includes("*") || userPermissions.includes("*:*")) {
         return true;
     }
     const required = parsePermission(requiredPermission);
-    return userPermissions.some((p) => {
+    return userPermissions.some((p: string) => {
         const user = parsePermission(p);
         // Exact match
         if (p === requiredPermission)
@@ -40,7 +40,7 @@ export function checkPermission(userPermissions, requiredPermission) {
         return false;
     });
 }
-export async function checkPermissionLogic(context, permission, redisClient) {
+export async function checkPermissionLogic(context: any, permission: any, redisClient: any) {
     const { memberId, organizationId, userId, role } = context;
     // 1. Check for ban
     const banKey = `auth:ban:${memberId}`;
@@ -68,7 +68,7 @@ export async function checkPermissionLogic(context, permission, redisClient) {
                     banReason: "Exceeded permission request limit.",
                 },
             })
-                .catch((err) => console.error("Failed to update user ban status:", err));
+                .catch((err: any) => console.error("Failed to update user ban status:", err));
             throw new PermissionError(`Forbidden: Permission '${permission}' denied. Your account is now temporarily blocked.`, attempts, true);
         }
         // 4. Create audit log (run in background)
@@ -87,7 +87,7 @@ export async function checkPermissionLogic(context, permission, redisClient) {
                 }),
             },
         })
-            .catch((err) => console.error("Failed to create audit log:", err));
+            .catch((err: any) => console.error("Failed to create audit log:", err));
         // 5. Throw standard denial
         throw new PermissionError(`Forbidden: You do not have the required permission: '${permission}'`, attempts, false);
     }
@@ -95,5 +95,5 @@ export async function checkPermissionLogic(context, permission, redisClient) {
     const failedAttemptsKey = `auth:failed-attempts:${memberId}:${permission}`;
     redisClient
         .del(failedAttemptsKey)
-        .catch((err) => console.error("Failed to clear failed attempts key:", err));
+        .catch((err: any) => console.error("Failed to clear failed attempts key:", err));
 }

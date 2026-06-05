@@ -65,7 +65,7 @@ export const RESOURCES = {
 /**
  * Helper function to create permission strings
  */
-export const createPermission = (resource, action, scope) => {
+export const createPermission = (resource: string, action: string, scope?: string) => {
     return scope ? `${resource}:${action}:${scope}` : `${resource}:${action}`;
 };
 /**

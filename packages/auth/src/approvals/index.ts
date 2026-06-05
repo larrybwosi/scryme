@@ -4,7 +4,7 @@ import { ApprovalWorkflowInputSchema } from '../validations/approval';
  * Creates an approval workflow for an organization.
  * Can be used standalone or within an existing Prisma transaction.
  */
-export async function createApprovalWorkflow(orgId, workflowData, prismaClient = db, tx) {
+export async function createApprovalWorkflow(orgId: string, workflowData: any, prismaClient: any = db, tx?: any) {
     // 1. Validate Input Data
     const validationResult = ApprovalWorkflowInputSchema.safeParse(workflowData);
     if (!validationResult.success) {
@@ -18,7 +18,7 @@ export async function createApprovalWorkflow(orgId, workflowData, prismaClient =
     const validatedData = validationResult.data;
     try {
         // 2. Define the workflow creation logic
-        const createWorkflow = async (client) => {
+        const createWorkflow = async (client: any) => {
             // Create the main workflow record
             const newWorkflow = await client.approvalWorkflow.create({
                 data: {
@@ -87,7 +87,7 @@ export async function createApprovalWorkflow(orgId, workflowData, prismaClient =
 /**
  * Updates an existing expense approval workflow info.
  */
-export async function updateApprovalWorkflowInfo(workflowId, workflowUpdateData) {
+export async function updateApprovalWorkflowInfo(workflowId: string, workflowUpdateData: any) {
     if (!workflowUpdateData.name && !workflowUpdateData.description && workflowUpdateData.isActive === undefined) {
         return { success: false, message: 'No update data provided.' };
     }
@@ -110,7 +110,7 @@ export async function updateApprovalWorkflowInfo(workflowId, workflowUpdateData)
 /**
  * Sets the currently active expense approval workflow for an organization.
  */
-export async function setActiveWorkflow(orgId, workflowId) {
+export async function setActiveWorkflow(orgId: string, workflowId: string | null) {
     try {
         if (workflowId) {
             const workflow = await db.approvalWorkflow.findUnique({
@@ -141,7 +141,7 @@ export async function setActiveWorkflow(orgId, workflowId) {
 /**
  * Fetches the complete structure of an approval workflow.
  */
-export async function getWorkflowDetails(workflowId) {
+export async function getWorkflowDetails(workflowId: string) {
     try {
         return await db.approvalWorkflow.findUnique({
             where: { id: workflowId },

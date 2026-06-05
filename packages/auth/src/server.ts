@@ -9,8 +9,8 @@ export async function getServerAuth() {
     if (!session) {
         return null;
     }
-    const organizationId = session.session.activeOrganizationId ||
-        session.user.activeOrganizationId;
+    const organizationId = (session.session as any).activeOrganizationId ||
+        (session.user as any).activeOrganizationId;
     return {
         user: session.user,
         session: session.session,
