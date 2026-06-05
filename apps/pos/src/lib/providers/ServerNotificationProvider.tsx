@@ -3,7 +3,7 @@ import { Message } from "ably"
 import { ServerNotification } from "@/types/notifications"
 import { useAuthStore } from "@/store/pos-auth-store"
 import { notificationService } from "@/lib/notification-service"
-import { useAblyStore } from "@/store/ablyStore"
+import { useRealtimeStore } from "@/store/realtimeStore"
 
 // ─── Dedup config ─────────────────────────────────────────────────────────────
 /** Maximum number of processed IDs to remember (prevents memory leak) */
@@ -39,9 +39,10 @@ export function ServerNotificationProvider({ children }: { children: React.React
   const [history, setHistory] = useState<ServerNotification[]>([])
   const [lastNotification, setLastNotification] = useState<ServerNotification | null>(null)
 
-  // Ably client + meta
-  const ably = useAblyStore((state) => state.client);
-  const connectionState = useAblyStore((state) => state.connectionState);
+  // Realtime client + meta
+  const ably = useRealtimeStore((state) => state.ablyClient);
+  const connectionState = useRealtimeStore((state) => state.connectionState);
+  const subscribe = useRealtimeStore((state) => state.subscribe);
   const { currentLocation } = useAuthStore();
   const storeId = currentLocation?.id;
 
@@ -59,9 +60,9 @@ export function ServerNotificationProvider({ children }: { children: React.React
   }, []);
 
   // ── Core message handler ─────────────────────────────────────────────────────
-  const handleIncomingMessage = useCallback(async (msg: Message) => {
+  const handleIncomingMessage = useCallback(async (data: any) => {
     try {
-      const notification: ServerNotification = msg.data as ServerNotification;
+      const notification: ServerNotification = data as ServerNotification;
 
       // Guard: ignore bad payloads
       if (!notification?.id || !notification?.title) {
@@ -118,21 +119,18 @@ export function ServerNotificationProvider({ children }: { children: React.React
     }
   }, [ably, handleIncomingMessage]);
 
-  // ── Ably subscription ─────────────────────────────────────────────────────────
+  // ── Realtime subscription ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!ably || !storeId) return;
+    if (!storeId) return;
 
-    const storeChannel = ably.channels.get(`store:${storeId}`);
-    const systemChannel = ably.channels.get(`system:global`);
-
-    storeChannel.subscribe(handleIncomingMessage);
-    systemChannel.subscribe(handleIncomingMessage);
+    const unsubStore = subscribe(`store:${storeId}`, 'message', handleIncomingMessage);
+    const unsubSystem = subscribe(`system:global`, 'message', handleIncomingMessage);
 
     return () => {
-      storeChannel.unsubscribe(handleIncomingMessage);
-      systemChannel.unsubscribe(handleIncomingMessage);
+      unsubStore();
+      unsubSystem();
     };
-  }, [ably, storeId, handleIncomingMessage]);
+  }, [storeId, handleIncomingMessage, subscribe]);
 
   // ── Replay on reconnect ───────────────────────────────────────────────────────
   useEffect(() => {

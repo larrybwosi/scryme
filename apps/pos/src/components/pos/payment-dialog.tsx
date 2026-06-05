@@ -44,7 +44,7 @@ import { MpesaFlowType, ProcessSaleInput, ProcessSaleInputSchema } from '@/lib/v
 import { cn } from '@/lib/utils';
 import { shiftService } from '@/lib/shift-service';
 import { emit } from '@tauri-apps/api/event';
-import { useAblyStore } from '@/store/ablyStore';
+import { useRealtimeStore } from '@/store/realtimeStore';
 import { useCashDrawer } from '@/hooks/use-cash-drawer';
 import { useGiftCard } from '@/hooks/use-gift-card';
 import { sendOrderToKitchen } from '@/lib/kds';
@@ -390,9 +390,9 @@ const PaymentModal = ({
     mpesaPhone,
   ]);
 
-  // ── Ably listener ──
-  const paymentChannel = useAblyStore(state => state.paymentChannel);
-  const ably = useAblyStore(state => state.client);
+  // ── Realtime listener ──
+  const paymentChannel = useRealtimeStore(state => state.paymentChannel);
+  const subscribe = useRealtimeStore(state => state.subscribe);
 
 
   // ── Payment helpers ──
@@ -426,11 +426,9 @@ const PaymentModal = ({
   );
 
   useEffect(() => {
-    if (!isOpen || selectedTab !== 'MOBILE_PAYMENT' || !ably || !paymentChannel) return;
-    const channel = ably.channels.get(paymentChannel);
+    if (!isOpen || selectedTab !== 'MOBILE_PAYMENT' || !paymentChannel) return;
 
-    const handleUnclaimed = (message: any) => {
-      const data = message.data;
+    const handleUnclaimed = (data: any) => {
       if ((mpesaMode === 'PAYBILL' || mpesaMode === 'QR') && data.accountRef) {
         if (data.accountRef.toUpperCase() === paybillAccountNo.toUpperCase()) handlePaymentMatch(data);
       }
@@ -439,8 +437,7 @@ const PaymentModal = ({
       }
     };
 
-    const handleUpdate = (msg: any) => {
-      const txData = msg.data;
+    const handleUpdate = (txData: any) => {
       if (txData.transactionId === fullSaleNumber || txData.data?.accountRef === paybillAccountNo) {
         const isSuccess = txData.status === 'COMPLETED' || txData.status === 'SUCCESS';
         if (isSuccess) {
@@ -452,16 +449,18 @@ const PaymentModal = ({
       }
     };
 
-    channel.subscribe('payment-unclaimed', handleUnclaimed);
-    channel.subscribe('payment-update', handleUpdate);
+    const unsubUnclaimed = subscribe(paymentChannel, 'payment-unclaimed', handleUnclaimed);
+    const unsubUpdate = subscribe(paymentChannel, 'payment-update', handleUpdate);
+
     return () => {
-      channel.unsubscribe();
+      unsubUnclaimed();
+      unsubUpdate();
     };
   }, [
     isOpen,
     selectedTab,
     mpesaMode,
-    ably,
+    subscribe,
     paymentChannel,
     fullSaleNumber,
     paybillAccountNo,
