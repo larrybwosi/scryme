@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@repo/ui/lib/utils';
+import { cn } from '@/lib/utils';
 import {
   StickyNote,
   Truck,

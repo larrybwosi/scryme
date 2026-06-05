@@ -1,24 +1,25 @@
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@repo/db";
+import { env } from "@repo/env";
 
 export const authOptions = {
-    database: prismaAdapter(db, {
-        provider: "postgresql",
-    }),
-    secret: process.env.BETTER_AUTH_SECRET,
-    emailAndPassword: {
-        enabled: true,
+  database: prismaAdapter(db, {
+    provider: "postgresql",
+  }),
+  secret: env.BETTER_AUTH_SECRET,
+  emailAndPassword: {
+    enabled: true,
+  },
+  socialProviders: {
+    github: {
+      clientId: env.GITHUB_CLIENT_ID || "default",
+      clientSecret: env.GITHUB_CLIENT_SECRET || "default",
     },
-    socialProviders: {
-        github: {
-            clientId: process.env.GITHUB_CLIENT_ID,
-            clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        },
-        google: {
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        },
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID || "default",
+      clientSecret: env.GOOGLE_CLIENT_SECRET || "default",
     },
+  },
 };
 
 // Export Permissions
@@ -39,4 +40,9 @@ export * from "./logic/check-permission";
 export * from "./logic/has-member-permission";
 
 // Export Approvals
-export { createApprovalWorkflow, updateApprovalWorkflowInfo, setActiveWorkflow, getWorkflowDetails } from "./approvals";
+export {
+  createApprovalWorkflow,
+  updateApprovalWorkflowInfo,
+  setActiveWorkflow,
+  getWorkflowDetails,
+} from "./approvals";

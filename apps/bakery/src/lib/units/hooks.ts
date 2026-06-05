@@ -83,9 +83,9 @@ const updateOrganizationUnit = async (unitId: string, data: Partial<Organization
   if (isTauri() || isOfflineMode()) {
     await tauriInvoke('update_organization_unit', {
         userId: 'local-user',
-        unit: { id: unitId, ...data }
+        unit: { id: unitId, ...data, organizationId: 'local-org' }
     });
-    return { id: unitId, ...data } as OrganizationUnit;
+    return { id: unitId, ...data, organizationId: 'local-org' } as OrganizationUnit;
   }
   const response = await axios.patch(`/api/units/organization/${unitId}`, data);
   return response.data;

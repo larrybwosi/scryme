@@ -4,7 +4,7 @@ import { db } from '@repo/db';
 import { customerSchema, type CustomerFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
 
-export async function createCustomer(data: CustomerFormValues, organizationId: string) {
+export async function createCustomer(data: CustomerFormValues, organizationId: string): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
 
@@ -23,7 +23,7 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
   }
 }
 
-export async function updateCustomer(id: string, data: CustomerFormValues) {
+export async function updateCustomer(id: string, data: CustomerFormValues): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
 
@@ -41,7 +41,7 @@ export async function updateCustomer(id: string, data: CustomerFormValues) {
   }
 }
 
-export async function deleteCustomer(id: string) {
+export async function deleteCustomer(id: string): Promise<any> {
   try {
     await db.customer.delete({
       where: { id },
@@ -55,7 +55,7 @@ export async function deleteCustomer(id: string) {
   }
 }
 
-export async function getCustomers(organizationId: string) {
+export async function getCustomers(organizationId: string): Promise<any[]> {
   try {
     const customers = await db.customer.findMany({
       where: { organizationId },
@@ -68,29 +68,66 @@ export async function getCustomers(organizationId: string) {
   }
 }
 
-export async function getCustomer(id: string) {
+export async function getCustomer(id: string): Promise<any> {
   try {
     const customer = await db.customer.findUnique({
       where: { id },
       include: {
         businessAccount: true,
+        addresses: true,
         invoices: {
+          include: {
+            items: true,
+          },
           orderBy: { createdAt: 'desc' },
-          take: 10,
+          take: 20,
         },
         transactions: {
+          include: {
+            items: true,
+            fulfillments: {
+              include: {
+                items: true,
+              },
+            },
+          },
           orderBy: { createdAt: 'desc' },
-          take: 10,
+          take: 20,
         },
         crmRecord: {
           include: {
             activities: {
+              include: {
+                member: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
               orderBy: { createdAt: 'desc' },
-              take: 10,
+              take: 20,
             },
             notes: {
+              include: {
+                createdBy: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
               orderBy: { createdAt: 'desc' },
-              take: 10,
+              take: 20,
+            },
+            followUps: {
+              include: {
+                assignedTo: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+              orderBy: { dueDate: 'asc' },
+              take: 20,
             },
           },
         },

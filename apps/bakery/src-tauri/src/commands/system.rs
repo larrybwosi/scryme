@@ -21,7 +21,6 @@ pub async fn get_hardware_identifiers() -> BackendResult<HardwareIdentifiers> {
     })
 }
 
-
 fn get_system_serial() -> Option<String> {
     #[cfg(target_os = "linux")]
     {

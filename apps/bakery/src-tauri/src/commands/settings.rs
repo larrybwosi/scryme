@@ -1,5 +1,5 @@
 use crate::error::{BackendError, BackendResult};
-use crate::models::{BakerySettings};
+use crate::models::BakerySettings;
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::Utc;
 use sqlx::SqlitePool;
@@ -33,10 +33,10 @@ pub async fn update_local_admin(
 #[tauri::command]
 pub async fn get_settings(
     pool: State<'_, SqlitePool>,
-    org_id: String,
+    #[allow(non_snake_case)] organizationId: String,
 ) -> BackendResult<BakerySettings> {
     sqlx::query_as::<_, BakerySettings>("SELECT * FROM bakery_settings WHERE organization_id = ? OR organization_id = 'local-org' LIMIT 1")
-        .bind(org_id)
+        .bind(organizationId)
         .fetch_one(&*pool)
         .await
         .map_err(BackendError::from)

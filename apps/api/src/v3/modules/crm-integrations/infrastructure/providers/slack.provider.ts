@@ -2,15 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { OrganizationIntegration } from '@repo/db';
 import { CommunicationMessage, CommunicationProvider } from '../../domain/communication-provider.interface';
 import axios from 'axios';
+import { env } from '@repo/env';
 
 @Injectable()
 export class SlackProvider implements CommunicationProvider {
   private readonly logger = new Logger(SlackProvider.name);
   slug = 'slack';
 
-  private readonly clientId = process.env.SLACK_CLIENT_ID;
-  private readonly clientSecret = process.env.SLACK_CLIENT_SECRET;
-  private readonly redirectUri = process.env.SLACK_REDIRECT_URI;
+  private readonly clientId = env.SLACK_CLIENT_ID;
+  private readonly clientSecret = env.SLACK_CLIENT_SECRET;
+  private readonly redirectUri = env.SLACK_REDIRECT_URI;
 
   getAuthUrl(organizationId: string): string {
     const scopes = 'chat:write,channels:history,groups:history,im:history,mpim:history,users:read,users:read.email';

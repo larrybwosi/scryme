@@ -1,6 +1,6 @@
 use crate::commands::{log_activity, serde_json_to_string};
 use crate::error::{BackendError, BackendResult};
-use crate::models::{SystemUnit, OrganizationUnit};
+use crate::models::{OrganizationUnit, SystemUnit};
 use chrono::Utc;
 use sqlx::SqlitePool;
 use tauri::State;
@@ -17,12 +17,12 @@ pub async fn get_system_units(pool: State<'_, SqlitePool>) -> BackendResult<Vec<
 #[tauri::command]
 pub async fn get_organization_units(
     pool: State<'_, SqlitePool>,
-    organization_id: String,
+    #[allow(non_snake_case)] organizationId: String,
 ) -> BackendResult<Vec<OrganizationUnit>> {
     sqlx::query_as::<_, OrganizationUnit>(
         "SELECT * FROM organization_units WHERE organization_id = ? AND is_active = 1",
     )
-    .bind(organization_id)
+    .bind(organizationId)
     .fetch_all(&*pool)
     .await
     .map_err(BackendError::from)

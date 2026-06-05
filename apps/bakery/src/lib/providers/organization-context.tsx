@@ -19,7 +19,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     queryKey: ['bakerySettings'],
     queryFn: async () => {
       if (isTauri() || isOfflineMode()) {
-        return tauriInvoke<BakerySettings>('get_settings', { org_id: 'local-org' });
+        return tauriInvoke<BakerySettings>('get_settings', { orgId: 'local-org' });
       }
       return sdk.bakery.getSettings();
     },

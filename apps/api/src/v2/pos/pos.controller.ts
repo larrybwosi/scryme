@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Query, Param, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, Res, UsePipes } from '@nestjs/common';
+import { env } from '@repo/env';
 import { ApiTags, ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { PosService } from './pos.service';
 import { PosSaleService } from './pos-sale.service';
@@ -6,6 +7,17 @@ import { v2Context } from '../../common/decorators/v2-context.decorator';
 import { type V2ApiContext } from '@repo/shared/server';
 import { Permissions } from '../../common/decorators/auth.decorator';
 import { FastifyReply } from 'fastify';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import {
+  CheckInSchema,
+  CheckOutSchema,
+  AdjustStockSchema,
+  CreateCustomerSchema,
+  RecordPaymentSchema,
+  CreateStockRequestSchema,
+  CreateStockTransferSchema,
+  ShiftSyncSchema,
+} from './pos.schema';
 
 @ApiTags('POS')
 @ApiSecurity('x-api-key')
@@ -19,16 +31,17 @@ export class PosController {
 
   @Post('check-in')
   @ApiOperation({ summary: 'Member check-in' })
+  @UsePipes(new ZodValidationPipe(CheckInSchema))
   async checkIn(@v2Context() ctx: V2ApiContext, @Body() body: any, @Res() res: any) {
     const result = await this.posService.checkIn(ctx, body);
 
     res.setCookie('dealio_member_token', result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 12,
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      domain: env.NEXT_PUBLIC_COOKIE_DOMAIN,
     });
 
     return res.send(result);
@@ -36,6 +49,7 @@ export class PosController {
 
   @Post('check-out')
   @ApiOperation({ summary: 'Member check-out' })
+  @UsePipes(new ZodValidationPipe(CheckOutSchema))
   async checkOut(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.checkOut(ctx, body);
   }
@@ -81,6 +95,7 @@ export class PosController {
   @Post('sale/payments')
   @Permissions('pos:sale:update')
   @ApiOperation({ summary: 'Record payment for a sale' })
+  @UsePipes(new ZodValidationPipe(RecordPaymentSchema))
   async recordPayment(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.recordPayment(ctx, body);
   }
@@ -113,6 +128,7 @@ export class PosController {
   @Post('inventory')
   @Permissions('pos:product:update')
   @ApiOperation({ summary: 'Adjust stock levels' })
+  @UsePipes(new ZodValidationPipe(AdjustStockSchema))
   async adjustStock(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.adjustStock(ctx, body);
   }
@@ -133,6 +149,7 @@ export class PosController {
 
   @Post('customers')
   @ApiOperation({ summary: 'Create POS customer' })
+  @UsePipes(new ZodValidationPipe(CreateCustomerSchema))
   async createCustomer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createCustomer(ctx, body);
   }
@@ -162,6 +179,7 @@ export class PosController {
 
   @Post('stock-requests')
   @ApiOperation({ summary: 'Create stock request' })
+  @UsePipes(new ZodValidationPipe(CreateStockRequestSchema))
   async createStockRequest(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockRequest(ctx, body);
   }
@@ -186,6 +204,7 @@ export class PosController {
 
   @Post('shifts/sync')
   @ApiOperation({ summary: 'Sync POS shifts' })
+  @UsePipes(new ZodValidationPipe(ShiftSyncSchema))
   async syncShifts(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.syncShifts(ctx, body);
   }
@@ -204,12 +223,14 @@ export class PosController {
 
   @Post('inventory/requests')
   @ApiOperation({ summary: 'Create inventory request' })
+  @UsePipes(new ZodValidationPipe(CreateStockRequestSchema))
   async createInventoryRequest(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockRequest(ctx, body);
   }
 
   @Post('inventory/process')
   @ApiOperation({ summary: 'Process inventory adjustments' })
+  @UsePipes(new ZodValidationPipe(AdjustStockSchema))
   async processInventory(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.adjustStock(ctx, body);
   }
@@ -240,6 +261,7 @@ export class PosController {
 
   @Post('inventory/transfers')
   @ApiOperation({ summary: 'Create stock transfer' })
+  @UsePipes(new ZodValidationPipe(CreateStockTransferSchema))
   async createStockTransfer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockTransfer(ctx, body);
   }

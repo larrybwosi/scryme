@@ -200,7 +200,9 @@ export default function CreateOrgPage() {
 
     setIsLoading(true);
     try {
+      console.log(data);
       const result = await createOrganization(data);
+      console.log(result);
       toast.success("Organization created successfully!");
       router.push("/dashboard");
     } catch (error: any) {

@@ -15,6 +15,7 @@ import {
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
+import { env } from "@repo/env";
 
 @Injectable()
 export class BakeryService {
@@ -34,8 +35,26 @@ export class BakeryService {
 
   async getIngredientRecords(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    // This is a placeholder for actual records logic
-    return [];
+    return this.prisma.client.stockMovement.findMany({
+      where: {
+        organizationId,
+        variant: {
+          product: {
+            type: "RAW_MATERIAL" as any,
+          },
+        },
+      },
+      include: {
+        variant: {
+          include: { product: true },
+        },
+        fromLocation: true,
+        toLocation: true,
+        member: { include: { user: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
   }
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
@@ -797,7 +816,13 @@ export class BakeryService {
     });
   }
 
-  async updateBaker(id: string, data: any) {
+  async updateBaker(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const baker = await this.prisma.client.bakeryBaker.findFirst({
+      where: { id, bakerySettings: { organizationId } },
+    });
+    if (!baker) throw new NotFoundException("Baker not found");
+
     return this.prisma.client.bakeryBaker.update({
       where: { id },
       data,
@@ -823,11 +848,11 @@ export class BakeryService {
   getCookieOptions(maxAgeSeconds: number): CookieSerializeOptions {
     return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: maxAgeSeconds,
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      domain: env.NEXT_PUBLIC_COOKIE_DOMAIN,
     };
   }
 
@@ -980,15 +1005,62 @@ export class BakeryService {
 
   async dispatchDelivery(ctx: V2ApiContext, data: any) {
     const { organizationId, memberId } = ctx;
-    // We should ideally reuse the V3 UseCase logic but for V2 simplicity:
-    // ... logic to create fulfillment and update transaction ...
-    return { success: true };
+    const { transactionId, partnerId, driverId, notes } = data;
+
+    return this.prisma.client.$transaction(async (tx) => {
+      const transaction = await tx.transaction.findFirst({
+        where: { id: transactionId, organizationId },
+      });
+
+      if (!transaction) throw new NotFoundException("Transaction not found");
+
+      const fulfillment = await tx.fulfillment.create({
+        data: {
+          transactionId,
+          type: "DELIVERY" as any,
+          status: "IN_TRANSIT" as any,
+          driverId: driverId,
+          deliveryNotes: notes,
+          dispatchedAt: new Date(),
+        },
+      });
+
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          deliveryPartnerId: partnerId,
+        },
+      });
+
+      return fulfillment;
+    });
   }
 
   async reconcileDelivery(ctx: V2ApiContext, data: any) {
     const { organizationId, memberId } = ctx;
-    // ... logic to reconcile fulfillment ...
-    return { success: true };
+    const { fulfillmentId, status, notes } = data;
+
+    return this.prisma.client.$transaction(async (tx) => {
+      const fulfillment = await tx.fulfillment.findFirst({
+        where: {
+          id: fulfillmentId,
+          transaction: { organizationId },
+        },
+      });
+
+      if (!fulfillment) throw new NotFoundException("Fulfillment not found");
+
+      const updatedFulfillment = await tx.fulfillment.update({
+        where: { id: fulfillmentId },
+        data: {
+          status: (status === "DELIVERED" ? "DELIVERED" : "CANCELLED") as any,
+          deliveredAt: status === "DELIVERED" ? new Date() : null,
+          deliveryNotes: notes || fulfillment.deliveryNotes,
+        },
+      });
+
+      return updatedFulfillment;
+    });
   }
 
   async getActiveDeliveries(ctx: V2ApiContext) {
@@ -1094,9 +1166,9 @@ export class BakeryService {
   }
 
   async getUpdate(target: string, currentVersion: string) {
-    const owner = process.env.GITHUB_OWNER || "larrybwosi";
-    const repo = process.env.GITHUB_REPO || "dealio";
-    const token = process.env.GITHUB_TOKEN;
+    const owner = env.GITHUB_OWNER;
+    const repo = env.GITHUB_REPO;
+    const token = env.GITHUB_TOKEN;
 
     const headers: any = {
       Accept: "application/vnd.github.v3+json",

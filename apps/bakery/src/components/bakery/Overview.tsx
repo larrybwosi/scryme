@@ -73,6 +73,7 @@ export default function Overview({ setActiveTab }: { setActiveTab: (tab: string)
   }
 
   if (error || !data) {
+    console.log(error)
     return (
       <div className="flex flex-col items-center justify-center mt-20 space-y-4">
         <AlertCircle className="h-10 w-10 text-destructive" />

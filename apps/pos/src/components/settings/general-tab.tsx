@@ -16,6 +16,8 @@ import {
   Loader2,
   ShieldCheck,
   MapPin,
+  Wifi,
+  Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
 import { Label } from '@repo/ui/components/ui/label';
@@ -30,6 +32,9 @@ import { LocationSwitchDialog } from './location-switch-dialog';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useUpdater } from '@/lib/providers/UpdateProvider';
+import axios from 'axios';
+import { API_ENDPOINT } from '@/lib/axios';
+import { toast } from 'sonner';
 
 // ─── Update Status UI Helpers ────────────────────────────────────────────────
 
@@ -70,6 +75,83 @@ const UPDATE_STATUS_CONFIG: Record<UpdateStatus, { label: string; badgeClass: st
     icon: <AlertTriangle className="h-3.5 w-3.5" />,
   },
 };
+
+// ─── Connection Test Card ────────────────────────────────────────────────────
+
+function ConnectionTestCard() {
+  const [isTesting, setIsTesting] = useState(false);
+  const [lastTested, setLastTested] = useState<string | null>(null);
+  const [status, setStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
+
+  const testConnection = async () => {
+    setIsTesting(true);
+    setStatus('IDLE');
+    try {
+      const response = await axios.get(`${API_ENDPOINT}/api/v2/health/ping`, { timeout: 5000 });
+      if (response.data?.message === 'pong') {
+        setStatus('SUCCESS');
+        toast.success('Connection to Scryme API successful');
+      } else {
+        throw new Error('Unexpected response format');
+      }
+    } catch (err: any) {
+      setStatus('ERROR');
+      toast.error(`Connection failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsTesting(false);
+      setLastTested(new Date().toLocaleTimeString());
+    }
+  };
+
+  return (
+    <Card className="border-muted/60 shadow-sm">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-blue-500/10 rounded-lg">
+            <Wifi className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <CardTitle className="text-lg font-semibold">API Connectivity</CardTitle>
+            <CardDescription>Verify your connection to the Scryme API.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <Separator className="mb-0" />
+      <CardContent className="pt-5 space-y-5">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Server Endpoint</p>
+            <p className="text-sm font-mono mt-1 truncate max-w-[250px]">{API_ENDPOINT}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={testConnection} disabled={isTesting} className="gap-2 text-xs">
+            {isTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+            {isTesting ? 'Testing…' : 'Test Connection'}
+          </Button>
+        </div>
+
+        {status !== 'IDLE' && (
+          <div
+            className={`flex items-center gap-2.5 text-xs p-3 rounded-lg border ${
+              status === 'SUCCESS'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
+                : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800'
+            }`}
+          >
+            {status === 'SUCCESS' ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+            )}
+            <div className="flex-1">
+              <span className="font-medium">{status === 'SUCCESS' ? 'Connected' : 'Connection Failed'}</span>
+              <p className="text-[10px] opacity-80">Last tested at {lastTested}</p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // ─── Software Updates Card ────────────────────────────────────────────────────
 
@@ -512,6 +594,9 @@ export default function GeneralSettings({
             )}
           </CardContent>
         </Card>
+
+        {/* Connectivity Test */}
+        <ConnectionTestCard />
 
         {/* Software Updates */}
         {import.meta.env.MODE !== 'standalone' && <SoftwareUpdatesCard />}

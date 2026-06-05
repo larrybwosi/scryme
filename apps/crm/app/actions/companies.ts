@@ -73,7 +73,7 @@ export async function getCompanies(organizationId: string) {
   }
 }
 
-export async function getCompany(id: string) {
+export async function getCompany(id: string): Promise<any> {
   try {
     const company = await db.businessAccount.findUnique({
       where: { id },
@@ -91,6 +91,17 @@ export async function getCompany(id: string) {
             },
             notes: {
               orderBy: { createdAt: 'desc' },
+              take: 10,
+            },
+            followUps: {
+              include: {
+                assignedTo: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+              orderBy: { dueDate: 'asc' },
               take: 10,
             },
           },

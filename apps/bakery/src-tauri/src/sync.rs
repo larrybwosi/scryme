@@ -6,22 +6,33 @@ use sqlx::SqlitePool;
 use std::time::Duration;
 use tokio::time::sleep;
 
-pub async fn start_sync_worker(pool: SqlitePool, api_base_url: String) {
+pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
     let client = reqwest::Client::new();
     let mut current_delay = Duration::from_secs(60);
     let min_delay = Duration::from_secs(60);
     let max_delay = Duration::from_secs(3600);
 
-    // Refine V3 API URL construction
-    let v3_api_url = if api_base_url.ends_with("/api/v2") {
-        api_base_url.replace("/api/v2", "/api/v3")
-    } else if api_base_url.contains("/api/v2/") {
-         api_base_url.replace("/api/v2/", "/api/v3/")
-    } else {
-        api_base_url.clone()
-    };
-
     loop {
+        // Fetch current API URL from settings
+        let api_base_url = match sqlx::query_scalar::<_, Option<String>>(
+            "SELECT api_endpoint_url FROM bakery_settings WHERE id = 'default-settings' LIMIT 1",
+        )
+        .fetch_optional(&pool)
+        .await
+        {
+            Ok(Some(Some(url))) if !url.is_empty() => url,
+            _ => default_api_base_url.clone(),
+        };
+
+        let api_base_url = if api_base_url.ends_with("/api/v2") {
+            api_base_url
+        } else {
+            format!("{}/api/v2", api_base_url.trim_end_matches('/'))
+        };
+
+        // Refine V3 API URL construction
+        let v3_api_url = api_base_url.replace("/api/v2", "/api/v3");
+
         let api_key = match get_api_key(&pool).await {
             Ok(Some(key)) => key,
             _ => {
@@ -126,11 +137,7 @@ async fn sync_units(
         None => format!("{}/{}/units", v3_api_url, slug),
     };
 
-    let res = client
-        .get(&url)
-        .header("X-API-KEY", api_key)
-        .send()
-        .await?;
+    let res = client.get(&url).header("X-API-KEY", api_key).send().await?;
 
     if !res.status().is_success() {
         return Err(BackendError::Network(res.error_for_status().unwrap_err()));
@@ -221,12 +228,11 @@ async fn sync_units(
 
 async fn get_api_key(pool: &SqlitePool) -> BackendResult<Option<String>> {
     // 1. Try to get from database first
-    let res: Option<(Option<String>,)> = sqlx::query_as(
-        "SELECT api_key FROM bakery_settings WHERE api_key IS NOT NULL LIMIT 1"
-    )
-        .fetch_optional(pool)
-        .await
-        .map_err(BackendError::from)?;
+    let res: Option<(Option<String>,)> =
+        sqlx::query_as("SELECT api_key FROM bakery_settings WHERE api_key IS NOT NULL LIMIT 1")
+            .fetch_optional(pool)
+            .await
+            .map_err(BackendError::from)?;
 
     if let Some(key) = res.and_then(|r| r.0) {
         return Ok(Some(key));
@@ -264,7 +270,9 @@ async fn sync_item(
     // Handle RESTOCK items specifically
     if item.entity_type == "RESTOCK" {
         let restock_data: crate::models::RestockData = serde_json::from_str(&item.payload)
-            .map_err(|e| BackendError::Internal(format!("Failed to parse restock payload: {}", e)))?;
+            .map_err(|e| {
+                BackendError::Internal(format!("Failed to parse restock payload: {}", e))
+            })?;
 
         let url = format!(
             "{}/catalog/products/{}/variants/{}/restock",

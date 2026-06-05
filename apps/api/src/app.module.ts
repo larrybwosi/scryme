@@ -18,13 +18,14 @@ import { V2AuthGuard } from './auth/v2-auth.guard';
 import { AuthorizationGuard } from './common/guards/authorization.guard';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { BullModule } from '@nestjs/bullmq';
+import { env } from '@repo/env';
 
 @Module({
   imports: [
     BullModule.forRoot({
       connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+        host: env.REDIS_HOST,
+        port: env.REDIS_PORT,
       },
     }),
     ThrottlerModule.forRoot([

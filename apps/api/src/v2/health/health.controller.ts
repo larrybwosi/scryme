@@ -1,4 +1,5 @@
 import { Controller, Get, Delete, Headers, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { env } from '@repo/env';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import * as crypto from 'node:crypto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -31,6 +32,13 @@ export class HealthController {
   }
 
   @AllowPublic()
+  @Get('ping')
+  @ApiOperation({ summary: 'Simple ping' })
+  async ping() {
+    return { message: 'pong', timestamp: new Date().toISOString() };
+  }
+
+  @AllowPublic()
   @Get('enhanced')
   @ApiOperation({ summary: 'Comprehensive system health check' })
   async getEnhanced() {
@@ -58,7 +66,7 @@ export class HealthController {
       const health = {
         status: overallStatus,
         timestamp: new Date().toISOString(),
-        version: process.env.APP_VERSION || '1.0.0',
+        version: env.APP_VERSION,
         uptime,
         checks: {
           database: dbCheck,
@@ -91,7 +99,7 @@ export class HealthController {
   @Delete('metrics')
   @ApiOperation({ summary: 'Reset in-process metrics' })
   async resetMetrics(@Headers('x-admin-secret') secret: string) {
-    const internalSecret = process.env.INTERNAL_ADMIN_SECRET;
+    const internalSecret = env.INTERNAL_ADMIN_SECRET;
 
     if (!internalSecret || !secret) {
       throw new UnauthorizedException();
