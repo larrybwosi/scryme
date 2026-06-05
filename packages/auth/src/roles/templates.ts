@@ -296,13 +296,13 @@ export const ROLE_TEMPLATES = [
 /**
  * Get role templates by category
  */
-export const getRoleTemplatesByCategory =  (category: any) => {
+export const getRoleTemplatesByCategory = (category) => {
     return ROLE_TEMPLATES.filter(template => template.category === category);
 };
 /**
  * Get a specific role template by id
  */
-export const getRoleTemplateById =  (id: any) => {
+export const getRoleTemplateById = (id) => {
     return ROLE_TEMPLATES.find(template => template.id === id);
 };
 /**

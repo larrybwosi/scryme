@@ -6,10 +6,17 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "jest"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.11",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "axios": "^1.17.0"
   }
 }
