@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Query, Param, Res, UsePipes } from '@nestjs/common';
+import { env } from '@repo/env';
 import { ApiTags, ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { PosService } from './pos.service';
 import { PosSaleService } from './pos-sale.service';
@@ -36,11 +37,11 @@ export class PosController {
 
     res.setCookie('dealio_member_token', result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 12,
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      domain: env.NEXT_PUBLIC_COOKIE_DOMAIN,
     });
 
     return res.send(result);

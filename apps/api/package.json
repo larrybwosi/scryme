@@ -41,6 +41,7 @@
     "@repo/auth": "workspace:*",
     "@repo/crm": "workspace:*",
     "@repo/db": "workspace:*",
+    "@repo/env": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/mpesa": "workspace:*",
     "@repo/shared": "workspace:*",

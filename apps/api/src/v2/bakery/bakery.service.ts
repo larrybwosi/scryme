@@ -15,6 +15,7 @@ import {
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
+import { env } from "@repo/env";
 
 @Injectable()
 export class BakeryService {
@@ -847,11 +848,11 @@ export class BakeryService {
   getCookieOptions(maxAgeSeconds: number): CookieSerializeOptions {
     return {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: maxAgeSeconds,
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      domain: env.NEXT_PUBLIC_COOKIE_DOMAIN,
     };
   }
 
@@ -1165,9 +1166,9 @@ export class BakeryService {
   }
 
   async getUpdate(target: string, currentVersion: string) {
-    const owner = process.env.GITHUB_OWNER || "larrybwosi";
-    const repo = process.env.GITHUB_REPO || "dealio";
-    const token = process.env.GITHUB_TOKEN;
+    const owner = env.GITHUB_OWNER;
+    const repo = env.GITHUB_REPO;
+    const token = env.GITHUB_TOKEN;
 
     const headers: any = {
       Accept: "application/vnd.github.v3+json",
