@@ -170,7 +170,7 @@ export const useBakerySettings = () => {
     queryFn: async () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke<BakerySettings>("get_settings", {
-          org_id: "local-org",
+          orgId: "local-org",
         });
       }
       const data = await sdk.bakery.getSettings();
@@ -199,7 +199,7 @@ export const useBakeryData = () => {
     queryFn: async () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke<OverviewData>("get_overview", {
-          org_id: "local-org",
+          orgId: "local-org",
         });
       }
       const data = await sdk.bakery.getOverview();
