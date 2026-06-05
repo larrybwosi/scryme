@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@plugin "tailwindcss-animate";
 @import "@repo/ui/globals.css";
+@plugin "tailwindcss-animate";
 @source "../../../packages/ui/src/**/*.tsx";
 
 @theme {
