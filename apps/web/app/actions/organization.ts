@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
