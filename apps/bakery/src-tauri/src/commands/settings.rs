@@ -33,10 +33,11 @@ pub async fn update_local_admin(
 #[tauri::command]
 pub async fn get_settings(
     pool: State<'_, SqlitePool>,
-    org_id: String,
+    #[serde(rename = "organizationId")]
+    organization_id: String,
 ) -> BackendResult<BakerySettings> {
     sqlx::query_as::<_, BakerySettings>("SELECT * FROM bakery_settings WHERE organization_id = ? OR organization_id = 'local-org' LIMIT 1")
-        .bind(org_id)
+        .bind(organization_id)
         .fetch_one(&*pool)
         .await
         .map_err(BackendError::from)

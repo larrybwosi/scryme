@@ -17,6 +17,7 @@ pub async fn get_system_units(pool: State<'_, SqlitePool>) -> BackendResult<Vec<
 #[tauri::command]
 pub async fn get_organization_units(
     pool: State<'_, SqlitePool>,
+    #[serde(rename = "organizationId")]
     organization_id: String,
 ) -> BackendResult<Vec<OrganizationUnit>> {
     sqlx::query_as::<_, OrganizationUnit>(

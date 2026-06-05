@@ -40,6 +40,7 @@ pub fn get_migrations() -> Vec<Migration> {
                     email TEXT,
                     is_active BOOLEAN DEFAULT 1,
                     bakery_settings_id TEXT,
+                    organization_id TEXT NOT NULL DEFAULT 'local-org',
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(bakery_settings_id) REFERENCES bakery_settings(id)

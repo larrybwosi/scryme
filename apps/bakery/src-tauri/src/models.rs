@@ -353,6 +353,7 @@ pub struct Baker {
     pub email: Option<String>,
     pub is_active: bool,
     pub bakery_settings_id: Option<String>,
+    pub organization_id: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
