@@ -8,9 +8,9 @@ const CONFIG = {
     BAN_TTL: 86400, // 24 hours
 };
 export class PermissionError extends Error {
-    message;
-    attempts;
-    isBanned;
+    override message: string;
+    attempts: number;
+    isBanned: boolean;
     constructor(message: string, attempts: number, isBanned: boolean) {
         super(message);
         this.message = message;
