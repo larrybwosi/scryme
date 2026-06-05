@@ -1,11 +1,12 @@
 import { PrismaClient } from '@repo/db';
+import { env } from '@repo/env';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { decrypt, encrypt } from '@repo/shared/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
+const JWT_SECRET = env.JWT_SECRET;
 
 export interface DeviceSetupTokenPayload {
   jti: string;

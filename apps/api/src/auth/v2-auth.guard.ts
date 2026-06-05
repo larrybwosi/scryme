@@ -9,6 +9,7 @@ import { validateDeviceKey, verifyMemberToken, verifyZitadelJwt, ROLE_PERMISSION
 import { ALLOW_PUBLIC_KEY } from '../common/decorators/auth.decorator';
 import { FastifyRequest } from 'fastify';
 import { db } from '@repo/db';
+import { env } from '@repo/env';
 
 @Injectable()
 export class V2AuthGuard implements CanActivate {
@@ -91,8 +92,8 @@ export class V2AuthGuard implements CanActivate {
     const authHeader = request.headers['authorization'];
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const zitadelDomain = process.env.ZITADEL_DOMAIN;
-      const zitadelAudience = process.env.ZITADEL_CLIENT_ID;
+      const zitadelDomain = env.ZITADEL_DOMAIN;
+      const zitadelAudience = env.ZITADEL_CLIENT_ID;
 
       if (zitadelDomain && zitadelAudience) {
         try {
