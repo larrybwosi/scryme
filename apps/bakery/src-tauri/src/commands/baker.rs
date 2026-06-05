@@ -67,8 +67,8 @@ pub async fn create_baker(
     }
 
     sqlx::query(
-        "INSERT INTO bakers (id, name, role, member_id, card_id, pin_hash, email, is_active, bakery_settings_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO bakers (id, name, role, member_id, card_id, pin_hash, email, is_active, bakery_settings_id, organization_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&baker.id)
     .bind(&baker.name)
@@ -79,6 +79,7 @@ pub async fn create_baker(
     .bind(&baker.email)
     .bind(baker.is_active)
     .bind(&baker.bakery_settings_id)
+    .bind(&baker.organization_id)
     .bind(baker.created_at)
     .bind(baker.updated_at)
     .execute(&*pool)

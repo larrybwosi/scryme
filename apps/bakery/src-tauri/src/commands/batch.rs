@@ -346,7 +346,8 @@ pub async fn get_batch_traceability(
 #[tauri::command]
 pub async fn get_overview(
     pool: State<'_, SqlitePool>,
-    org_id: String,
+    #[allow(non_snake_case)]
+    organizationId: String,
 ) -> BackendResult<serde_json::Value> {
     let rows_result = sqlx::query(
         "SELECT b.*, r.name as recipe_name, r.yield_quantity, r.yield_unit
@@ -355,7 +356,7 @@ pub async fn get_overview(
          WHERE b.organization_id = ? OR b.organization_id = 'local-org'
          ORDER BY b.created_at DESC",
     )
-    .bind(&org_id)
+    .bind(&organizationId)
     .fetch_all(&*pool)
     .await;
 

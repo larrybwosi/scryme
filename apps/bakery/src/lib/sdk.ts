@@ -27,7 +27,7 @@ const sdk = getSDK({
 // If in Tauri, attempt to load the provisioned API Key from keyring and settings
 if (isTauri()) {
   // Load settings to check for custom API URL
-  invoke<any>('get_settings', { orgId: 'local-org' })
+  invoke<any>('get_settings', { organizationId: 'local-org' })
     .then((settings) => {
       if (settings?.apiEndpointUrl) {
         localStorage.setItem('bakery_api_url', settings.apiEndpointUrl);

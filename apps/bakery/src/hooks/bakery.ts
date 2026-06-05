@@ -77,7 +77,7 @@ export const useCreateBatch = () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke("create_batch", {
           userId: "local-user",
-          input: data,
+          input: { ...data, organizationId: "local-org" },
         });
       }
       return sdk.bakery.createBatch(data);
@@ -121,7 +121,7 @@ export const useCreateRecipe = () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke("create_recipe", {
           userId: "local-user",
-          input: data,
+          input: { ...data, organizationId: "local-org" },
         });
       }
       return sdk.bakery.createRecipe(data);
@@ -170,7 +170,7 @@ export const useBakerySettings = () => {
     queryFn: async () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke<BakerySettings>("get_settings", {
-          org_id: "local-org",
+          organizationId: "local-org",
         });
       }
       const data = await sdk.bakery.getSettings();
@@ -199,7 +199,7 @@ export const useBakeryData = () => {
     queryFn: async () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke<OverviewData>("get_overview", {
-          org_id: "local-org",
+          organizationId: "local-org",
         });
       }
       const data = await sdk.bakery.getOverview();
@@ -378,7 +378,7 @@ export const useCreateTemplate = () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke("create_template", {
           userId: "local-user",
-          template: data,
+          template: { ...data, organizationId: "local-org" },
         });
       }
       return sdk.bakery.createTemplate(data);
@@ -475,7 +475,7 @@ export const useCreateBakeryCategory = () => {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke("create_category", {
           userId: "local-user",
-          category: data,
+          category: { ...data, organizationId: "local-org" },
         });
       }
       return sdk.bakery.createCategory(data);
@@ -592,7 +592,7 @@ export function useBakerySettingsManagement() {
       if (isTauri() || isOfflineMode()) {
         return tauriInvoke("create_baker", {
           userId: "local-user",
-          baker: data,
+          baker: { ...data, organizationId: "local-org" },
         });
       }
       return sdk.bakery.addBaker(data);
