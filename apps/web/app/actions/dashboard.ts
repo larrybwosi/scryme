@@ -255,11 +255,12 @@ export async function getDashboardData(timeframe: string = "month"): Promise<Das
     };
   });
 
-  // Mock Session Data
+  // Real session data or zero if not tracked
+  // For now we don't have a sessions table, so we use 0 instead of random mocks
   const totalSessionsChartData: ChartDataPoint[] = intervalDays.map(day => ({
     date: format(day, "MMM dd"),
-    current: Math.floor(Math.random() * 500) + 300,
-    previous: Math.floor(Math.random() * 500) + 200,
+    current: 0,
+    previous: 0,
   }));
 
   return {
