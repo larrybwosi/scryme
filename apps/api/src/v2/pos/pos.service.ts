@@ -447,7 +447,7 @@ export class PosService {
 
   async adjustStock(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(AdjustStockSchema, body);
-    const result = await this.inventoryService.adjustStock({
+    const result = await this.inventoryService.adjustStockAndPublish({
       organizationId: ctx.organizationId,
       ...validated,
       userId: ctx.userId || "system",

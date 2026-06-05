@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { realtimeService } from "@repo/shared";
 import type { V2ApiContext } from "@repo/shared/server";
 import { paginate } from "../../v3/common/utils/pagination";
 
@@ -252,8 +253,29 @@ export class InventoryService {
         newStock,
         adjustment: quantity,
         logId: movement.id,
+        productId,
+        variantId,
+        locationId,
       };
     });
+  }
+
+  async adjustStockAndPublish(data: any) {
+    const result = await this.adjustStock(data);
+
+    // Publish update
+    await realtimeService.publish(
+      `organization:${data.organizationId}:inventory`,
+      "stock-update",
+      {
+        productId: result.productId,
+        variantId: result.variantId,
+        locationId: result.locationId,
+        newStock: result.newStock,
+      },
+    );
+
+    return result;
   }
 
   async getLocations(ctx: V2ApiContext) {
