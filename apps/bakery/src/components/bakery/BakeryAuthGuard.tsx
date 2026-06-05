@@ -49,7 +49,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
     try {
       // Load custom API URL from settings if in Tauri
       try {
-        const settings = await invoke<any>('get_settings', { org_id: 'local-org' });
+        const settings = await invoke<any>('get_settings', { orgId: 'local-org' });
         if (settings?.apiEndpointUrl) {
           setApiUrl(settings.apiEndpointUrl);
           sdk.client.setBaseURL(settings.apiEndpointUrl);
@@ -171,7 +171,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
       // If custom API URL was used, save it to settings
       if (showApiUrl && apiUrl) {
         try {
-          const settings = await invoke<any>('get_settings', { org_id: 'local-org' });
+          const settings = await invoke<any>('get_settings', { orgId: 'local-org' });
           await invoke('update_settings', {
             userId: 'system',
             settings: {
