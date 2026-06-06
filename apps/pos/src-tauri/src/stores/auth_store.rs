@@ -23,6 +23,7 @@ pub struct DeviceConfig {
     pub base_url: String,
     pub location_id: String,
     pub device_key: String,
+    pub org_slug: String,
     #[serde(default)]
     pub allow_negative_stock: bool,
 }
@@ -30,6 +31,7 @@ pub struct DeviceConfig {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SanitizedDeviceConfig {
     pub location_id: String,
+    pub org_slug: String,
     pub allow_negative_stock: bool,
 }
 
@@ -293,11 +295,13 @@ pub async fn set_device_config(
     base_url: String,
     location_id: String,
     device_key: String,
+    org_slug: String,
 ) -> Result<(), String> {
     let new_config = DeviceConfig {
         base_url: base_url.clone(),
         location_id,
         device_key,
+        org_slug,
         allow_negative_stock: false, // Default to false for new setups
     };
 
@@ -478,6 +482,7 @@ pub async fn get_device_config(
     let config_guard = state.device_config.lock().map_err(|_| "Lock error")?;
     Ok(config_guard.as_ref().map(|c| SanitizedDeviceConfig {
         location_id: c.location_id.clone(),
+        org_slug: c.org_slug.clone(),
         allow_negative_stock: c.allow_negative_stock,
     }))
 }
@@ -600,6 +605,7 @@ pub async fn start_device_setup_command(
     network_state: State<'_, crate::network_monitor::NetworkState>,
     base_url: String,
     device_key: String,
+    org_slug: String,
 ) -> Result<(), String> {
     // We store a partial config (no location_id yet) in memory
     // This allows get_locations_command to work using build_request
@@ -608,6 +614,7 @@ pub async fn start_device_setup_command(
         base_url: base_url.clone(),
         location_id: String::new(), // Empty for now
         device_key,
+        org_slug,
         allow_negative_stock: false, // Default for setup
     });
 

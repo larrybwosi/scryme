@@ -60,6 +60,7 @@ const routeMap: Record<string, string> = {
   settings: '/settings',
   pricing: '/pricing',
   barcodes: '/barcodes',
+  'petty-cash': '/petty-cash',
 };
 
 const iconMap: Record<string, any> = {

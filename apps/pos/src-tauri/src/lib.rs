@@ -29,6 +29,7 @@ use stores::audit_store;
 use stores::auth_store::{self, AuthState};
 use stores::customer_store::{self, CustomerState};
 use stores::delivery_store;
+use stores::finance_store::{self, FinanceState};
 use stores::pricing_store::{self, PricingState};
 use stores::product_store::{self, ProductState};
 use stores::sales_store::{self, SalesState};
@@ -135,6 +136,7 @@ pub fn run() {
         .manage(PricingState::new())
         .manage(ShiftState::new())
         .manage(AuthState::new())
+        .manage(FinanceState::new())
         .manage(NotificationState::new())
         .manage(NetworkState::new())
         .manage(CustomerScreenState::new())
@@ -146,6 +148,7 @@ pub fn run() {
             tauri::async_runtime::block_on(product_store::init_state(app.handle()));
             tauri::async_runtime::block_on(customer_store::init_state(app.handle()));
             tauri::async_runtime::block_on(pricing_store::init_state(app.handle()));
+            tauri::async_runtime::block_on(finance_store::init_state(app.handle()));
             tauri::async_runtime::block_on(shift_store::init_state(app.handle()));
             tauri::async_runtime::block_on(audit_store::init_state(app.handle()));
 
@@ -185,7 +188,17 @@ pub fn run() {
             tauri::async_runtime::block_on(sales_store::init_state(app.handle(), &sales_state));
             
             #[cfg(not(feature = "standalone"))]
-            sales_store::start_auto_sync_task(app.handle().clone());
+            {
+                sales_store::start_auto_sync_task(app.handle().clone());
+
+                let app_clone = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    loop {
+                        tokio::time::sleep(std::time::Duration::from_secs(300)).await; // Every 5 minutes
+                        let _ = finance_store::sync_petty_cash(app_clone.clone()).await;
+                    }
+                });
+            }
 
             #[cfg(all(not(feature = "standalone"), feature = "restaurant"))]
             if let Err(e) = tauri::async_runtime::block_on(table_store::init_db(app.handle())) {
@@ -451,6 +464,7 @@ pub fn run() {
             sales_store::record_payment_command,
             sales_store::initiate_mpesa_payment_command,
             sales_store::invalidate_sale_command,
+            finance_store::register_petty_cash_command,
             sales_store::set_sync_interval_command,
             auth_store::set_negative_stock_command,
             #[cfg(not(feature = "standalone"))]

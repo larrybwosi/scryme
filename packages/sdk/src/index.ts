@@ -64,6 +64,8 @@ export const getSDK = (config: SDKConfig) => {
     pos: {
       getLocations: (params?: any) => sdk.client.get("/pos/locations", { params }),
       listLocations: (params?: any) => sdk.client.get("/pos/locations", { params }),
+      registerPettyCash: (orgSlug: string, data: any) => sdk.client.post(`/${orgSlug}/pos/petty-cash`, data),
+      getPettyCashFunds: (orgSlug: string) => sdk.client.get(`/${orgSlug}/pos/petty-cash/funds`),
     },
     bakery: {
       getAuthStatus: () => sdk.client.get("/bakery/auth/status"),
