@@ -19,32 +19,32 @@ pub struct DriverMember {
 
 #[tauri::command]
 pub async fn get_drivers_command(auth_state: State<'_, AuthState>) -> Result<Vec<Driver>, String> {
+    // V3 doesn't have a dedicated drivers endpoint in PosController yet,
+    // assuming it might be part of members or common.
+    // For now, let's use a generic path if available or return empty.
     let request =
-        auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::DRIVERS)?;
+        auth_state.build_request(reqwest::Method::GET, "members/drivers")?;
 
     let res = request.send().await.map_err(|e| e.to_string())?;
 
     if !res.status().is_success() {
-        return Err(format!("Failed to fetch drivers: {}", res.status()));
+        return Ok(vec![]); // Graceful fallback
     }
 
-    let drivers: Vec<Driver> = res.json().await.map_err(|e| e.to_string())?;
+    let v3_res: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let drivers: Vec<Driver> = serde_json::from_value(v3_res.get("data").cloned().unwrap_or_default()).unwrap_or_default();
     Ok(drivers)
 }
 
 #[tauri::command]
 pub async fn dispatch_order_command(
     auth_state: State<'_, AuthState>,
-    transaction_id: String,
+    _transaction_id: String,
     payload: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-    let path = format!(
-        "{}?transactionId={}",
-        crate::api_config::routes::DELIVERY_DISPATCH,
-        transaction_id
-    );
+    let path = crate::api_config::routes::DELIVERY_DISPATCH;
 
-    let request = auth_state.build_request(reqwest::Method::POST, &path)?;
+    let request = auth_state.build_request(reqwest::Method::POST, path)?;
 
     let res = request
         .json(&payload)

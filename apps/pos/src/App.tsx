@@ -13,7 +13,7 @@ import AnalyticsPage from '@/pages/analytics-page';
 import CustomersPage from '@/pages/customers-page';
 import ManageTablesPage from '@/pages/manage-tables-page';
 import CashDrawerPage from '@/pages/cash-drawer-page';
-import TillManagementPage from '@/pages/till-management-page';
+import TillManagementV3 from '@/pages/till-management-v3';
 import ReceiptSettingsPage from '@/pages/receipt-settings-page';
 import PendingTransactionsPage from '@/pages/pending-transactions';
 import CreateOrderPage from '@/pages/create-order';
@@ -25,8 +25,8 @@ import PricingViewPage from '@/pages/pricing-view-page';
 import NotFound from '@/pages/not-found';
 import ShiftManager from './components/shift-manager';
 import StockDeliveryPage from './pages/stock-acceptance';
-import StockTransferCreate from './pages/stock-transfers';
-import StockRequestCreate from './pages/stock-requests';
+import StockTransferCreate from './pages/stock-transfers-v3';
+import StockRequestCreate from './pages/stock-requests-v3';
 import KDSPage from './pages/kitchen-display';
 import HubOverviewPage from './pages/hub-overview';
 import ProductManagementPage from './pages/product-management';
@@ -117,7 +117,7 @@ const AppRoutes = () => {
           <>
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/cash-drawer" element={<CashDrawerPage />} />
-            <Route path="/till-management" element={<TillManagementPage />} />
+            <Route path="/till-management" element={<TillManagementV3 />} />
             <Route path="/pending-transactions" element={<PendingTransactionsPage />} />
             <Route path="/create-order" element={<CreateOrderPage />} />
           </>

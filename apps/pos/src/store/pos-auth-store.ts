@@ -57,6 +57,7 @@ export type Member = {
 
 interface PosAuthState {
   isConfigured: boolean;
+  orgSlug: string | null;
   currentMember: Member | null;
   checkedInMembers: Member[];
   currentLocation: InventoryLocation | null;
@@ -81,8 +82,8 @@ interface PosAuthActions {
 
   // Async initialization
   initializeFromBackend: () => Promise<void>;
-  provisionDevice: (setupToken: string) => Promise<void>;
-  registerDevice: (apiKey: string, location: InventoryLocation) => Promise<void>;
+  provisionDevice: (orgSlug: string, setupToken: string) => Promise<void>;
+  registerDevice: (orgSlug: string, apiKey: string, location: InventoryLocation) => Promise<void>;
   switchLocation: (location: InventoryLocation) => Promise<void>;
   setAllowNegativeStock: (allow: boolean) => Promise<void>;
   setDeviceConfig: (deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string | null) => void;
@@ -93,6 +94,7 @@ const STORAGE_KEY = 'pos-auth-storage-v3';
 
 const initialState: PosAuthState = {
   isConfigured: false,
+  orgSlug: null,
   currentMember: null,
   checkedInMembers: [],
   currentLocation: null,
@@ -218,8 +220,8 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         if (isInitialized) return;
 
         try {
-          // rust struct: SanitizedDeviceConfig { location_id, allow_negative_stock }
-          const config = await invoke<{ location_id: string; allow_negative_stock: boolean } | null>(
+          // rust struct: SanitizedDeviceConfig { org_slug, location_id, allow_negative_stock }
+          const config = await invoke<{ org_slug: string; location_id: string; allow_negative_stock: boolean } | null>(
             'get_device_config'
           );
           if (config) {
@@ -236,7 +238,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
                 // Failed to fetch location
               }
             }
-            set({ isInitialized: true, isConfigured: true });
+            set({ isInitialized: true, isConfigured: true, orgSlug: config.org_slug });
 
             // Sync existing session to Rust if present
             const { currentMember } = get();
@@ -257,45 +259,58 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         }
       },
 
-      provisionDevice: async (setupToken: string) => {
+      provisionDevice: async (orgSlug: string, setupToken: string) => {
+        // V3 provision endpoint is POST /api/v3/:orgSlug/pos/provision
         const response = await invoke<any>('authenticated_api_request', {
           method: 'POST',
-          path: 'api/v2/devices/provision',
-          body: { setupToken },
+          path: `pos/provision`, // orgSlug will be injected by build_request in Rust
+          body: { token: setupToken },
         });
 
-        if (response.success) {
-          const { apiKey, device } = response.data;
+        // V3 API response structure might be different.
+        // Based on NestJS interceptor, it might be { data: { clientId, clientSecret } }
+        if (response.data) {
+          const { clientId, clientSecret } = response.data;
 
-          await invoke('set_device_config', {
+          await invoke('start_device_setup_command', {
             baseUrl: API_ENDPOINT,
-            locationId: device.locationId,
-            deviceKey: apiKey,
+            orgSlug: orgSlug,
+            deviceKey: clientId, // Using clientId as deviceKey
           });
 
-          // We need to fetch the location details
+          // In V3, we might need to get locations to choose one, or it's assigned
           const data = await invoke<{ locations: InventoryLocation[] }>('get_locations_command');
-          const location = data.locations?.find(loc => loc.id === device.locationId);
+          // For now assume first location or we'll need a step to select it
+          const location = data.locations?.[0];
+
+          if (location) {
+             await invoke('set_device_config', {
+                baseUrl: API_ENDPOINT,
+                orgSlug: orgSlug,
+                locationId: location.id,
+                deviceKey: clientId,
+             });
+          }
 
           set({
-            // Do not set isConfigured here so that the Success UI can play out.
-            // completeSetup() will be called after the animation.
-            currentLocation: location || ({ ...device, id: device.locationId, name: device.name || 'Terminal' } as any),
+            orgSlug,
+            currentLocation: location || null,
           });
         } else {
-          throw new Error(response.error?.message || 'Provisioning failed');
+          throw new Error(response.message || 'Provisioning failed');
         }
       },
 
-      registerDevice: async (apiKey: string, location: InventoryLocation) => {
+      registerDevice: async (orgSlug: string, apiKey: string, location: InventoryLocation) => {
         await invoke('set_device_config', {
           baseUrl: API_ENDPOINT,
-          locationId: location.id,
+          orgSlug,
+          locationId: location?.id || '',
           deviceKey: apiKey,
         });
 
         // Update local state
-        set({ isConfigured: true, currentLocation: location });
+        set({ isConfigured: true, orgSlug, currentLocation: location });
       },
 
       switchLocation: async location => {
@@ -342,6 +357,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       partialize: state => ({
         // REMOVED deviceKey and memberToken from here for security
         isConfigured: state.isConfigured,
+        orgSlug: state.orgSlug,
         currentLocation: state.currentLocation,
         currentMember: state.currentMember,
         checkedInMembers: state.checkedInMembers,

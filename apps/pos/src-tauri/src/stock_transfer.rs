@@ -91,9 +91,9 @@ pub struct TransferApiPayload {
 
 fn build_client_with_context(
     auth_state: &State<'_, AuthState>,
-) -> Result<(reqwest::Client, String, String), CommandError> {
+) -> Result<(reqwest::Client, String, String, String), CommandError> {
     // 1. Get Config (Base URL & Current Location)
-    let (base_url, device_key, location_id) = {
+    let (base_url, org_slug, device_key, location_id) = {
         let config_guard = auth_state.device_config.lock().map_err(|_| {
             CommandError::new(ErrorKind::Configuration, "Failed to lock device config")
         })?;
@@ -104,6 +104,7 @@ fn build_client_with_context(
 
         (
             config.base_url.clone(),
+            config.org_slug.clone(),
             config.device_key.clone(),
             config.location_id.clone(),
         )
@@ -127,14 +128,14 @@ fn build_client_with_context(
     headers.insert("X-API-KEY", val);
 
     if let Some(t) = &token {
-        let mut val = HeaderValue::from_str(t).map_err(|e| {
+        let mut val = HeaderValue::from_str(&format!("Bearer {}", t)).map_err(|e| {
             CommandError::new(
                 ErrorKind::Authentication,
                 format!("Invalid Token format: {}", e),
             )
         })?;
         val.set_sensitive(true);
-        headers.insert("X-MEMBER-TOKEN", val);
+        headers.insert("Authorization", val);
     }
 
 
@@ -149,7 +150,7 @@ fn build_client_with_context(
             )
         })?;
 
-    Ok((client, clean_base, location_id))
+    Ok((client, clean_base, org_slug, location_id))
 }
 
 async fn handle_response<T: for<'de> Deserialize<'de>>(
@@ -207,13 +208,14 @@ pub async fn submit_stock_transfer(
     payload: TransferRequest,
 ) -> Result<serde_json::Value, CommandError> {
     // 1. Build Client & Fetch Current Location from State
-    let (client, base_url, current_location_id) = build_client_with_context(&auth_state)?;
+    let (client, base_url, org_slug, current_location_id) = build_client_with_context(&auth_state)?;
 
     // 2. Prepare API URL
     let url = format!(
-        "{}/{}",
+        "{}/api/v3/{}/{}",
         base_url,
-        crate::api_config::routes::INVENTORY_TRANSFERS
+        org_slug,
+        crate::api_config::routes::TRANSFERS
     );
 
     // 3. Construct Full Payload
@@ -250,13 +252,14 @@ pub async fn submit_stock_request(
     payload: TransferRequest,
 ) -> Result<serde_json::Value, CommandError> {
     // 1. Build Client & Fetch Current Location from State
-    let (client, base_url, current_location_id) = build_client_with_context(&auth_state)?;
+    let (client, base_url, org_slug, current_location_id) = build_client_with_context(&auth_state)?;
 
     // 2. Prepare API URL
     let url = format!(
-        "{}/{}",
+        "{}/api/v3/{}/{}",
         base_url,
-        crate::api_config::routes::INVENTORY_REQUESTS
+        org_slug,
+        crate::api_config::routes::REQUESTS
     );
 
     // 3. Construct Full Payload

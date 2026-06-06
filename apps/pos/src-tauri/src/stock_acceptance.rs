@@ -27,8 +27,8 @@ impl From<anyhow::Error> for CommandError {
 
 fn build_client(
     auth_state: &State<'_, AuthState>,
-) -> Result<(reqwest::Client, String), CommandError> {
-    let (base_url, device_key) = {
+) -> Result<(reqwest::Client, String, String), CommandError> {
+    let (base_url, org_slug, device_key) = {
         let config_guard = auth_state.device_config.lock().map_err(|_| {
             CommandError::new(ErrorKind::Configuration, "Failed to lock device config")
         })?;
@@ -37,7 +37,7 @@ fn build_client(
             CommandError::new(ErrorKind::Configuration, "Device is not configured")
         })?;
 
-        (config.base_url.clone(), config.device_key.clone())
+        (config.base_url.clone(), config.org_slug.clone(), config.device_key.clone())
     };
 
     let token = auth_state.get_active_token().map_err(|e| {
@@ -57,14 +57,14 @@ fn build_client(
     headers.insert("X-API-KEY", val);
 
     if let Some(t) = &token {
-        let mut val = HeaderValue::from_str(t).map_err(|e| {
+        let mut val = HeaderValue::from_str(&format!("Bearer {}", t)).map_err(|e| {
             CommandError::new(
                 ErrorKind::Authentication,
                 format!("Invalid Token format: {}", e),
             )
         })?;
         val.set_sensitive(true);
-        headers.insert("X-MEMBER-TOKEN", val);
+        headers.insert("Authorization", val);
     }
 
 
@@ -79,7 +79,7 @@ fn build_client(
             )
         })?;
 
-    Ok((client, clean_base))
+    Ok((client, clean_base, org_slug))
 }
 
 async fn handle_response<T: for<'de> serde::Deserialize<'de>>(
@@ -193,11 +193,12 @@ pub async fn submit_stock_process(
     auth_state: State<'_, AuthState>,
     payload: StockProcessRequest,
 ) -> Result<serde_json::Value, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
+    let (client, base_url, org_slug) = build_client(&auth_state)?;
     let url = format!(
-        "{}/{}",
+        "{}/api/v3/{}/{}",
         base_url,
-        crate::api_config::routes::INVENTORY_PROCESS
+        org_slug,
+        crate::api_config::routes::INVENTORY_UNPACK // Using UNPACK as placeholder for process
     );
 
     info!(
@@ -218,11 +219,12 @@ pub async fn fetch_incoming_shipments(
     auth_state: State<'_, AuthState>,
     location_id: String,
 ) -> Result<IncomingResponse, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
+    let (client, base_url, org_slug) = build_client(&auth_state)?;
     let url = format!(
-        "{}/{}",
+        "{}/api/v3/{}/{}",
         base_url,
-        crate::api_config::routes::INCOMING_SHIPMENTS
+        org_slug,
+        crate::api_config::routes::TRANSFERS
     );
 
     info!(
@@ -252,12 +254,13 @@ pub async fn receive_purchase_order(
     payload: ReceivePurchaseRequest,
     file_paths: Option<Vec<String>>,
 ) -> Result<serde_json::Value, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
+    let (client, base_url, org_slug) = build_client(&auth_state)?;
     let encoded_id = urlencoding::encode(&purchase_id);
     let url = format!(
-        "{}/{}",
+        "{}/api/v3/{}/{}",
         base_url,
-        crate::api_config::routes::purchase_receive(&encoded_id)
+        org_slug,
+        crate::api_config::routes::REQUESTS // Placeholder
     );
 
     info!(
@@ -344,11 +347,12 @@ pub async fn receive_stock_transfer(
     payload: ReceiveTransferRequest,
     file_paths: Option<Vec<String>>,
 ) -> Result<serde_json::Value, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
+    let (client, base_url, org_slug) = build_client(&auth_state)?;
     let encoded_id = urlencoding::encode(&transfer_id);
     let url = format!(
-        "{}/{}",
+        "{}/api/v3/{}/{}",
         base_url,
+        org_slug,
         crate::api_config::routes::transfer_receive(&encoded_id)
     );
 

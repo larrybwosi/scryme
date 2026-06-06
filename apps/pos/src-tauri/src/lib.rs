@@ -29,6 +29,7 @@ use stores::audit_store;
 use stores::auth_store::{self, AuthState};
 use stores::customer_store::{self, CustomerState};
 use stores::delivery_store;
+use stores::finance_store;
 use stores::pricing_store::{self, PricingState};
 use stores::product_store::{self, ProductState};
 use stores::sales_store::{self, SalesState};
@@ -506,6 +507,9 @@ pub fn run() {
             licensing::set_local_auth,
             licensing::verify_local_auth,
             migration::push_local_to_cloud,
+            finance_store::get_petty_cash_funds,
+            finance_store::top_up_petty_cash,
+            finance_store::record_petty_cash_expense,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
