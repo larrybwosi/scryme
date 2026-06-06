@@ -8,8 +8,6 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
-    "dotenv-expand": "^13.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

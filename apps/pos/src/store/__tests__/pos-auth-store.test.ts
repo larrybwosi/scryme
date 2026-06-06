@@ -31,6 +31,7 @@ describe('PosAuthStore', () => {
     mockInvoke
       .mockResolvedValueOnce({
         location_id: 'loc-1',
+        org_slug: 'test-org',
         allow_negative_stock: false,
       })
       .mockResolvedValueOnce({
@@ -58,7 +59,7 @@ describe('PosAuthStore', () => {
     mockInvoke.mockResolvedValueOnce({});
 
     const location = { id: 'loc-1', name: 'Test' } as any;
-    await useAuthStore.getState().registerDevice('test-key', location);
+    await useAuthStore.getState().registerDevice('test-key', location, 'test-org');
 
     expect(mockInvoke).toHaveBeenCalledWith(
       'set_device_config',
