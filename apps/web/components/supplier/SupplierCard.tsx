@@ -9,9 +9,10 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { toggleFavoriteSupplier } from "../../app/actions/supplier";
 import { useState } from "react";
 import { cn } from "@repo/ui/lib/utils";
+import { Supplier } from "../../types/supplier";
 
 interface SupplierCardProps {
-  supplier: any; // Ideally use a proper type
+  supplier: Supplier;
 }
 
 export function SupplierCard({ supplier }: SupplierCardProps) {
@@ -36,7 +37,7 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
         <div className="flex justify-between items-start">
           <div className="flex gap-3">
             <Avatar className="h-12 w-12 rounded-lg">
-              <AvatarImage src={supplier.logo} />
+              <AvatarImage src={supplier.logo || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary rounded-lg font-bold">
                 {initials}
               </AvatarFallback>
@@ -50,7 +51,7 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
                 <div className="flex items-center text-yellow-500 fill-yellow-500">
                   <Star size={12} className="fill-current" />
                   <span className="text-xs font-medium ml-1 text-muted-foreground">
-                    {supplier.rating || "4.5"}
+                    {supplier.avgRating}
                   </span>
                 </div>
               </div>

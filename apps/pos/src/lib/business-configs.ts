@@ -530,6 +530,7 @@ export const getDefaultSidebarItems = (businessType: BusinessType): SidebarItem[
     items.push({ id: 'till-management', label: 'Till Management', icon: 'Calculator', enabled: true });
   }
 
+  items.push({ id: 'petty-cash', label: 'Petty Cash', icon: 'Banknote', enabled: true });
   items.push({ id: 'pricing', label: 'Pricing', icon: 'Banknote', enabled: false });
   items.push({ id: 'barcodes', label: 'Barcodes', icon: 'Barcode', enabled: true });
   items.push({ id: 'stock-acceptance', label: 'Stock Acceptance', icon: 'Package', enabled: false });

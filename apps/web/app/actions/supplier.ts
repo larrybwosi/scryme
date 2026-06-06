@@ -3,12 +3,13 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { Supplier } from "../../types/supplier";
 
 export async function getSuppliers(options?: {
   featured?: boolean;
   favorite?: boolean;
   search?: string;
-}): Promise<any[]> {
+}): Promise<Supplier[]> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -44,7 +45,7 @@ export async function getSuppliers(options?: {
     where.OR = [
       { name: { contains: options.search, mode: "insensitive" } },
       { code: { contains: options.search, mode: "insensitive" } },
-      { contactName: { contains: options.search, mode: "insensitive" } },
+      { primaryContact: { contains: options.search, mode: "insensitive" } },
     ];
   }
 
@@ -57,6 +58,18 @@ export async function getSuppliers(options?: {
         },
       },
       reviews: {
+        include: {
+          member: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          },
+        },
         take: 5,
         orderBy: { createdAt: "desc" },
       },
@@ -70,10 +83,20 @@ export async function getSuppliers(options?: {
     orderBy: { name: "asc" },
   });
 
-  const processedSuppliers = suppliers.map((s) => ({
-    ...s,
-    isFavorite: s.favorites.length > 0,
-  }));
+  const processedSuppliers: Supplier[] = suppliers.map((s) => {
+    const totalReviews = s.reviews.length;
+    const avgRating = totalReviews > 0
+      ? (s.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
+      : "0.0";
+
+    return {
+      ...s,
+      isFavorite: s.favorites.length > 0,
+      avgRating,
+      reviewCount: totalReviews,
+      logo: (s as any).logo || null, // Assuming logo might be in customFields or added later
+    } as Supplier;
+  });
 
   if (options?.favorite) {
     return processedSuppliers.filter((s) => s.isFavorite);
@@ -112,7 +135,7 @@ export async function registerSupplier(data: {
   return supplier;
 }
 
-export async function getSupplierById(id: string): Promise<any> {
+export async function getSupplierById(id: string): Promise<Supplier | null> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -181,10 +204,26 @@ export async function getSupplierById(id: string): Promise<any> {
     return null;
   }
 
+  const totalReviews = supplier.reviews.length;
+  const avgRating = totalReviews > 0
+    ? (supplier.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
+    : "0.0";
+
+  // Calculate rating counts for the UI
+  const ratingCounts = [5, 4, 3, 2, 1].map(stars => {
+    const count = supplier.reviews.filter(r => r.rating === stars).length;
+    const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+    return { stars, count, percentage };
+  });
+
   return {
     ...supplier,
     isFavorite: supplier.favorites.length > 0,
-  };
+    avgRating,
+    reviewCount: totalReviews,
+    ratingCounts,
+    logo: (supplier as any).logo || null,
+  } as Supplier;
 }
 
 export async function toggleFavoriteSupplier(supplierId: string) {

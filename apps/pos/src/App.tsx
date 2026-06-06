@@ -13,6 +13,7 @@ import AnalyticsPage from '@/pages/analytics-page';
 import CustomersPage from '@/pages/customers-page';
 import ManageTablesPage from '@/pages/manage-tables-page';
 import CashDrawerPage from '@/pages/cash-drawer-page';
+import PettyCashPage from '@/pages/petty-cash-page';
 import TillManagementPage from '@/pages/till-management-page';
 import ReceiptSettingsPage from '@/pages/receipt-settings-page';
 import PendingTransactionsPage from '@/pages/pending-transactions';
@@ -117,6 +118,7 @@ const AppRoutes = () => {
           <>
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/cash-drawer" element={<CashDrawerPage />} />
+            <Route path="/petty-cash" element={<PettyCashPage />} />
             <Route path="/till-management" element={<TillManagementPage />} />
             <Route path="/pending-transactions" element={<PendingTransactionsPage />} />
             <Route path="/create-order" element={<CreateOrderPage />} />

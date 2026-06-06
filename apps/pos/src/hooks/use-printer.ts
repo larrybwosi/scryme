@@ -17,17 +17,17 @@ export const usePrinter = () => {
     setError(null);
     try {
       // 1. Fetch system printers
-      const systemPrinters = (await invoke<any[]>('get_system_printers')) || [];
+      const systemPrinters = await invoke<any[]>('get_system_printers');
 
       // 2. Fetch network printers
       let networkPrinters: any[] = [];
       try {
-        networkPrinters = (await invoke<any[]>('discover_network_printers')) || [];
+        networkPrinters = await invoke<any[]>('discover_network_printers');
       } catch (e) {
         console.warn('Network discovery failed', e);
       }
 
-      const allPrinters = [...(systemPrinters || []), ...(networkPrinters || [])];
+      const allPrinters = [...systemPrinters, ...networkPrinters];
 
       const formatted: PrinterDevice[] = allPrinters.map(p => ({
         id: p.id,
