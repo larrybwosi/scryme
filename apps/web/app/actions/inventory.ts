@@ -5,7 +5,7 @@ import { Prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 
-export async function getInventoryLocations(): Promise<{ id: string; name: string }[]> {
+export async function getInventoryLocations(): Promise<{ id: string; name: string; isDefault: boolean }[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -17,7 +17,262 @@ export async function getInventoryLocations(): Promise<{ id: string; name: strin
     select: {
       id: true,
       name: true,
+      isDefault: true,
     },
+  });
+}
+
+export async function getCategoriesFull() {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  return db.category.findMany({
+    where: {
+      organizationId: context.organizationId,
+    },
+    include: {
+      _count: {
+        select: { products: true }
+      }
+    },
+    orderBy: {
+      name: 'asc'
+    }
+  });
+}
+
+export async function createCategory(data: {
+  name: string;
+  description?: string;
+  parentId?: string;
+  color?: string;
+}): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const category = await db.category.create({
+    data: {
+      ...data,
+      organizationId: context.organizationId,
+      code: `${context.organizationId}-${data.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+    },
+  });
+
+  revalidatePath("/inventory/categories");
+  revalidatePath("/inventory");
+  return category;
+}
+
+export async function updateCategory(id: string, data: {
+  name?: string;
+  description?: string;
+  parentId?: string;
+  color?: string;
+}): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const category = await db.category.update({
+    where: { id, organizationId: context.organizationId },
+    data,
+  });
+
+  revalidatePath("/inventory/categories");
+  revalidatePath("/inventory");
+  return category;
+}
+
+export async function deleteCategory(id: string) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const productsCount = await db.product.count({
+    where: { categoryId: id },
+  });
+
+  if (productsCount > 0) {
+    throw new Error("Cannot delete category with associated products. Please move or delete the products first.");
+  }
+
+  await db.category.delete({
+    where: { id, organizationId: context.organizationId },
+  });
+
+  revalidatePath("/inventory/categories");
+  revalidatePath("/inventory");
+}
+
+export async function createProduct(data: {
+  name: string;
+  sku: string;
+  categoryId: string;
+  buyingPrice: number;
+  retailPrice: number;
+  initialStock: number;
+  imageUrls: string[];
+}): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId || !context.user.id) throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    // 1. Create the Product
+    const product = await tx.product.create({
+      data: {
+        name: data.name,
+        sku: data.sku,
+        categoryId: data.categoryId,
+        organizationId: context.organizationId,
+        imageUrls: data.imageUrls,
+        type: "FINISHED_GOOD",
+      },
+    });
+
+    // 2. Create the Default Variant
+    const variant = await tx.productVariant.create({
+      data: {
+        productId: product.id,
+        name: "Default",
+        sku: data.sku,
+        buyingPrice: new Decimal(data.buyingPrice),
+        retailPrice: new Decimal(data.retailPrice),
+        attributes: {}, // Required by schema
+      },
+    });
+
+    // Find default location
+    const defaultLocation = await tx.inventoryLocation.findFirst({
+      where: { organizationId: context.organizationId, isDefault: true },
+    }) || await tx.inventoryLocation.findFirst({
+      where: { organizationId: context.organizationId },
+    });
+
+    if (!defaultLocation) throw new Error("No inventory location found. Please create a location first.");
+
+    if (data.initialStock > 0) {
+      // 3. Create ProductVariantStock
+      await tx.productVariantStock.create({
+        data: {
+          productId: product.id,
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+          currentStock: new Decimal(data.initialStock),
+          availableStock: new Decimal(data.initialStock),
+          organizationId: context.organizationId,
+        },
+      });
+
+      // 4. Create Stock Adjustment for history
+      const adjustment = await tx.stockAdjustment.create({
+        data: {
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+          memberId: context.user.id,
+          quantity: new Decimal(data.initialStock),
+          reason: "INITIAL_STOCK",
+          notes: "Initial stock upon product creation",
+          status: "APPROVED",
+          organizationId: context.organizationId,
+        },
+      });
+
+      // 5. Create Stock Movement
+      await tx.stockMovement.create({
+        data: {
+          variantId: variant.id,
+          quantity: new Decimal(data.initialStock),
+          toLocationId: defaultLocation.id,
+          movementType: "INITIAL_STOCK",
+          adjustmentId: adjustment.id,
+          memberId: context.user.id,
+          notes: "Initial stock upon product creation",
+          organizationId: context.organizationId,
+        },
+      });
+    } else {
+      await tx.productVariantStock.create({
+        data: {
+          productId: product.id,
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+          currentStock: new Decimal(0),
+          availableStock: new Decimal(0),
+          organizationId: context.organizationId,
+        },
+      });
+    }
+
+    revalidatePath("/inventory");
+    return product;
+  });
+}
+
+export async function updateProduct(id: string, data: {
+  name?: string;
+  sku?: string;
+  categoryId?: string;
+  buyingPrice?: number;
+  retailPrice?: number;
+  imageUrls?: string[];
+}): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    const product = await tx.product.update({
+      where: { id, organizationId: context.organizationId },
+      data: {
+        name: data.name,
+        sku: data.sku,
+        categoryId: data.categoryId,
+        imageUrls: data.imageUrls,
+      },
+    });
+
+    const variant = await tx.productVariant.findFirst({
+      where: { productId: id },
+    });
+
+    if (variant) {
+      await tx.productVariant.update({
+        where: { id: variant.id },
+        data: {
+          sku: data.sku,
+          buyingPrice: data.buyingPrice !== undefined ? new Decimal(data.buyingPrice) : undefined,
+          retailPrice: data.retailPrice !== undefined ? new Decimal(data.retailPrice) : undefined,
+        },
+      });
+    }
+
+    revalidatePath("/inventory");
+    return product;
+  });
+}
+
+export async function deleteProduct(id: string) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  await db.product.delete({
+    where: { id, organizationId: context.organizationId },
+  });
+
+  revalidatePath("/inventory");
+}
+
+export async function getProduct(id: string) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return null;
+
+  return db.product.findUnique({
+    where: { id, organizationId: context.organizationId },
+    include: {
+      category: true,
+      variants: {
+        include: {
+          variantStocks: true
+        }
+      }
+    }
   });
 }
 
