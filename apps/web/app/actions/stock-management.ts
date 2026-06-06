@@ -211,7 +211,6 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
 
     if (status === "APPROVED") {
       updateData.approvedById = context.user.id;
-      updateData.approvedDate = new Date();
     } else if (status === "SHIPPED") {
       updateData.shippedById = context.user.id;
       updateData.shippedDate = new Date();

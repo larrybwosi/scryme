@@ -43,6 +43,7 @@ export default async function ReportsPage({
         <PageHeader
           title="Stock Reports"
           description="Generate and export detailed inventory movement and valuation reports."
+          icon={<FileText size={24} />}
         />
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">

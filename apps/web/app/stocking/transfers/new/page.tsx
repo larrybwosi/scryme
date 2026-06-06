@@ -52,6 +52,7 @@ export default async function NewTransferPage() {
         <PageHeader
           title="New Stock Transfer"
           description="Initiate a movement of goods between your business locations."
+          icon={<Plus size={24} />}
         />
       </div>
 

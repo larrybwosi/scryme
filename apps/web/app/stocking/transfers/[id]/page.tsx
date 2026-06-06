@@ -189,14 +189,14 @@ export default async function TransferDetailsPage({
                 </div>
               </div>
 
-              {transfer.approvedDate && (
+              {transfer.approvedBy && (
                 <div className="flex items-start gap-4">
                   <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
                     <CheckCircle2 size={16} />
                   </div>
                   <div>
                     <div className="font-medium">Approved</div>
-                    <div className="text-sm text-gray-500">By {transfer.approvedBy?.user.name} on {format(new Date(transfer.approvedDate), "PPP p")}</div>
+                    <div className="text-sm text-gray-500">By {transfer.approvedBy.user.name}</div>
                   </div>
                 </div>
               )}

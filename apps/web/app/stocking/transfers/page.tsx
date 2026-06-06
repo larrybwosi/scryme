@@ -45,6 +45,7 @@ export default async function TransfersPage() {
         <PageHeader
           title="Stock Transfers"
           description="Manage and track stock movements between locations."
+          icon={<ArrowLeftRight size={24} />}
         />
         <Link href="/stocking/transfers/new">
           <Button className="gap-2">

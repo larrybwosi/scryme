@@ -51,6 +51,7 @@ export default async function AuditTrailPage({
       <PageHeader
         title="Inventory Audit Trail"
         description="Full history of stock movements and adjustments for enterprise compliance."
+        icon={<ShieldCheck size={24} />}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

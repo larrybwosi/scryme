@@ -46,6 +46,7 @@ export default async function ReorderRulesPage() {
       <PageHeader
         title="Automated Reorder Rules"
         description="Configure thresholds for automatic stock replenishment and alerts."
+        icon={<Settings size={24} />}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

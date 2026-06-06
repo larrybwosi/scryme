@@ -63,6 +63,7 @@ export default async function StockingDashboard() {
       <PageHeader
         title="Stocking Dashboard"
         description="Monitor inventory health, stock movements, and distribution across locations."
+        icon={<TrendingUp size={24} />}
       />
 
       {/* Stats Grid */}
