@@ -21,6 +21,7 @@ pub struct MemberProfile {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct DeviceConfig {
     pub base_url: String,
+    pub org_slug: String,
     pub location_id: String,
     pub device_key: String,
     #[serde(default)]
@@ -29,6 +30,7 @@ pub struct DeviceConfig {
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SanitizedDeviceConfig {
+    pub org_slug: String,
     pub location_id: String,
     pub allow_negative_stock: bool,
 }
@@ -166,18 +168,26 @@ impl AuthState {
         method: reqwest::Method,
         path: &str,
     ) -> Result<reqwest::RequestBuilder, String> {
-        let (base_url, device_key) = {
+        let (base_url, org_slug, device_key) = {
             let config_guard = self
                 .device_config
                 .lock()
                 .map_err(|_| "Failed to lock device config")?;
 
             match config_guard.as_ref() {
-                Some(config) => (config.base_url.clone(), Some(config.device_key.clone())),
+                Some(config) => (
+                    config.base_url.clone(),
+                    Some(config.org_slug.clone()),
+                    Some(config.device_key.clone()),
+                ),
                 None => {
                     // Fallback for initial provisioning where we might not have a config yet
-                    let dev_url = if cfg!(debug_assertions) { "http://localhost:3000" } else { "https://dealioerp.vercel.app" };
-                    (dev_url.to_string(), None)
+                    let dev_url = if cfg!(debug_assertions) {
+                        "http://localhost:3000"
+                    } else {
+                        "https://dealioerp.vercel.app"
+                    };
+                    (dev_url.to_string(), None, None)
                 }
             }
         };
@@ -195,9 +205,20 @@ impl AuthState {
 
         let full_url = if path.starts_with("http") {
             path.to_string()
-        } else {
+        } else if let Some(slug) = org_slug {
             format!(
-                "{}/{}",
+                "{}/api/v3/{}/{}",
+                base_url.trim_end_matches('/'),
+                slug,
+                path.trim_start_matches('/')
+            )
+        } else {
+            // This is for the first provisioning step where we don't have a slug yet
+            // Assuming provisioning is at api/v3/auth/provision or something similar if it's global
+            // But user said we get slug during provisioning.
+            // If the provision endpoint itself needs a slug, we might need a special case.
+            format!(
+                "{}/api/v3/{}",
                 base_url.trim_end_matches('/'),
                 path.trim_start_matches('/')
             )
@@ -291,11 +312,13 @@ pub async fn set_device_config(
     state: State<'_, AuthState>,
     network_state: State<'_, crate::network_monitor::NetworkState>,
     base_url: String,
+    org_slug: String,
     location_id: String,
     device_key: String,
 ) -> Result<(), String> {
     let new_config = DeviceConfig {
         base_url: base_url.clone(),
+        org_slug,
         location_id,
         device_key,
         allow_negative_stock: false, // Default to false for new setups
@@ -320,13 +343,12 @@ pub async fn set_device_config(
 pub async fn login_member(
     app: AppHandle,
     state: State<'_, AuthState>,
-    card_id: String,
+    card_id: String, // V3 login uses clientId and pin. CardId might be clientId here.
     pin: Option<String>,
     location_id: Option<String>,
 ) -> Result<CheckInResult, String> {
     // 1. Build request (handles base_url, persistent client, and headers automatically)
-    let request =
-        state.build_request(reqwest::Method::POST, crate::api_config::routes::CHECK_IN)?;
+    let request = state.build_request(reqwest::Method::POST, crate::api_config::routes::LOGIN)?;
 
     // 2. Perform Request
     let device_key = {
@@ -335,10 +357,8 @@ pub async fn login_member(
     };
 
     let body = serde_json::json!({
-        "cardId": card_id,
-        "pin": pin,
-        "locationId": location_id,
-        "deviceKey": device_key
+        "clientId": card_id,
+        "pin": pin.unwrap_or_default(),
     });
 
     let res = request
@@ -372,21 +392,45 @@ pub async fn login_member(
     }
 
     // 3. Parse and Store Token Internally utilizing the new wrapper
-    let wrapper: LoginApiWrapper = serde_json::from_str(&text)
+    // V3 Login returns { accessToken: string } inside standard response
+    let v3_res: serde_json::Value = serde_json::from_str(&text)
         .map_err(|e| format!("JSON parse error: {} | Raw: {}", e, text))?;
 
-    let data = wrapper.data;
+    let data = v3_res.get("data").ok_or("Missing data in response")?;
+    let access_token = data.get("accessToken").and_then(|v| v.as_str()).ok_or("Missing accessToken")?;
+
+    // Since we need MemberProfile for CheckInResult, we might need to call ME endpoint
+    let (base_url, org_slug, device_key) = {
+        let config_guard = state.device_config.lock().map_err(|_| "Lock error")?;
+        let config = config_guard.as_ref().ok_or("Device not configured")?;
+        (config.base_url.clone(), config.org_slug.clone(), config.device_key.clone())
+    };
+
+    let me_request = state.client.get(format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::ME))
+        .header("Authorization", format!("Bearer {}", access_token))
+        .header("X-API-KEY", device_key)
+        .send().await.map_err(|e| e.to_string())?;
+
+    let me_text = me_request.text().await.map_err(|e| e.to_string())?;
+    let me_res: serde_json::Value = serde_json::from_str(&me_text).map_err(|e| e.to_string())?;
+    let me_data = me_res.get("data").ok_or("Missing me data")?;
+
+    let member = MemberProfile {
+        id: me_data.get("memberId").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+        name: me_data.get("memberName").and_then(|v| v.as_str()).unwrap_or("Staff").to_string(),
+        role: me_data.get("role").and_then(|v| v.as_str()).map(|s| s.to_string()),
+    };
 
     // CRITICAL: Token stays here, never returned to UI
     {
         let mut sessions = state.sessions.lock().map_err(|_| "Lock error")?;
-        sessions.insert(data.member.id.clone(), Session {
-            token: data.token.clone(),
-            user: data.member.clone(),
+        sessions.insert(member.id.clone(), Session {
+            token: access_token.to_string(),
+            user: member.clone(),
         });
 
         let mut active_id = state.active_member_id.lock().map_err(|_| "Lock error")?;
-        *active_id = Some(data.member.id.clone());
+        *active_id = Some(member.id.clone());
     }
 
     // Audit successful login
@@ -395,15 +439,15 @@ pub async fn login_member(
         crate::audit_store::AuditLevel::Info,
         "LOGIN",
         None,
-        Some(data.member.name.clone()),
+        Some(member.name.clone()),
         location_id,
         None,
-        serde_json::json!({ "card_id": card_id, "role": data.member.role }),
+        serde_json::json!({ "client_id": card_id, "role": member.role }),
     );
 
     Ok(CheckInResult {
-        member: data.member,
-        restored_session: data.restored_session.unwrap_or(false),
+        member,
+        restored_session: false,
     })
 }
 
@@ -477,6 +521,7 @@ pub async fn get_device_config(
 ) -> Result<Option<SanitizedDeviceConfig>, String> {
     let config_guard = state.device_config.lock().map_err(|_| "Lock error")?;
     Ok(config_guard.as_ref().map(|c| SanitizedDeviceConfig {
+        org_slug: c.org_slug.clone(),
         location_id: c.location_id.clone(),
         allow_negative_stock: c.allow_negative_stock,
     }))
@@ -599,6 +644,7 @@ pub async fn start_device_setup_command(
     state: State<'_, AuthState>,
     network_state: State<'_, crate::network_monitor::NetworkState>,
     base_url: String,
+    org_slug: String,
     device_key: String,
 ) -> Result<(), String> {
     // We store a partial config (no location_id yet) in memory
@@ -606,6 +652,7 @@ pub async fn start_device_setup_command(
     let mut config = state.device_config.lock().map_err(|_| "Lock error")?;
     *config = Some(DeviceConfig {
         base_url: base_url.clone(),
+        org_slug,
         location_id: String::new(), // Empty for now
         device_key,
         allow_negative_stock: false, // Default for setup

@@ -266,7 +266,13 @@ pub async fn run_sync(
     };
     let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
     if base_url.is_empty() { return Err(anyhow::anyhow!("Base URL is empty")); }
-    let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::PRODUCTS);
+
+    let org_slug = {
+        let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
+        config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?.org_slug.clone()
+    };
+
+    let target_url = format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::SYNC);
 
     let last_sync_time: Option<String> = if force_full_sync { None } else {
         sqlx::query("SELECT last_sync FROM product_sync_meta WHERE location_id = ?1").bind(&location_id).fetch_optional(&pool).await?.map(|r| r.get("last_sync"))
@@ -274,17 +280,17 @@ pub async fn run_sync(
 
     let mut headers = HeaderMap::new();
     headers.insert("X-API-KEY", HeaderValue::from_str(&device_key)?);
-    if let Some(token) = member_token { headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token)?); }
+    if let Some(token) = member_token { headers.insert("Authorization", HeaderValue::from_str(&format!("Bearer {}", token))?); }
 
     let client = reqwest::Client::builder().default_headers(headers).timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS)).build()?;
-    let mut query_params = vec![("locationId", location_id.clone()), ("page", "1".to_string()), ("limit", "2000".to_string()), ("categoryId", "all".to_string())];
+    let mut query_params = vec![("locationId", location_id.clone())];
     if let Some(ts) = &last_sync_time { query_params.push(("lastSync", ts.clone())); }
 
     let response = client.get(&target_url).query(&query_params).send().await?;
     if !response.status().is_success() { return Err(anyhow::anyhow!("Server returned error: {}", response.status())); }
 
-    let v2_resp = response.json::<crate::models::V2Response<ProductsSyncResponse>>().await?;
-    let mut res_body = v2_resp.data;
+    let v3_resp = response.json::<crate::models::V2Response<ProductsSyncResponse>>().await?;
+    let mut res_body = v3_resp.data;
 
     // Parallelize image caching for better performance
     let mut image_tasks = Vec::new();

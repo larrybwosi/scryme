@@ -483,15 +483,10 @@ async fn push_single_sale(
     location_id: &str,
     payload: &serde_json::Value,
 ) -> Result<serde_json::Value> {
-    let encoded_loc = urlencoding::encode(location_id);
-    let url_path = format!(
-        "{}?locationId={}&enableStockTracking=true",
-        crate::api_config::routes::SALE_PROCESS,
-        encoded_loc
-    );
+    let url_path = crate::api_config::routes::SALE_PROCESS;
 
     let req = auth_state
-        .build_request(reqwest::Method::POST, &url_path)
+        .build_request(reqwest::Method::POST, url_path)
         .map_err(SalesError::AuthError)?
         .json(payload);
 
@@ -702,7 +697,7 @@ pub async fn get_sales_history_command(
     auth_state: State<'_, AuthState>,
     location_id: Option<String>,
 ) -> Result<Vec<serde_json::Value>, String> {
-    let mut url_path = crate::api_config::routes::SALE_BASE.to_string();
+    let mut url_path = crate::api_config::routes::TRANSACTIONS.to_string();
     if let Some(loc_id) = location_id {
         let encoded_loc = urlencoding::encode(&loc_id);
         url_path = format!("{}?locationId={}", url_path, encoded_loc);
@@ -714,7 +709,9 @@ pub async fn get_sales_history_command(
         return Err(format!("Failed to fetch sales history: {}", res.status()));
     }
 
-    res.json().await.map_err(|e| e.to_string())
+    // V3 response is { data: [...] }
+    let v3_res: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    Ok(v3_res.get("data").and_then(|v| v.as_array()).cloned().unwrap_or_default())
 }
 
 #[tauri::command]
@@ -767,13 +764,12 @@ pub async fn scan_transaction_qr(auth_state: &AuthState, qr_code: String) -> Res
 
 pub async fn create_order(
     auth_state: &AuthState,
-    location_id: String,
+    _location_id: String,
     order_payload: serde_json::Value,
 ) -> Result<serde_json::Value> {
-    let encoded_loc = urlencoding::encode(&location_id);
-    let url_path = format!("{}?locationId={}", crate::api_config::routes::ORDERS, encoded_loc);
+    let url_path = crate::api_config::routes::SALE_PROCESS;
 
-    let req = auth_state.build_request(reqwest::Method::POST, &url_path).map_err(SalesError::AuthError)?;
+    let req = auth_state.build_request(reqwest::Method::POST, url_path).map_err(SalesError::AuthError)?;
     let resp = req.json(&order_payload).timeout(Duration::from_secs(30)).send().await.map_err(|e| SalesError::NetworkError(e.to_string()))?;
 
     let status = resp.status();

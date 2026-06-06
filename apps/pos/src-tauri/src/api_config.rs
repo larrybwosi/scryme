@@ -2,47 +2,57 @@
 
 pub mod routes {
     // --- Auth ---
-    pub const CHECK_IN: &str = "api/v2/pos/check-in";
-    pub const CHECK_OUT: &str = "api/v2/pos/check-out";
-    pub const LOCATIONS: &str = "api/v2/pos/locations";
-    pub const ABLY_AUTH: &str = "api/v2/pos/ably-auth";
-    pub const MPESA_INITIATE: &str = "api/v2/payments/mpesa/stkpush";
-    // pub const DEVICE_REGISTER: &str = "api/v2/devices/register";
+    pub const PROVISION: &str = "pos/provision";
+    pub const LOGIN: &str = "pos/login";
+    pub const ME: &str = "pos/me";
+    pub const CHECK_OUT: &str = "pos/check-out";
+    pub const LOCATIONS: &str = "pos/locations"; // Note: V3 might have locations elsewhere or same, but PosController doesn't have it.
+    pub const ABLY_AUTH: &str = "pos/ably-auth";
+    pub const MPESA_INITIATE: &str = "payments/mpesa/stkpush";
 
     // --- Inventory / Stock ---
-    pub const INVENTORY_TRANSFERS: &str = "api/v2/pos/inventory/transfers";
-    pub const INVENTORY_REQUESTS: &str = "api/v2/pos/inventory/requests";
-    pub const INVENTORY_PROCESS: &str = "api/v2/pos/inventory/process";
-    pub const INCOMING_SHIPMENTS: &str = "api/v2/pos/incoming";
+    pub const TRANSFERS: &str = "pos/transfers";
+    pub const REQUESTS: &str = "pos/requests";
+    pub const INVENTORY_UNPACK: &str = "pos/inventory/unpack";
+    pub const INVENTORY_PACK: &str = "pos/inventory/pack";
 
-    pub fn purchase_receive(id: &str) -> String {
-        format!("api/v2/pos/purchases/{}/receive", id)
+    pub fn transfer_ship(id: &str) -> String {
+        format!("pos/transfers/{}/ship", id)
     }
 
     pub fn transfer_receive(id: &str) -> String {
-        format!("api/v2/pos/inventory/transfers/{}/receive", id)
+        format!("pos/transfers/{}/receive", id)
     }
 
-    // --- Sales ---
-    pub const SALE_PROCESS: &str = "api/v2/pos/sale";
-    pub const SALE_BASE: &str = "api/v2/pos/sale";
-    pub const SALE_PAYMENTS: &str = "api/v2/pos/sale/payments";
-    pub const TRANSACTION_SCAN: &str = "api/v2/pos/transaction/scan";
-    pub const ORDERS: &str = "api/v2/pos/orders";
+    // --- Sales & Transactions ---
+    pub const SALE_PROCESS: &str = "pos/sale";
+    pub const TRANSACTIONS: &str = "pos/transactions";
+    pub const TRANSACTION_SCAN: &str = "pos/transaction/scan";
 
-    // --- Products & Pricing ---
-    pub const PRODUCTS: &str = "api/v2/pos/products";
-    pub const PRICING: &str = "api/v2/pos/pricing";
-    pub const PRICING_SYNC: &str = "api/v2/pos/pricing/sync";
+    // --- Sync ---
+    pub const SYNC: &str = "pos/sync";
 
-    // --- Customers ---
-    pub const CUSTOMERS: &str = "api/v2/pos/customers";
+    // --- Finance ---
+    pub const PETTY_CASH: &str = "pos/petty-cash";
+    pub fn petty_cash_top_up(id: &str) -> String {
+        format!("pos/petty-cash/{}/top-up", id)
+    }
+    pub fn petty_cash_expense(id: &str) -> String {
+        format!("pos/petty-cash/{}/expense", id)
+    }
 
-    // --- Shifts ---
-    pub const SHIFT_SYNC: &str = "api/v2/pos/shifts/sync";
+    pub fn download_invoice(id: &str) -> String {
+        format!("pos/finance/invoices/{}/download", id)
+    }
+    pub fn download_receipt(id: &str) -> String {
+        format!("pos/finance/receipts/{}/download", id)
+    }
 
     // --- Delivery ---
-    pub const DRIVERS: &str = "api/v2/pos/drivers";
-    pub const DELIVERY_DISPATCH: &str = "api/v2/pos/deliveries/dispatch";
-    pub const DELIVERY_RECONCILE: &str = "api/v2/pos/deliveries/reconcile-pod";
+    pub const DELIVERY_DISPATCH: &str = "pos/deliveries/dispatch";
+    pub const DELIVERY_RECONCILE: &str = "pos/deliveries/reconcile-pod";
+
+    // Legacy / V2 placeholders (if still needed temporarily during migration, but clean break requested)
+    pub const PRODUCTS: &str = "pos/products";
+    pub const CUSTOMERS: &str = "pos/customers";
 }

@@ -7,3 +7,4 @@ pub mod product_store;
 pub mod sales_store;
 pub mod shift_store;
 pub mod table_store;
+pub mod finance_store;
