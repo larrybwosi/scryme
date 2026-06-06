@@ -48,10 +48,14 @@ export class InventoryService {
         {
           /**
            * ⚡ Bolt: Performance Optimization
-           * Use nested select to prune heavy relation fields while keeping the parent model intact.
-           * This pattern prevents regressions while reducing the data load from relations.
+           * Use targeted select instead of include to fetch only essential scalar fields and relations.
+           * This reduces database payload size and serialization overhead.
            */
-          include: {
+          select: {
+            id: true,
+            availableStock: true,
+            reorderPoint: true,
+            reorderQty: true,
             variant: {
               select: {
                 id: true,
@@ -64,8 +68,6 @@ export class InventoryService {
                     name: true,
                   },
                 },
-                baseUnit: true,
-                baseOrgUnit: true,
               },
             },
             location: {
