@@ -113,28 +113,35 @@ export function Sidebar() {
       {/* Brand Header */}
       <div className={cn(
         "flex items-center h-[80px] px-6",
-        isCollapsed ? "justify-center" : "justify-between"
+        isCollapsed ? "flex-col justify-center gap-2" : "justify-between"
       )}>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
-          >
-            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          </button>
-          {!isCollapsed && (
+        {!isCollapsed ? (
+          <>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">F</span>
               </div>
               <span className="font-bold text-xl text-[#1D1D1F]">Fixoria <sup className="text-[10px] font-medium">TM</sup></span>
             </div>
-          )}
-        </div>
-        {isCollapsed && (
-          <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">F</span>
-          </div>
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
+            >
+              <ChevronLeft size={14} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
+            >
+              <ChevronRight size={14} />
+            </button>
+            <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">F</span>
+            </div>
+          </>
         )}
       </div>
 

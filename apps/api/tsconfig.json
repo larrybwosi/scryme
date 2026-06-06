@@ -17,6 +17,7 @@
       "@repo/db/client": ["../../packages/db/src/client.ts"],
       "@repo/auth": ["../../packages/auth/src/index.ts"],
       "@repo/shared": ["../../packages/shared/src/index.ts"],
+      "@repo/shared/server": ["../../packages/shared/src/server.ts"],
       "@repo/notifications": ["../../packages/notifications/src/index.ts"],
       "@repo/mpesa": ["../../packages/mpesa/src/index.ts"],
       "@repo/zitadel": ["../../packages/zitadel/src/index.ts"],
