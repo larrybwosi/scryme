@@ -32,6 +32,9 @@ services:
 
   api:
     image: ghcr.io/larrybwosi/scryme-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -53,6 +56,11 @@ services:
 
   crm:
     image: ghcr.io/larrybwosi/scryme-crm:latest
+    build:
+      context: .
+      dockerfile: apps/crm/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -71,6 +79,11 @@ services:
 
   web:
     image: ghcr.io/larrybwosi/scryme-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
