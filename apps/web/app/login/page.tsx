@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -111,7 +111,7 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
   >
     {disabled ? (
       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
@@ -165,14 +165,17 @@ const LoginPage = () => {
 
   const session = authClient.useSession();
 
-  if (session.data) {
-    router.push("/dashboard");
-  }
-
   const callbackUrl =
     searchParams.get("callbackUrl") ||
     searchParams.get("redirect") ||
     searchParams.get("returnTo");
+
+  // ✅ FIX: moved router.push out of render into a useEffect
+  useEffect(() => {
+    if (session.data) {
+      router.push("/dashboard");
+    }
+  }, [session.data, router]);
 
   const {
     register: registerLogin,
@@ -278,7 +281,7 @@ const LoginPage = () => {
                       `/sign-up${queryString ? `?${queryString}` : ""}`,
                     );
                   }}
-                  className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
+                  className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors cursor-pointer"
                 >
                   Sign up
                 </button>
@@ -356,7 +359,7 @@ const LoginPage = () => {
                     <button
                       type="button"
                       onClick={() => setCurrentView("forgot-password")}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -375,7 +378,7 @@ const LoginPage = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                       tabIndex={-1}
                     >
                       {showPassword ? (
@@ -395,7 +398,7 @@ const LoginPage = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2"
+                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -418,7 +421,7 @@ const LoginPage = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <button
                 onClick={() => setCurrentView("login")}
-                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to login
               </button>
@@ -459,7 +462,7 @@ const LoginPage = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md"
+                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer"
                   disabled={isLoading}
                 >
                   {isLoading ? "Processing..." : "Send reset instructions"}

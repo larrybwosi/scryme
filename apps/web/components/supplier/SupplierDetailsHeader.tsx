@@ -7,9 +7,10 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { useState } from "react";
 import { toggleFavoriteSupplier } from "../../app/actions/supplier";
 import { cn } from "@repo/ui/lib/utils";
+import { Supplier } from "../../types/supplier";
 
 interface SupplierDetailsHeaderProps {
-  supplier: any;
+  supplier: Supplier;
 }
 
 export function SupplierDetailsHeader({ supplier }: SupplierDetailsHeaderProps) {
@@ -32,7 +33,7 @@ export function SupplierDetailsHeader({ supplier }: SupplierDetailsHeaderProps) 
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
           <div className="flex gap-6 items-center">
             <Avatar className="h-24 w-24 rounded-2xl border-4 border-muted">
-              <AvatarImage src={supplier.logo} />
+              <AvatarImage src={supplier.logo || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold rounded-2xl">
                 {initials}
               </AvatarFallback>
@@ -47,8 +48,8 @@ export function SupplierDetailsHeader({ supplier }: SupplierDetailsHeaderProps) 
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <Star size={16} className="text-yellow-500 fill-yellow-500" />
-                  <span className="font-semibold text-foreground">4.5</span>
-                  <span>(120 reviews)</span>
+                  <span className="font-semibold text-foreground">{supplier.avgRating}</span>
+                  <span>({supplier.reviewCount} reviews)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <MapPin size={16} />
