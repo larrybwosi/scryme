@@ -38,7 +38,7 @@ const locationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   code: z.string().optional(),
   description: z.string().optional(),
-  locationType: z.nativeEnum(LocationType),
+  locationType: z.nativeEnum(LocationType).default(LocationType.RETAIL_SHOP),
   isDefault: z.boolean().default(false),
   parentLocationId: z.string().optional().nullable(),
   managerId: z.string().optional().nullable(),
@@ -69,7 +69,7 @@ export function LocationDialog({ children, location, locations = [], members = [
   const [open, setOpen] = useState(false);
 
   const form = useForm<LocationFormValues>({
-    resolver: zodResolver(locationSchema),
+    resolver: zodResolver(locationSchema) as any,
     defaultValues: {
       name: location?.name || "",
       code: location?.code || "",

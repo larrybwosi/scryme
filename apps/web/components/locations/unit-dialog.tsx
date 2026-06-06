@@ -35,7 +35,7 @@ import { StorageUnitType, UnitType } from "@repo/db";
 const unitSchema = z.object({
   name: z.string().min(1, "Name is required"),
   reference: z.string().optional(),
-  unitType: z.nativeEnum(StorageUnitType),
+  unitType: z.nativeEnum(StorageUnitType).default(StorageUnitType.SHELF),
   zoneId: z.string().optional().nullable(),
   capacity: z.coerce.number().optional(),
   capacityUnit: z.nativeEnum(UnitType).optional(),
@@ -54,14 +54,14 @@ export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialo
   const [open, setOpen] = useState(false);
 
   const form = useForm<UnitFormValues>({
-    resolver: zodResolver(unitSchema),
+    resolver: zodResolver(unitSchema) as any,
     defaultValues: {
       name: unit?.name || "",
       reference: unit?.reference || "",
       unitType: unit?.unitType || StorageUnitType.SHELF,
       zoneId: unit?.zoneId || null,
       capacity: unit?.capacity || undefined,
-      capacityUnit: unit?.capacityUnit || UnitType.UNIT,
+      capacityUnit: unit?.capacityUnit || UnitType.COUNT,
     },
   });
 

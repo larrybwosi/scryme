@@ -52,12 +52,12 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<ZoneFormValues>({
-    resolver: zodResolver(zoneSchema),
+    resolver: zodResolver(zoneSchema) as any,
     defaultValues: {
       name: zone?.name || "",
       description: zone?.description || "",
       capacity: zone?.capacity || undefined,
-      capacityUnit: zone?.capacityUnit || UnitType.UNIT,
+      capacityUnit: zone?.capacityUnit || UnitType.COUNT,
     },
   });
 
