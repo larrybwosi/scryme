@@ -6,40 +6,36 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { Progress } from "@repo/ui/components/ui/progress";
 import { format } from "date-fns";
+import { SupplierReview, RatingCount } from "../../types/supplier";
 
 interface SupplierReviewsProps {
-  reviews: any[];
+  reviews: SupplierReview[];
+  avgRating: string;
+  reviewCount: number;
+  ratingCounts: RatingCount[];
 }
 
-export function SupplierReviews({ reviews }: SupplierReviewsProps) {
-  const ratings = [
-    { stars: 5, count: 85, percentage: 70 },
-    { stars: 4, count: 20, percentage: 16 },
-    { stars: 3, count: 10, percentage: 8 },
-    { stars: 2, count: 3, percentage: 3 },
-    { stars: 1, count: 2, percentage: 3 },
-  ];
-
+export function SupplierReviews({ reviews, avgRating, reviewCount, ratingCounts }: SupplierReviewsProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1 space-y-6">
         <div className="p-6 bg-background border rounded-2xl shadow-sm space-y-4">
           <div className="text-center space-y-1">
-            <div className="text-5xl font-black">4.5</div>
+            <div className="text-5xl font-black">{avgRating}</div>
             <div className="flex justify-center gap-1">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star
                   key={i}
                   size={20}
-                  className={i <= 4 ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground fill-muted-foreground/20"}
+                  className={i <= Math.round(Number(avgRating)) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground fill-muted-foreground/20"}
                 />
               ))}
             </div>
-            <p className="text-sm text-muted-foreground font-medium pt-1">Based on 120 reviews</p>
+            <p className="text-sm text-muted-foreground font-medium pt-1">Based on {reviewCount} reviews</p>
           </div>
 
           <div className="space-y-3">
-            {ratings.map((rating) => (
+            {ratingCounts.map((rating) => (
               <div key={rating.stars} className="flex items-center gap-3">
                 <span className="text-xs font-bold w-4">{rating.stars}</span>
                 <Star size={12} className="text-muted-foreground fill-muted-foreground" />
@@ -67,7 +63,7 @@ export function SupplierReviews({ reviews }: SupplierReviewsProps) {
               <div className="flex justify-between items-start">
                 <div className="flex gap-4">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={review.member.user.image} />
+                    <AvatarImage src={review.member.user.image || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {review.member.user.name[0]}
                     </AvatarFallback>

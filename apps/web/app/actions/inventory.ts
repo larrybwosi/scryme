@@ -29,8 +29,19 @@ export async function getCategoriesFull() {
   return db.category.findMany({
     where: {
       organizationId: context.organizationId,
+      parentId: null, // Only fetch top-level categories
     },
     include: {
+      subcategories: {
+        include: {
+          _count: {
+            select: { products: true }
+          }
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      },
       _count: {
         select: { products: true }
       }

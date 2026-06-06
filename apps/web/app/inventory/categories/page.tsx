@@ -3,7 +3,7 @@ import { getCategoriesFull } from "../../actions/inventory";
 import { CategoryTable } from "../../../components/inventory/category-table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Plus } from "lucide-react";
-import { CategorySheet } from "../../../components/inventory/category-sheet";
+import { CategoryDialog } from "../../../components/inventory/category-dialog";
 
 export default async function CategoriesPage() {
   const categories = await getCategoriesFull();
@@ -16,12 +16,12 @@ export default async function CategoriesPage() {
           <p className="text-sm text-muted-foreground">Manage your product organization and taxonomy.</p>
         </div>
         <div className="flex items-center gap-3">
-          <CategorySheet>
+          <CategoryDialog>
             <Button className="gap-2">
               <Plus size={16} />
               <span>Add Category</span>
             </Button>
-          </CategorySheet>
+          </CategoryDialog>
         </div>
       </div>
 
