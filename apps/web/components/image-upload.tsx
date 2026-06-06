@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ export function ImageUpload({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFiles = async (files: FileList | File[]) => {
+  const uploadFiles = useCallback(async (files: FileList | File[]) => {
     const filesArray = Array.from(files).filter(file => file.type.startsWith("image/"));
 
     if (value.length + filesArray.length > maxImages) {
@@ -43,8 +44,9 @@ export function ImageUpload({
 
         if (!response.ok) throw new Error("Upload failed");
 
-        const data = await response.json();
-        return data.url;
+        const resData = await response.json();
+        // Handle standard API response wrapping if present
+        return resData.data?.url || resData.url;
       });
 
       const urls = await Promise.all(uploadPromises);
@@ -56,7 +58,7 @@ export function ImageUpload({
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [value, maxImages, onChange]);
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -75,7 +77,7 @@ export function ImageUpload({
         uploadFiles(files);
       }
     },
-    [disabled, isUploading, value, maxImages, onChange]
+    [disabled, isUploading, value, maxImages, onChange, uploadFiles]
   );
 
   const onPaste = useCallback(
@@ -95,7 +97,7 @@ export function ImageUpload({
         uploadFiles(files);
       }
     },
-    [disabled, isUploading, value, maxImages, onChange]
+    [disabled, isUploading, value, maxImages, onChange, uploadFiles]
   );
 
   const removeImage = (url: string) => {
@@ -110,10 +112,11 @@ export function ImageUpload({
             key={url}
             className="relative aspect-square rounded-md overflow-hidden border bg-gray-100 group"
           >
-            <img
+            <Image
               src={url}
               alt="Product"
-              className="object-cover w-full h-full"
+              fill
+              className="object-cover"
             />
             <button
               onClick={() => removeImage(url)}
