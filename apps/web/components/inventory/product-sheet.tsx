@@ -26,6 +26,7 @@ import { Loader2, Plus, Package, Check, AlertCircle } from "lucide-react";
 import { ImageUpload } from "../image-upload";
 import { useDebounce } from "use-debounce";
 import slugify from "slugify";
+import { cn } from "@repo/ui/lib/utils";
 
 interface ProductSheetProps {
   children?: React.ReactNode;
