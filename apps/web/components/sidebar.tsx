@@ -19,7 +19,11 @@ import {
   LogOut,
   ChevronDown,
   Boxes,
-  Package
+  Package,
+  TrendingUp,
+  ArrowLeftRight,
+  ShieldCheck,
+  FileText
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 
@@ -67,6 +71,18 @@ const sidebarConfig: SidebarSection[] = [
         items: [
           { title: "Product List", href: "/inventory" },
           { title: "Suppliers", href: "/inventory/supplier" },
+        ]
+      },
+      {
+        title: "Stocking",
+        icon: TrendingUp,
+        href: "/stocking",
+        items: [
+          { title: "Dashboard", href: "/stocking" },
+          { title: "Transfers", href: "/stocking/transfers" },
+          { title: "Reorder Rules", href: "/stocking/reorder-rules" },
+          { title: "Reports", href: "/stocking/reports" },
+          { title: "Audit Trail", href: "/stocking/audit" },
         ]
       },
       { title: "Integrations", icon: Boxes, href: "/integrations" },
