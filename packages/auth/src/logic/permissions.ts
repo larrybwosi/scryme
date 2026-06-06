@@ -1,15 +1,13 @@
-import { RESOURCES, PERMISSION_ACTIONS } from '../permissions/constants';
-
+import { PERMISSION_ACTIONS } from '../permissions/constants';
 /**
  * Creates a standard permission string
  */
-export function formatPermission(resource: string, action: string, scope?: string): string {
+export function formatPermission(resource: string, action: string, scope?: string) {
     if (action === PERMISSION_ACTIONS.ALL) {
         return `${resource}:*`;
     }
     return scope ? `${resource}:${action}:${scope}` : `${resource}:${action}`;
 }
-
 /**
  * Parses a permission string into its components
  */

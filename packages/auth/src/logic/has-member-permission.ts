@@ -4,7 +4,7 @@
  * @param action - The action to check permission for
  * @returns boolean - true if allowed, false if not
  */
-export function hasMemberPermission(role: string, action: string): boolean {
+export function hasMemberPermission(role: string, action: string) {
     // Define permissions for each member role
     const permissions: Record<string, string[]> = {
         OWNER: [
