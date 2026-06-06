@@ -2,29 +2,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@repo/db";
 import { env } from "@repo/env";
 
-// Validate required environment variables
-if (!env.BETTER_AUTH_SECRET) {
-  throw new Error("BETTER_AUTH_SECRET is required for authentication");
-}
-
-// Configure social providers only if credentials are provided
-const socialProviders = {
-  ...(env.GITHUB_CLIENT_ID &&
-    env.GITHUB_CLIENT_SECRET && {
-      github: {
-        clientId: env.GITHUB_CLIENT_ID,
-        clientSecret: env.GITHUB_CLIENT_SECRET,
-      },
-    }),
-  ...(env.GOOGLE_CLIENT_ID &&
-    env.GOOGLE_CLIENT_SECRET && {
-      google: {
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-      },
-    }),
-};
-
 export const authOptions = {
   database: prismaAdapter(db, {
     provider: "postgresql",
@@ -33,7 +10,16 @@ export const authOptions = {
   emailAndPassword: {
     enabled: true,
   },
-  socialProviders,
+  socialProviders: {
+    github: {
+      clientId: env.GITHUB_CLIENT_ID || "default",
+      clientSecret: env.GITHUB_CLIENT_SECRET || "default",
+    },
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID || "default",
+      clientSecret: env.GOOGLE_CLIENT_SECRET || "default",
+    },
+  },
 };
 
 // Export Permissions

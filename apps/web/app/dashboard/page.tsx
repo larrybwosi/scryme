@@ -30,6 +30,12 @@ export default async function DashboardPage(props: {
       maximumFractionDigits: 0,
     }).format(val);
 
+  const data = await getDashboardData(timeframe);
+  const today = format(new Date(), "EEEE, dd MMMM yyyy");
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+
   return (
     <div className="p-8 max-w-(--breakpoint-2xl) mx-auto">
       <Suspense fallback={<div>Loading dashboard...</div>}>

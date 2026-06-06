@@ -14,7 +14,6 @@
     "@hookform/resolvers": "3.9.0",
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:^",
-    "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/windmill": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
