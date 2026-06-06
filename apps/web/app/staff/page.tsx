@@ -21,7 +21,7 @@ export default async function StaffPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[#1D1D1F]">Staff Management</h1>
-            <p className="text-sm text-gray-500">Manage your organization's members and their access levels.</p>
+            <p className="text-sm text-gray-500">Manage your organization&apos;s members and their access levels.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,7 +105,7 @@ export function MemberActions({ member }: MemberActionsProps) {
     setLoading(false);
   };
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     const result = await getMemberSessions(member.user.id);
     if (result.success && result.data) {
       setSessions(result.data);
@@ -116,14 +116,14 @@ export function MemberActions({ member }: MemberActionsProps) {
         setActiveSessionToken(sessionCookie.split('=')[1]);
       }
     }
-  };
+  }, [member.user.id]);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     const result = await getOrgCustomRoles();
     if (result.success && result.data) {
       setCustomRoles(result.data);
     }
-  };
+  }, []);
 
   const handleRevokeSession = async (token: string) => {
     const result = await revokeSession(token);
@@ -147,11 +147,11 @@ export function MemberActions({ member }: MemberActionsProps) {
 
   useEffect(() => {
     if (isSessionsSheetOpen) fetchSessions();
-  }, [isSessionsSheetOpen]);
+  }, [isSessionsSheetOpen, fetchSessions]);
 
   useEffect(() => {
     if (isRolesSheetOpen) fetchRoles();
-  }, [isRolesSheetOpen]);
+  }, [isRolesSheetOpen, fetchRoles]);
 
   return (
     <>
