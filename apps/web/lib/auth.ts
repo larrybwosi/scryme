@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { authOptions } from "@repo/auth/server";
-import { admin } from "better-auth/plugins/admin";
+import { admin } from "better-auth/plugins";
 import { username } from "better-auth/plugins/username";
 import { bearer } from "better-auth/plugins/bearer";
 import { nextCookies } from "better-auth/next-js";
@@ -11,6 +11,7 @@ import { db } from "@repo/db";
 export const auth = betterAuth({
   ...(authOptions as any),
   plugins: [
+    admin(),
     customSession(async ({ user, session }) => {
       // Fetch from Database
       const usr = await db.user.findUnique({
