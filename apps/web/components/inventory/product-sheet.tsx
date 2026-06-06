@@ -20,9 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { createProduct, updateProduct, getProduct } from "../../app/actions/inventory";
+import { createProduct, updateProduct, getProduct, checkProductUniqueness } from "../../app/actions/inventory";
 import { toast } from "sonner";
-import { Loader2, Plus, Package } from "lucide-react";
+import { Loader2, Plus, Package, Check, AlertCircle } from "lucide-react";
+import { ImageUpload } from "../image-upload";
+import { useDebounce } from "use-debounce";
+import slugify from "slugify";
 
 interface ProductSheetProps {
   children?: React.ReactNode;
@@ -43,12 +46,57 @@ export function ProductSheet({ children, productId, categories, isOpen: controll
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
+    slug: '',
     categoryId: '',
     buyingPrice: 0,
     retailPrice: 0,
     initialStock: 0,
     imageUrls: [] as string[],
   });
+
+  const [isCheckingUniqueness, setIsCheckingUniqueness] = useState(false);
+  const [uniqueness, setUniqueness] = useState({ sku: true, slug: true });
+  const [isManualSku, setIsManualSku] = useState(false);
+  const [isManualSlug, setIsManualSlug] = useState(false);
+
+  const [debouncedSku] = useDebounce(formData.sku, 500);
+  const [debouncedSlug] = useDebounce(formData.slug, 500);
+
+  // Generate SKU and Slug from Name
+  useEffect(() => {
+    if (!productId) {
+      if (!isManualSku && formData.name) {
+        const prefix = formData.name.substring(0, 3).toUpperCase();
+        const random = Math.floor(10000 + Math.random() * 90000);
+        setFormData(prev => ({ ...prev, sku: `${prefix}-${random}` }));
+      }
+      if (!isManualSlug && formData.name) {
+        const slug = slugify(formData.name, { lower: true, strict: true });
+        setFormData(prev => ({ ...prev, slug }));
+      }
+    }
+  }, [formData.name, isManualSku, isManualSlug, productId]);
+
+  // Check uniqueness
+  useEffect(() => {
+    const check = async () => {
+      if (!debouncedSku && !debouncedSlug) return;
+      setIsCheckingUniqueness(true);
+      try {
+        const result = await checkProductUniqueness({
+          sku: debouncedSku,
+          slug: debouncedSlug,
+          excludeId: productId
+        });
+        setUniqueness(result);
+      } catch (error) {
+        console.error("Uniqueness check failed", error);
+      } finally {
+        setIsCheckingUniqueness(false);
+      }
+    };
+    check();
+  }, [debouncedSku, debouncedSlug, productId]);
 
   useEffect(() => {
     if (productId && open) {
@@ -61,6 +109,7 @@ export function ProductSheet({ children, productId, categories, isOpen: controll
             setFormData({
               name: product.name,
               sku: product.sku,
+              slug: product.slug || '',
               categoryId: product.categoryId,
               buyingPrice: variant?.buyingPrice ? Number(variant.buyingPrice) : 0,
               retailPrice: variant?.retailPrice ? Number(variant.retailPrice) : 0,
@@ -79,17 +128,30 @@ export function ProductSheet({ children, productId, categories, isOpen: controll
       setFormData({
         name: '',
         sku: '',
+        slug: '',
         categoryId: '',
         buyingPrice: 0,
         retailPrice: 0,
         initialStock: 0,
         imageUrls: [],
       });
+      setIsManualSku(false);
+      setIsManualSlug(false);
     }
   }, [productId, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!uniqueness.sku) {
+      toast.error("SKU must be unique");
+      return;
+    }
+    if (!uniqueness.slug) {
+      toast.error("Slug must be unique");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -97,6 +159,7 @@ export function ProductSheet({ children, productId, categories, isOpen: controll
         await updateProduct(productId, {
           name: formData.name,
           sku: formData.sku,
+          slug: formData.slug,
           categoryId: formData.categoryId,
           buyingPrice: formData.buyingPrice,
           retailPrice: formData.retailPrice,
@@ -148,15 +211,62 @@ export function ProductSheet({ children, productId, categories, isOpen: controll
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="sku">SKU</Label>
+                      <Label htmlFor="sku" className="flex items-center gap-2">
+                        SKU
+                        {isCheckingUniqueness ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                        ) : formData.sku ? (
+                          uniqueness.sku ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3 text-red-500" />
+                          )
+                        ) : null}
+                      </Label>
                       <Input
                         id="sku"
                         placeholder="e.g., BRD-001"
                         value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        onChange={(e) => {
+                          setIsManualSku(true);
+                          setFormData({ ...formData, sku: e.target.value });
+                        }}
+                        className={cn(!uniqueness.sku && formData.sku && "border-red-500 focus-visible:ring-red-500")}
                         required
                       />
+                      {!uniqueness.sku && formData.sku && (
+                        <p className="text-[10px] text-red-500 mt-1">SKU already exists</p>
+                      )}
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="slug" className="flex items-center gap-2">
+                        Slug
+                        {isCheckingUniqueness ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                        ) : formData.slug ? (
+                          uniqueness.slug ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3 text-red-500" />
+                          )
+                        ) : null}
+                      </Label>
+                      <Input
+                        id="slug"
+                        placeholder="e.g., sourdough-bread"
+                        value={formData.slug}
+                        onChange={(e) => {
+                          setIsManualSlug(true);
+                          setFormData({ ...formData, slug: e.target.value });
+                        }}
+                        className={cn(!uniqueness.slug && formData.slug && "border-red-500 focus-visible:ring-red-500")}
+                      />
+                      {!uniqueness.slug && formData.slug && (
+                        <p className="text-[10px] text-red-500 mt-1">Slug already exists</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
                       <Select
@@ -226,16 +336,11 @@ export function ProductSheet({ children, productId, categories, isOpen: controll
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Images</h3>
                 <div className="space-y-2">
-                  <Label htmlFor="image-url">Image URL</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="image-url"
-                      placeholder="https://..."
-                      value={formData.imageUrls[0] || ''}
-                      onChange={(e) => setFormData({ ...formData, imageUrls: [e.target.value] })}
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground italic">Tip: You can add more images later in the detailed view.</p>
+                  <ImageUpload
+                    value={formData.imageUrls}
+                    onChange={(urls) => setFormData({ ...formData, imageUrls: urls })}
+                    maxImages={3}
+                  />
                 </div>
               </div>
             </div>

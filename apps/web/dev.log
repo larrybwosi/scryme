@@ -1,0 +1,7 @@
+
+> web@2.0.0 dev /app/apps/web
+> next dev
+
+sh: 1: next: not found
+ ELIFECYCLE  Command failed.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?
