@@ -8,6 +8,8 @@ import { ProcessSaleDto } from '../../application/dto/sale.dto';
 import { ProcessSaleUseCase } from '../../application/use-cases/process-sale.use-case';
 import { SyncUseCase } from '../../application/use-cases/sync.use-case';
 import { GetTransactionsUseCase } from '../../application/use-cases/get-transactions.use-case';
+import { RegisterPettyCashUseCase } from '../../application/use-cases/register-petty-cash.use-case';
+import { RegisterPettyCashDto } from '../../application/dto/petty-cash.dto';
 import { StandardResponseInterceptor } from '@/v3/common/interceptors/standard-response.interceptor';
 import {
   ProvisionDeviceDto,
@@ -26,7 +28,8 @@ export class PosController {
     private readonly authService: V3AuthService,
     private readonly processSaleUseCase: ProcessSaleUseCase,
     private readonly syncUseCase: SyncUseCase,
-    private readonly getTransactionsUseCase: GetTransactionsUseCase
+    private readonly getTransactionsUseCase: GetTransactionsUseCase,
+    private readonly registerPettyCashUseCase: RegisterPettyCashUseCase
   ) {}
 
   @Post('provision')
@@ -99,5 +102,29 @@ export class PosController {
   @ApiResponse({ status: 200, description: 'Transactions' })
   async getTransactions(@v3Context() ctx: V3ApiContext, @Query() query: any) {
     return this.getTransactionsUseCase.execute(ctx, query);
+  }
+
+  @Post('petty-cash')
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Register a new petty cash expense',
+    operationId: 'POS_RegisterPettyCash',
+  })
+  @ApiResponse({ status: 201, description: 'Petty cash expense registered' })
+  async registerPettyCash(@v3Context() ctx: V3ApiContext, @Body() body: RegisterPettyCashDto) {
+    return this.registerPettyCashUseCase.execute(ctx, body);
+  }
+
+  @Get('petty-cash/funds')
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'List available petty cash funds',
+    operationId: 'POS_GetPettyCashFunds',
+  })
+  @ApiResponse({ status: 200, description: 'Petty cash funds' })
+  async getPettyCashFunds(@v3Context() ctx: V3ApiContext) {
+    return this.registerPettyCashUseCase.getFunds(ctx);
   }
 }

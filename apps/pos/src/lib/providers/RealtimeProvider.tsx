@@ -14,7 +14,7 @@ export default function RealtimeInitializer() {
   const currentMember = useAuthStore((state) => state.currentMember);
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
   const updateProductStock = usePosStore((state) => state.updateProductStock);
-  const organizationId = useAuthStore((state) => state.organizationId);
+  const organizationId = useAuthStore((state) => state.deviceConfig?.orgSlug);
 
   // ── Initialize Realtime once auth is ready ──────────────────────────────────
   useEffect(() => {

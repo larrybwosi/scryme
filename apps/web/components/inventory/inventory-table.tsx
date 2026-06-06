@@ -21,11 +21,22 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { AuditStockModal } from "./audit-stock-modal";
 import { StockAlertModal } from "./stock-alert-modal";
 import { StockHistoryDrawer } from "./stock-history-drawer";
-import { type InventoryProduct, reorderProduct } from "../../app/actions/inventory";
+import { type InventoryProduct, reorderProduct, deleteProduct, getCategories } from "../../app/actions/inventory";
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowUpDown, Loader2, Package } from "lucide-react";
+import { ArrowUpDown, Loader2, Package, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Image from 'next/image';
+import { ProductSheet } from "./product-sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 
 interface InventoryTableProps {
   data: InventoryProduct[];
@@ -38,7 +49,15 @@ export function InventoryTable({ data }: InventoryTableProps) {
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
+  const [isProductSheetOpen, setIsProductSheetOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+
+  useEffect(() => {
+    getCategories().then(setCategories);
+  }, []);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -191,6 +210,23 @@ export function InventoryTable({ data }: InventoryTableProps) {
                         <History className="mr-2 h-4 w-4" />
                         <span>Stock History</span>
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        setSelectedItem(item);
+                        setIsProductSheetOpen(true);
+                      }}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit Product</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => {
+                          setDeletingId(item.id);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete Product</span>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -217,8 +253,46 @@ export function InventoryTable({ data }: InventoryTableProps) {
             onClose={() => setIsHistoryDrawerOpen(false)}
             product={selectedItem}
           />
+          <ProductSheet
+            productId={selectedItem.id}
+            categories={categories}
+            isOpen={isProductSheetOpen}
+            onOpenChange={setIsProductSheetOpen}
+          />
         </>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product and all its variants/stock records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={async () => {
+                if (deletingId) {
+                  try {
+                    await deleteProduct(deletingId);
+                    toast.success("Product deleted successfully");
+                  } catch (e) {
+                    toast.error("Failed to delete product");
+                  } finally {
+                    setDeletingId(null);
+                    setIsDeleteDialogOpen(false);
+                  }
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

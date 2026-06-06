@@ -66,6 +66,11 @@ interface PosAuthState {
   allowNegativeStock: boolean;
   deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET';
   hubIp: string | null;
+  deviceConfig: {
+    locationId: string;
+    orgSlug: string;
+    allowNegativeStock: boolean;
+  } | null;
 }
 
 interface PosAuthActions {
@@ -82,7 +87,7 @@ interface PosAuthActions {
   // Async initialization
   initializeFromBackend: () => Promise<void>;
   provisionDevice: (setupToken: string) => Promise<void>;
-  registerDevice: (apiKey: string, location: InventoryLocation) => Promise<void>;
+  registerDevice: (apiKey: string, location: InventoryLocation, orgSlug: string) => Promise<void>;
   switchLocation: (location: InventoryLocation) => Promise<void>;
   setAllowNegativeStock: (allow: boolean) => Promise<void>;
   setDeviceConfig: (deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string | null) => void;
@@ -102,6 +107,7 @@ const initialState: PosAuthState = {
   allowNegativeStock: false,
   deviceType: 'MAIN_HUB',
   hubIp: null,
+  deviceConfig: null,
 };
 
 export const useAuthStore = create<PosAuthState & PosAuthActions>()(
@@ -218,11 +224,19 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         if (isInitialized) return;
 
         try {
-          // rust struct: SanitizedDeviceConfig { location_id, allow_negative_stock }
-          const config = await invoke<{ location_id: string; allow_negative_stock: boolean } | null>(
+          // rust struct: SanitizedDeviceConfig { location_id, org_slug, allow_negative_stock }
+          const config = await invoke<{ location_id: string; org_slug: string; allow_negative_stock: boolean } | null>(
             'get_device_config'
           );
           if (config) {
+            set({
+              deviceConfig: {
+                locationId: config.location_id,
+                orgSlug: config.org_slug,
+                allowNegativeStock: config.allow_negative_stock,
+              },
+            });
+
             // If currentLocation is not already hydrated from localStorage, fetch it
             const { currentLocation } = get();
             if (!currentLocation?.id && config.location_id) {
@@ -265,12 +279,13 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         });
 
         if (response.success) {
-          const { apiKey, device } = response.data;
+          const { apiKey, device, organization } = response.data;
 
           await invoke('set_device_config', {
             baseUrl: API_ENDPOINT,
             locationId: device.locationId,
             deviceKey: apiKey,
+            orgSlug: organization.slug,
           });
 
           // We need to fetch the location details
@@ -287,15 +302,24 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         }
       },
 
-      registerDevice: async (apiKey: string, location: InventoryLocation) => {
+      registerDevice: async (apiKey: string, location: InventoryLocation, orgSlug: string) => {
         await invoke('set_device_config', {
           baseUrl: API_ENDPOINT,
           locationId: location.id,
           deviceKey: apiKey,
+          orgSlug,
         });
 
         // Update local state
-        set({ isConfigured: true, currentLocation: location });
+        set({
+          isConfigured: true,
+          currentLocation: location,
+          deviceConfig: {
+            locationId: location.id,
+            orgSlug,
+            allowNegativeStock: false,
+          },
+        });
       },
 
       switchLocation: async location => {

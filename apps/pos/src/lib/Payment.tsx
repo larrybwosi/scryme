@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, createContext } from 'react';
-import Ably from 'ably';
 import { toast } from 'sonner';
 import { useRealtimeStore } from '@/store/realtimeStore';
 
