@@ -1,4 +1,3 @@
-"use server";
 import { betterAuth } from "better-auth";
 import { authOptions } from "./index";
 import { headers } from "next/headers";
