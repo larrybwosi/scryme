@@ -253,17 +253,17 @@ pub async fn run_sync(
 ) -> Result<usize> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let (base_url, device_key) = {
+    let (base_url, org_slug, device_key) = {
         let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
         let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
+        (config.base_url.clone(), config.org_slug.clone(), config.device_key.clone())
     };
 
     let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
 
     if base_url.is_empty() { return Err(anyhow::anyhow!("Base URL is empty")); }
 
-    let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS);
+    let target_url = format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::SYNC);
 
     let last_sync: Option<String> = sqlx::query("SELECT last_sync FROM customer_sync_meta WHERE id = 1")
         .fetch_optional(&pool)
@@ -276,9 +276,9 @@ pub async fn run_sync(
     headers.insert("X-API-KEY", val);
 
     if let Some(token) = member_token {
-        let mut val = HeaderValue::from_str(&token).map_err(|_| anyhow::anyhow!("Invalid Token"))?;
+        let mut val = HeaderValue::from_str(&format!("Bearer {}", token)).map_err(|_| anyhow::anyhow!("Invalid Token"))?;
         val.set_sensitive(true);
-        headers.insert("X-MEMBER-TOKEN", val);
+        headers.insert("Authorization", val);
     }
 
     let client = reqwest::Client::builder()
@@ -297,8 +297,8 @@ pub async fn run_sync(
         return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
     }
 
-    let v2_resp = response.json::<crate::models::V2Response<CustomersSyncResponse>>().await.map_err(|e| anyhow::anyhow!(e))?;
-    let res_body = v2_resp.data;
+    let v3_resp = response.json::<crate::models::V2Response<CustomersSyncResponse>>().await.map_err(|e| anyhow::anyhow!(e))?;
+    let res_body = v3_resp.data;
 
     let incoming_count = res_body.data.len();
     let mut tx = pool.begin().await.map_err(|e| anyhow::anyhow!(e))?;
@@ -426,20 +426,20 @@ pub async fn create_customer_cloud(
     auth_state: &AuthState,
     payload: serde_json::Value,
 ) -> Result<PosCustomer> {
-    let (base_url, device_key) = {
+    let (base_url, org_slug, device_key) = {
         let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
         let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
+        (config.base_url.clone(), config.org_slug.clone(), config.device_key.clone())
     };
 
     let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
 
-    let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS);
+    let target_url = format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::CUSTOMERS);
 
     let mut headers = HeaderMap::new();
     headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| anyhow::anyhow!(e))?);
     if let Some(token) = member_token {
-        headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token).map_err(|e| anyhow::anyhow!(e))?);
+        headers.insert("Authorization", HeaderValue::from_str(&format!("Bearer {}", token)).map_err(|e| anyhow::anyhow!(e))?);
     }
 
     let client = reqwest::Client::builder().default_headers(headers).build().map_err(|e| anyhow::anyhow!(e))?;
