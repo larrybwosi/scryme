@@ -64,7 +64,6 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
   async function onSubmit(values: ZoneFormValues) {
     const submissionData = {
       ...values,
-      capacityUnit: values.capacityUnit === "none" ? null : values.capacityUnit,
     };
 
     try {

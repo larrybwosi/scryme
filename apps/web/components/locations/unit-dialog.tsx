@@ -69,7 +69,6 @@ export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialo
     const submissionData = {
       ...values,
       zoneId: values.zoneId === "none" ? null : values.zoneId,
-      capacityUnit: values.capacityUnit === "none" ? null : values.capacityUnit,
     };
 
     try {
