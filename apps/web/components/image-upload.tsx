@@ -77,7 +77,7 @@ export function ImageUpload({
         uploadFiles(files);
       }
     },
-    [disabled, isUploading, value, maxImages, onChange, uploadFiles]
+    [disabled, isUploading, uploadFiles]
   );
 
   const onPaste = useCallback(
@@ -97,7 +97,7 @@ export function ImageUpload({
         uploadFiles(files);
       }
     },
-    [disabled, isUploading, value, maxImages, onChange, uploadFiles]
+    [disabled, isUploading, uploadFiles]
   );
 
   const removeImage = (url: string) => {
