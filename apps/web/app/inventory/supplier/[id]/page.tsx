@@ -58,15 +58,20 @@ export default async function SupplierDetailsPage({ params }: SupplierDetailsPag
           </TabsList>
 
           <TabsContent value="catalog" className="m-0 focus-visible:outline-none">
-            <ProductCatalog products={supplier.products} />
+            <ProductCatalog products={supplier.products || []} />
           </TabsContent>
 
           <TabsContent value="deliveries" className="m-0 focus-visible:outline-none">
-            <SupplierDeliveries purchases={supplier.purchases} />
+            <SupplierDeliveries purchases={supplier.purchases || []} />
           </TabsContent>
 
           <TabsContent value="reviews" className="m-0 focus-visible:outline-none">
-            <SupplierReviews reviews={supplier.reviews} />
+            <SupplierReviews
+              reviews={supplier.reviews}
+              avgRating={supplier.avgRating}
+              reviewCount={supplier.reviewCount}
+              ratingCounts={supplier.ratingCounts || []}
+            />
           </TabsContent>
 
           <TabsContent value="info" className="m-0 focus-visible:outline-none">

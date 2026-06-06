@@ -75,8 +75,11 @@ export type DashboardData = {
   periodLabel: string;
 };
 
-export async function getDashboardData(timeframe: string = "month"): Promise<DashboardData> {
+export async function getDashboardData(
+  timeframe: string = "month",
+): Promise<DashboardData> {
   const auth = await getServerAuth();
+
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
   }
@@ -146,24 +149,40 @@ export async function getDashboardData(timeframe: string = "month"): Promise<Das
     },
     include: {
       items: true,
-    }
+    },
   });
 
   // Basic Stats Calculation
-  const currentRevenue = currentTransactions.reduce((acc, t) => acc + Number(t.finalTotal), 0);
-  const previousRevenue = previousTransactions.reduce((acc, t) => acc + Number(t.finalTotal), 0);
+  const currentRevenue = currentTransactions.reduce(
+    (acc, t) => acc + Number(t.finalTotal),
+    0,
+  );
+  const previousRevenue = previousTransactions.reduce(
+    (acc, t) => acc + Number(t.finalTotal),
+    0,
+  );
 
   const currentSalesCount = currentTransactions.length;
   const previousSalesCount = previousTransactions.length;
 
-  const currentAvgRevenue = currentSalesCount > 0 ? currentRevenue / currentSalesCount : 0;
-  const previousAvgRevenue = previousSalesCount > 0 ? previousRevenue / previousSalesCount : 0;
+  const currentAvgRevenue =
+    currentSalesCount > 0 ? currentRevenue / currentSalesCount : 0;
+  const previousAvgRevenue =
+    previousSalesCount > 0 ? previousRevenue / previousSalesCount : 0;
 
-  const currentTotalItems = currentTransactions.reduce((acc, t) => acc + t.items.reduce((sum, item) => sum + item.quantity, 0), 0);
-  const previousTotalItems = previousTransactions.reduce((acc, t) => acc + t.items.reduce((sum, item) => sum + item.quantity, 0), 0);
+  const currentTotalItems = currentTransactions.reduce(
+    (acc, t) => acc + t.items.reduce((sum, item) => sum + item.quantity, 0),
+    0,
+  );
+  const previousTotalItems = previousTransactions.reduce(
+    (acc, t) => acc + t.items.reduce((sum, item) => sum + item.quantity, 0),
+    0,
+  );
 
-  const currentAvgItemsPerOrder = currentSalesCount > 0 ? currentTotalItems / currentSalesCount : 0;
-  const previousAvgItemsPerOrder = previousSalesCount > 0 ? previousTotalItems / previousSalesCount : 0;
+  const currentAvgItemsPerOrder =
+    currentSalesCount > 0 ? currentTotalItems / currentSalesCount : 0;
+  const previousAvgItemsPerOrder =
+    previousSalesCount > 0 ? previousTotalItems / previousSalesCount : 0;
 
   const calculateChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
@@ -172,16 +191,21 @@ export async function getDashboardData(timeframe: string = "month"): Promise<Das
 
   // Popular Products (by units sold)
   const productSalesMap = new Map<string, { name: string; sales: number }>();
-  currentTransactions.forEach(t => {
-    t.items.forEach(item => {
-      const existing = productSalesMap.get(item.variantId) || { name: `${item.productName} ${item.variantName}`, sales: 0 };
+  currentTransactions.forEach((t) => {
+    t.items.forEach((item) => {
+      const existing = productSalesMap.get(item.variantId) || {
+        name: `${item.productName} ${item.variantName}`,
+        sales: 0,
+      };
       existing.sales += item.quantity;
       productSalesMap.set(item.variantId, existing);
     });
   });
 
   const colors = ["#F97316", "#A855F7", "#3B82F6", "#22C55E", "#EAB308"];
-  const popularProducts: PopularProduct[] = Array.from(productSalesMap.entries())
+  const popularProducts: PopularProduct[] = Array.from(
+    productSalesMap.entries(),
+  )
     .map(([id, data], index) => ({
       id,
       name: data.name,
@@ -194,38 +218,53 @@ export async function getDashboardData(timeframe: string = "month"): Promise<Das
   // Chart Data preparation
   const intervalDays = eachDayOfInterval({
     start: currentStart,
-    end: currentEnd < now ? currentEnd : now
+    end: currentEnd < now ? currentEnd : now,
   });
 
-  const chartData: ChartDataPoint[] = intervalDays.map(day => {
+  const chartData: ChartDataPoint[] = intervalDays.map((day) => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter(t => isSameDay(t.createdAt, day));
+    const dayTransactions = currentTransactions.filter((t) =>
+      isSameDay(t.createdAt, day),
+    );
 
     // For comparison in charts
     let prevDay: Date;
-    if (timeframe === "week") prevDay = subMonths(day, 1); // Mocked match for simplicity
+    if (timeframe === "week")
+      prevDay = subMonths(day, 1); // Mocked match for simplicity
     else if (timeframe === "year") prevDay = subMonths(day, 12);
     else prevDay = subMonths(day, 1);
 
-    const prevDayTransactions = previousTransactions.filter(t => isSameDay(t.createdAt, prevDay));
+    const prevDayTransactions = previousTransactions.filter((t) =>
+      isSameDay(t.createdAt, prevDay),
+    );
 
     return {
       date: dayStr,
-      current: dayTransactions.reduce((acc, t) => acc + Number(t.finalTotal), 0),
-      previous: prevDayTransactions.reduce((acc, t) => acc + Number(t.finalTotal), 0),
+      current: dayTransactions.reduce(
+        (acc, t) => acc + Number(t.finalTotal),
+        0,
+      ),
+      previous: prevDayTransactions.reduce(
+        (acc, t) => acc + Number(t.finalTotal),
+        0,
+      ),
     };
   });
 
-  const averageSalesChartData: ChartDataPoint[] = intervalDays.map(day => {
+  const averageSalesChartData: ChartDataPoint[] = intervalDays.map((day) => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter(t => isSameDay(t.createdAt, day));
+    const dayTransactions = currentTransactions.filter((t) =>
+      isSameDay(t.createdAt, day),
+    );
 
     let prevDay: Date;
     if (timeframe === "week") prevDay = subMonths(day, 1);
     else if (timeframe === "year") prevDay = subMonths(day, 12);
     else prevDay = subMonths(day, 1);
 
-    const prevDayTransactions = previousTransactions.filter(t => isSameDay(t.createdAt, prevDay));
+    const prevDayTransactions = previousTransactions.filter((t) =>
+      isSameDay(t.createdAt, prevDay),
+    );
 
     return {
       date: dayStr,
@@ -234,30 +273,44 @@ export async function getDashboardData(timeframe: string = "month"): Promise<Das
     };
   });
 
-  const avgOrderValueChartData: ChartDataPoint[] = intervalDays.map(day => {
+  const avgOrderValueChartData: ChartDataPoint[] = intervalDays.map((day) => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter(t => isSameDay(t.createdAt, day));
+    const dayTransactions = currentTransactions.filter((t) =>
+      isSameDay(t.createdAt, day),
+    );
 
     let prevDay: Date;
     if (timeframe === "week") prevDay = subMonths(day, 1);
     else if (timeframe === "year") prevDay = subMonths(day, 12);
     else prevDay = subMonths(day, 1);
 
-    const prevDayTransactions = previousTransactions.filter(t => isSameDay(t.createdAt, prevDay));
+    const prevDayTransactions = previousTransactions.filter((t) =>
+      isSameDay(t.createdAt, prevDay),
+    );
 
-    const currentDayRev = dayTransactions.reduce((acc, t) => acc + Number(t.finalTotal), 0);
-    const prevDayRev = prevDayTransactions.reduce((acc, t) => acc + Number(t.finalTotal), 0);
+    const currentDayRev = dayTransactions.reduce(
+      (acc, t) => acc + Number(t.finalTotal),
+      0,
+    );
+    const prevDayRev = prevDayTransactions.reduce(
+      (acc, t) => acc + Number(t.finalTotal),
+      0,
+    );
 
     return {
       date: dayStr,
-      current: dayTransactions.length > 0 ? currentDayRev / dayTransactions.length : 0,
-      previous: prevDayTransactions.length > 0 ? prevDayRev / prevDayTransactions.length : 0,
+      current:
+        dayTransactions.length > 0 ? currentDayRev / dayTransactions.length : 0,
+      previous:
+        prevDayTransactions.length > 0
+          ? prevDayRev / prevDayTransactions.length
+          : 0,
     };
   });
 
   // Real session data or zero if not tracked
   // For now we don't have a sessions table, so we use 0 instead of random mocks
-  const totalSessionsChartData: ChartDataPoint[] = intervalDays.map(day => ({
+  const totalSessionsChartData: ChartDataPoint[] = intervalDays.map((day) => ({
     date: format(day, "MMM dd"),
     current: 0,
     previous: 0,
@@ -279,7 +332,10 @@ export async function getDashboardData(timeframe: string = "month"): Promise<Das
       },
       averageOrder: {
         value: currentAvgItemsPerOrder,
-        change: calculateChange(currentAvgItemsPerOrder, previousAvgItemsPerOrder),
+        change: calculateChange(
+          currentAvgItemsPerOrder,
+          previousAvgItemsPerOrder,
+        ),
       },
     },
     totalRevenue: {

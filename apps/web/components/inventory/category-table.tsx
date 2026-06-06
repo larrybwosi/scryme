@@ -16,10 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, Tag } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Tag, ChevronDown, ChevronRight } from "lucide-react";
 import { deleteCategory } from "../../app/actions/inventory";
 import { toast } from "sonner";
-import { CategorySheet } from "./category-sheet";
+import { CategoryDialog } from "./category-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +38,17 @@ interface CategoryTableProps {
 export function CategoryTable({ data }: CategoryTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    const newExpanded = new Set(expandedIds);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedIds(newExpanded);
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -71,56 +82,121 @@ export function CategoryTable({ data }: CategoryTableProps) {
             </TableRow>
           ) : (
             data.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white"
-                      style={{ backgroundColor: category.color || "#000" }}
-                    >
-                      <Tag size={14} />
-                    </div>
-                    <span className="font-medium text-sm">{category.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-sm text-gray-500 max-w-[300px] truncate">
-                  {category.description || "-"}
-                </TableCell>
-                <TableCell className="text-sm text-gray-500">
-                  {category._count?.products || 0} products
-                </TableCell>
-                <TableCell className="text-sm text-gray-500">
-                  {new Date(category.createdAt).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditingCategory(category)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        <span>Edit Category</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
-                        onClick={() => setDeletingId(category.id)}
+              <React.Fragment key={category.id}>
+                <TableRow>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 flex items-center justify-center">
+                        {category.subcategories?.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 p-0"
+                            onClick={() => toggleExpand(category.id)}
+                          >
+                            {expandedIds.has(category.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0"
+                        style={{ backgroundColor: category.color || "#000" }}
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Delete Category</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+                        <Tag size={14} />
+                      </div>
+                      <span className="font-medium text-sm">{category.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500 max-w-[300px] truncate">
+                    {category.description || "-"}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">
+                    {category._count?.products || 0} products
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">
+                    {new Date(category.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingCategory(category)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          <span>Edit Category</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => setDeletingId(category.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete Category</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+                {expandedIds.has(category.id) &&
+                  category.subcategories?.map((sub: any) => (
+                    <TableRow key={sub.id} className="bg-gray-50/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3 pl-12">
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0"
+                            style={{ backgroundColor: sub.color || "#666" }}
+                          >
+                            <Tag size={10} />
+                          </div>
+                          <span className="text-sm">{sub.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs text-gray-400 max-w-[300px] truncate italic">
+                        {sub.description || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {sub._count?.products || 0} products
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {new Date(sub.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditingCategory(sub)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit Category</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => setDeletingId(sub.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete Category</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </React.Fragment>
             ))
           )}
         </TableBody>
       </Table>
 
-      <CategorySheet
+      <CategoryDialog
         category={editingCategory}
         isOpen={!!editingCategory}
         onOpenChange={(open) => !open && setEditingCategory(null)}
