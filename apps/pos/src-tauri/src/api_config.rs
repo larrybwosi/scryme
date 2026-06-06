@@ -6,7 +6,7 @@ pub mod routes {
     pub const LOGIN: &str = "pos/login";
     pub const ME: &str = "pos/me";
     pub const CHECK_OUT: &str = "pos/check-out";
-    pub const LOCATIONS: &str = "pos/locations"; // Note: V3 might have locations elsewhere or same, but PosController doesn't have it.
+    pub const LOCATIONS: &str = "api/v2/pos/locations"; // Kept v2 for now as V3 doesn't have it in PosController
     pub const ABLY_AUTH: &str = "pos/ably-auth";
     pub const MPESA_INITIATE: &str = "payments/mpesa/stkpush";
 
@@ -26,11 +26,16 @@ pub mod routes {
 
     // --- Sales & Transactions ---
     pub const SALE_PROCESS: &str = "pos/sale";
+    pub const SALE_PAYMENTS: &str = "pos/sale/payments";
     pub const TRANSACTIONS: &str = "pos/transactions";
     pub const TRANSACTION_SCAN: &str = "pos/transaction/scan";
 
     // --- Sync ---
     pub const SYNC: &str = "pos/sync";
+    pub const PRICING_SYNC: &str = "pos/pricing/sync";
+
+    // --- Products & Pricing ---
+    pub const PRICING: &str = "pos/pricing";
 
     // --- Finance ---
     pub const PETTY_CASH: &str = "pos/petty-cash";

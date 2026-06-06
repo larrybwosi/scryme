@@ -305,7 +305,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         await invoke('set_device_config', {
           baseUrl: API_ENDPOINT,
           orgSlug,
-          locationId: location.id,
+          locationId: location?.id || '',
           deviceKey: apiKey,
         });
 

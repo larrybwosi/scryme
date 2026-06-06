@@ -211,10 +211,10 @@ pub async fn run_sync(
 ) -> Result<String> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let (base_url, device_key) = {
+    let (base_url, org_slug, device_key) = {
         let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
         let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
+        (config.base_url.clone(), config.org_slug.clone(), config.device_key.clone())
     };
 
     let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
@@ -223,15 +223,15 @@ pub async fn run_sync(
         .fetch_optional(&pool).await.map_err(|e| anyhow::anyhow!(e))?.map(|r| r.get("last_sync"));
 
     let target_url = if last_sync.is_some() {
-        format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::PRICING_SYNC)
+        format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::PRICING_SYNC)
     } else {
-        format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::PRICING)
+        format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::PRICING)
     };
 
     let mut headers = HeaderMap::new();
     headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| anyhow::anyhow!(e))?);
     if let Some(token) = member_token {
-        headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token).map_err(|e| anyhow::anyhow!(e))?);
+        headers.insert("Authorization", HeaderValue::from_str(&format!("Bearer {}", token)).map_err(|e| anyhow::anyhow!(e))?);
     }
 
     let client = reqwest::Client::builder().default_headers(headers).timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS)).build().map_err(|e| anyhow::anyhow!(e))?;

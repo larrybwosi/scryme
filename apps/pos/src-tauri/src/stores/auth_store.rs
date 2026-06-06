@@ -205,6 +205,12 @@ impl AuthState {
 
         let full_url = if path.starts_with("http") {
             path.to_string()
+        } else if path.starts_with("api/v2") {
+            format!(
+                "{}/{}",
+                base_url.trim_end_matches('/'),
+                path.trim_start_matches('/')
+            )
         } else if let Some(slug) = org_slug {
             format!(
                 "{}/api/v3/{}/{}",

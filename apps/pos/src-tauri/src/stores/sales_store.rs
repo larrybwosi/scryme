@@ -719,8 +719,8 @@ pub async fn record_payment_command(
     auth_state: State<'_, AuthState>,
     payload: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-    let url_path = crate::api_config::routes::SALE_PAYMENTS.to_string();
-    let res = auth_state.build_request(reqwest::Method::POST, &url_path)?.json(&payload).send().await.map_err(|e| e.to_string())?;
+    let url_path = crate::api_config::routes::SALE_PAYMENTS;
+    let res = auth_state.build_request(reqwest::Method::POST, url_path)?.json(&payload).send().await.map_err(|e| e.to_string())?;
 
     if !res.status().is_success() {
         return Err(format!("Payment recording failed: {} - {}", res.status(), res.text().await.unwrap_or_default()));

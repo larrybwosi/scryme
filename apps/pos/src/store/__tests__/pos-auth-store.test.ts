@@ -58,15 +58,17 @@ describe('PosAuthStore', () => {
     mockInvoke.mockResolvedValueOnce({});
 
     const location = { id: 'loc-1', name: 'Test' } as any;
-    await useAuthStore.getState().registerDevice('test-key', location);
+    await useAuthStore.getState().registerDevice('slug-1', 'test-key', location);
 
     expect(mockInvoke).toHaveBeenCalledWith(
       'set_device_config',
       expect.objectContaining({
+        orgSlug: 'slug-1',
         deviceKey: 'test-key',
         locationId: 'loc-1',
       })
     );
     expect(useAuthStore.getState().isConfigured).toBe(true);
+    expect(useAuthStore.getState().orgSlug).toBe('slug-1');
   });
 });
