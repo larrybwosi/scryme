@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { realtimeService } from "@repo/shared";
 import type { V2ApiContext } from "@repo/shared/server";
 import { paginate } from "../../v3/common/utils/pagination";
 
@@ -47,10 +48,14 @@ export class InventoryService {
         {
           /**
            * ⚡ Bolt: Performance Optimization
-           * Use nested select to prune heavy relation fields while keeping the parent model intact.
-           * This pattern prevents regressions while reducing the data load from relations.
+           * Use targeted select instead of include to fetch only essential scalar fields and relations.
+           * This reduces database payload size and serialization overhead.
            */
-          include: {
+          select: {
+            id: true,
+            availableStock: true,
+            reorderPoint: true,
+            reorderQty: true,
             variant: {
               select: {
                 id: true,
@@ -63,8 +68,6 @@ export class InventoryService {
                     name: true,
                   },
                 },
-                baseUnit: true,
-                baseOrgUnit: true,
               },
             },
             location: {
@@ -252,8 +255,29 @@ export class InventoryService {
         newStock,
         adjustment: quantity,
         logId: movement.id,
+        productId,
+        variantId,
+        locationId,
       };
     });
+  }
+
+  async adjustStockAndPublish(data: any) {
+    const result = await this.adjustStock(data);
+
+    // Publish update
+    await realtimeService.publish(
+      `organization:${data.organizationId}:inventory`,
+      "stock-update",
+      {
+        productId: result.productId,
+        variantId: result.variantId,
+        locationId: result.locationId,
+        newStock: result.newStock,
+      },
+    );
+
+    return result;
   }
 
   async getLocations(ctx: V2ApiContext) {

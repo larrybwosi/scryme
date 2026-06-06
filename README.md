@@ -8,40 +8,44 @@ Scryme is built as a monorepo using [Turborepo](https://turbo.build/), ensuring 
 
 ### 📱 Applications
 
-- **Scryme Web (ERP Dashboard)**: A powerful [Next.js](https://nextjs.org/) web application for back-office management. Business owners can manage inventory, view analytics, handle supplier relationships, and configure system-wide settings.
-- **Scryme POS (Point of Sale)**: A high-performance, offline-first desktop application built with [Tauri](https://tauri.app/) and [React](https://react.dev/). Optimized for fast sales processing, peripheral support (printers, scanners), and resilient operations.
-- **Scryme API**: A robust [NestJS](https://nestjs.com/) REST API that serves as the backbone of the platform, handling business logic, authentication, and data persistence.
+- **[Scryme Web](./apps/web)**: A powerful [Next.js](https://nextjs.org/) web application for back-office management. Business owners can manage inventory, view analytics, handle supplier relationships, and configure system-wide settings.
+- **[Scryme API](./apps/api)**: A robust [NestJS](https://nestjs.com/) REST API that serves as the backbone of the platform, handling business logic, authentication, and data persistence.
+- **[Scryme CRM](./apps/crm)**: Specialized application for managing customer relationships, loyalty programs, and automated marketing workflows.
+- **[Scryme POS](./apps/pos)**: A high-performance, offline-first desktop application built with [Tauri](https://tauri.app/) and [React](https://react.dev/). Optimized for fast sales processing and peripheral support.
+- **[Scryme Bakery](./apps/bakery)**: A dedicated Tauri desktop application for managing bakery production, recipes, and specialized inventory.
 
 ### 📦 Core Modules
 
-- **Inventory & Stock Management**: Real-time tracking across multiple locations, support for product variants, batch tracking, and low-stock alerts.
-- **Customer Relationship Management (CRM)**: Comprehensive customer profiles, purchase history tracking, and loyalty program management.
-- **Supplier & Procurement**: Manage supplier relationships, track purchase orders, and streamline inventory replenishment.
-- **Financial Integrations**: Native support for **M-Pesa** and other payment methods to ensure smooth transaction flows.
-- **Analytics & Reporting**: Detailed insights into sales performance, revenue trends, and operational efficiency.
+- **Inventory & Stock Management**: Real-time tracking, variant support, batch tracking, and low-stock alerts.
+- **CRM & Loyalty**: Comprehensive profiles, purchase history, and reward management.
+- **Supplier & Procurement**: Manage relationships, track purchase orders, and streamline replenishment.
+- **Financial Integrations**: Support for **M-Pesa** and other payment gateways.
+- **Analytics & Reporting**: Detailed insights into sales performance and operational efficiency.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Monorepo Management**: [Turborepo](https://turbo.build/)
-- **Frontend**: [Next.js](https://nextjs.org/), [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/)
-- **Desktop**: [Tauri](https://tauri.app/) (Rust + React)
+- **Frontend**: [Next.js](https://nextjs.org/), [React](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/)
+- **Desktop**: [Tauri v2](https://tauri.app/) (Rust + React)
 - **Backend**: [NestJS](https://nestjs.com/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) with [Prisma ORM](https://prisma.io/)
+- **Realtime**: [Ably](https://ably.com/)
+- **Auth**: [Zitadel](https://zitadel.com/)
 - **Package Management**: [pnpm](https://pnpm.io/)
 - **Containerization**: [Docker Compose](https://docs.docker.com/compose/)
 
 ---
 
-## 🏁 Getting Started
+## 🏁 Getting Started (Development)
 
 ### Prerequisites
 
-- **Node.js** (v18 or later)
+- **Node.js** (v22 or later)
 - **pnpm** (v9+)
 - **Docker** and **Docker Compose**
-- **Rust** (for building Scryme POS)
+- **Rust** (v1.75+ for building POS and Bakery apps)
 
 ### Setup Guide
 
@@ -56,18 +60,18 @@ Scryme is built as a monorepo using [Turborepo](https://turbo.build/), ensuring 
    pnpm install
    ```
 
-3. **Start the Infrastructure**
-   Scryme uses Docker Compose to manage the PostgreSQL database.
+3. **Start Infrastructure**
+   Scryme uses Docker Compose for local development (DB, Redis, RabbitMQ).
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 4. **Environment Configuration**
-   Copy `.env.example` to the relevant packages:
+   Copy `.env.example` to the relevant apps:
    ```bash
-   cp .env.example ./packages/db/.env
-   cp .env.example ./apps/api/.env
-   cp .env.example ./apps/web/.env
+   cp .env.example .env # Root env
+   cp apps/api/.env.example apps/api/.env
+   # Repeat for other apps as needed
    ```
 
 5. **Database Migration & Seeding**
@@ -80,32 +84,56 @@ Scryme is built as a monorepo using [Turborepo](https://turbo.build/), ensuring 
    ```bash
    pnpm run dev
    ```
+   This will start all applications in development mode.
+
+---
+
+## 🚢 Deployment
+
+For production deployments, we support Docker-based setups for web services and native builds for desktop applications.
+
+### Web & API (Docker)
+We provide a production-ready Docker Compose configuration. Refer to the [Deployment Guide](./apps/api/README.md#deployment) for more details.
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Desktop Apps (Tauri)
+To build the POS or Bakery applications for distribution:
+```bash
+cd apps/pos # or apps/bakery
+pnpm tauri build
+```
+
+---
 
 ## 🏗️ Monorepo Structure
 
 ```text
 ├── apps/
 │   ├── api/          # NestJS REST API
-│   ├── pos/          # Tauri Desktop POS application
-│   └── web/          # Next.js ERP Dashboard
+│   ├── bakery/       # Bakery management desktop app
+│   ├── crm/          # CRM web application
+│   ├── pos/          # Point of Sale desktop app
+│   └── web/          # ERP Dashboard web app
 ├── packages/
 │   ├── auth/         # Shared authentication logic
-│   ├── crm/          # Customer management logic
 │   ├── db/           # Prisma schema and client
-│   ├── mpesa/        # M-Pesa integration services
-│   ├── shared/       # Common utilities and types
+│   ├── sdk/          # Unified TypeScript SDK
 │   ├── ui/           # Shared React component library
-│   └── ...           # Additional domain-specific packages
+│   └── ...           # Domain-specific shared packages
 ```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please check out our [Contributing Guidelines](./CONTRIBUTING.md) (if available) or simply open a Pull Request.
 
 ---
 
 ## 📄 License
 
-This project's licensing information can be found in the respective application directories.
-
-## 📞 Support
-
-For enterprise inquiries or technical support, please contact the Scryme team.
+Individual applications may have different licenses. Please refer to the `README.md` in each app directory.
 
 _Built for efficiency. Scaled for growth._

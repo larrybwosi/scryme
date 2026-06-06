@@ -8,7 +8,7 @@ import { ConnectionStatusBanner } from "@/components/connection-status-banner"
 import { Toaster } from "sonner"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { UpdaterProvider } from "@/lib/providers/UpdateProvider"
-import AblyInitializer from "@/lib/providers/AblyProvider"
+import RealtimeInitializer from "@/lib/providers/RealtimeProvider"
 import { ServerNotificationProvider } from "@/lib/providers/ServerNotificationProvider"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -101,7 +101,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <AblyInitializer/>
+      <RealtimeInitializer/>
       <NotificationToast />
       <ConnectionStatusBanner />
       <QueryClientProvider client={queryClient}>
