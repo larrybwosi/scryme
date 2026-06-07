@@ -33,12 +33,15 @@ import {
   TableHeader,
   TableRow
 } from '@repo/ui/components/ui/table';
+import { submitCampaignForApproval, approveCampaign, rejectCampaign } from '../../actions';
+import { toast } from 'sonner';
 
 interface CampaignAnalyticsViewProps {
   campaign: any;
+  memberId: string;
 }
 
-export function CampaignAnalyticsView({ campaign }: CampaignAnalyticsViewProps) {
+export function CampaignAnalyticsView({ campaign, memberId }: CampaignAnalyticsViewProps) {
   const router = useRouter();
 
   if (!campaign) return <div>Campaign not found</div>;
@@ -65,6 +68,33 @@ export function CampaignAnalyticsView({ campaign }: CampaignAnalyticsViewProps) 
           </div>
         </div>
         <div className="flex gap-3">
+          {campaign.status === 'DRAFT' && (
+            <Button variant="outline" onClick={async () => {
+              await submitCampaignForApproval(campaign.id);
+              toast.success('Campaign submitted for approval');
+              router.refresh();
+            }}>
+              Submit for Approval
+            </Button>
+          )}
+          {campaign.status === 'PENDING_APPROVAL' && (
+            <div className="flex gap-2">
+               <Button variant="outline" className="text-red-600" onClick={async () => {
+                  await rejectCampaign(campaign.id);
+                  toast.success('Campaign rejected');
+                  router.refresh();
+               }}>
+                 Reject
+               </Button>
+               <Button className="bg-green-600 hover:bg-green-700" onClick={async () => {
+                  await approveCampaign(campaign.id, memberId);
+                  toast.success('Campaign approved');
+                  router.refresh();
+               }}>
+                 Approve
+               </Button>
+            </div>
+          )}
           <Button variant="outline">Edit Campaign</Button>
           <Button className="bg-blue-600 hover:bg-blue-700">Export Report</Button>
         </div>

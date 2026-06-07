@@ -28,17 +28,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { getWorkflows, updateWorkflow } from '../../../app/actions/campaigns';
+import { getWorkflows, updateWorkflow } from '@/app/actions/campaigns';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { WorkflowForm } from './workflow-form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@repo/ui/components/ui/dialog';
+import { useRouter } from 'next/navigation';
 
 interface WorkflowsViewProps {
   organizationId: string;
 }
 
 export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
+  const router = useRouter();
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchWorkflows();
@@ -74,9 +85,25 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
           <h1 className="text-3xl font-bold tracking-tight">Automation Workflows</h1>
           <p className="text-muted-foreground">Build visual customer journeys and automated sequences.</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Create Workflow
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Create Workflow
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Workflow</DialogTitle>
+            </DialogHeader>
+            <WorkflowForm
+              organizationId={organizationId}
+              onSuccess={(id: string) => {
+                setIsDialogOpen(false);
+                router.push(`/campaigns/workflows/${id}`);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

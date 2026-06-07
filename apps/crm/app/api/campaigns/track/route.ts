@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { trackCampaignEvent } from '../../../../actions/campaigns';
+import { trackCampaignEvent } from '../../../../app/actions/campaigns';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

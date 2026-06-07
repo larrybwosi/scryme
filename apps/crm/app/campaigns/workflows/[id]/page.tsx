@@ -1,16 +1,17 @@
 import { WorkflowEditor } from './_components/workflow-editor';
-import { OrgProvider } from '../../../../components/org-context';
-import { getOrganizationContext } from '../../../actions/auth';
-import { getCampaign } from '../../../actions/campaigns';
+import { OrgProvider } from '@/components/org-context';
+import { getOrganizationContext } from '@/app/actions/auth';
+import { getWorkflow } from '@/app/actions/workflows';
 
-export default async function WorkflowEditorPage({ params }: { params: { id: string } }) {
+export default async function WorkflowEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const context = (await getOrganizationContext())!;
   const { organizationId } = context;
   const { id } = await params;
+  const workflow = await getWorkflow(id);
 
   return (
     <OrgProvider organizationId={organizationId || 'default-org-id'}>
-      <WorkflowEditor workflowId={id} organizationId={organizationId} />
+      <WorkflowEditor workflow={workflow} organizationId={organizationId} />
     </OrgProvider>
   );
 }

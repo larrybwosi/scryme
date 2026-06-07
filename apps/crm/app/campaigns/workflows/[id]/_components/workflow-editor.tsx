@@ -37,6 +37,16 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { updateWorkflow } from '@/app/actions/campaigns';
+import { Input } from '@repo/ui/components/ui/input';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@repo/ui/components/ui/select';
 
 // Custom Node Components
 const TriggerNode = ({ data }: any) => (
@@ -88,42 +98,56 @@ const nodeTypes = {
   delay: DelayNode,
 };
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'trigger',
-    data: { label: 'New Customer Created', description: 'Triggers when a new customer is added to CRM' },
-    position: { x: 250, y: 50 },
-  },
-];
-
-const initialEdges: Edge[] = [];
-
 interface WorkflowEditorProps {
-  workflowId: string;
+  workflow: any;
   organizationId: string;
 }
 
-export function WorkflowEditor({ workflowId, organizationId }: WorkflowEditorProps) {
+export function WorkflowEditor({ workflow, organizationId }: WorkflowEditorProps) {
   const router = useRouter();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(workflow?.nodes || []);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(workflow?.edges || []);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNode(null);
+  }, []);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
-  const onSave = useCallback(() => {
-    toast.success('Workflow saved successfully');
-  }, [nodes, edges]);
+  const onSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const result = await updateWorkflow(workflow.id, {
+        nodes: nodes as any,
+        edges: edges as any,
+      });
+      if (result.success) {
+        toast.success('Workflow saved successfully');
+      } else {
+        toast.error('Failed to save workflow');
+      }
+    } catch (error) {
+      toast.error('Error saving workflow');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [workflow.id, nodes, edges]);
 
   const addAction = (type: string, label: string) => {
     const newNode: Node = {
       id: `${nodes.length + 1}`,
       type: 'action',
       data: { type, label },
-      position: { x: 250, y: nodes[nodes.length - 1].position.y + 150 },
+      position: { x: 250, y: nodes.length > 0 ? nodes[nodes.length - 1].position.y + 150 : 150 },
     };
     setNodes((nds) => nds.concat(newNode));
   };
@@ -133,7 +157,7 @@ export function WorkflowEditor({ workflowId, organizationId }: WorkflowEditorPro
       id: `${nodes.length + 1}`,
       type: 'delay',
       data: { duration: '2 Days' },
-      position: { x: 250, y: nodes[nodes.length - 1].position.y + 150 },
+      position: { x: 250, y: nodes.length > 0 ? nodes[nodes.length - 1].position.y + 150 : 150 },
     };
     setNodes((nds) => nds.concat(newNode));
   };
@@ -146,15 +170,22 @@ export function WorkflowEditor({ workflowId, organizationId }: WorkflowEditorPro
             <ChevronLeft size={20} />
           </Button>
           <div>
-            <h1 className="font-bold text-lg">Welcome Sequence Workflow</h1>
-            <p className="text-xs text-muted-foreground italic">Draft • Last saved 2 minutes ago</p>
+            <h1 className="font-bold text-lg">{workflow.name}</h1>
+            <p className="text-xs text-muted-foreground italic">Draft • Last saved moments ago</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={onSave}>
-            <Save className="mr-2 h-4 w-4" /> Save Draft
+          <Button variant="outline" onClick={onSave} disabled={isSaving}>
+            <Save className="mr-2 h-4 w-4" /> {isSaving ? 'Saving...' : 'Save Draft'}
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={async () => {
+               await onSave();
+               await updateWorkflow(workflow.id, { isActive: true });
+               toast.success('Workflow published!');
+            }}
+          >
             <Play className="mr-2 h-4 w-4" /> Publish Workflow
           </Button>
         </div>
@@ -167,6 +198,8 @@ export function WorkflowEditor({ workflowId, organizationId }: WorkflowEditorPro
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           fitView
         >
@@ -223,6 +256,66 @@ export function WorkflowEditor({ workflowId, organizationId }: WorkflowEditorPro
               </p>
             </div>
           </Panel>
+
+          {selectedNode && (
+            <Panel position="bottom-right" className="bg-white p-4 rounded-xl border shadow-2xl w-80 mb-4 mr-4">
+               <h3 className="text-sm font-bold border-b pb-2 mb-3">Node Properties</h3>
+               <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-slate-400">Label</label>
+                    <Input
+                      value={selectedNode.data.label as string}
+                      onChange={(e: any) => {
+                        const newLabel = e.target.value;
+                        setNodes(nds => nds.map(n => n.id === selectedNode.id ? { ...n, data: { ...n.data, label: newLabel } } : n));
+                        setSelectedNode(prev => prev ? { ...prev, data: { ...prev.data, label: newLabel } } : null);
+                      }}
+                      className="mt-1 h-8 text-xs"
+                    />
+                  </div>
+
+                  {selectedNode.type === 'action' && (
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Message Content</label>
+                      <Textarea
+                        placeholder="Enter email/sms content..."
+                        className="mt-1 text-xs"
+                        rows={5}
+                        value={(selectedNode.data.content as string) || ''}
+                        onChange={(e: any) => {
+                          const newContent = e.target.value;
+                          setNodes(nds => nds.map(n => n.id === selectedNode.id ? { ...n, data: { ...n.data, content: newContent } } : n));
+                          setSelectedNode(prev => prev ? { ...prev, data: { ...prev.data, content: newContent } } : null);
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {selectedNode.type === 'delay' && (
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Duration</label>
+                      <Select
+                        value={selectedNode.data.duration as string}
+                        onValueChange={(val: string) => {
+                           setNodes(nds => nds.map(n => n.id === selectedNode.id ? { ...n, data: { ...n.data, duration: val } } : n));
+                           setSelectedNode(prev => prev ? { ...prev, data: { ...prev.data, duration: val } } : null);
+                        }}
+                      >
+                         <SelectTrigger className="h-8 text-xs mt-1">
+                           <SelectValue placeholder="Select duration" />
+                         </SelectTrigger>
+                         <SelectContent>
+                            <SelectItem value="1 Hour">1 Hour</SelectItem>
+                            <SelectItem value="1 Day">1 Day</SelectItem>
+                            <SelectItem value="2 Days">2 Days</SelectItem>
+                            <SelectItem value="1 Week">1 Week</SelectItem>
+                         </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+               </div>
+            </Panel>
+          )}
         </ReactFlow>
       </div>
     </div>

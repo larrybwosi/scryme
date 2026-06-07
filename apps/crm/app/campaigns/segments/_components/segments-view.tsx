@@ -27,7 +27,15 @@ import {
   TableHeader,
   TableRow
 } from '@repo/ui/components/ui/table';
-import { getSegments } from '../../../app/actions/campaigns';
+import { getSegments } from '@/app/actions/campaigns';
+import { SegmentForm } from './segment-form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@repo/ui/components/ui/dialog';
 
 interface SegmentsViewProps {
   organizationId: string;
@@ -36,6 +44,7 @@ interface SegmentsViewProps {
 export function SegmentsView({ organizationId }: SegmentsViewProps) {
   const [segments, setSegments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchSegments();
@@ -59,9 +68,25 @@ export function SegmentsView({ organizationId }: SegmentsViewProps) {
           <h1 className="text-3xl font-bold tracking-tight">Audience Segments</h1>
           <p className="text-muted-foreground">Group your customers based on behavior, attributes, and custom fields.</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Create Segment
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Create Segment
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Segment</DialogTitle>
+            </DialogHeader>
+            <SegmentForm
+              organizationId={organizationId}
+              onSuccess={() => {
+                setIsDialogOpen(false);
+                fetchSegments();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex items-center space-x-2">

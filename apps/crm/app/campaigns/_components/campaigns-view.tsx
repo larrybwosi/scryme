@@ -45,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { getCampaigns } from '../../app/actions/campaigns';
+import { getCampaigns } from '../../actions/campaigns';
 import { CampaignForm } from './campaign-form';
 import Link from 'next/link';
 import {
@@ -163,7 +163,7 @@ export function CampaignsView({ organizationId, memberId }: CampaignsViewProps) 
             placeholder="Search campaigns..."
             className="pl-8"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: any) => setSearchQuery(e.target.value)}
           />
         </div>
         <Button variant="outline">Filters</Button>

@@ -62,7 +62,7 @@ export function CampaignForm({ organizationId, memberId, onSuccess }: CampaignFo
         <FormField
           control={form.control}
           name="name"
-          render={({ field }) => (
+          render={({ field }: { field: any }) => (
             <FormItem>
               <FormLabel>Campaign Name</FormLabel>
               <FormControl>
@@ -76,7 +76,7 @@ export function CampaignForm({ organizationId, memberId, onSuccess }: CampaignFo
         <FormField
           control={form.control}
           name="description"
-          render={({ field }) => (
+          render={({ field }: { field: any }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
@@ -95,7 +95,7 @@ export function CampaignForm({ organizationId, memberId, onSuccess }: CampaignFo
           <FormField
             control={form.control}
             name="channel"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem>
                 <FormLabel>Channel</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -120,7 +120,7 @@ export function CampaignForm({ organizationId, memberId, onSuccess }: CampaignFo
           <FormField
             control={form.control}
             name="status"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem>
                 <FormLabel>Initial Status</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>

@@ -16,8 +16,16 @@ export async function getOrganizationContext() {
   // We use casting to any to avoid TypeScript errors if the schema isn't perfectly synced
   const organizationId = (session.session as any).activeOrganizationId || (session.user as any).activeOrganizationId;
 
+  const member = await db.member.findFirst({
+    where: {
+      userId: session.user.id,
+      organizationId,
+    }
+  });
+
   return {
     user: session.user,
     organizationId,
+    memberId: member?.id,
   };
 }
