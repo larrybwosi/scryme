@@ -1,11 +1,13 @@
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
-import { WorkflowExecutionEngine } from '../application/services/workflow-engine.service';
+import { WorkflowExecutionEngine } from '../../application/services/workflow-engine.service';
 
-const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redisConnection = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  maxRetriesPerRequest: null,
+});
 
 export const workflowQueue = new Queue('workflow-queue', {
-  connection: redisConnection,
+  connection: redisConnection as any,
 });
 
 export const workflowWorker = new Worker(
@@ -25,5 +27,5 @@ export const workflowWorker = new Worker(
 
     await engine.executeNextNodes(instanceId);
   },
-  { connection: redisConnection }
+  { connection: redisConnection as any }
 );
