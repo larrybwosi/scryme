@@ -5,7 +5,11 @@ import * as argon2 from 'argon2';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { decrypt, encrypt } from '@repo/shared/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET is not defined in environment variables');
+}
 
 export interface DeviceSetupTokenPayload {
   jti: string;
