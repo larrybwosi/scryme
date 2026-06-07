@@ -11,13 +11,14 @@ import {
   PaymentMethod,
   FulfillmentStatus,
   MemberRole,
-  Prisma
+  Prisma,
 } from "@repo/db/client";
 import { Decimal } from "decimal.js";
 
 async function getMember(organizationId: string, userId: string) {
+  console.log(organizationId, userId);
   return await db.member.findUnique({
-    where: { organizationId_userId: { organizationId, userId } }
+    where: { organizationId_userId: { organizationId, userId } },
   });
 }
 
@@ -44,7 +45,12 @@ export async function getTransactions(params: {
   startDate?: Date;
   endDate?: Date;
 }) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   const where: Prisma.TransactionWhereInput = {
     organizationId: auth.organizationId,
@@ -87,12 +93,12 @@ export async function getTransactions(params: {
       location: true,
       member: {
         include: {
-          user: true
-        }
+          user: true,
+        },
       },
       _count: {
-        select: { items: true }
-      }
+        select: { items: true },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -101,7 +107,12 @@ export async function getTransactions(params: {
 }
 
 export async function getTransactionById(id: string) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   return await db.transaction.findUnique({
     where: {
@@ -115,23 +126,23 @@ export async function getTransactionById(id: string) {
         include: {
           variant: {
             include: {
-              product: true
-            }
-          }
-        }
+              product: true,
+            },
+          },
+        },
       },
       payments: true,
       fulfillments: {
         include: {
           items: true,
-          driver: true
-        }
+          driver: true,
+        },
       },
       member: {
         include: {
-          user: true
-        }
-      }
+          user: true,
+        },
+      },
     },
   });
 }
@@ -155,13 +166,22 @@ export async function createTransaction(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const count = await db.transaction.count({
-    where: { organizationId: auth.organizationId }
+    where: { organizationId: auth.organizationId },
   });
-  const number = `TRX-${new Date().getFullYear()}-${(count + 1).toString().padStart(5, '0')}`;
+  const number = `TRX-${new Date().getFullYear()}-${(count + 1).toString().padStart(5, "0")}`;
 
-  const subtotal = data.items.reduce((acc, item) => acc.plus(new Decimal(item.unitPrice).mul(item.quantity)), new Decimal(0));
-  const taxTotal = data.items.reduce((acc, item) => acc.plus(new Decimal(item.taxAmount || 0)), new Decimal(0));
-  const discountTotal = data.items.reduce((acc, item) => acc.plus(new Decimal(item.discountAmount || 0)), new Decimal(0));
+  const subtotal = data.items.reduce(
+    (acc, item) => acc.plus(new Decimal(item.unitPrice).mul(item.quantity)),
+    new Decimal(0),
+  );
+  const taxTotal = data.items.reduce(
+    (acc, item) => acc.plus(new Decimal(item.taxAmount || 0)),
+    new Decimal(0),
+  );
+  const discountTotal = data.items.reduce(
+    (acc, item) => acc.plus(new Decimal(item.discountAmount || 0)),
+    new Decimal(0),
+  );
   const finalTotal = subtotal.plus(taxTotal).minus(discountTotal);
 
   const transaction = await db.transaction.create({
@@ -181,7 +201,7 @@ export async function createTransaction(data: {
       paymentStatus: "UNPAID",
       notes: data.notes,
       items: {
-        create: data.items.map(item => ({
+        create: data.items.map((item) => ({
           variantId: item.variantId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -190,39 +210,45 @@ export async function createTransaction(data: {
           taxAmount: item.taxAmount || 0,
           discountAmount: item.discountAmount || 0,
           subtotal: new Decimal(item.unitPrice).mul(item.quantity),
-          lineTotal: new Decimal(item.unitPrice).mul(item.quantity).plus(item.taxAmount || 0).minus(item.discountAmount || 0),
+          lineTotal: new Decimal(item.unitPrice)
+            .mul(item.quantity)
+            .plus(item.taxAmount || 0)
+            .minus(item.discountAmount || 0),
           productName: "", // These should be fetched or snapshotted properly
           variantName: "",
           sku: "",
           notes: item.notes,
-        }))
-      }
+        })),
+      },
     },
   });
 
   // Snapshot item details (simplified for now, ideally done in the create or a service)
   for (const item of data.items) {
-      const variant = await db.productVariant.findUnique({
-          where: { id: item.variantId },
-          include: { product: true }
+    const variant = await db.productVariant.findUnique({
+      where: { id: item.variantId },
+      include: { product: true },
+    });
+    if (variant) {
+      await db.transactionItem.updateMany({
+        where: { transactionId: transaction.id, variantId: item.variantId },
+        data: {
+          productName: variant.product.name,
+          variantName: variant.name || "Default",
+          sku: variant.sku,
+        },
       });
-      if (variant) {
-          await db.transactionItem.updateMany({
-              where: { transactionId: transaction.id, variantId: item.variantId },
-              data: {
-                  productName: variant.product.name,
-                  variantName: variant.name || "Default",
-                  sku: variant.sku,
-              }
-          });
-      }
+    }
   }
 
   revalidatePath("/sales/transactions");
   return transaction;
 }
 
-export async function updateTransactionStatus(id: string, status: TransactionStatus) {
+export async function updateTransactionStatus(
+  id: string,
+  status: TransactionStatus,
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const transaction = await db.transaction.update({
@@ -235,17 +261,20 @@ export async function updateTransactionStatus(id: string, status: TransactionSta
   return transaction;
 }
 
-export async function addPayment(transactionId: string, data: {
-  amount: number;
-  method: PaymentMethod;
-  reference?: string;
-  notes?: string;
-}) {
+export async function addPayment(
+  transactionId: string,
+  data: {
+    amount: number;
+    method: PaymentMethod;
+    reference?: string;
+    notes?: string;
+  },
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const transaction = await db.transaction.findUnique({
     where: { id: transactionId, organizationId: auth.organizationId },
-    include: { payments: true }
+    include: { payments: true },
   });
 
   if (!transaction) throw new Error("Transaction not found");
@@ -259,7 +288,7 @@ export async function addPayment(transactionId: string, data: {
       referenceNumber: data.reference,
       notes: data.notes,
       status: "COMPLETED",
-    }
+    },
   });
 
   const totalPaid = new Decimal(transaction.totalPaid).plus(data.amount);
@@ -274,7 +303,7 @@ export async function addPayment(transactionId: string, data: {
     data: {
       totalPaid,
       paymentStatus,
-    }
+    },
   });
 
   revalidatePath("/sales/transactions");
@@ -288,12 +317,17 @@ export async function getFulfillments(params: {
   startDate?: Date;
   endDate?: Date;
 }) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   const where: Prisma.FulfillmentWhereInput = {
     transaction: {
-      organizationId: auth.organizationId
-    }
+      organizationId: auth.organizationId,
+    },
   };
 
   if (params.status && params.status !== "all") {
@@ -315,32 +349,38 @@ export async function getFulfillments(params: {
     include: {
       transaction: {
         include: {
-          customer: true
-        }
+          customer: true,
+        },
       },
       driver: true,
       items: true,
     },
     orderBy: {
-      createdAt: "desc"
-    }
+      createdAt: "desc",
+    },
   });
 }
 
-export async function updateFulfillmentStatus(id: string, status: FulfillmentStatus) {
+export async function updateFulfillmentStatus(
+  id: string,
+  status: FulfillmentStatus,
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const fulfillment = await db.fulfillment.update({
     where: { id },
     data: { status },
-    include: { transaction: true }
+    include: { transaction: true },
   });
 
   revalidatePath("/sales/deliveries");
   return fulfillment;
 }
 
-export async function bulkUpdateTransactionStatus(ids: string[], status: TransactionStatus) {
+export async function bulkUpdateTransactionStatus(
+  ids: string[],
+  status: TransactionStatus,
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const result = await db.transaction.updateMany({
@@ -355,7 +395,10 @@ export async function bulkUpdateTransactionStatus(ids: string[], status: Transac
   return result;
 }
 
-export async function bulkUpdateFulfillmentStatus(ids: string[], status: FulfillmentStatus) {
+export async function bulkUpdateFulfillmentStatus(
+  ids: string[],
+  status: FulfillmentStatus,
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const result = await db.fulfillment.updateMany({
@@ -372,10 +415,13 @@ export async function bulkUpdateFulfillmentStatus(ids: string[], status: Fulfill
   return result;
 }
 
-export async function reconcileFulfillment(id: string, data: {
-  notes?: string;
-  receivedBy?: string;
-}) {
+export async function reconcileFulfillment(
+  id: string,
+  data: {
+    notes?: string;
+    receivedBy?: string;
+  },
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const fulfillment = await db.fulfillment.update({
@@ -386,8 +432,8 @@ export async function reconcileFulfillment(id: string, data: {
       reconciledBy: auth.user.id,
       receivedBy: data.receivedBy,
       deliveryNotes: data.notes,
-      status: "COMPLETED"
-    }
+      status: "COMPLETED",
+    },
   });
 
   revalidatePath("/sales/deliveries");

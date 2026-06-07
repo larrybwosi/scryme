@@ -1,6 +1,6 @@
 // proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@repo/auth/server";
+import { auth } from "@/lib/auth";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
 const publicRoutes = ["/api/auth"];
@@ -17,8 +17,6 @@ export async function proxy(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: request.headers,
   });
-
-  console.log(session);
 
   const isAuthRoute = authRoutes.includes(pathname);
 
@@ -44,7 +42,6 @@ export async function proxy(request: NextRequest) {
     (session.session as any).activeOrganizationId ||
     (session.user as any).activeOrganizationId;
 
-  console.log({ organizationId });
   const isExcludedFromOrgCheck = [
     "/create-org",
     "/banned",
