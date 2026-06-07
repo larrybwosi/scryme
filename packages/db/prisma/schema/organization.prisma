@@ -17,6 +17,10 @@ model Organization {
   defaultLocationId  String?
   defaultWarehouseId String?
 
+  campaigns     Campaign[]        @relation("OrgCampaigns")
+  campaignSegments CampaignSegment[] @relation("OrgCampaignSegments")
+  campaignWorkflows CampaignWorkflow[] @relation("OrgCampaignWorkflows")
+
   members     Member[]
   invitations Invitation[]
   customers   Customer[]   @relation("OrgCustomers")
@@ -329,6 +333,9 @@ model Member {
   crmActivities          CrmActivity[]  @relation("CrmActivityMember")
   crmNotes               CrmNote[]      @relation("CrmNoteCreator")
   crmFollowUps           CrmFollowUp[]  @relation("CrmFollowUpAssignedTo")
+
+  createdCampaigns       Campaign[]     @relation("CampaignCreator")
+  approvedCampaigns      Campaign[]     @relation("CampaignApprover")
 
   // Purchase Relations
   createdPurchases Purchase[]        @relation("PurchaseCreator")
