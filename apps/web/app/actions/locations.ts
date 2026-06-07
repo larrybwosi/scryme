@@ -195,6 +195,14 @@ export async function deleteLocation(id: string) {
     throw new Error("Cannot delete location with existing stock.");
   }
 
+  const locationCount = await db.inventoryLocation.count({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (locationCount <= 1) {
+    throw new Error("Cannot delete the last location in the system. At least one location is required.");
+  }
+
   await db.inventoryLocation.delete({
     where: { id, organizationId: context.organizationId },
   });

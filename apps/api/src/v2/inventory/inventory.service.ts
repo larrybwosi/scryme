@@ -1,5 +1,6 @@
 import {
   Injectable,
+  BadRequestException,
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
@@ -318,6 +319,17 @@ export class InventoryService {
 
   async deleteLocation(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
+
+    const locationCount = await this.prisma.client.inventoryLocation.count({
+      where: { organizationId },
+    });
+
+    if (locationCount <= 1) {
+      throw new BadRequestException(
+        "Cannot delete the last location in the system. At least one location is required."
+      );
+    }
+
     return this.prisma.client.inventoryLocation.delete({
       where: { id, organizationId },
     });

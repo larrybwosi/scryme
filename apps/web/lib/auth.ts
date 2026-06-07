@@ -7,12 +7,50 @@ import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins/custom-session";
 import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
+import { getUpstashRedis } from "@repo/shared";
 
 export const auth = betterAuth({
   ...(authOptions as any),
+  secondaryStorage: {
+    get: async (key) => {
+      try {
+        const redis = getUpstashRedis();
+        const value = await redis.get(key);
+        return value ? JSON.stringify(value) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    set: async (key, value, ttl) => {
+      try {
+        const redis = getUpstashRedis();
+        await redis.set(key, JSON.parse(value), { ex: ttl });
+      } catch (e) {}
+    },
+    delete: async (key) => {
+      try {
+        const redis = getUpstashRedis();
+        await redis.del(key);
+      } catch (e) {}
+    },
+  },
   plugins: [
     admin(),
     customSession(async ({ user, session }) => {
+      const cacheKey = `session-cache:${user.id}`;
+      try {
+        const redis = getUpstashRedis();
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return {
+            user: { ...user, ...(cached as any) },
+            session,
+          };
+        }
+      } catch (e) {
+        console.error("Redis error:", e);
+      }
+
       // Fetch from Database
       const usr = await db.user.findUnique({
         where: { id: user.id },
@@ -49,6 +87,13 @@ export const auth = betterAuth({
         memberId: memberData.memberId,
         role: memberData.role,
       };
+
+      try {
+        const redis = getUpstashRedis();
+        await redis.set(cacheKey, customUserData, { ex: 60 }); // Cache for 1 minute
+      } catch (e) {
+        console.error("Redis cache error:", e);
+      }
 
       // Return the combined data
       return {

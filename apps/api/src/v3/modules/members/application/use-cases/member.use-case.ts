@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RedisService } from '@/redis/redis.service';
 import { CreateMemberDto, UpdateMemberDto, MemberQueryDto } from '../dto/member.dto';
 import { MemberRole, MembershipStatus, ApprovalRequestType, ApprovalStatus, AuditLogAction, AuditEntityType, Status } from '@repo/db';
 import * as bcrypt from 'bcryptjs';
@@ -7,7 +8,10 @@ import { emitMemberCreated, emitMemberRoleChanged, emitEvent } from '@repo/windm
 
 @Injectable()
 export class MemberUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async getMembers(organizationId: string, query: MemberQueryDto) {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', role, membershipStatus, isActive, departmentId, search } = query;
@@ -201,6 +205,8 @@ export class MemberUseCase {
           where: { id: user.id },
           data: { activeOrganizationId: organizationId },
         });
+        // Clear session cache
+        await this.redis.del(`session-cache:${user.id}`);
       }
 
       // Audit Log

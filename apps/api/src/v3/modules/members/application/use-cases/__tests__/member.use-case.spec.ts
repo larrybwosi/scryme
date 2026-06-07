@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MemberUseCase } from '../member.use-case';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RedisService } from '@/redis/redis.service';
 import { MemberRole, MembershipStatus } from '@repo/db';
 import { BadRequestException } from '@nestjs/common';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -8,6 +9,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 describe('MemberUseCase', () => {
   let useCase: MemberUseCase;
   let prisma: PrismaService;
+
+  const mockRedis = {
+    del: vi.fn(),
+    get: vi.fn(),
+    setex: vi.fn(),
+  };
 
   const mockPrisma = {
     client: {
@@ -39,6 +46,7 @@ describe('MemberUseCase', () => {
       providers: [
         MemberUseCase,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
