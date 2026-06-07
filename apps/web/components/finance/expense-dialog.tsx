@@ -32,7 +32,8 @@ import {
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createExpense } from '../../app/actions/finance';
 import { toast } from "sonner";
-import { PaymentMethod } from "@repo/db/client";
+import { PaymentMethod, RecurrenceFrequency } from "@repo/db/client";
+import { Switch } from "@repo/ui/components/ui/switch";
 
 const expenseSchema = z.object({
   description: z.string().min(2, "Description is required"),
@@ -41,6 +42,10 @@ const expenseSchema = z.object({
   expenseDate: z.string(),
   paymentMethod: z.nativeEnum(PaymentMethod),
   notes: z.string().optional(),
+  isRecurring: z.boolean().default(false),
+  frequency: z.nativeEnum(RecurrenceFrequency).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 type ExpenseFormValues = z.infer<typeof expenseSchema>;
@@ -61,16 +66,23 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
       expenseDate: new Date().toISOString().split('T')[0],
       paymentMethod: PaymentMethod.CASH,
       notes: '',
+      isRecurring: false,
+      frequency: RecurrenceFrequency.MONTHLY,
+      startDate: new Date().toISOString().split('T')[0],
     },
   });
+
+  const isRecurring = form.watch("isRecurring");
 
   async function onSubmit(values: ExpenseFormValues) {
     try {
       await createExpense({
         ...values,
         expenseDate: new Date(values.expenseDate),
+        startDate: values.startDate ? new Date(values.startDate) : undefined,
+        endDate: values.endDate ? new Date(values.endDate) : undefined,
       });
-      toast.success("Expense created successfully");
+      toast.success("Expense recorded successfully");
       setOpen(false);
       form.reset();
     } catch (error: any) {
@@ -178,6 +190,81 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="isRecurring"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Recurring Expense</FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {isRecurring && (
+              <div className="space-y-4 pt-2 border-t">
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frequency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(RecurrenceFrequency).map((freq) => (
+                            <SelectItem key={freq} value={freq}>
+                              {freq}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Date (Optional)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
             <FormField
               control={form.control}
               name="notes"
