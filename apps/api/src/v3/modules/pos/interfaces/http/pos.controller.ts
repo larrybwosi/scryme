@@ -14,6 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { PrismaService } from '../../../../../prisma/prisma.service';
 import { V3AuthService } from '../../../auth/infrastructure/services/v3-auth.service';
 import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
 import { v3Context } from '@/v3/common/decorators/v3-context.decorator';
