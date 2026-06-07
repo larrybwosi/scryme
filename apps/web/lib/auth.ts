@@ -12,7 +12,7 @@ import { getUpstashRedis } from "@repo/shared";
 export const auth = betterAuth({
   ...(authOptions as any),
   secondaryStorage: {
-    get: async (key) => {
+    get: async (key: string) => {
       try {
         const redis = getUpstashRedis();
         const value = await redis.get(key);
@@ -21,13 +21,17 @@ export const auth = betterAuth({
         return null;
       }
     },
-    set: async (key, value, ttl) => {
+    set: async (key: string, value: string, ttl?: number) => {
       try {
         const redis = getUpstashRedis();
-        await redis.set(key, JSON.parse(value), { ex: ttl });
+        if (ttl) {
+          await redis.set(key, JSON.parse(value), { ex: ttl });
+        } else {
+          await redis.set(key, JSON.parse(value));
+        }
       } catch (e) {}
     },
-    delete: async (key) => {
+    delete: async (key: string) => {
       try {
         const redis = getUpstashRedis();
         await redis.del(key);
