@@ -1,0 +1,161 @@
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+
+  @@map("CampaignStatus")
+}
+
+enum CampaignChannel {
+  EMAIL
+  SMS
+  IN_PERSON
+  IN_APP
+  WEBHOOK
+
+  @@map("CampaignChannel")
+}
+
+model Campaign {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation("OrgCampaigns", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String
+  description    String?         @db.Text
+  status         CampaignStatus  @default(DRAFT)
+  channel        CampaignChannel
+
+  // Audience targeting
+  segmentId      String?
+  segment        CampaignSegment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  // Scheduling
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
+
+  // Workflow integration
+  workflowId     String?         @unique
+  workflow       CampaignWorkflow? @relation(fields: [workflowId], references: [id], onDelete: SetNull)
+
+  // Ownership & Approval
+  createdById    String?
+  createdBy      Member?         @relation("CampaignCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedById   String?
+  approvedBy     Member?         @relation("CampaignApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt     DateTime?
+
+  // Analytics summary (denormalized for performance)
+  totalSent      Int             @default(0)
+  totalOpened    Int             @default(0)
+  totalClicked   Int             @default(0)
+  totalConverted Int             @default(0)
+  totalRevenue   Decimal         @default(0) @db.Decimal(12, 2)
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  events         CampaignEvent[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("campaigns")
+}
+
+model CampaignSegment {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation("OrgCampaignSegments", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String
+  description    String?
+
+  // JSON definition of filters: { "conditions": [...], "logic": "AND" }
+  filters        Json
+
+  campaigns      Campaign[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([organizationId])
+  @@map("campaign_segments")
+}
+
+model CampaignWorkflow {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation("OrgCampaignWorkflows", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String
+
+  // ReactFlow compatible JSON state
+  nodes          Json
+  edges          Json
+
+  isActive       Boolean         @default(false)
+  campaign       Campaign?
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  instances      CampaignWorkflowInstance[]
+
+  @@index([organizationId])
+  @@map("campaign_workflows")
+}
+
+model CampaignWorkflowInstance {
+  id             String          @id @default(cuid())
+  workflowId     String
+  workflow       CampaignWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  // The record (Customer/BusinessAccount) this instance is running for
+  recordId       String
+  record         CrmRecord       @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  status         String          @default("RUNNING") // RUNNING, COMPLETED, FAILED, HALTED
+  currentNodeId  String?
+
+  // Store state variables for this specific run
+  context        Json?
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([workflowId])
+  @@index([recordId])
+  @@map("campaign_workflow_instances")
+}
+
+model CampaignEvent {
+  id             String          @id @default(cuid())
+  campaignId     String
+  campaign       Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  recordId       String?
+  record         CrmRecord?      @relation(fields: [recordId], references: [id], onDelete: SetNull)
+
+  type           String          // SENT, OPENED, CLICKED, CONVERTED, BOUNCED
+
+  // Metadata for the event (e.g., link clicked, device info)
+  metadata       Json?
+
+  // For ROI/Conversion tracking
+  transactionId  String?
+  transaction    Transaction?    @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime        @default(now())
+
+  @@index([campaignId])
+  @@index([recordId])
+  @@index([type])
+  @@map("campaign_events")
+}

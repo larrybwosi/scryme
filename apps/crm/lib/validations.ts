@@ -57,3 +57,32 @@ export const crmFollowUpSchema = z.object({
 });
 
 export type CrmFollowUpFormValues = z.infer<typeof crmFollowUpSchema>;
+
+export const campaignSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  channel: z.enum(['EMAIL', 'SMS', 'IN_PERSON', 'IN_APP', 'WEBHOOK']),
+  status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED']).default('DRAFT'),
+  segmentId: z.string().optional().nullable(),
+  workflowId: z.string().optional().nullable(),
+  scheduledAt: z.coerce.date().optional().nullable(),
+});
+
+export type CampaignFormValues = z.infer<typeof campaignSchema>;
+
+export const campaignSegmentSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  filters: z.any(),
+});
+
+export type CampaignSegmentFormValues = z.infer<typeof campaignSegmentSchema>;
+
+export const campaignWorkflowSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  nodes: z.any(),
+  edges: z.any(),
+  isActive: z.boolean().default(false),
+});
+
+export type CampaignWorkflowFormValues = z.infer<typeof campaignWorkflowSchema>;
