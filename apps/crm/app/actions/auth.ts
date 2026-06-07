@@ -2,6 +2,7 @@
 
 import { auth } from '../../lib/auth';
 import { headers } from 'next/headers';
+import { db } from '@repo/db';
 
 export async function getOrganizationContext() {
   const session = await auth.api.getSession({
