@@ -82,36 +82,45 @@ export const CustomerService = {
    */
   async getCustomerById(organizationId: string, customerId: string): Promise<ActionResponse<any>> {
     try {
-      const customer = await prisma.customer.findFirst({
-        where: { id: customerId, organizationId },
-        include: {
-          crmRecord: {
-            include: {
-              notes: { orderBy: { timelineDate: 'desc' } },
-              activities: { orderBy: { createdAt: 'desc' } },
+      // PERFORMANCE: Use database-level aggregation for financial stats to avoid loading all invoices into memory.
+      // We also limit the number of related records (invoices, notes, activities) fetched to reduce payload size.
+      const [customer, totals, paidTotals] = await Promise.all([
+        prisma.customer.findFirst({
+          where: { id: customerId, organizationId },
+          include: {
+            crmRecord: {
+              include: {
+                notes: { orderBy: { timelineDate: 'desc' }, take: 10 },
+                activities: { orderBy: { createdAt: 'desc' }, take: 10 },
+              },
+            },
+            invoices: {
+              orderBy: { postingDate: 'desc' },
+              take: 10,
+            },
+            transactions: {
+              where: { organizationId },
+              orderBy: { createdAt: 'desc' },
+              take: 10,
             },
           },
-          invoices: {
-            orderBy: { postingDate: 'desc' },
-          },
-          transactions: {
-            where: { organizationId },
-            orderBy: { createdAt: 'desc' },
-            take: 10,
-          },
-        },
-      });
+        }),
+        prisma.invoice.aggregate({
+          where: { customerId, organizationId },
+          _sum: { grandTotal: true },
+        }),
+        prisma.invoice.aggregate({
+          where: { customerId, organizationId, status: 'PAID' },
+          _sum: { grandTotal: true },
+        }),
+      ]);
 
       if (!customer) {
         return { success: false, message: 'Customer not found.' };
       }
 
-      // Calculate balance
-      const totalInvoiced = (customer.invoices as Invoice[]).reduce((acc: number, inv: Invoice) => acc + inv.grandTotal, 0);
-      const totalPaidInvoices = (customer.invoices as Invoice[])
-        .filter((inv: Invoice) => inv.status === 'PAID')
-        .reduce((acc: number, inv: Invoice) => acc + inv.grandTotal, 0);
-
+      const totalInvoiced = totals._sum.grandTotal || 0;
+      const totalPaidInvoices = paidTotals._sum.grandTotal || 0;
       const balance = totalInvoiced - totalPaidInvoices;
 
       return {
