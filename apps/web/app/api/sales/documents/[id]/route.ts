@@ -7,6 +7,7 @@ import { createElement } from 'react';
 import {
   SimpleInvoicePDF,
   GenericReceiptDocument
+// @ts-ignore
 } from '@repo/documents';
 
 export async function GET(
