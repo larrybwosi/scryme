@@ -114,7 +114,11 @@ function loadEnvFiles() {
 
     for (const file of envFiles) {
       if (fs.existsSync(file)) {
-        const config = dotenv.config({ path: file, override: true });
+        const config = dotenv.config({
+          path: file,
+          override: true,
+          debug: false,
+        });
         expand({ ...config, override: true });
       }
     }

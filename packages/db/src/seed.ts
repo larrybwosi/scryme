@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { prisma } from "./client";
-import { Prisma } from "../generated/client";
+import { Prisma } from "../prisma/generated/client";
 
 const DEFAULT_USERS: Prisma.UserCreateInput[] = [
   // Add your own user to pre-populate the database with

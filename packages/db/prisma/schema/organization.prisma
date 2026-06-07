@@ -236,6 +236,7 @@ model Member {
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      MemberRole
   membershipStatus MembershipStatus @default(ACTIVE)
+  banReason String?
   isActive  Boolean          @default(true)
   deletedAt DateTime?
   version   Int        @default(0)

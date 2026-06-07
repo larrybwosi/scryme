@@ -17,11 +17,8 @@ export class UploadController {
     const fileName = `${uuidv7()}.${fileExtension}`;
 
     const buffer = await data.toBuffer();
-    // Assuming storageService has a 'uploadFile' or 'putObject' based on memory/grep
-    // but the previous build said 'put' doesn't exist either.
-    // Let's use any cast if unsure of provider method to pass build and focus on V3
-    await (storageService as any).uploadFile(fileName, buffer, data.mimetype);
+    const result = await storageService.upload(buffer, fileName, data.mimetype);
 
-    return res.send({ url: fileName });
+    return res.send({ url: result.url || fileName });
   }
 }
