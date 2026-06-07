@@ -259,18 +259,17 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         }
       },
 
-      provisionDevice: async (orgSlug: string, setupToken: string) => {
-        // V3 provision endpoint is POST /api/v3/:orgSlug/pos/provision
+      provisionDevice: async (_unusedSlug: string, setupToken: string) => {
+        // V3 provision endpoint is now global: POST /api/v3/auth/provision
         const response = await invoke<any>('authenticated_api_request', {
           method: 'POST',
-          path: `pos/provision`, // orgSlug will be injected by build_request in Rust
+          path: `auth/provision`,
           body: { token: setupToken },
         });
 
-        // V3 API response structure might be different.
-        // Based on NestJS interceptor, it might be { data: { clientId, clientSecret } }
+        // V3 API response structure is { data: { clientId, clientSecret, orgSlug } }
         if (response.data) {
-          const { clientId } = response.data;
+          const { clientId, orgSlug } = response.data;
 
           await invoke('start_device_setup_command', {
             baseUrl: API_ENDPOINT,
@@ -284,18 +283,20 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           const location = data.locations?.[0];
 
           if (location) {
-             await invoke('set_device_config', {
-                baseUrl: API_ENDPOINT,
-                orgSlug: orgSlug,
-                locationId: location.id,
-                deviceKey: clientId,
-             });
+            await invoke('set_device_config', {
+              baseUrl: API_ENDPOINT,
+              orgSlug: orgSlug,
+              locationId: location.id,
+              deviceKey: clientId,
+            });
           }
 
           set({
             orgSlug,
             currentLocation: location || null,
           });
+
+          return response.data;
         } else {
           throw new Error(response.message || 'Provisioning failed');
         }

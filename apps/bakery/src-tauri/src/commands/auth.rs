@@ -62,18 +62,16 @@ pub async fn provision_device_with_token(
     };
 
     let base_api_url = api_url_override.as_deref().unwrap_or(default_api_url);
-    let api_url = if base_api_url.ends_with("/api/v2") {
+    let api_url = if base_api_url.ends_with("/api/v3") {
         base_api_url.to_string()
     } else {
-        format!("{}/api/v2", base_api_url.trim_end_matches('/'))
+        format!("{}/api/v3", base_api_url.trim_end_matches('/'))
     };
 
     let response = client
-        .post(format!("{}/devices/provision", api_url))
+        .post(format!("{}/auth/provision", api_url))
         .json(&serde_json::json!({
-            "setupToken": setup_token,
-            "macAddress": mac_address,
-            "serialNumber": serial_number,
+            "token": setup_token,
         }))
         .send()
         .await
@@ -94,7 +92,9 @@ pub async fn provision_device_with_token(
         .await
         .map_err(BackendError::Network)?;
 
-    let api_key = result["apiKey"]
+    // Global V3 response wraps data in a "data" field
+    let data = &result["data"];
+    let api_key = data["apiKey"]
         .as_str()
         .ok_or_else(|| BackendError::Internal("No API Key returned from server".to_string()))?;
 

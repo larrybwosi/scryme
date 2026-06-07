@@ -741,6 +741,7 @@ function AppsApiContent() {
                     <option value="MOBILE_POS">Mobile POS</option>
                     <option value="KIOSK">Self-Service Kiosk</option>
                     <option value="TABLET">Service Tablet</option>
+                    <option value="BAKERY_TERMINAL">Bakery Terminal</option>
                   </select>
                 </div>
                 <div className="flex gap-4 mt-8">
