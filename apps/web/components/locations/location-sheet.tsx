@@ -40,7 +40,7 @@ const locationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   code: z.string().min(1, "Location code is required"),
   description: z.string().optional(),
-  locationType: z.nativeEnum(LocationType).default(LocationType.RETAIL_SHOP),
+  locationType: z.enum(LocationType).default(LocationType.RETAIL_SHOP),
   isDefault: z.boolean().default(false),
   parentLocationId: z.string().optional().nullable(),
   managerId: z.string().optional().nullable(),
@@ -144,9 +144,7 @@ export function LocationSheet({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="sm:max-w-xl flex flex-col h-full p-0">
         <SheetHeader className="p-6 border-b">
-          <SheetTitle>
-            {location ? "Edit Location" : "Add Location"}
-          </SheetTitle>
+          <SheetTitle>{location ? "Edit Location" : "Add Location"}</SheetTitle>
         </SheetHeader>
         <Form {...form}>
           <form

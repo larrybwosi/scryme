@@ -1,9 +1,8 @@
-import 'dotenv/config';
+import "dotenv/config";
 import { prisma } from "./client";
-import { Prisma } from "../prisma/generated/client";
+import { Prisma } from "../generated/client";
 
 const DEFAULT_USERS: Prisma.UserCreateInput[] = [
-  // Add your own user to pre-populate the database with
   {
     name: "Tim Apple",
     email: "tim@apple.com",
@@ -24,8 +23,8 @@ const DEFAULT_USERS: Prisma.UserCreateInput[] = [
           create: {
             ...user,
           },
-        })
-      )
+        }),
+      ),
     );
   } catch (error) {
     console.error(error);

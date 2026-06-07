@@ -1,6 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
-import { PrismaClient } from "../prisma/generated/client";
+import { PrismaClient } from "../generated/client";
 import { env } from "@repo/env";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -25,6 +25,6 @@ export const prisma =
 
 if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 export const db = prisma;
-export * from "../prisma/generated/client";
-import { Prisma } from "../prisma/generated/client";
+export * from "../generated/client";
+import { Prisma } from "../generated/client";
 export const Decimal = Prisma.Decimal;
