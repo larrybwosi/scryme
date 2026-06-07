@@ -94,13 +94,15 @@ const sidebarConfig: SidebarSection[] = [
     title: "ACCOUNTING",
     items: [
       {
-        title: "Report",
+        title: "Finance",
         icon: FileBarChart,
-        href: "/",
+        href: "/finance",
         items: [
-          { title: "Overview", href: "/report/overview" },
-          { title: "Booking Report", href: "/report/booking" },
-          { title: "Purchase Report", href: "/" },
+          { title: "Overview", href: "/finance" },
+          { title: "Expenses", href: "/finance/expenses" },
+          { title: "Purchases", href: "/finance/purchases" },
+          { title: "Utilities", href: "/finance/utilities" },
+          { title: "Approvals", href: "/finance/approvals" },
         ]
       },
       { title: "Maintenance", icon: Settings, href: "/maintenance" },

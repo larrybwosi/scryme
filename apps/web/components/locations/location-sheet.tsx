@@ -33,7 +33,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { createLocation, updateLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { LocationType } from "@repo/db";
+import { LocationType } from "@repo/db/client";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 const locationSchema = z.object({

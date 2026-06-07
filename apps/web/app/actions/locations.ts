@@ -4,7 +4,7 @@ import { db, LocationType, StorageUnitType, UnitType } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 
-export async function getLocations() {
+export async function getLocations(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -42,7 +42,7 @@ export async function getLocations() {
   });
 }
 
-export async function getMembersForSelect() {
+export async function getMembersForSelect(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -63,7 +63,7 @@ export async function getMembersForSelect() {
   });
 }
 
-export async function getLocation(id: string) {
+export async function getLocation(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
@@ -108,7 +108,7 @@ export async function createLocation(data: {
   managerId?: string;
   address?: any;
   contact?: any;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -143,7 +143,7 @@ export async function updateLocation(id: string, data: {
   managerId?: string;
   address?: any;
   contact?: any;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -209,7 +209,7 @@ export async function createZone(data: {
   locationId: string;
   capacity?: number;
   capacityUnit?: UnitType;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -230,7 +230,7 @@ export async function updateZone(id: string, data: {
   capacity?: number;
   capacityUnit?: UnitType;
   isActive?: boolean;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -275,7 +275,7 @@ export async function createUnit(data: {
   zoneId?: string;
   capacity?: number;
   capacityUnit?: UnitType;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -296,7 +296,7 @@ export async function updateUnit(id: string, data: {
   unitType?: StorageUnitType;
   zoneId?: string;
   isActive?: boolean;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -332,7 +332,7 @@ export async function deleteUnit(id: string) {
   revalidatePath(`/locations/${unit.locationId}`);
 }
 
-export async function getZoneWithUnits(zoneId: string) {
+export async function getZoneWithUnits(zoneId: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 

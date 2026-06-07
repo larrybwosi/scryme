@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { MemberRole } from "@repo/db";
+import { MemberRole } from "@repo/db/client";
 import { addStaffMember } from "../../app/actions/staff";
 import { toast } from "sonner";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
