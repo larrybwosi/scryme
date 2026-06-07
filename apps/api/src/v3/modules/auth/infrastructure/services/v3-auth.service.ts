@@ -19,13 +19,17 @@ export class V3AuthService {
         usedAt: null,
         expiresAt: { gt: new Date() },
       },
+      include: {
+        organization: true,
+      },
     });
 
     if (!setupToken) throw new UnauthorizedException('Invalid or expired setup token');
 
     const clientId = `pos_${crypto.randomBytes(8).toString('hex')}`;
     const rawSecret = crypto.randomBytes(32).toString('hex');
-    const hashedSecret = await bcrypt.hash(rawSecret, 10);
+    // Using SHA-256 for V3 secrets as per packages/shared/src/actions/api-management/index.ts
+    const hashedSecret = crypto.createHash('sha256').update(rawSecret).digest('hex');
 
     const client = await this.prisma.client.v3ApiClient.create({
       data: {
@@ -37,23 +41,39 @@ export class V3AuthService {
       },
     });
 
-    await this.prisma.client.deviceRegistry.create({
-      data: {
-        organizationId: setupToken.organizationId,
-        apiKeyId: client.id,
-        deviceName: setupToken.deviceName,
-        deviceType: setupToken.deviceType,
-        locationId: setupToken.locationId,
-        status: 'ACTIVE',
-      },
-    });
+    // For Bakery app, we also need to generate a V2 API Key for now
+    let v2ApiKey: string | undefined;
+    let v2ApiKeyId: string | undefined;
 
-    await this.prisma.client.deviceSetupToken.update({
-      where: { id: setupToken.id },
-      data: { usedAt: new Date(), redeemedApiKeyId: client.id },
-    });
+    if (setupToken.deviceType === 'BAKERY_TERMINAL') {
+      const { redeemDeviceSetupToken } = await import('../../../../../lib/api/v2/services/device-setup-tokens');
+      const v2Result = await redeemDeviceSetupToken(this.prisma, token);
+      v2ApiKey = v2Result.apiKey;
+      v2ApiKeyId = v2Result.apiKeyId;
+    } else {
+      await this.prisma.client.deviceRegistry.create({
+        data: {
+          organizationId: setupToken.organizationId,
+          apiKeyId: client.id,
+          deviceName: setupToken.deviceName,
+          deviceType: setupToken.deviceType,
+          locationId: setupToken.locationId,
+          status: 'ACTIVE',
+        },
+      });
 
-    return { clientId, clientSecret: rawSecret };
+      await this.prisma.client.deviceSetupToken.update({
+        where: { id: setupToken.id },
+        data: { usedAt: new Date(), redeemedApiKeyId: client.id },
+      });
+    }
+
+    return {
+      clientId,
+      clientSecret: rawSecret,
+      orgSlug: setupToken.organization.slug,
+      apiKey: v2ApiKey,
+    };
   }
 
   async validateClient(clientId: string, clientSecret: string) {

@@ -103,7 +103,6 @@ const SetupTokenStep = ({
   onNext: (slug: string, t: string) => void;
   onShowInstructions: () => void;
 }) => {
-  const [orgSlug, setOrgSlug] = useState('');
   const [token, setToken] = useState('');
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [error, setError] = useState('');
@@ -111,10 +110,6 @@ const SetupTokenStep = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgSlug) {
-      setError('Organization slug is required');
-      return;
-    }
     if (token.length < 10) {
       setError('Invalid token format');
       return;
@@ -122,9 +117,10 @@ const SetupTokenStep = ({
     setError('');
     setIsProvisioning(true);
     try {
-      await provisionDevice(orgSlug, token);
+      // Use an empty slug as it's now global, the store will handle it
+      const result: any = await provisionDevice('', token);
       setIsProvisioning(false);
-      onNext(orgSlug, token);
+      onNext(result?.orgSlug || '', token);
     } catch (err: any) {
       setIsProvisioning(false);
       setError(err.message || 'Failed to provision device');
@@ -134,23 +130,6 @@ const SetupTokenStep = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-8 w-full max-w-md mx-auto">
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label
-            htmlFor="orgSlug"
-            className="text-base font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider"
-          >
-            Organization Slug
-          </Label>
-          <Input
-            id="orgSlug"
-            value={orgSlug}
-            onChange={e => setOrgSlug(e.target.value)}
-            className="font-sans text-sm h-12 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-blue-600 rounded-none shadow-none transition-all"
-            placeholder="e.g. my-business"
-            autoFocus
-          />
-        </div>
-
         <Label
           htmlFor="setupToken"
           className="text-base font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider"
@@ -165,6 +144,7 @@ const SetupTokenStep = ({
             onChange={e => setToken(e.target.value)}
             className="pl-11 font-mono text-sm h-14 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-blue-600 rounded-none shadow-none transition-all"
             placeholder="Paste your setup token here..."
+            autoFocus
           />
           <Key className="absolute left-4 top-4.5 h-5 w-5 text-zinc-400 group-focus-within:text-blue-600 transition-colors" />
         </div>

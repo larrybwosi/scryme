@@ -23,3 +23,24 @@ export class TokenResponseDto {
   @ApiProperty({ example: 3600 })
   expiresIn: number;
 }
+
+export class ProvisionRequestDto {
+  @ApiProperty({ example: 'setup_123', description: 'The setup token generated in the dashboard' })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+}
+
+export class GlobalProvisionResponseDto {
+  @ApiProperty({ example: 'client_id_123' })
+  clientId: string;
+
+  @ApiProperty({ example: 'client_secret_456' })
+  clientSecret: string;
+
+  @ApiProperty({ example: 'my-org-slug' })
+  orgSlug: string;
+
+  @ApiProperty({ example: 'dealio_pk_live_123_abc...' })
+  apiKey?: string;
+}
