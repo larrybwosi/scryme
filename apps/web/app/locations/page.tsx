@@ -3,7 +3,7 @@ import { getLocations, getMembersForSelect } from "../actions/locations";
 import { LocationTable } from "../../components/locations/location-table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Plus, MapPin } from "lucide-react";
-import { LocationDialog } from "../../components/locations/location-dialog";
+import { LocationSheet } from "../../components/locations/location-sheet";
 
 export default async function LocationsPage() {
   const locations = await getLocations();
@@ -17,12 +17,12 @@ export default async function LocationsPage() {
           <p className="text-sm text-muted-foreground">Manage your branches, warehouses, and storage points.</p>
         </div>
         <div className="flex items-center gap-3">
-          <LocationDialog locations={locations} members={members}>
+          <LocationSheet locations={locations} members={members}>
             <Button className="gap-2">
               <Plus size={16} />
               <span>Add Location</span>
             </Button>
-          </LocationDialog>
+          </LocationSheet>
         </div>
       </div>
 

@@ -30,15 +30,15 @@ import {
 } from "@repo/ui/components/ui/select";
 import { createUnit, updateUnit } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { StorageUnitType, UnitType } from "@repo/db/client";
+import { StorageUnitType, UnitType } from "@repo/db";
 
 const unitSchema = z.object({
   name: z.string().min(1, "Name is required"),
   reference: z.string().optional(),
-  unitType: z.enum(StorageUnitType).default(StorageUnitType.SHELF),
+  unitType: z.nativeEnum(StorageUnitType).default(StorageUnitType.SHELF),
   zoneId: z.string().optional().nullable(),
   capacity: z.coerce.number().optional(),
-  capacityUnit: z.enum(UnitType).optional(),
+  capacityUnit: z.nativeEnum(UnitType).optional(),
 });
 
 type UnitFormValues = z.infer<typeof unitSchema>;
