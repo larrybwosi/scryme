@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "exports": {
-    ".": "./src/client.ts"
+    ".": "./src/client.ts",
+    "./client": "./src/browser.ts"
   },
   "scripts": {
     "db:migrate:deploy": "prisma migrate deploy",

@@ -32,27 +32,31 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { createLocation, updateLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { LocationType } from "@repo/db";
+import { LocationType } from "@repo/db/client";
 
 const locationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   code: z.string().optional(),
   description: z.string().optional(),
-  locationType: z.nativeEnum(LocationType).default(LocationType.RETAIL_SHOP),
+  locationType: z.enum(LocationType).default(LocationType.RETAIL_SHOP),
   isDefault: z.boolean().default(false),
   parentLocationId: z.string().optional().nullable(),
   managerId: z.string().optional().nullable(),
-  address: z.object({
-    street: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zipCode: z.string().optional(),
-    country: z.string().optional(),
-  }).optional(),
-  contact: z.object({
-    email: z.string().email().optional().or(z.literal("")),
-    phone: z.string().optional(),
-  }).optional(),
+  address: z
+    .object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      zipCode: z.string().optional(),
+      country: z.string().optional(),
+    })
+    .optional(),
+  contact: z
+    .object({
+      email: z.email().optional().or(z.literal("")),
+      phone: z.string().optional(),
+    })
+    .optional(),
 });
 
 type LocationFormValues = z.infer<typeof locationSchema>;
@@ -65,7 +69,13 @@ interface LocationDialogProps {
   isEdit?: boolean;
 }
 
-export function LocationDialog({ children, location, locations = [], members = [], isEdit = false }: LocationDialogProps) {
+export function LocationDialog({
+  children,
+  location,
+  locations = [],
+  members = [],
+  isEdit = false,
+}: LocationDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<LocationFormValues>({
@@ -96,7 +106,8 @@ export function LocationDialog({ children, location, locations = [], members = [
     // Convert "none" strings back to null for Prisma
     const submissionData = {
       ...values,
-      parentLocationId: values.parentLocationId === "none" ? null : values.parentLocationId,
+      parentLocationId:
+        values.parentLocationId === "none" ? null : values.parentLocationId,
       managerId: values.managerId === "none" ? null : values.managerId,
     };
 
@@ -120,7 +131,9 @@ export function LocationDialog({ children, location, locations = [], members = [
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{location ? "Edit Location" : "Add Location"}</DialogTitle>
+          <DialogTitle>
+            {location ? "Edit Location" : "Add Location"}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -160,7 +173,10 @@ export function LocationDialog({ children, location, locations = [], members = [
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Location Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
@@ -184,7 +200,10 @@ export function LocationDialog({ children, location, locations = [], members = [
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Parent Location</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="None" />
@@ -213,7 +232,10 @@ export function LocationDialog({ children, location, locations = [], members = [
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Manager</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || undefined}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Assign manager" />
@@ -240,7 +262,10 @@ export function LocationDialog({ children, location, locations = [], members = [
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Describe this location..." {...field} />
+                    <Textarea
+                      placeholder="Describe this location..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -248,7 +273,9 @@ export function LocationDialog({ children, location, locations = [], members = [
             />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium border-b pb-2">Address Details</h3>
+              <h3 className="text-sm font-medium border-b pb-2">
+                Address Details
+              </h3>
               <div className="grid grid-cols-1 gap-4">
                 <FormField
                   control={form.control}
@@ -323,7 +350,9 @@ export function LocationDialog({ children, location, locations = [], members = [
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium border-b pb-2">Contact Info</h3>
+              <h3 className="text-sm font-medium border-b pb-2">
+                Contact Info
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -360,9 +389,12 @@ export function LocationDialog({ children, location, locations = [], members = [
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Default Location</FormLabel>
+                    <FormLabel className="text-base">
+                      Default Location
+                    </FormLabel>
                     <div className="text-sm text-muted-foreground">
-                      Set as the primary location for new products and transactions.
+                      Set as the primary location for new products and
+                      transactions.
                     </div>
                   </div>
                   <FormControl>
