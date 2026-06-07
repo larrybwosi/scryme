@@ -36,12 +36,14 @@ import { PaymentMethod } from "@repo/db/client";
 
 const expenseSchema = z.object({
   description: z.string().min(2, "Description is required"),
-  amount: z.string().transform((val) => Number(val)),
+  amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   categoryId: z.string().min(1, "Category is required"),
-  expenseDate: z.string().default(new Date().toISOString().split('T')[0]),
-  paymentMethod: z.nativeEnum(PaymentMethod).default(PaymentMethod.CASH),
+  expenseDate: z.string(),
+  paymentMethod: z.nativeEnum(PaymentMethod),
   notes: z.string().optional(),
 });
+
+type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
 interface ExpenseDialogProps {
   categories: any[];
@@ -50,11 +52,11 @@ interface ExpenseDialogProps {
 
 export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
   const [open, setOpen] = useState(false);
-  const form = useForm<z.infer<typeof expenseSchema>>({
-    resolver: zodResolver(expenseSchema),
+  const form = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
       description: '',
-      amount: 0 as any,
+      amount: 0,
       categoryId: '',
       expenseDate: new Date().toISOString().split('T')[0],
       paymentMethod: PaymentMethod.CASH,
@@ -62,7 +64,7 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof expenseSchema>) {
+  async function onSubmit(values: ExpenseFormValues) {
     try {
       await createExpense({
         ...values,

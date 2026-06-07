@@ -38,8 +38,10 @@ const utilitySchema = z.object({
   provider: z.string().optional(),
   accountNumber: z.string().min(1, "Account number is required"),
   meterNumber: z.string().optional(),
-  type: z.nativeEnum(UtilityType).default(UtilityType.ELECTRICITY),
+  type: z.nativeEnum(UtilityType),
 });
+
+type UtilityFormValues = z.infer<typeof utilitySchema>;
 
 interface UtilityDialogProps {
   children: React.ReactNode;
@@ -47,8 +49,8 @@ interface UtilityDialogProps {
 
 export function UtilityDialog({ children }: UtilityDialogProps) {
   const [open, setOpen] = useState(false);
-  const form = useForm<z.infer<typeof utilitySchema>>({
-    resolver: zodResolver(utilitySchema),
+  const form = useForm<UtilityFormValues>({
+    resolver: zodResolver(utilitySchema) as any,
     defaultValues: {
       name: '',
       provider: '',
@@ -58,7 +60,7 @@ export function UtilityDialog({ children }: UtilityDialogProps) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof utilitySchema>) {
+  async function onSubmit(values: UtilityFormValues) {
     try {
       await createUtilityAccount(values);
       toast.success("Utility account created successfully");

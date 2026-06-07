@@ -1,4 +1,5 @@
 import { Plus, MoreHorizontal, Star } from 'lucide-react';
+import React from 'react';
 
 interface PageHeaderProps {
   title: string;
@@ -9,9 +10,10 @@ interface PageHeaderProps {
     label: string;
     onClick?: () => void;
   };
+  children?: React.ReactNode;
 }
 
-export function PageHeader({ title, icon, subtitle, description, action }: PageHeaderProps) {
+export function PageHeader({ title, icon, subtitle, description, action, children }: PageHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-4">
@@ -30,6 +32,7 @@ export function PageHeader({ title, icon, subtitle, description, action }: PageH
       </div>
 
       <div className="flex items-center gap-3">
+        {children}
         {action && (
           <button className="flex items-center gap-2 px-4 py-2 bg-[#4a9c6d] text-white rounded-lg text-sm font-semibold hover:bg-[#3d825b] transition-colors shadow-sm">
             <Plus className="w-4 h-4" />

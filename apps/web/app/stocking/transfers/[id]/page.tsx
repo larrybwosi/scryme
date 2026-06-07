@@ -26,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { revalidatePath } from 'next/cache';
 
 export default async function TransferDetailsPage({
   params
@@ -148,7 +147,7 @@ export default async function TransferDetailsPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transfer.items.map((item) => (
+                  {(transfer.items as any[]).map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="font-medium">{item.variant.product.name}</div>
@@ -165,7 +164,7 @@ export default async function TransferDetailsPage({
                   <TableRow className="bg-gray-50/50 font-bold">
                     <TableCell colSpan={4} className="text-right">Total Estimated Value</TableCell>
                     <TableCell className="text-right">
-                      ${transfer.items.reduce((acc, item) => acc + (item.requestedQuantity.toNumber() * item.unitCost.toNumber()), 0).toFixed(2)}
+                      ${(transfer.items as any[]).reduce((acc, item) => acc + (item.requestedQuantity.toNumber() * item.unitCost.toNumber()), 0).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 </TableBody>

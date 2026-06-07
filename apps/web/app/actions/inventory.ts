@@ -1,7 +1,6 @@
 "use server";
 
 import { db, StockAdjustmentReason, MovementType, AdjustmentStatus, Decimal, StockAdjustment, ProductVariant } from "@repo/db";
-import { Prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 
@@ -22,7 +21,7 @@ export async function getInventoryLocations(): Promise<{ id: string; name: strin
   });
 }
 
-export async function getCategoriesFull() {
+export async function getCategoriesFull(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -93,7 +92,7 @@ export async function updateCategory(id: string, data: {
   return category;
 }
 
-export async function deleteCategory(id: string) {
+export async function deleteCategory(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -263,7 +262,7 @@ export async function updateProduct(id: string, data: {
   });
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -274,7 +273,7 @@ export async function deleteProduct(id: string) {
   revalidatePath("/inventory");
 }
 
-export async function checkProductUniqueness(params: { sku?: string; slug?: string; excludeId?: string }) {
+export async function checkProductUniqueness(params: { sku?: string; slug?: string; excludeId?: string }): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return { sku: true, slug: true };
 
@@ -306,7 +305,7 @@ export async function checkProductUniqueness(params: { sku?: string; slug?: stri
   return results;
 }
 
-export async function getProduct(id: string) {
+export async function getProduct(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
