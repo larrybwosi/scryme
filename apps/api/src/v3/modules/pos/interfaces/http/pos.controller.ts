@@ -11,6 +11,7 @@ import {
   Patch,
   StreamableFile,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { V3AuthService } from '../../../auth/infrastructure/services/v3-auth.service';
@@ -61,6 +62,7 @@ import * as Fastify from 'fastify';
 @UseInterceptors(StandardResponseInterceptor)
 export class PosController {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly authService: V3AuthService,
     private readonly processSaleUseCase: ProcessSaleUseCase,
     private readonly syncUseCase: SyncUseCase,

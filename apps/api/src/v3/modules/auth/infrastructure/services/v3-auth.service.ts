@@ -128,7 +128,7 @@ export class V3AuthService {
       accessToken,
       member: {
         id: member.id,
-        name: member.user?.name || 'Staff',
+        name: (member as any).user?.name || 'Staff',
         role: member.role,
       },
     };
