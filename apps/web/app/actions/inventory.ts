@@ -116,6 +116,7 @@ export async function deleteCategory(id: string) {
 export async function createProduct(data: {
   name: string;
   sku: string;
+  slug?: string;
   categoryId: string;
   buyingPrice: number;
   retailPrice: number;
@@ -131,6 +132,7 @@ export async function createProduct(data: {
       data: {
         name: data.name,
         sku: data.sku,
+        slug: data.slug,
         categoryId: data.categoryId,
         organizationId: context.organizationId,
         imageUrls: data.imageUrls,
@@ -220,6 +222,7 @@ export async function createProduct(data: {
 export async function updateProduct(id: string, data: {
   name?: string;
   sku?: string;
+  slug?: string;
   categoryId?: string;
   buyingPrice?: number;
   retailPrice?: number;
@@ -234,6 +237,7 @@ export async function updateProduct(id: string, data: {
       data: {
         name: data.name,
         sku: data.sku,
+        slug: data.slug,
         categoryId: data.categoryId,
         imageUrls: data.imageUrls,
       },
@@ -268,6 +272,38 @@ export async function deleteProduct(id: string) {
   });
 
   revalidatePath("/inventory");
+}
+
+export async function checkProductUniqueness(params: { sku?: string; slug?: string; excludeId?: string }) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return { sku: true, slug: true };
+
+  const { sku, slug, excludeId } = params;
+  const results = { sku: true, slug: true };
+
+  if (sku) {
+    const existing = await db.product.findFirst({
+      where: {
+        sku,
+        organizationId: context.organizationId,
+        id: excludeId ? { not: excludeId } : undefined,
+      },
+    });
+    results.sku = !existing;
+  }
+
+  if (slug) {
+    const existing = await db.product.findFirst({
+      where: {
+        slug,
+        organizationId: context.organizationId,
+        id: excludeId ? { not: excludeId } : undefined,
+      },
+    });
+    results.slug = !existing;
+  }
+
+  return results;
 }
 
 export async function getProduct(id: string) {

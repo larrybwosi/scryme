@@ -1,0 +1,169 @@
+"use client";
+
+import React, { useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@repo/ui/components/ui/sheet";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { MemberRole } from "@repo/db";
+import { addStaffMember } from "../../app/actions/staff";
+import { toast } from "sonner";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
+
+export function AddMemberSheet({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    role: "EMPLOYEE" as MemberRole,
+    password: "",
+  });
+
+  const generatePassword = () => {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let pwd = "";
+    const values = new Uint32Array(12);
+    window.crypto.getRandomValues(values);
+    for (let i = 0; i < 12; i++) {
+      pwd += charset[values[i] % charset.length];
+    }
+    setFormData((prev) => ({ ...prev, password: pwd }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const result = await addStaffMember(formData);
+
+    if (result.success) {
+      toast.success("Staff member added successfully");
+      setOpen(false);
+      setFormData({
+        name: "",
+        email: "",
+        role: "EMPLOYEE",
+        password: "",
+      });
+    } else {
+      toast.error(result.error || "Failed to add staff member");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>{children}</SheetTrigger>
+      <SheetContent className="sm:max-w-[450px]">
+        <SheetHeader>
+          <SheetTitle>Add Staff Member</SheetTitle>
+          <SheetDescription>
+            Add a new member to your organization. They will be able to log in with the provided email and password.
+          </SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="space-y-6 py-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              placeholder="John Doe"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="john@example.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Organization Role</Label>
+            <Select
+              value={formData.role}
+              onValueChange={(value) =>
+                setFormData({ ...formData, role: value as MemberRole })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="MANAGER">Manager</SelectItem>
+                <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                <SelectItem value="CASHIER">Cashier</SelectItem>
+                <SelectItem value="REPORTER">Reporter</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={generatePassword}
+              >
+                <RefreshCw size={12} className="mr-1" />
+                Regenerate
+              </Button>
+            </div>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                placeholder="Autogenerated password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-500">
+              Please share this password with the member securely.
+            </p>
+          </div>
+          <SheetFooter className="pt-4">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Adding..." : "Add Staff Member"}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
+}
