@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   BedDouble,
+  ShoppingCart,
   Users,
   UserSquare2,
   MapPin,
@@ -45,6 +46,16 @@ const sidebarConfig: SidebarSection[] = [
     title: "DAILY OPERATION",
     items: [
       { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      {
+        title: "Sales",
+        icon: ShoppingCart,
+        href: "/sales/transactions",
+        items: [
+          { title: "Transactions", href: "/sales/transactions" },
+          { title: "New Order", href: "/sales/new" },
+          { title: "Deliveries", href: "/sales/deliveries" },
+        ]
+      },
       {
         title: "Reservation",
         icon: CalendarDays,
