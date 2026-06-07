@@ -70,9 +70,9 @@ export async function GET(
     let stream;
     if (type === 'receipt') {
         // Using GenericReceiptDocument or similar from @repo/documents
-        stream = await renderToStream(createElement(GenericReceiptDocument, { data: documentData } as any));
+        stream = await renderToStream(createElement(GenericReceiptDocument as any, { data: documentData } as any) as any);
     } else {
-        stream = await renderToStream(createElement(SimpleInvoicePDF, { data: documentData } as any));
+        stream = await renderToStream(createElement(SimpleInvoicePDF as any, { data: documentData } as any) as any);
     }
 
     return new NextResponse(stream as any, {
