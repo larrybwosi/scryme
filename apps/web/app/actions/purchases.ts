@@ -3,15 +3,30 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { Purchase, Supplier, MemberRole } from "@repo/db/client";
 
-export async function getPurchases(params: {
-  search?: string;
-  status?: string;
-}) {
+async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
   }
+
+  const member = await db.member.findUnique({
+    where: { organizationId_userId: { organizationId: auth.organizationId, userId: auth.user.id } }
+  });
+
+  if (!member || !allowedRoles.includes(member.role)) {
+    throw new Error("Forbidden: Insufficient permissions");
+  }
+
+  return { auth, member };
+}
+
+export async function getPurchases(params: {
+  search?: string;
+  status?: string;
+}): Promise<any[]> {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
 
   const where: any = {
     organizationId: auth.organizationId,
@@ -55,9 +70,8 @@ export async function getPurchases(params: {
     status: p.status,
     date: p.orderDate,
     itemCount: p.items.length,
-    // For the UI which expects 'product' and 'category'
     product: p.items[0]?.variant.product.name || "N/A",
-    category: p.items[0]?.variant.product.categoryId || "N/A", // Should ideally be category name
+    category: p.items[0]?.variant.product.categoryId || "N/A",
     image: p.items[0]?.variant.product.imageUrls[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=" + p.id,
   }));
 }
@@ -66,11 +80,8 @@ export async function createPurchase(data: {
   supplierId: string;
   items: { variantId: string; quantity: number; unitCost: number }[];
   purchaseNumber: string;
-}) {
-  const auth = await getServerAuth();
-  if (!auth || !auth.organizationId) {
-    throw new Error("Unauthorized");
-  }
+}): Promise<any> {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const totalAmount = data.items.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
 
@@ -93,6 +104,61 @@ export async function createPurchase(data: {
     },
   });
 
-  revalidatePath("/purchases");
+  revalidatePath("/finance/purchases");
   return purchase;
+}
+
+export async function updatePurchaseStatus(id: string, status: any): Promise<any> {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const purchase = await db.purchase.update({
+    where: { id, organizationId: auth.organizationId },
+    data: { status },
+  });
+
+  revalidatePath("/finance/purchases");
+  return purchase;
+}
+
+export async function createPurchasePayment(data: {
+  purchaseId: string;
+  amount: number;
+  paymentMethod: any;
+  reference?: string;
+}): Promise<any> {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const payment = await db.purchasePayment.create({
+    data: {
+      purchaseId: data.purchaseId,
+      amount: data.amount,
+      paymentMethod: data.paymentMethod,
+      reference: data.reference,
+      memberId: auth.user.id,
+    },
+  });
+
+  const purchase = await db.purchase.findUnique({
+    where: { id: data.purchaseId },
+    include: { payments: true }
+  });
+
+  if (purchase) {
+    const totalPaid = purchase.payments.reduce((acc, p) => acc + Number(p.amount), 0);
+    let paymentStatus: any = "PARTIALLY_PAID";
+    if (totalPaid >= Number(purchase.totalAmount)) {
+      paymentStatus = "PAID";
+    }
+
+    await db.purchase.update({
+      where: { id: data.purchaseId },
+      data: {
+        paidAmount: totalPaid,
+        paymentStatus: paymentStatus
+      }
+    });
+  }
+
+  revalidatePath("/finance/purchases");
+  return payment;
 }

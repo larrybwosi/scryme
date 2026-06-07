@@ -61,6 +61,7 @@ export const RESOURCES = {
     BAKERY: 'bakery',
     WORKSPACE: 'workspace',
     HULY: 'huly',
+    UTILITY: 'utility',
 };
 /**
  * Helper function to create permission strings

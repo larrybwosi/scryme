@@ -5,7 +5,7 @@ import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, subMonths, format, endOfMonth, startOfDay, endOfDay } from "date-fns";
 
-export async function getStockDashboardStats() {
+export async function getStockDashboardStats(): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
@@ -41,7 +41,7 @@ export async function getStockDashboardStats() {
   };
 }
 
-export async function getStockMovementsChartData() {
+export async function getStockMovementsChartData(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -87,7 +87,7 @@ export async function getStockMovementsChartData() {
   return data;
 }
 
-export async function getStockDistributionByLocation() {
+export async function getStockDistributionByLocation(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -110,7 +110,7 @@ export async function getStockDistributionByLocation() {
   }));
 }
 
-export async function getStockTransferList() {
+export async function getStockTransferList(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -130,7 +130,7 @@ export async function createStockTransfer(data: {
   toLocationId: string;
   items: { variantId: string; quantity: number }[];
   notes?: string;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId || !context.user.id) throw new Error("Unauthorized");
 
@@ -169,7 +169,7 @@ export async function createStockTransfer(data: {
   return result;
 }
 
-export async function getStockTransferDetails(id: string) {
+export async function getStockTransferDetails(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
@@ -195,7 +195,7 @@ export async function getStockTransferDetails(id: string) {
   });
 }
 
-export async function updateStockTransferStatus(id: string, status: StockTransferStatus, notes?: string) {
+export async function updateStockTransferStatus(id: string, status: StockTransferStatus, notes?: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId || !context.user.id) throw new Error("Unauthorized");
 
@@ -313,7 +313,7 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
   return result;
 }
 
-export async function getProductStockDistribution(productId: string) {
+export async function getProductStockDistribution(productId: string): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -335,7 +335,7 @@ export async function getStockMovementHistory(params: {
   startDate?: Date;
   endDate?: Date;
   limit?: number;
-}) {
+}): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -363,7 +363,7 @@ export async function getStockMovementHistory(params: {
   });
 }
 
-export async function getReorderRules() {
+export async function getReorderRules(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -384,7 +384,7 @@ export async function upsertReorderRule(data: {
   minQuantity: number;
   maxQuantity: number;
   reorderQuantity: number;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
