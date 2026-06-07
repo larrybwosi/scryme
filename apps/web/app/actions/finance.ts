@@ -6,14 +6,17 @@ import { revalidatePath } from "next/cache";
 import {
   ExpenseStatus,
   PaymentMethod,
+  ApprovalRequestType,
   UtilityType,
   Expense,
   ExpenseCategory,
   Supplier,
   Member,
   User,
-  MemberRole
+  MemberRole,
+  RecurrenceFrequency
 } from "@repo/db/client";
+import { submitForApproval } from "./approvals";
 
 async function getMember(organizationId: string, userId: string) {
   return await db.member.findUnique({
@@ -93,6 +96,11 @@ export async function createExpense(data: {
   supplierId?: string;
   receiptUrl?: string;
   notes?: string;
+  isRecurring?: boolean;
+  frequency?: RecurrenceFrequency;
+  startDate?: Date;
+  endDate?: Date;
+  utilityAccountId?: string;
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
@@ -102,25 +110,211 @@ export async function createExpense(data: {
   });
   const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
 
-  const expense = await db.expense.create({
-    data: {
-      organizationId: auth.organizationId,
-      memberId: auth.user.id,
-      expenseNumber,
-      description: data.description,
-      amount: data.amount,
-      categoryId: data.categoryId,
-      expenseDate: data.expenseDate,
-      paymentMethod: data.paymentMethod,
-      supplierId: data.supplierId,
-      receiptUrl: data.receiptUrl,
-      notes: data.notes,
-      status: "PENDING",
-    },
+  return await db.$transaction(async (tx) => {
+    const org = await tx.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { expenseApprovalThreshold: true }
+    });
+
+    const threshold = org?.expenseApprovalThreshold ? Number(org.expenseApprovalThreshold) : 0;
+    const status = data.amount > threshold ? "PENDING_APPROVAL" : "PENDING";
+
+    const expense = await tx.expense.create({
+      data: {
+        organizationId: auth.organizationId,
+        memberId: auth.user.id,
+        expenseNumber,
+        description: data.description,
+        amount: data.amount,
+        categoryId: data.categoryId,
+        expenseDate: data.expenseDate,
+        paymentMethod: data.paymentMethod,
+        supplierId: data.supplierId,
+        receiptUrl: data.receiptUrl,
+        notes: data.notes,
+        utilityAccountId: data.utilityAccountId,
+        status: status as ExpenseStatus,
+      },
+    });
+
+    if (status === "PENDING_APPROVAL") {
+      await submitForApproval({
+        relatedId: expense.id,
+        type: "EXPENSE",
+        amount: data.amount,
+        relatedRecordNumber: expenseNumber,
+      });
+    }
+
+    if (data.isRecurring && data.frequency && data.startDate) {
+      await tx.recurringExpense.create({
+        data: {
+          organizationId: auth.organizationId,
+          createdById: auth.user.id,
+          description: data.description,
+          amount: data.amount,
+          categoryId: data.categoryId,
+          paymentMethod: data.paymentMethod,
+          frequency: data.frequency,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          nextDueDate: calculateNextDueDate(data.startDate, data.frequency),
+          supplierId: data.supplierId,
+          utilityAccountId: data.utilityAccountId,
+        }
+      });
+    }
+
+    revalidatePath("/finance/expenses");
+    if (data.utilityAccountId) revalidatePath("/finance/utilities");
+    return expense;
+  });
+}
+
+function calculateNextDueDate(current: Date, frequency: RecurrenceFrequency): Date {
+  const next = new Date(current);
+  switch (frequency) {
+    case "DAILY": next.setDate(next.getDate() + 1); break;
+    case "WEEKLY": next.setDate(next.getDate() + 7); break;
+    case "BIWEEKLY": next.setDate(next.getDate() + 14); break;
+    case "MONTHLY": next.setMonth(next.getMonth() + 1); break;
+    case "QUARTERLY": next.setMonth(next.getMonth() + 3); break;
+    case "YEARLY": next.setFullYear(next.getFullYear() + 1); break;
+  }
+  return next;
+}
+
+export async function recordUtilityBill(data: {
+  utilityAccountId: string;
+  amount: number;
+  description: string;
+  billDate: Date;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+}) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const account = await db.utilityAccount.findUnique({
+    where: { id: data.utilityAccountId }
   });
 
-  revalidatePath("/finance/expenses");
+  if (!account) throw new Error("Utility account not found");
+
+  // Create an expense linked to the utility account
+  const expense = await createExpense({
+    description: data.description || `${account.name} Bill`,
+    amount: data.amount,
+    categoryId: (await getUtilityCategoryId(auth.organizationId)) || "", // Need to find or create a Utilities category
+    expenseDate: data.billDate,
+    paymentMethod: data.paymentMethod,
+    utilityAccountId: data.utilityAccountId,
+    notes: data.notes,
+  });
+
+  revalidatePath("/finance/utilities");
   return expense;
+}
+
+async function getUtilityCategoryId(organizationId: string) {
+  let category = await db.expenseCategory.findFirst({
+    where: { organizationId, name: { contains: "Utility", mode: "insensitive" } }
+  });
+
+  if (!category) {
+    category = await db.expenseCategory.create({
+      data: {
+        organizationId,
+        name: "Utilities",
+        description: "Water, Electricity, Internet, etc.",
+        code: "UTIL"
+      }
+    });
+  }
+
+  return category.id;
+}
+
+export async function processRecurringExpenses() {
+  // This would typically be called by a CRON job or background worker
+  // We'll implement the logic here to be triggered as needed
+
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
+  const dueRecurring = await db.recurringExpense.findMany({
+    where: {
+      isActive: true,
+      nextDueDate: { lte: today },
+      OR: [
+        { endDate: null },
+        { endDate: { gte: today } }
+      ]
+    }
+  });
+
+  for (const recurring of dueRecurring) {
+    await db.$transaction(async (tx) => {
+      // Create the actual expense
+      const count = await tx.expense.count({
+        where: { organizationId: recurring.organizationId }
+      });
+      const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+
+      // Check for approval threshold
+      const org = await tx.organization.findUnique({
+        where: { id: recurring.organizationId },
+        select: { expenseApprovalThreshold: true }
+      });
+
+      const threshold = org?.expenseApprovalThreshold ? Number(org.expenseApprovalThreshold) : 0;
+      const status = Number(recurring.amount) > threshold ? "PENDING_APPROVAL" : "PENDING";
+
+      const expense = await tx.expense.create({
+        data: {
+          organizationId: recurring.organizationId,
+          memberId: recurring.createdById, // Original creator
+          expenseNumber,
+          description: `Recurring: ${recurring.description}`,
+          amount: recurring.amount,
+          categoryId: recurring.categoryId,
+          expenseDate: recurring.nextDueDate,
+          paymentMethod: recurring.paymentMethod,
+          supplierId: recurring.supplierId,
+          utilityAccountId: recurring.utilityAccountId,
+          recurringExpenseId: recurring.id,
+          status: status as ExpenseStatus,
+        }
+      });
+
+      if (status === "PENDING_APPROVAL") {
+        // We'd call submitForApproval here, but we need to ensure it works within transaction
+        // For simplicity in this background task, we'll create the approval request directly if needed
+        await tx.approvalRequest.create({
+          data: {
+            organizationId: recurring.organizationId,
+            requesterId: recurring.createdById,
+            relatedId: expense.id,
+            requestType: "EXPENSE",
+            amount: recurring.amount,
+            relatedRecordNumber: expenseNumber,
+            status: "PENDING",
+          }
+        });
+      }
+
+      // Update next due date
+      const nextDueDate = calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
+      await tx.recurringExpense.update({
+        where: { id: recurring.id },
+        data: { nextDueDate }
+      });
+
+      // TODO: Send notifications to admins/managers
+      // console.log(`Created recurring expense ${expenseNumber} for organization ${recurring.organizationId}`);
+    });
+  }
+
+  return { processed: dueRecurring.length };
 }
 
 // --- Category Actions ---

@@ -3,7 +3,8 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
-import { Purchase, Supplier, MemberRole } from "@repo/db/client";
+import { Purchase, Supplier, MemberRole, PurchaseStatus, PaymentStatus, ThreeWayMatchStatus } from "@repo/db/client";
+import { submitForApproval } from "./approvals";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
@@ -79,20 +80,29 @@ export async function getPurchases(params: {
 export async function createPurchase(data: {
   supplierId: string;
   items: { variantId: string; quantity: number; unitCost: number }[];
-  purchaseNumber: string;
+  purchaseNumber?: string;
 }): Promise<any> {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const totalAmount = data.items.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+
+  // Generate purchase number if not provided
+  let purchaseNumber = data.purchaseNumber;
+  if (!purchaseNumber) {
+    const count = await db.purchase.count({
+      where: { organizationId: auth.organizationId }
+    });
+    purchaseNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+  }
 
   const purchase = await db.purchase.create({
     data: {
       organizationId: auth.organizationId,
       memberId: auth.user.id,
       supplierId: data.supplierId,
-      purchaseNumber: data.purchaseNumber,
+      purchaseNumber,
       totalAmount: totalAmount,
-      status: "ORDERED",
+      status: "DRAFT",
       items: {
         create: data.items.map((item) => ({
           variantId: item.variantId,
@@ -104,8 +114,104 @@ export async function createPurchase(data: {
     },
   });
 
+  // Check for approval threshold
+  const org = await db.organization.findUnique({
+    where: { id: auth.organizationId },
+    select: { expenseApprovalThreshold: true }
+  });
+
+  const threshold = org?.expenseApprovalThreshold ? Number(org.expenseApprovalThreshold) : 0;
+
+  if (totalAmount > threshold) {
+    await submitForApproval({
+      relatedId: purchase.id,
+      type: "PURCHASE_ORDER",
+      amount: totalAmount,
+      relatedRecordNumber: purchaseNumber,
+    });
+  } else {
+    await db.purchase.update({
+      where: { id: purchase.id },
+      data: { status: "ORDERED" }
+    });
+  }
+
   revalidatePath("/finance/purchases");
   return purchase;
+}
+
+export async function receivePurchaseItems(purchaseId: string, items: { itemId: string; quantity: number }[]) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  await db.$transaction(async (tx) => {
+    for (const item of items) {
+      await tx.purchaseItem.update({
+        where: { id: item.itemId },
+        data: {
+          receivedQuantity: { increment: item.quantity }
+        }
+      });
+    }
+
+    // Check if all items received
+    const purchase = await tx.purchase.findUnique({
+      where: { id: purchaseId },
+      include: { items: true }
+    });
+
+    if (purchase) {
+      const allReceived = purchase.items.every(i => i.receivedQuantity >= i.orderedQuantity);
+      const anyReceived = purchase.items.some(i => i.receivedQuantity > 0);
+
+      await tx.purchase.update({
+        where: { id: purchaseId },
+        data: {
+          status: allReceived ? "RECEIVED" : (anyReceived ? "PARTIALLY_RECEIVED" : "ORDERED")
+        }
+      });
+    }
+  });
+
+  revalidatePath("/finance/purchases");
+}
+
+export async function recordSupplierInvoice(data: {
+  purchaseId: string;
+  invoiceNumber: string;
+  amount: number;
+  issueDate: Date;
+  dueDate: Date;
+}) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const purchase = await db.purchase.findUnique({
+    where: { id: data.purchaseId }
+  });
+
+  if (!purchase) throw new Error("Purchase order not found");
+
+  const invoice = await db.supplierInvoice.create({
+    data: {
+      organizationId: auth.organizationId,
+      purchaseId: data.purchaseId,
+      supplierId: purchase.supplierId,
+      invoiceNumber: data.invoiceNumber,
+      totalAmount: data.amount,
+      subTotal: data.amount, // Simplified
+      taxAmount: 0,
+      issueDate: data.issueDate,
+      dueDate: data.dueDate,
+      status: "UNPAID",
+    }
+  });
+
+  await db.purchase.update({
+    where: { id: data.purchaseId },
+    data: { status: "BILLED" }
+  });
+
+  revalidatePath("/finance/purchases");
+  return invoice;
 }
 
 export async function updatePurchaseStatus(id: string, status: any): Promise<any> {

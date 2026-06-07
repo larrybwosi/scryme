@@ -61,7 +61,12 @@ export default async function UtilitiesPage() {
                   </TableCell>
                   <TableCell>{(account as any)._count.expenses}</TableCell>
                   <TableCell className="text-right">
-                    <button className="text-sm text-[#34A853] font-medium">View History</button>
+                    <div className="flex justify-end gap-2">
+                      <UtilityDialog mode="BILL" accountId={account.id} accountName={account.name}>
+                        <button className="text-sm text-[#34A853] font-medium">Record Bill</button>
+                      </UtilityDialog>
+                      <button className="text-sm text-gray-500 font-medium">History</button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

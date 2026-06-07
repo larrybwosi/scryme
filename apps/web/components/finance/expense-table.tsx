@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Repeat } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,7 +69,12 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                   {format(new Date(expense.expenseDate), "MMM d, yyyy")}
                 </TableCell>
                 <TableCell className="font-medium">
-                  {expense.expenseNumber}
+                  <div className="flex items-center gap-2">
+                    {expense.recurringExpenseId && (
+                      <Repeat className="h-3 w-3 text-blue-500" />
+                    )}
+                    {expense.expenseNumber}
+                  </div>
                 </TableCell>
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>
