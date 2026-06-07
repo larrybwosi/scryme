@@ -35,10 +35,10 @@ import { StorageUnitType, UnitType } from "@repo/db/client";
 const unitSchema = z.object({
   name: z.string().min(1, "Name is required"),
   reference: z.string().optional(),
-  unitType: z.enum(StorageUnitType).default(StorageUnitType.SHELF),
+  unitType: z.nativeEnum(StorageUnitType).default(StorageUnitType.SHELF),
   zoneId: z.string().optional().nullable(),
   capacity: z.coerce.number().optional(),
-  capacityUnit: z.enum(UnitType).optional(),
+  capacityUnit: z.nativeEnum(UnitType).optional(),
 });
 
 type UnitFormValues = z.infer<typeof unitSchema>;

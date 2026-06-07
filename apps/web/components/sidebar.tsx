@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   BedDouble,
+  ShoppingCart,
   Users,
   UserSquare2,
   MapPin,
@@ -45,6 +46,16 @@ const sidebarConfig: SidebarSection[] = [
     title: "DAILY OPERATION",
     items: [
       { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+      {
+        title: "Sales",
+        icon: ShoppingCart,
+        href: "/sales/transactions",
+        items: [
+          { title: "Transactions", href: "/sales/transactions" },
+          { title: "New Order", href: "/sales/new" },
+          { title: "Deliveries", href: "/sales/deliveries" },
+        ]
+      },
       {
         title: "Reservation",
         icon: CalendarDays,
@@ -94,13 +105,15 @@ const sidebarConfig: SidebarSection[] = [
     title: "ACCOUNTING",
     items: [
       {
-        title: "Report",
+        title: "Finance",
         icon: FileBarChart,
-        href: "/",
+        href: "/finance",
         items: [
-          { title: "Overview", href: "/report/overview" },
-          { title: "Booking Report", href: "/report/booking" },
-          { title: "Purchase Report", href: "/" },
+          { title: "Overview", href: "/finance" },
+          { title: "Expenses", href: "/finance/expenses" },
+          { title: "Purchases", href: "/finance/purchases" },
+          { title: "Utilities", href: "/finance/utilities" },
+          { title: "Approvals", href: "/finance/approvals" },
         ]
       },
       { title: "Maintenance", icon: Settings, href: "/maintenance" },

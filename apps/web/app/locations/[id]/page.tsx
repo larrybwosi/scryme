@@ -15,7 +15,7 @@ import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import { LocationDialog } from "../../../components/locations/location-dialog";
+import { LocationSheet } from "../../../components/locations/location-sheet";
 import { ZoneList } from "../../../components/locations/zone-list";
 import { UnitList } from "../../../components/locations/unit-list";
 
@@ -66,12 +66,12 @@ export default async function LocationDetailPage({ params }: PageProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <LocationDialog location={location} locations={allLocations} members={members} isEdit>
+            <LocationSheet location={location} locations={allLocations} members={members} isEdit>
               <Button variant="outline" className="gap-2">
                 <Settings size={16} />
                 <span>Configure</span>
               </Button>
-            </LocationDialog>
+            </LocationSheet>
           </div>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
                     <MapPin size={18} className="text-blue-600" />
                     Sub-locations
                   </h3>
-                  <LocationDialog
+                  <LocationSheet
                     locations={allLocations}
                     members={members}
                     location={{ parentLocationId: location.id }}
@@ -162,7 +162,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
                       <Plus size={14} />
                       Add Sub-location
                     </Button>
-                  </LocationDialog>
+                  </LocationSheet>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

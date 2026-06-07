@@ -1,4 +1,4 @@
-import { UnitType, IndustryCategory } from '../generated/client';
+import { UnitType, IndustryCategory } from './generated/client';
 
 // System Units data definition
 const units = [

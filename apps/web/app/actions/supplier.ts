@@ -112,7 +112,7 @@ export async function registerSupplier(data: {
   phone?: string;
   address?: string;
   contactName?: string;
-}) {
+}): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -226,7 +226,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   } as Supplier;
 }
 
-export async function toggleFavoriteSupplier(supplierId: string) {
+export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -277,7 +277,7 @@ export async function toggleFavoriteSupplier(supplierId: string) {
   revalidatePath(`/inventory/supplier/${supplierId}`);
 }
 
-export async function addSupplierReview(supplierId: string, rating: number, comment: string) {
+export async function addSupplierReview(supplierId: string, rating: number, comment: string): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");

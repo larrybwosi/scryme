@@ -37,7 +37,7 @@ const zoneSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
   capacity: z.coerce.number().optional(),
-  capacityUnit: z.enum(UnitType).optional(),
+  capacityUnit: z.nativeEnum(UnitType).default(UnitType.COUNT),
 });
 
 type ZoneFormValues = z.infer<typeof zoneSchema>;

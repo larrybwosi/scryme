@@ -23,7 +23,7 @@ import { MoreHorizontal, Edit, Trash2, MapPin, ExternalLink } from "lucide-react
 import { deleteLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
 import Link from "next/link";
-import { LocationDialog } from "./location-dialog";
+import { LocationSheet } from "./location-sheet";
 
 interface LocationTableProps {
   data: any[];
@@ -114,12 +114,12 @@ export function LocationTable({ data, members }: LocationTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <LocationDialog location={location} locations={data} members={members} isEdit>
+                        <LocationSheet location={location} locations={data} members={members} isEdit>
                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Details
                           </DropdownMenuItem>
-                        </LocationDialog>
+                        </LocationSheet>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
