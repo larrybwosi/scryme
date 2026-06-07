@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from '@ne
 import { V3AuthService } from '../../../auth/infrastructure/services/v3-auth.service';
 import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
 import { v3Context } from '@/v3/common/decorators/v3-context.decorator';
-import { type V3ApiContext } from '@repo/shared/server';
+import { type V3ApiContext, getDocumentUrl } from '@repo/shared/server';
 import { ProcessSaleDto } from '../../application/dto/sale.dto';
 import { ProcessSaleUseCase } from '../../application/use-cases/process-sale.use-case';
 import { SyncUseCase } from '../../application/use-cases/sync.use-case';
@@ -95,8 +95,7 @@ export class PosController {
   @ApiResponse({ status: 200, type: PosLoginResponseDto, description: 'Login successful' })
   @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: 'Invalid credentials' })
   async login(@Body() body: PosLoginDto) {
-    const accessToken = await this.authService.loginMember(body.clientId, body.pin);
-    return { accessToken };
+    return this.authService.loginMember(body.clientId, body.pin);
   }
 
   @Get('me')
@@ -310,12 +309,48 @@ export class PosController {
 
   // --- Shifts ---
 
+  @Get('locations')
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List active locations', operationId: 'POS_ListLocations' })
+  async listLocations(@v3Context() ctx: V3ApiContext) {
+    // Reusing standard prisma query for active locations
+    const locations = await this.prisma.client.inventoryLocation.findMany({
+      where: { organizationId: ctx.organizationId, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        locationType: true,
+        address: true,
+        isDefault: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+    return { locations };
+  }
+
   @Post('check-out')
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Member check-out', operationId: 'POS_CheckOut' })
   async checkOut(@v3Context() ctx: V3ApiContext) {
     return this.shiftUseCase.checkOut(ctx);
+  }
+
+  @Get('waybill/:id')
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get transaction waybill', operationId: 'POS_GetWaybill' })
+  async getWaybill(@v3Context() ctx: V3ApiContext, @Param('id') id: string) {
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+    });
+
+    if (!transaction) throw new BadRequestException('Transaction not found');
+
+    const url = getDocumentUrl('waybill', id, ctx.organizationId);
+    return { url };
   }
 
   @Get('shift-report')

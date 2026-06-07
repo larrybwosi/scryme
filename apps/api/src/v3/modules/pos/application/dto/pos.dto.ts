@@ -23,6 +23,19 @@ export class PosLoginDto {
 export class PosLoginResponseDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
   accessToken: string;
+
+  @ApiProperty({
+    example: {
+      id: 'member_123',
+      name: 'John Doe',
+      role: 'staff',
+    },
+  })
+  member: {
+    id: string;
+    name: string;
+    role: string | null;
+  };
 }
 
 export class ProvisionResponseDto {

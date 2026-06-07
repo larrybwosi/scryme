@@ -6,7 +6,7 @@ pub mod routes {
     pub const LOGIN: &str = "pos/login";
     pub const ME: &str = "pos/me";
     pub const CHECK_OUT: &str = "pos/check-out";
-    pub const LOCATIONS: &str = "api/v2/pos/locations"; // Kept v2 for now as V3 doesn't have it in PosController
+    pub const LOCATIONS: &str = "pos/locations";
     pub const ABLY_AUTH: &str = "pos/ably-auth";
     pub const MPESA_INITIATE: &str = "payments/mpesa/stkpush";
 
@@ -51,6 +51,9 @@ pub mod routes {
     }
     pub fn download_receipt(id: &str) -> String {
         format!("pos/finance/receipts/{}/download", id)
+    }
+    pub fn waybill(id: &str) -> String {
+        format!("pos/waybill/{}", id)
     }
 
     // --- Delivery ---

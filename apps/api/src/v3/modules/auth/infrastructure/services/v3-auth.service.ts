@@ -122,7 +122,16 @@ export class V3AuthService {
     const client = await this.validateLoginClient(clientId);
     const member = await this.validateLoginMember(client.organizationId, pin);
     await this.handleMemberCheckIn(client, member);
-    return this.generateToken(client, member);
+    const accessToken = await this.generateToken(client, member);
+
+    return {
+      accessToken,
+      member: {
+        id: member.id,
+        name: member.user?.name || 'Staff',
+        role: member.role,
+      },
+    };
   }
 
   private async validateLoginClient(clientId: string) {
