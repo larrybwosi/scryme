@@ -31,13 +31,13 @@ import {
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createZone, updateZone } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { UnitType } from "@repo/db";
+import { UnitType } from "@repo/db/client";
 
 const zoneSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
   capacity: z.coerce.number().optional(),
-  capacityUnit: z.nativeEnum(UnitType).optional(),
+  capacityUnit: z.enum(UnitType).optional(),
 });
 
 type ZoneFormValues = z.infer<typeof zoneSchema>;
@@ -136,7 +136,10 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select unit" />

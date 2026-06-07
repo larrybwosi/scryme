@@ -30,15 +30,15 @@ import {
 } from "@repo/ui/components/ui/select";
 import { createUnit, updateUnit } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { StorageUnitType, UnitType } from "@repo/db";
+import { StorageUnitType, UnitType } from "@repo/db/client";
 
 const unitSchema = z.object({
   name: z.string().min(1, "Name is required"),
   reference: z.string().optional(),
-  unitType: z.nativeEnum(StorageUnitType).default(StorageUnitType.SHELF),
+  unitType: z.enum(StorageUnitType).default(StorageUnitType.SHELF),
   zoneId: z.string().optional().nullable(),
   capacity: z.coerce.number().optional(),
-  capacityUnit: z.nativeEnum(UnitType).optional(),
+  capacityUnit: z.enum(UnitType).optional(),
 });
 
 type UnitFormValues = z.infer<typeof unitSchema>;
@@ -50,7 +50,12 @@ interface UnitDialogProps {
   unit?: any;
 }
 
-export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialogProps) {
+export function UnitDialog({
+  children,
+  locationId,
+  zones = [],
+  unit,
+}: UnitDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<UnitFormValues>({
@@ -91,7 +96,9 @@ export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialo
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{unit ? "Edit Storage Unit" : "Add Storage Unit"}</DialogTitle>
+          <DialogTitle>
+            {unit ? "Edit Storage Unit" : "Add Storage Unit"}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -131,7 +138,10 @@ export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
@@ -155,14 +165,19 @@ export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Storage Zone</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="No zone (Standalone)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No zone (Standalone)</SelectItem>
+                        <SelectItem value="none">
+                          No zone (Standalone)
+                        </SelectItem>
                         {zones.map((zone) => (
                           <SelectItem key={zone.id} value={zone.id}>
                             {zone.name}
@@ -196,7 +211,10 @@ export function UnitDialog({ children, locationId, zones = [], unit }: UnitDialo
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unit</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select unit" />
