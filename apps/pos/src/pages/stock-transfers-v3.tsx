@@ -4,22 +4,14 @@ import { useState } from 'react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Label } from '@repo/ui/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Badge } from '@repo/ui/components/ui/badge';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import { Input } from '@repo/ui/components/ui/input';
 import {
-  Package,
   Trash2,
   Send,
-  Building2,
   Loader2,
   Search,
   PackageSearch,
-  ArrowRightLeft,
-  CheckCircle2,
-  AlertCircle,
-  ChevronRight,
-  ClipboardList,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { invoke } from '@tauri-apps/api/core';
@@ -45,29 +37,32 @@ export default function StockTransferV3() {
   const [toLocationId, setToLocationId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { products: searchResults, isLoading: isLoadingProducts } = usePosProducts({
+  const { products: searchResults } = usePosProducts({
     search: searchTerm,
     category: 'all',
     enabled: searchTerm.length >= 2,
   });
 
   const addItem = (product: PosProduct, variantId: string) => {
-    const variant = product.variants.find(v => v.variantId === variantId);
+    const variant = product.variants.find(v => v.variantId === variantId) as any;
     if (!variant) return;
 
     if (items.find(i => i.variantId === variantId)) {
-        toast.error("Item already in list");
-        return;
+      toast.error('Item already in list');
+      return;
     }
 
-    setItems([...items, {
+    setItems([
+      ...items,
+      {
         id: Math.random().toString(36).substring(7),
         variantId,
         productName: product.productName,
         variantName: variant.variantName,
         quantity: 1,
-        stock: variant.stock
-    }]);
+        stock: variant.stock ?? 0,
+      },
+    ]);
     setSearchTerm('');
   };
 
@@ -134,7 +129,7 @@ export default function StockTransferV3() {
                                 <div className="flex flex-wrap gap-2 mt-1">
                                     {p.variants.map(v => (
                                         <Button key={v.variantId} size="sm" variant="outline" onClick={() => addItem(p, v.variantId)}>
-                                            {v.variantName} ({v.stock})
+                                            {v.variantName} ({(v as any).stock ?? 0})
                                         </Button>
                                     ))}
                                 </div>

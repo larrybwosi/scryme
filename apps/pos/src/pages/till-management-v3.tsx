@@ -15,7 +15,6 @@ import {
   Lock,
   Unlock,
   RefreshCw,
-  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
@@ -32,10 +31,8 @@ export default function TillManagementV3() {
   const [cashAmount, setCashAmount] = useState('');
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetchingFunds, setIsFetchingFunds] = useState(false);
 
   const fetchFunds = async () => {
-    setIsFetchingFunds(true);
     try {
         const data = await invoke<PettyCashFund[]>('get_petty_cash_funds');
         setFunds(data);
@@ -44,8 +41,6 @@ export default function TillManagementV3() {
         }
     } catch (e) {
         console.error(e);
-    } finally {
-        setIsFetchingFunds(false);
     }
   };
 

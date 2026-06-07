@@ -270,7 +270,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         // V3 API response structure might be different.
         // Based on NestJS interceptor, it might be { data: { clientId, clientSecret } }
         if (response.data) {
-          const { clientId, clientSecret } = response.data;
+          const { clientId } = response.data;
 
           await invoke('start_device_setup_command', {
             baseUrl: API_ENDPOINT,

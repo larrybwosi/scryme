@@ -27,10 +27,12 @@ describe('GetTransactionsUseCase', () => {
   });
 
   it('should fetch transactions with targeted select', async () => {
+    process.env.JWT_SECRET = 'test-secret';
     const ctx = {
       organizationId: 'org-1',
       memberId: 'mem-1',
       locationId: 'loc-1',
+      orgSlug: 'org-slug',
       permissions: ['*'],
     };
     const query = { page: '1', limit: '10' };

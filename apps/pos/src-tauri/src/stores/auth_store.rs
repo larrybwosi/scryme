@@ -205,12 +205,6 @@ impl AuthState {
 
         let full_url = if path.starts_with("http") {
             path.to_string()
-        } else if path.starts_with("api/v2") {
-            format!(
-                "{}/{}",
-                base_url.trim_end_matches('/'),
-                path.trim_start_matches('/')
-            )
         } else if let Some(slug) = org_slug {
             format!(
                 "{}/api/v3/{}/{}",
@@ -398,33 +392,18 @@ pub async fn login_member(
     }
 
     // 3. Parse and Store Token Internally utilizing the new wrapper
-    // V3 Login returns { accessToken: string } inside standard response
+    // V3 Login returns { accessToken: string, member: { id, name, role } } inside standard response data
     let v3_res: serde_json::Value = serde_json::from_str(&text)
         .map_err(|e| format!("JSON parse error: {} | Raw: {}", e, text))?;
 
     let data = v3_res.get("data").ok_or("Missing data in response")?;
     let access_token = data.get("accessToken").and_then(|v| v.as_str()).ok_or("Missing accessToken")?;
-
-    // Since we need MemberProfile for CheckInResult, we might need to call ME endpoint
-    let (base_url, org_slug, device_key) = {
-        let config_guard = state.device_config.lock().map_err(|_| "Lock error")?;
-        let config = config_guard.as_ref().ok_or("Device not configured")?;
-        (config.base_url.clone(), config.org_slug.clone(), config.device_key.clone())
-    };
-
-    let me_request = state.client.get(format!("{}/api/v3/{}/{}", base_url.trim_end_matches('/'), org_slug, crate::api_config::routes::ME))
-        .header("Authorization", format!("Bearer {}", access_token))
-        .header("X-API-KEY", device_key)
-        .send().await.map_err(|e| e.to_string())?;
-
-    let me_text = me_request.text().await.map_err(|e| e.to_string())?;
-    let me_res: serde_json::Value = serde_json::from_str(&me_text).map_err(|e| e.to_string())?;
-    let me_data = me_res.get("data").ok_or("Missing me data")?;
+    let member_data = data.get("member").ok_or("Missing member data in response")?;
 
     let member = MemberProfile {
-        id: me_data.get("memberId").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-        name: me_data.get("memberName").and_then(|v| v.as_str()).unwrap_or("Staff").to_string(),
-        role: me_data.get("role").and_then(|v| v.as_str()).map(|s| s.to_string()),
+        id: member_data.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+        name: member_data.get("name").and_then(|v| v.as_str()).unwrap_or("Staff").to_string(),
+        role: member_data.get("role").and_then(|v| v.as_str()).map(|s| s.to_string()),
     };
 
     // CRITICAL: Token stays here, never returned to UI

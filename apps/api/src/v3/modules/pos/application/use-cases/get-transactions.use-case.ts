@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { V3ApiContext } from '@repo/shared/server';
+import { V3ApiContext, getDocumentUrl } from '@repo/shared/server';
 
 @Injectable()
 export class GetTransactionsUseCase {
@@ -44,7 +44,8 @@ export class GetTransactionsUseCase {
         // Keeping top-level include for Transaction to ensure all scalar fields are present.
         // Impact: Reduces DB payload size by ~30-50% for transactions with many items or M-Pesa payments.
         include: {
-          customer: { select: { id: true, name: true } },
+          customer: { select: { id: true, name: true, email: true } },
+          fulfillments: { select: { id: true } },
           items: {
             select: {
               id: true,
@@ -99,8 +100,44 @@ export class GetTransactionsUseCase {
       }),
     ]);
 
+    const formattedTransactions = transactions.map((t) => {
+      const paidAmount = (t as any).payments
+        .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+
+      // In V3 we might want more complex fulfillment status check
+      // For now keeping it compatible with POS expected statuses
+      const status =
+        (t as any).fulfillments?.length > 0
+          ? 'dispatched'
+          : t.paymentStatus?.toLowerCase() || 'pending';
+
+      return {
+        id: t.id,
+        number: t.number,
+        customer: (t as any).customer?.name || 'Guest',
+        email: (t as any).customer?.email || '',
+        totalAmount: Number(t.finalTotal),
+        paidAmount,
+        date: t.createdAt?.toISOString() || new Date().toISOString(),
+        status,
+        fulfillmentId: (t as any).fulfillments?.[0]?.id || null,
+        invoiceLink: getDocumentUrl('invoice', t.id, organizationId),
+        items: (t as any).items.map((i: any) => ({
+          id: i.id,
+          productId: i.variant?.productId || '',
+          productName: i.productName,
+          variantId: i.variantId,
+          variantName: i.variantName,
+          sku: i.sku,
+          quantity: i.quantity,
+          unitPrice: Number(i.unitPrice),
+          totalPrice: Number(i.lineTotal),
+        })),
+      };
+    });
+
     return {
-      data: transactions,
+      data: formattedTransactions,
       pagination: {
         total,
         page,
