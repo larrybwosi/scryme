@@ -11,6 +11,7 @@ import {
   BedDouble,
   Users,
   UserSquare2,
+  MapPin,
   Megaphone,
   FileBarChart,
   Settings,
@@ -59,6 +60,7 @@ const sidebarConfig: SidebarSection[] = [
         href: "/guests",
         items: []
       },
+      { title: "Locations", icon: MapPin, href: "/locations" },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
       {
         title: "Inventory",
