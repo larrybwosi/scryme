@@ -31,13 +31,13 @@ import {
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createZone, updateZone } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { UnitType } from "@repo/db/client";
+import { UnitType } from "@repo/db";
 
 const zoneSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
   capacity: z.coerce.number().optional(),
-  capacityUnit: z.enum(UnitType).optional(),
+  capacityUnit: z.nativeEnum(UnitType).default(UnitType.COUNT),
 });
 
 type ZoneFormValues = z.infer<typeof zoneSchema>;
