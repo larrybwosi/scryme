@@ -1,9 +1,8 @@
 "use server";
 
 import { db } from "@repo/db";
-import { getServerAuth } from "@repo/auth/server";
+import { getServerAuth, auth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { MemberRole, MembershipStatus } from "@repo/db";
 
