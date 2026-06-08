@@ -37,15 +37,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-
 
-      - name: Lint
-        run: pnpm lint
+      - name: Lint and Type Check
+        run: pnpm turbo lint type-check
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
-      - name: Type Check
-        run: pnpm type-check
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      - name: Run API Tests
+        run: pnpm --filter api test
 
       - name: Run POS Frontend Tests
         run: pnpm --filter pos test:frontend
@@ -55,8 +53,18 @@ jobs:
         with:
           components: clippy
 
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-release-${{ hashFiles('.github/workflows/release.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-release-
+
       - name: Install POS Backend dependencies (Linux)
         run: |
+          sudo rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
           sudo apt-get update
           sudo apt-get install -y \
             libgtk-3-dev \
@@ -80,9 +88,11 @@ jobs:
       - name: Run POS Backend Linting
         run: pnpm --filter pos lint:backend
 
+      - name: Install cargo-tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
+
       - name: Run POS Backend Tests with Coverage
         run: |
-          cargo install cargo-tarpaulin
           cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out xml
 
       - name: Cache Playwright Browsers
@@ -215,9 +225,19 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./apps/pos/src-tauri -> target"
+      - name: Cache apt packages
+        if: matrix.os == 'ubuntu-22.04'
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-release-build-${{ hashFiles('.github/workflows/release.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-release-build-
       - name: install dependencies (ubuntu only)
         if: matrix.os == 'ubuntu-22.04'
         run: |
+          sudo rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev libusb-1.0-0-dev libgtk-3-dev libpcsclite-dev pkg-config
       - name: install dependencies
@@ -345,9 +365,19 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./apps/bakery/src-tauri -> target"
+      - name: Cache apt packages
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-release-bakery-${{ hashFiles('.github/workflows/release.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-release-bakery-
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
+          sudo rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
       - name: install dependencies

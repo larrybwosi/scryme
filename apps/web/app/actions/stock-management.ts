@@ -460,3 +460,133 @@ export async function upsertReorderRule(data: {
   revalidatePath("/stocking/reorder-rules");
   return rule;
 }
+
+export async function getStockLevels(params: {
+  locationId?: string;
+  search?: string;
+}): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const { locationId, search } = params;
+
+  // 1. Get products and variants with their stock records
+  const products = await db.product.findMany({
+    where: {
+      organizationId: context.organizationId,
+      isActive: true,
+      OR: search
+        ? [
+            { name: { contains: search, mode: "insensitive" } },
+            { sku: { contains: search, mode: "insensitive" } },
+            {
+              variants: {
+                some: { sku: { contains: search, mode: "insensitive" } },
+              },
+            },
+          ]
+        : undefined,
+    },
+    include: {
+      variants: {
+        where: { isActive: true },
+        include: {
+          variantStocks: {
+            where:
+              locationId && locationId !== "all" ? { locationId } : undefined,
+          },
+        },
+      },
+    },
+  });
+
+  // 2. Get incoming transfers (Shipped or In Transit)
+  const incomingTransfers = await db.stockTransferItem.findMany({
+    where: {
+      stockTransfer: {
+        organizationId: context.organizationId,
+        toLocationId:
+          locationId && locationId !== "all" ? locationId : undefined,
+        status: { in: ["SHIPPED", "IN_TRANSIT"] },
+      },
+    },
+    select: {
+      variantId: true,
+      requestedQuantity: true,
+      shippedQuantity: true,
+    },
+  });
+
+  // 3. Get incoming purchases (Ordered or Partially Received)
+  const incomingPurchases = await db.purchaseItem.findMany({
+    where: {
+      purchase: {
+        organizationId: context.organizationId,
+        locationId:
+          locationId && locationId !== "all" ? locationId : undefined,
+        status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
+      },
+    },
+    select: {
+      variantId: true,
+      orderedQuantity: true,
+      receivedQuantity: true,
+    },
+  });
+
+  // 4. Create lookup maps for efficiency
+  const transferMap = new Map<string, Decimal>();
+  incomingTransfers.forEach((t) => {
+    const current = transferMap.get(t.variantId) || new Decimal(0);
+    transferMap.set(
+      t.variantId,
+      current.add(t.shippedQuantity || t.requestedQuantity || 0),
+    );
+  });
+
+  const purchaseMap = new Map<string, Decimal>();
+  incomingPurchases.forEach((p) => {
+    const current = purchaseMap.get(p.variantId) || new Decimal(0);
+    const pending = new Decimal(p.orderedQuantity).minus(p.receivedQuantity);
+    if (pending.gt(0)) {
+      purchaseMap.set(p.variantId, current.add(pending));
+    }
+  });
+
+  // 5. Map results and aggregate data
+  const results = products.flatMap((product) =>
+    product.variants.map((variant) => {
+      const stocks = variant.variantStocks;
+
+      const current = stocks.reduce(
+        (acc, s) => acc.add(s.currentStock),
+        new Decimal(0),
+      );
+      const reserved = stocks.reduce(
+        (acc, s) => acc.add(s.reservedStock),
+        new Decimal(0),
+      );
+      const available = stocks.reduce(
+        (acc, s) => acc.add(s.availableStock),
+        new Decimal(0),
+      );
+
+      const incomingT = transferMap.get(variant.id) || new Decimal(0);
+      const incomingP = purchaseMap.get(variant.id) || new Decimal(0);
+
+      return {
+        productId: product.id,
+        variantId: variant.id,
+        name: product.name,
+        variantName: variant.name,
+        sku: variant.sku || product.sku,
+        currentStock: current.toNumber(),
+        reservedStock: reserved.toNumber(),
+        availableStock: available.toNumber(),
+        incomingStock: incomingT.add(incomingP).toNumber(),
+      };
+    }),
+  );
+
+  return results;
+}
