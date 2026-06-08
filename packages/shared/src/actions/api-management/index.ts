@@ -37,7 +37,10 @@ export async function getV3ApiClients(organizationId: string) {
   });
 }
 
-export async function deleteV3ApiClient(id: string, organizationId: string) {
+export async function deleteV3ApiClient(
+  id: string,
+  organizationId: string,
+): Promise<{ count: number }> {
   return db.v3ApiClient.deleteMany({
     where: { id, organizationId },
   });
@@ -52,7 +55,7 @@ export async function updateV3ApiClient(
     scopes: string[];
     corsOrigins: string[];
   }>,
-) {
+): Promise<{ count: number }> {
   return db.v3ApiClient.updateMany({
     where: { id, organizationId },
     data,
@@ -107,7 +110,7 @@ export async function getWebhookSubscriptions(organizationId: string) {
 export async function deleteWebhookSubscription(
   id: string,
   organizationId: string,
-) {
+): Promise<{ count: number }> {
   return db.webhookSubscription.deleteMany({
     where: { id, organizationId },
   });
@@ -151,7 +154,10 @@ export async function getV2ApiKeys(organizationId: string) {
   });
 }
 
-export async function deleteV2ApiKey(id: string, organizationId: string) {
+export async function deleteV2ApiKey(
+  id: string,
+  organizationId: string,
+): Promise<{ count: number }> {
   return db.apiKey.deleteMany({
     where: { id, organizationId },
   });
