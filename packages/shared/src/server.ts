@@ -16,3 +16,4 @@ export * from "./actions/transaction/process.sale";
 export * from "./actions/transaction/orders";
 export * from "./actions/organization/mpesa-trigger.service";
 export * from "./lib/services/navari.service";
+export * from "./lib/provisioning";
