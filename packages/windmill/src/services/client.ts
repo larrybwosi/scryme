@@ -57,7 +57,7 @@ export class WindmillApiClient {
       throw new Error(`Windmill API error ${res.status} on ${path}: ${text}`);
     }
 
-    return res.json() as Promise<T>;
+    return reson() as Promise<T>;
   }
 
   /**

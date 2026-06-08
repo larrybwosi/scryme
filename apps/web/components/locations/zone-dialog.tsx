@@ -32,6 +32,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createZone, updateZone } from "../../app/actions/locations";
 import { toast } from "sonner";
 import { UnitType } from "@repo/db/client";
+import { Loader2 } from "lucide-react";
 
 const zoneSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -50,6 +51,7 @@ interface ZoneDialogProps {
 
 export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ZoneFormValues>({
     resolver: zodResolver(zoneSchema) as any,
@@ -66,6 +68,7 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
       ...values,
     };
 
+    setIsSubmitting(true);
     try {
       if (zone) {
         await updateZone(zone.id, submissionData as any);
@@ -78,6 +81,8 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
       form.reset();
     } catch (error: any) {
       toast.error(error.message || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -158,7 +163,8 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
                 )}
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {zone ? "Update Zone" : "Create Zone"}
             </Button>
           </form>

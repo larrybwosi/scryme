@@ -110,9 +110,9 @@ export class WindmillTemplateService {
       console.log(`Deploying specific template to Windmill: ${templatePath}`);
       await client.upsertScript(`f/dealio/${templatePath}`, content);
     } catch (err: any) {
-      // Try with .js if .ts fails
+      // Try with  if .ts fails
       if (err.code === 'ENOENT') {
-        const jsPath = path.join(templatesDir, `${templatePath}.js`);
+        const jsPath = path.join(templatesDir, `${templatePath}`);
         const content = await fs.readFile(jsPath, 'utf-8');
         console.log(`Deploying specific template to Windmill: ${templatePath}`);
         await client.upsertScript(`f/dealio/${templatePath}`, content);
@@ -162,8 +162,8 @@ export class WindmillTemplateService {
       if (entry.isDirectory()) {
         await this.walkTemplates(fullPath, windmillPath, callback);
       } else if (entry.isFile()) {
-        const isScript = entry.name.endsWith('.ts') || entry.name.endsWith('.js');
-        const isJson = entry.name.endsWith('.json');
+        const isScript = entry.name.endsWith('.ts') || entry.name.endsWith('');
+        const isJson = entry.name.endsWith('on');
         const isYaml = entry.name.endsWith('.yaml') || entry.name.endsWith('.yml');
 
         if (isScript || isJson || isYaml) {

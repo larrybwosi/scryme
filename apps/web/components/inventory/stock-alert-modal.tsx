@@ -12,6 +12,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { updateStockAlert } from "../../app/actions/inventory";
+import { Loader2 } from "lucide-react";
 
 interface StockAlertModalProps {
   isOpen: boolean;
@@ -68,8 +69,9 @@ export function StockAlertModal({ isOpen, onClose, product }: StockAlertModalPro
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? "Saving..." : "Save Alert"}
           </Button>
         </DialogFooter>
