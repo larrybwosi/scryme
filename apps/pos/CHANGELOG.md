@@ -1,5 +1,12 @@
 # [3.3.0-nextgen.22](https://github.com/larrybwosi/dealio-desktop/compare/v3.3.0-nextgen.21...v3.3.0-nextgen.22) (2026-05-08)
 
+## 4.3.0
+
+### Minor Changes
+
+- 5a65313: Prisma update fix
+- 5a65313: Update
+
 ## 4.2.0
 
 ### Minor Changes
