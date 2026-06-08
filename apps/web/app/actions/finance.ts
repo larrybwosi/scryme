@@ -14,13 +14,13 @@ import {
   Member,
   User,
   MemberRole,
-  RecurrenceFrequency
+  RecurrenceFrequency,
 } from "@repo/db/client";
 import { submitForApproval } from "./approvals";
 
 async function getMember(organizationId: string, userId: string) {
   return await db.member.findUnique({
-    where: { organizationId_userId: { organizationId, userId } }
+    where: { organizationId_userId: { organizationId, userId } },
   });
 }
 
@@ -44,12 +44,19 @@ export async function getExpenses(params: {
   search?: string;
   status?: string;
   categoryId?: string;
-}): Promise<(Expense & {
-  category: ExpenseCategory;
-  member: Member & { user: User };
-  supplier: Supplier | null;
-})[]> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+}): Promise<
+  (Expense & {
+    category: ExpenseCategory;
+    member: Member & { user: User };
+    supplier: Supplier | null;
+  })[]
+> {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   const where: any = {
     organizationId: auth.organizationId,
@@ -76,8 +83,8 @@ export async function getExpenses(params: {
       category: true,
       member: {
         include: {
-          user: true
-        }
+          user: true,
+        },
       },
       supplier: true,
     },
@@ -106,23 +113,25 @@ export async function createExpense(data: {
 
   // Generate expense number
   const count = await db.expense.count({
-    where: { organizationId: auth.organizationId }
+    where: { organizationId: auth.organizationId },
   });
-  const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+  const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
   return await db.$transaction(async (tx) => {
     const org = await tx.organization.findUnique({
       where: { id: auth.organizationId },
-      select: { expenseApprovalThreshold: true }
+      select: { expenseApprovalThreshold: true },
     });
 
-    const threshold = org?.expenseApprovalThreshold ? Number(org.expenseApprovalThreshold) : 0;
+    const threshold = org?.expenseApprovalThreshold
+      ? Number(org.expenseApprovalThreshold)
+      : 0;
     const status = data.amount > threshold ? "PENDING_APPROVAL" : "PENDING";
 
     const expense = await tx.expense.create({
       data: {
         organizationId: auth.organizationId,
-        memberId: auth.user.id,
+        memberId: auth.memberId,
         expenseNumber,
         description: data.description,
         amount: data.amount,
@@ -161,7 +170,7 @@ export async function createExpense(data: {
           nextDueDate: calculateNextDueDate(data.startDate, data.frequency),
           supplierId: data.supplierId,
           utilityAccountId: data.utilityAccountId,
-        }
+        },
       });
     }
 
@@ -171,15 +180,30 @@ export async function createExpense(data: {
   });
 }
 
-function calculateNextDueDate(current: Date, frequency: RecurrenceFrequency): Date {
+function calculateNextDueDate(
+  current: Date,
+  frequency: RecurrenceFrequency,
+): Date {
   const next = new Date(current);
   switch (frequency) {
-    case "DAILY": next.setDate(next.getDate() + 1); break;
-    case "WEEKLY": next.setDate(next.getDate() + 7); break;
-    case "BIWEEKLY": next.setDate(next.getDate() + 14); break;
-    case "MONTHLY": next.setMonth(next.getMonth() + 1); break;
-    case "QUARTERLY": next.setMonth(next.getMonth() + 3); break;
-    case "YEARLY": next.setFullYear(next.getFullYear() + 1); break;
+    case "DAILY":
+      next.setDate(next.getDate() + 1);
+      break;
+    case "WEEKLY":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "BIWEEKLY":
+      next.setDate(next.getDate() + 14);
+      break;
+    case "MONTHLY":
+      next.setMonth(next.getMonth() + 1);
+      break;
+    case "QUARTERLY":
+      next.setMonth(next.getMonth() + 3);
+      break;
+    case "YEARLY":
+      next.setFullYear(next.getFullYear() + 1);
+      break;
   }
   return next;
 }
@@ -195,7 +219,7 @@ export async function recordUtilityBill(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const account = await db.utilityAccount.findUnique({
-    where: { id: data.utilityAccountId }
+    where: { id: data.utilityAccountId },
   });
 
   if (!account) throw new Error("Utility account not found");
@@ -217,7 +241,10 @@ export async function recordUtilityBill(data: {
 
 async function getUtilityCategoryId(organizationId: string) {
   let category = await db.expenseCategory.findFirst({
-    where: { organizationId, name: { contains: "Utility", mode: "insensitive" } }
+    where: {
+      organizationId,
+      name: { contains: "Utility", mode: "insensitive" },
+    },
   });
 
   if (!category) {
@@ -226,8 +253,8 @@ async function getUtilityCategoryId(organizationId: string) {
         organizationId,
         name: "Utilities",
         description: "Water, Electricity, Internet, etc.",
-        code: "UTIL"
-      }
+        code: "UTIL",
+      },
     });
   }
 
@@ -245,29 +272,29 @@ export async function processRecurringExpenses() {
     where: {
       isActive: true,
       nextDueDate: { lte: today },
-      OR: [
-        { endDate: null },
-        { endDate: { gte: today } }
-      ]
-    }
+      OR: [{ endDate: null }, { endDate: { gte: today } }],
+    },
   });
 
   for (const recurring of dueRecurring) {
     await db.$transaction(async (tx) => {
       // Create the actual expense
       const count = await tx.expense.count({
-        where: { organizationId: recurring.organizationId }
+        where: { organizationId: recurring.organizationId },
       });
-      const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+      const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
       // Check for approval threshold
       const org = await tx.organization.findUnique({
         where: { id: recurring.organizationId },
-        select: { expenseApprovalThreshold: true }
+        select: { expenseApprovalThreshold: true },
       });
 
-      const threshold = org?.expenseApprovalThreshold ? Number(org.expenseApprovalThreshold) : 0;
-      const status = Number(recurring.amount) > threshold ? "PENDING_APPROVAL" : "PENDING";
+      const threshold = org?.expenseApprovalThreshold
+        ? Number(org.expenseApprovalThreshold)
+        : 0;
+      const status =
+        Number(recurring.amount) > threshold ? "PENDING_APPROVAL" : "PENDING";
 
       const expense = await tx.expense.create({
         data: {
@@ -283,7 +310,7 @@ export async function processRecurringExpenses() {
           utilityAccountId: recurring.utilityAccountId,
           recurringExpenseId: recurring.id,
           status: status as ExpenseStatus,
-        }
+        },
       });
 
       if (status === "PENDING_APPROVAL") {
@@ -298,15 +325,18 @@ export async function processRecurringExpenses() {
             amount: recurring.amount,
             relatedRecordNumber: expenseNumber,
             status: "PENDING",
-          }
+          },
         });
       }
 
       // Update next due date
-      const nextDueDate = calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
+      const nextDueDate = calculateNextDueDate(
+        recurring.nextDueDate,
+        recurring.frequency,
+      );
       await tx.recurringExpense.update({
         where: { id: recurring.id },
-        data: { nextDueDate }
+        data: { nextDueDate },
       });
 
       // TODO: Send notifications to admins/managers
@@ -320,7 +350,12 @@ export async function processRecurringExpenses() {
 // --- Category Actions ---
 
 export async function getExpenseCategories(): Promise<ExpenseCategory[]> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   return await db.expenseCategory.findMany({
     where: { organizationId: auth.organizationId },
@@ -350,14 +385,19 @@ export async function createExpenseCategory(data: {
 // --- Utility Actions ---
 
 export async function getUtilityAccounts(): Promise<any[]> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   return await db.utilityAccount.findMany({
     where: { organizationId: auth.organizationId },
     include: {
       _count: {
-        select: { expenses: true }
-      }
+        select: { expenses: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -386,7 +426,12 @@ export async function createUtilityAccount(data: {
 // --- Overview Actions ---
 
 export async function getFinanceOverview() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   const currentMonthStart = new Date();
   currentMonthStart.setDate(1);
@@ -395,19 +440,19 @@ export async function getFinanceOverview() {
   const [totalExpenses, pendingApprovals, monthlySpend] = await Promise.all([
     db.expense.aggregate({
       where: { organizationId: auth.organizationId, status: "PAID" },
-      _sum: { amount: true }
+      _sum: { amount: true },
     }),
     db.approvalRequest.count({
-      where: { organizationId: auth.organizationId, status: "PENDING" }
+      where: { organizationId: auth.organizationId, status: "PENDING" },
     }),
     db.expense.aggregate({
       where: {
         organizationId: auth.organizationId,
         expenseDate: { gte: currentMonthStart },
-        status: { in: ["PAID", "APPROVED"] }
+        status: { in: ["PAID", "APPROVED"] },
       },
-      _sum: { amount: true }
-    })
+      _sum: { amount: true },
+    }),
   ]);
 
   return {
