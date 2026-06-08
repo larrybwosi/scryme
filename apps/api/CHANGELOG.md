@@ -1,5 +1,12 @@
 # api
 
+## 1.2.0
+
+### Minor Changes
+
+- 5d3f31b: Prisma update fix
+- 5d3f31b: Update
+
 ## 1.1.0
 
 ### Minor Changes
