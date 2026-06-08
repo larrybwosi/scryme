@@ -1,0 +1,3 @@
+## 2025-05-14 - [ImageUpload Accessibility & Interaction]
+**Learning:** Icon-only buttons that are only visible on hover (e.g., "Remove image" on product cards) are inaccessible to keyboard users unless `focus-visible:opacity-100` is applied. Additionally, custom interactive elements using `div` require `role="button"` and explicit `onKeyDown` handlers for 'Enter' and 'Space' to meet ARIA standards.
+**Action:** Always pair `group-hover:opacity-100` with `focus-visible:opacity-100` for action buttons, and ensure drag-and-drop zones provide immediate visual feedback (e.g., brand color border/background) during the `isDragging` state.
