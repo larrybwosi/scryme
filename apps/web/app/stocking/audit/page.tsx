@@ -14,6 +14,7 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { ShieldCheck, History, ArrowRight, User, MapPin } from "lucide-react";
+import { AuditProductFilter } from "../../../components/stocking/audit-product-filter";
 
 export default async function AuditTrailPage({
   searchParams
@@ -59,26 +60,8 @@ export default async function AuditTrailPage({
           <CardHeader>
             <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Filter by Product</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y max-h-[600px] overflow-y-auto">
-              <a
-                href="/stocking/audit"
-                className={`block p-4 hover:bg-gray-50 transition-colors ${!params.variantId ? 'bg-black/5 border-l-2 border-black' : ''}`}
-              >
-                <div className="font-bold text-sm">All Products</div>
-                <div className="text-xs text-gray-500">Showing recent movements</div>
-              </a>
-              {products.map((p) => (
-                <a
-                  key={p.variantId}
-                  href={`/stocking/audit?variantId=${p.variantId}`}
-                  className={`block p-4 hover:bg-gray-50 transition-colors ${params.variantId === p.variantId ? 'bg-black/5 border-l-2 border-black' : ''}`}
-                >
-                  <div className="font-bold text-sm truncate">{p.name}</div>
-                  <div className="text-xs text-gray-500">{p.sku}</div>
-                </a>
-              ))}
-            </div>
+          <CardContent className="p-6 pt-0">
+            <AuditProductFilter products={products} />
           </CardContent>
         </Card>
 

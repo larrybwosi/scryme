@@ -14,6 +14,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Bell, Settings, Plus, Save, AlertCircle } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
+import { ReorderRuleForm } from "../../../components/stocking/reorder-rule-form";
 
 export default async function ReorderRulesPage() {
   const [rules, locations, products] = await Promise.all([
@@ -55,43 +56,11 @@ export default async function ReorderRulesPage() {
             <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Add New Rule</CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={handleSave} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Product</label>
-                <select name="productId" required className="w-full p-2 border rounded-md bg-white text-sm">
-                  <option value="">Select product...</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Location</label>
-                <select name="locationId" required className="w-full p-2 border rounded-md bg-white text-sm">
-                  <option value="">Select location...</option>
-                  {locations.map(l => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Min (Trigger)</label>
-                  <input type="number" name="minQuantity" required className="w-full p-2 border rounded-md text-sm" placeholder="0" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Max (Target)</label>
-                  <input type="number" name="maxQuantity" required className="w-full p-2 border rounded-md text-sm" placeholder="0" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Reorder Amount</label>
-                <input type="number" name="reorderQuantity" required className="w-full p-2 border rounded-md text-sm" placeholder="0" />
-              </div>
-              <Button type="submit" className="w-full gap-2">
-                <Save size={16} /> Save Rule
-              </Button>
-            </form>
+            <ReorderRuleForm
+              products={products}
+              locations={locations}
+              onSave={handleSave}
+            />
           </CardContent>
         </Card>
 
