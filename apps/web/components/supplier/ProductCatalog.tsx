@@ -157,7 +157,7 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove from Catalog?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove <strong>{productToDelete?.product.name}</strong> from this supplier's catalog. This action does not delete the product itself.
+            This will remove <strong>{productToDelete?.product.name}</strong> from this supplier&apos;s catalog. This action does not delete the product itself.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

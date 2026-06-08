@@ -97,7 +97,7 @@ export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: A
         <DialogHeader>
           <DialogTitle>Add Product to Catalog</DialogTitle>
           <DialogDescription>
-            Select a product from your inventory to add to this supplier's catalog.
+            Select a product from your inventory to add to this supplier&apos;s catalog.
           </DialogDescription>
         </DialogHeader>
 

@@ -21,6 +21,7 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Supplier } from "../../types/supplier";
 import { useRouter } from 'next/navigation';
 import { cn } from "@repo/ui/lib/utils";
+import Image from 'next/image';
 
 interface SupplierTableProps {
   data: Supplier[];
@@ -60,9 +61,9 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
               >
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary font-bold relative overflow-hidden">
                       {supplier.logo ? (
-                        <img src={supplier.logo} alt={supplier.name} className="w-full h-full object-cover rounded-lg" />
+                        <Image src={supplier.logo} alt={supplier.name} fill className="object-cover" />
                       ) : (
                         <Building2 size={20} />
                       )}
