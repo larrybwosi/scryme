@@ -1,17 +1,20 @@
-import React from 'react';
+import React from "react";
 import { PageHeader } from "../../../../components/page-header";
-import { getInventoryLocations, getInventoryProducts } from "../../../actions/inventory";
+import {
+  getInventoryLocations,
+  getInventoryProducts,
+} from "../../../actions/inventory";
 import { createStockTransfer } from "../../../actions/stock-management";
 import { Button } from "@repo/ui/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
-import { redirect } from 'next/navigation';
+import { redirect } from "next/navigation";
 import { NewTransferForm } from "../../../../components/stocking/new-transfer-form";
 
 export default async function NewTransferPage() {
   const [locations, products] = await Promise.all([
     getInventoryLocations(),
-    getInventoryProducts({ stockLevel: "all" })
+    getInventoryProducts({ stockLevel: "all" }),
   ]);
 
   const handleSubmit = async (formData: FormData) => {
@@ -35,7 +38,7 @@ export default async function NewTransferPage() {
         fromLocationId,
         toLocationId,
         items,
-        notes
+        notes,
       });
       redirect("/stocking/transfers");
     }
