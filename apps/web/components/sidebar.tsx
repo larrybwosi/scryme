@@ -9,8 +9,10 @@ import {
   LayoutDashboard,
   CalendarDays,
   BedDouble,
+  ShoppingCart,
   Users,
   UserSquare2,
+  MapPin,
   Megaphone,
   FileBarChart,
   Settings,
@@ -19,7 +21,11 @@ import {
   LogOut,
   ChevronDown,
   Boxes,
-  Package
+  Package,
+  TrendingUp,
+  ArrowLeftRight,
+  ShieldCheck,
+  FileText
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 
@@ -41,6 +47,16 @@ const sidebarConfig: SidebarSection[] = [
     items: [
       { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
       {
+        title: "Sales",
+        icon: ShoppingCart,
+        href: "/sales/transactions",
+        items: [
+          { title: "Transactions", href: "/sales/transactions" },
+          { title: "New Order", href: "/sales/new" },
+          { title: "Deliveries", href: "/sales/deliveries" },
+        ]
+      },
+      {
         title: "Reservation",
         icon: CalendarDays,
         href: "/reservation",
@@ -59,6 +75,7 @@ const sidebarConfig: SidebarSection[] = [
         href: "/guests",
         items: []
       },
+      { title: "Locations", icon: MapPin, href: "/locations" },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
       {
         title: "Inventory",
@@ -69,6 +86,18 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Suppliers", href: "/inventory/supplier" },
         ]
       },
+      {
+        title: "Stocking",
+        icon: TrendingUp,
+        href: "/stocking",
+        items: [
+          { title: "Dashboard", href: "/stocking" },
+          { title: "Transfers", href: "/stocking/transfers" },
+          { title: "Reorder Rules", href: "/stocking/reorder-rules" },
+          { title: "Reports", href: "/stocking/reports" },
+          { title: "Audit Trail", href: "/stocking/audit" },
+        ]
+      },
       { title: "Integrations", icon: Boxes, href: "/integrations" },
     ]
   },
@@ -76,13 +105,15 @@ const sidebarConfig: SidebarSection[] = [
     title: "ACCOUNTING",
     items: [
       {
-        title: "Report",
+        title: "Finance",
         icon: FileBarChart,
-        href: "/",
+        href: "/finance",
         items: [
-          { title: "Overview", href: "/report/overview" },
-          { title: "Booking Report", href: "/report/booking" },
-          { title: "Purchase Report", href: "/" },
+          { title: "Overview", href: "/finance" },
+          { title: "Expenses", href: "/finance/expenses" },
+          { title: "Purchases", href: "/finance/purchases" },
+          { title: "Utilities", href: "/finance/utilities" },
+          { title: "Approvals", href: "/finance/approvals" },
         ]
       },
       { title: "Maintenance", icon: Settings, href: "/maintenance" },

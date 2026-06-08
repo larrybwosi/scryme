@@ -116,6 +116,7 @@ model Transaction {
   returns               Return[]
   attachments           Attachment[]
   invoices              Invoice[]
+  campaignEvents        CampaignEvent[]
   ecommerceOrderMapping EcommerceOrderMapping? @relation("TransactionEcommerceMapping") // Back-relation for e-commerce order mappings
   loyaltyVouchers       LoyaltyVoucher[]
 

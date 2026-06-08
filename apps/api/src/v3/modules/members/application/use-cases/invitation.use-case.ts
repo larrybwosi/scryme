@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RedisService } from '@/redis/redis.service';
 import { CreateInvitationDto, InvitationQueryDto, AcceptInvitationDto } from '../dto/invitation.dto';
 import { InvitationStatus, AuditLogAction, AuditEntityType } from '@repo/db';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,7 +8,10 @@ import { emitEvent } from '@repo/windmill/server';
 
 @Injectable()
 export class InvitationUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async getInvitations(organizationId: string, query: InvitationQueryDto) {
     const { page = 1, limit = 10, status, email } = query;
@@ -164,6 +168,9 @@ export class InvitationUseCase {
         where: { id: userId },
         data: { activeOrganizationId: invitation.organizationId },
       });
+
+      // Clear session cache
+      await this.redis.del(`session-cache:${userId}`);
 
       return member;
     });

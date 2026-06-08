@@ -906,12 +906,31 @@ export class PosService {
 
     const priceLists = await this.prisma.client.priceList.findMany({
       where,
-      include: {
+      // ⚡ Bolt: Use select instead of include to fetch only essential scalar fields and relations.
+      // This reduces database payload size and serialization overhead.
+      select: {
+        id: true,
+        code: true,
+        priority: true,
+        isGlobal: true,
+        isActive: true,
+        validFrom: true,
+        validTo: true,
+        updatedAt: true,
         items: {
           where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
+          select: {
+            id: true,
+            priceListId: true,
+            variantId: true,
+            sellingUnitId: true,
+            minQuantity: true,
+            price: true,
+            updatedAt: true,
+          },
         },
-        customers: true,
-        businessAccounts: true,
+        customers: { select: { id: true } },
+        businessAccounts: { select: { id: true } },
       },
     });
 

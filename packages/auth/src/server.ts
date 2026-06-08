@@ -1,20 +1,36 @@
-import { betterAuth } from "better-auth";
-import { authOptions } from "./index";
 import { headers } from "next/headers";
-export const auth = betterAuth(authOptions);
-export async function getServerAuth() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-    if (!session) {
-        return null;
+import { auth } from "./auth";
+import { redirect } from "next/navigation";
+import { hasMemberPermission } from "./logic/has-member-permission";
+
+export async function getServerAuth(permission?: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    return null;
+  }
+
+  const user = session.user as any;
+  const organizationId =
+    (session.session as any).activeOrganizationId || user.activeOrganizationId;
+  const memberId = user.memberId;
+  const role = user.role;
+
+  if (permission) {
+    if (!role || !hasMemberPermission(role, permission)) {
+      redirect("/unauthorized");
     }
-    const organizationId = (session.session as any).activeOrganizationId ||
-        (session.user as any).activeOrganizationId;
-    return {
-        user: session.user,
-        session: session.session,
-        organizationId,
-    };
+  }
+
+  return {
+    user: session.user,
+    session: session.session,
+    organizationId,
+    memberId,
+    role,
+  };
 }
 export * from "./index";
+export { auth };

@@ -20,6 +20,7 @@ export function ImageUpload({
   disabled
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
@@ -67,9 +68,21 @@ export function ImageUpload({
     }
   };
 
+  const onDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (disabled || isUploading) return;
+    setIsDragging(true);
+  }, [disabled, isUploading]);
+
+  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
+      setIsDragging(false);
       if (disabled || isUploading) return;
 
       const files = e.dataTransfer.files;
@@ -100,6 +113,13 @@ export function ImageUpload({
     [disabled, isUploading, uploadFiles]
   );
 
+  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  }, []);
+
   const removeImage = (url: string) => {
     onChange(value.filter((u) => u !== url));
   };
@@ -121,7 +141,8 @@ export function ImageUpload({
             <button
               onClick={() => removeImage(url)}
               type="button"
-              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Remove image"
+              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-[#34A853] focus-visible:ring-offset-2"
             >
               <X size={12} />
             </button>
@@ -131,11 +152,17 @@ export function ImageUpload({
           <div
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
             onPaste={onPaste}
+            onKeyDown={onKeyDown}
             onClick={() => fileInputRef.current?.click()}
             tabIndex={0}
+            role="button"
+            aria-label="Upload images"
             className={cn(
               "aspect-square rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:ring-offset-2",
+              isDragging && "border-[#34A853] bg-[#34A853]/5",
               isUploading && "opacity-50 cursor-not-allowed",
               disabled && "opacity-50 cursor-not-allowed pointer-events-none"
             )}
