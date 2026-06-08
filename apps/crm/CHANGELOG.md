@@ -1,5 +1,12 @@
 # crm
 
+## 2.2.0
+
+### Minor Changes
+
+- 5d3f31b: Prisma update fix
+- 5d3f31b: Update
+
 ## 2.1.0
 
 ### Minor Changes

@@ -96,10 +96,17 @@ jobs:
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+<<<<<<< HEAD
         run: pnpm --filter pos exec playwright install --with-deps
 
       - name: Run POS E2E tests
         run: pnpm --filter pos test:e2e
+=======
+        run: pnpm --filter dealio-desktop exec playwright install --with-deps
+
+      - name: Run POS E2E tests
+        run: pnpm --filter dealio-desktop test:e2e
+>>>>>>> main
         env:
           POSTHOG_API_KEY: mock
           SENTRY_DSN: mock
