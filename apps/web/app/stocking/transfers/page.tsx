@@ -14,6 +14,7 @@ import {
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
+import { Input } from "@repo/ui/components/ui/input";
 
 export default async function TransfersPage() {
   const transfers = await getStockTransferList();
@@ -59,10 +60,10 @@ export default async function TransfersPage() {
         <div className="p-4 border-b flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input
+            <Input
               type="text"
               placeholder="Search transfers..."
-              className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5"
+              className="pl-10 bg-white"
             />
           </div>
           <Button variant="outline" size="sm" className="gap-2">
