@@ -28,6 +28,11 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 interface SidebarItem {
   title: string;
@@ -146,6 +151,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
+              aria-label="Collapse sidebar"
             >
               <ChevronLeft size={14} />
             </button>
@@ -155,6 +161,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
+              aria-label="Expand sidebar"
             >
               <ChevronRight size={14} />
             </button>
@@ -182,41 +189,55 @@ export function Sidebar() {
                   pathname === item.href ||
                   item.items?.some((sub) => sub.href === pathname);
 
+                const NavButton = (
+                  <button
+                    onClick={() =>
+                      hasSubmenu && !isCollapsed
+                        ? toggleSubmenu(item.title)
+                        : null
+                    }
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                      isActive
+                        ? "text-[#34A853] bg-[#34A853]/5 font-medium"
+                        : "text-gray-500 hover:bg-gray-50",
+                      isCollapsed && "justify-center",
+                    )}
+                    aria-label={isCollapsed ? item.title : undefined}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon
+                        size={20}
+                        className={cn(
+                          isActive ? "text-[#34A853]" : "text-gray-400",
+                        )}
+                      />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </div>
+                    {!isCollapsed && hasSubmenu && (
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "transition-transform",
+                          isOpen && "rotate-180",
+                        )}
+                      />
+                    )}
+                  </button>
+                );
+
                 return (
                   <div key={itemIdx}>
-                    <button
-                      onClick={() =>
-                        hasSubmenu && !isCollapsed
-                          ? toggleSubmenu(item.title)
-                          : null
-                      }
-                      className={cn(
-                        "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                        isActive
-                          ? "text-[#34A853] bg-[#34A853]/5 font-medium"
-                          : "text-gray-500 hover:bg-gray-50",
-                        isCollapsed && "justify-center",
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon
-                          size={20}
-                          className={cn(
-                            isActive ? "text-[#34A853]" : "text-gray-400",
-                          )}
-                        />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </div>
-                      {!isCollapsed && hasSubmenu && (
-                        <ChevronDown
-                          size={16}
-                          className={cn(
-                            "transition-transform",
-                            isOpen && "rotate-180",
-                          )}
-                        />
-                      )}
-                    </button>
+                    {isCollapsed ? (
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>{NavButton}</TooltipTrigger>
+                        <TooltipContent side="right" className="font-medium">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      NavButton
+                    )}
 
                     {!isCollapsed && hasSubmenu && isOpen && (
                       <div className="mt-1 ml-4 border-l-2 border-gray-100 pl-4 space-y-1">
@@ -249,17 +270,53 @@ export function Sidebar() {
 
       {/* Bottom Nav */}
       <div className="p-4 border-t space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
-          <div className="relative">
-            <Bell size={20} />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
-          </div>
-          {!isCollapsed && <span>Notifications</span>}
-        </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
-          <HelpCircle size={20} />
-          {!isCollapsed && <span>Support</span>}
-        </button>
+        {isCollapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
+                aria-label="Notifications"
+              >
+                <div className="relative">
+                  <Bell size={20} />
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-medium">
+              Notifications
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+            <div className="relative">
+              <Bell size={20} />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+            </div>
+            <span>Notifications</span>
+          </button>
+        )}
+
+        {isCollapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
+                aria-label="Support"
+              >
+                <HelpCircle size={20} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="font-medium">
+              Support
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+            <HelpCircle size={20} />
+            <span>Support</span>
+          </button>
+        )}
       </div>
 
       {/* User Profile */}
@@ -280,7 +337,15 @@ export function Sidebar() {
           )}
         </div>
         {!isCollapsed && (
-          <LogOut size={16} className="text-gray-400 cursor-pointer" />
+          <button
+            onClick={() => {
+              /* Handle logout */
+            }}
+            className="p-1 rounded-md hover:bg-gray-200 transition-colors"
+            aria-label="Log out"
+          >
+            <LogOut size={16} className="text-gray-400" />
+          </button>
         )}
       </div>
     </aside>
