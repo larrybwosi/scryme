@@ -1,14 +1,30 @@
 import { NextResponse } from 'next/server';
+import { getServerAuth } from '@repo/auth/server';
 
 export async function POST(req: Request) {
+  const auth = await getServerAuth();
+  if (!auth) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   try {
     const formData = await req.formData();
 
+    // Forward headers including cookies for authentication
+    // We omit 'content-type' to let fetch generate the correct boundary for multipart/form-data
+    const headers: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== 'content-type') {
+        headers[key] = value;
+      }
+    });
+
     const response = await fetch(`${apiUrl}/api/upload`, {
       method: 'POST',
       body: formData,
+      headers,
     });
 
     if (!response.ok) {
