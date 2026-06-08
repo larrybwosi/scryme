@@ -1,4 +1,4 @@
-import { db, Prisma } from "@repo/db";
+import { db } from "@repo/db";
 import * as crypto from "crypto";
 
 // --- V3 API Client Actions ---
@@ -11,7 +11,10 @@ export async function createV3ApiClient(data: {
 }) {
   const clientId = `v3_${crypto.randomBytes(16).toString("hex")}`;
   const rawSecret = crypto.randomBytes(32).toString("hex");
-  const hashedSecret = crypto.createHash("sha256").update(rawSecret).digest("hex");
+  const hashedSecret = crypto
+    .createHash("sha256")
+    .update(rawSecret)
+    .digest("hex");
 
   const client = await db.v3ApiClient.create({
     data: {
@@ -40,21 +43,31 @@ export async function deleteV3ApiClient(id: string, organizationId: string) {
   });
 }
 
-export async function updateV3ApiClient(id: string, organizationId: string, data: Partial<{
-  name: string;
-  isActive: boolean;
-  scopes: string[];
-  corsOrigins: string[];
-}>) {
+export async function updateV3ApiClient(
+  id: string,
+  organizationId: string,
+  data: Partial<{
+    name: string;
+    isActive: boolean;
+    scopes: string[];
+    corsOrigins: string[];
+  }>,
+) {
   return db.v3ApiClient.updateMany({
     where: { id, organizationId },
     data,
   });
 }
 
-export async function regenerateV3ClientSecret(id: string, organizationId: string) {
+export async function regenerateV3ClientSecret(
+  id: string,
+  organizationId: string,
+) {
   const rawSecret = crypto.randomBytes(32).toString("hex");
-  const hashedSecret = crypto.createHash("sha256").update(rawSecret).digest("hex");
+  const hashedSecret = crypto
+    .createHash("sha256")
+    .update(rawSecret)
+    .digest("hex");
 
   await db.v3ApiClient.updateMany({
     where: { id, organizationId },
@@ -91,7 +104,10 @@ export async function getWebhookSubscriptions(organizationId: string) {
   });
 }
 
-export async function deleteWebhookSubscription(id: string, organizationId: string) {
+export async function deleteWebhookSubscription(
+  id: string,
+  organizationId: string,
+) {
   return db.webhookSubscription.deleteMany({
     where: { id, organizationId },
   });
@@ -147,7 +163,12 @@ export async function createDeviceSetupToken(data: {
   organizationId: string;
   createdById: string;
   deviceName: string;
-  deviceType: "POS_TERMINAL" | "MOBILE_POS" | "KIOSK" | "TABLET" | "BAKERY_TERMINAL";
+  deviceType:
+    | "POS_TERMINAL"
+    | "MOBILE_POS"
+    | "KIOSK"
+    | "TABLET"
+    | "BAKERY_TERMINAL";
   locationId: string;
   permissions?: string[];
   environment?: "LIVE" | "TEST";
@@ -183,9 +204,9 @@ export async function getDeviceSetupTokens(organizationId: string) {
 }
 
 export async function getDeviceRegistry(organizationId: string) {
-    return db.deviceRegistry.findMany({
-        where: { organizationId },
-        include: { location: true },
-        orderBy: { createdAt: "desc" },
-    });
+  return db.deviceRegistry.findMany({
+    where: { organizationId },
+    include: { location: true },
+    orderBy: { createdAt: "desc" },
+  });
 }

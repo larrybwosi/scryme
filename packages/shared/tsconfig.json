@@ -9,11 +9,12 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "nodenext",
     "jsx": "react-jsx",
     "types": ["jest", "node"],
     "paths": {
       "@repo/windmill/server": ["../windmill/src/server.ts"],
-      "@repo/db": ["../../packages/db/src/index.ts"],
+      "@repo/db": ["../packages/db/src/index.ts"],
       "@/*": ["./src/*"]
     },
     "noImplicitAny": false,
