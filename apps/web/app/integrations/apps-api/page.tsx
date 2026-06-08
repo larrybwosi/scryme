@@ -16,7 +16,10 @@ import {
   Lock,
   MoreVertical,
   Check,
+  QrCode,
+  Terminal,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { Breadcrumbs } from "../../../components/breadcrumbs";
 import { PageHeader } from "../../../components/page-header";
 import { cn } from "@repo/ui/lib/utils";
@@ -36,6 +39,7 @@ import {
   regenerateV3ClientSecretAction,
   updateV3ApiClientAction,
 } from "../../actions/api-management";
+import { getLocations } from "../../actions/locations";
 
 import {
   Dialog,
@@ -110,8 +114,11 @@ function AppsApiContent() {
     deviceName: "",
     deviceType: "POS_TERMINAL" as any,
     locationId: "default",
+    permissions: [] as string[],
+    environment: "LIVE" as "LIVE" | "TEST",
   });
   const [deviceTokenResult, setDeviceTokenResult] = useState<any>(null);
+  const [locations, setLocations] = useState<any[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -122,18 +129,23 @@ function AppsApiContent() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [v3, v2, wh, tokens, regs] = await Promise.all([
+      const [v3, v2, wh, tokens, regs, locs] = await Promise.all([
         getV3ApiClientsAction(),
         getV2ApiKeysAction(),
         getWebhookSubscriptionsAction(),
         getDeviceSetupTokensAction(),
         getDeviceRegistryAction(),
+        getLocations(),
       ]);
       setV3Clients(v3);
       setV2Keys(v2);
       setWebhooks(wh);
       setDeviceTokens(tokens);
       setRegistries(regs);
+      setLocations(locs);
+      if (locs.length > 0 && newDevice.locationId === "default") {
+        setNewDevice(prev => ({ ...prev, locationId: locs[0].id }));
+      }
     } catch (error) {
       console.error("Failed to load data", error);
       toast.error("Failed to load integration data");
@@ -587,7 +599,14 @@ function AppsApiContent() {
                         <Label htmlFor="device-type">Device Type</Label>
                         <Select
                           value={newDevice.deviceType}
-                          onValueChange={(val) => setNewDevice({ ...newDevice, deviceType: val as any })}
+                          onValueChange={(val) => {
+                            const deviceType = val as any;
+                            const permissions = deviceType === "BAKERY_TERMINAL"
+                              ? ["bakery:production", "bakery:recipes"]
+                              : ["pos:transactions", "pos:orders", "pos:inventory"];
+
+                            setNewDevice({ ...newDevice, deviceType, permissions });
+                          }}
                         >
                           <SelectTrigger id="device-type">
                             <SelectValue placeholder="Select device type" />
@@ -597,32 +616,121 @@ function AppsApiContent() {
                             <SelectItem value="MOBILE_POS">Mobile POS</SelectItem>
                             <SelectItem value="KIOSK">Self-Service Kiosk</SelectItem>
                             <SelectItem value="TABLET">Service Tablet</SelectItem>
+                            <SelectItem value="BAKERY_TERMINAL">Bakery Terminal</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="location-id">Location</Label>
+                        <Select
+                          value={newDevice.locationId}
+                          onValueChange={(val) => setNewDevice({ ...newDevice, locationId: val })}
+                        >
+                          <SelectTrigger id="location-id">
+                            <SelectValue placeholder="Select location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {locations.map((loc) => (
+                              <SelectItem key={loc.id} value={loc.id}>
+                                {loc.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label className="text-sm font-semibold">Environment</Label>
+                        <Select
+                          value={newDevice.environment}
+                          onValueChange={(val) => setNewDevice({ ...newDevice, environment: val as any })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="LIVE">Production (Live)</SelectItem>
+                            <SelectItem value="TEST">Sandbox (Test)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-3">
+                        <Label className="text-sm font-semibold">Pre-assigned Permissions</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {["pos:transactions", "pos:orders", "pos:inventory", "pos:customers", "bakery:production", "bakery:recipes"].map((perm) => (
+                            <div key={perm} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`perm-${perm}`}
+                                checked={newDevice.permissions.includes(perm)}
+                                onCheckedChange={(checked) => {
+                                  const permissions = checked
+                                    ? [...newDevice.permissions, perm]
+                                    : newDevice.permissions.filter((p) => p !== perm);
+                                  setNewDevice({ ...newDevice, permissions });
+                                }}
+                              />
+                              <label
+                                htmlFor={`perm-${perm}`}
+                                className="text-[10px] font-bold uppercase text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {perm.replace(":", " ")}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-6 py-4">
                       <div className="p-3 bg-status-success/10 text-status-success rounded-lg text-xs border border-status-success/20 font-medium text-center">
-                        Setup token generated successfully.
+                        Setup token generated successfully. Valid for 24 hours.
                       </div>
-                      <div className="text-center p-8 bg-muted rounded-2xl border-2 border-dashed border-border">
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                          Setup Token
+
+                      <div className="flex flex-col items-center gap-6">
+                        <div className="bg-white p-4 rounded-xl border-2 border-primary/20 shadow-sm">
+                          <QRCodeSVG
+                            value={deviceTokenResult.rawToken}
+                            size={180}
+                            level="H"
+                            includeMargin={false}
+                          />
                         </div>
-                        <div className="text-2xl font-mono font-bold tracking-widest text-primary break-all">
-                          {deviceTokenResult.rawToken}
+
+                        <div className="w-full space-y-4">
+                          <div className="text-center p-4 bg-muted rounded-xl border border-border relative group">
+                            <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                              Provisioning Token
+                            </div>
+                            <div className="text-lg font-mono font-bold tracking-widest text-primary break-all px-4">
+                              {deviceTokenResult.rawToken}
+                            </div>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="mt-4 w-full gap-2"
+                              onClick={() => copyToClipboard(deviceTokenResult.rawToken)}
+                            >
+                              <Copy size={14} /> Copy Token
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full gap-2 text-xs h-9"
+                              onClick={() => copyToClipboard(`curl -X POST "${process.env.NEXT_PUBLIC_API_URL}/v2/devices/provision" -H "Content-Type: application/json" -d '{"setupToken":"${deviceTokenResult.rawToken}"}'`)}
+                            >
+                              <Terminal size={14} /> Copy cURL Command
+                            </Button>
+                          </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          className="mt-4 gap-2 text-primary"
-                          onClick={() => copyToClipboard(deviceTokenResult.rawToken)}
-                        >
-                          <Copy size={14} /> Copy Token
-                        </Button>
                       </div>
-                      <p className="text-[10px] text-center text-muted-foreground">
-                        Enter this token on the device within 24 hours.
+
+                      <p className="text-[10px] text-center text-muted-foreground italic">
+                        Scan the QR code on your mobile device or enter the token manually to provision.
                       </p>
                     </div>
                   )}
