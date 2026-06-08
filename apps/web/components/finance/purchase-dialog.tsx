@@ -31,7 +31,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { createPurchase } from '../../app/actions/purchases';
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 
 const purchaseSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
@@ -52,6 +52,7 @@ interface PurchaseDialogProps {
 
 export function PurchaseDialog({ suppliers, products, children }: PurchaseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema) as any,
     defaultValues: {
@@ -66,6 +67,7 @@ export function PurchaseDialog({ suppliers, products, children }: PurchaseDialog
   });
 
   async function onSubmit(values: PurchaseFormValues) {
+    setIsSubmitting(true);
     try {
       await createPurchase(values);
       toast.success("Purchase order created successfully");
@@ -73,6 +75,8 @@ export function PurchaseDialog({ suppliers, products, children }: PurchaseDialog
       form.reset();
     } catch (error: any) {
       toast.error(error.message || "Failed to create purchase order");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -219,7 +223,8 @@ export function PurchaseDialog({ suppliers, products, children }: PurchaseDialog
             </div>
 
             <DialogFooter>
-              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]">
+              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Purchase Order
               </Button>
             </DialogFooter>
