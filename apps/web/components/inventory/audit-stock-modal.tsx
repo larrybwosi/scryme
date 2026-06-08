@@ -30,7 +30,6 @@ import {
   User,
   Tag,
   CheckCircle2,
-  Loader2,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -346,7 +345,7 @@ export function AuditStockModal({
                   Learn more about Audit Stock
                 </a>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+                  <Button variant="outline" onClick={onClose}>
                     Cancel
                   </Button>
                   <Button
@@ -354,7 +353,6 @@ export function AuditStockModal({
                     onClick={handleSave}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>

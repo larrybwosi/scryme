@@ -57,7 +57,7 @@ export class WindmillApiClient {
       throw new Error(`Windmill API error ${res.status} on ${path}: ${text}`);
     }
 
-    return reson() as Promise<T>;
+    return res.json() as Promise<T>;
   }
 
   /**
@@ -91,7 +91,7 @@ export class WindmillApiClient {
       id: jobId,
       status: this.mapStatus(res.status),
       result: res.result,
-      error: res.failure_reason,
+      error: (res as any).failure_reason,
     };
   }
 

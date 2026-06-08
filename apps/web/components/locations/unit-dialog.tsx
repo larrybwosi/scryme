@@ -31,7 +31,6 @@ import {
 import { createUnit, updateUnit } from "../../app/actions/locations";
 import { toast } from "sonner";
 import { StorageUnitType, UnitType } from "@repo/db/client";
-import { Loader2 } from "lucide-react";
 
 const unitSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -58,7 +57,6 @@ export function UnitDialog({
   unit,
 }: UnitDialogProps) {
   const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<UnitFormValues>({
     resolver: zodResolver(unitSchema) as any,
@@ -78,7 +76,6 @@ export function UnitDialog({
       zoneId: values.zoneId === "none" ? null : values.zoneId,
     };
 
-    setIsSubmitting(true);
     try {
       if (unit) {
         await updateUnit(unit.id, submissionData as any);
@@ -91,8 +88,6 @@ export function UnitDialog({
       form.reset();
     } catch (error: any) {
       toast.error(error.message || "Something went wrong");
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -239,8 +234,7 @@ export function UnitDialog({
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" className="w-full">
               {unit ? "Update Unit" : "Create Unit"}
             </Button>
           </form>
