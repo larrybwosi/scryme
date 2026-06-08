@@ -48,7 +48,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
       - name: Run POS Frontend Tests
-        run: pnpm --filter dealio-desktop test:frontend
+        run: pnpm --filter pos test:frontend
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -78,12 +78,12 @@ jobs:
           chmod +x apps/pos/src-tauri/binaries/*
 
       - name: Run POS Backend Linting
-        run: pnpm --filter dealio-desktop lint:backend
+        run: pnpm --filter pos lint:backend
 
       - name: Run POS Backend Tests with Coverage
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out Xml
+          cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out xml
 
       - name: Cache Playwright Browsers
         id: playwright-cache
@@ -96,10 +96,10 @@ jobs:
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter dealio-desktop exec playwright install --with-deps
+        run: pnpm --filter pos exec playwright install --with-deps
 
       - name: Run POS E2E tests
-        run: pnpm --filter dealio-desktop test:e2e
+        run: pnpm --filter pos test:e2e
         env:
           POSTHOG_API_KEY: mock
           SENTRY_DSN: mock
@@ -293,9 +293,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "POS v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: ${{ github.ref != 'refs/heads/main' }}
-          args: ${{ matrix.args }} ${{ matrix.variant == 'retail' && '--config apps/pos/src-tauri/tauri.retail.conf.json --features retail' || format('--config apps/pos/src-tauri/tauri.{0}.conf.json --features {0}', matrix.variant) }}
+          args: ${{ matrix.args }} ${{ matrix.variant == 'retail' && '--config src-tauri/tauri.retail.conf.json --features retail' || format('--config src-tauri/tauri.{0}.conf.json --features {0}', matrix.variant) }}
           projectPath: apps/pos
       - name: Extract latest.json
         if: matrix.variant != 'standalone'
@@ -381,6 +382,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "Bakery v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           projectPath: apps/bakery
