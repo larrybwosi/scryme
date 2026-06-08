@@ -85,18 +85,6 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Audit Trail", href: "/stocking/audit" },
         ],
       },
-      {
-        title: "Stocking",
-        icon: TrendingUp,
-        href: "/stocking",
-        items: [
-          { title: "Dashboard", href: "/stocking" },
-          { title: "Transfers", href: "/stocking/transfers" },
-          { title: "Reorder Rules", href: "/stocking/reorder-rules" },
-          { title: "Reports", href: "/stocking/reports" },
-          { title: "Audit Trail", href: "/stocking/audit" },
-        ],
-      },
       { title: "Integrations", icon: Boxes, href: "/integrations" },
     ],
   },
