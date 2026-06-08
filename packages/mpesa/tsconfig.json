@@ -1,32 +1,17 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
     "jsx": "react-jsx",
     "outDir": "dist",
     "rootDir": "../..",
     "noEmit": false,
-    "types": [
-      "jest",
-      "node"
-    ],
+    "types": ["jest", "node"],
     "paths": {
-      "@repo/db": [
-        "../../packages/db/src/index.ts"
-      ],
-      "@repo/shared": [
-        "../../packages/shared/src/index.ts"
-      ],
-      "@repo/windmill/server": [
-        "../../packages/windmill/src/server.ts"
-      ]
+      "@repo/db": ["../../packages/db/src/index.ts"],
+      "@repo/shared": ["../../packages/shared/src/index.ts"],
+      "@repo/windmill/server": ["../../packages/windmill/src/server.ts"]
     }
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

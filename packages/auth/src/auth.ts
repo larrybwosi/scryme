@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { authOptions } from "@repo/auth/server";
+import { authOptions } from "./index";
 import { admin } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins/custom-session";

@@ -1,5 +1,5 @@
-import { triggerWorkflow } from "./workflows";
-import { runAutomation } from './service';
+import { triggerWorkflow } from "./workflows.js";
+import { runAutomation } from './service.js';
 
 // Dynamically imported to avoid circular dependencies in some environments
 // but since this is server-side and within the same workspace, we can try relative or alias
