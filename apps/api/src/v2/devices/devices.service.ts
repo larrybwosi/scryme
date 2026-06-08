@@ -26,9 +26,9 @@ export class DevicesService {
 
     const data = parsed.data;
 
-    // Redeem token - uses shared logic
-    const { redeemDeviceSetupToken } = await import('@/lib/api/v2/services/device-setup-tokens');
-    const result = await redeemDeviceSetupToken(this.prisma, data.setupToken);
+    // Redeem token - uses unified shared logic
+    const { redeemProvisioningToken } = await import('@repo/shared/server');
+    const result = await redeemProvisioningToken(data.setupToken, this.prisma.client);
 
     // Persist optional hardware identifiers
     await this.prisma.client.deviceRegistry.update({
@@ -46,13 +46,8 @@ export class DevicesService {
       apiKey: result.apiKey,
       apiKeyId: result.apiKeyId,
       deviceRegistryId: result.deviceRegistryId,
-      device: {
-        deviceName: result.deviceName,
-        deviceType: result.deviceType,
-        locationId: result.locationId,
-        permissions: result.permissions,
-        environment: result.environment,
-      },
+      device: result.device,
+      organization: result.organization,
       createdAt: result.createdAt,
     };
   }

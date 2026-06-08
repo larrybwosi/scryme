@@ -35,6 +35,7 @@ import {
   deleteWebhookSubscriptionAction,
   regenerateV3ClientSecretAction,
   updateV3ApiClientAction,
+  getAvailableLocationsAction,
 } from "../../actions/api-management";
 
 import {
@@ -105,11 +106,12 @@ function AppsApiContent() {
   // Device Tokens State
   const [deviceTokens, setDeviceTokens] = useState<any[]>([]);
   const [registries, setRegistries] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [showDeviceDialog, setShowDeviceDialog] = useState(false);
   const [newDevice, setNewDevice] = useState({
     deviceName: "",
     deviceType: "POS_TERMINAL" as any,
-    locationId: "default",
+    locationId: "",
   });
   const [deviceTokenResult, setDeviceTokenResult] = useState<any>(null);
 
@@ -122,18 +124,24 @@ function AppsApiContent() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [v3, v2, wh, tokens, regs] = await Promise.all([
+      const [v3, v2, wh, tokens, regs, locs] = await Promise.all([
         getV3ApiClientsAction(),
         getV2ApiKeysAction(),
         getWebhookSubscriptionsAction(),
         getDeviceSetupTokensAction(),
         getDeviceRegistryAction(),
+        getAvailableLocationsAction(),
       ]);
       setV3Clients(v3);
       setV2Keys(v2);
       setWebhooks(wh);
       setDeviceTokens(tokens);
       setRegistries(regs);
+      setLocations(locs);
+
+      if (locs.length > 0 && !newDevice.locationId) {
+        setNewDevice(prev => ({ ...prev, locationId: locs[0].id }));
+      }
     } catch (error) {
       console.error("Failed to load data", error);
       toast.error("Failed to load integration data");
@@ -597,6 +605,25 @@ function AppsApiContent() {
                             <SelectItem value="MOBILE_POS">Mobile POS</SelectItem>
                             <SelectItem value="KIOSK">Self-Service Kiosk</SelectItem>
                             <SelectItem value="TABLET">Service Tablet</SelectItem>
+                            <SelectItem value="BAKERY_TERMINAL">Bakery Terminal</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="device-location">Location</Label>
+                        <Select
+                          value={newDevice.locationId}
+                          onValueChange={(val) => setNewDevice({ ...newDevice, locationId: val })}
+                        >
+                          <SelectTrigger id="device-location">
+                            <SelectValue placeholder="Select location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {locations.map((loc) => (
+                              <SelectItem key={loc.id} value={loc.id}>
+                                {loc.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

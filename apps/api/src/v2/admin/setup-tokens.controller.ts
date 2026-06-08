@@ -5,10 +5,10 @@ import { v2Context } from '@/common/decorators/v2-context.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
 import { Permissions } from '@/common/decorators/auth.decorator';
 import {
-  createDeviceSetupToken,
+  createProvisioningToken,
   listSetupTokens,
   revokeSetupToken,
-} from '@/lib/api/v2/services/device-setup-tokens';
+} from '@repo/shared/server';
 
 @ApiTags('Admin - Setup Tokens')
 @ApiSecurity('x-api-key')
@@ -22,7 +22,7 @@ export class SetupTokensController {
   @ApiOperation({ summary: 'Create a new device setup token' })
   async create(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return {
-      data: await createDeviceSetupToken(this.prisma, {
+      data: await createProvisioningToken({
         organizationId: ctx.organizationId,
         createdById: ctx.memberId!,
         deviceName: body.deviceName,
@@ -31,7 +31,7 @@ export class SetupTokensController {
         permissions: body.permissions,
         allowedIps: body.allowedIps,
         environment: body.environment,
-      }),
+      }, this.prisma.client),
     };
   }
 
@@ -45,10 +45,10 @@ export class SetupTokensController {
   ) {
     return {
       data: {
-        tokens: await listSetupTokens(this.prisma, ctx.organizationId, {
+        tokens: await listSetupTokens(ctx.organizationId, {
           includeUsed: includeUsed === 'true',
           includeExpired: includeExpired === 'true',
-        }),
+        }, this.prisma.client),
       },
     };
   }
@@ -58,7 +58,7 @@ export class SetupTokensController {
   @ApiOperation({ summary: 'Revoke a device setup token' })
   async revoke(@v2Context() ctx: V2ApiContext, @Query('tokenId') tokenId: string) {
     return {
-      data: await revokeSetupToken(this.prisma, ctx.organizationId, tokenId),
+      data: await revokeSetupToken(ctx.organizationId, tokenId, this.prisma.client),
     };
   }
 }
