@@ -150,9 +150,9 @@ export function Sidebar() {
           <>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">F</span>
+                <span className="text-white font-bold text-xl">S</span>
               </div>
-              <span className="font-bold text-xl text-[#1D1D1F]">Fixoria <sup className="text-[10px] font-medium">TM</sup></span>
+              <span className="font-bold text-xl text-[#1D1D1F]">Scryme <sup className="text-[10px] font-medium">TM</sup></span>
             </div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -170,29 +170,12 @@ export function Sidebar() {
               <ChevronRight size={14} />
             </button>
             <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">F</span>
+              <span className="text-white font-bold text-xl">S</span>
             </div>
           </>
         )}
       </div>
 
-      {/* Org Switcher */}
-      {!isCollapsed && (
-        <div className="px-4 mb-6">
-          <div className="flex items-center justify-between p-3 border rounded-xl bg-white hover:bg-gray-50 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-medium">
-                G
-              </div>
-              <div>
-                <div className="font-semibold text-sm">Grand Sylhet Hotel</div>
-                <div className="text-[11px] text-gray-500 uppercase font-medium">3 ADMIN ADDED</div>
-              </div>
-            </div>
-            <ChevronDown size={16} className="text-gray-400" />
-          </div>
-        </div>
-      )}
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">

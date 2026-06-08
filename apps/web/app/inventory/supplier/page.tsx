@@ -1,22 +1,25 @@
 import { Suspense } from "react";
 import { getSuppliers } from "../../actions/supplier";
 import { SupplierCard } from "../../../components/supplier/SupplierCard";
+import { SupplierTable } from "../../../components/supplier/supplier-table";
 import { PageHeader } from "../../../components/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
-import { Search, Filter, Truck } from "lucide-react";
+import { Search, Filter, Truck, LayoutGrid, List } from "lucide-react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { RegisterSupplierModal } from "../../../components/supplier/register-supplier-modal";
+import Link from "next/link";
 
 interface SupplierPageProps {
-  searchParams: {
+  searchParams: Promise<{
     tab?: string;
     q?: string;
-  };
+    view?: string;
+  }>;
 }
 
-async function SupplierList({ tab, q }: { tab?: string; q?: string }) {
+async function SupplierList({ tab, q, view = "table" }: { tab?: string; q?: string; view?: string }) {
   const options = {
     featured: tab === "featured",
     favorite: tab === "favorites",
@@ -40,21 +43,23 @@ async function SupplierList({ tab, q }: { tab?: string; q?: string }) {
     );
   }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {suppliers.map((supplier) => (
-        <SupplierCard key={supplier.id} supplier={supplier} />
-      ))}
-    </div>
-  );
+  if (view === "grid") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {suppliers.map((supplier) => (
+          <SupplierCard key={supplier.id} supplier={supplier} />
+        ))}
+      </div>
+    );
+  }
+
+  return <SupplierTable data={suppliers} />;
 }
 
 function SupplierSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-        <div key={i} className="h-[280px] rounded-xl border bg-card animate-pulse" />
-      ))}
+    <div className="space-y-4">
+      <div className="h-[400px] rounded-xl border bg-card animate-pulse" />
     </div>
   );
 }
@@ -62,6 +67,7 @@ function SupplierSkeleton() {
 export default async function SupplierListPage({ searchParams }: SupplierPageProps) {
   const resolvedSearchParams = await searchParams;
   const currentTab = resolvedSearchParams.tab || "all";
+  const currentView = resolvedSearchParams.view || "table";
 
   return (
     <div className="flex-1 space-y-8 p-8 max-w-7xl mx-auto">
@@ -71,7 +77,21 @@ export default async function SupplierListPage({ searchParams }: SupplierPagePro
           subtitle="Manage your global network of suppliers and product catalogs"
           icon={<Truck className="w-6 h-6" />}
         />
-        <RegisterSupplierModal />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
+             <Link href={`/inventory/supplier?view=table&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ''}`}>
+                <Button variant={currentView === 'table' ? 'secondary' : 'ghost'} size="sm" className="h-8 w-8 p-0">
+                  <List size={16} />
+                </Button>
+             </Link>
+             <Link href={`/inventory/supplier?view=grid&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ''}`}>
+                <Button variant={currentView === 'grid' ? 'secondary' : 'ghost'} size="sm" className="h-8 w-8 p-0">
+                  <LayoutGrid size={16} />
+                </Button>
+             </Link>
+          </div>
+          <RegisterSupplierModal />
+        </div>
       </div>
 
       <Tabs defaultValue={currentTab} className="w-full space-y-6">
@@ -111,17 +131,17 @@ export default async function SupplierListPage({ searchParams }: SupplierPagePro
 
         <TabsContent value="all" className="m-0 pt-2">
           <Suspense fallback={<SupplierSkeleton />}>
-            <SupplierList tab="all" q={resolvedSearchParams.q} />
+            <SupplierList tab="all" q={resolvedSearchParams.q} view={currentView} />
           </Suspense>
         </TabsContent>
         <TabsContent value="featured" className="m-0 pt-2">
           <Suspense fallback={<SupplierSkeleton />}>
-            <SupplierList tab="featured" q={resolvedSearchParams.q} />
+            <SupplierList tab="featured" q={resolvedSearchParams.q} view={currentView} />
           </Suspense>
         </TabsContent>
         <TabsContent value="favorites" className="m-0 pt-2">
           <Suspense fallback={<SupplierSkeleton />}>
-            <SupplierList tab="favorites" q={resolvedSearchParams.q} />
+            <SupplierList tab="favorites" q={resolvedSearchParams.q} view={currentView} />
           </Suspense>
         </TabsContent>
       </Tabs>
