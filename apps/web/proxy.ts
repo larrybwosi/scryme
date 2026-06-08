@@ -1,6 +1,6 @@
 // proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/lib/auth"; // Adjust this path to your actual Better Auth instance instance
+import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
 const publicRoutes = ["/api/auth"];

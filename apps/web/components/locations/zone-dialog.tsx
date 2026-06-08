@@ -31,7 +31,7 @@ import {
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createZone, updateZone } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { UnitType } from "@repo/db";
+import { UnitType } from "@repo/db/client";
 
 const zoneSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

@@ -54,6 +54,7 @@ export const ROLE_TEMPLATES = [
             ...PERMISSION_DEFINITIONS.reports,
             ...PERMISSION_DEFINITIONS.hr,
             ...PERMISSION_DEFINITIONS.communication,
+            ...PERMISSION_DEFINITIONS.utilities,
         ],
         isCustomizable: false,
         icon: '⚙️',

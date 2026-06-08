@@ -1,12 +1,21 @@
 "use server";
 
-import { db, StockAdjustmentReason, MovementType, AdjustmentStatus, Decimal, StockAdjustment, ProductVariant } from "@repo/db";
-import { Prisma } from "@repo/db";
-import { getOrganizationContext } from "./auth";
+import {
+  db,
+  StockAdjustmentReason,
+  MovementType,
+  AdjustmentStatus,
+  Decimal,
+  StockAdjustment,
+  ProductVariant,
+} from "@repo/db";
 import { revalidatePath } from "next/cache";
+import { getServerAuth } from "@repo/auth/server";
 
-export async function getInventoryLocations(): Promise<{ id: string; name: string; isDefault: boolean }[]> {
-  const context = await getOrganizationContext();
+export async function getInventoryLocations(): Promise<
+  { id: string; name: string; isDefault: boolean }[]
+> {
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.inventoryLocation.findMany({
@@ -22,8 +31,8 @@ export async function getInventoryLocations(): Promise<{ id: string; name: strin
   });
 }
 
-export async function getCategoriesFull() {
-  const context = await getOrganizationContext();
+export async function getCategoriesFull(): Promise<any[]> {
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.category.findMany({
@@ -35,20 +44,20 @@ export async function getCategoriesFull() {
       subcategories: {
         include: {
           _count: {
-            select: { products: true }
-          }
+            select: { products: true },
+          },
         },
         orderBy: {
-          name: 'asc'
-        }
+          name: "asc",
+        },
       },
       _count: {
-        select: { products: true }
-      }
+        select: { products: true },
+      },
     },
     orderBy: {
-      name: 'asc'
-    }
+      name: "asc",
+    },
   });
 }
 
@@ -58,14 +67,14 @@ export async function createCategory(data: {
   parentId?: string;
   color?: string;
 }): Promise<any> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const category = await db.category.create({
     data: {
       ...data,
       organizationId: context.organizationId,
-      code: `${context.organizationId}-${data.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+      code: `${context.organizationId}-${data.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
     },
   });
 
@@ -74,13 +83,16 @@ export async function createCategory(data: {
   return category;
 }
 
-export async function updateCategory(id: string, data: {
-  name?: string;
-  description?: string;
-  parentId?: string;
-  color?: string;
-}): Promise<any> {
-  const context = await getOrganizationContext();
+export async function updateCategory(
+  id: string,
+  data: {
+    name?: string;
+    description?: string;
+    parentId?: string;
+    color?: string;
+  },
+): Promise<any> {
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const category = await db.category.update({
@@ -93,8 +105,8 @@ export async function updateCategory(id: string, data: {
   return category;
 }
 
-export async function deleteCategory(id: string) {
-  const context = await getOrganizationContext();
+export async function deleteCategory(id: string): Promise<any> {
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const productsCount = await db.product.count({
@@ -102,7 +114,9 @@ export async function deleteCategory(id: string) {
   });
 
   if (productsCount > 0) {
-    throw new Error("Cannot delete category with associated products. Please move or delete the products first.");
+    throw new Error(
+      "Cannot delete category with associated products. Please move or delete the products first.",
+    );
   }
 
   await db.category.delete({
@@ -123,8 +137,9 @@ export async function createProduct(data: {
   initialStock: number;
   imageUrls: string[];
 }): Promise<any> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id) throw new Error("Unauthorized");
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
 
   return db.$transaction(async (tx) => {
     // 1. Create the Product
@@ -153,13 +168,18 @@ export async function createProduct(data: {
     });
 
     // Find default location
-    const defaultLocation = await tx.inventoryLocation.findFirst({
-      where: { organizationId: context.organizationId, isDefault: true },
-    }) || await tx.inventoryLocation.findFirst({
-      where: { organizationId: context.organizationId },
-    });
+    const defaultLocation =
+      (await tx.inventoryLocation.findFirst({
+        where: { organizationId: context.organizationId, isDefault: true },
+      })) ||
+      (await tx.inventoryLocation.findFirst({
+        where: { organizationId: context.organizationId },
+      }));
 
-    if (!defaultLocation) throw new Error("No inventory location found. Please create a location first.");
+    if (!defaultLocation)
+      throw new Error(
+        "No inventory location found. Please create a location first.",
+      );
 
     if (data.initialStock > 0) {
       // 3. Create ProductVariantStock
@@ -179,7 +199,7 @@ export async function createProduct(data: {
         data: {
           variantId: variant.id,
           locationId: defaultLocation.id,
-          memberId: context.user.id,
+          memberId: context.memberId,
           quantity: new Decimal(data.initialStock),
           reason: "INITIAL_STOCK",
           notes: "Initial stock upon product creation",
@@ -196,7 +216,7 @@ export async function createProduct(data: {
           toLocationId: defaultLocation.id,
           movementType: "INITIAL_STOCK",
           adjustmentId: adjustment.id,
-          memberId: context.user.id,
+          memberId: context.memberId,
           notes: "Initial stock upon product creation",
           organizationId: context.organizationId,
         },
@@ -219,16 +239,19 @@ export async function createProduct(data: {
   });
 }
 
-export async function updateProduct(id: string, data: {
-  name?: string;
-  sku?: string;
-  slug?: string;
-  categoryId?: string;
-  buyingPrice?: number;
-  retailPrice?: number;
-  imageUrls?: string[];
-}): Promise<any> {
-  const context = await getOrganizationContext();
+export async function updateProduct(
+  id: string,
+  data: {
+    name?: string;
+    sku?: string;
+    slug?: string;
+    categoryId?: string;
+    buyingPrice?: number;
+    retailPrice?: number;
+    imageUrls?: string[];
+  },
+): Promise<any> {
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   return db.$transaction(async (tx) => {
@@ -252,8 +275,14 @@ export async function updateProduct(id: string, data: {
         where: { id: variant.id },
         data: {
           sku: data.sku,
-          buyingPrice: data.buyingPrice !== undefined ? new Decimal(data.buyingPrice) : undefined,
-          retailPrice: data.retailPrice !== undefined ? new Decimal(data.retailPrice) : undefined,
+          buyingPrice:
+            data.buyingPrice !== undefined
+              ? new Decimal(data.buyingPrice)
+              : undefined,
+          retailPrice:
+            data.retailPrice !== undefined
+              ? new Decimal(data.retailPrice)
+              : undefined,
         },
       });
     }
@@ -263,8 +292,8 @@ export async function updateProduct(id: string, data: {
   });
 }
 
-export async function deleteProduct(id: string) {
-  const context = await getOrganizationContext();
+export async function deleteProduct(id: string): Promise<any> {
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   await db.product.delete({
@@ -274,8 +303,12 @@ export async function deleteProduct(id: string) {
   revalidatePath("/inventory");
 }
 
-export async function checkProductUniqueness(params: { sku?: string; slug?: string; excludeId?: string }) {
-  const context = await getOrganizationContext();
+export async function checkProductUniqueness(params: {
+  sku?: string;
+  slug?: string;
+  excludeId?: string;
+}): Promise<any> {
+  const context = await getServerAuth();
   if (!context?.organizationId) return { sku: true, slug: true };
 
   const { sku, slug, excludeId } = params;
@@ -306,8 +339,8 @@ export async function checkProductUniqueness(params: { sku?: string; slug?: stri
   return results;
 }
 
-export async function getProduct(id: string) {
-  const context = await getOrganizationContext();
+export async function getProduct(id: string): Promise<any> {
+  const context = await getServerAuth();
   if (!context?.organizationId) return null;
 
   return db.product.findUnique({
@@ -316,15 +349,15 @@ export async function getProduct(id: string) {
       category: true,
       variants: {
         include: {
-          variantStocks: true
-        }
-      }
-    }
+          variantStocks: true,
+        },
+      },
+    },
   });
 }
 
 export async function getCategories(): Promise<{ id: string; name: string }[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.category.findMany({
@@ -339,7 +372,7 @@ export async function getCategories(): Promise<{ id: string; name: string }[]> {
 }
 
 export async function getSuppliers(): Promise<{ id: string; name: string }[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.supplier.findMany({
@@ -363,10 +396,18 @@ export async function getInventoryProducts(params: {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }): Promise<InventoryProduct[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
-  const { search, locationId, categoryId, supplierId, stockLevel, sortBy, sortOrder = "asc" } = params;
+  const {
+    search,
+    locationId,
+    categoryId,
+    supplierId,
+    stockLevel,
+    sortBy,
+    sortOrder = "asc",
+  } = params;
 
   // Build the where clause
   const where: any = {
@@ -375,15 +416,15 @@ export async function getInventoryProducts(params: {
 
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { sku: { contains: search, mode: 'insensitive' } },
+      { name: { contains: search, mode: "insensitive" } },
+      { sku: { contains: search, mode: "insensitive" } },
       {
         variants: {
           some: {
-            sku: { contains: search, mode: 'insensitive' }
-          }
-        }
-      }
+            sku: { contains: search, mode: "insensitive" },
+          },
+        },
+      },
     ];
   }
 
@@ -411,7 +452,8 @@ export async function getInventoryProducts(params: {
       variants: {
         include: {
           variantStocks: {
-            where: locationId && locationId !== "all" ? { locationId } : undefined,
+            where:
+              locationId && locationId !== "all" ? { locationId } : undefined,
           },
         },
       },
@@ -422,8 +464,12 @@ export async function getInventoryProducts(params: {
   let results = products.flatMap((product) =>
     product.variants.map((variant) => {
       const stocks = variant.variantStocks;
-      const currentStock = stocks.reduce((acc, s) => acc.plus(s.currentStock), new Decimal(0));
-      const lowStockThreshold = variant.reorderPoint || product.lowStockThreshold || 0;
+      const currentStock = stocks.reduce(
+        (acc, s) => acc.plus(s.currentStock),
+        new Decimal(0),
+      );
+      const lowStockThreshold =
+        variant.reorderPoint || product.lowStockThreshold || 0;
 
       let status: "High" | "Low" | "Out of Stock" | "Normal" = "Normal";
       if (currentStock.isZero()) {
@@ -443,17 +489,19 @@ export async function getInventoryProducts(params: {
         supplier: product.suppliers[0]?.supplier.name || "N/A",
         currentStock: currentStock.toNumber(),
         status,
-        unitPrice: variant.retailPrice?.toNumber() || variant.buyingPrice.toNumber(),
+        unitPrice:
+          variant.retailPrice?.toNumber() || variant.buyingPrice.toNumber(),
         image: product.imageUrls[0],
       };
-    })
+    }),
   );
 
   if (stockLevel && stockLevel !== "all") {
     results = results.filter((r) => {
       if (stockLevel === "low") return r.status === "Low";
       if (stockLevel === "out") return r.status === "Out of Stock";
-      if (stockLevel === "normal") return r.status === "Normal" || r.status === "High";
+      if (stockLevel === "normal")
+        return r.status === "Normal" || r.status === "High";
       return true;
     });
   }
@@ -478,8 +526,11 @@ export async function getInventoryProducts(params: {
   return results;
 }
 
-export async function getVariantStockByLocation(variantId: string, locationId: string): Promise<number> {
-  const context = await getOrganizationContext();
+export async function getVariantStockByLocation(
+  variantId: string,
+  locationId: string,
+): Promise<number> {
+  const context = await getServerAuth();
   if (!context?.organizationId) return 0;
 
   const stock = await db.productVariantStock.findUnique({
@@ -504,8 +555,8 @@ export async function adjustStock(data: {
   reason: StockAdjustmentReason;
   notes?: string;
 }): Promise<StockAdjustment | null> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id) {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) {
     throw new Error("Unauthorized");
   }
 
@@ -520,7 +571,7 @@ export async function adjustStock(data: {
       data: {
         variantId,
         locationId,
-        memberId: context.user.id,
+        memberId: context.memberId,
         quantity: new Decimal(quantity),
         reason,
         notes,
@@ -536,9 +587,12 @@ export async function adjustStock(data: {
         quantity: new Decimal(quantity),
         toLocationId: quantity > 0 ? locationId : null,
         fromLocationId: quantity < 0 ? locationId : null,
-        movementType: quantity > 0 ? MovementType.ADJUSTMENT_IN : MovementType.ADJUSTMENT_OUT,
+        movementType:
+          quantity > 0
+            ? MovementType.ADJUSTMENT_IN
+            : MovementType.ADJUSTMENT_OUT,
         adjustmentId: adjustment.id,
-        memberId: context.user.id,
+        memberId: context.memberId,
         notes,
         organizationId: context.organizationId,
       },
@@ -565,7 +619,7 @@ export async function adjustStock(data: {
     } else {
       const variant = await tx.productVariant.findUnique({
         where: { id: variantId },
-        select: { productId: true }
+        select: { productId: true },
       });
 
       if (!variant) throw new Error("Variant not found");
@@ -592,7 +646,7 @@ export async function updateValue(data: {
   retailPrice?: number;
   buyingPrice?: number;
 }): Promise<ProductVariant> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const { variantId, retailPrice, buyingPrice } = data;
@@ -600,8 +654,10 @@ export async function updateValue(data: {
   const result = await db.productVariant.update({
     where: { id: variantId },
     data: {
-      retailPrice: retailPrice !== undefined ? new Decimal(retailPrice) : undefined,
-      buyingPrice: buyingPrice !== undefined ? new Decimal(buyingPrice) : undefined,
+      retailPrice:
+        retailPrice !== undefined ? new Decimal(retailPrice) : undefined,
+      buyingPrice:
+        buyingPrice !== undefined ? new Decimal(buyingPrice) : undefined,
     },
   });
 
@@ -613,7 +669,7 @@ export async function updateStockAlert(data: {
   variantId: string;
   reorderPoint: number;
 }): Promise<ProductVariant> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const result = await db.productVariant.update({
@@ -627,9 +683,11 @@ export async function updateStockAlert(data: {
   return result;
 }
 
-export async function reorderProduct(variantId: string): Promise<{ success: boolean; message: string }> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id) {
+export async function reorderProduct(
+  variantId: string,
+): Promise<{ success: boolean; message: string }> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) {
     throw new Error("Unauthorized");
   }
 
@@ -639,16 +697,18 @@ export async function reorderProduct(variantId: string): Promise<{ success: bool
       product: true,
       suppliers: {
         include: { supplier: true },
-        take: 1
-      }
-    }
+        take: 1,
+      },
+    },
   });
 
   if (!variant) throw new Error("Variant not found");
 
   const supplier = variant.suppliers[0]?.supplier;
   if (!supplier) {
-    throw new Error("No supplier associated with this product. Please assign a supplier before reordering.");
+    throw new Error(
+      "No supplier associated with this product. Please assign a supplier before reordering.",
+    );
   }
 
   // Create a Purchase Order in ORDERED status
@@ -656,7 +716,7 @@ export async function reorderProduct(variantId: string): Promise<{ success: bool
     data: {
       organizationId: context.organizationId,
       supplierId: supplier.id,
-      memberId: context.user.id,
+      memberId: context.memberId,
       status: "ORDERED",
       orderDate: new Date(),
       totalAmount: variant.buyingPrice.mul(variant.reorderQty || 10),
@@ -667,16 +727,16 @@ export async function reorderProduct(variantId: string): Promise<{ success: bool
           orderedQuantity: Number(variant.reorderQty || 10),
           unitCost: variant.buyingPrice,
           totalCost: variant.buyingPrice.mul(variant.reorderQty || 10),
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   revalidatePath("/inventory");
 
   return {
     success: true,
-    message: `Purchase Order ${purchase.purchaseNumber} for ${variant.product.name} has been created.`
+    message: `Purchase Order ${purchase.purchaseNumber} for ${variant.product.name} has been created.`,
   };
 }
 
@@ -693,8 +753,12 @@ export type InventoryProduct = {
   image?: string;
 };
 
-export async function getStockAdjustmentHistory(variantId: string): Promise<(StockAdjustment & { member: { user: { name: string | null; image: string | null } } })[]> {
-  const context = await getOrganizationContext();
+export async function getStockAdjustmentHistory(variantId: string): Promise<
+  (StockAdjustment & {
+    member: { user: { name: string | null; image: string | null } };
+  })[]
+> {
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.stockAdjustment.findMany({
@@ -715,7 +779,7 @@ export async function getStockAdjustmentHistory(variantId: string): Promise<(Sto
       },
     },
     orderBy: {
-      adjustmentDate: 'desc',
+      adjustmentDate: "desc",
     },
     take: 10,
   });

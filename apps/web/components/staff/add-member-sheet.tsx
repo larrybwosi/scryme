@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { MemberRole } from "@repo/db";
+import { MemberRole } from "@repo/db/client";
 import { addStaffMember } from "../../app/actions/staff";
 import { toast } from "sonner";
 import { Eye, EyeOff, RefreshCw } from "lucide-react";
@@ -37,7 +37,8 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
   });
 
   const generatePassword = () => {
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    const charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
     let pwd = "";
     const values = new Uint32Array(12);
     window.crypto.getRandomValues(values);
@@ -75,7 +76,8 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
         <SheetHeader>
           <SheetTitle>Add Staff Member</SheetTitle>
           <SheetDescription>
-            Add a new member to your organization. They will be able to log in with the provided email and password.
+            Add a new member to your organization. They will be able to log in
+            with the provided email and password.
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-6 py-6">
@@ -85,7 +87,9 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
               id="name"
               placeholder="John Doe"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               required
             />
           </div>
@@ -96,7 +100,9 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
               type="email"
               placeholder="john@example.com"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               required
             />
           </div>

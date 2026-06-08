@@ -4,4 +4,4 @@
 // No Node.js dependencies — zero runtime weight for type imports.
 // ============================================================
 
-export * from "../prisma/generated/client";
+export * from "../generated/browser";

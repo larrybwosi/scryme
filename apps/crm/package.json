@@ -19,6 +19,7 @@
     "@repo/windmill": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/pg": "^8.20.0",
+    "@xyflow/react": "^12.11.0",
     "better-auth": "^1.4.19",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
@@ -60,7 +60,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     reset,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -87,8 +87,8 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
   const isLoading = isLoadingRecipes || isLoadingBakers;
   const error = recipesError || bakersError;
 
-  const watchedSystemUnitId = watch('systemUnitId');
-  const watchedOrgUnitId = watch('orgUnitId');
+  const watchedSystemUnitId = useWatch({ control, name: 'systemUnitId' });
+  const watchedOrgUnitId = useWatch({ control, name: 'orgUnitId' });
   const unitValue = watchedSystemUnitId || watchedOrgUnitId;
   const unitErrorMessage =
     !watchedSystemUnitId && !watchedOrgUnitId && errors.root?.message
@@ -193,7 +193,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
   };
 
   const toggleScheduleDay = (dayValue: number) => {
-    const currentDays = watch('scheduleDays') || [];
+    const currentDays = scheduleDays;
     const dayIndex = currentDays.indexOf(dayValue);
 
     let newDays;
@@ -208,15 +208,20 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
     setValue('scheduleDays', newDays, { shouldValidate: true, shouldDirty: true });
   };
 
+  const scheduleDays = useWatch({ control, name: 'scheduleDays' }) || [];
+  const assistantBakerIds = useWatch({ control, name: 'assistantBakerIds' }) || [];
+  const leadBakerId = useWatch({ control, name: 'leadBakerId' });
+  const recipeId = useWatch({ control, name: 'recipeId' });
+  const isActive = useWatch({ control, name: 'isActive' });
+
   const isDaySelected = (dayValue: number) => {
-    const currentDays = watch('scheduleDays') || [];
-    return currentDays.includes(dayValue);
+    return scheduleDays.includes(dayValue);
   };
 
   const isMutationPending = creatingTemplate || updatingTemplate;
   const isFormSubmitting = isSubmitting || isMutationPending;
 
-  const selectedDaysCount = watch('scheduleDays')?.length || 0;
+  const selectedDaysCount = scheduleDays.length;
 
   return (
     <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
@@ -270,7 +275,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 Base Recipe {isEditing ? '' : <span className="text-destructive">*</span>}
               </Label>
               <Select
-                value={watch('recipeId')}
+                value={recipeId}
                 onValueChange={value => setValue('recipeId', value, { shouldValidate: true })}
                 disabled={isLoading || isFormSubmitting}
               >
@@ -445,11 +450,11 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 Default Lead Baker
               </Label>
               <Select
-                value={watch('leadBakerId') || ''}
+                value={leadBakerId || ''}
                 onValueChange={value => {
                   setValue('leadBakerId', value || undefined, { shouldDirty: true });
                   // Remove from assistants if selected as lead
-                  const currentAssistants = watch('assistantBakerIds') || [];
+                  const currentAssistants = assistantBakerIds;
                   if (value && currentAssistants.includes(value)) {
                     setValue(
                       'assistantBakerIds',
@@ -482,9 +487,9 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
               <Label className="text-sm font-medium">Default Assistant Bakers</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border rounded-lg bg-muted/20 max-h-40 overflow-y-auto">
                 {bakers
-                  .filter(b => b.isActive && b.id !== watch('leadBakerId'))
+                  .filter(b => b.isActive && b.id !== leadBakerId)
                   .map(baker => {
-                    const isSelected = watch('assistantBakerIds')?.includes(baker.id);
+                    const isSelected = assistantBakerIds?.includes(baker.id);
                     return (
                       <div
                         key={baker.id}
@@ -493,7 +498,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                         ${isSelected ? 'bg-primary/10 border-primary/20' : 'hover:bg-accent'}
                       `}
                         onClick={() => {
-                          const current = watch('assistantBakerIds') || [];
+                          const current = assistantBakerIds;
                           if (isSelected) {
                             setValue(
                               'assistantBakerIds',
@@ -517,7 +522,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                       </div>
                     );
                   })}
-                {bakers.filter(b => b.isActive && b.id !== watch('leadBakerId')).length === 0 && (
+                {bakers.filter(b => b.isActive && b.id !== leadBakerId).length === 0 && (
                   <p className="text-xs text-muted-foreground italic col-span-2">No other active bakers available.</p>
                 )}
               </div>
@@ -598,14 +603,14 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 <Shield className="h-5 w-5 text-blue-500" /> Template Status
               </Label>
               <p className="text-sm text-muted-foreground">
-                {watch('isActive')
+                {isActive
                   ? 'Active templates can be used in production.'
                   : 'Inactive templates are archived and cannot be used.'}
               </p>
             </div>
             <Switch
               id="isActive"
-              checked={watch('isActive')}
+              checked={isActive}
               onCheckedChange={checked => setValue('isActive', checked, { shouldDirty: true })}
               disabled={isFormSubmitting}
               className="data-[state=checked]:bg-primary"

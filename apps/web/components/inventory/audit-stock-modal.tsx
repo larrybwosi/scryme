@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { adjustStock, updateValue, getStockAdjustmentHistory, getInventoryLocations, getVariantStockByLocation, type InventoryProduct } from "../../app/actions/inventory";
-import { type StockAdjustmentReason } from "@repo/db";
+import { type StockAdjustmentReason } from "@repo/db/client";
 import { format } from "date-fns";
 
 interface AuditStockModalProps {

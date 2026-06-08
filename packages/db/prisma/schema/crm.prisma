@@ -104,6 +104,8 @@ model CrmRecord {
   activities         CrmActivity[]
   notes              CrmNote[]
   followUps          CrmFollowUp[]
+  campaignEvents     CampaignEvent[]
+  workflowInstances  CampaignWorkflowInstance[]
 
   @@index([objectId, organizationId])
   @@index([organizationId])

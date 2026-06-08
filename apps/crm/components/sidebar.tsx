@@ -13,6 +13,7 @@ import {
   BarChart3,
   Activity,
   Megaphone,
+  GitBranch,
   Settings,
   Bell,
   HelpCircle,
@@ -42,7 +43,13 @@ const sidebarConfig: SidebarSection[] = [
       { title: 'Pipeline', icon: TrendingUp, href: '/pipeline' },
       { title: 'Contacts', icon: Contact, href: '/contacts' },
       { title: 'Companies', icon: Building2, href: '/companies' },
-      { title: 'Campaigns', icon: Megaphone, href: '/campaigns' },
+      {
+        title: 'Campaigns',
+        icon: Megaphone,
+        href: '/campaigns',
+      },
+      { title: 'Segments', icon: Users, href: '/campaigns/segments' },
+      { title: 'Workflows', icon: GitBranch, href: '/campaigns/workflows' },
     ],
   },
   {

@@ -4,7 +4,7 @@ import { db, LocationType, StorageUnitType, UnitType } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 
-export async function getLocations() {
+export async function getLocations(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -42,7 +42,7 @@ export async function getLocations() {
   });
 }
 
-export async function getMembersForSelect() {
+export async function getMembersForSelect(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -63,7 +63,7 @@ export async function getMembersForSelect() {
   });
 }
 
-export async function getLocation(id: string) {
+export async function getLocation(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
@@ -108,7 +108,7 @@ export async function createLocation(data: {
   managerId?: string;
   address?: any;
   contact?: any;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -132,18 +132,21 @@ export async function createLocation(data: {
   return location;
 }
 
-export async function updateLocation(id: string, data: {
-  name?: string;
-  code?: string;
-  description?: string;
-  locationType?: LocationType;
-  isActive?: boolean;
-  isDefault?: boolean;
-  parentLocationId?: string;
-  managerId?: string;
-  address?: any;
-  contact?: any;
-}) {
+export async function updateLocation(
+  id: string,
+  data: {
+    name?: string;
+    code?: string;
+    description?: string;
+    locationType?: LocationType;
+    isActive?: boolean;
+    isDefault?: boolean;
+    parentLocationId?: string;
+    managerId?: string;
+    address?: any;
+    contact?: any;
+  },
+): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -153,7 +156,7 @@ export async function updateLocation(id: string, data: {
         where: {
           organizationId: context.organizationId,
           isDefault: true,
-          id: { not: id }
+          id: { not: id },
         },
         data: { isDefault: false },
       });
@@ -187,12 +190,28 @@ export async function deleteLocation(id: string) {
     },
   });
 
-  if (dependencies?._count.childLocations && dependencies._count.childLocations > 0) {
+  if (
+    dependencies?._count.childLocations &&
+    dependencies._count.childLocations > 0
+  ) {
     throw new Error("Cannot delete location with sub-locations.");
   }
 
-  if (dependencies?._count.variantStocks && dependencies._count.variantStocks > 0) {
+  if (
+    dependencies?._count.variantStocks &&
+    dependencies._count.variantStocks > 0
+  ) {
     throw new Error("Cannot delete location with existing stock.");
+  }
+
+  const locationCount = await db.inventoryLocation.count({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (locationCount <= 1) {
+    throw new Error(
+      "Cannot delete the last location in the system. At least one location is required.",
+    );
   }
 
   await db.inventoryLocation.delete({
@@ -209,7 +228,7 @@ export async function createZone(data: {
   locationId: string;
   capacity?: number;
   capacityUnit?: UnitType;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -224,13 +243,16 @@ export async function createZone(data: {
   return zone;
 }
 
-export async function updateZone(id: string, data: {
-  name?: string;
-  description?: string;
-  capacity?: number;
-  capacityUnit?: UnitType;
-  isActive?: boolean;
-}) {
+export async function updateZone(
+  id: string,
+  data: {
+    name?: string;
+    description?: string;
+    capacity?: number;
+    capacityUnit?: UnitType;
+    isActive?: boolean;
+  },
+): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -251,13 +273,14 @@ export async function deleteZone(id: string) {
     where: { id, organizationId: context.organizationId },
     include: {
       _count: {
-        select: { storageUnits: true }
-      }
-    }
+        select: { storageUnits: true },
+      },
+    },
   });
 
   if (!zone) throw new Error("Zone not found");
-  if (zone._count.storageUnits > 0) throw new Error("Cannot delete zone with storage units");
+  if (zone._count.storageUnits > 0)
+    throw new Error("Cannot delete zone with storage units");
 
   await db.storageZone.delete({
     where: { id, organizationId: context.organizationId },
@@ -275,7 +298,7 @@ export async function createUnit(data: {
   zoneId?: string;
   capacity?: number;
   capacityUnit?: UnitType;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -290,13 +313,16 @@ export async function createUnit(data: {
   return unit;
 }
 
-export async function updateUnit(id: string, data: {
-  name?: string;
-  reference?: string;
-  unitType?: StorageUnitType;
-  zoneId?: string;
-  isActive?: boolean;
-}) {
+export async function updateUnit(
+  id: string,
+  data: {
+    name?: string;
+    reference?: string;
+    unitType?: StorageUnitType;
+    zoneId?: string;
+    isActive?: boolean;
+  },
+): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -317,13 +343,14 @@ export async function deleteUnit(id: string) {
     where: { id, organizationId: context.organizationId },
     include: {
       _count: {
-        select: { stockBatches: true }
-      }
-    }
+        select: { stockBatches: true },
+      },
+    },
   });
 
   if (!unit) throw new Error("Unit not found");
-  if (unit._count.stockBatches > 0) throw new Error("Cannot delete unit with stock batches");
+  if (unit._count.stockBatches > 0)
+    throw new Error("Cannot delete unit with stock batches");
 
   await db.storageUnit.delete({
     where: { id, organizationId: context.organizationId },
@@ -332,7 +359,7 @@ export async function deleteUnit(id: string) {
   revalidatePath(`/locations/${unit.locationId}`);
 }
 
-export async function getZoneWithUnits(zoneId: string) {
+export async function getZoneWithUnits(zoneId: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
