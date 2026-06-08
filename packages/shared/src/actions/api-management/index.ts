@@ -149,6 +149,8 @@ export async function createDeviceSetupToken(data: {
   deviceName: string;
   deviceType: "POS_TERMINAL" | "MOBILE_POS" | "KIOSK" | "TABLET" | "BAKERY_TERMINAL";
   locationId: string;
+  permissions?: string[];
+  environment?: "LIVE" | "TEST";
 }) {
   const jti = crypto.randomUUID();
   const rawToken = crypto.randomBytes(32).toString("hex");
@@ -161,6 +163,8 @@ export async function createDeviceSetupToken(data: {
       deviceName: data.deviceName,
       deviceType: data.deviceType,
       locationId: data.locationId,
+      permissions: data.permissions || [],
+      environment: data.environment || "LIVE",
       jti,
       tokenHash,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours

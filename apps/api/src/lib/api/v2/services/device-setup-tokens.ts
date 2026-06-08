@@ -84,8 +84,20 @@ export async function redeemDeviceSetupToken(prisma: { client: PrismaClient }, t
     include: { organization: { select: { id: true, name: true } } },
   });
 
-  if (!setupToken || setupToken.usedAt || setupToken.revokedAt || setupToken.expiresAt < new Date()) {
-    throw new UnauthorizedException('Setup token is no longer valid');
+  if (!setupToken) {
+    throw new UnauthorizedException('Setup token not found or invalid');
+  }
+
+  if (setupToken.revokedAt) {
+    throw new UnauthorizedException('Setup token has been revoked by an administrator');
+  }
+
+  if (setupToken.usedAt) {
+    throw new UnauthorizedException('Setup token has already been used and cannot be reused');
+  }
+
+  if (setupToken.expiresAt < new Date()) {
+    throw new UnauthorizedException('Setup token has expired (validity window exceeded)');
   }
 
   // 1. Generate API Key

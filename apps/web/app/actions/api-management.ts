@@ -141,6 +141,8 @@ export async function createDeviceSetupTokenAction(data: {
     | "TABLET"
     | "BAKERY_TERMINAL";
   locationId: string;
+  permissions?: string[];
+  environment?: "LIVE" | "TEST";
 }): Promise<any> {
   const context = await ensureOrgContext();
   const result = await createDeviceSetupToken({
@@ -162,34 +164,3 @@ export async function getDeviceRegistryAction(): Promise<any> {
   return getDeviceRegistry(context.organizationId);
 }
 
-async function createDeviceSetupToken(data: {
-  organizationId: string;
-  createdById: string;
-  deviceName: string;
-  deviceType:
-    | "POS_TERMINAL"
-    | "MOBILE_POS"
-    | "KIOSK"
-    | "TABLET"
-    | "BAKERY_TERMINAL";
-  locationId: string;
-}) {
-  const jti = crypto.randomUUID();
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-
-  const setupToken = await db.deviceSetupToken.create({
-    data: {
-      organizationId: data.organizationId,
-      createdById: data.createdById,
-      deviceName: data.deviceName,
-      deviceType: data.deviceType,
-      locationId: data.locationId,
-      jti,
-      tokenHash,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    },
-  });
-
-  return { ...setupToken, rawToken };
-}
