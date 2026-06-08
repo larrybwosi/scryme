@@ -23,6 +23,7 @@ jobs:
       web: ${{ steps.changes.outputs.web }}
       packages: ${{ steps.changes.outputs.packages }}
       workflow: ${{ steps.changes.outputs.workflow }}
+      test_workflow: ${{ steps.changes.outputs.test_workflow }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -45,6 +46,8 @@ jobs:
               - 'apps/web/**'
             packages:
               - 'packages/**'
+            test_workflow:
+              - '.github/workflows/test.yml'
             workflow:
               - '.github/workflows/**'
               - 'package.json'
@@ -66,7 +69,8 @@ jobs:
              [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
              [ "${{ needs.filter.outputs.web }}" == "true" ] || \
              [ "${{ needs.filter.outputs.packages }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+             [ "${{ needs.filter.outputs.workflow }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             echo "needed=true" >> $GITHUB_OUTPUT
           else
             echo "needed=false" >> $GITHUB_OUTPUT
@@ -100,7 +104,7 @@ jobs:
 
       - name: Lint and Type Check
         run: |
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             pnpm turbo lint type-check
           else
             FILTER=""
@@ -122,7 +126,7 @@ jobs:
 
   rust-pos:
     needs: filter
-    if: needs.filter.outputs.pos_rust == 'true' || needs.filter.outputs.workflow == 'true'
+    if: needs.filter.outputs.pos_rust == 'true' || needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -142,8 +146,17 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: apps/pos/src-tauri
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-pos-${{ hashFiles('.github/workflows/test.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-pos-
       - name: Install system dependencies
         run: |
+          sudo rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
           sudo apt-get update
           sudo apt-get install -y \
             libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev \
@@ -151,6 +164,8 @@ jobs:
       - name: Create dummy binaries
         run: |
           mkdir -p apps/pos/src-tauri/binaries
+          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
+          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
           touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
           chmod +x apps/pos/src-tauri/binaries/*
       - name: Lint Backend
@@ -162,7 +177,7 @@ jobs:
 
   rust-bakery:
     needs: filter
-    if: needs.filter.outputs.bakery_rust == 'true' || needs.filter.outputs.workflow == 'true'
+    if: needs.filter.outputs.bakery_rust == 'true' || needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -182,8 +197,17 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: apps/bakery/src-tauri
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-bakery-${{ hashFiles('.github/workflows/test.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-bakery-
       - name: Install system dependencies
         run: |
+          sudo rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
           sudo apt-get update
           sudo apt-get install -y \
             libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
@@ -212,16 +236,16 @@ jobs:
       - name: Run Tests
         run: |
           FILTER=""
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             pnpm --filter pos test:frontend
           fi
-          if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             pnpm --filter api test
           fi
 
   e2e-tests:
     needs: [filter]
-    if: needs.filter.outputs.pos == 'true' || (needs.filter.outputs.packages == 'true' && github.event_name == 'push') || needs.filter.outputs.workflow == 'true'
+    if: needs.filter.outputs.pos == 'true' || (needs.filter.outputs.packages == 'true' && github.event_name == 'push') || needs.filter.outputs.workflow == 'true' || needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -256,7 +280,8 @@ jobs:
         needs.filter.outputs.crm == 'true' ||
         needs.filter.outputs.web == 'true' ||
         needs.filter.outputs.packages == 'true' ||
-        needs.filter.outputs.workflow == 'true'
+        needs.filter.outputs.workflow == 'true' ||
+        needs.filter.outputs.test_workflow == 'true'
       )
     runs-on: ubuntu-latest
     steps:
