@@ -4,9 +4,9 @@ import type { V2ApiContext } from '@repo/shared/server';
 import { z } from 'zod';
 
 const ProvisionSchema = z.object({
-  setupToken: z.string().min(10),
+  setupToken: z.string().min(3),
   serialNumber: z.string().max(120).optional(),
-  macAddress: z.string().regex(/^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/).optional(),
+  macAddress: z.string().optional(),
 });
 
 @Injectable()

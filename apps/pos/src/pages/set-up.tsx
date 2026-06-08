@@ -109,7 +109,7 @@ const SetupTokenStep = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (token.length < 10) {
+    if (token.length < 3) {
       setError('Invalid token format');
       return;
     }

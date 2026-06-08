@@ -64,7 +64,7 @@ pub async fn provision_device_with_token(
 ) -> BackendResult<()> {
     let client = reqwest::Client::new();
     let default_api_url = if cfg!(debug_assertions) {
-        "http://localhost:3001"
+        "http://localhost:3002"
     } else {
         "https://api.scryme.app"
     };
