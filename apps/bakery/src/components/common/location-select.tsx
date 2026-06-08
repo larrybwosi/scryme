@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { Check, ChevronsUpDown, MapPin, Loader2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";

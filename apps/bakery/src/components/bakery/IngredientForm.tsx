@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
@@ -36,7 +36,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
+    control,
     reset,
   } = useForm<CreateRawMaterialInput & { categoryId: string; tags?: string[] }>();
 
@@ -124,8 +124,9 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
     }
   };
 
-  const nameValue = watch('name');
-  const categoryIdValue = watch('categoryId');
+  const nameValue = useWatch({ control, name: 'name' });
+  const categoryIdValue = useWatch({ control, name: 'categoryId' });
+  const tags = useWatch({ control, name: 'tags' }) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -203,7 +204,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
               <Label className="text-xs text-slate-600">Tags</Label>
             </div>
             <TagInput
-              tags={watch('tags') || []}
+              tags={tags}
               onChange={tags => setValue('tags', tags, { shouldDirty: true })}
               placeholder="Add keywords (e.g. organic, bulk, refrigerated)"
             />

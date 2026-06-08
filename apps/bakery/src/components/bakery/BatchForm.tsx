@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Loader2,
@@ -272,7 +272,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isDirty },
   } = useForm<any>({
@@ -299,7 +299,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
     }, [batch]),
   });
 
-  const watchedValues = watch();
+  const watchedValues = useWatch({ control });
 
   const handleBatchUnitChange = useCallback(
     (value: string | undefined, type: 'system' | 'org') => {
