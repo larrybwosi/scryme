@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -291,7 +291,6 @@ function BulkReceiveDialog({
     register,
     control,
     handleSubmit,
-    watch,
     setValue,
     reset,
     formState: { errors, isSubmitting },
@@ -305,7 +304,7 @@ function BulkReceiveDialog({
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
-  const watchLines = watch('lines');
+  const watchLines = useWatch({ control, name: 'lines' });
 
   const grandTotal = watchLines?.reduce((s, l) => {
     if (l.useContainer) {

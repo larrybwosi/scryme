@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useEffect, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
 import { Button } from '@repo/ui/components/ui/button';
@@ -81,7 +81,6 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
     register,
     control,
     handleSubmit,
-    watch,
     setValue,
     reset,
     formState: { errors },
@@ -110,7 +109,13 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
     name: 'ingredients',
   });
 
-  const watchIngredients = watch('ingredients');
+  const watchIngredients = useWatch({ control, name: 'ingredients' });
+  const categoryId = useWatch({ control, name: 'categoryId' });
+  const systemUnitId = useWatch({ control, name: 'systemUnitId' });
+  const orgUnitId = useWatch({ control, name: 'orgUnitId' });
+  const producesVariantId = useWatch({ control, name: 'producesVariantId' });
+  const tags = useWatch({ control, name: 'tags' }) || [];
+  const difficulty = useWatch({ control, name: 'difficulty' }) || 'MEDIUM';
 
   useEffect(() => {
     if (recipe && mode === 'edit') {
@@ -319,7 +324,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                         <SelectSkeleton />
                       ) : (
                         <Select
-                          value={watch('categoryId')}
+                          value={categoryId}
                           onValueChange={value => setValue('categoryId', value)}
                           disabled={isSubmitting}
                         >
@@ -366,7 +371,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                         />
                         <div className="flex-1">
                           <AdvancedUnitSelector
-                            value={watch('systemUnitId') || watch('orgUnitId') || undefined}
+                            value={systemUnitId || orgUnitId || undefined}
                             onValueChange={(val, type) => {
                               setValue('systemUnitId', type === 'system' ? val : undefined);
                               setValue('orgUnitId', type === 'org' ? val : undefined);
@@ -384,7 +389,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-500 uppercase">Produces Product Variant *</Label>
                       <ProductVariantsSelect
-                        value={watch('producesVariantId')}
+                        value={producesVariantId}
                         onValueChange={val => setValue('producesVariantId', val)}
                         disabled={isSubmitting}
                         placeholder="Link to inventory item"
@@ -398,7 +403,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-slate-500 uppercase">Search Tags</Label>
                     <TagInput
-                      tags={watch('tags') || []}
+                      tags={tags}
                       onChange={tags => setValue('tags', tags)}
                       placeholder="Add searchable labels"
                     />
@@ -428,7 +433,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-500 uppercase">Complexity</Label>
                       <Select
-                        value={watch('difficulty') || 'MEDIUM'}
+                        value={difficulty}
                         onValueChange={value => setValue('difficulty', value as any)}
                         disabled={isSubmitting}
                       >
