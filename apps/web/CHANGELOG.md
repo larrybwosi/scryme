@@ -1,5 +1,12 @@
 # web
 
+## 2.3.0
+
+### Minor Changes
+
+- 5a65313: Prisma update fix
+- 5a65313: Update
+
 ## 2.2.0
 
 ### Minor Changes
