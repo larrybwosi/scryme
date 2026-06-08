@@ -13,34 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  filter:
-    runs-on: ubuntu-latest
-    outputs:
-      pos: ${{ steps.changes.outputs.pos }}
-      bakery: ${{ steps.changes.outputs.bakery }}
-      api: ${{ steps.changes.outputs.api }}
-      workflow: ${{ steps.changes.outputs.workflow }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            pos:
-              - 'apps/pos/**'
-            bakery:
-              - 'apps/bakery/**'
-            api:
-              - 'apps/api/**'
-            workflow:
-              - '.github/workflows/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'turbo.json'
-
   lint-test:
-    needs: filter
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,17 +48,14 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
       - name: Run POS Frontend Tests
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: pnpm --filter dealio-desktop test:frontend
 
       - name: Install Rust
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
 
       - name: Install POS Backend dependencies (Linux)
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -100,7 +70,6 @@ jobs:
             patchelf
 
       - name: Create POS dummy binaries
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: |
           mkdir -p apps/pos/src-tauri/binaries
           touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
@@ -109,17 +78,14 @@ jobs:
           chmod +x apps/pos/src-tauri/binaries/*
 
       - name: Run POS Backend Linting
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: pnpm --filter dealio-desktop lint:backend
 
       - name: Run POS Backend Tests with Coverage
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: |
           cargo install cargo-tarpaulin
           cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out Xml
 
       - name: Cache Playwright Browsers
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         id: playwright-cache
         uses: actions/cache@v4
         with:
@@ -129,11 +95,10 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright Browsers
-        if: (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true') && steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter dealio-desktop exec playwright install --with-deps
 
       - name: Run POS E2E tests
-        if: needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true'
         run: pnpm --filter dealio-desktop test:e2e
         env:
           POSTHOG_API_KEY: mock
@@ -209,8 +174,8 @@ jobs:
         run: echo "version=$(jq -r .version apps/pos/package.json)" >> $GITHUB_OUTPUT
 
   publish-pos:
-    needs: [filter, release-management, set-version]
-    if: needs.release-management.outputs.published == 'true' && (needs.filter.outputs.pos == 'true' || needs.filter.outputs.workflow == 'true')
+    needs: [release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
     permissions:
       contents: write
     strategy:
@@ -354,8 +319,8 @@ jobs:
           path: latest-${{ matrix.variant }}-${{ matrix.target_group }}.json
 
   publish-bakery:
-    needs: [filter, release-management, set-version]
-    if: needs.release-management.outputs.published == 'true' && (needs.filter.outputs.bakery == 'true' || needs.filter.outputs.workflow == 'true')
+    needs: [release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
     permissions:
       contents: write
     strategy:
@@ -421,7 +386,7 @@ jobs:
           projectPath: apps/bakery
 
   docker-images:
-    needs: [filter, release-management, set-version]
+    needs: [release-management, set-version]
     if: needs.release-management.outputs.published == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -447,7 +412,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push API image
-        if: needs.filter.outputs.api == 'true' || needs.filter.outputs.workflow == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -458,7 +422,6 @@ jobs:
             ghcr.io/${{ env.REPO_LOWER }}/api:${{ needs.set-version.outputs.version }}
 
       - name: Build and push Bakery image
-        if: needs.filter.outputs.bakery == 'true' || needs.filter.outputs.workflow == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .

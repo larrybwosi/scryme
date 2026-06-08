@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -167,9 +167,11 @@ const LoginContent = () => {
 
   const session = authClient.useSession();
 
-  if (session.data) {
-    router.push("/customers");
-  }
+  useEffect(() => {
+    if (session.data) {
+      router.push("/customers");
+    }
+  }, [session.data, router]);
 
   const callbackUrl =
     searchParams.get("callbackUrl") ||
@@ -259,6 +261,15 @@ const LoginContent = () => {
       <span className="text-emerald-800 text-sm font-medium">{text}</span>
     </div>
   );
+
+  // Optional styling tweak: Don't render the form visual content if user is already authenticated
+  if (session.data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-white">
@@ -482,7 +493,6 @@ const LoginContent = () => {
 
       {/* ── Right Panel ── */}
       <div className="hidden lg:flex flex-1 bg-[#0d3d2b] text-white relative overflow-hidden flex-col justify-between p-12">
-        {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -491,11 +501,9 @@ const LoginContent = () => {
           }}
         />
 
-        {/* Glow blob */}
         <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full bg-emerald-400/10 blur-[80px] pointer-events-none" />
         <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-full bg-emerald-500/10 blur-[70px] pointer-events-none" />
 
-        {/* Floating skill tags */}
         {[
           { name: "Website Design", className: "top-16 right-24" },
           { name: "Blockchain", className: "top-28 left-10" },
@@ -508,7 +516,6 @@ const LoginContent = () => {
           <FloatingTag key={i} name={tag.name} className={tag.className} />
         ))}
 
-        {/* Avatars */}
         {[
           { bg: "bg-white", pos: "top-14 left-14" },
           { bg: "bg-orange-400", pos: "top-36 right-44" },
@@ -525,7 +532,6 @@ const LoginContent = () => {
           />
         ))}
 
-        {/* Main copy */}
         <div className="relative z-10 mt-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 border border-emerald-400/20 rounded-full mb-6">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -544,7 +550,6 @@ const LoginContent = () => {
             better, hire smarter.
           </p>
 
-          {/* Stats row */}
           <div className="flex gap-8 mt-10 pt-8 border-t border-white/10">
             <StatCard value="7,200+" label="Vetted agencies" />
             <StatCard value="94%" label="Client satisfaction" />
@@ -558,7 +563,13 @@ const LoginContent = () => {
 
 const LoginPage = () => {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <LoginContent />
     </Suspense>
   );

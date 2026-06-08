@@ -17,48 +17,54 @@ export function ImageUpload({
   value = [],
   onChange,
   maxImages = 3,
-  disabled
+  disabled,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFiles = useCallback(async (files: FileList | File[]) => {
-    const filesArray = Array.from(files).filter(file => file.type.startsWith("image/"));
+  const uploadFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const filesArray = Array.from(files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
 
-    if (value.length + filesArray.length > maxImages) {
-      toast.error(`Maximum of ${maxImages} images allowed`);
-      return;
-    }
+      if (value.length + filesArray.length > maxImages) {
+        toast.error(`Maximum of ${maxImages} images allowed`);
+        return;
+      }
 
-    setIsUploading(true);
+      setIsUploading(true);
 
-    try {
-      const uploadPromises = filesArray.map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
+      try {
+        const uploadPromises = filesArray.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Upload failed");
+
+          const resData = await response.json();
+          // Handle standard API response wrapping if present
+          return resData.data?.url || resData.url;
         });
 
-        if (!response.ok) throw new Error("Upload failed");
-
-        const resData = await response.json();
-        // Handle standard API response wrapping if present
-        return resData.data?.url || resData.url;
-      });
-
-      const urls = await Promise.all(uploadPromises);
-      onChange([...value, ...urls]);
-      toast.success(`${urls.length} image(s) uploaded successfully`);
-    } catch (error) {
-      toast.error("Failed to upload image(s)");
-      console.error(error);
-    } finally {
-      setIsUploading(false);
-    }
-  }, [value, maxImages, onChange]);
+        const urls = await Promise.all(uploadPromises);
+        onChange([...value, ...urls]);
+        toast.success(`${urls.length} image(s) uploaded successfully`);
+      } catch (error) {
+        toast.error("Failed to upload image(s)");
+        console.error(error);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [value, maxImages, onChange],
+  );
 
   const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -67,9 +73,24 @@ export function ImageUpload({
     }
   };
 
+  const onDragEnter = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      if (disabled || isUploading) return;
+      setIsDragging(true);
+    },
+    [disabled, isUploading],
+  );
+
+  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
+      setIsDragging(false);
       if (disabled || isUploading) return;
 
       const files = e.dataTransfer.files;
@@ -77,7 +98,7 @@ export function ImageUpload({
         uploadFiles(files);
       }
     },
-    [disabled, isUploading, uploadFiles]
+    [disabled, isUploading, uploadFiles],
   );
 
   const onPaste = useCallback(
@@ -97,8 +118,15 @@ export function ImageUpload({
         uploadFiles(files);
       }
     },
-    [disabled, isUploading, uploadFiles]
+    [disabled, isUploading, uploadFiles],
   );
+
+  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  }, []);
 
   const removeImage = (url: string) => {
     onChange(value.filter((u) => u !== url));
@@ -112,16 +140,12 @@ export function ImageUpload({
             key={url}
             className="relative aspect-square rounded-md overflow-hidden border bg-gray-100 group"
           >
-            <Image
-              src={url}
-              alt="Product"
-              fill
-              className="object-cover"
-            />
+            <Image src={url} alt="Product" fill className="object-cover" />
             <button
               onClick={() => removeImage(url)}
               type="button"
-              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Remove image"
+              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-[#34A853] focus-visible:ring-offset-2"
             >
               <X size={12} />
             </button>
@@ -131,13 +155,19 @@ export function ImageUpload({
           <div
             onDrop={onDrop}
             onDragOver={(e) => e.preventDefault()}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
             onPaste={onPaste}
+            onKeyDown={onKeyDown}
             onClick={() => fileInputRef.current?.click()}
             tabIndex={0}
+            role="button"
+            aria-label="Upload images"
             className={cn(
               "aspect-square rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-[#34A853] focus:ring-offset-2",
+              isDragging && "border-[#34A853] bg-[#34A853]/5",
               isUploading && "opacity-50 cursor-not-allowed",
-              disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+              disabled && "opacity-50 cursor-not-allowed pointer-events-none",
             )}
           >
             {isUploading ? (
@@ -162,7 +192,8 @@ export function ImageUpload({
         disabled={disabled || isUploading}
       />
       <p className="text-[11px] text-gray-500">
-        Upload up to {maxImages} images. Drag and drop or paste directly into the box.
+        Upload up to {maxImages} images. Drag and drop or paste directly into
+        the box.
       </p>
     </div>
   );

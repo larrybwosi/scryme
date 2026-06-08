@@ -83,7 +83,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -131,7 +131,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Install Rust
@@ -171,7 +171,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Install Rust
@@ -204,7 +204,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma Client
@@ -230,7 +230,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Cache Playwright Browsers
@@ -247,3 +247,56 @@ jobs:
         env:
           POSTHOG_API_KEY: mock
           SENTRY_DSN: mock
+
+  build-verify:
+    needs: [filter]
+    if: |
+      github.event_name == 'pull_request' && (
+        needs.filter.outputs.api == 'true' ||
+        needs.filter.outputs.crm == 'true' ||
+        needs.filter.outputs.web == 'true' ||
+        needs.filter.outputs.packages == 'true' ||
+        needs.filter.outputs.workflow == 'true'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm generate
+
+      - name: Turbo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-build-
+
+      - name: Build
+        run: |
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+            pnpm turbo build --filter=api... --filter=crm... --filter=web...
+          else
+            FILTER=""
+            if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+              FILTER="$FILTER --filter=api..."
+            fi
+            if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+              FILTER="$FILTER --filter=crm..."
+            fi
+            if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+              FILTER="$FILTER --filter=web..."
+            fi
+            pnpm turbo build $FILTER
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres

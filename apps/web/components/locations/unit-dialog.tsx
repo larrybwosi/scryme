@@ -30,7 +30,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { createUnit, updateUnit } from "../../app/actions/locations";
 import { toast } from "sonner";
-import { StorageUnitType, UnitType } from "@repo/db";
+import { StorageUnitType, UnitType } from "@repo/db/client";
 
 const unitSchema = z.object({
   name: z.string().min(1, "Name is required"),

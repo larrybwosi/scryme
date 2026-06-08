@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
   CalendarDays,
   BedDouble,
+  ShoppingCart,
   Users,
   UserSquare2,
   MapPin,
@@ -24,9 +25,9 @@ import {
   TrendingUp,
   ArrowLeftRight,
   ShieldCheck,
-  FileText
-} from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
+  FileText,
+} from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
 
 interface SidebarItem {
   title: string;
@@ -46,23 +47,20 @@ const sidebarConfig: SidebarSection[] = [
     items: [
       { title: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
       {
-        title: "Reservation",
-        icon: CalendarDays,
-        href: "/reservation",
-        items: []
+        title: "Sales",
+        icon: ShoppingCart,
+        href: "/sales/transactions",
+        items: [
+          { title: "Transactions", href: "/sales/transactions" },
+          { title: "New Order", href: "/sales/new" },
+          { title: "Deliveries", href: "/sales/deliveries" },
+        ],
       },
-      { title: "Room Operation", icon: BedDouble, href: "/rooms" },
       {
         title: "Manage Staff",
         icon: Users,
         href: "/staff",
-        items: []
-      },
-      {
-        title: "Manage Guests",
-        icon: UserSquare2,
-        href: "/guests",
-        items: []
+        items: [],
       },
       { title: "Locations", icon: MapPin, href: "/locations" },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
@@ -73,7 +71,7 @@ const sidebarConfig: SidebarSection[] = [
         items: [
           { title: "Product List", href: "/inventory" },
           { title: "Suppliers", href: "/inventory/supplier" },
-        ]
+        ],
       },
       {
         title: "Stocking",
@@ -85,39 +83,39 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Reorder Rules", href: "/stocking/reorder-rules" },
           { title: "Reports", href: "/stocking/reports" },
           { title: "Audit Trail", href: "/stocking/audit" },
-        ]
+        ],
       },
       { title: "Integrations", icon: Boxes, href: "/integrations" },
-    ]
+    ],
   },
   {
     title: "ACCOUNTING",
     items: [
       {
-        title: "Report",
+        title: "Finance",
         icon: FileBarChart,
-        href: "/",
+        href: "/finance",
         items: [
-          { title: "Overview", href: "/report/overview" },
-          { title: "Booking Report", href: "/report/booking" },
-          { title: "Purchase Report", href: "/" },
-        ]
+          { title: "Overview", href: "/finance" },
+          { title: "Expenses", href: "/finance/expenses" },
+          { title: "Purchases", href: "/finance/purchases" },
+          { title: "Utilities", href: "/finance/utilities" },
+          { title: "Approvals", href: "/finance/approvals" },
+        ],
       },
       { title: "Maintenance", icon: Settings, href: "/maintenance" },
-    ]
-  }
+    ],
+  },
 ];
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [openMenus, setOpenMenus] = useState<string[]>(['Report']);
+  const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
   const pathname = usePathname();
 
   const toggleSubmenu = (title: string) => {
-    setOpenMenus(prev =>
-      prev.includes(title)
-        ? prev.filter(t => t !== title)
-        : [...prev, title]
+    setOpenMenus((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
     );
   };
 
@@ -125,21 +123,25 @@ export function Sidebar() {
     <aside
       className={cn(
         "flex flex-col h-screen border-r bg-white transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-[80px]" : "w-[280px]"
+        isCollapsed ? "w-[80px]" : "w-[280px]",
       )}
     >
       {/* Brand Header */}
-      <div className={cn(
-        "flex items-center h-[80px] px-6",
-        isCollapsed ? "flex-col justify-center gap-2" : "justify-between"
-      )}>
+      <div
+        className={cn(
+          "flex items-center h-[80px] px-6",
+          isCollapsed ? "flex-col justify-center gap-2" : "justify-between",
+        )}
+      >
         {!isCollapsed ? (
           <>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">F</span>
+                <span className="text-white font-bold text-xl">S</span>
               </div>
-              <span className="font-bold text-xl text-[#1D1D1F]">Fixoria <sup className="text-[10px] font-medium">TM</sup></span>
+              <span className="font-bold text-xl text-[#1D1D1F]">
+                Scryme <sup className="text-[10px] font-medium">TM</sup>
+              </span>
             </div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -157,29 +159,11 @@ export function Sidebar() {
               <ChevronRight size={14} />
             </button>
             <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">F</span>
+              <span className="text-white font-bold text-xl">S</span>
             </div>
           </>
         )}
       </div>
-
-      {/* Org Switcher */}
-      {!isCollapsed && (
-        <div className="px-4 mb-6">
-          <div className="flex items-center justify-between p-3 border rounded-xl bg-white hover:bg-gray-50 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-medium">
-                G
-              </div>
-              <div>
-                <div className="font-semibold text-sm">Grand Sylhet Hotel</div>
-                <div className="text-[11px] text-gray-500 uppercase font-medium">3 ADMIN ADDED</div>
-              </div>
-            </div>
-            <ChevronDown size={16} className="text-gray-400" />
-          </div>
-        </div>
-      )}
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
@@ -194,26 +178,42 @@ export function Sidebar() {
               {section.items.map((item, itemIdx) => {
                 const hasSubmenu = item.items && item.items.length > 0;
                 const isOpen = openMenus.includes(item.title);
-                const isActive = pathname === item.href || item.items?.some(sub => sub.href === pathname);
+                const isActive =
+                  pathname === item.href ||
+                  item.items?.some((sub) => sub.href === pathname);
 
                 return (
                   <div key={itemIdx}>
                     <button
-                      onClick={() => hasSubmenu && !isCollapsed ? toggleSubmenu(item.title) : null}
+                      onClick={() =>
+                        hasSubmenu && !isCollapsed
+                          ? toggleSubmenu(item.title)
+                          : null
+                      }
                       className={cn(
                         "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                        isActive ? "text-[#34A853] bg-[#34A853]/5 font-medium" : "text-gray-500 hover:bg-gray-50",
-                        isCollapsed && "justify-center"
+                        isActive
+                          ? "text-[#34A853] bg-[#34A853]/5 font-medium"
+                          : "text-gray-500 hover:bg-gray-50",
+                        isCollapsed && "justify-center",
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <item.icon size={20} className={cn(isActive ? "text-[#34A853]" : "text-gray-400")} />
+                        <item.icon
+                          size={20}
+                          className={cn(
+                            isActive ? "text-[#34A853]" : "text-gray-400",
+                          )}
+                        />
                         {!isCollapsed && <span>{item.title}</span>}
                       </div>
                       {!isCollapsed && hasSubmenu && (
                         <ChevronDown
                           size={16}
-                          className={cn("transition-transform", isOpen && "rotate-180")}
+                          className={cn(
+                            "transition-transform",
+                            isOpen && "rotate-180",
+                          )}
                         />
                       )}
                     </button>
@@ -228,7 +228,9 @@ export function Sidebar() {
                               href={subItem.href}
                               className={cn(
                                 "block py-2 text-sm transition-colors",
-                                isSubActive ? "text-[#1D1D1F] font-bold" : "text-gray-500 hover:text-gray-800"
+                                isSubActive
+                                  ? "text-[#1D1D1F] font-bold"
+                                  : "text-gray-500 hover:text-gray-800",
                               )}
                             >
                               {subItem.title}
@@ -268,12 +270,18 @@ export function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="overflow-hidden">
-              <div className="font-bold text-sm truncate text-[#1D1D1F]">Rahat Ali</div>
-              <div className="text-[11px] text-gray-500 truncate">Super Admin</div>
+              <div className="font-bold text-sm truncate text-[#1D1D1F]">
+                Rahat Ali
+              </div>
+              <div className="text-[11px] text-gray-500 truncate">
+                Super Admin
+              </div>
             </div>
           )}
         </div>
-        {!isCollapsed && <LogOut size={16} className="text-gray-400 cursor-pointer" />}
+        {!isCollapsed && (
+          <LogOut size={16} className="text-gray-400 cursor-pointer" />
+        )}
       </div>
     </aside>
   );

@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@repo/db";
+import { db, Decimal } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 import { Supplier } from "../../types/supplier";
@@ -112,7 +112,8 @@ export async function registerSupplier(data: {
   phone?: string;
   address?: string;
   contactName?: string;
-}) {
+  type?: any;
+}): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -126,13 +127,109 @@ export async function registerSupplier(data: {
       phone: data.phone || undefined,
       primaryContact: data.contactName || data.name,
       street: data.address || undefined,
-      type: "manufacturer", // Defaulting to a valid enum value
+      type: data.type || "manufacturer",
       organizationId: auth.organizationId,
     },
   });
 
   revalidatePath("/inventory/supplier");
   return supplier;
+}
+
+export async function updateSupplier(id: string, data: Partial<{
+  name: string;
+  code: string;
+  email: string;
+  phone: string;
+  primaryContact: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  type: any;
+  website: string;
+  taxId: string;
+  registrationNumber: string;
+  currency: string;
+  paymentTerms: string;
+  leadTime: number;
+  riskLevel: any;
+}>): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const supplier = await db.supplier.update({
+    where: {
+      id,
+      organizationId: auth.organizationId
+    },
+    data: {
+      ...data,
+      leadTime: data.leadTime ? Number(data.leadTime) : undefined,
+    },
+  });
+
+  revalidatePath("/inventory/supplier");
+  revalidatePath(`/inventory/supplier/${id}`);
+  return supplier;
+}
+
+export async function deleteSupplier(id: string): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  await db.supplier.delete({
+    where: {
+      id,
+      organizationId: auth.organizationId
+    },
+  });
+
+  revalidatePath("/inventory/supplier");
+}
+
+export async function addProductToSupplier(data: {
+  supplierId: string;
+  productId: string;
+  variantId?: string;
+  costPrice: number;
+  supplierSku?: string;
+}): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const ps = await db.productSupplier.create({
+    data: {
+      supplierId: data.supplierId,
+      productId: data.productId,
+      variantId: data.variantId,
+      costPrice: new Decimal(data.costPrice),
+      supplierSku: data.supplierSku,
+    },
+  });
+
+  revalidatePath(`/inventory/supplier/${data.supplierId}`);
+  return ps;
+}
+
+export async function removeProductFromSupplier(productSupplierId: string, supplierId: string): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  await db.productSupplier.delete({
+    where: { id: productSupplierId },
+  });
+
+  revalidatePath(`/inventory/supplier/${supplierId}`);
 }
 
 export async function getSupplierById(id: string): Promise<Supplier | null> {
@@ -226,7 +323,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   } as Supplier;
 }
 
-export async function toggleFavoriteSupplier(supplierId: string) {
+export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -277,7 +374,7 @@ export async function toggleFavoriteSupplier(supplierId: string) {
   revalidatePath(`/inventory/supplier/${supplierId}`);
 }
 
-export async function addSupplierReview(supplierId: string, rating: number, comment: string) {
+export async function addSupplierReview(supplierId: string, rating: number, comment: string): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");

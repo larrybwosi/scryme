@@ -1,33 +1,47 @@
 "use server";
 
-import { db, Decimal, StockTransferStatus, MovementType, AlertStatus } from "@repo/db";
+import {
+  db,
+  Decimal,
+  StockTransferStatus,
+  MovementType,
+  AlertStatus,
+} from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
-import { startOfMonth, subMonths, format, endOfMonth, startOfDay, endOfDay } from "date-fns";
+import {
+  startOfMonth,
+  subMonths,
+  format,
+  endOfMonth,
+  startOfDay,
+  endOfDay,
+} from "date-fns";
 
-export async function getStockDashboardStats() {
+export async function getStockDashboardStats(): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
-  const [totalProducts, totalStockValue, pendingTransfers, lowStockAlerts] = await Promise.all([
-    db.product.count({ where: { organizationId: context.organizationId } }),
-    db.productVariantStock.aggregate({
-      where: { organizationId: context.organizationId },
-      _sum: { currentStock: true }
-    }),
-    db.stockTransfer.count({
-      where: {
-        organizationId: context.organizationId,
-        status: { in: ["PENDING_APPROVAL", "SHIPPED", "IN_TRANSIT"] }
-      }
-    }),
-    db.productVariantStock.count({
-      where: {
-        organizationId: context.organizationId,
-        currentStock: { lte: 10 } // Simplified for now as Prisma doesn't support field-to-field comparison easily
-      }
-    })
-  ]);
+  const [totalProducts, totalStockValue, pendingTransfers, lowStockAlerts] =
+    await Promise.all([
+      db.product.count({ where: { organizationId: context.organizationId } }),
+      db.productVariantStock.aggregate({
+        where: { organizationId: context.organizationId },
+        _sum: { currentStock: true },
+      }),
+      db.stockTransfer.count({
+        where: {
+          organizationId: context.organizationId,
+          status: { in: ["PENDING_APPROVAL", "SHIPPED", "IN_TRANSIT"] },
+        },
+      }),
+      db.productVariantStock.count({
+        where: {
+          organizationId: context.organizationId,
+          currentStock: { lte: 10 }, // Simplified for now as Prisma doesn't support field-to-field comparison easily
+        },
+      }),
+    ]);
 
   // For total value, we ideally want currentStock * buyingPrice.
   // This aggregate only gives sum of stock. We'll do a more detailed query if needed.
@@ -37,11 +51,11 @@ export async function getStockDashboardStats() {
     totalProducts,
     totalStockItems: totalStockValue._sum.currentStock?.toNumber() || 0,
     pendingTransfers,
-    lowStockAlerts
+    lowStockAlerts,
   };
 }
 
-export async function getStockMovementsChartData() {
+export async function getStockMovementsChartData(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -50,67 +64,83 @@ export async function getStockMovementsChartData() {
     return {
       start: startOfMonth(d),
       end: endOfMonth(d),
-      label: format(d, "MMM")
+      label: format(d, "MMM"),
     };
   }).reverse();
 
-  const data = await Promise.all(last6Months.map(async (month) => {
-    const movements = await db.stockMovement.groupBy({
-      by: ['movementType'],
-      where: {
-        organizationId: context.organizationId,
-        movementDate: {
-          gte: month.start,
-          lte: month.end
-        }
-      },
-      _sum: {
-        quantity: true
-      }
-    });
+  const data = await Promise.all(
+    last6Months.map(async (month) => {
+      const movements = await db.stockMovement.groupBy({
+        by: ["movementType"],
+        where: {
+          organizationId: context.organizationId,
+          movementDate: {
+            gte: month.start,
+            lte: month.end,
+          },
+        },
+        _sum: {
+          quantity: true,
+        },
+      });
 
-    const inbound = movements
-      .filter(m => ["PURCHASE_RECEIPT", "ADJUSTMENT_IN", "TRANSFER", "CUSTOMER_RETURN"].includes(m.movementType))
-      .reduce((acc, m) => acc + (m._sum.quantity?.toNumber() || 0), 0);
+      const inbound = movements
+        .filter((m) =>
+          [
+            "PURCHASE_RECEIPT",
+            "ADJUSTMENT_IN",
+            "TRANSFER",
+            "CUSTOMER_RETURN",
+          ].includes(m.movementType),
+        )
+        .reduce((acc, m) => acc + (m._sum.quantity?.toNumber() || 0), 0);
 
-    const outbound = movements
-      .filter(m => ["SALE", "ADJUSTMENT_OUT", "SUPPLIER_RETURN"].includes(m.movementType))
-      .reduce((acc, m) => acc + Math.abs(m._sum.quantity?.toNumber() || 0), 0);
+      const outbound = movements
+        .filter((m) =>
+          ["SALE", "ADJUSTMENT_OUT", "SUPPLIER_RETURN"].includes(
+            m.movementType,
+          ),
+        )
+        .reduce(
+          (acc, m) => acc + Math.abs(m._sum.quantity?.toNumber() || 0),
+          0,
+        );
 
-    return {
-      name: month.label,
-      inbound,
-      outbound
-    };
-  }));
+      return {
+        name: month.label,
+        inbound,
+        outbound,
+      };
+    }),
+  );
 
   return data;
 }
 
-export async function getStockDistributionByLocation() {
+export async function getStockDistributionByLocation(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
   const distribution = await db.productVariantStock.groupBy({
-    by: ['locationId'],
+    by: ["locationId"],
     where: { organizationId: context.organizationId },
     _sum: {
-      currentStock: true
-    }
+      currentStock: true,
+    },
   });
 
   const locations = await db.inventoryLocation.findMany({
-    where: { id: { in: distribution.map(d => d.locationId) } },
-    select: { id: true, name: true }
+    where: { id: { in: distribution.map((d) => d.locationId) } },
+    select: { id: true, name: true },
   });
 
-  return distribution.map(d => ({
-    name: locations.find(l => l.id === d.locationId)?.name || "Unknown",
-    value: d._sum.currentStock?.toNumber() || 0
+  return distribution.map((d) => ({
+    name: locations.find((l) => l.id === d.locationId)?.name || "Unknown",
+    value: d._sum.currentStock?.toNumber() || 0,
   }));
 }
 
-export async function getStockTransferList() {
+export async function getStockTransferList(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -119,9 +149,9 @@ export async function getStockTransferList() {
     include: {
       fromLocation: { select: { name: true } },
       toLocation: { select: { name: true } },
-      requestedBy: { select: { user: { select: { name: true } } } }
+      requestedBy: { select: { user: { select: { name: true } } } },
     },
-    orderBy: { requestedDate: 'desc' }
+    orderBy: { requestedDate: "desc" },
   });
 }
 
@@ -130,9 +160,10 @@ export async function createStockTransfer(data: {
   toLocationId: string;
   items: { variantId: string; quantity: number }[];
   notes?: string;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.user.id)
+    throw new Error("Unauthorized");
 
   const transferNumber = `TRF-${Date.now()}`;
 
@@ -147,19 +178,21 @@ export async function createStockTransfer(data: {
         requestedById: context.user.id,
         status: "PENDING_APPROVAL",
         items: {
-          create: await Promise.all(data.items.map(async (item) => {
-            const variant = await tx.productVariant.findUnique({
-              where: { id: item.variantId },
-              select: { buyingPrice: true }
-            });
-            return {
-              variantId: item.variantId,
-              requestedQuantity: new Decimal(item.quantity),
-              unitCost: variant?.buyingPrice || new Decimal(0)
-            };
-          }))
-        }
-      }
+          create: await Promise.all(
+            data.items.map(async (item) => {
+              const variant = await tx.productVariant.findUnique({
+                where: { id: item.variantId },
+                select: { buyingPrice: true },
+              });
+              return {
+                variantId: item.variantId,
+                requestedQuantity: new Decimal(item.quantity),
+                unitCost: variant?.buyingPrice || new Decimal(0),
+              };
+            }),
+          ),
+        },
+      },
     });
 
     return transfer;
@@ -169,7 +202,7 @@ export async function createStockTransfer(data: {
   return result;
 }
 
-export async function getStockTransferDetails(id: string) {
+export async function getStockTransferDetails(id: string): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return null;
 
@@ -186,22 +219,27 @@ export async function getStockTransferDetails(id: string) {
         include: {
           variant: {
             include: {
-              product: true
-            }
-          }
-        }
-      }
-    }
+              product: true,
+            },
+          },
+        },
+      },
+    },
   });
 }
 
-export async function updateStockTransferStatus(id: string, status: StockTransferStatus, notes?: string) {
+export async function updateStockTransferStatus(
+  id: string,
+  status: StockTransferStatus,
+  notes?: string,
+): Promise<any> {
   const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.user.id)
+    throw new Error("Unauthorized");
 
   const transfer = await db.stockTransfer.findUnique({
     where: { id, organizationId: context.organizationId },
-    include: { items: true }
+    include: { items: true },
   });
 
   if (!transfer) throw new Error("Transfer not found");
@@ -221,13 +259,13 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
           where: {
             variantId_locationId: {
               variantId: item.variantId,
-              locationId: transfer.fromLocationId
-            }
+              locationId: transfer.fromLocationId,
+            },
           },
           data: {
             currentStock: { decrement: item.requestedQuantity },
-            availableStock: { decrement: item.requestedQuantity }
-          }
+            availableStock: { decrement: item.requestedQuantity },
+          },
         });
 
         // Record movement
@@ -242,8 +280,8 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
             referenceId: transfer.id,
             referenceType: "StockTransfer",
             memberId: context.user.id,
-            notes: `Transfer ${transfer.transferNumber} Shipped`
-          }
+            notes: `Transfer ${transfer.transferNumber} Shipped`,
+          },
         });
       }
     } else if (status === "COMPLETED") {
@@ -257,9 +295,9 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
           where: {
             variantId_locationId: {
               variantId: item.variantId,
-              locationId: transfer.toLocationId
-            }
-          }
+              locationId: transfer.toLocationId,
+            },
+          },
         });
 
         if (stock) {
@@ -267,11 +305,13 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
             where: { id: stock.id },
             data: {
               currentStock: { increment: item.requestedQuantity },
-              availableStock: { increment: item.requestedQuantity }
-            }
+              availableStock: { increment: item.requestedQuantity },
+            },
           });
         } else {
-          const variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
           await tx.productVariantStock.create({
             data: {
               organizationId: context.organizationId,
@@ -279,8 +319,8 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
               variantId: item.variantId,
               locationId: transfer.toLocationId,
               currentStock: item.requestedQuantity,
-              availableStock: item.requestedQuantity
-            }
+              availableStock: item.requestedQuantity,
+            },
           });
         }
 
@@ -296,15 +336,15 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
             referenceId: transfer.id,
             referenceType: "StockTransfer",
             memberId: context.user.id,
-            notes: `Transfer ${transfer.transferNumber} Completed`
-          }
+            notes: `Transfer ${transfer.transferNumber} Completed`,
+          },
         });
       }
     }
 
     return tx.stockTransfer.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
   });
 
@@ -313,19 +353,21 @@ export async function updateStockTransferStatus(id: string, status: StockTransfe
   return result;
 }
 
-export async function getProductStockDistribution(productId: string) {
+export async function getProductStockDistribution(
+  productId: string,
+): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
   return db.productVariantStock.findMany({
     where: {
       productId,
-      organizationId: context.organizationId
+      organizationId: context.organizationId,
     },
     include: {
       location: true,
-      variant: true
-    }
+      variant: true,
+    },
   });
 }
 
@@ -335,7 +377,7 @@ export async function getStockMovementHistory(params: {
   startDate?: Date;
   endDate?: Date;
   limit?: number;
-}) {
+}): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -343,27 +385,29 @@ export async function getStockMovementHistory(params: {
     where: {
       organizationId: context.organizationId,
       variantId: params.variantId,
-      OR: params.locationId ? [
-        { fromLocationId: params.locationId },
-        { toLocationId: params.locationId }
-      ] : undefined,
+      OR: params.locationId
+        ? [
+            { fromLocationId: params.locationId },
+            { toLocationId: params.locationId },
+          ]
+        : undefined,
       movementDate: {
         gte: params.startDate,
-        lte: params.endDate
-      }
+        lte: params.endDate,
+      },
     },
     include: {
       variant: { include: { product: true } },
       fromLocation: true,
       toLocation: true,
-      member: { include: { user: true } }
+      member: { include: { user: true } },
     },
-    orderBy: { movementDate: 'desc' },
-    take: params.limit || 50
+    orderBy: { movementDate: "desc" },
+    take: params.limit || 50,
   });
 }
 
-export async function getReorderRules() {
+export async function getReorderRules(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
@@ -372,8 +416,8 @@ export async function getReorderRules() {
     include: {
       product: true,
       variant: true,
-      location: true
-    }
+      location: true,
+    },
   });
 }
 
@@ -384,7 +428,7 @@ export async function upsertReorderRule(data: {
   minQuantity: number;
   maxQuantity: number;
   reorderQuantity: number;
-}) {
+}): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -393,14 +437,14 @@ export async function upsertReorderRule(data: {
       organizationId_productId_variantId_locationId: {
         organizationId: context.organizationId,
         productId: data.productId,
-        variantId: data.variantId || null as any,
-        locationId: data.locationId
-      }
+        variantId: data.variantId || (null as any),
+        locationId: data.locationId,
+      },
     },
     update: {
       minQuantity: new Decimal(data.minQuantity),
       maxQuantity: new Decimal(data.maxQuantity),
-      reorderQuantity: new Decimal(data.reorderQuantity)
+      reorderQuantity: new Decimal(data.reorderQuantity),
     },
     create: {
       organizationId: context.organizationId,
@@ -409,8 +453,8 @@ export async function upsertReorderRule(data: {
       locationId: data.locationId,
       minQuantity: new Decimal(data.minQuantity),
       maxQuantity: new Decimal(data.maxQuantity),
-      reorderQuantity: new Decimal(data.reorderQuantity)
-    }
+      reorderQuantity: new Decimal(data.reorderQuantity),
+    },
   });
 
   revalidatePath("/stocking/reorder-rules");
