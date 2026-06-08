@@ -16,6 +16,7 @@ import {
   deleteV2ApiKey,
   getDeviceSetupTokens,
   getDeviceRegistry,
+  createDeviceSetupToken,
 } from "@repo/shared";
 import { revalidatePath } from "next/cache";
 import { db } from "@repo/db";
@@ -163,4 +164,3 @@ export async function getDeviceRegistryAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getDeviceRegistry(context.organizationId);
 }
-
