@@ -1,6 +1,6 @@
 import "server-only";
 
-import { auth } from "../../lib/auth";
+import { auth } from "@repo/auth/server";
 import { headers } from "next/headers";
 
 export async function getOrganizationContext() {
