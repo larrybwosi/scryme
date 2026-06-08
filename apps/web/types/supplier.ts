@@ -30,6 +30,10 @@ export interface Supplier {
   street?: string | null;
   state?: string | null;
   zipCode?: string | null;
+  _count?: {
+    products: number;
+    purchases: number;
+  };
 }
 
 export interface ProductSupplier {
