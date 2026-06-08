@@ -178,7 +178,7 @@ impl AuthState {
                 Some(config) => (config.base_url.clone(), Some(config.device_key.clone())),
                 None => {
                     // Fallback for initial provisioning where we might not have a config yet
-                    let dev_url = if cfg!(debug_assertions) { "http://localhost:3000" } else { "https://dealioerp.vercel.app" };
+                    let dev_url = if cfg!(debug_assertions) { "http://localhost:3002" } else { "https://dealioerp.vercel.app" };
                     (dev_url.to_string(), None)
                 }
             }

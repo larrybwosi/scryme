@@ -16,12 +16,13 @@ import {
   deleteV2ApiKey,
   getDeviceSetupTokens,
   getDeviceRegistry,
+  createDeviceSetupToken,
 } from "@repo/shared";
 import { revalidatePath } from "next/cache";
-import { db } from "@repo/db";
+import { getServerAuth } from "@repo/auth/server";
 
 async function ensureOrgContext() {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context || !context.organizationId) {
     throw new Error("Unauthorized");
   }
@@ -148,7 +149,7 @@ export async function createDeviceSetupTokenAction(data: {
   const result = await createDeviceSetupToken({
     ...data,
     organizationId: context.organizationId,
-    createdById: context.user.id,
+    createdById: context.memberId,
   });
   revalidatePath("/integrations/apps-api");
   return result;
@@ -163,4 +164,3 @@ export async function getDeviceRegistryAction(): Promise<any> {
   const context = await ensureOrgContext();
   return getDeviceRegistry(context.organizationId);
 }
-
