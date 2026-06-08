@@ -28,6 +28,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const [setupToken, setSetupToken] = useState('');
+  const [provisionError, setProvisionError] = useState<string | null>(null);
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [hardwareInfo, setHardwareInfo] = useState<{ macAddress?: string; serialNumber?: string } | null>(null);
   const [isDetectingHardware, setIsDetectingHardware] = useState(false);
@@ -153,6 +154,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
     }
 
     setIsProvisioning(true);
+    setProvisionError(null);
     try {
       // 1. Provision via Rust backend (handles keyring storage)
       await invoke('provision_device_with_token', {
@@ -196,7 +198,9 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
       toast.success('Terminal provisioned and initialized successfully');
     } catch (error: any) {
       console.error('Provisioning failed', error);
-      toast.error(error.message || 'Provisioning failed');
+      const errorMessage = typeof error === 'string' ? error : error.message || 'Provisioning failed';
+      setProvisionError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsProvisioning(false);
     }
@@ -417,6 +421,15 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
                                     />
                                 </div>
                             </div>
+
+                            {provisionError && (
+                              <div className="p-3 bg-red-50 border border-red-100 rounded-xl animate-in fade-in slide-in-from-top-1">
+                                <div className="flex items-start gap-2 text-red-800">
+                                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                                  <p className="text-xs font-medium leading-relaxed">{provisionError}</p>
+                                </div>
+                              </div>
+                            )}
 
                             {showApiUrl && (
                               <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">

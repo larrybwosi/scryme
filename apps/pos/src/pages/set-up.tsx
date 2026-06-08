@@ -121,7 +121,10 @@ const SetupTokenStep = ({
       onNext(token);
     } catch (err: any) {
       setIsProvisioning(false);
-      setError(err.message || 'Failed to provision device');
+
+      // Extract specific error message if it's from our API
+      const errorMessage = typeof err === 'string' ? err : err.message || 'Failed to provision device';
+      setError(errorMessage);
     }
   };
 
