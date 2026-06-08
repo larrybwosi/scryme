@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Key,
@@ -122,11 +122,7 @@ function AppsApiContent() {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [v3, v2, wh, tokens, regs, locs] = await Promise.all([
@@ -144,7 +140,7 @@ function AppsApiContent() {
       setRegistries(regs);
       setLocations(locs);
       if (locs.length > 0 && newDevice.locationId === "default") {
-        setNewDevice(prev => ({ ...prev, locationId: locs[0].id }));
+        setNewDevice((prev) => ({ ...prev, locationId: locs[0].id }));
       }
     } catch (error) {
       console.error("Failed to load data", error);
@@ -152,7 +148,11 @@ function AppsApiContent() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [newDevice.locationId]);
+
+  useEffect(() => {
+    loadData();
+  }, [activeTab, loadData]);
 
   const handleCreateV3 = async () => {
     try {
