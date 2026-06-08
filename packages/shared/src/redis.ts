@@ -110,3 +110,12 @@ export const getRedisClient = async (): Promise<RedisClient> => {
 
   return redisClient;
 };
+
+export const redisProxy: RedisClient = new Proxy({} as RedisClient, {
+  get: (_target, prop: keyof RedisClient) => {
+    return async (...args: any[]) => {
+      const client = await getRedisClient();
+      return (client[prop] as Function)(...args);
+    };
+  },
+});
