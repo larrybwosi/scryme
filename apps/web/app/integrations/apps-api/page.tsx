@@ -139,16 +139,19 @@ function AppsApiContent() {
       setDeviceTokens(tokens);
       setRegistries(regs);
       setLocations(locs);
-      if (locs.length > 0 && newDevice.locationId === "default") {
-        setNewDevice((prev) => ({ ...prev, locationId: locs[0].id }));
-      }
+      setNewDevice((prev) => {
+        if (locs.length > 0 && prev.locationId === "default") {
+          return { ...prev, locationId: locs[0].id };
+        }
+        return prev;
+      });
     } catch (error) {
       console.error("Failed to load data", error);
       toast.error("Failed to load integration data");
     } finally {
       setIsLoading(false);
     }
-  }, [newDevice.locationId]);
+  }, []);
 
   useEffect(() => {
     loadData();
