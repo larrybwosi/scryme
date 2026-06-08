@@ -1,12 +1,6 @@
 "use server";
 
-import {
-  db,
-  Decimal,
-  StockTransferStatus,
-  MovementType,
-  AlertStatus,
-} from "@repo/db";
+import { db, StockTransferStatus, MovementType, AlertStatus } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 import {
@@ -17,6 +11,7 @@ import {
   startOfDay,
   endOfDay,
 } from "date-fns";
+import Decimal from "decimal.js";
 
 export async function getStockDashboardStats(): Promise<any> {
   const context = await getOrganizationContext();
@@ -522,8 +517,7 @@ export async function getStockLevels(params: {
     where: {
       purchase: {
         organizationId: context.organizationId,
-        locationId:
-          locationId && locationId !== "all" ? locationId : undefined,
+        // locationId: locationId && locationId !== "all" ? locationId : undefined,
         status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
       },
     },
