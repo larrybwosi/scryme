@@ -8,6 +8,8 @@ module.exports = function (options) {
     externals: [
       {
         'server-only': 'commonjs ' + path.resolve(__dirname, 'src/lib/empty.ts'),
+        'next/headers': 'commonjs ' + path.resolve(__dirname, 'src/lib/empty.ts'),
+        'next/navigation': 'commonjs ' + path.resolve(__dirname, 'src/lib/empty.ts'),
       },
       nodeExternals({
         allowlist: [/^@repo/],
@@ -17,9 +19,10 @@ module.exports = function (options) {
       ...options.resolve,
       alias: {
         ...options.resolve.alias,
-        '@': path.resolve(__dirname, '../../apps/main/src'),
+        '@': path.resolve(__dirname, 'src'),
         '@repo/zitadel/server': path.resolve(__dirname, 'src/zitadel/zitadel.service.ts'),
         '@repo/zitadel': path.resolve(__dirname, 'src/zitadel/zitadel.service.ts'),
+        '@repo/auth/server': path.resolve(__dirname, '../../packages/auth/src/index.ts'),
       },
     },
   };
