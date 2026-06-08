@@ -93,7 +93,7 @@ pub fn run() {
 
             // Start sync worker
             let base_api_url = if cfg!(debug_assertions) {
-                "http://localhost:3001"
+                "http://localhost:3002"
             } else {
                 option_env!("VITE_API_URL").unwrap_or("https://api.scryme.app")
             };
