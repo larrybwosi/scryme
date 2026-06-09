@@ -23,7 +23,7 @@ import {
 import { MemberRole } from "@repo/db/client";
 import { addStaffMember } from "../../app/actions/staff";
 import { toast } from "sonner";
-import { Eye, EyeOff, RefreshCw, Loader2 } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 
 export function AddMemberSheet({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -165,7 +165,6 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
           </div>
           <SheetFooter className="pt-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Adding..." : "Add Staff Member"}
             </Button>
           </SheetFooter>
