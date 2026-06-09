@@ -11,6 +11,7 @@ import { ApiError } from '@repo/shared/server';
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
+    console.error('Unhandled Exception:', exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<any>();
 
