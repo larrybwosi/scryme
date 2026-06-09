@@ -17,25 +17,27 @@ import { OAuthModule } from "./oauth/oauth.module";
 import { PublicModule } from "./public/public.module";
 import { UnitsModule } from "./units/units.module";
 
+export const V2_SUB_MODULES = [
+  BakeryModule,
+  CatalogModule,
+  InventoryModule,
+  PosModule,
+  MembersModule,
+  CustomersModule,
+  OrdersModule,
+  PaymentsModule,
+  UsersModule,
+  AnalyticsModule,
+  RealtimeModule,
+  DevicesModule,
+  AdminModule,
+  HealthModule,
+  OAuthModule,
+  PublicModule,
+  UnitsModule,
+];
+
 @Module({
-  imports: [
-    BakeryModule,
-    CatalogModule,
-    InventoryModule,
-    PosModule,
-    MembersModule,
-    CustomersModule,
-    OrdersModule,
-    PaymentsModule,
-    UsersModule,
-    AnalyticsModule,
-    RealtimeModule,
-    DevicesModule,
-    AdminModule,
-    HealthModule,
-    OAuthModule,
-    PublicModule,
-    UnitsModule,
-  ],
+  imports: V2_SUB_MODULES,
 })
 export class V2Module {}

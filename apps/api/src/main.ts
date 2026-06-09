@@ -9,7 +9,8 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
-import { V3Module } from "./v3/v3.module";
+import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
+import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { StandardResponseInterceptor } from "./common/interceptors/standard-response.interceptor";
 
@@ -91,7 +92,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const documentV2 = SwaggerModule.createDocument(app, configV2, {
-    include: [AppModule], // This might need refinement to exclude V3
+    include: [V2Module, ...V2_SUB_MODULES],
   });
   SwaggerModule.setup("api/v2/docs", app, documentV2);
 
@@ -105,7 +106,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const documentV3 = SwaggerModule.createDocument(app, configV3, {
-    include: [V3Module],
+    include: [V3Module, ...V3_SUB_MODULES],
   });
   SwaggerModule.setup("api/v3/docs", app, documentV3);
 

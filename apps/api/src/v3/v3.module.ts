@@ -20,29 +20,31 @@ import { StandalonePosModule } from './modules/standalone-pos/standalone-pos.mod
 import { CrmIntegrationsModule } from './modules/crm-integrations/crm-integrations.module';
 import { UnitsModule } from './modules/units/units.module';
 
+export const V3_SUB_MODULES = [
+  V3CommonModule,
+  V3AuthModule,
+  WebhooksModule,
+  CatalogModule,
+  CustomersModule,
+  InventoryModule,
+  OrdersModule,
+  PaymentsModule,
+  PosModule,
+  LoyaltyModule,
+  MembersModule,
+  EcommerceCartModule,
+  FavoritesModule,
+  StockingModule,
+  CrmModule,
+  FinanceModule,
+  StandalonePosModule,
+  B2BModule,
+  CrmIntegrationsModule,
+  UnitsModule,
+];
+
 @Module({
-  imports: [
-    V3CommonModule,
-    V3AuthModule,
-    WebhooksModule,
-    CatalogModule,
-    CustomersModule,
-    InventoryModule,
-    OrdersModule,
-    PaymentsModule,
-    PosModule,
-    LoyaltyModule,
-    MembersModule,
-    EcommerceCartModule,
-    FavoritesModule,
-    StockingModule,
-    CrmModule,
-    FinanceModule,
-    StandalonePosModule,
-    B2BModule,
-    CrmIntegrationsModule,
-    UnitsModule,
-  ],
+  imports: V3_SUB_MODULES,
   controllers: [],
   providers: [],
 })
