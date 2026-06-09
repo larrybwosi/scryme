@@ -10,7 +10,7 @@ import {
   Member,
   User,
   ApprovalDecision,
-  MemberRole
+  MemberRole,
 } from "@repo/db/client";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
@@ -20,7 +20,12 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   }
 
   const member = await db.member.findUnique({
-    where: { organizationId_userId: { organizationId: auth.organizationId, userId: auth.user.id } }
+    where: {
+      organizationId_userId: {
+        organizationId: auth.organizationId,
+        userId: auth.user.id,
+      },
+    },
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
@@ -30,23 +35,25 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   return { auth, member };
 }
 
-export async function getApprovalRequests(): Promise<(ApprovalRequest & {
-  requester: Member & { user: User };
-  decisions: (ApprovalDecision & { approver: Member & { user: User } })[];
-})[]> {
+export async function getApprovalRequests(): Promise<
+  (ApprovalRequest & {
+    requester: Member & { user: User };
+    decisions: (ApprovalDecision & { approver: Member & { user: User } })[];
+  })[]
+> {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   return await db.approvalRequest.findMany({
     where: { organizationId: auth.organizationId },
     include: {
       requester: {
-        include: { user: true }
+        include: { user: true },
       },
       decisions: {
         include: {
-          approver: { include: { user: true } }
-        }
-      }
+          approver: { include: { user: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -58,53 +65,62 @@ export async function submitForApproval(data: {
   amount: number;
   relatedRecordNumber: string;
 }) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+  ]);
 
   // 1. Find if there's an active workflow for this type
-  const triggerEvent = data.type === "EXPENSE" ? "EXPENSE_CREATED" :
-                       data.type === "PURCHASE_ORDER" ? "PURCHASE_ORDER_CREATED" : null;
+  const triggerEvent =
+    data.type === "EXPENSE"
+      ? "EXPENSE_CREATED"
+      : data.type === "PURCHASE_ORDER"
+        ? "PURCHASE_ORDER_CREATED"
+        : null;
 
   const workflow = await db.approvalWorkflow.findFirst({
     where: {
       organizationId: auth.organizationId,
       isActive: true,
-      triggerEvent: triggerEvent
+      triggerEvent: triggerEvent,
     },
     include: {
       steps: {
         orderBy: { stepNumber: "asc" },
         include: {
           conditions: true,
-          actions: true
-        }
-      }
-    }
+          actions: true,
+        },
+      },
+    },
   });
 
   // If no workflow, create a pending request for manual approval by admins
   const request = await db.approvalRequest.create({
     data: {
       organizationId: auth.organizationId,
-      requesterId: auth.user.id,
+      requesterId: auth.memberId,
       relatedId: data.relatedId,
       requestType: data.type,
       amount: data.amount,
       relatedRecordNumber: data.relatedRecordNumber,
       status: "PENDING",
       workflowId: workflow?.id,
-    }
+    },
   });
 
   // Update the related record status
   if (data.type === "EXPENSE") {
     await db.expense.update({
       where: { id: data.relatedId },
-      data: { status: "PENDING_APPROVAL", approvalRequestId: request.id }
+      data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
     });
   } else if (data.type === "PURCHASE_ORDER") {
     await db.purchase.update({
       where: { id: data.relatedId },
-      data: { status: "PENDING_APPROVAL", approvalRequestId: request.id }
+      data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
     });
   }
 
@@ -121,7 +137,7 @@ export async function makeApprovalDecision(data: {
 
   const request = await db.approvalRequest.findUnique({
     where: { id: data.requestId },
-    include: { workflow: { include: { steps: true } } }
+    include: { workflow: { include: { steps: true } } },
   });
 
   if (!request) throw new Error("Request not found");
@@ -134,14 +150,14 @@ export async function makeApprovalDecision(data: {
       status: data.status as ApprovalStatus,
       comments: data.comments,
       decisionDate: new Date(),
-      stepNumber: request.currentStep
-    }
+      stepNumber: request.currentStep,
+    },
   });
 
   // Simplified multi-step logic
   await db.approvalRequest.update({
     where: { id: data.requestId },
-    data: { status: data.status as ApprovalStatus }
+    data: { status: data.status as ApprovalStatus },
   });
 
   // Update related record
@@ -149,24 +165,24 @@ export async function makeApprovalDecision(data: {
     if (request.requestType === "EXPENSE") {
       await db.expense.update({
         where: { id: request.relatedId },
-        data: { status: "APPROVED" }
+        data: { status: "APPROVED" },
       });
     } else if (request.requestType === "PURCHASE_ORDER") {
       await db.purchase.update({
         where: { id: request.relatedId },
-        data: { status: "APPROVED" }
+        data: { status: "APPROVED" },
       });
     }
   } else if (data.status === "REJECTED") {
     if (request.requestType === "EXPENSE") {
       await db.expense.update({
         where: { id: request.relatedId },
-        data: { status: "REJECTED" }
+        data: { status: "REJECTED" },
       });
     } else if (request.requestType === "PURCHASE_ORDER") {
       await db.purchase.update({
         where: { id: request.relatedId },
-        data: { status: "REJECTED" }
+        data: { status: "REJECTED" },
       });
     }
   }
