@@ -12,6 +12,7 @@ import { AppModule } from "./app.module";
 import { V3Module } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { StandardResponseInterceptor } from "./common/interceptors/standard-response.interceptor";
+import { redactSensitiveData } from "./common/utils/redaction";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -42,8 +43,8 @@ async function bootstrap() {
             : undefined,
           authorization: headers.authorization ? "[REDACTED]" : undefined,
         },
-        query: Object.keys(query || {}).length ? query : undefined,
-        body: body && Object.keys(body).length ? body : undefined,
+        query: Object.keys(query || {}).length ? redactSensitiveData(query) : undefined,
+        body: body && Object.keys(body).length ? redactSensitiveData(body) : undefined,
       });
 
       // Log response when request completes
