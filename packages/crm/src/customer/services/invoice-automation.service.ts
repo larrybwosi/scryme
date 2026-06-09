@@ -1,5 +1,5 @@
 import 'server-only';
-import { prisma } from '@repo/db/client';
+import { prisma } from '@repo/db';
 import { NotificationEngine } from '@repo/notifications';
 import { runAutomation } from '@repo/windmill/server';
 

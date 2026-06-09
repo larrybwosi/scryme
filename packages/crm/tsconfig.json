@@ -12,33 +12,7 @@
       "node"
     ],
     "rootDir": "src",
-    "baseUrl": ".",
-    "paths": {
-      "@repo/db": [
-        "../../packages/db/src/index.ts"
-      ],
-      "@repo/db/client": [
-        "../../packages/db/src/client.ts"
-      ],
-      "@repo/shared": [
-        "../../packages/shared/src/index.ts"
-      ],
-      "@repo/notifications": [
-        "../../packages/notifications/src/index.ts"
-      ],
-      "@repo/zitadel": [
-        "../../packages/zitadel/src/index.ts"
-      ],
-      "@repo/windmill": [
-        "../../packages/windmill/src/index.ts"
-      ],
-      "@repo/windmill/server": [
-        "../../packages/windmill/src/server.ts"
-      ],
-      "@repo/ui/*": [
-        "../../packages/ui/src/*"
-      ]
-    }
+    "baseUrl": "."
   },
   "include": [
     "src"

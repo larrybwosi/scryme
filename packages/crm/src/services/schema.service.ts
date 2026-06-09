@@ -1,5 +1,5 @@
 import 'server-only';
-import { PrismaClient, CrmFieldType } from '@repo/db/client';
+import { PrismaClient, CrmFieldType } from '@repo/db';
 import { CreateObjectInput, CreateFieldInput, CachingProvider } from '../types';
 
 export class SchemaService {

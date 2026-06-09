@@ -1,5 +1,5 @@
 import 'server-only';
-import { PrismaClient, CrmRelationshipType } from '@repo/db/client';
+import { PrismaClient, CrmRelationshipType } from '@repo/db';
 
 export class RelationService {
   constructor(private prisma: PrismaClient) {}
