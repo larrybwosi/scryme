@@ -21,6 +21,7 @@ import {
 import { PaymentMethod } from '@repo/db/client';
 import { addPayment } from '../../app/actions/sales';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface AddPaymentModalProps {
   transaction: any;
@@ -99,6 +100,7 @@ export function AddPaymentModal({ transaction, isOpen, onClose }: AddPaymentModa
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || amount <= 0}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Adding...' : 'Add Payment'}
           </Button>
         </DialogFooter>

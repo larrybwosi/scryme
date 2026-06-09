@@ -23,7 +23,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { registerSupplier } from "../../app/actions/supplier";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -209,6 +209,7 @@ export function RegisterSupplierModal() {
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="rounded-xl h-11 px-6">Cancel</Button>
               <Button type="submit" disabled={isSubmitting} className="rounded-xl h-11 px-10 font-bold">
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? "Registering..." : "Register Supplier"}
               </Button>
             </DialogFooter>

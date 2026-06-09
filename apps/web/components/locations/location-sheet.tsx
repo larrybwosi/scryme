@@ -34,6 +34,7 @@ import { Switch } from "@repo/ui/components/ui/switch";
 import { createLocation, updateLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
 import { LocationType } from "@repo/db/client";
+import { Loader2 } from "lucide-react";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 
 const locationSchema = z.object({
@@ -79,6 +80,7 @@ export function LocationSheet({
   isEdit = false,
 }: LocationSheetProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema) as any,
@@ -124,6 +126,7 @@ export function LocationSheet({
       managerId: values.managerId === "none" ? null : values.managerId,
     };
 
+    setIsSubmitting(true);
     try {
       if (isEdit && location?.id) {
         await updateLocation(location.id, submissionData as any);
@@ -136,6 +139,8 @@ export function LocationSheet({
       form.reset();
     } catch (error: any) {
       toast.error(error.message || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -425,7 +430,8 @@ export function LocationSheet({
               </div>
             </ScrollArea>
             <SheetFooter className="p-6 border-t bg-white">
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {location ? "Update Location" : "Create Location"}
               </Button>
             </SheetFooter>
