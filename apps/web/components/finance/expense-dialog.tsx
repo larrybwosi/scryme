@@ -33,6 +33,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createExpense } from '../../app/actions/finance';
 import { toast } from "sonner";
 import { PaymentMethod, RecurrenceFrequency } from "@repo/db/client";
+import { Loader2 } from "lucide-react";
 import { Switch } from "@repo/ui/components/ui/switch";
 
 const expenseSchema = z.object({
@@ -57,6 +58,7 @@ interface ExpenseDialogProps {
 
 export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
@@ -75,6 +77,7 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
   const isRecurring = form.watch("isRecurring");
 
   async function onSubmit(values: ExpenseFormValues) {
+    setIsSubmitting(true);
     try {
       await createExpense({
         ...values,
@@ -87,6 +90,8 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
       form.reset();
     } catch (error: any) {
       toast.error(error.message || "Failed to create expense");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -279,7 +284,8 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]">
+              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Expense
               </Button>
             </DialogFooter>

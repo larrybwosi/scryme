@@ -22,6 +22,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
+import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -349,6 +350,7 @@ export function EditSupplierModal({ supplier, isOpen, onOpenChange }: EditSuppli
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
