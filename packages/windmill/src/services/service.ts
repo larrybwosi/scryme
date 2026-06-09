@@ -1,6 +1,6 @@
 import { db as prisma } from "@repo/db";
-import { getWindmillClientForOrg } from "./client";
-import { WindmillExecutionOptions } from "../types";
+import { getWindmillClientForOrg } from "./client.js";
+import { WindmillExecutionOptions } from "../types.js";
 
 /**
  * The primary entry point for triggering Windmill automations from Dealio.
