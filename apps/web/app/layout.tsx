@@ -1,6 +1,7 @@
 import './globals.css';
 import { SidebarWrapper } from '../components/sidebar-wrapper';
 import { Toaster } from "@repo/ui/components/ui/sonner";
+import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { RealtimeProvider } from "@repo/shared";
 import { TopLoader } from '../components/top-loader';
 
@@ -14,12 +15,14 @@ export default function RootLayout({
       <body className="bg-[#f8f9fa] font-sans antialiased">
         <TopLoader />
         <RealtimeProvider>
-          <div className="flex h-screen overflow-hidden">
-            <SidebarWrapper />
-            <main className="flex-1 overflow-y-auto custom-scrollbar">
-              {children}
-            </main>
-          </div>
+          <TooltipProvider>
+            <div className="flex h-screen overflow-hidden">
+              <SidebarWrapper />
+              <main className="flex-1 overflow-y-auto custom-scrollbar">
+                {children}
+              </main>
+            </div>
+          </TooltipProvider>
         </RealtimeProvider>
         <Toaster />
       </body>

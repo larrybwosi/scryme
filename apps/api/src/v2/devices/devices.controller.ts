@@ -1,8 +1,8 @@
-import { Controller, Post, Body, Req } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DevicesService } from './devices.service';
-import { AllowPublic } from 'src/common/decorators/auth.decorator';
-import { v2Context } from 'src/common/decorators/v2-context.decorator';
+import { AllowPublic } from '../../common/decorators/auth.decorator';
+import { v2Context } from '../../common/decorators/v2-context.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
 
 @ApiTags('Devices')
