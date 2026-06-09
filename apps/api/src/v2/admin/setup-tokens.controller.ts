@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Query, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { PrismaService } from '@/prisma/prisma.service';
 import { v2Context } from '@/common/decorators/v2-context.decorator';
@@ -6,9 +6,9 @@ import type { V2ApiContext } from '@repo/shared/server';
 import { Permissions } from '@/common/decorators/auth.decorator';
 import {
   createDeviceSetupToken,
-  listSetupTokens,
+  getDeviceSetupTokens as listSetupTokens,
   revokeSetupToken,
-} from '@/lib/api/v2/services/device-setup-tokens';
+} from '@repo/shared/server';
 
 @ApiTags('Admin - Setup Tokens')
 @ApiSecurity('x-api-key')
@@ -21,17 +21,22 @@ export class SetupTokensController {
   @Permissions('admin:devices:write')
   @ApiOperation({ summary: 'Create a new device setup token' })
   async create(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    const result = await createDeviceSetupToken(this.prisma, {
+      organizationId: ctx.organizationId,
+      createdById: ctx.memberId!,
+      deviceName: body.deviceName,
+      deviceType: body.deviceType,
+      locationId: body.locationId,
+      permissions: body.permissions,
+      allowedIps: body.allowedIps,
+      environment: body.environment,
+    });
+
     return {
-      data: await createDeviceSetupToken(this.prisma, {
-        organizationId: ctx.organizationId,
-        createdById: ctx.memberId!,
-        deviceName: body.deviceName,
-        deviceType: body.deviceType,
-        locationId: body.locationId,
-        permissions: body.permissions,
-        allowedIps: body.allowedIps,
-        environment: body.environment,
-      }),
+      data: {
+        ...result,
+        setupToken: result.rawToken, // Maintain compatibility with old frontend/API response
+      },
     };
   }
 
@@ -57,8 +62,12 @@ export class SetupTokensController {
   @Permissions('admin:devices:write')
   @ApiOperation({ summary: 'Revoke a device setup token' })
   async revoke(@v2Context() ctx: V2ApiContext, @Query('tokenId') tokenId: string) {
-    return {
-      data: await revokeSetupToken(this.prisma, ctx.organizationId, tokenId),
-    };
+    try {
+      return {
+        data: await revokeSetupToken(this.prisma, ctx.organizationId, tokenId),
+      };
+    } catch (err) {
+      throw new BadRequestException(err instanceof Error ? err.message : 'Failed to revoke token');
+    }
   }
 }

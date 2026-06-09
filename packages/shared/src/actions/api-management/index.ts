@@ -165,48 +165,17 @@ export async function deleteV2ApiKey(
 
 // --- V2 Device Setup Token Actions ---
 
-export async function createDeviceSetupToken(data: {
-  organizationId: string;
-  createdById: string;
-  deviceName: string;
-  deviceType:
-    | "POS_TERMINAL"
-    | "MOBILE_POS"
-    | "KIOSK"
-    | "TABLET"
-    | "BAKERY_TERMINAL";
-  locationId: string;
-  permissions?: string[];
-  environment?: "LIVE" | "TEST";
-}) {
-  const jti = crypto.randomUUID();
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+import {
+  createDeviceSetupToken as createToken,
+  getDeviceSetupTokens as getTokens,
+} from "../../lib/provisioning/common";
 
-  const setupToken = await db.deviceSetupToken.create({
-    data: {
-      organizationId: data.organizationId,
-      createdById: data.createdById,
-      deviceName: data.deviceName,
-      deviceType: data.deviceType,
-      locationId: data.locationId,
-      permissions: data.permissions || [],
-      environment: data.environment || "LIVE",
-      jti,
-      tokenHash,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    },
-  });
-
-  return { ...setupToken, rawToken };
+export async function createDeviceSetupToken(data: any) {
+  return createToken(db, data);
 }
 
 export async function getDeviceSetupTokens(organizationId: string) {
-  return db.deviceSetupToken.findMany({
-    where: { organizationId },
-    include: { location: true },
-    orderBy: { createdAt: "desc" },
-  });
+  return getTokens(db, organizationId);
 }
 
 export async function getDeviceRegistry(organizationId: string) {
