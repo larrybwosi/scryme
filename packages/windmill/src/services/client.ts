@@ -3,7 +3,7 @@ import {
   WindmillJob,
   WindmillWorkspace,
   WindmillHealthCheckResponse,
-} from "../types";
+} from "../types.js";
 import crypto from "crypto";
 
 const ALGORITHM = "aes-256-gcm";

@@ -1,3 +1,3 @@
-export * from './types';
-export * from './components/WindmillConfig';
-export * from './services/scryme-chat';
+export * from './types.js';
+export * from './components/WindmillConfig.js';
+export * from './services/scryme-chat.js';
