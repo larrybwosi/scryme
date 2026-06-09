@@ -58,7 +58,7 @@ export class CycleCountingService {
 
     const stockTakeNumber = `CC-${Date.now()}`;
 
-    await this.prisma.client.stockTake.create({
+    const stockTake = await this.prisma.client.stockTake.create({
       data: {
         organizationId,
         locationId,
@@ -66,14 +66,21 @@ export class CycleCountingService {
         status: StockTakeStatus.PLANNED,
         scheduledDate: new Date(),
         notes: `Automatically generated from Cycle Count Config: ${config.name}. Included ABC: ${config.includeABC?.join(',') || 'All'}`,
-        items: {
-          create: stock.map(s => ({
-            variantId: s.variantId,
-            systemQuantity: s.currentStock,
-          })),
-        },
       },
     });
+
+    // Chunking items to avoid memory issues and large transaction payload
+    const chunkSize = 100;
+    for (let i = 0; i < stock.length; i += chunkSize) {
+      const chunk = stock.slice(i, i + chunkSize);
+      await this.prisma.client.stockTakeItem.createMany({
+        data: chunk.map((s) => ({
+          stockTakeId: stockTake.id,
+          variantId: s.variantId,
+          systemQuantity: s.currentStock,
+        })),
+      });
+    }
 
     await this.prisma.client.cycleCountConfig.update({
       where: { id: config.id },

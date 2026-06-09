@@ -10,6 +10,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
     "jsx": "react-jsx",
     "types": ["jest", "node"],
     "paths": {

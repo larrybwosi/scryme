@@ -1,5 +1,5 @@
 import 'server-only';
-import { prisma } from '@repo/db/client';
+import { prisma } from '@repo/db';
 import { redisProxy as redis } from '@repo/shared/server';
 
 export class CartService {

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@repo/db/client";
+import { PrismaClient } from "@repo/db";
 import 'server-only';
 import { CustomerService } from '../services/customer.service';
 
