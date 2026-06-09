@@ -1,0 +1,18 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@2.2.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 605ms
+(node:122072) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/apps/web/next.config.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /app/apps/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[?25h
+/app/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  web@2.2.0 dev: `next dev`
+Exit status 143
