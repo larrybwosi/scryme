@@ -44,12 +44,7 @@ async function bootstrap() {
           authorization: headers.authorization ? "[REDACTED]" : undefined,
         },
         query: Object.keys(query || {}).length ? query : undefined,
-        body:
-          body && Object.keys(body).length
-            ? JSON.stringify(body).length > 2000
-              ? { _truncated: true, length: JSON.stringify(body).length }
-              : body
-            : undefined,
+        body: body && Object.keys(body).length ? body : undefined,
       });
 
       // Log response when request completes

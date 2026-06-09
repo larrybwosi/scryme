@@ -255,24 +255,6 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           letterSpacing: 1.5,
           color: '#444',
         },
-
-        // ── CUSTOM SECTIONS ──
-        customSection: {
-          marginTop: 6,
-          paddingTop: 4,
-          borderTopWidth: 1,
-          borderTopColor: '#eee',
-        },
-        customTitle: {
-          fontSize: base - 1,
-          fontWeight: 'bold',
-          marginBottom: 2,
-          textTransform: 'uppercase',
-        },
-        customContent: {
-          fontSize: base - 1,
-          lineHeight: 1.4,
-        },
       }),
     [base, pad, bc, bs, isThermal, config.itemSpacing]
   );
@@ -369,10 +351,10 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
 
         {/* ── META GRID ── */}
         <View style={styles.metaGrid}>
-          {config.showOrderNumber !== false && order.orderNumber && (
+          {config.showOrderNumber !== false && (
             <View style={styles.metaCell}>
               <Text style={styles.metaLabel}>Receipt No</Text>
-              <Text style={styles.metaValue}>{String(order.orderNumber)}</Text>
+              <Text style={styles.metaValue}>{order.orderNumber}</Text>
             </View>
           )}
           <View style={styles.metaCell}>
@@ -383,19 +365,19 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
                 : format(new Date(), 'dd/MM/yy HH:mm')}
             </Text>
           </View>
-          {branchName && typeof branchName === 'string' && (
+          {branchName && (
             <View style={styles.metaCell}>
               <Text style={styles.metaLabel}>Branch</Text>
               <Text style={styles.metaValue}>{branchName}</Text>
             </View>
           )}
-          {config.showCashier && order.cashierName && typeof order.cashierName === 'string' && (
+          {config.showCashier && order.cashierName && (
             <View style={styles.metaCell}>
               <Text style={styles.metaLabel}>Served By</Text>
               <Text style={styles.metaValue}>{order.cashierName}</Text>
             </View>
           )}
-          {config.showCustomerName && order.customerName && typeof order.customerName === 'string' && (
+          {config.showCustomerName && order.customerName && (
             <View style={styles.metaCell}>
               <Text style={styles.metaLabel}>Customer</Text>
               <Text style={styles.metaValue}>{order.customerName}</Text>
@@ -413,19 +395,19 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           </View>
 
           {order.items?.map((item, i) => {
-            const unitPrice = Number(item.selectedUnit?.price) || 0;
-            const lineTotal = unitPrice * (Number(item.quantity) || 0);
-            const variant = typeof item.variantName === 'string' ? item.variantName : '';
+            const unitPrice = item.selectedUnit?.price || 0;
+            const lineTotal = unitPrice * item.quantity;
+            const variant = item.variantName || '';
             const showVariant = variant && !['Default', 'Default Variant'].includes(variant);
             return (
               <View key={i} style={styles.tRow}>
                 <View style={styles.colItem}>
-                  <Text style={styles.itemName}>{String(item.productName || 'Unknown Item')}</Text>
+                  <Text style={styles.itemName}>{item.productName}</Text>
                   {showVariant && <Text style={styles.itemVariant}>{variant}</Text>}
                 </View>
-                <Text style={styles.colQty}>{String(item.quantity)}</Text>
-                <Text style={[styles.colPrice, { color: '#555' }]}>{formatCurrency(unitPrice, String(currency))}</Text>
-                <Text style={[styles.colTotal, { fontWeight: 'bold' }]}>{formatCurrency(lineTotal, String(currency))}</Text>
+                <Text style={styles.colQty}>{item.quantity}</Text>
+                <Text style={[styles.colPrice, { color: '#555' }]}>{formatCurrency(unitPrice, currency)}</Text>
+                <Text style={[styles.colTotal, { fontWeight: 'bold' }]}>{formatCurrency(lineTotal, currency)}</Text>
               </View>
             );
           })}
@@ -436,36 +418,36 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           {config.showSubtotal !== false && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>{formatCurrency(Number(order.subTotal) || 0, String(currency))}</Text>
+              <Text style={styles.totalValue}>{formatCurrency(order.subTotal || 0, currency)}</Text>
             </View>
           )}
-          {config.showDiscountBreakdown !== false && Number(order.discount) > 0 && (
+          {config.showDiscountBreakdown !== false && order.discount > 0 && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Discount</Text>
-              <Text style={styles.totalValue}>-{formatCurrency(Number(order.discount), String(currency))}</Text>
+              <Text style={styles.totalValue}>-{formatCurrency(order.discount, currency)}</Text>
             </View>
           )}
           {config.showTaxBreakdown !== false && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tax</Text>
-              <Text style={styles.totalValue}>{formatCurrency(Number(order.taxes) || 0, String(currency))}</Text>
+              <Text style={styles.totalValue}>{formatCurrency(order.taxes || 0, currency)}</Text>
             </View>
           )}
           <View style={styles.grandRow}>
             <Text style={styles.grandLabel}>Total</Text>
             <Text style={styles.grandValue}>
-              {String(currency)} {formatCurrency(Number(order.total) || 0, String(currency))}
+              {currency} {formatCurrency(order.total || 0, currency)}
             </Text>
           </View>
           <View style={[styles.totalRow, { marginTop: 2 }]}>
             <Text style={styles.totalLabel}>Payment</Text>
-            <Text style={styles.totalValue}>{String(order.paymentMethod || 'Cash')}</Text>
+            <Text style={styles.totalValue}>{order.paymentMethod || 'Cash'}</Text>
           </View>
-          {config.showSavingsTotal && Number(order.discount) > 0 && (
+          {config.showSavingsTotal && order.discount > 0 && (
             <View style={styles.savingsRow}>
               <Text style={styles.savingsText}>You Saved</Text>
               <Text style={[styles.savingsText, { fontWeight: 'bold' }]}>
-                {formatCurrency(Number(order.discount), String(currency))}
+                {formatCurrency(order.discount, currency)}
               </Text>
             </View>
           )}
@@ -498,56 +480,26 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
             <Text style={[styles.footerLine, { fontWeight: 'bold', marginTop: 2 }]}>{config.socialMediaHandle}</Text>
           )}
 
-          {config.showSurveyQr && typeof config.surveyUrl === 'string' && config.surveyUrl && (
+          {config.showSurveyQr && config.surveyUrl && (
             <Text style={styles.footerLine}>Rate us: {config.surveyUrl}</Text>
           )}
 
-          {config.showQrCode && typeof qrCodeUrl === 'string' && qrCodeUrl && (
-            <Image src={qrCodeUrl} style={{ width: 48, height: 48, marginTop: 6 }} />
-          )}
+          {config.showQrCode && qrCodeUrl && <Image src={qrCodeUrl} style={{ width: 48, height: 48, marginTop: 6 }} />}
 
-          {config.showBarcode && typeof barcodeUrl === 'string' && barcodeUrl && (
+          {config.showBarcode && barcodeUrl && (
             <View style={styles.barcodeWrap}>
               <Image src={barcodeUrl} style={{ width: isThermal ? 120 : 160, height: 28, objectFit: 'contain' }} />
-              <Text style={styles.barcodeNum}>{String(order.orderNumber)}</Text>
+              <Text style={styles.barcodeNum}>{order.orderNumber}</Text>
             </View>
           )}
 
-          {config.showReturnPolicy && typeof config.returnPolicyText === 'string' && config.returnPolicyText && (
+          {config.showReturnPolicy && config.returnPolicyText && (
             <Text style={[styles.footerDisclaimer, { marginTop: 5 }]}>{config.returnPolicyText}</Text>
           )}
 
-          {config.showLegalDisclaimer && typeof config.legalDisclaimerText === 'string' && config.legalDisclaimerText && (
+          {config.showLegalDisclaimer && config.legalDisclaimerText && (
             <Text style={styles.footerDisclaimer}>{config.legalDisclaimerText}</Text>
           )}
-
-          {/* Custom Sections */}
-          {config.customSections?.map((section: any) => (
-            <View
-              key={section.id}
-              style={[
-                styles.customSection,
-                { alignItems: section.alignment === 'center' ? 'center' : section.alignment === 'right' ? 'flex-end' : 'flex-start' }
-              ]}
-            >
-              {section.title && (
-                <Text style={[styles.customTitle, { textAlign: section.alignment }]}>{section.title}</Text>
-              )}
-              {section.content && (
-                <Text
-                  style={[
-                    styles.customContent,
-                    {
-                      textAlign: section.alignment,
-                      fontWeight: section.bold ? 'bold' : 'normal'
-                    }
-                  ]}
-                >
-                  {section.content}
-                </Text>
-              )}
-            </View>
-          ))}
 
           <Text style={styles.footerDisclaimer}>Goods once sold are not returnable.</Text>
         </View>

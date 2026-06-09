@@ -39,7 +39,7 @@ export async function createDeviceSetupTokenCore(
 export async function getDeviceSetupTokensCore(
   prisma: any,
   organizationId: string,
-  filters?: { includeUsed?: boolean; includeExpired?: boolean; includeRevoked?: boolean }
+  filters?: { includeUsed?: boolean; includeExpired?: boolean }
 ) {
   const where: any = { organizationId };
 
@@ -49,9 +49,7 @@ export async function getDeviceSetupTokensCore(
   if (!filters?.includeExpired) {
     where.expiresAt = { gt: new Date() };
   }
-  if (!filters?.includeRevoked) {
-    where.revokedAt = null;
-  }
+  where.revokedAt = null;
 
   const tokens = await (prisma.client || prisma).deviceSetupToken.findMany({
     where,
@@ -81,7 +79,6 @@ export async function getDeviceSetupTokensCore(
   }));
 }
 
-
 export async function revokeSetupTokenCore(prisma: any, organizationId: string, tokenId: string) {
   const p = prisma.client || prisma;
   const token = await p.deviceSetupToken.findFirst({
@@ -95,15 +92,5 @@ export async function revokeSetupTokenCore(prisma: any, organizationId: string, 
   return p.deviceSetupToken.update({
     where: { id: tokenId },
     data: { revokedAt: new Date() },
-  });
-}
-
-export async function deleteDeviceSetupTokensCore(prisma: any, organizationId: string, tokenIds: string[]) {
-  const p = prisma.client || prisma;
-  return p.deviceSetupToken.deleteMany({
-    where: {
-      id: { in: tokenIds },
-      organizationId,
-    },
   });
 }

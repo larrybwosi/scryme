@@ -315,7 +315,7 @@ const SuccessStep = ({
       <div className="space-y-3">
         <div className="flex justify-between text-xs text-zinc-400 uppercase font-bold tracking-wider">
           <span>Booting Engine</span>
-          <span>{typeof progress === "number" ? progress : 0}%</span>
+          <span>{progress}%</span>
         </div>
         <Progress value={progress} className="h-2 rounded-none bg-zinc-100 dark:bg-zinc-800" />
       </div>

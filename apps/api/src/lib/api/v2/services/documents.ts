@@ -3,18 +3,6 @@ import { Mappers } from '@repo/documents/server';
 import { renderToStream } from '@react-pdf/renderer';
 import React from 'react';
 
-const templateCache = new Map<string, any>();
-
-async function getTemplate(name: string, importPath: string) {
-  if (templateCache.has(name)) {
-    return templateCache.get(name);
-  }
-  const module = await import(importPath);
-  const template = module[name];
-  templateCache.set(name, template);
-  return template;
-}
-
 export async function generateDocument(type: string, data: any): Promise<any> {
   return Buffer.from([]);
 }
@@ -56,14 +44,17 @@ export async function getDocumentStream(
   let data: any;
   let filename: string;
 
+  const { InvoiceTemplate } = await import('@repo/documents/v2/InvoiceTemplate');
+  const { ReceiptTemplate } = await import('@repo/documents/v2/ReceiptTemplate');
+
   switch (type) {
     case 'invoice':
-      DocumentComponent = await getTemplate('InvoiceTemplate', '@repo/documents/v2/InvoiceTemplate');
+      DocumentComponent = InvoiceTemplate;
       data = Mappers.toInvoiceData(transaction);
       filename = `Invoice_${transaction.number}.pdf`;
       break;
     case 'receipt':
-      DocumentComponent = await getTemplate('ReceiptTemplate', '@repo/documents/v2/ReceiptTemplate');
+      DocumentComponent = ReceiptTemplate;
       data = Mappers.toReceiptData(transaction);
       filename = `Receipt_${transaction.number}.pdf`;
       break;

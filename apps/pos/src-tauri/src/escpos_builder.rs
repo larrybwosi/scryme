@@ -104,59 +104,29 @@ impl EscPosBuilder {
         }
     }
 
-    /// Formats the primary receipt item row with automatic name wrapping.
+    /// Formats the primary receipt item row.
     /// You must pass the column widths based on your paper size.
     /// Example for 58mm (32 chars): col_widths = (14, 4, 6, 8)
     /// Example for 80mm (48 chars): col_widths = (22, 6, 9, 11)
     pub fn item_row(&mut self, item: &str, qty: &str, price: &str, total: &str, col_widths: (usize, usize, usize, usize)) {
         let (w_item, w_qty, w_price, w_total) = col_widths;
         
-        let words: Vec<&str> = item.split_whitespace().collect();
-        let mut lines = Vec::new();
-        let mut current_line = String::new();
-
-        for word in words {
-            if word.chars().count() > w_item {
-                // Handle extremely long single words by force-breaking
-                if !current_line.is_empty() {
-                    lines.push(current_line);
-                    current_line = String::new();
-                }
-                let mut remaining = word;
-                while remaining.chars().count() > w_item {
-                    let (head, tail) = remaining.split_at(
-                        remaining.char_indices().nth(w_item).map(|(i, _)| i).unwrap_or(remaining.len())
-                    );
-                    lines.push(head.to_string());
-                    remaining = tail;
-                }
-                current_line = remaining.to_string();
-            } else if current_line.is_empty() {
-                current_line.push_str(word);
-            } else if current_line.chars().count() + 1 + word.chars().count() <= w_item {
-                current_line.push(' ');
-                current_line.push_str(word);
-            } else {
-                lines.push(current_line);
-                current_line = word.to_string();
-            }
+        // Safely truncate the item name if it's too long for its column
+        let mut item_str = item.to_string();
+        if item_str.chars().count() > w_item {
+            // Keep room for a trailing space
+            let end = item_str.char_indices().nth(w_item - 1).map(|(i, _)| i).unwrap_or(item_str.len());
+            item_str = item_str[..end].to_string();
         }
-        lines.push(current_line);
 
-        // Print first line with Qty, Price, Total
-        let first_name_line = lines.get(0).cloned().unwrap_or_default();
+        // Left align Item, Right align Qty, Price, and Total
         let formatted_row = format!(
             "{:<w_item$}{:>w_qty$}{:>w_price$}{:>w_total$}",
-            first_name_line, qty, price, total,
+            item_str, qty, price, total,
             w_item = w_item, w_qty = w_qty, w_price = w_price, w_total = w_total
         );
-        self.text_line(&formatted_row);
 
-        // Print subsequent lines for long names
-        for i in 1..lines.len() {
-            let wrapped_line = format!("{:<w_item$}", lines[i]);
-            self.text_line(&wrapped_line);
-        }
+        self.text_line(&formatted_row);
     }
 
     // --- NEW: NATIVE 1D BARCODE (CODE128) ---

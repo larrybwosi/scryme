@@ -1,5 +1,5 @@
 import 'server-only';
-import { Prisma, PrismaClient, CrmFieldType } from '@repo/db';
+import { Prisma, PrismaClient, CrmFieldType } from '@repo/db/client';
 import { CreateRecordInput, ActivityLogger, CachingProvider } from '../types';
 
 type PrismaOrTx = PrismaClient | Prisma.TransactionClient;

@@ -99,8 +99,8 @@ export function ConnectionStatusBanner() {
       }
     };
 
-    window.addEventListener('realtime-connection-change', handleChange);
-    return () => window.removeEventListener('realtime-connection-change', handleChange);
+    window.addEventListener('ably-connection-change', handleChange);
+    return () => window.removeEventListener('ably-connection-change', handleChange);
   }, []);
 
   const config = status ? getStatusConfig(status.state) : null;
@@ -122,8 +122,8 @@ export function ConnectionStatusBanner() {
     >
       <div className="flex items-center gap-2 min-w-0">
         <Icon className={cn('h-4 w-4 shrink-0', config.iconClass, config.spinning && 'animate-spin')} />
-        <span className="font-medium truncate"> {typeof config.label === "string" ? config.label : ""}</span>
-        {config.sublabel && <span className="text-xs opacity-70 truncate hidden sm:inline">—  {typeof config.sublabel === "string" ? config.sublabel : ""}</span>}
+        <span className="font-medium truncate">{config.label}</span>
+        {config.sublabel && <span className="text-xs opacity-70 truncate hidden sm:inline">— {config.sublabel}</span>}
       </div>
 
       <div className="flex items-center gap-2 shrink-0">

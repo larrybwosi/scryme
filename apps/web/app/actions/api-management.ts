@@ -17,7 +17,6 @@ import {
   getDeviceSetupTokens,
   getDeviceRegistry,
   createDeviceSetupToken,
-  deleteDeviceSetupTokens,
 } from "@repo/shared";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
@@ -158,17 +157,7 @@ export async function createDeviceSetupTokenAction(data: {
 
 export async function getDeviceSetupTokensAction(): Promise<any> {
   const context = await ensureOrgContext();
-  return getDeviceSetupTokens(context.organizationId, {
-    includeUsed: true,
-    includeExpired: true,
-    includeRevoked: true,
-  });
-}
-
-export async function deleteDeviceSetupTokensAction(tokenIds: string[]): Promise<any> {
-  const context = await ensureOrgContext();
-  await deleteDeviceSetupTokens(context.organizationId, tokenIds);
-  revalidatePath("/integrations/apps-api");
+  return getDeviceSetupTokens(context.organizationId);
 }
 
 export async function getDeviceRegistryAction(): Promise<any> {

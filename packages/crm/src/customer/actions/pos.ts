@@ -1,4 +1,4 @@
-import { PrismaClient } from "@repo/db";
+import { PrismaClient } from "@repo/db/client";
 import 'server-only';
 import { PosCustomerService } from '../services/pos.service';
 import { CreateCustomerData } from '../validations/pos';
