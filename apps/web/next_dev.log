@@ -100,3 +100,5 @@ To eliminate this warning, add "type": "module" to /app/apps/web/package.json.
   229 |
   230 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
 ✓ Compiled in 3.3s
+✓ Compiled in 2.3s
+✓ Compiled in 2.9s
