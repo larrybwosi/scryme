@@ -80,7 +80,9 @@ jobs:
     needs: [filter, validation-needed]
     if: needs.validation-needed.outputs.needed == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -285,6 +287,8 @@ jobs:
         needs.filter.outputs.test_workflow == 'true'
       )
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -326,3 +330,4 @@ jobs:
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          NODE_ENV: production
