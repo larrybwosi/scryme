@@ -104,7 +104,7 @@ export class WindmillApiClient {
       id: jobId,
       status: this.mapStatus(res.status),
       result: res.result,
-      error: (res as any).failure_reason,
+      error: res.failure_reason,
     };
   }
 

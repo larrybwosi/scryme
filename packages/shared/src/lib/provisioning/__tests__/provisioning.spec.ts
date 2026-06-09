@@ -21,7 +21,7 @@ const mockPrisma = {
   },
 };
 
-vi.mock('../../api/v2/utils/encryption', () => ({
+vi.mock('../../../api/v2/utils/encryption', () => ({
   encrypt: vi.fn((val) => `encrypted_${val}`),
   decrypt: vi.fn((val) => val.replace('encrypted_', '')),
 }));
