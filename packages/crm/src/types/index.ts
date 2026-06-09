@@ -1,4 +1,4 @@
-import { CrmFieldType, CrmRelationshipType } from '@repo/db';
+import { CrmFieldType, CrmRelationshipType } from '@repo/db/client';
 
 export type {
   CrmObjectDefinition,
@@ -6,7 +6,7 @@ export type {
   CrmRecord,
   CrmRelationshipDefinition,
   CrmAssociation,
-} from '@repo/db';
+} from '@repo/db/client';
 
 export { CrmFieldType, CrmRelationshipType };
 export * from './infrastructure';

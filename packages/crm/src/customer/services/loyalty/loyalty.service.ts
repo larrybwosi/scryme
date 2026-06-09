@@ -1,5 +1,5 @@
 import 'server-only';
-import { prisma, Prisma } from '@repo/db';
+import { prisma, Prisma } from '@repo/db/client';
 import { Decimal } from 'decimal.js';
 import { OpenLoyaltyClient } from '@repo/shared/server';
 

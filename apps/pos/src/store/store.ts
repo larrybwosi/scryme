@@ -139,14 +139,6 @@ export interface SidebarItem {
   icon: string;
   enabled: boolean;
 }
-export interface ReceiptCustomSection {
-  id: string;
-  title: string;
-  content: string;
-  alignment: 'left' | 'center' | 'right';
-  bold: boolean;
-}
-
 export interface ReceiptConfig {
   // Branding
   showLogo: boolean;
@@ -248,9 +240,6 @@ export interface ReceiptConfig {
   showOrderNumber: boolean;
   showTransactionId: boolean;
   orderNumberPrefix: string;
-
-  // Custom Sections
-  customSections: ReceiptCustomSection[];
 }
 
 export interface KitchenTicketConfig {
@@ -739,9 +728,6 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   showOrderNumber: true,
   showTransactionId: false,
   orderNumberPrefix: 'ORD-',
-
-  // Custom Sections
-  customSections: [],
 });
 
 export const getDefaultKitchenTicketConfig = (): KitchenTicketConfig => ({

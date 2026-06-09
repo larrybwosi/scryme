@@ -1,4 +1,4 @@
-import { AddressType, CustomerCreationType, Address, Customer, Transaction } from '@repo/db';
+import { AddressType, CustomerCreationType, Address, Customer, Transaction } from '@repo/db/client';
 import { z } from 'zod';
 
 // --- Address Schema ---
