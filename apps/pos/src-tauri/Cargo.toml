@@ -56,13 +56,13 @@ log = "0.4"          # For standard logging
 tauri-plugin-log = { version = "2", features = ["colored"] } # Structured file logging
 
 tauri-plugin-os = "2"
-tauri-plugin-fs = "2"
+tauri-plugin-fs = "2.5.1"
 tauri-plugin-http = "2"
 hidapi = "2.6.3"
 tauri-plugin-hid = "0.2.2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-notification = "2"
-tauri-plugin-dialog = "2"
+tauri-plugin-dialog = "2.7.1"
 tauri-plugin-store = "2"
 tauri-plugin-upload = "2"
 tauri-plugin-deep-link = "2"
