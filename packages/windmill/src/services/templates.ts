@@ -1,10 +1,10 @@
-import { getWindmillClientForOrg, WindmillApiClient } from "./client";
-import { ScrymeChatApiClient } from "./scryme-chat";
+import { getWindmillClientForOrg, WindmillApiClient } from "./client.js";
+import { ScrymeChatApiClient } from "./scryme-chat.js";
 import * as fs from "fs/promises";
 import { Dirent } from "fs";
 import * as path from "path";
 import { db as prisma } from "@repo/db";
-import { WindmillTemplate } from "../types";
+import { WindmillTemplate } from "../types.js";
 
 /**
  * Service to manage and deploy Windmill templates to organization workspaces.
