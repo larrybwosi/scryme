@@ -15,7 +15,7 @@ export type CreateOrderResult = {
   data?: any;
 };
 
-export async function createOrder(
+export async function createOrderLegacy(
   organizationId: string,
   memberId: string,
   input: CreateOrderInput

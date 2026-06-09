@@ -21,5 +21,3 @@ export * from './services/openloyalty';
 
 // Actions
 export * from './actions/api-management';
-export * from './actions/transaction/create.order';
-export * from './actions/transaction/process.sale';

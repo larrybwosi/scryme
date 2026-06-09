@@ -381,7 +381,7 @@ export async function createOrderAction(data: any) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   if (data.type === "POS_SALE") {
-    const { processSale } = await import("@repo/shared");
+    const { processSale } = await import("@repo/shared/server");
 
     // Transform OrderForm data to ProcessSaleInput
     const saleData = {
@@ -417,7 +417,7 @@ export async function createOrderAction(data: any) {
   }
 
   // Import shared logic for QUOTE and SALES_ORDER
-  const { createOrder } = await import("@repo/shared");
+  const { createOrder } = await import("@repo/shared/server");
 
   const result = await createOrder(
     auth.organizationId,
