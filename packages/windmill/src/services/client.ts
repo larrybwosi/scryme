@@ -1,29 +1,42 @@
-import { db as prisma } from '@repo/db';
-import { WindmillJob, WindmillWorkspace, WindmillHealthCheckResponse } from '../types.js';
-import crypto from 'crypto';
+import { db as prisma } from "@repo/db";
+import {
+  WindmillJob,
+  WindmillWorkspace,
+  WindmillHealthCheckResponse,
+} from "../types.js";
+import crypto from "crypto";
 
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = "aes-256-gcm";
 
 function getKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    throw new Error('ENCRYPTION_KEY environment variable is not set. Set it to a 32-character string.');
+    throw new Error(
+      "ENCRYPTION_KEY environment variable is not set. Set it to a 32-character string.",
+    );
   }
   if (key.length !== 32) {
-    throw new Error(`ENCRYPTION_KEY must be exactly 32 characters long (got ${key.length}).`);
+    throw new Error(
+      `ENCRYPTION_KEY must be exactly 32 characters long (got ${key.length}).`,
+    );
   }
   return key;
 }
 
 function decrypt(text: string): string {
   const key = getKey();
-  const [ivHex, authTagHex, encryptedHex] = text.split(':');
-  if (!ivHex || !authTagHex || !encryptedHex) throw new Error('Invalid encrypted string format');
+  const [ivHex, authTagHex, encryptedHex] = text.split(":");
+  if (!ivHex || !authTagHex || !encryptedHex)
+    throw new Error("Invalid encrypted string format");
 
-  const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(key), Buffer.from(ivHex, 'hex'));
-  decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
-  let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    Buffer.from(key),
+    Buffer.from(ivHex, "hex"),
+  );
+  decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
+  let decrypted = decipher.update(encryptedHex, "hex", "utf8");
+  decrypted += decipher.final("utf8");
   return decrypted;
 }
 
@@ -32,28 +45,28 @@ export class WindmillApiClient {
   private readonly apiKey: string;
   private readonly workspace: string;
 
-  constructor(baseUrl: string, apiKey: string, workspace: string = 'default') {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+  constructor(baseUrl: string, apiKey: string, workspace: string = "default") {
+    this.baseUrl = baseUrl.replace(/\/$/, "");
     this.apiKey = apiKey;
     this.workspace = workspace;
   }
 
   private async request<T>(
     path: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseUrl}/api/w/${this.workspace}${path}`;
     const res = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
         ...(options.headers ?? {}),
       },
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
+      const text = await res.text().catch(() => "");
       throw new Error(`Windmill API error ${res.status} on ${path}: ${text}`);
     }
 
@@ -65,7 +78,7 @@ export class WindmillApiClient {
    */
   async runScript(path: string, args: any): Promise<string> {
     const res = await this.request<{ job_id: string }>(`/jobs/run/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(args),
     });
     return res.job_id;
@@ -76,7 +89,7 @@ export class WindmillApiClient {
    */
   async runFlow(path: string, args: any): Promise<string> {
     const res = await this.request<{ job_id: string }>(`/flows/run/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(args),
     });
     return res.job_id;
@@ -98,13 +111,17 @@ export class WindmillApiClient {
   /**
    * Upsert a script (create or update).
    */
-  async upsertScript(path: string, content: string, summary?: string): Promise<void> {
+  async upsertScript(
+    path: string,
+    content: string,
+    summary?: string,
+  ): Promise<void> {
     await this.request(`/scripts/update/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
         content,
         summary: summary ?? `Auto-deployed from Dealio`,
-        language: 'typescript',
+        language: "typescript",
       }),
     });
   }
@@ -114,7 +131,7 @@ export class WindmillApiClient {
    */
   async upsertFlow(path: string, value: any): Promise<void> {
     await this.request(`/flows/update/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
         value,
       }),
@@ -124,15 +141,18 @@ export class WindmillApiClient {
   /**
    * Manage Schedules (Crons).
    */
-  async upsertSchedule(path: string, schedule: {
-    schedule: string; // Cron expression
-    script_path?: string;
-    flow_path?: string;
-    args: any;
-    enabled?: boolean;
-  }): Promise<void> {
+  async upsertSchedule(
+    path: string,
+    schedule: {
+      schedule: string; // Cron expression
+      script_path?: string;
+      flow_path?: string;
+      args: any;
+      enabled?: boolean;
+    },
+  ): Promise<void> {
     await this.request(`/schedules/update/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(schedule),
     });
   }
@@ -140,9 +160,13 @@ export class WindmillApiClient {
   /**
    * Manage Variables.
    */
-  async setVariable(path: string, value: string, isSecret: boolean = false): Promise<void> {
+  async setVariable(
+    path: string,
+    value: string,
+    isSecret: boolean = false,
+  ): Promise<void> {
     await this.request(`/variables/update/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
         value,
         is_secret: isSecret,
@@ -153,12 +177,15 @@ export class WindmillApiClient {
   /**
    * Manage Resources.
    */
-  async upsertResource(path: string, resource: {
-    resource_type: string;
-    value: any;
-  }): Promise<void> {
+  async upsertResource(
+    path: string,
+    resource: {
+      resource_type: string;
+      value: any;
+    },
+  ): Promise<void> {
     await this.request(`/resources/update/${path}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(resource),
     });
   }
@@ -167,20 +194,27 @@ export class WindmillApiClient {
    * Create a new workspace.
    * Note: This usually requires a global admin API key, not a workspace-scoped one.
    */
-  static async createWorkspace(baseUrl: string, adminApiKey: string, name: string, slug: string): Promise<void> {
-    const url = `${baseUrl.replace(/\/$/, '')}/api/workspaces/create`;
+  static async createWorkspace(
+    baseUrl: string,
+    adminApiKey: string,
+    name: string,
+    slug: string,
+  ): Promise<void> {
+    const url = `${baseUrl.replace(/\/$/, "")}/api/workspaces/create`;
     const res = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${adminApiKey}`,
       },
       body: JSON.stringify({ name, slug }),
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Failed to create Windmill workspace: ${res.status} ${text}`);
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `Failed to create Windmill workspace: ${res.status} ${text}`,
+      );
     }
   }
 
@@ -209,7 +243,7 @@ export class WindmillApiClient {
 
       return {
         ok: true,
-        message: 'Windmill connection successful',
+        message: "Windmill connection successful",
         latencyMs,
       };
     } catch (err: any) {
@@ -221,21 +255,21 @@ export class WindmillApiClient {
     }
   }
 
-  private mapStatus(status: string): WindmillJob['status'] {
+  private mapStatus(status: string): WindmillJob["status"] {
     switch (status) {
-      case 'waiting':
-      case 'queued':
-        return 'PENDING';
-      case 'running':
-        return 'RUNNING';
-      case 'completed':
-        return 'COMPLETED';
-      case 'failed':
-        return 'FAILED';
-      case 'canceled':
-        return 'CANCELLED';
+      case "waiting":
+      case "queued":
+        return "PENDING";
+      case "running":
+        return "RUNNING";
+      case "completed":
+        return "COMPLETED";
+      case "failed":
+        return "FAILED";
+      case "canceled":
+        return "CANCELLED";
       default:
-        return 'PENDING';
+        return "PENDING";
     }
   }
 }
@@ -243,25 +277,37 @@ export class WindmillApiClient {
 /**
  * Factory to get a Windmill client for a specific organization.
  */
-export async function getWindmillClientForOrg(organizationId: string): Promise<WindmillApiClient> {
+export async function getWindmillClientForOrg(
+  organizationId: string,
+): Promise<WindmillApiClient> {
   const config = await prisma.windmillConfiguration.findUnique({
     where: { organizationId },
   });
 
   if (!config) {
-    throw new Error(`Windmill not configured for organization ${organizationId}`);
+    throw new Error(
+      `Windmill not configured for organization ${organizationId}`,
+    );
   }
 
   if (!config.workspaceId) {
-    throw new Error(`Windmill workspace not provisioned for organization ${organizationId}`);
+    throw new Error(
+      `Windmill workspace not provisioned for organization ${organizationId}`,
+    );
   }
 
   let apiKey = config.windmillApiKey;
   try {
     apiKey = decrypt(apiKey);
   } catch (err) {
-    console.warn(`Failed to decrypt API key for org ${organizationId}, using as-is`);
+    console.warn(
+      `Failed to decrypt API key for org ${organizationId}, using as-is`,
+    );
   }
 
-  return new WindmillApiClient(config.windmillBaseUrl, apiKey, config.workspaceId);
+  return new WindmillApiClient(
+    config.windmillBaseUrl,
+    apiKey,
+    config.workspaceId,
+  );
 }

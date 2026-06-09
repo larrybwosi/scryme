@@ -80,6 +80,7 @@ jobs:
     needs: [filter, validation-needed]
     if: needs.validation-needed.outputs.needed == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

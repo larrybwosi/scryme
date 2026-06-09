@@ -1,5 +1,5 @@
 import { triggerWorkflow } from "./workflows.js";
-import { runAutomation } from './service.js';
+import { runAutomation } from "./service.js";
 
 // Dynamically imported to avoid circular dependencies in some environments
 // but since this is server-side and within the same workspace, we can try relative or alias
@@ -12,27 +12,30 @@ import { runAutomation } from './service.js';
 export async function emitBakeryDailyGenerator(organizationId: string) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/daily-generator',
+    scriptPath: "f/dealio/bakery/daily-generator",
     data: { organizationId },
-    dealioEventType: 'bakery.daily.generator.manual'
+    dealioEventType: "bakery.daily.generator.manual",
   });
 }
 
-export async function emitBakeryStaleCleanup(organizationId: string, gracePeriodHours: string = '4') {
+export async function emitBakeryStaleCleanup(
+  organizationId: string,
+  gracePeriodHours: string = "4",
+) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/stale-cleanup',
+    scriptPath: "f/dealio/bakery/stale-cleanup",
     data: { organizationId, gracePeriodHours },
-    dealioEventType: 'bakery.stale.cleanup.manual'
+    dealioEventType: "bakery.stale.cleanup.manual",
   });
 }
 
 export async function emitBakeryWasteReport(organizationId: string) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/waste-report',
+    scriptPath: "f/dealio/bakery/waste-report",
     data: { organizationId },
-    dealioEventType: 'bakery.waste.report.manual'
+    dealioEventType: "bakery.waste.report.manual",
   });
 }
 
@@ -45,17 +48,17 @@ export async function emitBakeryBatchDisposalRequested(
     expirationStatus: string;
     expiresAt: string;
     location?: string | null;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/expiry-monitor-hitl',
+    scriptPath: "f/dealio/bakery/expiry-monitor-hitl",
     data: {
-      action: 'check-expiration',
+      action: "check-expiration",
       organizationId,
-      ...data
+      ...data,
     },
-    dealioEventType: 'bakery.batch.disposal.requested'
+    dealioEventType: "bakery.batch.disposal.requested",
   });
 }
 
@@ -68,13 +71,13 @@ export async function emitBakeryBatchCreated(
     plannedQuantity: number;
     unit: string;
     scheduledStartAt: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/batch_created',
+    scriptPath: "f/dealio/bakery/batch_created",
     data,
-    dealioEventType: 'bakery.batch.created'
+    dealioEventType: "bakery.batch.created",
   });
 }
 
@@ -88,13 +91,13 @@ export async function emitBakeryBatchStarted(
     unit: string;
     leadBaker: string;
     scheduledStartAt: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/batch_started',
+    scriptPath: "f/dealio/bakery/batch_started",
     data,
-    dealioEventType: 'bakery.batch.started'
+    dealioEventType: "bakery.batch.started",
   });
 }
 
@@ -109,13 +112,13 @@ export async function emitBakeryBatchCompleted(
     unit: string;
     completedAt: string;
     expiresAt?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/batch_completed',
+    scriptPath: "f/dealio/bakery/batch_completed",
     data,
-    dealioEventType: 'bakery.batch.completed'
+    dealioEventType: "bakery.batch.completed",
   });
 }
 
@@ -127,13 +130,13 @@ export async function emitBakeryBatchCancelled(
     recipeName: string;
     cancelledAt: string;
     reason?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/batch_cancelled',
+    scriptPath: "f/dealio/bakery/batch_cancelled",
     data,
-    dealioEventType: 'bakery.batch.cancelled'
+    dealioEventType: "bakery.batch.cancelled",
   });
 }
 
@@ -149,21 +152,20 @@ export async function emitStockLowAlert(
     currentQuantity: number;
     reorderPoint: number;
     warehouseId?: string;
-  }
+  },
 ) {
   // Trigger internal Dealio workflow if configured
   try {
-
-    await triggerWorkflow(organizationId, 'STOCK_LOW', data);
+    await triggerWorkflow(organizationId, "STOCK_LOW", data);
   } catch (e) {
-    console.error('Failed to trigger internal workflow for STOCK_LOW', e);
+    console.error("Failed to trigger internal workflow for STOCK_LOW", e);
   }
 
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/low-stock-alert',
+    scriptPath: "f/dealio/core/low-stock-alert",
     data,
-    dealioEventType: 'stock.alert.low'
+    dealioEventType: "stock.alert.low",
   });
 }
 
@@ -174,13 +176,13 @@ export async function emitStockExpired(
     variantName: string;
     quantity: number;
     expiredAt: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/stock-expired',
+    scriptPath: "f/dealio/core/stock-expired",
     data,
-    dealioEventType: 'stock.expired'
+    dealioEventType: "stock.expired",
   });
 }
 
@@ -192,13 +194,13 @@ export async function emitBusinessInsightReport(
     summary: any;
     topProducts: any[];
     lowStockItems: any[];
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/business-insight-feed',
+    scriptPath: "f/dealio/core/business-insight-feed",
     data,
-    dealioEventType: 'report.business.insights'
+    dealioEventType: "report.business.insights",
   });
 }
 
@@ -213,13 +215,13 @@ export async function emitExpenseApprovalRequested(
     description: string;
     category?: string;
     receiptUrl?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/expense-approval',
+    scriptPath: "f/dealio/core/expense-approval",
     data,
-    dealioEventType: 'expense.approval.requested'
+    dealioEventType: "expense.approval.requested",
   });
 }
 
@@ -231,13 +233,13 @@ export async function emitPurchaseApprovalRequested(
     requestedBy: string;
     totalAmount: number;
     currency: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/purchase-approval',
+    scriptPath: "f/dealio/core/purchase-approval",
     data,
-    dealioEventType: 'purchase.approval.requested'
+    dealioEventType: "purchase.approval.requested",
   });
 }
 
@@ -253,13 +255,13 @@ export async function emitBudgetThresholdExceeded(
     amountUsed: number;
     totalBudget: number;
     currency: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/finance/budget-exceeded',
+    scriptPath: "f/dealio/finance/budget-exceeded",
     data,
-    dealioEventType: 'finance.budget.exceeded'
+    dealioEventType: "finance.budget.exceeded",
   });
 }
 
@@ -270,13 +272,13 @@ export async function emitLargeTransaction(
     amount: number;
     currency: string;
     type: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/finance/high-value-alert',
+    scriptPath: "f/dealio/finance/high-value-alert",
     data,
-    dealioEventType: 'finance.transaction.large'
+    dealioEventType: "finance.transaction.large",
   });
 }
 
@@ -290,13 +292,13 @@ export async function emitExpenseCreated(
     description: string;
     category?: string;
     receiptUrl?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/expense-created',
+    scriptPath: "f/dealio/core/expense-created",
     data,
-    dealioEventType: 'expense.created'
+    dealioEventType: "expense.created",
   });
 }
 
@@ -305,15 +307,15 @@ export async function emitAuditConfigChanged(
   data: {
     entityType: string;
     entityId: string;
-    action: 'CREATE' | 'UPDATE' | 'DELETE';
+    action: "CREATE" | "UPDATE" | "DELETE";
     changedBy: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/audit/config_changed',
+    scriptPath: "f/dealio/audit/config_changed",
     data,
-    dealioEventType: 'audit.config.changed'
+    dealioEventType: "audit.config.changed",
   });
 }
 
@@ -325,13 +327,13 @@ export async function emitStockRequestCreated(
     requestedBy: string;
     totalCost: number;
     items?: { variantName: string; quantity: number }[];
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/stock-request',
+    scriptPath: "f/dealio/core/stock-request",
     data,
-    dealioEventType: 'stock.request.created'
+    dealioEventType: "stock.request.created",
   });
 }
 
@@ -344,13 +346,13 @@ export async function emitStockTransferCreated(
     toLocation: string;
     priority: string;
     items: { variantName: string; quantity: number }[];
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/stock-transfer-created',
+    scriptPath: "f/dealio/core/stock-transfer-created",
     data,
-    dealioEventType: 'stock.transfer.created'
+    dealioEventType: "stock.transfer.created",
   });
 }
 
@@ -362,13 +364,13 @@ export async function emitStockTransferShipped(
     shippedAt: string;
     carrier?: string;
     trackingNumber?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/stock-transfer-shipped',
+    scriptPath: "f/dealio/core/stock-transfer-shipped",
     data,
-    dealioEventType: 'stock.transfer.shipped'
+    dealioEventType: "stock.transfer.shipped",
   });
 }
 
@@ -379,13 +381,13 @@ export async function emitStockTransferReceived(
     transferNumber: string;
     receivedAt: string;
     receivedBy: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/stock-transfer-received',
+    scriptPath: "f/dealio/core/stock-transfer-received",
     data,
-    dealioEventType: 'stock.transfer.received'
+    dealioEventType: "stock.transfer.received",
   });
 }
 
@@ -398,13 +400,13 @@ export async function emitStockAdjustment(
     quantity: number;
     reason: string;
     notes?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/core/stock-adjustment',
+    scriptPath: "f/dealio/core/stock-adjustment",
     data,
-    dealioEventType: 'stock.adjustment.created'
+    dealioEventType: "stock.adjustment.created",
   });
 }
 
@@ -419,13 +421,13 @@ export async function emitMemberCreated(
     name: string;
     email: string;
     role: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/member_created',
+    scriptPath: "f/dealio/member_created",
     data,
-    dealioEventType: 'member.created'
+    dealioEventType: "member.created",
   });
 }
 
@@ -437,13 +439,13 @@ export async function emitMemberRoleChanged(
     email: string;
     previousRole: string;
     newRole: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/member_role_changed',
+    scriptPath: "f/dealio/member_role_changed",
     data,
-    dealioEventType: 'member.role.changed'
+    dealioEventType: "member.role.changed",
   });
 }
 
@@ -457,13 +459,13 @@ export async function emitCrmRecordCreated(
     recordId: string;
     entityType: string;
     name: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/crm/record_created',
+    scriptPath: "f/dealio/crm/record_created",
     data,
-    dealioEventType: 'crm.record.created'
+    dealioEventType: "crm.record.created",
   });
 }
 
@@ -474,13 +476,13 @@ export async function emitCrmRecordUpdated(
     entityType: string;
     name: string;
     changes: any;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/crm/record_updated',
+    scriptPath: "f/dealio/crm/record_updated",
     data,
-    dealioEventType: 'crm.record.updated'
+    dealioEventType: "crm.record.updated",
   });
 }
 
@@ -497,13 +499,13 @@ export async function emitOrderPlaced(
     totalAmount: number;
     currency: string;
     items: { productName: string; quantity: number; lineTotal: number }[];
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/order_placed',
+    scriptPath: "f/dealio/order_placed",
     data,
-    dealioEventType: 'order.placed'
+    dealioEventType: "order.placed",
   });
 }
 
@@ -515,13 +517,13 @@ export async function emitPaymentCompleted(
     currency: string;
     method: string;
     reference?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/payment_completed',
+    scriptPath: "f/dealio/payment_completed",
     data,
-    dealioEventType: 'payment.completed'
+    dealioEventType: "payment.completed",
   });
 }
 
@@ -536,13 +538,13 @@ export async function emitLoyaltyPointsAwarded(
     points: number;
     balanceAfter: number;
     description: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/loyalty/points_awarded',
+    scriptPath: "f/dealio/loyalty/points_awarded",
     data,
-    dealioEventType: 'loyalty.points.awarded'
+    dealioEventType: "loyalty.points.awarded",
   });
 }
 
@@ -553,13 +555,13 @@ export async function emitLoyaltyVoucherCreated(
     voucherCode: string;
     rewardName: string;
     expiresAt: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/loyalty/voucher_created',
+    scriptPath: "f/dealio/loyalty/voucher_created",
     data,
-    dealioEventType: 'loyalty.voucher.created'
+    dealioEventType: "loyalty.voucher.created",
   });
 }
 
@@ -572,16 +574,16 @@ export async function emitCustomerCreated(
     customerId: string;
     name: string;
     email?: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/customer_created',
+    scriptPath: "f/dealio/customer_created",
     data: {
       ...data,
-      eventType: 'customer.created'
+      eventType: "customer.created",
     },
-    dealioEventType: 'customer.created'
+    dealioEventType: "customer.created",
   });
 }
 
@@ -591,15 +593,15 @@ export async function emitCustomerSynced(
     customerId: string;
     name: string;
     email?: string;
-    action: 'created' | 'updated';
+    action: "created" | "updated";
     provider: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/customer_synced',
+    scriptPath: "f/dealio/customer_synced",
     data,
-    dealioEventType: 'customer.synced'
+    dealioEventType: "customer.synced",
   });
 }
 
@@ -611,13 +613,13 @@ export async function emitBakeryBatchExpiring(
     recipeName: string;
     expiresAt: string;
     daysRemaining: number;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/batch_expiring',
+    scriptPath: "f/dealio/bakery/batch_expiring",
     data,
-    dealioEventType: 'bakery.batch.expiring'
+    dealioEventType: "bakery.batch.expiring",
   });
 }
 
@@ -628,28 +630,32 @@ export async function emitBakeryBatchExpired(
     batchNumber: string;
     recipeName: string;
     expiredAt: string;
-  }
+  },
 ) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/bakery/batch_expired',
+    scriptPath: "f/dealio/bakery/batch_expired",
     data,
-    dealioEventType: 'bakery.batch.expired'
+    dealioEventType: "bakery.batch.expired",
   });
 }
 
 /**
  * Generic event emitter for Windmill.
  */
-export async function emitEvent(organizationId: string, eventType: string, data: any) {
+export async function emitEvent(
+  organizationId: string,
+  eventType: string,
+  data: any,
+) {
   return runAutomation({
     organizationId,
-    scriptPath: 'f/dealio/generic-event-handler',
+    scriptPath: "f/dealio/generic-event-handler",
     data: {
       ...data,
-      eventType
+      eventType,
     },
-    dealioEventType: eventType
+    dealioEventType: eventType,
   });
 }
 
@@ -657,29 +663,34 @@ export async function emitEvent(organizationId: string, eventType: string, data:
  * Placeholder for other emitters that were in the legacy automation engine but not yet fully mapped in Windmill.
  */
 export async function emitMemberDeactivated(organizationId: string, data: any) {
-  return emitEvent(organizationId, 'member.deactivated', data);
+  return emitEvent(organizationId, "member.deactivated", data);
 }
 
 export async function emitInvoiceOverdue(organizationId: string, data: any) {
   // Trigger internal Dealio workflow if configured
   try {
-
-    await triggerWorkflow(organizationId, 'INVOICE_OVERDUE', data);
+    await triggerWorkflow(organizationId, "INVOICE_OVERDUE", data);
   } catch (e) {
-    console.error('Failed to trigger internal workflow for INVOICE_OVERDUE', e);
+    console.error("Failed to trigger internal workflow for INVOICE_OVERDUE", e);
   }
 
-  return emitEvent(organizationId, 'invoice.overdue', data);
+  return emitEvent(organizationId, "invoice.overdue", data);
 }
 
-export async function emitDealPriceListUpdated(organizationId: string, data: any) {
-  return emitEvent(organizationId, 'deal.pricelist.updated', data);
+export async function emitDealPriceListUpdated(
+  organizationId: string,
+  data: any,
+) {
+  return emitEvent(organizationId, "deal.pricelist.updated", data);
 }
 
-export async function emitAuditSecurityAlert(organizationId: string, data: any) {
-  return emitEvent(organizationId, 'audit.security.alert', data);
+export async function emitAuditSecurityAlert(
+  organizationId: string,
+  data: any,
+) {
+  return emitEvent(organizationId, "audit.security.alert", data);
 }
 
 export async function emitReportAuditLog(organizationId: string, data: any) {
-  return emitEvent(organizationId, 'report.audit.log', data);
+  return emitEvent(organizationId, "report.audit.log", data);
 }
