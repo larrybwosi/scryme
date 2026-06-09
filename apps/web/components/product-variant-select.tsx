@@ -23,6 +23,7 @@ interface ProductVariant {
   name: string;
   sku?: string;
   productName: string;
+  stock?: number;
 }
 
 export interface ProductVariantSelectProps {
@@ -83,9 +84,13 @@ export function ProductVariantSelect({
                   key={variant.id}
                   value={variant.productName + " " + variant.name + " " + (variant.sku || "") + " " + variant.id}
                   onSelect={() => {
-                    onValueChange(variant.id === value ? "" : variant.id);
-                    setOpen(false);
+                    if ((variant.stock ?? 0) > 0) {
+                      onValueChange(variant.id === value ? "" : variant.id);
+                      setOpen(false);
+                    }
                   }}
+                  disabled={(variant.stock ?? 0) <= 0}
+                  className={cn((variant.stock ?? 0) <= 0 && "opacity-50 cursor-not-allowed")}
                 >
                   <Check
                     className={cn(
@@ -93,8 +98,18 @@ export function ProductVariantSelect({
                       value === variant.id ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <div className="flex flex-col">
-                    <span className="font-medium">{formatLabel(variant)}</span>
+                  <div className="flex flex-col flex-1">
+                    <div className="flex justify-between items-center w-full">
+                      <span className="font-medium">{formatLabel(variant)}</span>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
+                        (variant.stock ?? 0) > 0
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                          : "bg-red-50 text-red-600 border border-red-100"
+                      )}>
+                        {variant.stock ?? 0} in stock
+                      </span>
+                    </div>
                     {variant.sku && (
                       <span className="text-xs text-muted-foreground">{variant.sku}</span>
                     )}

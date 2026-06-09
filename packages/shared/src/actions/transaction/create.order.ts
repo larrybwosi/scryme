@@ -15,7 +15,7 @@ export type CreateOrderResult = {
   data?: any;
 };
 
-export async function createOrder(
+export async function createOrderLegacy(
   organizationId: string,
   memberId: string,
   input: CreateOrderInput
@@ -125,15 +125,18 @@ export async function createOrder(
       }
 
       // 7. Create Fulfillment record
-      await tx.fulfillment.create({
-        data: {
-          transactionId: transaction.id,
-          type: validated.fulfillment.type,
-          status: FulfillmentStatus.PENDING,
-          shippingAddressId: validated.fulfillment.shippingAddressId,
-          pickupLocationId: validated.fulfillment.pickupLocationId,
-        },
-      });
+      const fulfillment = validated.fulfillment;
+      if (fulfillment) {
+        await tx.fulfillment.create({
+          data: {
+            transactionId: transaction.id,
+            type: fulfillment.type,
+            status: FulfillmentStatus.PENDING,
+            shippingAddressId: fulfillment.shippingAddressId,
+            pickupLocationId: fulfillment.pickupLocationId,
+          },
+        });
+      }
 
       return transaction;
     });

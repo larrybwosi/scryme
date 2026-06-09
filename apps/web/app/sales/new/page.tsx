@@ -17,6 +17,33 @@ export default async function NewOrderPage() {
     orderBy: { name: "asc" },
   });
 
+  const variants = await db.productVariant.findMany({
+    where: {
+      product: {
+        organizationId: auth?.organizationId,
+      },
+    },
+    include: {
+      product: true,
+      variantStocks: true,
+    },
+    orderBy: {
+      product: {
+        name: "asc",
+      },
+    },
+  });
+
+  const formattedVariants = variants.map((v) => ({
+    id: v.id,
+    name: v.name,
+    sku: v.sku,
+    productName: v.product.name,
+    retailPrice: Number(v.retailPrice),
+    buyingPrice: Number(v.buyingPrice),
+    stock: v.variantStocks.reduce((acc, s) => acc + Number(s.currentStock), 0),
+  }));
+
   return (
     <div className="w-full space-y-6">
       <PageHeader
@@ -25,7 +52,11 @@ export default async function NewOrderPage() {
         icon={<PackagePlus className="w-7 h-7" />}
       />
 
-      <OrderForm customers={customers} locations={locations} />
+      <OrderForm
+        customers={customers}
+        locations={locations}
+        variants={formattedVariants}
+      />
     </div>
   );
 }
