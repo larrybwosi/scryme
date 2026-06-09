@@ -26,6 +26,7 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   getDeviceRegistryAction,
   getDeviceSetupTokensAction,
+  deleteDeviceSetupTokensAction,
   getV2ApiKeysAction,
   getV3ApiClientsAction,
   getWebhookSubscriptionsAction,
@@ -72,6 +73,7 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { toast } from "sonner";
+import { ProvisioningTable } from "../../../components/integrations/provisioning-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,6 +110,7 @@ function AppsApiContent() {
 
   // Device Tokens State
   const [deviceTokens, setDeviceTokens] = useState<any[]>([]);
+  const [sessionRawTokens, setSessionRawTokens] = useState<Record<string, string>>({});
   const [registries, setRegistries] = useState<any[]>([]);
   const [showDeviceDialog, setShowDeviceDialog] = useState(false);
   const [newDevice, setNewDevice] = useState({
@@ -201,10 +204,23 @@ function AppsApiContent() {
     try {
       const res = await createDeviceSetupTokenAction(newDevice);
       setDeviceTokenResult(res);
+      if (res.id && res.rawToken) {
+        setSessionRawTokens(prev => ({ ...prev, [res.id]: res.rawToken }));
+      }
       loadData();
       toast.success("Device provisioned successfully");
     } catch (error) {
       toast.error("Failed to provision device");
+    }
+  };
+
+  const handleDeleteDeviceTokens = async (ids: string[]) => {
+    try {
+      await deleteDeviceSetupTokensAction(ids);
+      loadData();
+      toast.success(`${ids.length} token(s) deleted`);
+    } catch (error) {
+      toast.error("Failed to delete tokens");
     }
   };
 
@@ -719,14 +735,30 @@ function AppsApiContent() {
                             </Button>
                           </div>
 
-                          <div className="grid grid-cols-1 gap-2">
+                          <div className="grid grid-cols-2 gap-2">
                             <Button
                               variant="outline"
                               size="sm"
                               className="w-full gap-2 text-xs h-9"
                               onClick={() => copyToClipboard(`curl -X POST "${process.env.NEXT_PUBLIC_API_URL}/v2/devices/provision" -H "Content-Type: application/json" -d '{"setupToken":"${deviceTokenResult.rawToken}"}'`)}
                             >
-                              <Terminal size={14} /> Copy cURL Command
+                              <Terminal size={14} /> Copy cURL
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full gap-2 text-xs h-9"
+                              onClick={() => {
+                                const element = document.createElement("a");
+                                const file = new Blob([deviceTokenResult.rawToken], { type: "text/plain" });
+                                element.href = URL.createObjectURL(file);
+                                element.download = `provisioning-token-${deviceTokenResult.deviceName}.txt`;
+                                document.body.appendChild(element);
+                                element.click();
+                                toast.success("Token downloaded");
+                              }}
+                            >
+                              <Download size={14} /> Download .txt
                             </Button>
                           </div>
                         </div>
@@ -761,77 +793,73 @@ function AppsApiContent() {
               </div>
             </div>
 
-            <div className="grid gap-4">
-              {registries.length === 0 && deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length === 0 && (
-                <div className="bg-card p-12 rounded-xl border border-dashed flex flex-col items-center justify-center text-center">
-                  <Monitor className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                  <p className="text-muted-foreground font-medium">No devices provisioned yet.</p>
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Setup Tokens</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Tokens used to provision new devices.
+                  </p>
                 </div>
-              )}
-              {deviceTokens
-                .filter((t) => !t.usedAt && !t.revokedAt)
-                .map((token) => (
-                  <div
-                    key={token.id}
-                    className="bg-status-warning/5 p-4 rounded-xl border border-status-warning/20 flex justify-between items-center shadow-sm"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-status-warning/10 flex items-center justify-center text-status-warning">
-                        <Lock size={20} />
-                      </div>
-                      <div>
-                        <div className="font-bold text-foreground">
-                          Pending Setup: {token.deviceName}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          Expires: {new Date(token.expiresAt).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-status-warning hover:bg-status-warning/10"
-                      onClick={() => copyToClipboard(token.rawToken)}
-                    >
-                      <Copy size={16} />
-                    </Button>
-                  </div>
-                ))}
-              {registries.map((reg) => (
-                <div
-                  key={reg.id}
-                  className="bg-card p-4 rounded-xl border flex justify-between items-center shadow-sm"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                      <Monitor size={20} />
-                    </div>
-                    <div>
-                      <div className="font-bold">{reg.deviceName}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                        <span>{reg.deviceType}</span>
-                        <span className="w-1 h-1 rounded-full bg-border" />
-                        <span>{reg.location?.name || "Main Location"}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={reg.status === "ACTIVE" ? "default" : "secondary"}
-                      className={reg.status === "ACTIVE" ? "bg-status-success/10 text-status-success border-status-success/20" : ""}
-                    >
-                      {reg.status}
-                    </Badge>
-                    <div className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase tracking-tighter">
-                      Last seen:{" "}
-                      {reg.lastSeenAt
-                        ? new Date(reg.lastSeenAt).toLocaleString()
-                        : "Never"}
-                    </div>
-                  </div>
+                <ProvisioningTable
+                  data={deviceTokens.map(t => ({
+                    ...t,
+                    rawToken: sessionRawTokens[t.tokenId]
+                  }))}
+                  onDelete={handleDeleteDeviceTokens}
+                />
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Provisioned Devices</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Currently active or inactive devices in your organization.
+                  </p>
                 </div>
-              ))}
+                <div className="grid gap-4">
+                  {registries.length === 0 && (
+                    <div className="bg-card p-12 rounded-xl border border-dashed flex flex-col items-center justify-center text-center">
+                      <Monitor className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                      <p className="text-muted-foreground font-medium">No devices provisioned yet.</p>
+                    </div>
+                  )}
+                  {registries.map((reg) => (
+                    <div
+                      key={reg.id}
+                      className="bg-card p-4 rounded-xl border flex justify-between items-center shadow-sm"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                          <Monitor size={20} />
+                        </div>
+                        <div>
+                          <div className="font-bold">{reg.deviceName}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                            <span>{reg.deviceType}</span>
+                            <span className="w-1 h-1 rounded-full bg-border" />
+                            <span>{reg.location?.name || "Main Location"}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={reg.status === "ACTIVE" ? "default" : "secondary"}
+                          className={reg.status === "ACTIVE" ? "bg-status-success/10 text-status-success border-status-success/20" : ""}
+                        >
+                          {reg.status}
+                        </Badge>
+                        <div className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase tracking-tighter">
+                          Last seen:{" "}
+                          {reg.lastSeenAt
+                            ? new Date(reg.lastSeenAt).toLocaleString()
+                            : "Never"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </section>
         </div>
