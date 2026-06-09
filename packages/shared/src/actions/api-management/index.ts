@@ -166,16 +166,16 @@ export async function deleteV2ApiKey(
 // --- V2 Device Setup Token Actions ---
 
 import {
-  createDeviceSetupToken as createToken,
-  getDeviceSetupTokens as getTokens,
+  createDeviceSetupTokenCore,
+  getDeviceSetupTokensCore,
 } from "../../lib/provisioning/common";
 
 export async function createDeviceSetupToken(data: any) {
-  return createToken(db, data);
+  return createDeviceSetupTokenCore(db, data);
 }
 
 export async function getDeviceSetupTokens(organizationId: string) {
-  return getTokens(db, organizationId);
+  return getDeviceSetupTokensCore(db, organizationId);
 }
 
 export async function getDeviceRegistry(organizationId: string) {

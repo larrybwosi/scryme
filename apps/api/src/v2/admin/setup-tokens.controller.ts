@@ -5,9 +5,9 @@ import { v2Context } from '@/common/decorators/v2-context.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
 import { Permissions } from '@/common/decorators/auth.decorator';
 import {
-  createDeviceSetupToken,
-  getDeviceSetupTokens as listSetupTokens,
-  revokeSetupToken,
+  createDeviceSetupTokenCore as createDeviceSetupToken,
+  getDeviceSetupTokensCore as listSetupTokens,
+  revokeSetupTokenCore as revokeSetupToken,
 } from '@repo/shared/server';
 
 @ApiTags('Admin - Setup Tokens')

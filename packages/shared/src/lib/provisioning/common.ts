@@ -1,6 +1,6 @@
 import * as crypto from "crypto";
 
-export async function createDeviceSetupToken(
+export async function createDeviceSetupTokenCore(
   prisma: any,
   data: {
     organizationId: string;
@@ -36,7 +36,7 @@ export async function createDeviceSetupToken(
   return { ...setupToken, rawToken };
 }
 
-export async function getDeviceSetupTokens(
+export async function getDeviceSetupTokensCore(
   prisma: any,
   organizationId: string,
   filters?: { includeUsed?: boolean; includeExpired?: boolean }
@@ -79,7 +79,7 @@ export async function getDeviceSetupTokens(
   }));
 }
 
-export async function revokeSetupToken(prisma: any, organizationId: string, tokenId: string) {
+export async function revokeSetupTokenCore(prisma: any, organizationId: string, tokenId: string) {
   const p = prisma.client || prisma;
   const token = await p.deviceSetupToken.findFirst({
     where: { id: tokenId, organizationId },
