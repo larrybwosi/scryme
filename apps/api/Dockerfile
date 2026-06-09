@@ -45,7 +45,9 @@ COPY turbo.json turbo.json
 RUN npx turbo run generate
 
 # Build the API and its internal workspace dependencies
-RUN npx turbo build --filter=api...
+# Use serial execution and increased memory to prevent OOM during build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN npx turbo build --filter=api... --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -55,6 +57,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
