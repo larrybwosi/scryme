@@ -15,17 +15,12 @@ import {
 
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
-  if (!auth || !auth.organizationId) {
+  if (!auth || !auth.organizationId || !auth.memberId) {
     throw new Error("Unauthorized");
   }
 
   const member = await db.member.findUnique({
-    where: {
-      organizationId_userId: {
-        organizationId: auth.organizationId,
-        userId: auth.user.id,
-      },
-    },
+    where: { id: auth.memberId },
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
@@ -146,7 +141,7 @@ export async function makeApprovalDecision(data: {
   await db.approvalDecision.create({
     data: {
       approvalRequestId: data.requestId,
-      approverId: auth.user.id,
+      approverId: auth.memberId,
       status: data.status as ApprovalStatus,
       comments: data.comments,
       decisionDate: new Date(),

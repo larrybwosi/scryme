@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,6 +33,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createExpense } from '../../app/actions/finance';
 import { toast } from "sonner";
 import { PaymentMethod, RecurrenceFrequency } from "@repo/db/client";
+import { Loader2 } from "lucide-react";
 import { Switch } from "@repo/ui/components/ui/switch";
 
 const expenseSchema = z.object({
@@ -57,6 +58,7 @@ interface ExpenseDialogProps {
 
 export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
@@ -75,19 +77,21 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
   const isRecurring = form.watch("isRecurring");
 
   async function onSubmit(values: ExpenseFormValues) {
-    try {
-      await createExpense({
-        ...values,
-        expenseDate: new Date(values.expenseDate),
-        startDate: values.startDate ? new Date(values.startDate) : undefined,
-        endDate: values.endDate ? new Date(values.endDate) : undefined,
-      });
-      toast.success("Expense recorded successfully");
-      setOpen(false);
-      form.reset();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create expense");
-    }
+    startTransition(async () => {
+      try {
+        await createExpense({
+          ...values,
+          expenseDate: new Date(values.expenseDate),
+          startDate: values.startDate ? new Date(values.startDate) : undefined,
+          endDate: values.endDate ? new Date(values.endDate) : undefined,
+        });
+        toast.success("Expense recorded successfully");
+        setOpen(false);
+        form.reset();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to create expense");
+      }
+    });
   }
 
   return (
@@ -279,7 +283,8 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]">
+              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Expense
               </Button>
             </DialogFooter>

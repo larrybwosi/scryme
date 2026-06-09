@@ -251,7 +251,7 @@ export function OrderForm({
         setShowSuccessModal(true);
         toast.success("Order created successfully");
       } else {
-        toast.error(result.message || "Failed to create order");
+        toast.error((result as any).error || (result as any).message || "Failed to create order");
       }
     } catch (error) {
       console.error(error);
