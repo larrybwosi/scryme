@@ -41,7 +41,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@next/eslint-plugin-next": "^16.2.0",
+    "@next/eslint-plugin-next": "16.2.6",
     "@repo/auth": "workspace:^",
     "@repo/db": "workspace:*",
     "@repo/eslint-config": "workspace:*",
@@ -52,11 +52,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "better-auth": "^1.4.19",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "14.2.35",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-only-warn": "^1.1.0",
+    "eslint-config-next": "15.2.0",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-only-warn": "1.2.1",
     "pg": "^8.21.0",
-    "typescript": "5.5.4"
+    "@typescript-eslint/parser": "8.61.0"
   }
 }
