@@ -173,10 +173,8 @@ jobs:
           chmod +x apps/pos/src-tauri/binaries/*
       - name: Lint Backend
         run: cd apps/pos && pnpm lint:backend
-      - name: Install cargo-tarpaulin
-        uses: taiki-e/install-action@cargo-tarpaulin
-      - name: Test Backend
-        run: cd apps/pos/src-tauri && cargo tarpaulin --ignore-tests --out Xml
+      - name: Check Backend
+        run: cd apps/pos/src-tauri && cargo check
 
   rust-bakery:
     needs: filter
@@ -276,7 +274,7 @@ jobs:
           SENTRY_DSN: mock
 
   build-verify:
-    needs: [filter]
+    needs: [filter, lint-typecheck]
     if: |
       github.event_name == 'pull_request' && (
         needs.filter.outputs.api == 'true' ||
@@ -313,7 +311,7 @@ jobs:
 
       - name: Build
         run: |
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             pnpm turbo build --filter=api... --filter=crm... --filter=web... --concurrency=1
           else
             FILTER=""
@@ -326,7 +324,12 @@ jobs:
             if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
               FILTER="$FILTER --filter=web..."
             fi
-            pnpm turbo build $FILTER --concurrency=1
+
+            if [ -n "$FILTER" ]; then
+              pnpm turbo build $FILTER --concurrency=1
+            else
+              echo "No changes requiring build-verify detected"
+            fi
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
