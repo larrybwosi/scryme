@@ -30,4 +30,4 @@ else
 fi
 
 echo "Starting NestJS application..."
-exec node apps/api/dist/main.js
+exec node dist/main

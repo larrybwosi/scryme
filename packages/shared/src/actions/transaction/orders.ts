@@ -730,11 +730,9 @@ export async function confirmOrder(
         const stockAdjustments: Prisma.StockAdjustmentCreateManyInput[] = [];
         const allocationCreations: Prisma.InventoryAllocationCreateManyInput[] =
           [];
-
-        for (const [
-          variantId,
-          totalBaseNeeded,
-        ] of baseQuantitiesToCommit.entries()) {
+        for (const [variantId, totalBaseNeeded] of Array.from(
+          baseQuantitiesToCommit.entries(),
+        )) {
           const pool = stockPoolMap.get(variantId);
           const variantName =
             order.items.find((i) => i.variantId === variantId)?.variantName ||
@@ -755,7 +753,6 @@ export async function confirmOrder(
           }
 
           // A. Move Stock: Available -> Reserved
-          // This prevents other orders from taking this stock while this order is being processed.
           stockUpdates.push(
             tx.productVariantStock.update({
               where: { id: pool.id },
@@ -773,14 +770,13 @@ export async function confirmOrder(
             memberId,
             variantId,
             locationId: order.locationId!,
-            referenceNumber: refItem?.id || transactionId!, // Link to line item or transaction
+            referenceNumber: refItem?.id || transactionId!,
             reason: StockAdjustmentReason.ORDER_COMMIT,
-            quantity: -totalBaseNeeded, // Negative indicates it's leaving "Available" pool
+            quantity: -totalBaseNeeded,
             notes: `Order ${order.number} confirmed (Stock Reserved)`,
           } as any);
 
           // C. Soft Allocate Batches (FEFO/LIFO)
-          // This tells the warehouse exactly WHICH batches to pick.
           const batchOrderBy: Prisma.StockBatchOrderByWithRelationInput[] =
             inventoryPolicy === "LIFO"
               ? [{ receivedDate: "desc" }]
@@ -798,8 +794,6 @@ export async function confirmOrder(
 
           let remainingToAllocateForVariant = totalBaseNeeded;
 
-          // Distribute batches to the line items that need this variant
-          // We iterate through batches and "fill" the needs of line items
           for (const batch of availableBatches) {
             if (remainingToAllocateForVariant <= 0) break;
 
@@ -808,8 +802,6 @@ export async function confirmOrder(
               new Prisma.Decimal(batch.currentQuantity as any).toNumber(),
             );
 
-            // Assign this batch quantity to specific line items
-            // Find items for this variant that still need allocation
             const applicableItems = order.items.filter(
               (i) =>
                 i.variantId === variantId && (itemBaseNeeds.get(i.id) || 0) > 0,
@@ -832,7 +824,6 @@ export async function confirmOrder(
                 status: AllocationStatus.RESERVED,
               });
 
-              // Update trackers
               itemBaseNeeds.set(item.id, needed - allocateAmount);
               batchQtyUsed += allocateAmount;
             }
@@ -1042,7 +1033,9 @@ export async function cancelOrder(
           const stockUpdates = [];
           const stockAdjustments: Prisma.StockAdjustmentCreateManyInput[] = [];
 
-          for (const [variantId, quantity] of variantBaseQuantities.entries()) {
+          for (const [variantId, quantity] of Array.from(
+            variantBaseQuantities.entries(),
+          )) {
             const stock = stockMap.get(variantId);
             if (!stock) {
               console.warn(

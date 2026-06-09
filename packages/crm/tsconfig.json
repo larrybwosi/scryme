@@ -11,7 +11,7 @@
       "jest",
       "node"
     ],
-    "rootDir": "../../",
+    "rootDir": "src",
     "baseUrl": ".",
     "paths": {
       "@repo/db": [

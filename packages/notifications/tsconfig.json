@@ -9,5 +9,6 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
+  "exclude": ["node_modules", "dist"],
   "include": ["src"]
 }
