@@ -1,10 +1,11 @@
 {
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["ESNext", "DOM"],
     "declaration": true,
     "outDir": "dist",
-    "rootDir": "..",
+    "rootDir": "src",
     "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -14,8 +15,6 @@
     "jsx": "react-jsx",
     "types": ["jest", "node"],
     "paths": {
-      "@repo/windmill/server": ["../windmill/src/server.ts"],
-      "@repo/db": ["../packages/db/src/index.ts"],
       "@/*": ["./src/*"]
     },
     "noImplicitAny": false,

@@ -8,8 +8,9 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
-import { V2Module } from './v2/v2.module';
-import { V3Module } from './v3/v3.module';
+import { V2Module, V2_SUB_MODULES } from './v2/v2.module';
+import { V3Module, V3_SUB_MODULES } from './v3/v3.module';
+
 import { UploadModule } from './common/upload/upload.module';
 import { WindmillModule } from './common/Windmill/WindmillModule';
 import { ZitadelModule } from './zitadel/zitadel.module';
@@ -53,10 +54,12 @@ import { env } from '@repo/env';
       {
         path: 'v2',
         module: V2Module,
+        children: V2_SUB_MODULES.map((m) => ({ path: '/', module: m })),
       },
       {
         path: 'v3',
         module: V3Module,
+        children: V3_SUB_MODULES.map((m) => ({ path: '/', module: m })),
       },
     ]),
   ],

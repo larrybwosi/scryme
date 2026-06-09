@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "concurrency": "25",
+  "concurrency": "1",
   "globalPassThroughEnv": ["DATABASE_URL"],
   "tasks": {
     "build": {

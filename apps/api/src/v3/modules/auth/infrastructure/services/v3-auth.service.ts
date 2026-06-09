@@ -4,57 +4,18 @@ import { env } from '@repo/env';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
-import { decrypt, timingSafeMatch } from '@repo/shared/server';
+import { decrypt, timingSafeMatch, provisionDeviceV3 } from '@repo/shared/server';
 
 @Injectable()
 export class V3AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   async provisionDevice(token: string) {
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-    const setupToken = await this.prisma.client.deviceSetupToken.findFirst({
-      where: {
-        tokenHash,
-        revokedAt: null,
-        usedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-    });
-
-    if (!setupToken) throw new UnauthorizedException('Invalid or expired setup token');
-
-    const clientId = `pos_${crypto.randomBytes(8).toString('hex')}`;
-    const rawSecret = crypto.randomBytes(32).toString('hex');
-    const hashedSecret = await bcrypt.hash(rawSecret, 10);
-
-    const client = await this.prisma.client.v3ApiClient.create({
-      data: {
-        name: setupToken.deviceName,
-        clientId,
-        clientSecret: hashedSecret,
-        organizationId: setupToken.organizationId,
-        scopes: setupToken.permissions,
-      },
-    });
-
-    await this.prisma.client.deviceRegistry.create({
-      data: {
-        organizationId: setupToken.organizationId,
-        apiKeyId: client.id,
-        deviceName: setupToken.deviceName,
-        deviceType: setupToken.deviceType,
-        locationId: setupToken.locationId,
-        status: 'ACTIVE',
-      },
-    });
-
-    await this.prisma.client.deviceSetupToken.update({
-      where: { id: setupToken.id },
-      data: { usedAt: new Date(), redeemedApiKeyId: client.id },
-    });
-
-    return { clientId, clientSecret: rawSecret };
+    try {
+      return await provisionDeviceV3(this.prisma, token);
+    } catch (err) {
+      throw new UnauthorizedException(err instanceof Error ? err.message : 'Provisioning failed');
+    }
   }
 
   async validateClient(clientId: string, clientSecret: string) {

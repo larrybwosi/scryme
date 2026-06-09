@@ -4,7 +4,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "outDir": "dist",
-    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo",
     "noImplicitAny": false,
     "strictNullChecks": false,
     "strict": false,
