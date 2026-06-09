@@ -1,5 +1,5 @@
 import { db, ApprovalWorkflow } from "@repo/db";
-import { runAutomation } from "./service.js";
+import { runAutomation } from "./service";
 import { notificationEngine } from "@repo/notifications";
 import { ApprovalActionType, ApprovalMode, ConditionType } from "@repo/db";
 

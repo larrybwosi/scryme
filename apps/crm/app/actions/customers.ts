@@ -72,7 +72,7 @@ export async function getCustomer(id: string): Promise<any> {
   try {
     // ⚡ Bolt: Optimize detail fetching by using targeted select and aggregations.
     // This reduces DB payload size and serialization overhead compared to deep includes.
-    const [customer, totals, paidTotals] = await Promise.all([
+    const [customer, totals, paidTotals, revenue, ordersCount, openInvoicesCount] = await Promise.all([
       db.customer.findUnique({
         where: { id },
         select: {
@@ -323,6 +323,16 @@ export async function getCustomer(id: string): Promise<any> {
         where: { customerId: id, status: 'PAID' },
         _sum: { grandTotal: true },
       }),
+      db.transaction.aggregate({
+        where: { customerId: id },
+        _sum: { finalTotal: true },
+      }),
+      db.transaction.count({
+        where: { customerId: id },
+      }),
+      db.invoice.count({
+        where: { customerId: id, status: { notIn: ['PAID', 'VOID'] } },
+      }),
     ]);
 
     if (!customer) return null;
@@ -331,12 +341,18 @@ export async function getCustomer(id: string): Promise<any> {
     const totalInvoiced = totals._sum.grandTotal || 0;
     const totalPaidInvoices = paidTotals._sum.grandTotal || 0;
     const balance = totalInvoiced - totalPaidInvoices;
+    const totalRevenue = Number(revenue._sum.finalTotal || 0);
+    const totalOrdersCount = ordersCount;
+    const openInvoicesCountValue = openInvoicesCount;
 
     return {
       ...customer,
       totalInvoiced,
       totalPaidInvoices,
       balance,
+      totalRevenue,
+      totalOrdersCount,
+      openInvoicesCount: openInvoicesCountValue,
     };
   } catch (error) {
     console.error('Error fetching customer:', error);

@@ -254,7 +254,7 @@ export class NotificationEngine {
 
   private async deliverEmail(dispatch: any) {
     // Dynamically import mailer to avoid circular dependencies or heavy bundle in frontend if this was used there
-    const { sendEmail } = await import("../lib/services/mailer.js" as any);
+    const { sendEmail } = await import("../lib/services/mailer.ts" as any);
 
     const recipients = await db.user.findMany({
       where: { id: { in: dispatch.recipientIds } },
