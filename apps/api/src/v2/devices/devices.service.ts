@@ -5,8 +5,8 @@ import { z } from 'zod';
 
 const ProvisionSchema = z.object({
   setupToken: z.string().min(3),
-  serialNumber: z.string().max(120).optional(),
-  macAddress: z.string().optional(),
+  serialNumber: z.string().max(120).optional().nullable(),
+  macAddress: z.string().optional().nullable(),
 });
 
 @Injectable()

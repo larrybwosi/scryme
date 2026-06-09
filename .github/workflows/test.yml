@@ -80,7 +80,9 @@ jobs:
     needs: [filter, validation-needed]
     if: needs.validation-needed.outputs.needed == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -106,7 +108,7 @@ jobs:
       - name: Lint and Type Check
         run: |
           if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            pnpm turbo lint type-check
+            pnpm turbo lint type-check --concurrency=1
           else
             FILTER=""
             if [ "${{ needs.filter.outputs.pos }}" == "true" ]; then FILTER="$FILTER --filter=pos..."; fi
@@ -117,7 +119,7 @@ jobs:
             if [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=@repo/*..."; fi
 
             if [ -n "$FILTER" ]; then
-              pnpm turbo lint type-check $FILTER
+              pnpm turbo lint type-check $FILTER --concurrency=1
             else
               echo "No JS/TS changes detected, skipping lint and type-check"
             fi
@@ -285,6 +287,8 @@ jobs:
         needs.filter.outputs.test_workflow == 'true'
       )
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -310,7 +314,7 @@ jobs:
       - name: Build
         run: |
           if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
-            pnpm turbo build --filter=api... --filter=crm... --filter=web...
+            pnpm turbo build --filter=api... --filter=crm... --filter=web... --concurrency=1
           else
             FILTER=""
             if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
@@ -322,7 +326,8 @@ jobs:
             if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
               FILTER="$FILTER --filter=web..."
             fi
-            pnpm turbo build $FILTER
+            pnpm turbo build $FILTER --concurrency=1
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          NODE_ENV: production

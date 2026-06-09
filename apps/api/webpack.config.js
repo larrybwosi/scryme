@@ -3,12 +3,22 @@ const path = require("path");
 const webpack = require("webpack");
 
 module.exports = function (options) {
-  const forkTsPlugin = options.plugins.find(
+  const isDev = options.mode === "development";
+
+  const forkTsPluginIndex = options.plugins.findIndex(
     (p) => p.constructor.name === "ForkTsCheckerWebpackPlugin",
   );
-  if (forkTsPlugin) {
-    forkTsPlugin.options.typescript.memoryLimit = 4096;
+
+  if (forkTsPluginIndex !== -1) {
+    if (isDev) {
+      // Remove the plugin in dev mode to save memory and speed up build
+      options.plugins.splice(forkTsPluginIndex, 1);
+    } else {
+      // In production/build, keep it but ensure memory limit is sufficient
+      options.plugins[forkTsPluginIndex].options.typescript.memoryLimit = 4096;
+    }
   }
+
   return {
     ...options,
     externals: [
