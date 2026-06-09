@@ -325,7 +325,7 @@ export function WindmillConfig() {
   );
 }
 
-function Badge({ children, variant = 'secondary' }: { children: React.ReactNode, variant?: 'success' | 'warning' | 'secondary' }) {
+function Badge({ children, variant = 'secondary' }: { children?: React.ReactNode, variant?: 'success' | 'warning' | 'secondary' }) {
   const variants = {
     success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
     warning: 'border-amber-500/20 bg-amber-500/10 text-amber-400',

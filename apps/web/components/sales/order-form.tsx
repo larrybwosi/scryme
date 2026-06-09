@@ -47,7 +47,6 @@ import {
 } from "@repo/ui/components/ui/tooltip";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
-import { Loader2 } from "lucide-react";
 
 // ── Schema ─────────────────────────────────────────────────────────────────────
 
@@ -283,11 +282,7 @@ export function OrderForm({
                 className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Save className="w-3.5 h-3.5" />
-                )}
+                <Save className="w-3.5 h-3.5" />
                 {isSubmitting ? "Creating..." : "Create Order"}
               </Button>
             </div>
@@ -628,11 +623,7 @@ export function OrderForm({
                     className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-2 gap-2 h-11"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
+                    <Save className="w-4 h-4" />
                     {isSubmitting ? "Creating Order…" : "Create Order"}
                   </Button>
 

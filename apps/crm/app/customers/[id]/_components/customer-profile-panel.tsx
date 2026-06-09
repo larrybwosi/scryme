@@ -62,9 +62,9 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
     .slice(0, 2)
     .toUpperCase();
 
-  const totalRevenue = customer.totalRevenue;
-  const totalOrders = customer.totalOrdersCount;
-  const openInvoices = customer.openInvoicesCount;
+  const totalRevenue = customer.transactions.reduce((sum, t) => sum + Number(t.finalTotal), 0);
+  const totalOrders = customer.transactions.length;
+  const openInvoices = customer.invoices.filter(i => i.status !== 'PAID' && i.status !== 'VOID').length;
 
   // Calculate Health Score based on order frequency
   // Logic:

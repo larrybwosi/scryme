@@ -19,7 +19,7 @@
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
     "better-auth": "^1.4.19",
-    "next": "16.2.0",
+    "next": "16.2.7",
     "zod": "latest"
   },
   "devDependencies": {
