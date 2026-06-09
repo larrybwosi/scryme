@@ -27,4 +27,10 @@ export type CustomerWithRelations = Customer & {
     notes: (CrmNote & { createdBy: (Member & { user: User }) | null })[];
     followUps: (CrmFollowUp & { assignedTo: (Member & { user: User }) | null })[];
   }) | null;
+  totalInvoiced: number;
+  totalPaidInvoices: number;
+  balance: number;
+  totalRevenue: number;
+  totalOrdersCount: number;
+  openInvoicesCount: number;
 };
