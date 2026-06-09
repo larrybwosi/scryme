@@ -1,6 +1,6 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
+import { type V2ApiContext, provisionDeviceV2 } from '@repo/shared/server';
 import { z } from 'zod';
 
 const ProvisionSchema = z.object({
@@ -26,34 +26,14 @@ export class DevicesService {
 
     const data = parsed.data;
 
-    // Redeem token - uses shared logic
-    const { redeemDeviceSetupToken } = await import('@/lib/api/v2/services/device-setup-tokens');
-    const result = await redeemDeviceSetupToken(this.prisma, data.setupToken);
-
-    // Persist optional hardware identifiers
-    await this.prisma.client.deviceRegistry.update({
-      where: { id: result.deviceRegistryId },
-      data: {
+    try {
+      return await provisionDeviceV2(this.prisma, data.setupToken, {
+        ipAddress: ctx.ipAddress,
         serialNumber: data.serialNumber,
         macAddress: data.macAddress,
-        lastSeenAt: new Date(),
-        lastSeenIp: ctx.ipAddress,
-      },
-      select: { id: true },
-    });
-
-    return {
-      apiKey: result.apiKey,
-      apiKeyId: result.apiKeyId,
-      deviceRegistryId: result.deviceRegistryId,
-      device: {
-        deviceName: result.deviceName,
-        deviceType: result.deviceType,
-        locationId: result.locationId,
-        permissions: result.permissions,
-        environment: result.environment,
-      },
-      createdAt: result.createdAt,
-    };
+      });
+    } catch (err) {
+      throw new UnauthorizedException(err instanceof Error ? err.message : 'Provisioning failed');
+    }
   }
 }

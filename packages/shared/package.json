@@ -27,6 +27,7 @@
     "ably": "^2.18.0",
     "argon2": "^0.44.0",
     "axios": "latest",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "ioredis": "^5.11.0",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/bcryptjs": "^2.4.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.33",
     "@types/react": "^19.2.14",
