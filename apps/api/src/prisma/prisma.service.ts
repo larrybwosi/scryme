@@ -6,5 +6,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   public readonly client = db;
 
   async onModuleInit() {}
-  async onModuleDestroy() {}
+  async onModuleDestroy() {
+    await this.client.$disconnect();
+  }
 }
