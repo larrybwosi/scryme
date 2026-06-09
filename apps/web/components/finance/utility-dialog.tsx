@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,6 +33,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createUtilityAccount, recordUtilityBill } from '../../app/actions/finance';
 import { toast } from "sonner";
 import { UtilityType, PaymentMethod } from "@repo/db/client";
+import { Loader2 } from "lucide-react";
 
 const utilitySchema = z.object({
   name: z.string().min(2, "Account name is required"),
@@ -62,6 +63,7 @@ interface UtilityDialogProps {
 
 export function UtilityDialog({ children, mode = "CREATE", accountId, accountName }: UtilityDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const utilityForm = useForm<UtilityFormValues>({
     resolver: zodResolver(utilitySchema) as any,
@@ -86,30 +88,34 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
   });
 
   async function onUtilitySubmit(values: UtilityFormValues) {
-    try {
-      await createUtilityAccount(values);
-      toast.success("Utility account created successfully");
-      setOpen(false);
-      utilityForm.reset();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create utility account");
-    }
+    startTransition(async () => {
+      try {
+        await createUtilityAccount(values);
+        toast.success("Utility account created successfully");
+        setOpen(false);
+        utilityForm.reset();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to create utility account");
+      }
+    });
   }
 
   async function onBillSubmit(values: BillFormValues) {
     if (!accountId) return;
-    try {
-      await recordUtilityBill({
-        ...values,
-        utilityAccountId: accountId,
-        billDate: new Date(values.billDate),
-      });
-      toast.success("Utility bill recorded successfully");
-      setOpen(false);
-      billForm.reset();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to record utility bill");
-    }
+    startTransition(async () => {
+      try {
+        await recordUtilityBill({
+          ...values,
+          utilityAccountId: accountId,
+          billDate: new Date(values.billDate),
+        });
+        toast.success("Utility bill recorded successfully");
+        setOpen(false);
+        billForm.reset();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to record utility bill");
+      }
+    });
   }
 
   return (
@@ -204,7 +210,8 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]">
+                <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Save Account
                 </Button>
               </DialogFooter>
@@ -292,7 +299,8 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]">
+                <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Record Bill
                 </Button>
               </DialogFooter>

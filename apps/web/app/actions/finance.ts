@@ -18,19 +18,16 @@ import {
 } from "@repo/db/client";
 import { submitForApproval } from "./approvals";
 
-async function getMember(organizationId: string, userId: string) {
-  return await db.member.findUnique({
-    where: { organizationId_userId: { organizationId, userId } },
-  });
-}
-
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
-  if (!auth || !auth.organizationId) {
+  if (!auth || !auth.organizationId || !auth.memberId) {
     throw new Error("Unauthorized");
   }
 
-  const member = await getMember(auth.organizationId, auth.user.id);
+  const member = await db.member.findUnique({
+    where: { id: auth.memberId },
+  });
+
   if (!member || !allowedRoles.includes(member.role)) {
     throw new Error("Forbidden: Insufficient permissions");
   }
@@ -159,7 +156,7 @@ export async function createExpense(data: {
       await tx.recurringExpense.create({
         data: {
           organizationId: auth.organizationId,
-          createdById: auth.user.id,
+          createdById: auth.memberId,
           description: data.description,
           amount: data.amount,
           categoryId: data.categoryId,
