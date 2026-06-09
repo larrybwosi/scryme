@@ -104,6 +104,7 @@ export class BakeryService {
           type: "RAW_MATERIAL" as any,
         },
       },
+      take: 500, // Safety limit
       select: {
         id: true,
         name: true,
@@ -145,6 +146,7 @@ export class BakeryService {
     const { organizationId } = ctx;
     return this.prisma.client.recipe.findMany({
       where: { organizationId },
+      take: 200, // Safety limit
       select: {
         id: true,
         name: true,

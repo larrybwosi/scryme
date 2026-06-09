@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -16,8 +16,11 @@ import {
   ReceiptText,
   StickyNote,
   AlertCircle,
+  Download,
+  CheckCircle2,
+  X,
 } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@repo/ui/components/ui/button";
@@ -45,8 +48,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@repo/ui/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
+import { ProductVariantSelect } from "../product-variant-select";
+import { createOrderAction } from "@/app/actions/sales";
 
 // ── Schema ─────────────────────────────────────────────────────────────────────
 
@@ -175,12 +188,16 @@ function SummaryRow({
 export function OrderForm({
   customers,
   locations,
+  variants,
 }: {
   customers: any[];
   locations: any[];
+  variants: any[];
 }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const {
     register,
@@ -228,14 +245,26 @@ export function OrderForm({
   const onSubmit = async (data: OrderFormValues) => {
     setIsSubmitting(true);
     try {
-      // await createTransaction({ ...data, expectedDeliveryDate: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : undefined });
-      toast.success("Order created successfully");
-      router.push("/sales/transactions");
-    } catch {
-      toast.error("Failed to create order");
+      const result = await createOrderAction(data);
+      if (result.success) {
+        setCreatedOrder(result.data);
+        setShowSuccessModal(true);
+        toast.success("Order created successfully");
+      } else {
+        toast.error(result.message || "Failed to create order");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDownloadInvoice = () => {
+    if (!createdOrder) return;
+    const url = `/api/sales/documents/${createdOrder.id}?type=invoice`;
+    window.open(url, "_blank");
   };
 
   return (
@@ -314,18 +343,27 @@ export function OrderForm({
                       <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
                         <User className="w-3 h-3" /> Customer
                       </Label>
-                      <Select onValueChange={(v) => setValue("customerId", v)}>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Select customer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {customers.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="customerId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Select customer" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {customers.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                       <FieldError
                         message={errors.customerId?.message as string}
                       />
@@ -336,18 +374,27 @@ export function OrderForm({
                       <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
                         <MapPin className="w-3 h-3" /> Location
                       </Label>
-                      <Select onValueChange={(v) => setValue("locationId", v)}>
-                        <SelectTrigger className="bg-white">
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.map((l) => (
-                            <SelectItem key={l.id} value={l.id}>
-                              {l.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="locationId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Select location" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {locations.map((l) => (
+                                <SelectItem key={l.id} value={l.id}>
+                                  {l.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                       <FieldError
                         message={errors.locationId?.message as string}
                       />
@@ -358,21 +405,27 @@ export function OrderForm({
                       <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
                         <ReceiptText className="w-3 h-3" /> Order Type
                       </Label>
-                      <Select
-                        defaultValue="SALES_ORDER"
-                        onValueChange={(v) => setValue("type", v as any)}
-                      >
-                        <SelectTrigger className="bg-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="SALES_ORDER">
-                            Sales Order
-                          </SelectItem>
-                          <SelectItem value="QUOTE">Quote</SelectItem>
-                          <SelectItem value="POS_SALE">POS Sale</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="type"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger className="bg-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="SALES_ORDER">
+                                Sales Order
+                              </SelectItem>
+                              <SelectItem value="QUOTE">Quote</SelectItem>
+                              <SelectItem value="POS_SALE">POS Sale</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
 
                     {/* Expected Delivery */}
@@ -445,11 +498,32 @@ export function OrderForm({
                         >
                           {/* Product */}
                           <div className="col-span-12 sm:col-span-4">
-                            {/* Replace with your <ProductVariantsSelect /> */}
-                            <Input
-                              placeholder="Search product…"
-                              className="bg-white text-sm"
-                              {...register(`items.${index}.variantId`)}
+                            <Controller
+                              name={`items.${index}.variantId`}
+                              control={control}
+                              render={({ field: variantField }) => (
+                                <ProductVariantSelect
+                                  variants={variants}
+                                  value={variantField.value}
+                                  onValueChange={(val) => {
+                                    variantField.onChange(val);
+                                    const variant = variants.find(
+                                      (v) => v.id === val,
+                                    );
+                                    if (variant) {
+                                      setValue(
+                                        `items.${index}.unitPrice`,
+                                        variant.retailPrice,
+                                      );
+                                      setValue(
+                                        `items.${index}.unitCost`,
+                                        variant.buyingPrice,
+                                      );
+                                    }
+                                  }}
+                                  placeholder="Search product…"
+                                />
+                              )}
                             />
                             <FieldError
                               message={
@@ -636,6 +710,67 @@ export function OrderForm({
           </div>
         </form>
       </div>
+
+      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="flex flex-col items-center justify-center text-center space-y-3 pt-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-xl font-bold">
+                Order Created!
+              </DialogTitle>
+              <DialogDescription className="text-zinc-500">
+                Order{" "}
+                <span className="font-semibold text-zinc-900">
+                  {createdOrder?.number}
+                </span>{" "}
+                has been successfully generated.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3 py-4">
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">Amount Due</span>
+                <span className="font-bold text-zinc-900">
+                  {fmt(createdOrder?.finalTotal || 0)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">Customer</span>
+                <span className="font-medium text-zinc-900">
+                  {createdOrder?.customer?.name || "Walk-in Customer"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setShowSuccessModal(false);
+                router.push("/sales/transactions");
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              onClick={handleDownloadInvoice}
+            >
+              <Download className="w-4 h-4" />
+              Download Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }

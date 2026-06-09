@@ -69,7 +69,7 @@ export function NetworkStatusBadge() {
             className={cn("gap-1.5 px-2 py-0.5 uppercase text-[10px] font-bold tracking-wider rounded-full cursor-help transition-all duration-300", config.className)}
           >
             {config.icon}
-            {config.label}
+             {typeof config.label === "string" ? config.label : ""}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>

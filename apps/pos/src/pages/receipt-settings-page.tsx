@@ -25,6 +25,8 @@ import {
   Download,
   Printer,
   RotateCcw,
+  Plus,
+  Trash2,
   Layout,
   FileText,
   QrCode,
@@ -253,6 +255,7 @@ function KitchenTicketPreview({ order, config }: { order: any; config: KitchenTi
 const RECEIPT_TABS = [
   { value: 'branding', label: 'Branding', icon: Palette },
   { value: 'content', label: 'Content', icon: FileText },
+  { value: 'custom', label: 'Custom Sections', icon: Plus },
   { value: 'compliance', label: 'Legal', icon: BadgeCheck },
   { value: 'print', label: 'Print', icon: Printer },
   { value: 'extras', label: 'Extras', icon: Layers },
@@ -448,6 +451,120 @@ function ReceiptSettings({
               )}
             </Section>
           </>
+        )}
+
+        {tab === 'custom' && (
+          <Section
+            title="Custom Sections"
+            icon={Plus}
+            description="Add user-defined sections to the bottom of the receipt"
+          >
+            <div className="space-y-4">
+              {config.customSections?.map((section, index) => (
+                <div key={section.id} className="p-3 rounded-md bg-zinc-900 border border-zinc-800 space-y-3 relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const newSections = [...config.customSections];
+                      newSections.splice(index, 1);
+                      updateConfig('customSections', newSections);
+                    }}
+                    className="absolute top-2 right-2 h-7 w-7 p-0 text-zinc-500 hover:text-red-400"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                      Section Title
+                    </Label>
+                    <Input
+                      value={section.title}
+                      onChange={e => {
+                        const newSections = [...config.customSections];
+                        newSections[index] = { ...section, title: e.target.value };
+                        updateConfig('customSections', newSections);
+                      }}
+                      className="h-8 text-[12px] bg-zinc-950 border-zinc-800"
+                      placeholder="e.g., Special Offer"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                      Content
+                    </Label>
+                    <Textarea
+                      value={section.content}
+                      onChange={e => {
+                        const newSections = [...config.customSections];
+                        newSections[index] = { ...section, content: e.target.value };
+                        updateConfig('customSections', newSections);
+                      }}
+                      className="text-[12px] bg-zinc-950 border-zinc-800 min-h-[60px]"
+                      placeholder="Enter section content here..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                        Alignment
+                      </Label>
+                      <Select
+                        value={section.alignment}
+                        onValueChange={v => {
+                          const newSections = [...config.customSections];
+                          newSections[index] = { ...section, alignment: v as any };
+                          updateConfig('customSections', newSections);
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-[12px] bg-zinc-950 border-zinc-800">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="left">Left</SelectItem>
+                          <SelectItem value="center">Center</SelectItem>
+                          <SelectItem value="right">Right</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between pt-5">
+                      <Label className="text-[12px] font-medium text-zinc-300">Bold Text</Label>
+                      <Switch
+                        checked={section.bold}
+                        onCheckedChange={v => {
+                          const newSections = [...config.customSections];
+                          newSections[index] = { ...section, bold: v };
+                          updateConfig('customSections', newSections);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-9 border-dashed border-zinc-800 hover:border-zinc-600 bg-transparent text-zinc-400 gap-2"
+                onClick={() => {
+                  const newSection = {
+                    id: `sec_${Date.now()}`,
+                    title: '',
+                    content: '',
+                    alignment: 'left' as const,
+                    bold: false,
+                  };
+                  updateConfig('customSections', [...(config.customSections || []), newSection]);
+                }}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Custom Section
+              </Button>
+            </div>
+          </Section>
         )}
 
         {tab === 'content' && (

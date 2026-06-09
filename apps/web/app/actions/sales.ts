@@ -377,6 +377,72 @@ export async function updateFulfillmentStatus(
   return fulfillment;
 }
 
+export async function createOrderAction(data: any) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  // console.log(data);
+  if (data.type === "POS_SALE") {
+    const { processSale } = await import("@repo/shared/server");
+
+    // Transform OrderForm data to ProcessSaleInput
+    const saleData = {
+      cartItems: data.items.map((item: any) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+      })),
+      locationId: data.locationId,
+      customerId: data.customerId,
+      discountAmount: data.discountAmount,
+      notes: data.notes,
+      payments: [
+        {
+          method: "CASH", // Default for now
+          amount:
+            data.items.reduce(
+              (acc: number, item: any) =>
+                acc +
+                item.unitPrice * item.quantity +
+                (item.taxAmount || 0) -
+                (item.discountAmount || 0),
+              0,
+            ) - (data.discountAmount || 0),
+        },
+      ],
+      enableStockTracking: true,
+    };
+
+    const result = await processSale(
+      auth.organizationId,
+      auth.user.id,
+      saleData,
+    );
+
+    if (result.success) {
+      revalidatePath("/sales/transactions");
+    }
+
+    return result;
+  }
+
+  // Import shared logic for QUOTE and SALES_ORDER
+  const { createOrder } = await import("@repo/shared/server");
+
+  const result = await createOrder(auth.organizationId, auth.user.id, {
+    ...data,
+    type: data.type === "QUOTE" ? "QUOTE" : "SALES_ORDER",
+    status: data.type === "QUOTE" ? "DRAFT" : "PENDING_CONFIRMATION",
+    fulfillment: {
+      type: "DELIVERY", // Default
+      pickupLocationId: data.locationId,
+    },
+  });
+
+  if (result.success) {
+    revalidatePath("/sales/transactions");
+  }
+
+  return result;
+}
+
 export async function bulkUpdateTransactionStatus(
   ids: string[],
   status: TransactionStatus,

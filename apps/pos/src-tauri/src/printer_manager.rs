@@ -339,26 +339,8 @@ pub async fn print_job(
     match job_type.as_str() {
         "receipt" => print_receipt_native(app, order, settings, branch_name).await,
         "kitchen" => print_kitchen_native(app, order, settings, branch_name).await,
-        "bar" => {
-            if let Some(pdf_bytes) = order.get("pdfBytes").and_then(|v| v.as_array()) {
-                let bytes: Vec<u8> = pdf_bytes.iter().filter_map(|v| v.as_u64().map(|b| b as u8)).collect();
-                let printer_config = get_printer_config(app.clone()).await?;
-                let target = printer_config.bar_printer.or(printer_config.receipt_printer).ok_or("Bar printer not configured")?.target;
-                print_pdf_to_system_printer(&app, target, bytes).await
-            } else {
-                print_bar_native(app, order, settings, branch_name).await
-            }
-        },
-        "bill" => {
-            if let Some(pdf_bytes) = order.get("pdfBytes").and_then(|v| v.as_array()) {
-                let bytes: Vec<u8> = pdf_bytes.iter().filter_map(|v| v.as_u64().map(|b| b as u8)).collect();
-                let printer_config = get_printer_config(app.clone()).await?;
-                let target = printer_config.bill_printer.or(printer_config.receipt_printer).ok_or("Bill printer not configured")?.target;
-                print_pdf_to_system_printer(&app, target, bytes).await
-            } else {
-                print_bill_native(app, order, settings, branch_name).await
-            }
-        },
+        "bar" => print_bar_native(app, order, settings, branch_name).await,
+        "bill" => print_bill_native(app, order, settings, branch_name).await,
         "label" => print_generic_labels(app, order, settings).await,
         "invoice" | "waybill" => {
             // PDF Printing path for A4/Full documents
@@ -827,6 +809,39 @@ pub async fn print_receipt_native(
         }
     }
 
+    // --- CUSTOM SECTIONS ---
+    if let Some(sections) = config.get("customSections").and_then(|v| v.as_array()) {
+        for section in sections {
+            esc.divider(width);
+
+            let alignment = section.get("alignment").and_then(|v| v.as_str()).unwrap_or("left");
+            let align_val = match alignment {
+                "center" => 1,
+                "right" => 2,
+                _ => 0,
+            };
+            esc.align(align_val);
+
+            if let Some(title) = section.get("title").and_then(|v| v.as_str()) {
+                if !title.is_empty() {
+                    esc.bold(true);
+                    esc.text_line(&title.to_uppercase());
+                    esc.bold(false);
+                }
+            }
+
+            if let Some(content) = section.get("content").and_then(|v| v.as_str()) {
+                if !content.is_empty() {
+                    let bold = section.get("bold").and_then(|v| v.as_bool()).unwrap_or(false);
+                    if bold { esc.bold(true); }
+                    esc.text_line(content);
+                    if bold { esc.bold(false); }
+                }
+            }
+        }
+    }
+
+    esc.align(1);
     esc.text_line("Goods once sold are not returnable.");
 
     // --- FINISH BUILDING COMMANDS ---
