@@ -48,7 +48,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "ts-jest": "^29.4.9",
-    "typescript": "latest",
+    "typescript": "5.7.3",
     "typescript-eslint": "^8.59.3"
   },
   "peerDependencies": {

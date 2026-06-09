@@ -124,6 +124,7 @@ jobs:
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
   rust-pos:
     needs: filter
@@ -326,3 +327,4 @@ jobs:
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          NODE_OPTIONS: "--max-old-space-size=6144"

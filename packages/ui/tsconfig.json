@@ -2,7 +2,6 @@
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
     "target": "es2017",
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@repo/ui/*": [
         "./src/*"

@@ -13,7 +13,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-turbo": "^2.0.0",
     "eslint-plugin-only-warn": "^1.1.0",
-    "typescript": "5.5.4"
+    "typescript": "5.7.3"
   },
   "scripts": {
     "lint": "echo \"no lint script defined\"",

@@ -57,6 +57,6 @@
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-only-warn": "^1.1.0",
     "pg": "^8.21.0",
-    "typescript": "5.5.4"
+    "typescript": "5.7.3"
   }
 }
