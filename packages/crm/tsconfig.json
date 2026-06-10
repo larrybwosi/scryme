@@ -1,6 +1,7 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
+    "target": "ESNext",
     "jsx": "react-jsx",
     "ignoreDeprecations": "5.0",
     "noEmit": true,
@@ -11,7 +12,6 @@
       "jest",
       "node"
     ],
-    "rootDir": "src",
     "baseUrl": ".",
     "paths": {
       "@repo/db": [
