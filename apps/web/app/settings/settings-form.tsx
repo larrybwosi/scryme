@@ -67,7 +67,7 @@ export function SettingsForm({ initialSettings }: { initialSettings: any }) {
             Currency & Localization
           </CardTitle>
           <CardDescription>
-            Set your organization's primary currency and region settings.
+            Set your organization&apos;s primary currency and region settings.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -91,7 +91,8 @@ export function SettingsForm({ initialSettings }: { initialSettings: any }) {
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground">
-                This will be the default currency for all new transactions and reports.
+                This will be the default currency for all new transactions and
+                reports.
               </p>
             </div>
 
@@ -115,17 +116,29 @@ export function SettingsForm({ initialSettings }: { initialSettings: any }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="UTC">UTC (Universal Time)</SelectItem>
-                  <SelectItem value="Africa/Nairobi">Africa/Nairobi (EAT)</SelectItem>
-                  <SelectItem value="Europe/London">Europe/London (GMT/BST)</SelectItem>
-                  <SelectItem value="America/New_York">America/New_York (EST/EDT)</SelectItem>
+                  <SelectItem value="Africa/Nairobi">
+                    Africa/Nairobi (EAT)
+                  </SelectItem>
+                  <SelectItem value="Europe/London">
+                    Europe/London (GMT/BST)
+                  </SelectItem>
+                  <SelectItem value="America/New_York">
+                    America/New_York (EST/EDT)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </CardContent>
         <CardFooter className="bg-zinc-50/50 border-t p-4">
-          <Button type="submit" disabled={isPending} className="ml-auto bg-zinc-900 text-white">
-            {isPending ? "Saving..." : (
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="ml-auto bg-zinc-900 text-white"
+          >
+            {isPending ? (
+              "Saving..."
+            ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
