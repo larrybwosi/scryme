@@ -80,9 +80,9 @@ export function ApprovalList({ requests }: ApprovalListProps) {
                 </TableCell>
                 <TableCell>{request.requester.user.name}</TableCell>
                 <TableCell>
-                  {new Intl.NumberFormat("en-KE", {
+                  {new Intl.NumberFormat("en-US", {
                     style: "currency",
-                    currency: request.currency || "KES",
+                    currency: request.currency || "USD",
                   }).format(Number(request.amount))}
                 </TableCell>
                 <TableCell>

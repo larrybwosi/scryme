@@ -1,0 +1,41 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@2.2.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 553ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+(node:231939) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///app/apps/web/next.config.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /app/apps/web/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+○ Compiling proxy ...
+
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ], BETTER_AUTH_SECRET: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:227:11)
+    at module evaluation (../../packages/env/src/index.ts:234:20)
+    at <unknown> (../../packages/db/src/client.ts:4:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0cjz-ob._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1098:30)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1169:30)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1449:30)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  225 |       parsed.error.flatten().fieldErrors,
+  226 |     );
+> 227 |     throw new Error("Invalid environment variables");
+      |           ^
+  228 |   }
+  229 |
+  230 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &

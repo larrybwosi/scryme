@@ -214,6 +214,7 @@ export async function createOrder(
         let transactionSubTotal = new Prisma.Decimal(0);
         const transactionItemsCreateData: Prisma.TransactionItemCreateWithoutTransactionInput[] =
           [];
+        const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
           const variant = variantsMap.get(item.variantId);
@@ -277,6 +278,13 @@ export async function createOrder(
             allocationsCreateData.push(...allocationResult.allocations);
             unitCost = new Prisma.Decimal(
               allocationResult.unitCost as unknown as Prisma.Decimal,
+            );
+
+            const currentVariantStockUpdate =
+              variantStockUpdates.get(item.variantId) ?? 0;
+            variantStockUpdates.set(
+              item.variantId,
+              currentVariantStockUpdate + allocationResult.stockDeductionTotal,
             );
           }
 
@@ -364,7 +372,23 @@ export async function createOrder(
 
         const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
-        // 7. --- Create Transaction Record ---
+        // 7. --- Update Stock (Deduct immediately for orders) ---
+        if (enableStockTracking && locationId) {
+          await Promise.all(
+            Array.from(variantStockUpdates.entries()).map(
+              ([variantId, quantityChange]) =>
+                tx.productVariantStock.updateMany({
+                  where: { variantId, locationId, organizationId },
+                  data: {
+                    currentStock: { decrement: quantityChange },
+                    availableStock: { decrement: quantityChange },
+                  },
+                }),
+            ),
+          );
+        }
+
+        // 8. --- Create Transaction Record ---
         const newOrder = await tx.transaction.create({
           data: {
             ...orderData, // contains customerId, organizationId, etc.
@@ -372,7 +396,10 @@ export async function createOrder(
             memberId,
             number: orderNumber,
             type: orderData.type ?? TransactionType.ONLINE_ORDER,
-            status: TransactionStatus.CONFIRMED, // Assumption: Immediate confirmation if stock checks pass
+            status:
+              orderData.type === TransactionType.QUOTE
+                ? TransactionStatus.DRAFT
+                : TransactionStatus.COMPLETED, // Mark as completed since stock is deducted
             paymentStatus: calcPaymentStatus || PaymentStatus.PENDING,
 
             subtotal: totalAmountBeforeTax,
