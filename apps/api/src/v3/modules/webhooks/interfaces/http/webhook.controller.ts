@@ -56,12 +56,13 @@ export class WebhookController {
     operationId: 'Webhooks_Delete',
   })
   @ApiResponse({ status: 200, description: 'Webhook deleted' })
-  async delete(@Req() req: any, @Param('id') id: string) {
-    return this.prisma.client.webhookSubscription.deleteMany({
+  async delete(@Req() req: any, @Param('id') id: string): Promise<{ count: number }> {
+    const result = await this.prisma.client.webhookSubscription.deleteMany({
       where: {
         id,
         organizationId: req.v3Context.organizationId,
       },
     });
+    return { count: result.count };
   }
 }

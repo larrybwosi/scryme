@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from "react";
+import useSWR from "swr";
 import {
   Plus,
   Search,
@@ -17,26 +18,26 @@ import {
   ArrowUpRight,
   TrendingUp,
   Users,
-  DollarSign
-} from 'lucide-react';
+  DollarSign,
+} from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@repo/ui/components/ui/card';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@repo/ui/components/ui/table';
-import { Badge } from '@repo/ui/components/ui/badge';
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,80 +46,167 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { getCampaigns } from '../../actions/campaigns';
-import { CampaignForm } from './campaign-form';
-import Link from 'next/link';
+import { getCampaigns } from "../../actions/campaigns";
+import { CampaignForm } from "./campaign-form";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
-} from '@repo/ui/components/ui/dialog';
+  DialogTrigger,
+} from "@repo/ui/components/ui/dialog";
 
 interface CampaignsViewProps {
   organizationId: string;
   memberId: string;
 }
 
-export function CampaignsView({ organizationId, memberId }: CampaignsViewProps) {
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+// SWR fetcher function
+const fetcher = async (url: string, organizationId: string) => {
+  const data = await getCampaigns(organizationId);
+  return data;
+};
+
+export function CampaignsView({
+  organizationId,
+  memberId,
+}: CampaignsViewProps) {
+  const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, [organizationId]);
+  // Use SWR for data fetching
+  const {
+    data: campaigns = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(
+    ["campaigns", organizationId],
+    () => getCampaigns(organizationId),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60000, // 1 minute
+    },
+  );
 
-  const fetchCampaigns = async () => {
-    try {
-      const data = await getCampaigns(organizationId);
-      setCampaigns(data);
-    } catch (error) {
-      console.error('Error fetching campaigns:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredCampaigns = campaigns.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCampaigns = campaigns.filter((c: any) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const stats = [
-    { label: 'Active Campaigns', value: campaigns.filter(c => c.status === 'ACTIVE').length, icon: Activity, color: 'text-blue-600' },
-    { label: 'Total Recipients', value: campaigns.reduce((acc, c) => acc + (c.totalSent || 0), 0), icon: Users, color: 'text-purple-600' },
-    { label: 'Avg Open Rate', value: '24.5%', icon: Mail, color: 'text-green-600' },
-    { label: 'Total Revenue', value: `$${campaigns.reduce((acc, c) => acc + Number(c.totalRevenue || 0), 0).toLocaleString()}`, icon: DollarSign, color: 'text-orange-600' },
+    {
+      label: "Active Campaigns",
+      value: campaigns.filter((c: any) => c.status === "ACTIVE").length,
+      icon: Activity,
+      color: "text-blue-600",
+    },
+    {
+      label: "Total Recipients",
+      value: campaigns.reduce(
+        (acc: number, c: any) => acc + (c.totalSent || 0),
+        0,
+      ),
+      icon: Users,
+      color: "text-purple-600",
+    },
+    {
+      label: "Avg Open Rate",
+      value: "24.5%",
+      icon: Mail,
+      color: "text-green-600",
+    },
+    {
+      label: "Total Revenue",
+      value: `$${campaigns.reduce((acc: number, c: any) => acc + Number(c.totalRevenue || 0), 0).toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-orange-600",
+    },
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
-      case 'DRAFT': return <Badge variant="secondary">Draft</Badge>;
-      case 'PENDING_APPROVAL': return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending Approval</Badge>;
-      case 'SCHEDULED': return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Scheduled</Badge>;
-      case 'COMPLETED': return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Completed</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+      case "ACTIVE":
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            Active
+          </Badge>
+        );
+      case "DRAFT":
+        return <Badge variant="secondary">Draft</Badge>;
+      case "PENDING_APPROVAL":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            Pending Approval
+          </Badge>
+        );
+      case "SCHEDULED":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            Scheduled
+          </Badge>
+        );
+      case "COMPLETED":
+        return (
+          <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+            Completed
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const getChannelIcon = (channel: string) => {
     switch (channel) {
-      case 'EMAIL': return <Mail className="h-4 w-4 text-blue-500" />;
-      case 'SMS': return <MessageSquare className="h-4 w-4 text-green-500" />;
-      case 'IN_PERSON': return <UserCheck className="h-4 w-4 text-orange-500" />;
-      default: return <Megaphone className="h-4 w-4 text-gray-500" />;
+      case "EMAIL":
+        return <Mail className="h-4 w-4 text-blue-500" />;
+      case "SMS":
+        return <MessageSquare className="h-4 w-4 text-green-500" />;
+      case "IN_PERSON":
+        return <UserCheck className="h-4 w-4 text-orange-500" />;
+      default:
+        return <Megaphone className="h-4 w-4 text-gray-500" />;
     }
   };
+
+  const handleCampaignCreated = () => {
+    setIsDialogOpen(false);
+    mutate(); // Re-fetch campaigns data
+  };
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center text-red-600">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                Error loading campaigns
+              </h3>
+              <p className="text-muted-foreground">
+                Failed to load campaigns. Please try again later.
+              </p>
+              <Button onClick={() => mutate()} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Campaigns</h1>
-          <p className="text-muted-foreground">Manage and track your marketing automation.</p>
+          <p className="text-muted-foreground">
+            Manage and track your marketing automation.
+          </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -133,10 +221,7 @@ export function CampaignsView({ organizationId, memberId }: CampaignsViewProps) 
             <CampaignForm
               organizationId={organizationId}
               memberId={memberId}
-              onSuccess={() => {
-                setIsDialogOpen(false);
-                fetchCampaigns();
-              }}
+              onSuccess={handleCampaignCreated}
             />
           </DialogContent>
         </Dialog>
@@ -146,7 +231,9 @@ export function CampaignsView({ organizationId, memberId }: CampaignsViewProps) 
         {stats.map((stat, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {stat.label}
+              </CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
@@ -183,47 +270,77 @@ export function CampaignsView({ organizationId, memberId }: CampaignsViewProps) 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                  Loading campaigns...
+                <TableCell colSpan={7} className="text-center py-10">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-muted-foreground">
+                      Loading campaigns...
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : filteredCampaigns.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                  No campaigns found.
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-10 text-muted-foreground"
+                >
+                  {searchQuery
+                    ? "No campaigns match your search."
+                    : "No campaigns found. Create your first campaign to get started!"}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredCampaigns.map((campaign) => (
-                <TableRow key={campaign.id} className="hover:bg-slate-50 transition-colors">
+              filteredCampaigns.map((campaign: any) => (
+                <TableRow
+                  key={campaign.id}
+                  className="hover:bg-slate-50 transition-colors"
+                >
                   <TableCell className="font-medium">
-                    <Link href={`/campaigns/${campaign.id}`} className="flex flex-col hover:text-primary">
+                    <Link
+                      href={`/campaigns/${campaign.id}`}
+                      className="flex flex-col hover:text-primary"
+                    >
                       <span>{campaign.name}</span>
-                      <span className="text-xs text-muted-foreground">{campaign.segment?.name || 'All Customers'}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {campaign.segment?.name || "All Customers"}
+                      </span>
                     </Link>
                   </TableCell>
                   <TableCell>{getStatusBadge(campaign.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       {getChannelIcon(campaign.channel)}
-                      <span className="text-xs capitalize">{campaign.channel.toLowerCase()}</span>
+                      <span className="text-xs capitalize">
+                        {campaign.channel.toLowerCase()}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>{campaign.totalSent?.toLocaleString() || 0}</TableCell>
+                  <TableCell>
+                    {campaign.totalSent?.toLocaleString() || 0}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1 w-24">
                       <div className="flex justify-between text-xs">
                         <span>Open Rate</span>
                         <span className="font-medium">
-                          {campaign.totalSent > 0 ? Math.round((campaign.totalOpened / campaign.totalSent) * 100) : 0}%
+                          {campaign.totalSent > 0
+                            ? Math.round(
+                                (campaign.totalOpened / campaign.totalSent) *
+                                  100,
+                              )
+                            : 0}
+                          %
                         </span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-1.5">
                         <div
                           className="bg-blue-500 h-1.5 rounded-full"
-                          style={{ width: `${campaign.totalSent > 0 ? (campaign.totalOpened / campaign.totalSent) * 100 : 0}%` }}
+                          style={{
+                            width: `${campaign.totalSent > 0 ? (campaign.totalOpened / campaign.totalSent) * 100 : 0}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -243,7 +360,9 @@ export function CampaignsView({ organizationId, memberId }: CampaignsViewProps) 
                         <DropdownMenuItem>View Details</DropdownMenuItem>
                         <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600">
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

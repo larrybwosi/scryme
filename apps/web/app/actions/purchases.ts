@@ -8,12 +8,12 @@ import { submitForApproval } from "./approvals";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
-  if (!auth || !auth.organizationId) {
+  if (!auth || !auth.organizationId || !auth.memberId) {
     throw new Error("Unauthorized");
   }
 
   const member = await db.member.findUnique({
-    where: { organizationId_userId: { organizationId: auth.organizationId, userId: auth.user.id } }
+    where: { id: auth.memberId }
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
@@ -98,7 +98,7 @@ export async function createPurchase(data: {
   const purchase = await db.purchase.create({
     data: {
       organizationId: auth.organizationId,
-      memberId: auth.user.id,
+      memberId: auth.memberId,
       supplierId: data.supplierId,
       purchaseNumber,
       totalAmount: totalAmount,
@@ -240,7 +240,7 @@ export async function createPurchasePayment(data: {
       amount: data.amount,
       paymentMethod: data.paymentMethod,
       reference: data.reference,
-      memberId: auth.user.id,
+      memberId: auth.memberId,
     },
   });
 

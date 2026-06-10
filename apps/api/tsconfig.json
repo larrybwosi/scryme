@@ -1,37 +1,18 @@
 {
   "extends": "../../packages/config-typescript/base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "declaration": true,
+    "declarationMap": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
     "target": "ES2021",
-    "sourceMap": true,
+    "sourceMap": false,
     "outDir": "./dist",
     "incremental": true,
-    "paths": {
-      "@repo/db": ["../../packages/db/src/index.ts"],
-      "@repo/db/client": ["../../packages/db/src/client.ts"],
-      "@repo/auth": ["../../packages/auth/src/index.ts"],
-      "@repo/shared": ["../../packages/shared/src/index.ts"],
-      "@repo/shared/server": ["../../packages/shared/src/server.ts"],
-      "@repo/notifications": ["../../packages/notifications/src/index.ts"],
-      "@repo/mpesa": ["../../packages/mpesa/src/index.ts"],
-      "@repo/zitadel": ["../../packages/zitadel/src/index.ts"],
-      "@repo/windmill": ["../../packages/windmill/src/index.ts"],
-      "@repo/windmill/server": ["../../packages/windmill/src/server.ts"],
-      "@repo/suppliers": ["../../packages/suppliers/src/index.ts"],
-      "@repo/crm": ["../../packages/crm/src/index.ts"],
-      "@repo/crm/server": ["../../packages/crm/src/server.ts"],
-      "@repo/documents": ["../../packages/documents/src/index.ts"],
-      "@repo/documents/client": ["../../packages/documents/src/client.ts"],
-      "@/*": ["./src/*"],
-      "@/prisma/client": ["./src/prisma/client.ts"],
-      "@/prisma/*": ["./src/prisma/*"]
-    },
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
@@ -39,7 +20,19 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": false,
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vitest/globals"],
+    "paths": {
+      "@/*": ["./src/*"],
+    }
   },
-  "exclude": ["node_modules", "dist"]
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "**/__mocks__/**"
+  ]
 }

@@ -12,16 +12,14 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "moduleResolution": "bundler",
     "noEmit": true,
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
     "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"],
-      "@repo/auth": ["../../packages/auth/src/index.ts"],
-      "@repo/ui/*": ["../../packages/ui/src/*"],
-      "@repo/sdk": ["../../packages/sdk/src/index.ts"],
-      "@repo/sdk/*": ["../../packages/sdk/src/*"]
+      "@repo/auth": ["../../packages/auth/src/index.ts"]
     }
   },
   "include": ["src"],

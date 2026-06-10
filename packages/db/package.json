@@ -25,17 +25,17 @@
     "@prisma/client-runtime-utils": "7.2.0",
     "@repo/env": "workspace:*",
     "dotenv": "^17.2.3",
-    "pg": "^8.20.0"
+    "pg": "^8.21.0"
   },
   "devDependencies": {
+    "@eslint/js": "^8.57.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/pg": "^8.20.0",
-    "eslint": "^9.39.4",
     "prisma": "latest",
     "rimraf": "^5.0.5",
     "tsup": "^8.5.1",
     "tsx": "4.21.0",
-    "typescript": "5.5.4"
+    "typescript-eslint": "^8.61.0"
   }
 }

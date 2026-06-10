@@ -52,6 +52,7 @@ export class V3AuthService {
 
     return jwt.sign(payload, this.getJwtSecret(), {
       expiresIn: member ? '12h' : '1h',
+      algorithm: 'HS256',
     });
   }
 
@@ -144,7 +145,9 @@ export class V3AuthService {
 
   async verifyToken(token: string) {
     try {
-      return jwt.verify(token, this.getJwtSecret()) as any;
+      return jwt.verify(token, this.getJwtSecret(), {
+        algorithms: ['HS256'],
+      }) as any;
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
     }

@@ -1,18 +1,18 @@
-import 'server-only';
-import { prisma, Prisma } from '@repo/db/client';
-import { Decimal } from 'decimal.js';
-import { OpenLoyaltyClient } from '@repo/shared/server';
+import "server-only";
+import { prisma, Prisma } from "@repo/db";
+import { Decimal } from "decimal.js";
+import { OpenLoyaltyClient } from "@repo/shared/server";
 
 export type LoyaltyActionType =
-  | 'EARNED'
-  | 'REDEEMED'
-  | 'EXPIRED'
-  | 'ADJUSTED'
-  | 'REFUND_VOID'
-  | 'EARNED_PURCHASE'
-  | 'SPENT_REWARD'
-  | 'MANUAL_ADJUSTMENT'
-  | 'REFUND_DEDUCTION';
+  | "EARNED"
+  | "REDEEMED"
+  | "EXPIRED"
+  | "ADJUSTED"
+  | "REFUND_VOID"
+  | "EARNED_PURCHASE"
+  | "SPENT_REWARD"
+  | "MANUAL_ADJUSTMENT"
+  | "REFUND_DEDUCTION";
 
 export class LoyaltyService {
   /**
@@ -21,9 +21,15 @@ export class LoyaltyService {
   static async calculatePoints(
     organizationId: string,
     customerId: string,
-    transactionItems: { variantId: string; productId: string; categoryId?: string; quantity: number; subtotal: number }[],
+    transactionItems: {
+      variantId: string;
+      productId: string;
+      categoryId?: string;
+      quantity: number;
+      subtotal: number;
+    }[],
     totalAmount: number,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const client = tx || (prisma as any);
 
@@ -31,7 +37,7 @@ export class LoyaltyService {
       where: { organizationId, isActive: true },
       include: {
         rules: { where: { isActive: true } },
-        tiers: { orderBy: { minPoints: 'desc' } },
+        tiers: { orderBy: { minPoints: "desc" } },
       },
     });
 
@@ -39,7 +45,10 @@ export class LoyaltyService {
 
     const customer = await client.customer.findUnique({
       where: { id: customerId },
-      select: { loyaltyPoints: true, loyaltyTransactions: { select: { points: true, type: true } } },
+      select: {
+        loyaltyPoints: true,
+        loyaltyTransactions: { select: { points: true, type: true } },
+      },
     });
 
     if (!customer) return 0;
@@ -48,13 +57,15 @@ export class LoyaltyService {
     let multiplier = new Decimal(1.0);
 
     let pointsForTier = customer.loyaltyPoints;
-    if (program.tierBasis === 'LIFETIME_POINTS') {
+    if (program.tierBasis === "LIFETIME_POINTS") {
       pointsForTier = (customer.loyaltyTransactions as any[])
-        .filter((t: any) => t.type === 'EARNED')
+        .filter((t: any) => t.type === "EARNED")
         .reduce((sum: number, t: any) => sum + t.points, 0);
     }
 
-    const currentTier = program.tiers.find((t: any) => pointsForTier >= t.minPoints);
+    const currentTier = program.tiers.find(
+      (t: any) => pointsForTier >= t.minPoints,
+    );
     if (currentTier) {
       multiplier = new Decimal(currentTier.multiplier.toString());
     }
@@ -74,23 +85,30 @@ export class LoyaltyService {
         if (rule.categoryId && rule.categoryId !== item.categoryId) continue;
 
         // Check conditions
-        if (rule.minOrderValue && new Decimal(totalAmount).lt(rule.minOrderValue.toString())) continue;
+        if (
+          rule.minOrderValue &&
+          new Decimal(totalAmount).lt(rule.minOrderValue.toString())
+        )
+          continue;
         if (rule.validFrom && rule.validFrom > new Date()) continue;
         if (rule.validTo && rule.validTo < new Date()) continue;
 
-        if (rule.ruleType === 'POINTS_PER_ITEM') {
+        if (rule.ruleType === "POINTS_PER_ITEM") {
           rulePoints = rule.pointsValue * item.quantity;
-        } else if (rule.ruleType === 'POINTS_PER_CURRENCY') {
-          if (rule.currencyAmount && !new Decimal(rule.currencyAmount.toString()).isZero()) {
+        } else if (rule.ruleType === "POINTS_PER_CURRENCY") {
+          if (
+            rule.currencyAmount &&
+            !new Decimal(rule.currencyAmount.toString()).isZero()
+          ) {
             rulePoints = Math.floor(
               new Decimal(item.subtotal)
                 .div(rule.currencyAmount.toString())
                 .mul(rule.pointsValue)
-                .toNumber()
+                .toNumber(),
             );
           }
-        } else if (rule.ruleType === 'FIXED_POINTS') {
-           rulePoints = rule.pointsValue;
+        } else if (rule.ruleType === "FIXED_POINTS") {
+          rulePoints = rule.pointsValue;
         }
 
         if (rulePoints > itemBestPoints) {
@@ -102,25 +120,28 @@ export class LoyaltyService {
 
     let transactionBestPoints = 0;
     for (const rule of program.rules) {
-        if (!rule.variantId && !rule.productId && !rule.categoryId) {
-            let rulePoints = 0;
-            if (rule.ruleType === 'POINTS_PER_CURRENCY') {
-                if (rule.currencyAmount && !new Decimal(rule.currencyAmount.toString()).isZero()) {
-                    rulePoints = Math.floor(
-                      new Decimal(totalAmount)
-                        .div(rule.currencyAmount.toString())
-                        .mul(rule.pointsValue)
-                        .toNumber()
-                    );
-                }
-            } else if (rule.ruleType === 'FIXED_POINTS') {
-                rulePoints = rule.pointsValue;
-            }
-
-            if (rulePoints > transactionBestPoints) {
-                transactionBestPoints = rulePoints;
-            }
+      if (!rule.variantId && !rule.productId && !rule.categoryId) {
+        let rulePoints = 0;
+        if (rule.ruleType === "POINTS_PER_CURRENCY") {
+          if (
+            rule.currencyAmount &&
+            !new Decimal(rule.currencyAmount.toString()).isZero()
+          ) {
+            rulePoints = Math.floor(
+              new Decimal(totalAmount)
+                .div(rule.currencyAmount.toString())
+                .mul(rule.pointsValue)
+                .toNumber(),
+            );
+          }
+        } else if (rule.ruleType === "FIXED_POINTS") {
+          rulePoints = rule.pointsValue;
         }
+
+        if (rulePoints > transactionBestPoints) {
+          transactionBestPoints = rulePoints;
+        }
+      }
     }
 
     const finalPoints = Math.max(totalPoints, transactionBestPoints);
@@ -138,7 +159,7 @@ export class LoyaltyService {
     customerId: string,
     points: number,
     referenceId: string,
-    description: string
+    description: string,
   ) {
     if (points <= 0) return;
 
@@ -158,11 +179,11 @@ export class LoyaltyService {
         programId: program.id,
         customerId,
         organizationId,
-        type: 'EARNED',
+        type: "EARNED",
         points,
         balanceAfter: customer.loyaltyPoints,
         referenceId,
-        referenceType: 'TRANSACTION',
+        referenceType: "TRANSACTION",
         description,
       },
     });
@@ -177,7 +198,7 @@ export class LoyaltyService {
     customerId: string,
     points: number,
     referenceId: string,
-    description: string
+    description: string,
   ) {
     if (points <= 0) return;
 
@@ -185,7 +206,7 @@ export class LoyaltyService {
       where: { organizationId, isActive: true },
     });
 
-    if (!program) throw new Error('Active loyalty program not found.');
+    if (!program) throw new Error("Active loyalty program not found.");
 
     const customer = await tx.customer.findUnique({
       where: { id: customerId },
@@ -193,7 +214,7 @@ export class LoyaltyService {
     });
 
     if (!customer || customer.loyaltyPoints < points) {
-      throw new Error('Insufficient loyalty points.');
+      throw new Error("Insufficient loyalty points.");
     }
 
     const updatedCustomer = await tx.customer.update({
@@ -206,11 +227,11 @@ export class LoyaltyService {
         programId: program.id,
         customerId,
         organizationId,
-        type: 'REDEEMED',
+        type: "REDEEMED",
         points: -points,
         balanceAfter: updatedCustomer.loyaltyPoints,
         referenceId,
-        referenceType: 'TRANSACTION',
+        referenceType: "TRANSACTION",
         description,
       },
     });
@@ -223,7 +244,7 @@ export class LoyaltyService {
     organizationId: string,
     customerId: string,
     code: string,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ) {
     const client = tx || (prisma as any);
     const voucher = await client.loyaltyVoucher.findFirst({
@@ -231,11 +252,8 @@ export class LoyaltyService {
         code,
         organizationId,
         customerId,
-        status: 'ACTIVE',
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
-        ],
+        status: "ACTIVE",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       include: {
         reward: true,
@@ -243,7 +261,7 @@ export class LoyaltyService {
     });
 
     if (!voucher) {
-      throw new Error('Invalid or expired voucher.');
+      throw new Error("Invalid or expired voucher.");
     }
 
     return voucher;
@@ -255,12 +273,12 @@ export class LoyaltyService {
   static async redeemVoucher(
     tx: Prisma.TransactionClient,
     voucherId: string,
-    transactionId: string
+    transactionId: string,
   ) {
     await tx.loyaltyVoucher.update({
       where: { id: voucherId },
       data: {
-        status: 'REDEEMED',
+        status: "REDEEMED",
         redeemedAt: new Date(),
         transactionId,
       },
@@ -275,7 +293,7 @@ export class LoyaltyService {
     organizationId: string,
     refereeCustomerId: string,
     transactionId: string,
-    event: 'SIGNUP' | 'FIRST_PURCHASE'
+    event: "SIGNUP" | "FIRST_PURCHASE",
   ) {
     const customer = await tx.customer.findUnique({
       where: { id: refereeCustomerId },
@@ -293,11 +311,11 @@ export class LoyaltyService {
       where: {
         refereeId: user.id,
         organizationId,
-        status: 'pending_verification',
+        status: "pending_verification",
         rewardApplied: false,
         program: {
-          trigger: event
-        }
+          trigger: event,
+        },
       },
       include: { program: true },
     });
@@ -307,14 +325,16 @@ export class LoyaltyService {
     await tx.referral.update({
       where: { id: referral.id },
       data: {
-        firstPurchaseMade: event === 'FIRST_PURCHASE',
-        status: 'completed',
+        firstPurchaseMade: event === "FIRST_PURCHASE",
+        status: "completed",
         rewardApplied: true,
       },
     });
 
     if (referral.program.referrerReward > 0) {
-      const referrerUser = await tx.user.findUnique({ where: { id: referral.referrerId } });
+      const referrerUser = await tx.user.findUnique({
+        where: { id: referral.referrerId },
+      });
       if (referrerUser && referrerUser.email) {
         const referrerCustomer = await tx.customer.findFirst({
           where: { organizationId, email: referrerUser.email },
@@ -327,7 +347,7 @@ export class LoyaltyService {
             referrerCustomer.id,
             referral.program.referrerReward,
             referral.id,
-            `Referral reward for referring ${customer.name}`
+            `Referral reward for referring ${customer.name}`,
           );
         }
       }
@@ -340,7 +360,7 @@ export class LoyaltyService {
         refereeCustomerId,
         referral.program.refereeReward,
         referral.id,
-        `Referral bonus from program ${referral.program.name}`
+        `Referral bonus from program ${referral.program.name}`,
       );
     }
   }
@@ -354,21 +374,32 @@ export class LoyaltyService {
     customerId: string,
     transactionId: string,
     totalAmountMicros: number,
-    items: { sku: string; name: string; quantity: number; price: number }[]
+    items: { sku: string; name: string; quantity: number; price: number }[],
   ): Promise<{ success: boolean; error?: string }> {
     try {
       if (!customerId || items.length === 0) {
-        return { success: false, error: 'Invalid transaction payload.' };
+        return { success: false, error: "Invalid transaction payload." };
       }
 
       const grossValue = totalAmountMicros / 1_000_000;
 
-      await OpenLoyaltyClient.submitTransaction(customerId, transactionId, grossValue, items);
+      await OpenLoyaltyClient.submitTransaction(
+        customerId,
+        transactionId,
+        grossValue,
+        items,
+      );
 
       return { success: true };
     } catch (error) {
-      console.error('[LoyaltyService] Failed to submit purchase to Open Loyalty:', error);
-      return { success: false, error: 'Failed to sync transaction with loyalty engine.' };
+      console.error(
+        "[LoyaltyService] Failed to submit purchase to Open Loyalty:",
+        error,
+      );
+      return {
+        success: false,
+        error: "Failed to sync transaction with loyalty engine.",
+      };
     }
   }
 
@@ -379,7 +410,7 @@ export class LoyaltyService {
     customerId: string,
     pointsDelta: number,
     actionType: LoyaltyActionType,
-    notes?: string
+    notes?: string,
   ): Promise<{ success: boolean; error?: string }> {
     if (pointsDelta === 0) return { success: true };
 
@@ -389,26 +420,45 @@ export class LoyaltyService {
       if (pointsDelta > 0) {
         await OpenLoyaltyClient.addPoints(customerId, pointsDelta, reason);
       } else {
-        await OpenLoyaltyClient.deductPoints(customerId, Math.abs(pointsDelta), reason);
+        await OpenLoyaltyClient.deductPoints(
+          customerId,
+          Math.abs(pointsDelta),
+          reason,
+        );
       }
 
       return { success: true };
     } catch (error) {
-      console.error('[LoyaltyService] Failed to apply points via Open Loyalty:', error);
-      return { success: false, error: 'Failed to push point adjustment to Loyalty Engine.' };
+      console.error(
+        "[LoyaltyService] Failed to apply points via Open Loyalty:",
+        error,
+      );
+      return {
+        success: false,
+        error: "Failed to push point adjustment to Loyalty Engine.",
+      };
     }
   }
 
   /**
    * Fetches the customer's point history from Open Loyalty.
    */
-  static async getExternalTransactions(customerId: string): Promise<{ success: boolean; data?: any[]; error?: string }> {
+  static async getExternalTransactions(
+    customerId: string,
+  ): Promise<{ success: boolean; data?: any[]; error?: string }> {
     try {
-      const transactions = await OpenLoyaltyClient.getCustomerTransactions(customerId);
+      const transactions =
+        await OpenLoyaltyClient.getCustomerTransactions(customerId);
       return { success: true, data: transactions };
     } catch (error) {
-      console.error('[LoyaltyService] Failed to fetch customer transactions:', error);
-      return { success: false, error: 'Failed to retrieve transaction history.' };
+      console.error(
+        "[LoyaltyService] Failed to fetch customer transactions:",
+        error,
+      );
+      return {
+        success: false,
+        error: "Failed to retrieve transaction history.",
+      };
     }
   }
 }

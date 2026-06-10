@@ -46,9 +46,9 @@ export const CustomerService = {
           take: pageSize,
           skip,
           orderBy: { name: 'asc' },
-          include: {
-            crmRecord: true,
-          },
+          // ⚡ Bolt: Performance Optimization
+          // Remove broad 'include: { crmRecord: true }' to avoid fetching large dynamic JSON data in list view.
+          // This reduces database I/O and response payload size while maintaining the scalar data contract.
         }),
         prisma.customer.count({ where }),
       ]);

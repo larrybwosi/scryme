@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -31,7 +31,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { createPurchase } from '../../app/actions/purchases';
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 
 const purchaseSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
@@ -52,6 +52,7 @@ interface PurchaseDialogProps {
 
 export function PurchaseDialog({ suppliers, products, children }: PurchaseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema) as any,
     defaultValues: {
@@ -66,14 +67,16 @@ export function PurchaseDialog({ suppliers, products, children }: PurchaseDialog
   });
 
   async function onSubmit(values: PurchaseFormValues) {
-    try {
-      await createPurchase(values);
-      toast.success("Purchase order created successfully");
-      setOpen(false);
-      form.reset();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create purchase order");
-    }
+    startTransition(async () => {
+      try {
+        await createPurchase(values);
+        toast.success("Purchase order created successfully");
+        setOpen(false);
+        form.reset();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to create purchase order");
+      }
+    });
   }
 
   // Get all variants from products
@@ -219,7 +222,8 @@ export function PurchaseDialog({ suppliers, products, children }: PurchaseDialog
             </div>
 
             <DialogFooter>
-              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]">
+              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Purchase Order
               </Button>
             </DialogFooter>

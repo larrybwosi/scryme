@@ -1,6 +1,6 @@
-import 'server-only';
-import { prisma } from '@repo/db/client';
-import { redisProxy as redis } from '@repo/shared/server';
+import "server-only";
+import { prisma } from "@repo/db";
+import { redisProxy as redis } from "@repo/shared/server";
 
 export class CartService {
   private static getCacheKey(id: string, isSession: boolean) {
@@ -17,7 +17,7 @@ export class CartService {
 
     const abandonedCarts = await prisma.cart.findMany({
       where: {
-        status: 'ACTIVE',
+        status: "ACTIVE",
         updatedAt: { lt: thresholdDate },
       },
       select: { id: true, sessionId: true, customerId: true },
@@ -29,13 +29,15 @@ export class CartService {
 
     const updateResult = await prisma.cart.updateMany({
       where: { id: { in: cartIds } },
-      data: { status: 'ABANDONED' },
+      data: { status: "ABANDONED" },
     });
 
     const keysToDelete: string[] = [];
     abandonedCarts.forEach((cart: any) => {
-      if (cart.sessionId) keysToDelete.push(this.getCacheKey(cart.sessionId, true));
-      if (cart.customerId) keysToDelete.push(this.getCacheKey(cart.customerId, false));
+      if (cart.sessionId)
+        keysToDelete.push(this.getCacheKey(cart.sessionId, true));
+      if (cart.customerId)
+        keysToDelete.push(this.getCacheKey(cart.customerId, false));
     });
 
     if (keysToDelete.length > 0) {

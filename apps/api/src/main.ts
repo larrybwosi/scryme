@@ -9,12 +9,17 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
+import { validateEncryptionKey } from "@repo/shared/server";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
 import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { StandardResponseInterceptor } from "./common/interceptors/standard-response.interceptor";
+import { redactSensitiveData } from "./common/utils/redaction";
 
 async function bootstrap() {
+  // Verify encryption key at startup
+  validateEncryptionKey();
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
@@ -43,8 +48,13 @@ async function bootstrap() {
             : undefined,
           authorization: headers.authorization ? "[REDACTED]" : undefined,
         },
-        query: Object.keys(query || {}).length ? query : undefined,
-        body: body && Object.keys(body).length ? body : undefined,
+        query: Object.keys(query || {}).length
+          ? redactSensitiveData(query)
+          : undefined,
+        body:
+          body && Object.keys(body).length
+            ? redactSensitiveData(body)
+            : undefined,
       });
 
       // Log response when request completes
@@ -81,8 +91,8 @@ async function bootstrap() {
 
   // Swagger V2
   const configV2 = new DocumentBuilder()
-    .setTitle("Dealio V2 API")
-    .setDescription("The Dealio V2 API documentation")
+    .setTitle("Scryme V2 API")
+    .setDescription("The Scryme V2 API documentation")
     .setVersion("2.0")
     .addApiKey({ type: "apiKey", name: "x-api-key", in: "header" }, "x-api-key")
     .addApiKey(
@@ -98,9 +108,9 @@ async function bootstrap() {
 
   // Swagger V3
   const configV3 = new DocumentBuilder()
-    .setTitle("Dealio V3 API")
+    .setTitle("Scryme V3 API")
     .setDescription(
-      "The Dealio V3 API documentation - Scalable & Enterprise Ready",
+      "The Scryme V3 API documentation - Scalable & Enterprise Ready",
     )
     .setVersion("3.0")
     .addBearerAuth()
@@ -109,6 +119,54 @@ async function bootstrap() {
     include: [V3Module, ...V3_SUB_MODULES],
   });
   SwaggerModule.setup("api/v3/docs", app, documentV3);
+
+  // Serve landing page at /
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .get("/", async (_req, reply) => {
+      reply.type("text/html").send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scryme API</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a; color: #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .container { text-align: center; padding: 2rem; }
+    h1 { font-size: 3rem; font-weight: 800; color: #38bdf8; }
+    p { margin-top: 1rem; font-size: 1.125rem; color: #94a3b8; }
+    .links { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .links a {
+      padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none;
+      font-weight: 600; transition: background 0.2s;
+    }
+    .links a:first-child { background: #38bdf8; color: #0f172a; }
+    .links a:first-child:hover { background: #7dd3fc; }
+    .links a:last-child { background: #1e293b; color: #e2e8f0; }
+    .links a:last-child:hover { background: #334155; }
+    .status { margin-top: 2rem; font-size: 0.875rem; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Scryme API</h1>
+    <p>Welcome to the Scryme API service.</p>
+    <div class="links">
+      <a href="/api/v2/docs">V2 API Docs</a>
+      <a href="/api/v3/docs">V3 API Docs</a>
+    </div>
+    <div class="status">Scryme API &middot; Running</div>
+  </div>
+</body>
+</html>`);
+    });
 
   await app.listen(env.PORT, "0.0.0.0");
   console.log(`Application is running on: ${await app.getUrl()}`);

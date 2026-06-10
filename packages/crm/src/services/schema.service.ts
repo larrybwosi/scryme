@@ -1,11 +1,11 @@
-import 'server-only';
-import { PrismaClient, CrmFieldType } from '@repo/db/client';
-import { CreateObjectInput, CreateFieldInput, CachingProvider } from '../types';
+import "server-only";
+import { PrismaClient, CrmFieldType } from "@repo/db";
+import { CreateObjectInput, CreateFieldInput, CachingProvider } from "../types";
 
 export class SchemaService {
   constructor(
     private prisma: PrismaClient,
-    private cache?: CachingProvider
+    private cache?: CachingProvider,
   ) {}
 
   async createObject(input: CreateObjectInput) {
@@ -26,7 +26,7 @@ export class SchemaService {
 
     const objects = await this.prisma.crmObjectDefinition.findMany({
       where: { organizationId },
-      include: { fields: { orderBy: { order: 'asc' } } },
+      include: { fields: { orderBy: { order: "asc" } } },
     });
 
     if (this.cache) {
@@ -47,7 +47,7 @@ export class SchemaService {
       where: {
         organizationId_name: { organizationId, name },
       },
-      include: { fields: { orderBy: { order: 'asc' } } },
+      include: { fields: { orderBy: { order: "asc" } } },
     });
 
     if (object && this.cache) {
@@ -59,11 +59,13 @@ export class SchemaService {
 
   async createField(input: CreateFieldInput, organizationId: string) {
     const obj = await this.prisma.crmObjectDefinition.findUnique({
-      where: { id: input.objectId, organizationId }
+      where: { id: input.objectId, organizationId },
     });
     if (obj && this.cache) {
       await this.cache.del(`crm:schema:objects:${obj.organizationId}`);
-      await this.cache.del(`crm:schema:object:${obj.organizationId}:${obj.name}`);
+      await this.cache.del(
+        `crm:schema:object:${obj.organizationId}:${obj.name}`,
+      );
     }
     return this.prisma.crmFieldDefinition.create({
       data: input,
@@ -71,9 +73,11 @@ export class SchemaService {
   }
 
   async deleteObject(id: string, organizationId: string) {
-    const obj = await this.prisma.crmObjectDefinition.findFirst({ where: { id, organizationId } });
-    if (!obj) throw new Error('Object not found');
-    if (obj.isSystem) throw new Error('Cannot delete system objects');
+    const obj = await this.prisma.crmObjectDefinition.findFirst({
+      where: { id, organizationId },
+    });
+    if (!obj) throw new Error("Object not found");
+    if (obj.isSystem) throw new Error("Cannot delete system objects");
 
     if (this.cache) {
       await this.cache.del(`crm:schema:objects:${organizationId}`);
@@ -86,20 +90,58 @@ export class SchemaService {
   async seedStandardObjects(organizationId: string) {
     // Standard Person Object
     const person = await this.createObject({
-      name: 'person',
-      label: 'Person',
-      labelPlural: 'People',
-      icon: 'User',
+      name: "person",
+      label: "Person",
+      labelPlural: "People",
+      icon: "User",
       organizationId,
       isSystem: true,
     });
 
     const personFields: CreateFieldInput[] = [
-      { objectId: person.id, name: 'firstName', label: 'First Name', type: CrmFieldType.TEXT, isRequired: true, order: 1, isSystem: true },
-      { objectId: person.id, name: 'lastName', label: 'Last Name', type: CrmFieldType.TEXT, isRequired: true, order: 2, isSystem: true },
-      { objectId: person.id, name: 'email', label: 'Email', type: CrmFieldType.EMAIL, isUnique: true, order: 3, isSystem: true },
-      { objectId: person.id, name: 'phone', label: 'Phone', type: CrmFieldType.PHONE, order: 4, isSystem: true },
-      { objectId: person.id, name: 'notes', label: 'Notes', type: CrmFieldType.TEXT, order: 5, isSystem: true },
+      {
+        objectId: person.id,
+        name: "firstName",
+        label: "First Name",
+        type: CrmFieldType.TEXT,
+        isRequired: true,
+        order: 1,
+        isSystem: true,
+      },
+      {
+        objectId: person.id,
+        name: "lastName",
+        label: "Last Name",
+        type: CrmFieldType.TEXT,
+        isRequired: true,
+        order: 2,
+        isSystem: true,
+      },
+      {
+        objectId: person.id,
+        name: "email",
+        label: "Email",
+        type: CrmFieldType.EMAIL,
+        isUnique: true,
+        order: 3,
+        isSystem: true,
+      },
+      {
+        objectId: person.id,
+        name: "phone",
+        label: "Phone",
+        type: CrmFieldType.PHONE,
+        order: 4,
+        isSystem: true,
+      },
+      {
+        objectId: person.id,
+        name: "notes",
+        label: "Notes",
+        type: CrmFieldType.TEXT,
+        order: 5,
+        isSystem: true,
+      },
     ];
 
     for (const field of personFields) {
@@ -108,19 +150,48 @@ export class SchemaService {
 
     // Standard Company Object
     const company = await this.createObject({
-      name: 'company',
-      label: 'Company',
-      labelPlural: 'Companies',
-      icon: 'Building',
+      name: "company",
+      label: "Company",
+      labelPlural: "Companies",
+      icon: "Building",
       organizationId,
       isSystem: true,
     });
 
     const companyFields: CreateFieldInput[] = [
-      { objectId: company.id, name: 'name', label: 'Name', type: CrmFieldType.TEXT, isRequired: true, order: 1, isSystem: true },
-      { objectId: company.id, name: 'domain', label: 'Domain', type: CrmFieldType.URL, order: 2, isSystem: true },
-      { objectId: company.id, name: 'industry', label: 'Industry', type: CrmFieldType.TEXT, order: 3, isSystem: true },
-      { objectId: company.id, name: 'notes', label: 'Notes', type: CrmFieldType.TEXT, order: 4, isSystem: true },
+      {
+        objectId: company.id,
+        name: "name",
+        label: "Name",
+        type: CrmFieldType.TEXT,
+        isRequired: true,
+        order: 1,
+        isSystem: true,
+      },
+      {
+        objectId: company.id,
+        name: "domain",
+        label: "Domain",
+        type: CrmFieldType.URL,
+        order: 2,
+        isSystem: true,
+      },
+      {
+        objectId: company.id,
+        name: "industry",
+        label: "Industry",
+        type: CrmFieldType.TEXT,
+        order: 3,
+        isSystem: true,
+      },
+      {
+        objectId: company.id,
+        name: "notes",
+        label: "Notes",
+        type: CrmFieldType.TEXT,
+        order: 4,
+        isSystem: true,
+      },
     ];
 
     for (const field of companyFields) {
@@ -131,12 +202,12 @@ export class SchemaService {
     await this.prisma.crmRelationshipDefinition.create({
       data: {
         organizationId,
-        name: 'company_people',
-        type: 'ONE_TO_MANY',
+        name: "company_people",
+        type: "ONE_TO_MANY",
         sourceObjectId: company.id,
         targetObjectId: person.id,
-        sourceLabel: 'Employees',
-        targetLabel: 'Company',
+        sourceLabel: "Employees",
+        targetLabel: "Company",
       },
     });
 

@@ -1,11 +1,11 @@
-import { ShoppingBag, Plus } from 'lucide-react';
-import { PageHeader } from '../../../components/page-header';
-import { FilterBar } from '../../../components/filter-bar';
-import { PurchaseTable } from '../../../components/purchase-table';
-import { getPurchases } from '../../actions/purchases';
-import { getSuppliers, getInventoryProducts } from '../../actions/inventory';
-import { PurchaseDialog } from '../../../components/finance/purchase-dialog';
-import { Button } from '@repo/ui/components/ui/button';
+import { ShoppingBag, Plus } from "lucide-react";
+import { PageHeader } from "../../../components/page-header";
+import { FilterBar } from "../../../components/filter-bar";
+import { PurchaseTable } from "../../../components/purchase-table";
+import { getPurchases } from "../../actions/purchases";
+import { getSuppliers, getInventoryProducts } from "../../actions/inventory";
+import { PurchaseDialog } from "../../../components/finance/purchase-dialog";
+import { Button } from "@repo/ui/components/ui/button";
 
 export default async function PurchasesPage(props: {
   searchParams: Promise<{ q?: string; status?: string }>;
@@ -17,7 +17,7 @@ export default async function PurchasesPage(props: {
       status: searchParams.status,
     }),
     getSuppliers(),
-    getInventoryProducts({})
+    getInventoryProducts({}),
   ]);
 
   return (

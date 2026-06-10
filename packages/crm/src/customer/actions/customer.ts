@@ -1,6 +1,6 @@
-import { PrismaClient } from "@repo/db/client";
-import 'server-only';
-import { CustomerService } from '../services/customer.service';
+import { PrismaClient } from "@repo/db";
+import "server-only";
+import { CustomerService } from "../services/customer.service";
 
 export function createCustomerActions(prisma: PrismaClient) {
   const service = new CustomerService(prisma);
@@ -14,12 +14,20 @@ export function createCustomerActions(prisma: PrismaClient) {
       return service.getCustomerById(organizationId, customerId);
     },
 
-    async saveCustomer(organizationId: string, memberId: string, formData: any) {
+    async saveCustomer(
+      organizationId: string,
+      memberId: string,
+      formData: any,
+    ) {
       return service.saveCustomer(organizationId, memberId, formData);
     },
 
-    async deleteCustomer(organizationId: string, userId: string, customerId: string) {
+    async deleteCustomer(
+      organizationId: string,
+      userId: string,
+      customerId: string,
+    ) {
       return service.deleteCustomer(organizationId, userId, customerId);
-    }
+    },
   };
 }

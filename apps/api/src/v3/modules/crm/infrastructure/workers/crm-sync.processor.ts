@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { CrmSyncJobData } from '../services/crm-sync.service';
 
 @Processor('crm-sync')

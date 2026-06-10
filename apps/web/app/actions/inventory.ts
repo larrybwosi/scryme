@@ -489,8 +489,7 @@ export async function getInventoryProducts(params: {
         supplier: product.suppliers[0]?.supplier.name || "N/A",
         currentStock: currentStock.toNumber(),
         status,
-        unitPrice:
-          variant.retailPrice?.toNumber() || variant.buyingPrice.toNumber(),
+        unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
         image: product.imageUrls[0],
       };
     }),

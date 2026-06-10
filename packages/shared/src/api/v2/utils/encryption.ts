@@ -3,11 +3,10 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 
 /**
- * Returns the encryption key, validated lazily at call-time rather than at
- * module evaluation. This prevents the build from crashing when ENCRYPTION_KEY
- * is not set in the build environment (it is only required at runtime).
+ * Validates the encryption key.
+ * Throws an error if the key is not set or is not 32 characters long.
  */
-function getKey(): string {
+export function validateEncryptionKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
     throw new Error('ENCRYPTION_KEY environment variable is not set. Set it to a 32-character string.');
@@ -16,6 +15,15 @@ function getKey(): string {
     throw new Error(`ENCRYPTION_KEY must be exactly 32 characters long (got ${key.length}).`);
   }
   return key;
+}
+
+/**
+ * Returns the encryption key, validated lazily at call-time rather than at
+ * module evaluation. This prevents the build from crashing when ENCRYPTION_KEY
+ * is not set in the build environment (it is only required at runtime).
+ */
+function getKey(): string {
+  return validateEncryptionKey();
 }
 
 export const encrypt = (text: string): string => {
