@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { FastifyReply } from 'fastify';
 import { ApiError } from '@repo/shared/server';
+import { env } from '@repo/env';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -31,7 +32,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       code = (exception as any).code;
       details = (exception as any).details;
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // In production, don't leak generic error messages
+      message =
+        env.NODE_ENV === 'development' ? exception.message : 'Internal server error';
     }
 
     response.status(status).send({
