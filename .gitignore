@@ -36,3 +36,4 @@ apps/web/.env
 # turbo
 .turbo
 tsconfig.tsbuildinfo
+.tsbuildinfo
