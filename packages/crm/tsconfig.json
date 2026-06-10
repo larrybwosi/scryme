@@ -8,17 +8,6 @@
     "skipLibCheck": true,
     "strict": true,
     "types": ["jest", "node"],
-    "baseUrl": ".",
-    "paths": {
-      "@repo/db": ["../db/src/index.ts"],
-      "@repo/db/client": ["../db/src/client.ts"],
-      "@repo/shared": ["../shared/src/index.ts"],
-      "@repo/notifications": ["../notifications/src/index.ts"],
-      "@repo/zitadel": ["../zitadel/src/index.ts"],
-      "@repo/windmill": ["../windmill/src/index.ts"],
-      "@repo/windmill/server": ["../windmill/src/server.ts"],
-      "@repo/ui/*": ["../ui/src/*"]
-    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
