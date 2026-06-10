@@ -83,6 +83,7 @@ const sidebarConfig: SidebarSection[] = [
         icon: TrendingUp,
         href: "/stocking",
         items: [
+          { title: "Stocking List", href: "/stocking/list" },
           { title: "Dashboard", href: "/stocking" },
           { title: "Transfers", href: "/stocking/transfers" },
           { title: "Reorder Rules", href: "/stocking/reorder-rules" },

@@ -13,8 +13,11 @@ import {
   Package,
   ArrowLeftRight,
   AlertTriangle,
-  LayoutGrid
+  LayoutGrid,
+  ArrowRight
 } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@repo/ui/components/ui/button";
 import { StockCharts } from "../../components/stocking/stock-charts";
 import { StockLevelsTable } from "../../components/stocking/stock-levels-table";
 import { StockLevelsFilters } from "../../components/stocking/stock-levels-filters";
@@ -119,6 +122,12 @@ export default async function StockingDashboard({
               Detailed breakdown of inventory across all locations and in-transit units.
             </p>
           </div>
+          <Link href="/stocking/list">
+            <Button variant="ghost" size="sm" className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+              View All
+              <ArrowRight size={16} />
+            </Button>
+          </Link>
         </CardHeader>
         <CardContent className="pt-6 flex flex-col gap-6">
           <StockLevelsFilters locations={locations} />
