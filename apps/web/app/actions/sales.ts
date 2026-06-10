@@ -179,11 +179,15 @@ export async function createTransaction(data: {
     new Decimal(0),
   );
   const finalTotal = subtotal.plus(taxTotal).minus(discountTotal);
+  const orgSettings = await db.organizationSettings.findUnique({
+    where: { organizationId: auth.organizationId },
+  });
 
   const transaction = await db.transaction.create({
     data: {
       organizationId: auth.organizationId,
       memberId: auth.memberId,
+      currencyCode: orgSettings?.defaultCurrency || "USD",
       number,
       type: data.type,
       customerId: data.customerId,

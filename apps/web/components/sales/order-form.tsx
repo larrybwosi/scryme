@@ -102,10 +102,8 @@ const ORDER_TYPE_META = {
   },
 } as const;
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    n,
-  );
+const fmt = (n: number, currency = "USD") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(n);
 
 // ── Sub-components ──────────────────────────────────────────────────────────────
 
@@ -189,10 +187,12 @@ export function OrderForm({
   customers,
   locations,
   variants,
+  currency = "USD",
 }: {
   customers: any[];
   locations: any[];
   variants: any[];
+  currency?: string;
 }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -587,7 +587,7 @@ export function OrderForm({
                           {/* Line Total */}
                           <div className="col-span-6 sm:col-span-2 text-right">
                             <span className="text-sm font-semibold text-zinc-900 tabular-nums">
-                              {fmt(lineTotal)}
+                              {fmt(lineTotal, currency)}
                             </span>
                           </div>
 
@@ -678,18 +678,29 @@ export function OrderForm({
 
                   {/* Pricing breakdown */}
                   <div className="space-y-2.5">
-                    <SummaryRow label="Subtotal" value={fmt(subtotal)} />
-                    <SummaryRow label="Tax" value={fmt(taxTotal)} muted />
+                    <SummaryRow
+                      label="Subtotal"
+                      value={fmt(subtotal, currency)}
+                    />
+                    <SummaryRow
+                      label="Tax"
+                      value={fmt(taxTotal, currency)}
+                      muted
+                    />
                     <SummaryRow
                       label="Discount"
-                      value={`− ${fmt(discountTotal)}`}
+                      value={`− ${fmt(discountTotal, currency)}`}
                       muted
                     />
                   </div>
 
                   <Separator />
 
-                  <SummaryRow label="Total" value={fmt(finalTotal)} highlight />
+                  <SummaryRow
+                    label="Total"
+                    value={fmt(finalTotal, currency)}
+                    highlight
+                  />
 
                   <Button
                     form="order-form"
@@ -736,7 +747,7 @@ export function OrderForm({
               <div className="flex justify-between text-sm">
                 <span className="text-zinc-500">Amount Due</span>
                 <span className="font-bold text-zinc-900">
-                  {fmt(createdOrder?.finalTotal || 0)}
+                  {fmt(createdOrder?.finalTotal || 0, currency)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
