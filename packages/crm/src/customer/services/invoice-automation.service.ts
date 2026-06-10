@@ -1,7 +1,7 @@
-import 'server-only';
-import { prisma } from '@repo/db/client';
-import { NotificationEngine } from '@repo/notifications';
-import { runAutomation } from '@repo/windmill/server';
+import "server-only";
+import { prisma } from "@repo/db";
+import { NotificationEngine } from "@repo/notifications";
+import { runAutomation } from "@repo/windmill/server";
 
 const notificationEngine = new NotificationEngine();
 
@@ -13,7 +13,9 @@ export const InvoiceAutomationService = {
    * Orchestrates the daily check for customer invoice reminders.
    */
   async runCustomerInvoiceReminders() {
-    console.log('[InvoiceAutomation] Starting customer invoice reminder automation...');
+    console.log(
+      "[InvoiceAutomation] Starting customer invoice reminder automation...",
+    );
 
     const organizations = await prisma.organization.findMany({
       where: { deletedAt: null },
@@ -24,7 +26,9 @@ export const InvoiceAutomationService = {
       await this.processOrgInvoiceReminders(org.id, org.name);
     }
 
-    console.log('[InvoiceAutomation] Customer invoice reminder automation completed.');
+    console.log(
+      "[InvoiceAutomation] Customer invoice reminder automation completed.",
+    );
   },
 
   /**
@@ -38,7 +42,7 @@ export const InvoiceAutomationService = {
     const pendingInvoices = await prisma.invoice.findMany({
       where: {
         organizationId,
-        status: { in: ['PENDING', 'SUBMITTED', 'PARTIALLY_PAID'] },
+        status: { in: ["PENDING", "SUBMITTED", "PARTIALLY_PAID"] },
         dueDate: { not: null },
       },
     });
@@ -57,23 +61,29 @@ export const InvoiceAutomationService = {
       try {
         await runAutomation({
           organizationId,
-          scriptPath: 'f/dealio/finance/overdue-invoices-summary',
-          dealioEventType: 'overdue_invoices_summary',
+          scriptPath: "f/dealio/finance/overdue-invoices-summary",
+          dealioEventType: "overdue_invoices_summary",
           data: {
             orgName,
             count: overdueInvoices.length,
-            totalAmount: overdueInvoices.reduce((sum: number, inv: any) => sum + inv.grandTotal, 0),
+            totalAmount: overdueInvoices.reduce(
+              (sum: number, inv: any) => sum + inv.grandTotal,
+              0,
+            ),
             invoices: overdueInvoices.map((inv: any) => ({
               id: inv.id,
               customer: inv.customer,
               amount: inv.grandTotal,
               dueDate: inv.dueDate?.toLocaleDateString(),
             })),
-            eventType: 'overdue_invoices_summary',
+            eventType: "overdue_invoices_summary",
           },
         });
       } catch (error) {
-        console.error(`[InvoiceAutomation] Failed to trigger Windmill for Org ${organizationId}:`, error);
+        console.error(
+          `[InvoiceAutomation] Failed to trigger Windmill for Org ${organizationId}:`,
+          error,
+        );
       }
     }
 
@@ -94,14 +104,21 @@ export const InvoiceAutomationService = {
     }
   },
 
-  async sendCustomerReminder(organizationId: string, orgName: string, invoice: any) {
+  async sendCustomerReminder(
+    organizationId: string,
+    orgName: string,
+    invoice: any,
+  ) {
     try {
       // Resolve customer/business account
       const [customer, businessAccount] = await Promise.all([
         prisma.customer.findFirst({
           where: {
             organizationId,
-            OR: [{ id: invoice.customer as string }, { email: invoice.customer as string }],
+            OR: [
+              { id: invoice.customer as string },
+              { email: invoice.customer as string },
+            ],
           },
         }),
         prisma.businessAccount.findFirst({
@@ -109,11 +126,13 @@ export const InvoiceAutomationService = {
             organizationId,
             id: invoice.customer as string,
           },
-        })
+        }),
       ]);
 
-      const email = customer?.email || (invoice.customer.includes('@') ? invoice.customer : null);
-      const name = customer?.name || businessAccount?.name || 'Valued Customer';
+      const email =
+        customer?.email ||
+        (invoice.customer.includes("@") ? invoice.customer : null);
+      const name = customer?.name || businessAccount?.name || "Valued Customer";
 
       if (email) {
         // Find or create a shadow user for the customer if they don't have one
@@ -124,13 +143,15 @@ export const InvoiceAutomationService = {
         if (!user) {
           // Note: In a real system, we might not want to create shadow users.
           // For now, we'll try to use the user ID if it exists.
-          console.log(`[InvoiceAutomation] No User found for email ${email}, skipping automated email via NotificationEngine.`);
+          console.log(
+            `[InvoiceAutomation] No User found for email ${email}, skipping automated email via NotificationEngine.`,
+          );
           return;
         }
 
         await notificationEngine.notify({
           organizationId,
-          templateName: 'CUSTOMER_INVOICE_REMINDER',
+          templateName: "CUSTOMER_INVOICE_REMINDER",
           data: {
             customerName: name,
             invoiceId: invoice.id,
@@ -141,13 +162,18 @@ export const InvoiceAutomationService = {
           recipients: {
             userIds: [user.id],
           },
-          channels: ['EMAIL'],
+          channels: ["EMAIL"],
         });
 
-        console.log(`[InvoiceAutomation] Sent reminder for Invoice ${invoice.id} to ${email}`);
+        console.log(
+          `[InvoiceAutomation] Sent reminder for Invoice ${invoice.id} to ${email}`,
+        );
       }
     } catch (error) {
-      console.error(`[InvoiceAutomation] Failed to notify customer for Invoice ${invoice.id}:`, error);
+      console.error(
+        `[InvoiceAutomation] Failed to notify customer for Invoice ${invoice.id}:`,
+        error,
+      );
     }
-  }
+  },
 };

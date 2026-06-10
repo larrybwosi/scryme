@@ -33,7 +33,7 @@
       "dependsOn": ["^generate"]
     },
     "type-check": {
-      "dependsOn": ["^generate"]
+      "dependsOn": ["^build"]
     }
   }
 }

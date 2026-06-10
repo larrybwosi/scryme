@@ -1,5 +1,5 @@
-import 'server-only';
-import { PrismaClient } from '@repo/db/client';
+import "server-only";
+import { PrismaClient } from "@repo/db";
 
 export interface CreatePosCustomerData {
   name: string;
@@ -24,7 +24,7 @@ export class PosCustomerService {
    */
   async getCustomersDelta(
     organizationId: string,
-    lastSync: string | null
+    lastSync: string | null,
   ): Promise<{ data: any[]; nextSyncToken: string }> {
     const customers = await this.prisma.customer.findMany({
       where: {
@@ -33,7 +33,7 @@ export class PosCustomerService {
       },
     });
 
-    const mappedData = customers.map(c => ({
+    const mappedData = customers.map((c) => ({
       id: c.id,
       name: c.name,
       email: c.email,
@@ -50,22 +50,25 @@ export class PosCustomerService {
   /**
    * Full-text search across customers.
    */
-  async searchPosCustomers(organizationId: string, searchTerm: string): Promise<any[]> {
+  async searchPosCustomers(
+    organizationId: string,
+    searchTerm: string,
+  ): Promise<any[]> {
     if (!searchTerm?.trim()) return [];
 
     const customers = await this.prisma.customer.findMany({
       where: {
         organizationId,
         OR: [
-          { name: { contains: searchTerm, mode: 'insensitive' } },
-          { email: { contains: searchTerm, mode: 'insensitive' } },
-          { phone: { contains: searchTerm, mode: 'insensitive' } },
+          { name: { contains: searchTerm, mode: "insensitive" } },
+          { email: { contains: searchTerm, mode: "insensitive" } },
+          { phone: { contains: searchTerm, mode: "insensitive" } },
         ],
       },
       take: 20,
     });
 
-    return customers.map(c => ({
+    return customers.map((c) => ({
       id: c.id,
       name: c.name,
       email: c.email,
@@ -80,27 +83,27 @@ export class PosCustomerService {
   async createPosCustomer(
     organizationId: string,
     rawData: CreatePosCustomerData,
-    memberId?: string
+    memberId?: string,
   ): Promise<any> {
-    if (!rawData.name?.trim()) throw new Error('Customer name is required.');
+    if (!rawData.name?.trim()) throw new Error("Customer name is required.");
 
-    const { CustomerService } = await import('./customer.service');
+    const { CustomerService } = await import("./customer.service");
     const customerService = new CustomerService(this.prisma);
 
     const response = await customerService.saveCustomer(
       organizationId,
-      memberId || '',
+      memberId || "",
       {
         name: rawData.name,
         email: rawData.email,
         phone: rawData.phone,
         ...rawData.address,
         notes: rawData.notes,
-      }
+      },
     );
 
     if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to create customer');
+      throw new Error(response.message || "Failed to create customer");
     }
 
     return {
