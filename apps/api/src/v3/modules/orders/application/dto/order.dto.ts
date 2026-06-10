@@ -20,4 +20,16 @@ export class OrderResponseDto {
 
   @ApiProperty({ example: '2023-10-27T10:00:00.000Z' })
   createdAt: string;
+
+  @ApiProperty({ example: 'LPO-2023-001', required: false })
+  lpoNumber?: string;
+
+  @ApiProperty({ example: '2023-10-01T00:00:00Z', required: false })
+  lpoDate?: Date;
+
+  @ApiProperty({ example: '2023-12-31T00:00:00Z', required: false })
+  lpoExpiryDate?: Date;
+
+  @ApiProperty({ example: 'https://storage.example.com/lpos/lpo-001.pdf', required: false })
+  lpoUrl?: string;
 }

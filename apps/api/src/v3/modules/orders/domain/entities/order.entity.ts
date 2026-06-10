@@ -9,6 +9,10 @@ export class Order {
     public readonly locationId: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly items: any[] = []
+    public readonly items: any[] = [],
+    public lpoNumber?: string | null,
+    public lpoDate?: Date | null,
+    public lpoExpiryDate?: Date | null,
+    public lpoUrl?: string | null
   ) {}
 }

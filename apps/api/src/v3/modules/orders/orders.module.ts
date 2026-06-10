@@ -7,6 +7,7 @@ import { CreateOrderUseCase } from './application/use-cases/create-order.use-cas
 import { UpdateOrderStatusUseCase } from './application/use-cases/update-order-status.use-case';
 import { RequestB2BQuoteUseCase } from './application/use-cases/request-b2b-quote.use-case';
 import { ConvertQuoteToOrderUseCase } from './application/use-cases/convert-quote-to-order.use-case';
+import { AttachLpoUseCase } from './application/use-cases/attach-lpo.use-case';
 import { PrismaOrderRepository } from './infrastructure/persistence/prisma-order.repository';
 import { IOrderRepository } from './domain/repositories/order-repository.interface';
 import { PrismaModule } from '../../../prisma/prisma.module';
@@ -33,6 +34,7 @@ import { FinanceModule } from '../finance/finance.module';
     UpdateOrderStatusUseCase,
     RequestB2BQuoteUseCase,
     ConvertQuoteToOrderUseCase,
+    AttachLpoUseCase,
     {
       provide: IOrderRepository,
       useClass: PrismaOrderRepository,

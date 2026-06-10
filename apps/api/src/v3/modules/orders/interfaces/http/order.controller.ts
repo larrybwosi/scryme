@@ -5,6 +5,7 @@ import { CreateOrderUseCase } from '../../application/use-cases/create-order.use
 import { UpdateOrderStatusUseCase } from '../../application/use-cases/update-order-status.use-case';
 import { RequestB2BQuoteUseCase } from '../../application/use-cases/request-b2b-quote.use-case';
 import { ConvertQuoteToOrderUseCase } from '../../application/use-cases/convert-quote-to-order.use-case';
+import { AttachLpoUseCase } from '../../application/use-cases/attach-lpo.use-case';
 import { MultiTenancyGuard } from '@/v3/common/guards/multi-tenancy.guard';
 import { PermissionsGuard } from '@/v3/common/guards/permissions.guard';
 import { AuditInterceptor } from '../../../../common/interceptors/audit.interceptor';
@@ -14,6 +15,7 @@ import { PaginationQueryDto } from '@/v3/common/utils/pagination';
 import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
 import { UpdateOrderStatusDto, OrderResponseDto } from '../../application/dto/order.dto';
 import { CreateOrderDto } from '../../application/dto/create-order.dto';
+import { AttachLpoDto } from '../../application/dto/attach-lpo.dto';
 import { RequestB2BQuoteDto } from '../../application/dto/request-b2b-quote.dto';
 import { ApiErrorResponseDto } from '@/v3/common/dto/response.dto';
 
@@ -28,7 +30,8 @@ export class OrderController {
     private readonly createOrderUseCase: CreateOrderUseCase,
     private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     private readonly requestB2BQuoteUseCase: RequestB2BQuoteUseCase,
-    private readonly convertQuoteToOrderUseCase: ConvertQuoteToOrderUseCase
+    private readonly convertQuoteToOrderUseCase: ConvertQuoteToOrderUseCase,
+    private readonly attachLpoUseCase: AttachLpoUseCase
   ) {}
 
   @Post()
@@ -90,5 +93,17 @@ export class OrderController {
   @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: 'Quote not found' })
   async convertQuoteToOrder(@Req() req: any, @Param('id') id: string) {
     return this.convertQuoteToOrderUseCase.execute(req.organization.id, id);
+  }
+
+  @Post(':id/lpo')
+  @Permissions('order:write')
+  @ApiOperation({
+    summary: 'Attach an LPO to a quote or order',
+    operationId: 'Orders_AttachLpo',
+  })
+  @ApiResponse({ status: 200, description: 'LPO attached successfully' })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: 'Order not found' })
+  async attachLpo(@Req() req: any, @Param('id') id: string, @Body() dto: AttachLpoDto) {
+    return this.attachLpoUseCase.execute(req.organization.id, id, dto);
   }
 }

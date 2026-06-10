@@ -48,6 +48,10 @@ export const CreateOrderInputSchema = z.object({
   taxIds: z.array(z.string()).optional(),
   enableStockTracking: z.boolean().optional(),
   isWholesale: z.boolean().optional(),
+  lpoNumber: z.string().optional(),
+  lpoDate: z.coerce.date().optional(),
+  lpoExpiryDate: z.coerce.date().optional(),
+  lpoUrl: z.string().optional(),
 });
 
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;

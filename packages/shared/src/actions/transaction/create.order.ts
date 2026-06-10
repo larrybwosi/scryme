@@ -92,6 +92,11 @@ export async function createOrder(
           shippingTotal,
           finalTotal,
           baseCurrencyTotal: finalTotal,
+          notes: validated.notes,
+          lpoNumber: validated.lpoNumber,
+          lpoDate: validated.lpoDate,
+          lpoExpiryDate: validated.lpoExpiryDate,
+          lpoUrl: validated.lpoUrl,
           items: {
             create: transactionItemsData,
           },

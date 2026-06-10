@@ -120,8 +120,12 @@ model Transaction {
   ecommerceOrderMapping EcommerceOrderMapping? @relation("TransactionEcommerceMapping") // Back-relation for e-commerce order mappings
   loyaltyVouchers       LoyaltyVoucher[]
 
-  // ---  QUOTES ---
+  // ---  QUOTES & LPOs ---
   termsAndConditions String? @db.Text // Specific legal text for this quote
+  lpoNumber          String?
+  lpoDate            DateTime?
+  lpoExpiryDate      DateTime?
+  lpoUrl             String?
 
   // Self-Relation to link Quote -> Order
   parentTransactionId String?

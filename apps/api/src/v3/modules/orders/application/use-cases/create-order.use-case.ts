@@ -25,6 +25,10 @@ export class CreateOrderUseCase {
       items: dto.items,
       type: dto.channel as any, // Map channel to transaction type
       notes: dto.notes,
+      lpoNumber: dto.lpoNumber,
+      lpoDate: dto.lpoDate,
+      lpoExpiryDate: dto.lpoExpiryDate,
+      lpoUrl: dto.lpoUrl,
     } as CreateOrderInput);
 
     if (!result.success) {

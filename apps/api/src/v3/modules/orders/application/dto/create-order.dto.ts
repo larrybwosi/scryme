@@ -58,4 +58,24 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiProperty({ example: 'LPO-2023-001', required: false })
+  @IsString()
+  @IsOptional()
+  lpoNumber?: string;
+
+  @ApiProperty({ example: '2023-10-01T00:00:00Z', required: false })
+  @IsString()
+  @IsOptional()
+  lpoDate?: string;
+
+  @ApiProperty({ example: '2023-12-31T00:00:00Z', required: false })
+  @IsString()
+  @IsOptional()
+  lpoExpiryDate?: string;
+
+  @ApiProperty({ example: 'https://storage.example.com/lpos/lpo-001.pdf', required: false })
+  @IsString()
+  @IsOptional()
+  lpoUrl?: string;
 }

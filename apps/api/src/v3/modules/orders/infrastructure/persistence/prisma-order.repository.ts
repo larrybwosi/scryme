@@ -29,6 +29,10 @@ export class PrismaOrderRepository implements IOrderRepository {
           createdAt: true,
           updatedAt: true,
           items: true,
+          lpoNumber: true,
+          lpoDate: true,
+          lpoExpiryDate: true,
+          lpoUrl: true,
         },
       }
     );
@@ -47,7 +51,11 @@ export class PrismaOrderRepository implements IOrderRepository {
             o.locationId,
             o.createdAt,
             o.updatedAt,
-            o.items
+            o.items,
+            o.lpoNumber,
+            o.lpoDate,
+            o.lpoExpiryDate,
+            o.lpoUrl
           )
       ),
     };
@@ -67,6 +75,10 @@ export class PrismaOrderRepository implements IOrderRepository {
         createdAt: true,
         updatedAt: true,
         items: true,
+        lpoNumber: true,
+        lpoDate: true,
+        lpoExpiryDate: true,
+        lpoUrl: true,
       },
     });
     if (!o) return null;
@@ -80,13 +92,21 @@ export class PrismaOrderRepository implements IOrderRepository {
       o.locationId,
       o.createdAt,
       o.updatedAt,
-      o.items
+      o.items,
+      o.lpoNumber,
+      o.lpoDate,
+      o.lpoExpiryDate,
+      o.lpoUrl
     );
   }
 
   async create(orderData: any): Promise<Order> {
     const o = await this.prisma.client.transaction.create({
       data: {
+        lpoNumber: orderData.lpoNumber,
+        lpoDate: orderData.lpoDate,
+        lpoExpiryDate: orderData.lpoExpiryDate,
+        lpoUrl: orderData.lpoUrl,
         number: orderData.number,
         type: orderData.type || 'ONLINE_ORDER',
         channel: orderData.channel || 'ECOMMERCE_STORE',
@@ -141,6 +161,10 @@ export class PrismaOrderRepository implements IOrderRepository {
       update: {
         status: order.status as any,
         finalTotal: order.totalAmount,
+        lpoNumber: order.lpoNumber,
+        lpoDate: order.lpoDate,
+        lpoExpiryDate: order.lpoExpiryDate,
+        lpoUrl: order.lpoUrl,
       },
       create: {
         id: order.id,
@@ -168,7 +192,11 @@ export class PrismaOrderRepository implements IOrderRepository {
       o.locationId,
       o.createdAt,
       o.updatedAt,
-      (o as any).items || []
+      (o as any).items || [],
+      o.lpoNumber,
+      o.lpoDate,
+      o.lpoExpiryDate,
+      o.lpoUrl
     );
   }
 }
