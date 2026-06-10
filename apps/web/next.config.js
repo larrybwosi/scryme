@@ -1,25 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: "standalone",
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'api.dicebear.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "api.dicebear.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3001',
-        pathname: '/**',
+        protocol: "http",
+        hostname: "localhost",
+        port: "3001",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: '**',
-      }
+        protocol: "https",
+        hostname: "**",
+      },
     ],
   },
 };

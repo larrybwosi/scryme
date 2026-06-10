@@ -125,7 +125,7 @@ impl EscPosBuilder {
             item_str, qty, price, total,
             w_item = w_item, w_qty = w_qty, w_price = w_price, w_total = w_total
         );
-        
+
         self.text_line(&formatted_row);
     }
 

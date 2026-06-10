@@ -459,36 +459,64 @@ export async function upsertReorderRule(data: {
 export async function getStockLevels(params: {
   locationId?: string;
   search?: string;
+  categoryId?: string;
+  supplierId?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  groupBy?: string;
 }): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
-  const { locationId, search } = params;
+  const { locationId, search, categoryId, supplierId, sortBy, sortOrder = "asc", groupBy } = params;
+
+  // Build the where clause for products
+  const where: any = {
+    organizationId: context.organizationId,
+    isActive: true,
+  };
+
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { sku: { contains: search, mode: "insensitive" } },
+      {
+        variants: {
+          some: { sku: { contains: search, mode: "insensitive" } },
+        },
+      },
+    ];
+  }
+
+  if (categoryId && categoryId !== "all") {
+    where.categoryId = categoryId;
+  }
+
+  if (supplierId && supplierId !== "all") {
+    where.suppliers = {
+      some: {
+        supplierId: supplierId,
+      },
+    };
+  }
 
   // 1. Get products and variants with their stock records
   const products = await db.product.findMany({
-    where: {
-      organizationId: context.organizationId,
-      isActive: true,
-      OR: search
-        ? [
-            { name: { contains: search, mode: "insensitive" } },
-            { sku: { contains: search, mode: "insensitive" } },
-            {
-              variants: {
-                some: { sku: { contains: search, mode: "insensitive" } },
-              },
-            },
-          ]
-        : undefined,
-    },
+    where,
     include: {
+      category: { select: { name: true } },
+      suppliers: {
+        include: { supplier: { select: { name: true } } },
+      },
       variants: {
         where: { isActive: true },
         include: {
           variantStocks: {
             where:
               locationId && locationId !== "all" ? { locationId } : undefined,
+            include: {
+              location: { select: { name: true } },
+            },
           },
         },
       },
@@ -548,39 +576,84 @@ export async function getStockLevels(params: {
   });
 
   // 5. Map results and aggregate data
-  const results = products.flatMap((product) =>
-    product.variants.map((variant) => {
+  let results = products.flatMap((product) =>
+    product.variants.flatMap((variant) => {
       const stocks = variant.variantStocks;
 
-      const current = stocks.reduce(
-        (acc, s) => acc.add(s.currentStock),
-        new Decimal(0),
-      );
-      const reserved = stocks.reduce(
-        (acc, s) => acc.add(s.reservedStock),
-        new Decimal(0),
-      );
-      const available = stocks.reduce(
-        (acc, s) => acc.add(s.availableStock),
-        new Decimal(0),
-      );
+      if (groupBy === "location") {
+        // Return a row for each location stock record
+        return stocks.map((stock) => {
+          const incomingT = transferMap.get(variant.id) || new Decimal(0);
+          const incomingP = purchaseMap.get(variant.id) || new Decimal(0);
 
-      const incomingT = transferMap.get(variant.id) || new Decimal(0);
-      const incomingP = purchaseMap.get(variant.id) || new Decimal(0);
+          // Note: incoming stock is per variant, not per location in this simple aggregation
+          // In a more complex setup, we'd filter incoming by location too
+          return {
+            productId: product.id,
+            variantId: variant.id,
+            name: product.name,
+            variantName: variant.name,
+            sku: variant.sku || product.sku,
+            categoryName: product.category?.name || "Uncategorized",
+            supplierName: product.suppliers[0]?.supplier.name || "N/A",
+            locationId: stock.locationId,
+            locationName: stock.location.name,
+            currentStock: stock.currentStock.toNumber(),
+            reservedStock: stock.reservedStock.toNumber(),
+            availableStock: stock.availableStock.toNumber(),
+            incomingStock: incomingT.add(incomingP).toNumber(),
+          };
+        });
+      } else {
+        const current = stocks.reduce(
+          (acc, s) => acc.add(s.currentStock),
+          new Decimal(0),
+        );
+        const reserved = stocks.reduce(
+          (acc, s) => acc.add(s.reservedStock),
+          new Decimal(0),
+        );
+        const available = stocks.reduce(
+          (acc, s) => acc.add(s.availableStock),
+          new Decimal(0),
+        );
 
-      return {
-        productId: product.id,
-        variantId: variant.id,
-        name: product.name,
-        variantName: variant.name,
-        sku: variant.sku || product.sku,
-        currentStock: current.toNumber(),
-        reservedStock: reserved.toNumber(),
-        availableStock: available.toNumber(),
-        incomingStock: incomingT.add(incomingP).toNumber(),
-      };
+        const incomingT = transferMap.get(variant.id) || new Decimal(0);
+        const incomingP = purchaseMap.get(variant.id) || new Decimal(0);
+
+        return [{
+          productId: product.id,
+          variantId: variant.id,
+          name: product.name,
+          variantName: variant.name,
+          sku: variant.sku || product.sku,
+          categoryName: product.category?.name || "Uncategorized",
+          supplierName: product.suppliers[0]?.supplier.name || "N/A",
+          currentStock: current.toNumber(),
+          reservedStock: reserved.toNumber(),
+          availableStock: available.toNumber(),
+          incomingStock: incomingT.add(incomingP).toNumber(),
+        }];
+      }
     }),
   );
+
+  // Sorting
+  if (sortBy) {
+    results.sort((a, b) => {
+      let valA: any = a[sortBy as keyof typeof a];
+      let valB: any = b[sortBy as keyof typeof b];
+
+      if (typeof valA === "string") {
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+      }
+
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
 
   return results;
 }

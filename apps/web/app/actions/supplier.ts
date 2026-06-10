@@ -16,15 +16,11 @@ export async function getSuppliers(options?: {
   }
 
   const orgId = auth.organizationId;
-  const userId = auth.user.id;
 
   // Find the member record for this user and organization
   const member = await db.member.findUnique({
     where: {
-      organizationId_userId: {
-        organizationId: orgId,
-        userId: userId,
-      },
+      id: auth.memberId,
     },
   });
 
@@ -239,14 +235,10 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   }
 
   const orgId = auth.organizationId;
-  const userId = auth.user.id;
 
   const member = await db.member.findUnique({
     where: {
-      organizationId_userId: {
-        organizationId: orgId,
-        userId: userId,
-      },
+      id: auth.memberId,
     },
   });
 
@@ -330,14 +322,10 @@ export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
   }
 
   const orgId = auth.organizationId;
-  const userId = auth.user.id;
 
   const member = await db.member.findUnique({
     where: {
-      organizationId_userId: {
-        organizationId: orgId,
-        userId: userId,
-      },
+      id: auth.memberId,
     },
   });
 
@@ -381,14 +369,10 @@ export async function addSupplierReview(supplierId: string, rating: number, comm
   }
 
   const orgId = auth.organizationId;
-  const userId = auth.user.id;
 
   const member = await db.member.findUnique({
     where: {
-      organizationId_userId: {
-        organizationId: orgId,
-        userId: userId,
-      },
+      id: auth.memberId,
     },
   });
 

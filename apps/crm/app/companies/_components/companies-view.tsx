@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from "react";
+import useSWR from "swr";
 import {
   Building2,
   Search,
@@ -10,58 +11,60 @@ import {
   MoreHorizontal,
   ArrowUpDown,
   FileText,
-} from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import { getCompanies, deleteCompany } from '../../actions/companies';
-import { StatCard } from '../../../components/ui/stat-card';
-import { useOrg } from '../../../components/org-context';
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
+import { getCompanies, deleteCompany } from "../../actions/companies";
+import { StatCard } from "../../../components/ui/stat-card";
+import { useOrg } from "../../../components/org-context";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@repo/ui/components/ui/sheet';
-import { CompanyForm } from './company-form';
+} from "@repo/ui/components/ui/sheet";
+import { CompanyForm } from "./company-form";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@repo/ui/components/ui/dropdown-menu';
-import { Button } from '@repo/ui/components/ui/button';
+} from "@repo/ui/components/ui/dropdown-menu";
+import { Button } from "@repo/ui/components/ui/button";
+import { toast } from "sonner";
+import { Card, CardContent } from "@repo/ui/components/ui/card";
 
 const PAGE_SIZE = 10;
 
 export function CompaniesView() {
   const { organizationId } = useOrg();
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<any>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchCompanies = async () => {
-    setLoading(true);
-    try {
-      const data = await getCompanies(organizationId);
-      setCompanies(data);
-    } catch (error) {
-      console.error('Failed to fetch companies', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCompanies();
-  }, [organizationId]);
+  // Use SWR for data fetching
+  const {
+    data: companies = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(
+    organizationId ? ["companies", organizationId] : null,
+    () => getCompanies(organizationId),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      dedupingInterval: 60000, // 1 minute
+    },
+  );
 
   const filtered = useMemo(() => {
-    return companies.filter((c) => {
+    return companies.filter((c: any) => {
       const matchesSearch =
-        search === '' ||
+        search === "" ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         (c.taxId && c.taxId.toLowerCase().includes(search.toLowerCase()));
       return matchesSearch;
@@ -70,17 +73,85 @@ export function CompaniesView() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
-  const paged = filtered.slice((safeCurrentPage - 1) * PAGE_SIZE, safeCurrentPage * PAGE_SIZE);
+  const paged = filtered.slice(
+    (safeCurrentPage - 1) * PAGE_SIZE,
+    safeCurrentPage * PAGE_SIZE,
+  );
 
-  const startItem = filtered.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
+  const startItem =
+    filtered.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
   const handleDelete = async (id: string) => {
-    if (typeof window !== 'undefined' && global.confirm('Are you sure you want to delete this company?')) {
-      await deleteCompany(id);
-      fetchCompanies();
+    if (
+      typeof window !== "undefined" &&
+      window.confirm("Are you sure you want to delete this company?")
+    ) {
+      try {
+        setDeletingId(id);
+
+        // Optimistic update - remove from UI immediately
+        const updatedCompanies = companies.filter((c: any) => c.id !== id);
+        mutate(updatedCompanies, false);
+
+        // Perform actual deletion
+        await deleteCompany(id);
+
+        toast.success("Company deleted successfully");
+
+        // Revalidate to ensure data consistency
+        mutate();
+
+        // Adjust page if current page becomes empty
+        if (paged.length === 1 && page > 1) {
+          setPage(page - 1);
+        }
+      } catch (error) {
+        // Revert on error
+        mutate();
+        toast.error("Failed to delete company");
+        console.error("Failed to delete company", error);
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
+
+  const handleCompanySuccess = () => {
+    setIsCreateOpen(false);
+    setEditingCompany(null);
+    mutate(); // Re-fetch companies data
+    toast.success(
+      editingCompany
+        ? "Company updated successfully"
+        : "Company created successfully",
+    );
+  };
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+        <div className="flex-1 px-8 pb-8">
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-red-600">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Error loading companies
+                </h3>
+                <p className="text-muted-foreground">
+                  Failed to load companies. Please try again later.
+                </p>
+                <Button onClick={() => mutate()} className="mt-4">
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
@@ -103,12 +174,7 @@ export function CompaniesView() {
               <SheetHeader>
                 <SheetTitle>Add New Company</SheetTitle>
               </SheetHeader>
-              <CompanyForm
-                onSuccess={() => {
-                  setIsCreateOpen(false);
-                  fetchCompanies();
-                }}
-              />
+              <CompanyForm onSuccess={handleCompanySuccess} />
             </SheetContent>
           </Sheet>
         </div>
@@ -129,7 +195,10 @@ export function CompaniesView() {
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
             <div className="relative flex-1 max-w-sm">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
               <input
                 type="text"
                 placeholder="Search by name or tax ID..."
@@ -162,21 +231,38 @@ export function CompaniesView() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {loading ? (
+                {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-16 text-[13px] text-muted-foreground">
-                      Loading companies...
+                    <td colSpan={5} className="text-center py-16">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p className="text-[13px] text-muted-foreground">
+                          Loading companies...
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : paged.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-16 text-[13px] text-muted-foreground">
-                      No companies found.
+                    <td
+                      colSpan={5}
+                      className="text-center py-16 text-[13px] text-muted-foreground"
+                    >
+                      {search
+                        ? "No companies match your search."
+                        : "No companies found. Create your first company to get started!"}
                     </td>
                   </tr>
                 ) : (
-                  paged.map((company) => (
-                    <tr key={company.id} className="hover:bg-muted/30 transition-colors group">
+                  paged.map((company: any) => (
+                    <tr
+                      key={company.id}
+                      className={cn(
+                        "hover:bg-muted/30 transition-colors group",
+                        deletingId === company.id &&
+                          "opacity-50 pointer-events-none",
+                      )}
+                    >
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
@@ -188,10 +274,10 @@ export function CompaniesView() {
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
-                        {company.taxId || '—'}
+                        {company.taxId || "—"}
                       </td>
                       <td className="px-4 py-3.5 text-right text-[13px] text-foreground">
-                        {company._count.customers}
+                        {company._count?.customers || 0}
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
                         {new Date(company.createdAt).toLocaleDateString()}
@@ -200,7 +286,9 @@ export function CompaniesView() {
                         <div className="flex items-center justify-end gap-1">
                           <Sheet
                             open={editingCompany?.id === company.id}
-                            onOpenChange={(open: boolean) => !open && setEditingCompany(null)}
+                            onOpenChange={(open: boolean) =>
+                              !open && setEditingCompany(null)
+                            }
                           >
                             <button
                               onClick={() => setEditingCompany(company)}
@@ -214,16 +302,16 @@ export function CompaniesView() {
                               </SheetHeader>
                               <CompanyForm
                                 initialData={company}
-                                onSuccess={() => {
-                                  setEditingCompany(null);
-                                  fetchCompanies();
-                                }}
+                                onSuccess={handleCompanySuccess}
                               />
                             </SheetContent>
                           </Sheet>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors">
+                              <button
+                                className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors"
+                                disabled={deletingId === company.id}
+                              >
                                 <MoreHorizontal size={14} />
                               </button>
                             </DropdownMenuTrigger>
@@ -231,8 +319,11 @@ export function CompaniesView() {
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => handleDelete(company.id)}
+                                disabled={deletingId === company.id}
                               >
-                                Delete
+                                {deletingId === company.id
+                                  ? "Deleting..."
+                                  : "Delete"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

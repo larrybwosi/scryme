@@ -18,6 +18,7 @@ import {
   Check,
   QrCode,
   Terminal,
+  Download,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Breadcrumbs } from "../../../components/breadcrumbs";

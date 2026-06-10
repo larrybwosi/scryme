@@ -3,14 +3,21 @@ import { Pool } from "pg";
 import { PrismaClient } from "../generated/client";
 import { env } from "@repo/env";
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient;
+  pgPool: Pool;
+};
 
 // 1. Create the Pool specifically for the adapter
 const connectionString = env.DATABASE_URL;
 
-const pool = new Pool({
-  connectionString,
-});
+const pool =
+  globalForPrisma.pgPool ||
+  new Pool({
+    connectionString,
+  });
+
+if (env.NODE_ENV !== "production") globalForPrisma.pgPool = pool;
 
 // 2. Pass the pool to the adapter
 const adapter = new PrismaPg(pool);
@@ -19,8 +26,6 @@ export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter,
-    // Optional: Log queries to see if connection works
-    // log: ['query', 'info', 'warn', 'error'],
   });
 
 if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

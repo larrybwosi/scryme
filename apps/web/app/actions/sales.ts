@@ -15,20 +15,16 @@ import {
 } from "@repo/db/client";
 import { Decimal } from "decimal.js";
 
-async function getMember(organizationId: string, userId: string) {
-  console.log(organizationId, userId);
-  return await db.member.findUnique({
-    where: { organizationId_userId: { organizationId, userId } },
-  });
-}
-
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
-  if (!auth || !auth.organizationId) {
+  if (!auth || !auth.organizationId || !auth.memberId) {
     throw new Error("Unauthorized");
   }
 
-  const member = await getMember(auth.organizationId, auth.user.id);
+  const member = await db.member.findUnique({
+    where: { id: auth.memberId },
+  });
+
   if (!member || !allowedRoles.includes(member.role)) {
     throw new Error("Forbidden: Insufficient permissions");
   }
@@ -187,7 +183,7 @@ export async function createTransaction(data: {
   const transaction = await db.transaction.create({
     data: {
       organizationId: auth.organizationId,
-      memberId: auth.user.id,
+      memberId: auth.memberId,
       number,
       type: data.type,
       customerId: data.customerId,
@@ -377,6 +373,72 @@ export async function updateFulfillmentStatus(
   return fulfillment;
 }
 
+export async function createOrderAction(data: any) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  // console.log(data);
+  if (data.type === "POS_SALE") {
+    const { processSale } = await import("@repo/shared/server");
+
+    // Transform OrderForm data to ProcessSaleInput
+    const saleData = {
+      cartItems: data.items.map((item: any) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+      })),
+      locationId: data.locationId,
+      customerId: data.customerId,
+      discountAmount: data.discountAmount,
+      notes: data.notes,
+      payments: [
+        {
+          method: "CASH", // Default for now
+          amount:
+            data.items.reduce(
+              (acc: number, item: any) =>
+                acc +
+                item.unitPrice * item.quantity +
+                (item.taxAmount || 0) -
+                (item.discountAmount || 0),
+              0,
+            ) - (data.discountAmount || 0),
+        },
+      ],
+      enableStockTracking: true,
+    };
+
+    const result = await processSale(
+      auth.organizationId,
+      auth.memberId,
+      saleData,
+    );
+
+    if (result.success) {
+      revalidatePath("/sales/transactions");
+    }
+
+    return result;
+  }
+
+  // Import shared logic for QUOTE and SALES_ORDER
+  const { createOrder } = await import("@repo/shared/server");
+
+  const result = await createOrder(auth.organizationId, auth.memberId, {
+    ...data,
+    type: data.type === "QUOTE" ? "QUOTE" : "SALES_ORDER",
+    status: data.type === "QUOTE" ? "DRAFT" : "PENDING_CONFIRMATION",
+    fulfillment: {
+      type: "DELIVERY", // Default
+      pickupLocationId: data.locationId,
+    },
+  });
+
+  if (result.success) {
+    revalidatePath("/sales/transactions");
+  }
+
+  return result;
+}
+
 export async function bulkUpdateTransactionStatus(
   ids: string[],
   status: TransactionStatus,
@@ -429,7 +491,7 @@ export async function reconcileFulfillment(
     data: {
       isReconciled: true,
       reconciledAt: new Date(),
-      reconciledBy: auth.user.id,
+      reconciledBy: auth.memberId,
       receivedBy: data.receivedBy,
       deliveryNotes: data.notes,
       status: "COMPLETED",

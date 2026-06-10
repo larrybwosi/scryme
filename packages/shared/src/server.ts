@@ -14,8 +14,13 @@ export * from "./services/openloyalty";
 export * from "./services/customer";
 export * from "./actions/transaction/process.sale";
 export * from "./actions/transaction/orders";
+export * from "./actions/transaction/orders";
 export * from "./actions/organization/mpesa-trigger.service";
 export * from "./lib/services/navari.service";
-export { createDeviceSetupTokenCore, getDeviceSetupTokensCore, revokeSetupTokenCore } from "./lib/provisioning/common";
+export {
+  createDeviceSetupTokenCore,
+  getDeviceSetupTokensCore,
+  revokeSetupTokenCore,
+} from "./lib/provisioning/common";
 export { provisionDeviceV2 } from "./lib/provisioning/v2";
 export { provisionDeviceV3 } from "./lib/provisioning/v3";
