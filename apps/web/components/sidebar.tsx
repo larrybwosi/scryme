@@ -109,7 +109,7 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Approvals", href: "/finance/approvals" },
         ],
       },
-      { title: "Maintenance", icon: Settings, href: "/maintenance" },
+      { title: "Settings", icon: Settings, href: "/settings" },
     ],
   },
 ];

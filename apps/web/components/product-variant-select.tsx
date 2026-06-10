@@ -107,7 +107,7 @@ export function ProductVariantSelect({
                           ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                           : "bg-red-50 text-red-600 border border-red-100"
                       )}>
-                        {variant.stock ?? 0} in stock
+                        {variant.stock ?? 0} available
                       </span>
                     </div>
                     {variant.sku && (

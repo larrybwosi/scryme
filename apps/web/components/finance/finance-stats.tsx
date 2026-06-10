@@ -18,13 +18,13 @@ interface FinanceStatsProps {
   };
 }
 
-export function FinanceStats({ stats }: FinanceStatsProps) {
+export function FinanceStats({ stats, currency = "KES" }: FinanceStatsProps & { currency?: string }) {
   const cards = [
     {
       title: "Total Paid Expenses",
-      value: new Intl.NumberFormat("en-KE", {
+      value: new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "KES",
+        currency: currency,
       }).format(stats.totalExpenses),
       icon: DollarSign,
       trend: "+12.5%",
@@ -33,9 +33,9 @@ export function FinanceStats({ stats }: FinanceStatsProps) {
     },
     {
       title: "Monthly Spend",
-      value: new Intl.NumberFormat("en-KE", {
+      value: new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "KES",
+        currency: currency,
       }).format(stats.monthlySpend),
       icon: TrendingUp,
       trend: "+4.3%",

@@ -81,9 +81,9 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                   <Badge variant="outline">{expense.category.name}</Badge>
                 </TableCell>
                 <TableCell>
-                  {new Intl.NumberFormat("en-KE", {
+                  {new Intl.NumberFormat("en-US", {
                     style: "currency",
-                    currency: expense.currencyCode || "KES",
+                    currency: expense.currencyCode || "USD",
                   }).format(Number(expense.amount))}
                 </TableCell>
                 <TableCell>

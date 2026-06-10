@@ -124,6 +124,9 @@ export async function createExpense(data: {
       ? Number(org.expenseApprovalThreshold)
       : 0;
     const status = data.amount > threshold ? "PENDING_APPROVAL" : "PENDING";
+    const orgSettings = await tx.organizationSettings.findUnique({
+      where: { organizationId: auth.organizationId },
+    });
 
     const expense = await tx.expense.create({
       data: {
@@ -132,6 +135,7 @@ export async function createExpense(data: {
         expenseNumber,
         description: data.description,
         amount: data.amount,
+        currencyCode: orgSettings?.defaultCurrency || "USD",
         categoryId: data.categoryId,
         expenseDate: data.expenseDate,
         paymentMethod: data.paymentMethod,

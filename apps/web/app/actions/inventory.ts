@@ -194,7 +194,21 @@ export async function createProduct(data: {
         },
       });
 
-      // 4. Create Stock Adjustment for history
+      // 4. Create Stock Batch for the enterprise logic
+      const batch = await tx.stockBatch.create({
+        data: {
+          organizationId: context.organizationId,
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+          initialQuantity: new Decimal(data.initialStock),
+          currentQuantity: new Decimal(data.initialStock),
+          purchasePrice: new Decimal(data.buyingPrice),
+          receivedDate: new Date(),
+          batchNumber: `INIT-${variant.sku}-${Date.now().toString().slice(-4)}`,
+        },
+      });
+
+      // 5. Create Stock Adjustment for history
       const adjustment = await tx.stockAdjustment.create({
         data: {
           variantId: variant.id,
@@ -205,10 +219,11 @@ export async function createProduct(data: {
           notes: "Initial stock upon product creation",
           status: "APPROVED",
           organizationId: context.organizationId,
+          stockBatchId: batch.id,
         },
       });
 
-      // 5. Create Stock Movement
+      // 6. Create Stock Movement
       await tx.stockMovement.create({
         data: {
           variantId: variant.id,
@@ -219,6 +234,7 @@ export async function createProduct(data: {
           memberId: context.memberId,
           notes: "Initial stock upon product creation",
           organizationId: context.organizationId,
+          stockBatchId: batch.id,
         },
       });
     } else {
@@ -607,6 +623,32 @@ export async function adjustStock(data: {
       },
     });
 
+    const variant = await tx.productVariant.findUnique({
+      where: { id: variantId },
+      select: { productId: true, buyingPrice: true, sku: true },
+    });
+
+    if (!variant) throw new Error("Variant not found");
+
+    let batchId: string | undefined;
+
+    // Create a batch if adding stock
+    if (quantity > 0) {
+      const batch = await tx.stockBatch.create({
+        data: {
+          organizationId: context.organizationId,
+          variantId,
+          locationId,
+          initialQuantity: new Decimal(quantity),
+          currentQuantity: new Decimal(quantity),
+          purchasePrice: variant.buyingPrice,
+          receivedDate: new Date(),
+          batchNumber: `ADJ-${variant.sku}-${Date.now().toString().slice(-4)}`,
+        },
+      });
+      batchId = batch.id;
+    }
+
     if (stock) {
       await tx.productVariantStock.update({
         where: { id: stock.id },
@@ -616,13 +658,6 @@ export async function adjustStock(data: {
         },
       });
     } else {
-      const variant = await tx.productVariant.findUnique({
-        where: { id: variantId },
-        select: { productId: true },
-      });
-
-      if (!variant) throw new Error("Variant not found");
-
       await tx.productVariantStock.create({
         data: {
           variantId,
@@ -632,6 +667,19 @@ export async function adjustStock(data: {
           availableStock: new Decimal(quantity),
           organizationId: context.organizationId,
         },
+      });
+    }
+
+    // Update adjustment and movement with batchId if it was created
+    if (batchId) {
+      await tx.stockAdjustment.update({
+        where: { id: adjustment.id },
+        data: { stockBatchId: batchId },
+      });
+
+      await tx.stockMovement.update({
+        where: { adjustmentId: adjustment.id },
+        data: { stockBatchId: batchId },
       });
     }
 
