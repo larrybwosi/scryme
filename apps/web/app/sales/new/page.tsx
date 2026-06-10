@@ -41,8 +41,13 @@ export default async function NewOrderPage() {
     productName: v.product.name,
     retailPrice: Number(v.retailPrice),
     buyingPrice: Number(v.buyingPrice),
-    stock: v.variantStocks.reduce((acc, s) => acc + Number(s.currentStock), 0),
+    stock: v.variantStocks.reduce((acc, s) => acc + Number(s.availableStock), 0),
   }));
+
+  const organization = await db.organization.findUnique({
+    where: { id: auth?.organizationId },
+    include: { settings: true },
+  });
 
   return (
     <div className="w-full space-y-6">
@@ -56,6 +61,7 @@ export default async function NewOrderPage() {
         customers={customers}
         locations={locations}
         variants={formattedVariants}
+        currency={organization?.settings?.defaultCurrency || "USD"}
       />
     </div>
   );

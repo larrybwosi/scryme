@@ -10,6 +10,7 @@ import { AverageSalesChart } from "../../components/dashboard/average-sales-char
 import { TotalSessionsChart } from "../../components/dashboard/total-sessions-chart";
 import { format } from "date-fns";
 import { Suspense } from "react";
+import { db } from "@repo/db";
 
 export default async function DashboardPage(props: {
   searchParams: Promise<{ timeframe?: string }>;
@@ -20,13 +21,21 @@ export default async function DashboardPage(props: {
   const auth = (await getServerAuth())!;
   console.log(auth);
 
-  const data = await getDashboardData(timeframe);
+  const [data, organization] = await Promise.all([
+    getDashboardData(timeframe),
+    db.organization.findUnique({
+      where: { id: auth.organizationId },
+      include: { settings: true },
+    }),
+  ]);
+
+  const currency = organization?.settings?.defaultCurrency || "USD";
   const today = format(new Date(), "EEEE, dd MMMM yyyy");
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: currency,
       maximumFractionDigits: 0,
     }).format(val);
 

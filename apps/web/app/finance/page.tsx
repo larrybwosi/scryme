@@ -3,10 +3,18 @@ import { PageHeader } from '../../components/page-header';
 import { FinanceStats } from '../../components/finance/finance-stats';
 import { getFinanceOverview, getExpenses } from '../actions/finance';
 import { ExpenseTable } from '../../components/finance/expense-table';
+import { db } from '@repo/db';
+import { getServerAuth } from '@repo/auth/server';
 
 export default async function FinancePage() {
+  const auth = await getServerAuth();
   const stats = await getFinanceOverview();
   const recentExpenses = await getExpenses({ status: 'all' });
+
+  const organization = await db.organization.findUnique({
+    where: { id: auth?.organizationId },
+    include: { settings: true },
+  });
 
   return (
     <div className="space-y-8">
@@ -16,7 +24,10 @@ export default async function FinancePage() {
         icon={<Wallet className="w-7 h-7" />}
       />
 
-      <FinanceStats stats={stats} />
+      <FinanceStats
+        stats={stats}
+        currency={organization?.settings?.defaultCurrency || "USD"}
+      />
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">

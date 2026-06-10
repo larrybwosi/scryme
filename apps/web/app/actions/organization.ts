@@ -71,6 +71,37 @@ export async function createOrganization(data: {
   return organization;
 }
 
+export async function updateOrganizationSettings(data: {
+  defaultCurrency?: string;
+  defaultTimezone?: string;
+  country?: string;
+}): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const settings = await db.organizationSettings.upsert({
+    where: { organizationId: auth.organizationId },
+    update: data,
+    create: {
+      ...data,
+      organizationId: auth.organizationId,
+    },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  return settings;
+}
+
+export async function getOrganizationSettings(): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  return db.organizationSettings.findUnique({
+    where: { organizationId: auth.organizationId },
+  });
+}
+
 export async function checkSlugAvailability(slug: string) {
   const existing = await db.organization.findUnique({
     where: { slug },
