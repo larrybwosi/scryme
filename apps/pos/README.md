@@ -57,6 +57,32 @@ The output can be found in `apps/pos/src-tauri/target/release/bundle/`.
 
 ---
 
+## 🔧 CI/CD & Updates
+
+To enable automatic updates and successful builds in GitHub Actions, you must configure the following secrets in your repository:
+
+### 🔑 Generating Signing Keys
+
+Run the following command to generate a new key pair:
+
+```bash
+pnpm --filter pos tauri signer generate -w src-tauri/pos-updater.key
+```
+
+### 🔐 GitHub Secrets
+
+Add these secrets to your GitHub repository settings under **Secrets and variables > Actions**:
+
+| Secret Name | Description |
+| ----------- | ----------- |
+| `POS_TAURI_SIGNING_PRIVATE_KEY` | The content of the generated `.key` file (private key). |
+| `POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The password used when generating the key (if any). |
+| `POS_TAURI_PUBLIC_KEY` | The public key string displayed after generation. |
+
+> **Note**: These keys are specific to the POS application. The Bakery application uses its own set of keys prefixed with `BAKERY_` (e.g., `BAKERY_TAURI_PUBLIC_KEY`).
+
+---
+
 ## 🔧 Configuration
 
 ### Onboarding
