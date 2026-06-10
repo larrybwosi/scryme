@@ -1,5 +1,7 @@
 import { db, type Prisma } from "@repo/db";
 import * as crypto from "crypto";
+import * as argon2 from "argon2";
+import { encrypt } from "../../api/v2/utils/encryption";
 
 // --- V3 API Client Actions ---
 
@@ -126,10 +128,20 @@ export async function createV2ApiKey(data: {
   keyType?: "POS" | "CLIENT";
   permissions?: string[];
 }) {
-  const keyPrefix = `sk_${data.environment === "TEST" ? "test_" : ""}${crypto.randomBytes(4).toString("hex")}`;
-  const rawKey = crypto.randomBytes(24).toString("hex");
-  const fullKey = `${keyPrefix}_${rawKey}`;
-  const hashedKey = crypto.createHash("sha256").update(fullKey).digest("hex");
+  const keyPrefix = `sk_${data.environment === "TEST" ? "test_" : ""}${crypto.randomBytes(4).toString("hex")}_`;
+  const secret = crypto.randomBytes(32).toString("hex");
+  const fullKey = `${keyPrefix}${secret}`;
+
+  // 1. Hash the secret with argon2
+  const hashedSecret = await argon2.hash(secret, {
+    type: argon2.argon2id,
+    memoryCost: 4096,
+    timeCost: 3,
+    parallelism: 4,
+  });
+
+  // 2. Encrypt the hash for storage
+  const encryptedHash = encrypt(hashedSecret);
 
   const apiKey = await db.apiKey.create({
     data: {
@@ -137,7 +149,7 @@ export async function createV2ApiKey(data: {
       organizationId: data.organizationId,
       createdById: data.createdById,
       keyPrefix,
-      hashedKey,
+      hashedKey: encryptedHash,
       environment: data.environment || "LIVE",
       keyType: data.keyType || "CLIENT",
       permissions: data.permissions || [],
