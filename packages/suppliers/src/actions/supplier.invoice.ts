@@ -1,8 +1,6 @@
 import { db as prisma } from "@repo/db";
 import {
-  SupplierInvoice,
   PaymentStatus,
-  PurchaseStatus,
   Prisma,
 } from "@repo/db";
 import { z } from "zod";

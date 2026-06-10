@@ -33,7 +33,7 @@ import {
   ShiftSyncSchema,
 } from "./pos.schema";
 import { Decimal } from "decimal.js";
-import { RedisService } from "src/redis/redis.service";
+import { RedisService } from "@/redis/redis.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { PosCustomerService } from "./pos-customer.service";
 import { Prisma } from "@repo/db";
