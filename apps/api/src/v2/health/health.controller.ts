@@ -25,7 +25,7 @@ export class HealthController {
       throw new ServiceUnavailableException({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        error: error.message,
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
       });
     }
   }
@@ -82,7 +82,7 @@ export class HealthController {
       throw new ServiceUnavailableException({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        error: error.message,
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message,
       });
     }
   }
