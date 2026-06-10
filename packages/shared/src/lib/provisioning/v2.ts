@@ -3,25 +3,41 @@ import * as argon2 from "argon2";
 import { encrypt } from "../../api/v2/utils/encryption";
 
 export async function provisionDeviceV2(prisma: any, token: string, extraData: { ipAddress?: string, serialNumber?: string, macAddress?: string } = {}) {
+  const startTime = performance.now();
   console.log('[ProvisionV2] Starting provisioning with token');
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
   console.log('[ProvisionV2] Looking up setup token');
-  const setupToken = await (prisma.client || prisma).deviceSetupToken.findFirst({
+  const dbStart = performance.now();
+  const setupToken = await (prisma.client || prisma).deviceSetupToken.findUnique({
     where: {
       tokenHash,
-      revokedAt: null,
-      usedAt: null,
-      expiresAt: { gt: new Date() },
     },
   });
+  const dbEnd = performance.now();
+  console.log(`[ProvisionV2] DB Lookup took ${(dbEnd - dbStart).toFixed(2)}ms`);
 
   if (!setupToken) {
-    console.log('[ProvisionV2] Setup token not found or expired');
-    throw new Error("Invalid or expired setup token");
+    console.log('[ProvisionV2] Setup token not found');
+    throw new Error("Invalid setup token");
   }
 
-  console.log('[ProvisionV2] Found setup token for device:', setupToken.deviceName);
+  if (setupToken.revokedAt) {
+    console.log('[ProvisionV2] Setup token is revoked');
+    throw new Error("Setup token has been revoked");
+  }
+
+  if (setupToken.usedAt) {
+    console.log('[ProvisionV2] Setup token has already been used');
+    throw new Error("Setup token has already been used");
+  }
+
+  if (setupToken.expiresAt < new Date()) {
+    console.log('[ProvisionV2] Setup token has expired');
+    throw new Error("Setup token has expired");
+  }
+
+  console.log('[ProvisionV2] Found valid setup token for device:', setupToken.deviceName);
 
   // 1. Generate API Key
   const secret = crypto.randomBytes(32).toString("hex");
@@ -33,13 +49,15 @@ export async function provisionDeviceV2(prisma: any, token: string, extraData: {
 
   // Hash the secret
   console.log('[ProvisionV2] Hashing secret with argon2...');
+  const argonStart = performance.now();
   const hashedSecret = await argon2.hash(secret, {
     type: argon2.argon2id,
     memoryCost: 4096,
     timeCost: 3,
     parallelism: 4,
   });
-  console.log('[ProvisionV2] Argon2 hash complete');
+  const argonEnd = performance.now();
+  console.log(`[ProvisionV2] Argon2 hash complete in ${(argonEnd - argonStart).toFixed(2)}ms`);
 
   // Encrypt the hash for storage
   console.log('[ProvisionV2] Encrypting hash for storage...');
@@ -94,7 +112,8 @@ export async function provisionDeviceV2(prisma: any, token: string, extraData: {
     },
   });
 
-  console.log('[ProvisionV2] Provisioning complete');
+  const totalTime = performance.now() - startTime;
+  console.log(`[ProvisionV2] Provisioning complete in ${totalTime.toFixed(2)}ms`);
   return {
     apiKey: plaintextKey,
     apiKeyId: apiKey.id,
