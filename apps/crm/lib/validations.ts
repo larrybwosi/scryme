@@ -5,6 +5,7 @@ export const customerSchema = z.object({
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone: z.string().optional(),
   company: z.string().optional(),
+  businessAccountId: z.string().optional().nullable(),
   customerType: z.string().optional(),
   taxId: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -16,6 +17,11 @@ export type CustomerFormValues = z.infer<typeof customerSchema>;
 export const businessAccountSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   taxId: z.string().optional(),
+  contacts: z.array(z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email().optional().or(z.literal('')),
+    phone: z.string().optional(),
+  })).optional(),
 });
 
 export type BusinessAccountFormValues = z.infer<typeof businessAccountSchema>;

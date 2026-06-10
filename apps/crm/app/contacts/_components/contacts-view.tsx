@@ -1,18 +1,16 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import useSWR from "swr";
 import {
-  Users,
+  Contact,
   Search,
   Plus,
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  ArrowUpDown,
-  Globe,
   AlertCircle,
+  Building2,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { getCustomers, deleteCustomer } from "../../actions/customers";
@@ -25,7 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
-import { CustomerForm } from "./customer-form";
+import { ContactForm } from "./contact-form";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,49 +36,41 @@ import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
 
-export function CustomersView() {
+export function ContactsView() {
   const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "All" | "Active" | "Inactive"
-  >("All");
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [editingContact, setEditingContact] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Use SWR for data fetching
   const {
-    data: customers = [],
+    data: contacts = [],
     error,
     isLoading,
     mutate,
   } = useSWR(
-    organizationId ? ["customers-b2c", organizationId] : null,
-    () => getCustomers(organizationId, { type: 'B2C' }),
+    organizationId ? ["contacts", organizationId] : null,
+    () => getCustomers(organizationId, { type: 'CONTACT' }),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 1 minute
+      dedupingInterval: 60000,
     },
   );
 
   const filtered = useMemo(() => {
-    return customers.filter((c: any) => {
+    return contacts.filter((c: any) => {
       const matchesSearch =
         search === "" ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
-        (c.company && c.company.toLowerCase().includes(search.toLowerCase()));
+        (c.businessAccount?.name && c.businessAccount.name.toLowerCase().includes(search.toLowerCase()));
 
-      const matchesStatus =
-        statusFilter === "All" ||
-        (statusFilter === "Active" && c.isActive) ||
-        (statusFilter === "Inactive" && !c.isActive);
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [search, statusFilter, customers]);
+  }, [search, contacts]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
@@ -96,50 +86,38 @@ export function CustomersView() {
   const handleDelete = async (id: string) => {
     if (
       typeof window !== "undefined" &&
-      window.confirm("Are you sure you want to delete this customer?")
+      window.confirm("Are you sure you want to delete this contact?")
     ) {
       try {
         setDeletingId(id);
-
-        // Optimistic update - remove from UI immediately
-        const updatedCustomers = customers.filter((c: any) => c.id !== id);
-        mutate(updatedCustomers, false);
-
-        // Perform actual deletion
+        const updatedContacts = contacts.filter((c: any) => c.id !== id);
+        mutate(updatedContacts, false);
         await deleteCustomer(id);
-
-        toast.success("Customer deleted successfully");
-
-        // Revalidate to ensure data consistency
+        toast.success("Contact deleted successfully");
         mutate();
-
-        // Adjust page if current page becomes empty
         if (paged.length === 1 && page > 1) {
           setPage(page - 1);
         }
       } catch (error) {
-        // Revert on error
         mutate();
-        toast.error("Failed to delete customer");
-        console.error("Failed to delete customer", error);
+        toast.error("Failed to delete contact");
+        console.error("Failed to delete contact", error);
       } finally {
         setDeletingId(null);
       }
     }
   };
 
-  const handleCustomerSuccess = () => {
+  const handleSuccess = () => {
     setIsCreateOpen(false);
-    setEditingCustomer(null);
-    mutate(); // Re-fetch customers data
+    setEditingContact(null);
+    mutate();
     toast.success(
-      editingCustomer
-        ? "Customer updated successfully"
-        : "Customer created successfully",
+      editingContact
+        ? "Contact updated successfully"
+        : "Contact created successfully",
     );
   };
-
-  const activeCount = customers.filter((c: any) => c.isActive).length;
 
   if (error) {
     return (
@@ -149,15 +127,8 @@ export function CustomersView() {
             <CardContent className="py-8">
               <div className="text-center text-red-600">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Error loading customers
-                </h3>
-                <p className="text-muted-foreground">
-                  Failed to load customers. Please try again later.
-                </p>
-                <Button onClick={() => mutate()} className="mt-4">
-                  Retry
-                </Button>
+                <h3 className="text-lg font-semibold mb-2">Error loading contacts</h3>
+                <Button onClick={() => mutate()} className="mt-4">Retry</Button>
               </div>
             </CardContent>
           </Card>
@@ -171,33 +142,33 @@ export function CustomersView() {
       <div className="px-8 pt-7 pb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-[22px] font-bold text-foreground">Customers</h1>
+            <h1 className="text-[22px] font-bold text-foreground">Contacts</h1>
             <p className="text-[13px] text-muted-foreground mt-0.5">
-              Manage and track all your customer relationships.
+              Manage people associated with your business accounts.
             </p>
           </div>
           <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <SheetTrigger asChild>
               <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-primary/90 transition-colors">
                 <Plus size={15} />
-                Add Customer
+                Add Contact
               </button>
             </SheetTrigger>
             <SheetContent className="sm:max-w-[440px] overflow-y-auto">
               <SheetHeader>
-                <SheetTitle>Add New Customer</SheetTitle>
+                <SheetTitle>Add New Contact</SheetTitle>
               </SheetHeader>
-              <CustomerForm onSuccess={handleCustomerSuccess} type="B2C" />
+              <ContactForm onSuccess={handleSuccess} />
             </SheetContent>
           </Sheet>
         </div>
 
         <div className="grid grid-cols-4 gap-4 mt-6">
           <StatCard
-            title="Total Customers"
-            value={customers.length}
-            sub={`${activeCount} active`}
-            icon={Users}
+            title="Total Contacts"
+            value={contacts.length}
+            sub="Linked to companies"
+            icon={Contact}
             iconColor="text-primary"
             iconBg="bg-primary/10"
           />
@@ -220,25 +191,6 @@ export function CustomersView() {
                 className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
-            <div className="flex items-center gap-1.5">
-              {(["All", "Active", "Inactive"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    setStatusFilter(s);
-                    setPage(1); // Reset to first page when filter changes
-                  }}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-                    statusFilter === s
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background border border-border text-muted-foreground hover:bg-accent",
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -246,16 +198,10 @@ export function CustomersView() {
               <thead>
                 <tr className="bg-muted/50 border-b border-border">
                   <th className="text-left px-5 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Customer
+                    Contact
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Company
-                  </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Status
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Phone
@@ -266,115 +212,64 @@ export function CustomersView() {
               <tbody className="divide-y divide-border">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-16">
+                    <td colSpan={4} className="text-center py-16">
                       <div className="flex flex-col items-center gap-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        <p className="text-[13px] text-muted-foreground">
-                          Loading customers...
-                        </p>
+                        <p className="text-[13px] text-muted-foreground">Loading contacts...</p>
                       </div>
                     </td>
                   </tr>
                 ) : paged.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-16 text-[13px] text-muted-foreground"
-                    >
-                      {search || statusFilter !== "All"
-                        ? "No customers match your criteria."
-                        : "No customers found. Create your first customer to get started!"}
+                    <td colSpan={4} className="text-center py-16 text-[13px] text-muted-foreground">
+                      {search ? "No contacts match your search." : "No contacts found."}
                     </td>
                   </tr>
                 ) : (
-                  paged.map((customer: any) => (
-                    <tr
-                      key={customer.id}
-                      className={cn(
-                        "hover:bg-muted/30 transition-colors group",
-                        deletingId === customer.id &&
-                          "opacity-50 pointer-events-none",
-                      )}
-                    >
+                  paged.map((contact: any) => (
+                    <tr key={contact.id} className={cn("hover:bg-muted/30 transition-colors group", deletingId === contact.id && "opacity-50 pointer-events-none")}>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
-                            {customer.name.charAt(0).toUpperCase()}
+                            {contact.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground">
-                              {customer.name}
-                            </div>
-                            <div className="text-[11.5px] text-muted-foreground">
-                              {customer.email || "No email"}
-                            </div>
+                            <div className="text-[13px] font-semibold text-foreground">{contact.name}</div>
+                            <div className="text-[11.5px] text-muted-foreground">{contact.email || "No email"}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-[13px] text-foreground font-medium">
-                        {customer.company || "—"}
-                      </td>
-                      <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
-                        {customer.customerType || "—"}
-                      </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={cn(
-                            "px-2 py-0.5 rounded-full text-[11px] font-semibold",
-                            customer.isActive
-                              ? "bg-status-success/10 text-status-success"
-                              : "bg-muted text-muted-foreground",
-                          )}
-                        >
-                          {customer.isActive ? "Active" : "Inactive"}
-                        </span>
+                        <div className="flex items-center gap-2 text-[13px] text-foreground font-medium">
+                          <Building2 size={14} className="text-muted-foreground" />
+                          {contact.businessAccount?.name || "—"}
+                        </div>
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
-                        {customer.phone || "—"}
+                        {contact.phone || "—"}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center justify-end gap-1">
-                          <Sheet
-                            open={editingCustomer?.id === customer.id}
-                            onOpenChange={(open: boolean) =>
-                              !open && setEditingCustomer(null)
-                            }
-                          >
-                            <button
-                              onClick={() => setEditingCustomer(customer)}
-                              className="px-2.5 py-1.5 text-[11.5px] font-medium bg-primary/8 text-primary rounded-md hover:bg-primary/15 transition-colors"
-                            >
+                          <Sheet open={editingContact?.id === contact.id} onOpenChange={(open) => !open && setEditingContact(null)}>
+                            <button onClick={() => setEditingContact(contact)} className="px-2.5 py-1.5 text-[11.5px] font-medium bg-primary/8 text-primary rounded-md hover:bg-primary/15 transition-colors">
                               Edit
                             </button>
                             <SheetContent className="sm:max-w-[440px] overflow-y-auto">
                               <SheetHeader>
-                                <SheetTitle>Edit Customer</SheetTitle>
+                                <SheetTitle>Edit Contact</SheetTitle>
                               </SheetHeader>
-                              <CustomerForm
-                                initialData={customer}
-                                onSuccess={handleCustomerSuccess}
-                                type="B2C"
-                              />
+                              <ContactForm initialData={contact} onSuccess={handleSuccess} />
                             </SheetContent>
                           </Sheet>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button
-                                className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors"
-                                disabled={deletingId === customer.id}
-                              >
+                              <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors" disabled={deletingId === contact.id}>
                                 <MoreHorizontal size={14} />
                               </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDelete(customer.id)}
-                                disabled={deletingId === customer.id}
-                              >
-                                {deletingId === customer.id
-                                  ? "Deleting..."
-                                  : "Delete"}
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(contact.id)} disabled={deletingId === contact.id}>
+                                {deletingId === contact.id ? "Deleting..." : "Delete"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -389,25 +284,13 @@ export function CustomersView() {
 
           <div className="flex items-center justify-between px-5 py-3.5 border-t border-border bg-muted/20">
             <p className="text-[12.5px] text-muted-foreground">
-              Showing {startItem}–{endItem} of {filtered.length} customers
+              Showing {startItem}–{endItem} of {filtered.length} contacts
             </p>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safeCurrentPage === 1}
-                className="w-8 h-8"
-              >
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safeCurrentPage === 1} className="w-8 h-8">
                 <ChevronLeft size={14} />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safeCurrentPage === totalPages}
-                className="w-8 h-8"
-              >
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safeCurrentPage === totalPages} className="w-8 h-8">
                 <ChevronRight size={14} />
               </Button>
             </div>
