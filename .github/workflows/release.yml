@@ -471,6 +471,7 @@ jobs:
             ghcr.io/${{ env.REPO_LOWER }}/${{ matrix.service }}:${{ needs.set-version.outputs.version }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'mock-secret-for-build' }}
 
   finalize-release:
     needs: [publish-pos, set-version]
