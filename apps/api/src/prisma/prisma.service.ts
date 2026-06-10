@@ -5,6 +5,8 @@ import { db } from '@repo/db';
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   public readonly client = db;
 
-  async onModuleInit() {}
+  async onModuleInit() {
+    await this.client.$connect();
+  }
   async onModuleDestroy() {}
 }
