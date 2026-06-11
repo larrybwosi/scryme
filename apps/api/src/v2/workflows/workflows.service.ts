@@ -50,7 +50,7 @@ export class WorkflowsService {
     // In a real scenario, this would fetch from Windmill API or a shared library table
     // For now, we return our mock scripts and mark if they are provisioned for this org
 
-    const config = await this.prisma.windmillConfiguration.findUnique({
+    const config = await (this.prisma.client as any).windmillConfiguration.findUnique({
       where: { organizationId: ctx.organizationId },
     });
 
@@ -64,12 +64,12 @@ export class WorkflowsService {
 
   async provisionWorkflow(ctx: V2ApiContext, path: string, settings: any) {
     // Simulated: Ensure Windmill config exists for the org
-    let config = await this.prisma.windmillConfiguration.findUnique({
+    let config = await (this.prisma.client as any).windmillConfiguration.findUnique({
       where: { organizationId: ctx.organizationId },
     });
 
     if (!config) {
-      config = await this.prisma.windmillConfiguration.create({
+      config = await (this.prisma.client as any).windmillConfiguration.create({
         data: {
           organizationId: ctx.organizationId,
           windmillApiKey: 'simulated_key_' + Math.random().toString(36).substring(7),
@@ -85,7 +85,7 @@ export class WorkflowsService {
   }
 
   async triggerWorkflow(ctx: V2ApiContext, path: string, inputs: any) {
-    const config = await this.prisma.windmillConfiguration.findUnique({
+    const config = await (this.prisma.client as any).windmillConfiguration.findUnique({
       where: { organizationId: ctx.organizationId },
     });
 
@@ -94,7 +94,7 @@ export class WorkflowsService {
     }
 
     // Simulate an execution record
-    const execution = await this.prisma.windmillExecution.create({
+    const execution = await (this.prisma.client as any).windmillExecution.create({
       data: {
         organizationId: ctx.organizationId,
         configId: config.id,
@@ -108,7 +108,7 @@ export class WorkflowsService {
 
     // Simulate background processing
     setTimeout(async () => {
-      await this.prisma.windmillExecution.update({
+      await (this.prisma.client as any).windmillExecution.update({
         where: { id: execution.id },
         data: {
           status: 'COMPLETED',
@@ -122,7 +122,7 @@ export class WorkflowsService {
   }
 
   async getExecutionHistory(ctx: V2ApiContext, scriptPath?: string) {
-    return this.prisma.windmillExecution.findMany({
+    return (this.prisma.client as any).windmillExecution.findMany({
       where: {
         organizationId: ctx.organizationId,
         ...(scriptPath ? { scriptPath } : {}),
