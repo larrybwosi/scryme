@@ -3,6 +3,7 @@ import { StandalonePosService } from './standalone-pos.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UnauthorizedException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import * as crypto from 'crypto';
 
 describe('StandalonePosService', () => {
   let service: StandalonePosService;
@@ -48,22 +49,38 @@ describe('StandalonePosService', () => {
   });
 
   describe('createSetupKey', () => {
-    it('should create a setup key', async () => {
+    it('should create a setup key and return the raw token', async () => {
       const dto = { name: 'Test Device', deviceId: 'POS-1' };
-      mockPrisma.client.standaloneSetupKey.create.mockResolvedValue({ id: '1', ...dto });
+      mockPrisma.client.standaloneSetupKey.create.mockImplementation(({ data }) => Promise.resolve({ id: '1', ...data }));
 
       const result = await service.createSetupKey(dto);
 
       expect(result).toBeDefined();
-      expect(mockPrisma.client.standaloneSetupKey.create).toHaveBeenCalled();
+      expect(result.token).toBeDefined();
+      expect(result.token.length).toBe(64); // hex-encoded 32 bytes
+
+      // Check if the stored token is a hash of the returned raw token
+      const expectedHash = crypto.createHash('sha256').update(result.token).digest('hex');
+      expect(mockPrisma.client.standaloneSetupKey.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          token: expectedHash,
+        }),
+      });
     });
   });
 
   describe('activateDevice', () => {
     it('should throw UnauthorizedException for invalid token', async () => {
       mockPrisma.client.standaloneSetupKey.findUnique.mockResolvedValue(null);
-      await expect(service.activateDevice({ token: 'invalid', machineId: 'm1' }))
+      const token = 'some-token';
+      const expectedHash = crypto.createHash('sha256').update(token).digest('hex');
+
+      await expect(service.activateDevice({ token, machineId: 'm1' }))
         .rejects.toThrow(UnauthorizedException);
+
+      expect(mockPrisma.client.standaloneSetupKey.findUnique).toHaveBeenCalledWith({
+        where: { token: expectedHash },
+      });
     });
 
     it('should throw ForbiddenException if token already used', async () => {
@@ -92,9 +109,17 @@ describe('StandalonePosService', () => {
   });
 
   describe('validateKey', () => {
-    it('should throw UnauthorizedException for invalid key', async () => {
+    it('should hash the key before looking it up', async () => {
       mockPrisma.client.standaloneDeviceKey.findUnique.mockResolvedValue(null);
-      await expect(service.validateKey('invalid')).rejects.toThrow(UnauthorizedException);
+      const key = 'test-key';
+      const expectedHash = crypto.createHash('sha256').update(key).digest('hex');
+
+      await expect(service.validateKey(key)).rejects.toThrow(UnauthorizedException);
+
+      expect(mockPrisma.client.standaloneDeviceKey.findUnique).toHaveBeenCalledWith({
+        where: { key: expectedHash },
+        include: { device: true },
+      });
     });
 
     it('should return valid true for active, non-expired key', async () => {
