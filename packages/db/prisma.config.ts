@@ -4,7 +4,11 @@ import path from "path";
 import { defineConfig } from "prisma/config";
 
 // Load .env from root if it exists
-config({ path: path.resolve(__dirname, "../../.env") });
+config({
+  path: path.resolve(__dirname, "../../.env"),
+  debug: false,
+  quiet: true,
+});
 
 export default defineConfig({
   schema: path.join("prisma", "schema"),
@@ -12,6 +16,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres",
+    url:
+      process.env.DATABASE_URL ||
+      "postgresql://postgres:postgres@localhost:5432/postgres",
   },
 });
