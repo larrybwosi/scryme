@@ -1,4 +1,7 @@
-export interface RealtimeProvider {
+export interface RealtimeServerProvider {
   publish(channel: string, event: string, data: any): Promise<void>;
-  // Additional methods like subscribe, presence could be added here if needed
+  subscribe(channel: string, event: string, callback: (data: any) => void): void;
+  unsubscribe(channel: string, event: string): void;
+  presenceEnter(channel: string, data: any): Promise<void>;
+  presenceLeave(channel: string): Promise<void>;
 }

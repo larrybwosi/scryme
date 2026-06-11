@@ -19,6 +19,7 @@
     "@prisma/client": "^7.8.0",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
+    "@repo/env": "workspace:*",
     "@repo/windmill": "workspace:*",
     "@sanity/client": "^7.22.1",
     "@types/jsonwebtoken": "^9.0.10",

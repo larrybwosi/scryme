@@ -6,10 +6,11 @@ import { usePosStore } from '@/store/store';
 
 export default function RealtimeInitializer() {
   const initialize = useRealtimeStore((state) => state.initialize);
-  const ablyClient = useRealtimeStore((state) => state.ablyClient);
-  const socketClient = useRealtimeStore((state) => state.socketClient);
-  const connectionState = useRealtimeStore((state) => state.connectionState);
+  const client = useRealtimeStore((state) => state.client);
+  const isConnected = useRealtimeStore((state) => state.isConnected);
   const subscribe = useRealtimeStore((state) => state.subscribe);
+  const presenceEnter = useRealtimeStore((state) => state.presenceEnter);
+  const presenceLeave = useRealtimeStore((state) => state.presenceLeave);
   const currentLocation = useAuthStore((state) => state.currentLocation);
   const currentMember = useAuthStore((state) => state.currentMember);
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
@@ -26,55 +27,37 @@ export default function RealtimeInitializer() {
 
   // ── Presence management ────────────────────────────────────────────────────
   useEffect(() => {
-    if (!currentLocation?.id || !currentMember) return;
+    if (!currentLocation?.id || !currentMember || !isConnected) return;
 
-    if (ablyClient) {
-        const presenceChannel = ablyClient.channels.get(`presence:${currentLocation.id}`);
-        presenceChannel.presence
-          .enter({ id: currentMember.id, name: currentMember.name, updatedAt: new Date().toISOString() })
-          .catch(() => {});
+    presenceEnter(`presence:${currentLocation.id}`, {
+      id: currentMember.id,
+      name: currentMember.name,
+      updatedAt: new Date().toISOString()
+    });
 
-        return () => {
-          presenceChannel.presence.leave().catch(() => {});
-        };
-    } else if (socketClient && socketClient.connected) {
-        socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
-    }
-
-  }, [ablyClient, socketClient, currentLocation?.id, currentMember]);
+    return () => {
+      presenceLeave(`presence:${currentLocation.id}`);
+    };
+  }, [isConnected, currentLocation?.id, currentMember, presenceEnter, presenceLeave]);
 
   // ── Reconnect when page becomes visible after being backgrounded ───────────
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
-      const current = useRealtimeStore.getState();
-      if (
-        current.ablyClient &&
-        ['disconnected', 'suspended', 'failed'].includes(current.connectionState)
-      ) {
-        current.ablyClient.connect();
-      } else if (current.socketClient && !current.socketClient.connected) {
-        current.socketClient.connect();
+      if (client && !isConnected) {
+        // Most clients handle auto-reconnect, but we can nudge it
+        if (client.ably) client.ably.connect();
+        if (client.socket) client.socket.connect();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // ── Re-init when connection is definitively failed or closed ───────────────
-  useEffect(() => {
-    if (connectionState === 'failed' && isAuthInitialized && currentMember) {
-      const timeoutId = setTimeout(() => {
-        initialize();
-      }, 5_000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [connectionState, initialize, isAuthInitialized, currentMember]);
+  }, [client, isConnected]);
 
   // ── Inventory sync ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!organizationId) return;
+    if (!organizationId || !isConnected) return;
 
     const channel = `organization:${organizationId}:inventory`;
     const unsub = subscribe(channel, 'stock-update', (data: any) => {
@@ -85,14 +68,13 @@ export default function RealtimeInitializer() {
     });
 
     return () => unsub();
-  }, [organizationId, subscribe, updateProductStock]);
+  }, [organizationId, isConnected, subscribe, updateProductStock]);
 
   // ── Cleanup on unmount ─────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
       const state = useRealtimeStore.getState();
-      state.ablyClient?.close();
-      state.socketClient?.disconnect();
+      state.client?.close();
     };
   }, []);
 

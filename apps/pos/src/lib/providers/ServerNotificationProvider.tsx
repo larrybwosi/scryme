@@ -1,5 +1,4 @@
 import { createContext, useContext, useCallback, useState, useEffect, useRef } from "react"
-import { Message } from "ably"
 import { ServerNotification } from "@/types/notifications"
 import { useAuthStore } from "@/store/pos-auth-store"
 import { notificationService } from "@/lib/notification-service"
@@ -14,7 +13,7 @@ interface ServerNotificationContextType {
   lastNotification: ServerNotification | null;
   history: ServerNotification[];
   clearHistory: () => void;
-  /** Granular Ably connection state string */
+  /** Granular connection state string */
   connectionState: string;
   /** How many queued items are awaiting backend persistence */
   pendingCount: number;
@@ -40,8 +39,8 @@ export function ServerNotificationProvider({ children }: { children: React.React
   const [lastNotification, setLastNotification] = useState<ServerNotification | null>(null)
 
   // Realtime client + meta
-  const ably = useRealtimeStore((state) => state.ablyClient);
-  const connectionState = useRealtimeStore((state) => state.connectionState);
+  const client = useRealtimeStore((state) => state.client);
+  const isConnected = useRealtimeStore((state) => state.isConnected);
   const subscribe = useRealtimeStore((state) => state.subscribe);
   const { currentLocation } = useAuthStore();
   const storeId = currentLocation?.id;
@@ -102,26 +101,26 @@ export function ServerNotificationProvider({ children }: { children: React.React
 
   // ── Replay missed messages from Ably channel history ─────────────────────────
   const replayHistory = useCallback(async (channelName: string) => {
-    if (!ably) return;
+    if (!client || !client.ably) return;
     try {
-      const channel = ably.channels.get(channelName);
+      const channel = client.ably.channels.get(channelName);
       // Fetch the last 100 messages published in the past 2 minutes
       const page = await channel.history({ limit: 100 });
-      const items: Message[] = page.items ?? [];
+      const items = page.items ?? [];
       if (items.length > 0) {
         // Oldest first so they arrive in chronological order
         for (const msg of [...items].reverse()) {
-          await handleIncomingMessage(msg);
+          await handleIncomingMessage(msg.data);
         }
       }
     } catch (err) {
       // History replay failed
     }
-  }, [ably, handleIncomingMessage]);
+  }, [client, handleIncomingMessage]);
 
   // ── Realtime subscription ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!storeId) return;
+    if (!storeId || !isConnected) return;
 
     const unsubStore = subscribe(`store:${storeId}`, 'message', handleIncomingMessage);
     const unsubSystem = subscribe(`system:global`, 'message', handleIncomingMessage);
@@ -130,18 +129,18 @@ export function ServerNotificationProvider({ children }: { children: React.React
       unsubStore();
       unsubSystem();
     };
-  }, [storeId, handleIncomingMessage, subscribe]);
+  }, [storeId, isConnected, handleIncomingMessage, subscribe]);
 
   // ── Replay on reconnect ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (connectionState !== 'connected' || !storeId) return;
+    if (!isConnected || !storeId) return;
     // Small delay to let channel subscriptions re-establish first
     const tid = setTimeout(() => {
       replayHistory(`store:${storeId}`);
       replayHistory('system:global');
     }, 500);
     return () => clearTimeout(tid);
-  }, [connectionState, storeId, replayHistory]);
+  }, [isConnected, storeId, replayHistory]);
 
   // ── Pending count (refresh every 5 s) ────────────────────────────────────────
   const [pendingCount, setPendingCount] = useState(0);
@@ -158,7 +157,7 @@ export function ServerNotificationProvider({ children }: { children: React.React
         lastNotification,
         history,
         clearHistory: () => setHistory([]),
-        connectionState,
+        connectionState: isConnected ? 'connected' : 'disconnected',
         pendingCount,
       }}
     >

@@ -2,7 +2,7 @@ import './globals.css';
 import { SidebarWrapper } from '../components/sidebar-wrapper';
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
-import { RealtimeProvider } from "@repo/shared";
+import { RealtimeContextProvider as RealtimeProvider } from "@repo/shared";
 
 export default function RootLayout({
   children,

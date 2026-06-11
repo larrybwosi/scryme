@@ -1,115 +1,82 @@
 'use client'
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { Realtime } from 'ably';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
+import { BaseRealtimeClient, RealtimeProviderType } from './realtime/client';
 import axios from 'axios';
 
 interface RealtimeContextType {
-  socket: Socket | null;
-  ably: Realtime | null;
   isConnected: boolean;
-  provider: 'ably' | 'socketio';
+  provider: RealtimeProviderType;
   subscribe: (channel: string, event: string, callback: (data: any) => void) => () => void;
   publish: (channel: string, event: string, data: any) => Promise<void>;
+  presenceEnter: (channel: string, data: any) => Promise<void>;
+  presenceLeave: (channel: string) => Promise<void>;
 }
 
 const RealtimeContext = createContext<RealtimeContextType>({
-  socket: null,
-  ably: null,
   isConnected: false,
   provider: 'ably',
   subscribe: () => () => {},
   publish: async () => {},
+  presenceEnter: async () => {},
+  presenceLeave: async () => {},
 });
 
-export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [ably, setAbly] = useState<Realtime | null>(null);
+export const RealtimeContextProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
-  const [provider, setProvider] = useState<'ably' | 'socketio'>('ably');
+  const [provider, setProvider] = useState<RealtimeProviderType>('ably');
 
-  useEffect(() => {
+  const client = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+
     const providerType = (process.env.NEXT_PUBLIC_REALTIME_PROVIDER as any) || 'ably';
     setProvider(providerType);
 
-    if (providerType === 'socketio') {
-      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
-      const socketInstance = io(socketUrl, {
-        transports: ['websocket'],
-      });
-
-      socketInstance.on('connect', () => {
-        setIsConnected(true);
-        console.log('Socket.io connected');
-      });
-
-      socketInstance.on('disconnect', () => {
-        setIsConnected(false);
-        console.log('Socket.io disconnected');
-      });
-
-      setSocket(socketInstance);
-
-      return () => {
-        socketInstance.disconnect();
-      };
-    } else {
-      const ablyInstance = new Realtime({
-        authCallback: async (tokenParams, callback) => {
-          try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
-            const response = await axios.post(`${baseUrl}/api/auth/ably`, {}, { withCredentials: true });
-            callback(null, response.data);
-          } catch (err: any) {
-            callback(err, null);
-          }
-        },
-      });
-
-      ablyInstance.connection.on('connected', () => {
-        setIsConnected(true);
-        console.log('Ably connected');
-      });
-
-      ablyInstance.connection.on('disconnected', () => {
-        setIsConnected(false);
-      });
-
-      setAbly(ablyInstance);
-
-      return () => {
-        ablyInstance.close();
-      };
-    }
+    return new BaseRealtimeClient({
+      provider: providerType,
+      socketUrl: process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002',
+      ablyAuthCallback: async (tokenParams, callback) => {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || '';
+          const response = await axios.post(`${baseUrl}/api/auth/ably`, {}, { withCredentials: true });
+          callback(null, response.data);
+        } catch (err: any) {
+          callback(err, null);
+        }
+      },
+    });
   }, []);
 
-  const subscribe = useCallback((channelName: string, event: string, callback: (data: any) => void) => {
-    if (provider === 'socketio' && socket) {
-      socket.emit('join', { channel: channelName });
-      socket.on(event, callback);
-      return () => {
-        socket.off(event, callback);
-      };
-    } else if (provider === 'ably' && ably) {
-      const channel = ably.channels.get(channelName);
-      channel.subscribe(event, (message) => callback(message.data));
-      return () => {
-        channel.unsubscribe(event);
-      };
-    }
-    return () => {};
-  }, [provider, socket, ably]);
+  useEffect(() => {
+    if (!client) return;
 
-  const publish = useCallback(async (channelName: string, event: string, data: any) => {
-    if (provider === 'socketio' && socket) {
-      socket.emit('publish', { channel: channelName, event, data });
-    } else if (provider === 'ably' && ably) {
-      await ably.channels.get(channelName).publish(event, data);
-    }
-  }, [provider, socket, ably]);
+    const unsubscribe = client.onConnectionChange((connected) => {
+      setIsConnected(connected);
+    });
+
+    return () => {
+      unsubscribe();
+      client.close();
+    };
+  }, [client]);
+
+  const subscribe = useCallback((channel: string, event: string, callback: (data: any) => void) => {
+    return client?.subscribe(channel, event, callback) || (() => {});
+  }, [client]);
+
+  const publish = useCallback(async (channel: string, event: string, data: any) => {
+    await client?.publish(channel, event, data);
+  }, [client]);
+
+  const presenceEnter = useCallback(async (channel: string, data: any) => {
+    await client?.presenceEnter(channel, data);
+  }, [client]);
+
+  const presenceLeave = useCallback(async (channel: string) => {
+    await client?.presenceLeave(channel);
+  }, [client]);
 
   return (
-    <RealtimeContext.Provider value={{ socket, ably, isConnected, provider, subscribe, publish }}>
+    <RealtimeContext.Provider value={{ isConnected, provider, subscribe, publish, presenceEnter, presenceLeave }}>
       {children}
     </RealtimeContext.Provider>
   );

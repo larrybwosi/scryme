@@ -2,7 +2,7 @@ import './globals.css';
 import { SidebarWrapper } from '../components/sidebar-wrapper';
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import type { Metadata } from 'next';
-import { RealtimeProvider } from "@repo/shared";
+import { RealtimeContextProvider as RealtimeProvider } from "@repo/shared";
 
 export const metadata: Metadata = {
   title: 'Scryme CRM',

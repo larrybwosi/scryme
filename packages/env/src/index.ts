@@ -57,6 +57,12 @@ const serverSchema = z.object({
   GITHUB_OWNER: z.string().default("larrybwosi"),
   GITHUB_REPO: z.string().default("dealio"),
   GITHUB_TOKEN: z.string().optional(),
+
+  // Realtime
+  REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
+  ABLY_API_KEY: z.string().optional(),
+  SOCKET_URL: z.string().url().optional(),
+  INTERNAL_REALTIME_SECRET: z.string().default("development-realtime-secret"),
 });
 
 const clientSchema = z.object({
@@ -65,6 +71,10 @@ const clientSchema = z.object({
   NEXT_PUBLIC_WEB_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_CRM_URL: z.string().url().default("http://localhost:3001"),
   NEXT_PUBLIC_COOKIE_DOMAIN: z.string().optional(),
+
+  // Realtime
+  NEXT_PUBLIC_REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
+  NEXT_PUBLIC_SOCKET_URL: z.string().url().default("http://localhost:3002"),
 });
 
 // ─────────────────────────────────────────────
@@ -163,12 +173,18 @@ function getRawEnv() {
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+    REALTIME_PROVIDER: process.env.REALTIME_PROVIDER,
+    ABLY_API_KEY: process.env.ABLY_API_KEY,
+    SOCKET_URL: process.env.SOCKET_URL,
+    INTERNAL_REALTIME_SECRET: process.env.INTERNAL_REALTIME_SECRET,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_WEB_URL: process.env.NEXT_PUBLIC_WEB_URL,
     NEXT_PUBLIC_CRM_URL: process.env.NEXT_PUBLIC_CRM_URL,
     NEXT_PUBLIC_COOKIE_DOMAIN: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+    NEXT_PUBLIC_REALTIME_PROVIDER: process.env.NEXT_PUBLIC_REALTIME_PROVIDER,
+    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
   };
 }
 

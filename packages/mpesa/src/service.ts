@@ -176,16 +176,23 @@ export class MpesaService {
         if (paymentStatus === 'PAID') {
           await this.updateTransactionOnPayment(tx, updatedPayment.transactionId, amountPaid);
         }
-      });
 
-      const status = ResultCode === 0 ? 'COMPLETED' : 'FAILED';
-      await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
-        paymentId,
-        status,
-        data: {
-          receipt: mpesaReceipt,
-          description: ResultDesc,
-        },
+        const transaction = await tx.transaction.findUnique({
+          where: { id: updatedPayment.transactionId },
+          select: { number: true, accountRef: true }
+        });
+
+        const status = ResultCode === 0 ? 'COMPLETED' : 'FAILED';
+        await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
+          paymentId,
+          transactionId: transaction?.number,
+          status,
+          data: {
+            receipt: mpesaReceipt,
+            description: ResultDesc,
+            accountRef: transaction?.accountRef,
+          },
+        });
       });
 
       return { success: true };
@@ -307,11 +314,12 @@ export class MpesaService {
           await this.updateTransactionOnPayment(tx, transaction.id, amount);
 
           await realtimeService.publish(`organization:${transaction.organizationId}:payments`, 'payment-update', {
-            transactionId: transaction.id,
+            transactionId: transaction.number,
             status: 'COMPLETED',
             data: {
               receipt: TransID,
               amount,
+              accountRef: BillRefNumber,
             },
           });
 
@@ -359,6 +367,22 @@ export class MpesaService {
               details: payload as any,
             },
           });
+
+          // Fetch organization from the shortcode to know where to publish
+          const config = await tx.paymentCredentials.findFirst({
+             where: { mpesaShortCode: BusinessShortCode }
+          });
+
+          if (config) {
+              await realtimeService.publish(`organization:${config.organizationId}:payments`, 'payment-unclaimed', {
+                transId: TransID,
+                amount,
+                phone: MSISDN,
+                accountRef: BillRefNumber,
+                firstName: FirstName,
+                lastName: LastName,
+              });
+          }
         });
       }
       return { success: true };
