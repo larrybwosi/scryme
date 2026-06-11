@@ -5,7 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { customerSchema, type CustomerFormValues } from '../../../lib/validations';
 import { createCustomer, updateCustomer } from '../../actions/customers';
+import { getCompanies } from '../../actions/companies';
 import { useOrg } from '../../../components/org-context';
+import useSWR from 'swr';
 import {
   Form,
   FormControl,
@@ -24,14 +26,20 @@ import {
   SelectValue,
 } from '@repo/ui/components/ui/select';
 
-interface CustomerFormProps {
+interface ContactFormProps {
   initialData?: CustomerFormValues & { id: string };
   onSuccess: () => void;
-  type?: 'B2C' | 'CONTACT';
+  businessAccountId?: string;
 }
 
-export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerFormProps) {
+export function ContactForm({ initialData, onSuccess, businessAccountId }: ContactFormProps) {
   const { organizationId } = useOrg();
+
+  const { data: companies = [] } = useSWR(
+    organizationId ? ['companies-list', organizationId] : null,
+    () => getCompanies(organizationId)
+  );
+
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: initialData || {
@@ -39,10 +47,9 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
       email: '',
       phone: '',
       company: '',
-      customerType: type,
-      taxId: '',
+      businessAccountId: businessAccountId || '',
+      customerType: 'B2B',
       isActive: true,
-      deliveryNotes: '',
     },
   });
 
@@ -55,7 +62,7 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
       }
       onSuccess();
     } catch (error) {
-      console.error('Failed to save customer', error);
+      console.error('Failed to save contact', error);
     }
   };
 
@@ -65,11 +72,11 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
         <FormField
           control={form.control}
           name="name"
-          render={({ field }: { field: any }) => (
+          render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="Jane Smith" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -78,11 +85,11 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
         <FormField
           control={form.control}
           name="email"
-          render={({ field }: { field: any }) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="john@example.com" {...field} />
+                <Input placeholder="jane@company.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,7 +98,7 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
         <FormField
           control={form.control}
           name="phone"
-          render={({ field }: { field: any }) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
@@ -103,34 +110,35 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
         />
         <FormField
           control={form.control}
-          name="company"
-          render={({ field }: { field: any }) => (
+          name="businessAccountId"
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Company</FormLabel>
-              <FormControl>
-                <Input placeholder="Acme Inc" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* For B2C individuals, the type is fixed as B2C to maintain view consistency */}
-        <FormField
-          control={form.control}
-          name="taxId"
-          render={({ field }: { field: any }) => (
-            <FormItem>
-              <FormLabel>Tax ID (PIN)</FormLabel>
-              <FormControl>
-                <Input placeholder="KRA PIN" {...field} />
-              </FormControl>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || undefined}
+                value={field.value || undefined}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a company" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {companies.map((company: any) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
         <div className="pt-4 flex justify-end gap-3">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {initialData ? 'Update' : 'Create'} Customer
+            {initialData ? 'Update' : 'Create'} Contact
           </Button>
         </div>
       </form>

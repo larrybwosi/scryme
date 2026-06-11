@@ -16,6 +16,7 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
     });
 
     revalidatePath('/customers');
+    revalidatePath('/contacts');
     return { success: true, data: customer };
   } catch (error: any) {
     console.error('Error creating customer:', error);
@@ -33,6 +34,7 @@ export async function updateCustomer(id: string, data: CustomerFormValues): Prom
     });
 
     revalidatePath('/customers');
+    revalidatePath('/contacts');
     revalidatePath(`/customers/${id}`);
     return { success: true, data: customer };
   } catch (error: any) {
@@ -48,6 +50,7 @@ export async function deleteCustomer(id: string): Promise<any> {
     });
 
     revalidatePath('/customers');
+    revalidatePath('/contacts');
     return { success: true };
   } catch (error: any) {
     console.error('Error deleting customer:', error);
@@ -55,10 +58,29 @@ export async function deleteCustomer(id: string): Promise<any> {
   }
 }
 
-export async function getCustomers(organizationId: string): Promise<any[]> {
+export async function getCustomers(
+  organizationId: string,
+  filter?: { type?: 'B2C' | 'B2B' | 'CONTACT'; businessAccountId?: string }
+): Promise<any[]> {
   try {
+    const where: any = { organizationId };
+
+    if (filter?.type === 'B2C') {
+      where.customerType = 'B2C';
+      where.businessAccountId = null;
+    } else if (filter?.type === 'CONTACT') {
+      where.businessAccountId = { not: null };
+    }
+
+    if (filter?.businessAccountId) {
+      where.businessAccountId = filter.businessAccountId;
+    }
+
     const customers = await db.customer.findMany({
-      where: { organizationId },
+      where,
+      include: {
+        businessAccount: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
     return customers;
