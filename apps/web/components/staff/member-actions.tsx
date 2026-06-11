@@ -39,6 +39,8 @@ import {
   XCircle,
   CheckCircle2,
   Monitor,
+  User,
+  Eye,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -51,6 +53,7 @@ import {
 } from "../../app/actions/staff";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import Link from "next/link";
 
 interface MemberActionsProps {
   member: {
@@ -167,6 +170,12 @@ export function MemberActions({ member }: MemberActionsProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-50">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem asChild>
+            <Link href={`/staff/${member.id}`} className="flex items-center">
+              <Eye size={14} className="mr-2" />
+              View Profile
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsRolesSheetOpen(true)}>
             <Shield size={14} className="mr-2" />
             Manage Custom Roles
