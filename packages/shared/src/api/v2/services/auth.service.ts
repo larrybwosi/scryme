@@ -1,5 +1,6 @@
 import * as argon2 from 'argon2';
 import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
 import { decrypt } from '../utils/encryption';
 
 export async function validateDeviceKey(db: any, fullApiKey: string, ipAddress?: string) {
@@ -17,8 +18,16 @@ export async function validateDeviceKey(db: any, fullApiKey: string, ipAddress?:
       if (!(apiToken.ipWhitelist as string[]).includes(ipAddress)) return null;
     }
 
-    const decryptedHash = decrypt(apiToken.hashedKey);
-    const isValid = await argon2.verify(decryptedHash, secret);
+    let isValid = false;
+    try {
+      const decryptedHash = decrypt(apiToken.hashedKey);
+      isValid = await argon2.verify(decryptedHash, secret);
+    } catch (err) {
+      // Fallback for legacy keys hashed with SHA-256
+      const legacyHash = crypto.createHash('sha256').update(fullApiKey).digest('hex');
+      isValid = apiToken.hashedKey === legacyHash;
+    }
+
     if (!isValid) return null;
 
     db.apiKey.update({

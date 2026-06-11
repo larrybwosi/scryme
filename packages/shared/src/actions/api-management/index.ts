@@ -1,5 +1,7 @@
 import { db, Prisma } from "@repo/db";
 import * as crypto from "crypto";
+import * as argon2 from "argon2";
+import { encrypt } from "../../api/v2/utils/encryption";
 
 // --- V3 API Client Actions ---
 
@@ -11,13 +13,13 @@ export async function createV3ApiClient(data: {
 }) {
   const clientId = `v3_${crypto.randomBytes(16).toString("hex")}`;
   const rawSecret = crypto.randomBytes(32).toString("hex");
-  const hashedSecret = crypto.createHash("sha256").update(rawSecret).digest("hex");
+  const encryptedSecret = encrypt(rawSecret);
 
   const client = await db.v3ApiClient.create({
     data: {
       name: data.name,
       clientId,
-      clientSecret: hashedSecret,
+      clientSecret: encryptedSecret,
       organizationId: data.organizationId,
       scopes: data.scopes || ["read", "write"],
       corsOrigins: data.corsOrigins || [],
@@ -54,11 +56,11 @@ export async function updateV3ApiClient(id: string, organizationId: string, data
 
 export async function regenerateV3ClientSecret(id: string, organizationId: string) {
   const rawSecret = crypto.randomBytes(32).toString("hex");
-  const hashedSecret = crypto.createHash("sha256").update(rawSecret).digest("hex");
+  const encryptedSecret = encrypt(rawSecret);
 
   await db.v3ApiClient.updateMany({
     where: { id, organizationId },
-    data: { clientSecret: hashedSecret },
+    data: { clientSecret: encryptedSecret },
   });
 
   return rawSecret;
@@ -107,10 +109,15 @@ export async function createV2ApiKey(data: {
   keyType?: "POS" | "CLIENT";
   permissions?: string[];
 }) {
-  const keyPrefix = `sk_${data.environment === "TEST" ? "test_" : ""}${crypto.randomBytes(4).toString("hex")}`;
+  const keyPrefix = `dealio_sk_${data.environment === "TEST" ? "test_" : ""}${crypto.randomBytes(4).toString("hex")}_`;
   const rawKey = crypto.randomBytes(24).toString("hex");
-  const fullKey = `${keyPrefix}_${rawKey}`;
-  const hashedKey = crypto.createHash("sha256").update(fullKey).digest("hex");
+  const fullKey = `${keyPrefix}${rawKey}`;
+
+  // Follow the security pattern from validateDeviceKey:
+  // 1. Hash the secret part with Argon2
+  // 2. Encrypt the Argon2 hash with AES-256-GCM
+  const argonHash = await argon2.hash(rawKey);
+  const hashedKey = encrypt(argonHash);
 
   const apiKey = await db.apiKey.create({
     data: {

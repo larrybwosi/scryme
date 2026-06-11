@@ -9,3 +9,8 @@
 **Vulnerability:** The `HealthController` was returning raw error messages from database and system checks directly to the client, even in production. This bypassed the global `AllExceptionsFilter` because the controller was manually constructing and throwing `ServiceUnavailableException` with the raw error message.
 **Learning:** Global exception filters can be bypassed if controllers catch errors and re-throw them with specific response objects containing sensitive data. Health check endpoints are often overlooked but can leak technical details about the stack (DB type, connectivity issues, etc.).
 **Prevention:** Mask raw error messages in all public-facing endpoints, especially health checks. Ensure that any manual exception throwing also respects environment-based masking.
+
+## 2026-06-11 - [Inconsistent Security Patterns for API Secrets]
+**Vulnerability:** Found that V2 API keys and V3 client secrets were being stored using simple SHA-256 hashing in shared actions, which was inconsistent with the authentication logic in the API that expected a multi-layered security pattern (Argon2 + AES-256-GCM). This caused newly created keys to be non-functional and less secure.
+**Learning:** Security standards must be enforced across both the creation and validation paths. Inconsistencies often arise when shared actions and API services are developed independently without a unified security utility or clear documentation of the required secret lifecycle.
+**Prevention:** Centralize secret handling (hashing/encryption) into shared utilities and ensure both the "write" (creation) and "read" (validation) logic use these same utilities. Always provide a secure fallback or migration strategy when upgrading security patterns for existing credentials.
