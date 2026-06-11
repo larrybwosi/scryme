@@ -158,13 +158,13 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
 
             <div className="space-y-2">
               <Label htmlFor="pin" className="text-sm text-slate-700 dark:text-slate-300">
-                Access PIN (4 digits)
+                Access PIN (up to 20 chars)
               </Label>
               <Input
                 id="pin"
                 type="password"
-                maxLength={4}
-                placeholder="1234"
+                maxLength={20}
+                placeholder="••••••••"
                 value={pin}
                 onChange={e => setPin(e.target.value)}
                 disabled={!selectedMemberId || isSubmitting}

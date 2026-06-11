@@ -1,10 +1,10 @@
 module.exports = {
-  extends: ['next/core-web-vitals', 'prettier'],
-  plugins: ['only-warn'],
+  extends: ["next/core-web-vitals", "prettier"],
+  plugins: ["only-warn"],
   settings: {
-    'import/resolver': {
+    "import/resolver": {
       typescript: {
-        project: __dirname + '/tsconfig.json',
+        project: __dirname + "/tsconfig.json",
       },
     },
   },

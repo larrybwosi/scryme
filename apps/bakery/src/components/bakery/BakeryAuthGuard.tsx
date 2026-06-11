@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Key, Lock, User, Utensils, AlertCircle, Loader2, CheckCircle2, Zap, ArrowRight, ShieldCheck, Mail, Eye, EyeOff, Activity, Globe, Cpu } from 'lucide-react';
+import { Key, Lock, User, Utensils, AlertCircle, Loader2, CheckCircle2, Zap, ArrowRight, ShieldCheck, Mail, Eye, EyeOff, Activity, Globe, Cpu, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
 import { useQueryClient } from '@tanstack/react-query';
@@ -471,6 +471,34 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
                                   >
                                     {isValidatingApi ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Test'}
                                   </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-10 px-3 border-amber-200 text-amber-700 hover:bg-amber-50"
+                                    onClick={async () => {
+                                      if (!apiUrl) return;
+                                      try {
+                                        const settings = await invoke<any>('get_settings', { orgId: 'local-org' });
+                                        await invoke('update_settings', {
+                                          userId: 'system',
+                                          settings: {
+                                            ...settings,
+                                            apiEndpointUrl: apiUrl,
+                                          }
+                                        });
+                                        sdk.client.setBaseURL(apiUrl);
+                                        localStorage.setItem('bakery_api_url', apiUrl);
+                                        toast.success('API Endpoint URL saved');
+                                      } catch (err) {
+                                        toast.error('Failed to save API Endpoint');
+                                      }
+                                    }}
+                                    disabled={!apiUrl}
+                                  >
+                                    <Save className="h-3 w-3 mr-1" />
+                                    Save
+                                  </Button>
                                 </div>
                               </div>
                             )}
@@ -589,9 +617,9 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
                                         type={showPin ? "text" : "password"}
                                         value={pin}
                                         onChange={(e) => setPin(e.target.value)}
-                                        maxLength={4}
-                                        placeholder="••••"
-                                        className="pl-10 pr-10 h-11 border-amber-200 focus:ring-amber-500 focus:border-amber-500 font-mono tracking-[0.5em]"
+                                        maxLength={20}
+                                        placeholder="••••••••"
+                                        className="pl-10 pr-10 h-11 border-amber-200 focus:ring-amber-500 focus:border-amber-500 font-mono tracking-[0.2em]"
                                         required
                                     />
                                     <button
