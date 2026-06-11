@@ -24,6 +24,34 @@ const sdk = getSDK({
   }
 });
 
+// Add response interceptor to unwrap StandardResponse
+sdk.client.interceptors.response.use(
+  (response) => {
+    // If it matches the StandardResponse format, unwrap it
+    if (
+      response.data &&
+      response.data.success === true &&
+      response.data.data !== undefined &&
+      (response.data.timestamp || response.data.meta)
+    ) {
+      return {
+        ...response,
+        data: response.data.data,
+      };
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Load persistent member token if available
+if (typeof window !== 'undefined') {
+  const memberToken = localStorage.getItem('bakery_member_token');
+  if (memberToken) {
+    sdk.setMemberToken(memberToken);
+  }
+}
+
 // If in Tauri, attempt to load the provisioned API Key from keyring and settings
 if (isTauri()) {
   // Load settings to check for custom API URL

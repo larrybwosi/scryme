@@ -58,10 +58,9 @@ export class BakeryAuthController {
   @AllowPublic()
   @Get('status')
   @ApiOperation({ summary: 'Check bakery authentication status' })
-  async status(@Req() req: any) {
-    const cookies = (req as any).cookies || {};
-    const hasDeviceKey = !!cookies['dealio_device_key'];
-    const hasMemberToken = !!cookies['dealio_member_token'];
+  async status(@v2Context() ctx: V2ApiContext) {
+    const hasDeviceKey = !!ctx.organizationId && (ctx.authType === 'device' || ctx.authType === 'hybrid');
+    const hasMemberToken = !!ctx.memberId;
 
     return {
       hasDeviceKey,

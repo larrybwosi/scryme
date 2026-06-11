@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { type V2ApiContext } from '@repo/shared/server';
-import { MemberRole } from '@repo/db';
+import { type V2ApiContext, createMemberToken } from '@repo/shared/server';
+import { MemberRole, Status } from '@repo/db';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -160,6 +160,8 @@ export class MembersService {
       where: { memberId: member.id, checkOutTime: null },
     });
 
+    let attendanceLogId = activeLog?.id;
+
     if (!activeLog) {
       await this.prisma.client.$transaction(async (tx) => {
         const log = await tx.attendanceLog.create({
@@ -179,15 +181,18 @@ export class MembersService {
             lastCheckInTime: new Date(),
             currentCheckInLocationId: locationId,
             currentAttendanceLogId: log.id,
-            status: 'ONLINE',
+            status: Status.ONLINE,
           },
         });
+        attendanceLogId = log.id;
       });
     }
 
+    const token = await createMemberToken(member.id, organizationId, attendanceLogId!);
+
     // Return non-sensitive member info formatted for POS/Bakery
     return {
-      token: "legacy-session-token", // Placeholder for compatibility
+      token,
       member: {
         id: member.id,
         name: member.user.name,
