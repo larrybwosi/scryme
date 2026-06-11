@@ -31,6 +31,7 @@ import {
   ArrowLeftRight,
   ShieldCheck,
   FileText,
+  Zap,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -92,6 +93,12 @@ const sidebarConfig: SidebarSection[] = [
         ],
       },
       { title: "Integrations", icon: Boxes, href: "/integrations" },
+    ],
+  },
+  {
+    title: "AUTOMATIONS",
+    items: [
+      { title: "Workflows", icon: Zap, href: "/workflows" },
     ],
   },
   {
