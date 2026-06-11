@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -125,6 +125,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
   const pathname = usePathname();
+  const router = useRouter();
 
   const toggleSubmenu = (title: string) => {
     setOpenMenus((prev) =>
@@ -199,11 +200,13 @@ export function Sidebar() {
 
                 const itemContent = (
                   <button
-                    onClick={() =>
-                      hasSubmenu && !isCollapsed
-                        ? toggleSubmenu(item.title)
-                        : null
-                    }
+                    onClick={() => {
+                      if (hasSubmenu && !isCollapsed) {
+                        toggleSubmenu(item.title);
+                      } else {
+                        router.push(item.href);
+                      }
+                    }}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                       isActive

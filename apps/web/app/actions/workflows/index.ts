@@ -1,20 +1,22 @@
 'use server';
 
 import { getServerAuth } from '@repo/auth/server';
+import { createMemberToken } from '@repo/shared/server';
 
 const getWorkflowsSDK = async () => {
   const { getSDK } = await import('@repo/sdk');
   const { env } = await import('@repo/env');
-  const { cookies } = await import('next/headers');
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get('member_token')?.value;
+  const auth = await getServerAuth();
 
   const sdk = getSDK({
     baseURL: `${env.NEXT_PUBLIC_API_URL}/api/v2`,
   });
 
-  if (token) {
+  if (auth?.memberId && auth?.organizationId) {
+    // Generate a member token for the API request since the web app uses session-based auth
+    // but the V2 API expects a JWT member token
+    const token = await createMemberToken(auth.memberId, auth.organizationId, 'web-session');
     sdk.setMemberToken(token);
   }
 
