@@ -1,6 +1,6 @@
 import { V3AuthModule } from '../auth/auth.module';
 import { Module, Global, forwardRef } from '@nestjs/common';
-import { MembersController } from './interfaces/http/members.controller';
+import { MembersController, TerminalMembersController } from './interfaces/http/members.controller';
 import { InvitationController } from './interfaces/http/invitation.controller';
 import { RoleManagementController } from './interfaces/http/role-management.controller';
 import { DepartmentController } from './interfaces/http/department.controller';
