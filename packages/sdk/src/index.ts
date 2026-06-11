@@ -121,6 +121,12 @@ export const getSDK = (config: SDKConfig) => {
       updateIngredient: (id: string, data: any) => sdk.client.patch(`/bakery/ingredients/${id}`, data),
       deleteIngredient: (id: string) => sdk.client.delete(`/bakery/ingredients/${id}`),
     },
+    workflows: {
+      getAvailable: () => sdk.client.get("/workflows/available"),
+      provision: (data: { path: string; settings: any }) => sdk.client.post("/workflows/provision", data),
+      trigger: (data: { path: string; inputs: any }) => sdk.client.post("/workflows/trigger", data),
+      getHistory: (params?: { path?: string }) => sdk.client.get("/workflows/history", { params }),
+    },
   };
 
   return sdk;
