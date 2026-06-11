@@ -2,7 +2,7 @@
 
 pub mod routes {
     // --- Auth ---
-    pub const CHECK_IN: &str = "api/v2/pos/check-in";
+    pub const CHECK_IN: &str = "api/v2/members/login";
     pub const CHECK_OUT: &str = "api/v2/pos/check-out";
     pub const LOCATIONS: &str = "api/v2/pos/locations";
     pub const ABLY_AUTH: &str = "api/v2/pos/ably-auth";

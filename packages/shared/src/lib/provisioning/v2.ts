@@ -21,6 +21,15 @@ export async function provisionDeviceV2(
   const dbStart = performance.now();
   const setupToken = await prisma.deviceSetupToken.findUnique({
     where: { tokenHash },
+    include: {
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    },
   });
   console.log(
     `[ProvisionV2] DB Lookup took ${(performance.now() - dbStart).toFixed(2)}ms`,
@@ -128,6 +137,7 @@ export async function provisionDeviceV2(
     apiKey: plaintextKey,
     apiKeyId: apiKey.id,
     deviceRegistryId: deviceRegistry.id,
+    organization: setupToken.organization,
     device: {
       deviceName: setupToken.deviceName,
       deviceType: setupToken.deviceType,
