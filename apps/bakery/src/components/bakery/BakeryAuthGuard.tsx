@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Key, Lock, User, Utensils, AlertCircle, Loader2, CheckCircle2, Zap, ArrowRight, ShieldCheck, Mail, Eye, EyeOff, Activity, Globe, Cpu } from 'lucide-react';
+import { Key, Lock, User, Utensils, AlertCircle, Loader2, CheckCircle2, Zap, ArrowRight, ShieldCheck, Mail, Eye, EyeOff, Activity, Globe, Cpu, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
 import { useQueryClient } from '@tanstack/react-query';
