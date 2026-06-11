@@ -16,6 +16,7 @@ import { AttendanceUseCase } from './application/use-cases/attendance.use-case';
   imports: [forwardRef(() => V3AuthModule)],
   controllers: [
     MembersController,
+    TerminalMembersController,
     InvitationController,
     RoleManagementController,
     DepartmentController,

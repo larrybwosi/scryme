@@ -170,6 +170,27 @@ export class MemberRoleDto {
   name: string;
 }
 
+export class TerminalLoginDto {
+  @ApiProperty()
+  @IsString()
+  cardId: string;
+
+  @ApiProperty()
+  @IsString()
+  pin: string;
+}
+
+export class TerminalLoginResponseDto {
+  @ApiProperty()
+  token: string;
+
+  @ApiProperty()
+  member: MemberResponseDto;
+
+  @ApiPropertyOptional()
+  restoredSession?: boolean;
+}
+
 export class MemberResponseDto {
   @ApiProperty()
   id: string;
