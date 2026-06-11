@@ -4,7 +4,7 @@ import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
 import { MultiTenancyGuard } from '@/v3/common/guards/multi-tenancy.guard';
 import { StandardResponseInterceptor } from '@/v3/common/interceptors/standard-response.interceptor';
 import { MemberUseCase } from '../../application/use-cases/member.use-case';
-import { CreateMemberDto, UpdateMemberDto, MemberQueryDto, MemberResponseDto } from '../../application/dto/member.dto';
+import { CreateMemberDto, UpdateMemberDto, MemberQueryDto, MemberResponseDto, TerminalLoginDto, TerminalLoginResponseDto } from '../../application/dto/member.dto';
 import { Status } from '@repo/db';
 import { Permissions } from '@/v3/common/decorators/permissions.decorator';
 import { PermissionsGuard } from '@/v3/common/guards/permissions.guard';
@@ -73,5 +73,21 @@ export class MembersController {
   async updateStatus(@Request() req: any, @Param('id') id: string, @Body('status') status: Status) {
     const actorId = req.v3Context.memberId;
     return this.memberUseCase.updateMemberStatus(req.v3Context.organizationId, id, status, actorId);
+  }
+}
+
+@ApiTags('V3 Members Terminal')
+@UseGuards(V3AuthGuard)
+@UseInterceptors(StandardResponseInterceptor)
+@Controller('members')
+export class TerminalMembersController {
+  constructor(private readonly memberUseCase: MemberUseCase) {}
+
+  @Post('login')
+  @ApiOperation({ summary: 'Login member via terminal' })
+  @ApiResponse({ status: 200, type: TerminalLoginResponseDto })
+  async login(@Request() req: any, @Body() dto: TerminalLoginDto) {
+    const { organizationId, locationId } = req.v3Context;
+    return this.memberUseCase.login(organizationId, locationId, dto.cardId, dto.pin);
   }
 }
