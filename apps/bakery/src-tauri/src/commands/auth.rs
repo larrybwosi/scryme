@@ -100,8 +100,12 @@ pub async fn provision_device_with_token(
     }
 
     let result: serde_json::Value = response.json().await.map_err(BackendError::Network)?;
+    
+    // Log the returned result
+    println!("Provisioning API response: {:?}", result);
 
-    let api_key = result["apiKey"]
+    // FIX: Access ["data"]["apiKey"] instead of just ["apiKey"]
+    let api_key = result["data"]["apiKey"]
         .as_str()
         .ok_or_else(|| BackendError::Internal("No API Key returned from server".to_string()))?;
 
