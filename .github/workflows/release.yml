@@ -437,6 +437,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api, bakery, crm, web]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -456,25 +460,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push API image
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/api/Dockerfile
+          file: apps/${{ matrix.service }}/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ env.REPO_LOWER }}/api:latest
-            ghcr.io/${{ env.REPO_LOWER }}/api:${{ needs.set-version.outputs.version }}
-
-      - name: Build and push Bakery image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/bakery/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ env.REPO_LOWER }}/bakery:latest
-            ghcr.io/${{ env.REPO_LOWER }}/bakery:${{ needs.set-version.outputs.version }}
+            ghcr.io/${{ env.REPO_LOWER }}/${{ matrix.service }}:latest
+            ghcr.io/${{ env.REPO_LOWER }}/${{ matrix.service }}:${{ needs.set-version.outputs.version }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'mock-secret-for-build' }}
 
   finalize-release:
     needs: [publish-pos, set-version]

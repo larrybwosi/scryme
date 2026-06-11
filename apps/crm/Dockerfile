@@ -43,6 +43,8 @@ COPY turbo.json turbo.json
 # Build-time environment variables
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG BETTER_AUTH_SECRET
+ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 
 # Generate Prisma Client (if needed by CRM)
 RUN npx turbo run generate
