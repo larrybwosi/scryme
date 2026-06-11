@@ -91,18 +91,6 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
       setHasDeviceKey(status.hasDeviceKey);
       setHasMemberToken(status.hasMemberToken);
 
-      // Fetch current device info to get locationId if provisioned
-      if (status.hasDeviceKey) {
-        try {
-          const deviceMe = await sdk.bakery.getMe();
-          if (deviceMe.locationId) {
-            setLocationId(deviceMe.locationId);
-          }
-        } catch (deviceMeError) {
-          console.error('Failed to fetch device info', deviceMeError);
-        }
-      }
-
       // Automated SSO Flow: If we have a device key but no member token, attempt SSO
       if (status.hasDeviceKey && !status.hasMemberToken && window.navigator.onLine) {
           console.log('Device configured, attempting automated SSO...');
@@ -169,15 +157,12 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
     setProvisionError(null);
     try {
       // 1. Provision via Rust backend (handles keyring storage)
-      const response = (await invoke('provision_device_with_token', {
+      await invoke('provision_device_with_token', {
         setupToken,
         macAddress: hardwareInfo?.macAddress || null,
         serialNumber: hardwareInfo?.serialNumber || null,
         apiUrlOverride: showApiUrl ? apiUrl : null,
-      })) as any;
-
-      // Extract device info from response if available
-      const provisionedLocationId = response?.device?.locationId;
+      });
 
       // Update SDK base URL immediately if override was used
       if (showApiUrl && apiUrl) {
@@ -185,22 +170,20 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
         localStorage.setItem('bakery_api_url', apiUrl);
       }
 
-      // Save custom API URL and locationId to settings
-      try {
-        const settings = await invoke<any>('get_settings', { orgId: 'local-org' });
-        await invoke('update_settings', {
-          userId: 'system',
-          settings: {
-            ...settings,
-            apiEndpointUrl: showApiUrl ? apiUrl : settings?.apiEndpointUrl,
-            locationId: provisionedLocationId || settings?.locationId,
-          }
-        });
-        if (provisionedLocationId) {
-          setLocationId(provisionedLocationId);
+      // If custom API URL was used, save it to settings
+      if (showApiUrl && apiUrl) {
+        try {
+          const settings = await invoke<any>('get_settings', { orgId: 'local-org' });
+          await invoke('update_settings', {
+            userId: 'system',
+            settings: {
+              ...settings,
+              apiEndpointUrl: apiUrl
+            }
+          });
+        } catch (settingsError) {
+          console.error('Failed to save custom API URL to settings', settingsError);
         }
-      } catch (settingsError) {
-        console.error('Failed to save settings', settingsError);
       }
 
       // 2. Retrieve the new key and update SDK
@@ -255,18 +238,15 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!locationId) {
-        toast.error('Terminal location not configured. Please re-provision.');
+        toast.error('Please select a production location');
         return;
     }
     setIsLoggingIn(true);
     try {
-        const response = await sdk.auth.terminalLogin(cardId, pin);
-        const member = response.member;
-        localStorage.setItem('bakery_user', JSON.stringify(member));
         setHasMemberToken(true);
-        toast.success(`Welcome back, ${member.name}`);
-    } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Authentication failed');
+        toast.success('Access granted to production');
+    } catch (error) {
+        toast.error('Authentication failed');
     } finally {
         setIsLoggingIn(false);
     }
@@ -576,6 +556,15 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
                     </CardHeader>
                     <form onSubmit={handleLogin}>
                         <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="location" className="text-sm font-medium text-gray-700">Production Location</Label>
+                                <LocationSelect
+                                    value={locationId}
+                                    onValueChange={setLocationId}
+                                    placeholder="Select kitchen location"
+                                />
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="card-id" className="text-sm font-medium text-gray-700">Baker ID</Label>
                                 <div className="relative">
