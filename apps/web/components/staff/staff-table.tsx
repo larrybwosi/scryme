@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avat
 import { Badge } from "@repo/ui/components/ui/badge";
 import { MemberActions } from "./member-actions";
 import { format } from "date-fns";
+import Link from "next/link";
 
 interface StaffMember {
   id: string;
@@ -61,12 +62,12 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
                         {member.user.name?.charAt(0) || member.user.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
+                    <Link href={`/staff/${member.id}`} className="flex flex-col hover:opacity-70 transition-opacity">
                       <span className="font-semibold text-sm text-[#1D1D1F]">
                         {member.user.name || "Unnamed User"}
                       </span>
                       <span className="text-xs text-gray-500">{member.user.email}</span>
-                    </div>
+                    </Link>
                   </div>
                 </TableCell>
                 <TableCell>
