@@ -293,10 +293,24 @@ export class PosService {
           organizationId: ctx.organizationId,
           status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
         },
-        include: {
+        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
+        select: {
+          id: true,
+          purchaseNumber: true,
+          orderDate: true,
+          status: true,
           supplier: { select: { id: true, name: true } },
           items: {
-            include: {
+            select: {
+              id: true,
+              variantId: true,
+              orderedQuantity: true,
+              receivedQuantity: true,
+              rejectedQuantity: true,
+              invoicedQuantity: true,
+              unitCost: true,
+              taxAmount: true,
+              totalCost: true,
               variant: {
                 select: {
                   id: true,
@@ -315,10 +329,21 @@ export class PosService {
           toLocationId: locationId,
           status: { in: ["SHIPPED", "IN_TRANSIT"] as any },
         },
-        include: {
+        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
+        select: {
+          id: true,
+          transferNumber: true,
+          requestedDate: true,
+          status: true,
           fromLocation: { select: { id: true, name: true } },
           items: {
-            include: {
+            select: {
+              id: true,
+              variantId: true,
+              requestedQuantity: true,
+              shippedQuantity: true,
+              receivedQuantity: true,
+              unitCost: true,
               variant: {
                 select: {
                   id: true,
@@ -683,15 +708,42 @@ export class PosService {
         organizationId: ctx.organizationId,
         OR: [{ fromLocationId: locationId }, { toLocationId: locationId }],
       },
-      include: {
-        fromLocation: { select: { name: true } },
-        toLocation: { select: { name: true } },
-        items: {
-          include: {
-            variant: { include: { product: { select: { name: true } } } },
+      // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
+      select: {
+        id: true,
+        requestNumber: true,
+        status: true,
+        priority: true,
+        requestDate: true,
+        justification: true,
+        totalEstimatedCost: true,
+        fromLocation: { select: { id: true, name: true } },
+        toLocation: { select: { id: true, name: true } },
+        requestedBy: {
+          select: {
+            id: true,
+            user: { select: { name: true } },
           },
         },
-        requestedBy: { select: { user: { select: { name: true } } } },
+        items: {
+          select: {
+            id: true,
+            variantId: true,
+            requestedQuantity: true,
+            reason: true,
+            unitCostAtRequest: true,
+            allocatedQuantity: true,
+            fulfilledQuantity: true,
+            variant: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                product: { select: { name: true } },
+              },
+            },
+          },
+        },
       },
       orderBy: { requestDate: "desc" },
     });
