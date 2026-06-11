@@ -287,6 +287,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--max-old-space-size=8192"
+      BETTER_AUTH_SECRET: "mock-secret-for-build"
+      NEXT_PUBLIC_API_URL: "http://localhost:3002"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
