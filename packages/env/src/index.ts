@@ -22,7 +22,7 @@ const serverSchema = z.object({
   PORT: z.coerce.number().default(3001),
 
   // Auth
-  BETTER_AUTH_SECRET: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),

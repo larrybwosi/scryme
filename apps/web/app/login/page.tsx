@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -154,7 +154,7 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
 
 type View = "login" | "forgot-password";
 
-const LoginContent = () => {
+const LoginPageContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [currentView, setCurrentView] = useState<View>("login");
@@ -559,15 +559,15 @@ const LoginContent = () => {
 
 const LoginPage = () => {
   return (
-    <React.Suspense
+    <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-white">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
         </div>
       }
     >
-      <LoginContent />
-    </React.Suspense>
+      <LoginPageContent />
+    </Suspense>
   );
 };
 

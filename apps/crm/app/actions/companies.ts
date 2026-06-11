@@ -6,16 +6,24 @@ import { revalidatePath } from 'next/cache';
 
 export async function createCompany(data: BusinessAccountFormValues, organizationId: string) {
   try {
-    const validatedData = businessAccountSchema.parse(data);
+    const { contacts, ...rest } = businessAccountSchema.parse(data);
 
     const company = await db.businessAccount.create({
       data: {
-        ...validatedData,
+        ...rest,
         organizationId,
+        customers: contacts && contacts.length > 0 ? {
+          create: contacts.map(contact => ({
+            ...contact,
+            organizationId,
+            customerType: 'B2B',
+          }))
+        } : undefined
       },
     });
 
     revalidatePath('/companies');
+    revalidatePath('/contacts');
     return { success: true, data: company };
   } catch (error: any) {
     console.error('Error creating company:', error);
