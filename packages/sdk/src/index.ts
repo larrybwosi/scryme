@@ -43,6 +43,7 @@ export const getSDK = (config: SDKConfig) => {
     auth: {
       getAuthStatus: () => sdk.client.get("/auth/status"),
       logout: () => sdk.client.post("/auth/logout"),
+      terminalLogin: (cardId: string, pin: string) => sdk.client.post("/members/login", { cardId, pin }),
     },
     catalog: {
       getProducts: (params?: any) => sdk.client.get("/catalog/products", { params }),
@@ -69,6 +70,7 @@ export const getSDK = (config: SDKConfig) => {
     },
     bakery: {
       getAuthStatus: () => sdk.client.get("/bakery/auth/status"),
+      getMe: () => sdk.client.get("/devices/me"),
       sso: () => sdk.client.post("/bakery/auth/sso"),
       logout: () => sdk.client.post("/bakery/auth/logout"),
       getOverview: () => sdk.client.get("/bakery"),
