@@ -48,11 +48,11 @@ export {
   type InvoiceTemplateType
 } from './templates/invoice-templates';
 export { InvoicePDF as SimpleInvoicePDF } from './templates/InvoicePDF';
-export { InvoicePDF as Temp3InvoicePDF, type InvoiceData as Temp3InvoiceData } from './templates/Invoice.temp3';
+export { InvoicePDF as Temp3InvoicePDF } from './templates/Invoice.temp3';
 export { BusinessInvoicePDF as Temp4InvoicePDF } from './templates/Invoice.temp4';
-export { ModernInvoicePDF, type ModernInvoiceData, type ModernInvoiceItem } from './templates/Invoice.temp5';
-export { BusinessInvoicePDF as DenvisInvoicePDF, type BusinessInvoiceData, type BusinessInvoiceItem } from './templates/denvis.temp.6';
-export { InvoicePDF as Temp2InvoicePDF, type InvoiceData as Temp2InvoiceData, type InvoiceItem as Temp2InvoiceItem } from './templates/invoice.temp2';
+export { ModernInvoicePDF } from './templates/Invoice.temp5';
+export { BusinessInvoicePDF as DenvisInvoicePDF } from './templates/denvis.temp.6';
+export { InvoicePDF as Temp2InvoicePDF } from './templates/invoice.temp2';
 export { ThermalReceiptPDF, type ThermalReceiptData } from './templates/ThermalReceiptForRestaurants';
 
 export * from './v2/InvoiceTemplate';

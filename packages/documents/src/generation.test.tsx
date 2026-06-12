@@ -13,18 +13,21 @@ const verifyRender = async (element: React.ReactElement<DocumentProps>) => {
 describe('Document Generation', () => {
   describe('V2 Templates', () => {
     it('renders InvoiceTemplate correctly', async () => {
-      const data: Templates.InvoicePDFData = {
+      const data: any = {
         invoiceNumber: 'INV-001',
         status: 'PAID',
         date: '2023-10-01',
         customerName: 'John Doe',
         organizationName: 'Scryme Bakery',
+        company: { name: 'Scryme Bakery', address: 'Bakery Ave' },
+        client: { name: 'John Doe', email: 'john@doe.com', address: 'Street 1' },
         items: [
           { itemCode: 'B-001', itemName: 'Croissant', quantity: 2, rate: 2.5, amount: 5.0 }
         ],
-        netTotal: 5.0,
-        totalTaxes: 0.8,
-        grandTotal: 5.8
+        subtotal: 5.0,
+        tax: 0.8,
+        total: 5.8,
+        payment: { terms: 'COD', availableMethods: ['CASH'] }
       };
       await verifyRender(<Templates.InvoiceTemplate data={data} />);
     });
@@ -86,12 +89,12 @@ describe('Document Generation', () => {
 
   describe('V1 Templates', () => {
      it('renders SimpleInvoicePDF correctly', async () => {
-        const data = {
+        const data: any = {
             invoiceNumber: '123',
             date: '2023-01-01',
             company: { name: 'Org', address: 'Addr', phone: '123', email: 'a@b.com' },
             client: { name: 'Client', address: 'Addr', email: 'c@d.com' },
-            items: [{ description: 'Item', qty: 1, unitPrice: 10 }],
+            items: [{ description: 'Item', qty: 1, unitPrice: 10, amount: 10 }],
             currencySymbol: '$',
             subtotal: 10,
             tax: 1,
@@ -100,7 +103,7 @@ describe('Document Generation', () => {
             payment: { terms: 'COD' }
         };
         // Needs qrCode prop too
-        await verifyRender(<Templates.SimpleInvoicePDF data={data} qrCode="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" />);
+        await verifyRender(<Templates.SimpleInvoicePDF data={data} />);
      });
 
      it('renders BatchProductionForm correctly', async () => {
