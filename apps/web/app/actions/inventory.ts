@@ -503,7 +503,7 @@ export async function getInventoryProducts(params: {
         sku: variant.sku || product.sku,
         category: product.category.name,
         supplier: product.suppliers[0]?.supplier.name || "N/A",
-        currentStock: currentStock.toNumber(),
+        currentStock: Number(currentStock),
         status,
         unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
         image: product.imageUrls[0],
