@@ -1,3 +1,3 @@
-## 2025-05-14 - [ImageUpload Accessibility & Interaction]
-**Learning:** Icon-only buttons that are only visible on hover (e.g., "Remove image" on product cards) are inaccessible to keyboard users unless `focus-visible:opacity-100` is applied. Additionally, custom interactive elements using `div` require `role="button"` and explicit `onKeyDown` handlers for 'Enter' and 'Space' to meet ARIA standards.
-**Action:** Always pair `group-hover:opacity-100` with `focus-visible:opacity-100` for action buttons, and ensure drag-and-drop zones provide immediate visual feedback (e.g., brand color border/background) during the `isDragging` state.
+## 2025-06-11 - [PageHeader Accessibility & Semantic Actions]
+**Learning:** Icon-only buttons (Star for favorites, MoreHorizontal for options) lacked descriptive labels and tooltips, making them inaccessible to screen readers and unclear for mouse users. Additionally, using `onClick` with a string path for navigation is an anti-pattern that breaks standard browser behaviors (like middle-click to open in new tab).
+**Action:** Always wrap icon-only buttons in `Tooltip` and provide `aria-label`. Use `asChild` with `Link` for navigation actions to preserve semantic HTML and browser native features.
