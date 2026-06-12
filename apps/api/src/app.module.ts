@@ -15,6 +15,7 @@ import { UploadModule } from './common/upload/upload.module';
 import { WindmillModule } from './common/Windmill/WindmillModule';
 import { ZitadelModule } from './zitadel/zitadel.module';
 import { MpesaModule } from './common/mpesa.module';
+import { CommonModule } from './common/common.module';
 import { V2AuthGuard } from './auth/v2-auth.guard';
 import { AuthorizationGuard } from './common/guards/authorization.guard';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
@@ -50,6 +51,7 @@ import { env } from '@repo/env';
     WindmillModule,
     ZitadelModule,
     MpesaModule,
+    CommonModule,
     RouterModule.register([
       {
         path: 'v2',

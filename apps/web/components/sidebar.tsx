@@ -116,7 +116,15 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Approvals", href: "/finance/approvals" },
         ],
       },
-      { title: "Settings", icon: Settings, href: "/settings" },
+      {
+        title: "Settings",
+        icon: Settings,
+        href: "/settings",
+        items: [
+          { title: "Organization", href: "/settings" },
+          { title: "Authorized Devices", href: "/settings/devices" },
+        ],
+      },
     ],
   },
 ];
