@@ -8,6 +8,7 @@ import {
   Decimal,
   StockAdjustment,
   ProductVariant,
+  Prisma,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
@@ -262,9 +263,12 @@ export async function updateProduct(
     sku?: string;
     slug?: string;
     categoryId?: string;
+    description?: string;
+    detailedDescription?: string;
     buyingPrice?: number;
     retailPrice?: number;
     imageUrls?: string[];
+    tags?: string[];
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -278,7 +282,10 @@ export async function updateProduct(
         sku: data.sku,
         slug: data.slug,
         categoryId: data.categoryId,
+        description: data.description,
+        detailedDescription: data.detailedDescription,
         imageUrls: data.imageUrls,
+        tags: data.tags,
       },
     });
 
@@ -366,6 +373,13 @@ export async function getProduct(id: string): Promise<any> {
       variants: {
         include: {
           variantStocks: true,
+          priceListItems: true,
+          pricingRules: true,
+        },
+      },
+      suppliers: {
+        include: {
+          supplier: true,
         },
       },
     },
@@ -801,6 +815,37 @@ export type InventoryProduct = {
   unitPrice: number;
   image?: string;
 };
+
+export async function bulkDeleteVariants(variantIds: string[]): Promise<Prisma.BatchPayload> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.productVariant.deleteMany({
+    where: {
+      id: { in: variantIds },
+      product: { organizationId: context.organizationId },
+    },
+  });
+
+  revalidatePath("/inventory");
+  return result;
+}
+
+export async function updateVariantStatus(variantIds: string[], isActive: boolean): Promise<Prisma.BatchPayload> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.productVariant.updateMany({
+    where: {
+      id: { in: variantIds },
+      product: { organizationId: context.organizationId },
+    },
+    data: { isActive },
+  });
+
+  revalidatePath("/inventory");
+  return result;
+}
 
 export async function getStockAdjustmentHistory(variantId: string): Promise<
   (StockAdjustment & {
