@@ -1,5 +1,17 @@
 # bakery
 
+## 5.0.0
+
+### Major Changes
+
+- 7fc4a5f: nothing
+
+### Minor Changes
+
+- ac0f269: Prisma update fix
+- 7fc4a5f: minor update
+- ac0f269: Update
+
 ## 4.2.0
 
 ### Minor Changes
