@@ -2,6 +2,7 @@ import { prisma as db } from '@repo/db';
 import { Mappers } from '@repo/documents/server';
 import { renderToStream } from '@react-pdf/renderer';
 import React from 'react';
+import QRCode from 'qrcode';
 
 export async function generateDocument(type: string, data: any): Promise<any> {
   return Buffer.from([]);
@@ -43,6 +44,7 @@ export async function getDocumentStream(
   let DocumentComponent: React.ComponentType<any>;
   let data: any;
   let filename: string;
+  let qrCode: string = '';
 
   const { getInvoiceTemplate } = await import('@repo/documents');
   const { ReceiptTemplate } = await import('@repo/documents/v2/ReceiptTemplate');
@@ -53,6 +55,13 @@ export async function getDocumentStream(
       DocumentComponent = getInvoiceTemplate(selectedTemplate);
       data = Mappers.toInvoiceData(transaction);
       filename = `Invoice_${transaction.number}.pdf`;
+
+      try {
+        // Generate QR code for invoice number (or verification URL if available)
+        qrCode = await QRCode.toDataURL(transaction.number);
+      } catch (err) {
+        console.error('Failed to generate QR code', err);
+      }
       break;
     }
     case 'receipt':
@@ -65,7 +74,7 @@ export async function getDocumentStream(
   }
 
   const stream = await renderToStream(
-    React.createElement(DocumentComponent, { data, settings: transaction.organization?.settings })
+    React.createElement(DocumentComponent, { data, qrCode, settings: transaction.organization?.settings })
   );
 
   return {

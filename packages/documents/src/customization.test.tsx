@@ -24,7 +24,7 @@ describe('V2 Customization', () => {
   });
 
   it('passes branding data to PDFHeader and PDFFooter in InvoiceTemplate', async () => {
-    const data: Templates.InvoicePDFData = {
+    const data: any = {
       invoiceNumber: 'INV-001',
       status: 'PAID',
       date: '2023-10-01',
@@ -32,10 +32,12 @@ describe('V2 Customization', () => {
       organizationName: 'Custom Org Name',
       organizationAddress: '123 Custom St',
       logoUrl: 'https://example.com/logo.png',
+      company: { name: 'Custom Org Name', address: '123 Custom St' },
+      client: { name: 'John Doe' },
       items: [{ itemCode: 'B-001', itemName: 'Croissant', quantity: 2, rate: 2.5, amount: 5.0 }],
-      netTotal: 5.0,
-      totalTaxes: 0.8,
-      grandTotal: 5.8
+      subtotal: 5.0,
+      tax: 0.8,
+      total: 5.8
     };
 
     await renderToBuffer(<Templates.InvoiceTemplate data={data} />);
