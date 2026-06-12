@@ -21,3 +21,5 @@ export * from './services/openloyalty';
 
 // Actions
 export * from './actions/api-management';
+
+export * from './storage';
