@@ -148,12 +148,15 @@ export async function createExpense(data: {
     });
 
     if (status === "PENDING_APPROVAL") {
-      await submitForApproval({
-        relatedId: expense.id,
-        type: "EXPENSE",
-        amount: data.amount,
-        relatedRecordNumber: expenseNumber,
-      });
+      await submitForApproval(
+        {
+          relatedId: expense.id,
+          type: "EXPENSE",
+          amount: data.amount,
+          relatedRecordNumber: expenseNumber,
+        },
+        tx,
+      );
     }
 
     if (data.isRecurring && data.frequency && data.startDate) {
@@ -295,7 +298,9 @@ export async function processRecurringExpenses() {
         ? Number(org.expenseApprovalThreshold)
         : 0;
       const status =
-        Number(recurring.amount) > threshold ? "PENDING_APPROVAL" : "PENDING";
+        Number(recurring.amount?.toString() || 0) > threshold
+          ? "PENDING_APPROVAL"
+          : "PENDING";
 
       const expense = await tx.expense.create({
         data: {
@@ -457,8 +462,8 @@ export async function getFinanceOverview() {
   ]);
 
   return {
-    totalExpenses: Number(totalExpenses._sum.amount || 0),
-    pendingApprovals,
-    monthlySpend: Number(monthlySpend._sum.amount || 0),
+    totalExpenses: Number(totalExpenses._sum.amount?.toString() || 0),
+    pendingApprovals: pendingApprovals || 0,
+    monthlySpend: Number(monthlySpend._sum.amount?.toString() || 0),
   };
 }

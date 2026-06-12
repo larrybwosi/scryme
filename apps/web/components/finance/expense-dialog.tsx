@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -58,19 +58,25 @@ interface ExpenseDialogProps {
 
 export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
-      description: '',
+      description: "",
       amount: 0,
-      categoryId: '',
-      expenseDate: new Date().toISOString().split('T')[0],
+      categoryId: "",
+      expenseDate: new Date().toISOString().split("T")[0],
       paymentMethod: PaymentMethod.CASH,
-      notes: '',
+      notes: "",
       isRecurring: false,
       frequency: RecurrenceFrequency.MONTHLY,
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -93,6 +99,8 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
       }
     });
   }
+
+  if (!mounted) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
