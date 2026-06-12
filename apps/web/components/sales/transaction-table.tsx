@@ -24,10 +24,12 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { cn } from "@repo/ui/lib/utils";
+import { TransactionDetailsSheet } from './transaction-details-sheet';
 
 export function TransactionTable({ transactions }: { transactions: any[] }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paymentTrx, setPaymentTrx] = useState<any>(null);
+  const [viewTransactionId, setViewTransactionId] = useState<string | null>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev =>
@@ -97,9 +99,9 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
                     onChange={() => toggleSelect(trx.id)}
                   />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 cursor-pointer" onClick={() => setViewTransactionId(trx.id)}>
                   <div className="flex flex-col">
-                    <span className="font-bold text-zinc-900">{trx.number}</span>
+                    <span className="font-bold text-zinc-900 hover:underline">{trx.number}</span>
                     <span className="text-xs text-zinc-500">
                       {format(new Date(trx.createdAt), 'MMM d, yyyy HH:mm')}
                     </span>
@@ -146,7 +148,7 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setViewTransactionId(trx.id)}>
                         <Eye className="mr-2 h-4 w-4" /> View Details
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setPaymentTrx(trx)}>
@@ -193,6 +195,12 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
         transaction={paymentTrx}
         isOpen={!!paymentTrx}
         onClose={() => setPaymentTrx(null)}
+      />
+
+      <TransactionDetailsSheet
+        transactionId={viewTransactionId}
+        isOpen={!!viewTransactionId}
+        onClose={() => setViewTransactionId(null)}
       />
     </div>
   );
