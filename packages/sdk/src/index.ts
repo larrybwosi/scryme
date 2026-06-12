@@ -13,7 +13,21 @@ export const getSDK = (config: SDKConfig) => {
   });
 
   client.interceptors.response.use(
-    (response: AxiosResponse) => response,
+    (response: AxiosResponse) => {
+      // If it matches the StandardResponse format, unwrap it
+      if (
+        response.data &&
+        response.data.success === true &&
+        response.data.data !== undefined &&
+        (response.data.timestamp || response.data.meta)
+      ) {
+        return {
+          ...response,
+          data: response.data.data,
+        };
+      }
+      return response;
+    },
     (error: any) => {
       if (error.response?.status === 401 && config.onUnauthorized) {
         config.onUnauthorized();

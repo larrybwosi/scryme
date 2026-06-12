@@ -1,4 +1,5 @@
 export interface V2ApiContext {
+  openObserveService?: any; // Using any here to avoid circular dependency with API service
   organizationId: string;
   deviceId?: string;
   deviceName?: string;
