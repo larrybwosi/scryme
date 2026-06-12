@@ -119,9 +119,9 @@ const getStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
 });
 
 // Create Document Component
-export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode: string }) => {
+export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: string }) => {
   const invoiceData = data;
-  const branding = data.organization ? { primaryColor: data.organization.primaryColor } : {};
+  const branding = data.organization ? { primaryColor: (data.organization as any).primaryColor } : {};
   const colors = getColors(branding.primaryColor);
   const styles = getStyles(colors);
 
@@ -144,13 +144,15 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode: string
     return parts.filter(Boolean).join('\n');
   };
 
+  const logo = invoiceData.logo || invoiceData.logoUrl || (invoiceData.company?.logo || invoiceData.company?.logoUrl);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.companyInfo}>
-            {(invoiceData.company.logo || invoiceData.company.logoUrl) && <Image src={(invoiceData.company.logo || invoiceData.company.logoUrl) as string} style={{ height: 40, marginBottom: 8, objectFit: 'contain' }} />}
+            {logo && <Image src={logo as string} style={{ height: 40, marginBottom: 8, objectFit: 'contain' }} />}
             <Text style={styles.companyName}>{invoiceData.company.name || 'Company Name'}</Text>
             <Text style={styles.companyDetails}>
               {invoiceData.company.address || 'Company Address'}
@@ -197,7 +199,7 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode: string
             <Text style={[styles.tableHeaderCol, styles.colPrice]}>Unit Price</Text>
             <Text style={[styles.tableHeaderCol, styles.colAmount]}>Amount</Text>
           </View>
-          {invoiceData.items.map((item, index) => (
+          {invoiceData.items.map((item: any, index: number) => (
             <View key={index} style={styles.tableRow}>
               <Text style={[styles.tableCol, styles.colQty]}>{item.qty || item.quantity}</Text>
               <Text style={[styles.tableCol, styles.colDesc]}>{item.description || item.itemName}</Text>

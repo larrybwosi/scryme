@@ -189,7 +189,7 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
   const subtotal = data.subtotal;
   const gstRate = data.gstRate || data.taxRate || (data.tax / subtotal) * 100 || 0;
   const gstAmount = data.tax;
-  const total = data.total || data.grandTotal;
+  const total = data.total || data.grandTotal || 0;
 
   const invoiceTo = data.invoiceTo || {
     name: data.client.name,

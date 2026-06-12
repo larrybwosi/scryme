@@ -317,7 +317,7 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
     ...invoiceData,
     companyName: invoiceData.companyName || invoiceData.company.name,
     companyTagline: invoiceData.companyTagline || invoiceData.company.tagline || '',
-    companyAddress: invoiceData.companyAddress || {
+    companyAddress: {
       city: invoiceData.company.city || '',
       street: invoiceData.company.address,
       zipCode: '',
@@ -356,7 +356,7 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
   const subtotal = invoiceData.subtotal;
   const taxAmount = invoiceData.tax;
   const discountAmount = (invoiceData as any).discountAmount || 0;
-  const totalDue = invoiceData.total || invoiceData.grandTotal;
+  const totalDue = invoiceData.total || invoiceData.grandTotal || 0;
 
   return (
     <Document>

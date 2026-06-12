@@ -219,7 +219,7 @@ const formatPrice = (amount: number, currencyCode: string, locale: string = 'en-
 };
 
 export const BusinessInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoiceData }) => {
-  const { currencyCode, locale } = invoiceData.currencySettings || { code: invoiceData.currency, locale: 'en-US' };
+  const { code, locale } = invoiceData.currencySettings || { code: invoiceData.currency, locale: 'en-US' };
   const isInclusive = invoiceData.isTaxInclusive ?? false;
 
   const subTotal = invoiceData.subtotal;
@@ -293,12 +293,12 @@ export const BusinessInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invo
               </View>
               <View style={styles.priceColumn}>
                 <Text style={[styles.tableCell, { textAlign: 'right' }]}>
-                  {formatPrice(item.unitPrice || item.price || item.rate, currencyCode || 'USD', locale || 'en-US')}
+                  {formatPrice(item.unitPrice || item.price || item.rate, code || 'USD', locale || 'en-US')}
                 </Text>
               </View>
               <View style={styles.totalColumn}>
                 <Text style={[styles.tableCell, { textAlign: 'right' }]}>
-                  {formatPrice(item.total || item.amount, currencyCode || 'USD', locale || 'en-US')}
+                  {formatPrice(item.total || item.amount, code || 'USD', locale || 'en-US')}
                 </Text>
               </View>
             </View>
@@ -310,11 +310,11 @@ export const BusinessInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invo
           <View style={styles.totalsBox}>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>{isInclusive ? 'Total (Excl. Tax)' : 'Sub Total'}</Text>
-              <Text style={styles.totalValue}>{formatPrice(subTotal, currencyCode || 'USD', locale || 'en-US')}</Text>
+              <Text style={styles.totalValue}>{formatPrice(subTotal, code || 'USD', locale || 'en-US')}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tax ({invoiceData.taxRate}%)</Text>
-              <Text style={styles.totalValue}>{formatPrice(taxAmount, currencyCode || 'USD', locale || 'en-US')}</Text>
+              <Text style={styles.totalValue}>{formatPrice(taxAmount, code || 'USD', locale || 'en-US')}</Text>
             </View>
 
             {isInstallment ? (
@@ -322,22 +322,22 @@ export const BusinessInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invo
                 <View style={styles.grandTotalRow}>
                   <Text style={[styles.totalLabel, { fontWeight: 'bold' }]}>Invoice Total</Text>
                   <Text style={[styles.totalValue, { fontWeight: 'bold' }]}>
-                    {formatPrice(grandTotal, currencyCode || 'USD', locale || 'en-US')}
+                    {formatPrice(grandTotal, code || 'USD', locale || 'en-US')}
                   </Text>
                 </View>
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>Less: Amount Paid</Text>
-                  <Text style={styles.totalValue}>({formatPrice(amountPaid, currencyCode || 'USD', locale || 'en-US')})</Text>
+                  <Text style={styles.totalValue}>({formatPrice(amountPaid, code || 'USD', locale || 'en-US')})</Text>
                 </View>
                 <View style={[styles.totalRow, styles.balanceDueRow]}>
                   <Text style={styles.balanceDueLabel}>Balance Due</Text>
-                  <Text style={styles.balanceDueValue}>{formatPrice(balanceDue, currencyCode || 'USD', locale || 'en-US')}</Text>
+                  <Text style={styles.balanceDueValue}>{formatPrice(balanceDue, code || 'USD', locale || 'en-US')}</Text>
                 </View>
               </>
             ) : (
               <View style={[styles.totalRow, styles.balanceDueRow]}>
                 <Text style={styles.balanceDueLabel}>Grand Total</Text>
-                <Text style={styles.balanceDueValue}>{formatPrice(grandTotal, currencyCode || 'USD', locale || 'en-US')}</Text>
+                <Text style={styles.balanceDueValue}>{formatPrice(grandTotal, code || 'USD', locale || 'en-US')}</Text>
               </View>
             )}
           </View>
