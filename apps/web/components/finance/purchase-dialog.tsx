@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -60,7 +60,13 @@ export function PurchaseDialog({
   children,
 }: PurchaseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema) as any,
     defaultValues: {
@@ -87,14 +93,14 @@ export function PurchaseDialog({
     });
   }
 
-  // Get all variants from products
-  const variants = products.flatMap((p) =>
-    p?.variants?.map((v: any) => ({
-      id: v.id,
-      name: `${p.name} ${v.name !== "Default" ? `(${v.name})` : ""}`,
-      unitCost: Number(v.buyingPrice || 0),
-    })),
-  );
+  // Products returned from getInventoryProducts are already flattened variants
+  const variants = products.map((p: any) => ({
+    id: p.variantId,
+    name: `${p.name} ${p.variantName !== "Default" ? `(${p.variantName})` : ""}`,
+    unitCost: Number(p.unitPrice || 0), // Adjusting based on user input for buying price
+  }));
+
+  if (!mounted) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

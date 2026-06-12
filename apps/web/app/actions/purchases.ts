@@ -67,13 +67,15 @@ export async function getPurchases(params: {
     id: p.id,
     purchaseNumber: p.purchaseNumber,
     supplierName: p.supplier.name,
-    amount: Number(p.totalAmount),
+    amount: Number(p.totalAmount?.toString() || 0),
     status: p.status,
     date: p.orderDate,
     itemCount: p.items.length,
     product: p.items[0]?.variant.product.name || "N/A",
     category: p.items[0]?.variant.product.categoryId || "N/A",
-    image: p.items[0]?.variant.product.imageUrls[0] || "https://api.dicebear.com/7.x/shapes/svg?seed=" + p.id,
+    image:
+      p.items[0]?.variant.product.imageUrls[0] ||
+      "https://api.dicebear.com/7.x/shapes/svg?seed=" + p.id,
   }));
 }
 
@@ -95,49 +97,56 @@ export async function createPurchase(data: {
     purchaseNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
   }
 
-  const purchase = await db.purchase.create({
-    data: {
-      organizationId: auth.organizationId,
-      memberId: auth.memberId,
-      supplierId: data.supplierId,
-      purchaseNumber,
-      totalAmount: totalAmount,
-      status: "DRAFT",
-      items: {
-        create: data.items.map((item) => ({
-          variantId: item.variantId,
-          orderedQuantity: item.quantity,
-          unitCost: item.unitCost,
-          totalCost: item.quantity * item.unitCost,
-        })),
+  return await db.$transaction(async (tx) => {
+    const purchase = await tx.purchase.create({
+      data: {
+        organizationId: auth.organizationId,
+        memberId: auth.memberId,
+        supplierId: data.supplierId,
+        purchaseNumber,
+        totalAmount: totalAmount,
+        status: "DRAFT",
+        items: {
+          create: data.items.map((item) => ({
+            variantId: item.variantId,
+            orderedQuantity: item.quantity,
+            unitCost: item.unitCost,
+            totalCost: item.quantity * item.unitCost,
+          })),
+        },
       },
-    },
-  });
-
-  // Check for approval threshold
-  const org = await db.organization.findUnique({
-    where: { id: auth.organizationId },
-    select: { expenseApprovalThreshold: true }
-  });
-
-  const threshold = org?.expenseApprovalThreshold ? Number(org.expenseApprovalThreshold) : 0;
-
-  if (totalAmount > threshold) {
-    await submitForApproval({
-      relatedId: purchase.id,
-      type: "PURCHASE_ORDER",
-      amount: totalAmount,
-      relatedRecordNumber: purchaseNumber,
     });
-  } else {
-    await db.purchase.update({
-      where: { id: purchase.id },
-      data: { status: "ORDERED" }
-    });
-  }
 
-  revalidatePath("/finance/purchases");
-  return purchase;
+    // Check for approval threshold
+    const org = await tx.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { expenseApprovalThreshold: true },
+    });
+
+    const threshold = org?.expenseApprovalThreshold
+      ? Number(org.expenseApprovalThreshold)
+      : 0;
+
+    if (totalAmount > threshold) {
+      await submitForApproval(
+        {
+          relatedId: purchase.id,
+          type: "PURCHASE_ORDER",
+          amount: totalAmount,
+          relatedRecordNumber: purchaseNumber!,
+        },
+        tx,
+      );
+    } else {
+      await tx.purchase.update({
+        where: { id: purchase.id },
+        data: { status: "ORDERED" },
+      });
+    }
+
+    revalidatePath("/finance/purchases");
+    return purchase;
+  });
 }
 
 export async function receivePurchaseItems(purchaseId: string, items: { itemId: string; quantity: number }[]) {
@@ -250,9 +259,12 @@ export async function createPurchasePayment(data: {
   });
 
   if (purchase) {
-    const totalPaid = purchase.payments.reduce((acc, p) => acc + Number(p.amount), 0);
+    const totalPaid = purchase.payments.reduce(
+      (acc, p) => acc + Number(p.amount?.toString() || 0),
+      0,
+    );
     let paymentStatus: any = "PARTIALLY_PAID";
-    if (totalPaid >= Number(purchase.totalAmount)) {
+    if (totalPaid >= Number(purchase.totalAmount?.toString() || 0)) {
       paymentStatus = "PAID";
     }
 
@@ -260,8 +272,8 @@ export async function createPurchasePayment(data: {
       where: { id: data.purchaseId },
       data: {
         paidAmount: totalPaid,
-        paymentStatus: paymentStatus
-      }
+        paymentStatus: paymentStatus,
+      },
     });
   }
 

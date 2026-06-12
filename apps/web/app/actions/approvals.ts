@@ -54,12 +54,16 @@ export async function getApprovalRequests(): Promise<
   });
 }
 
-export async function submitForApproval(data: {
-  relatedId: string;
-  type: ApprovalRequestType;
-  amount: number;
-  relatedRecordNumber: string;
-}) {
+export async function submitForApproval(
+  data: {
+    relatedId: string;
+    type: ApprovalRequestType;
+    amount: number;
+    relatedRecordNumber: string;
+  },
+  tx?: any,
+) {
+  const client = tx || db;
   const { auth } = await checkPermission([
     "OWNER",
     "ADMIN",
@@ -75,7 +79,7 @@ export async function submitForApproval(data: {
         ? "PURCHASE_ORDER_CREATED"
         : null;
 
-  const workflow = await db.approvalWorkflow.findFirst({
+  const workflow = await client.approvalWorkflow.findFirst({
     where: {
       organizationId: auth.organizationId,
       isActive: true,
@@ -93,7 +97,7 @@ export async function submitForApproval(data: {
   });
 
   // If no workflow, create a pending request for manual approval by admins
-  const request = await db.approvalRequest.create({
+  const request = await client.approvalRequest.create({
     data: {
       organizationId: auth.organizationId,
       requesterId: auth.memberId,
@@ -108,12 +112,12 @@ export async function submitForApproval(data: {
 
   // Update the related record status
   if (data.type === "EXPENSE") {
-    await db.expense.update({
+    await client.expense.update({
       where: { id: data.relatedId },
       data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
     });
   } else if (data.type === "PURCHASE_ORDER") {
-    await db.purchase.update({
+    await client.purchase.update({
       where: { id: data.relatedId },
       data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
     });
