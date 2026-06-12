@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WebhookService } from '../../../webhooks/infrastructure/services/webhook.service';
-import { V3RealtimeGateway } from '../../../../common/realtime/v3-realtime.gateway';
+import { ApiRealtimeService } from '../../../../../common/services/realtime.service';
 
 @Injectable()
 export class ConvertQuoteToOrderUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly webhookService: WebhookService,
-    private readonly realtimeGateway: V3RealtimeGateway
+    private readonly realtimeService: ApiRealtimeService
   ) {}
 
   async execute(organizationId: string, quoteId: string) {
@@ -41,7 +41,7 @@ export class ConvertQuoteToOrderUseCase {
     });
 
     // 3. Trigger events
-    this.realtimeGateway.sendToOrder(quote.id, 'order.created', updatedTransaction);
+    await this.realtimeService.publish(`order:${quote.id}`, 'order.created', updatedTransaction);
     await this.webhookService.dispatch('order.created', organizationId, updatedTransaction);
 
     return updatedTransaction;

@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { V3AuthService } from '../../modules/auth/infrastructure/services/v3-auth.service';
 import { UseGuards } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RealtimeRedisService } from '../../../v2/realtime/realtime-redis.service';
 
 @WebSocketGateway({
   namespace: 'v3',
@@ -24,7 +25,8 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
 
   constructor(
     private readonly v3AuthService: V3AuthService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly redis: RealtimeRedisService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -45,8 +47,111 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log(`V3 Client disconnected: ${client.id}`);
+    const context = (client as any).v3Context;
+    const clientId = context?.memberId || client.id;
+
+    const presenceKeys = await this.redis.keys('realtime:presence:*');
+    for (const key of presenceKeys) {
+      const channel = key.replace('realtime:presence:', '');
+      await this.redis.leavePresence(channel, clientId);
+
+      const members = await this.redis.getPresence(channel);
+      this.server.to(channel).emit('presence:update', { channel, members });
+    }
+  }
+
+  @SubscribeMessage('join')
+  async handleJoinRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string, options?: { rewind?: number } },
+  ) {
+    const context = (client as any).v3Context;
+    if (!context) return { event: 'error', message: 'Unauthorized' };
+
+    // Basic ownership check for common V3 patterns
+    if (data.channel.startsWith('order:')) {
+      const orderId = data.channel.split(':')[1];
+      const order = await this.prisma.client.transaction.findUnique({
+        where: { id: orderId },
+        select: { organizationId: true },
+      });
+      if (!order || order.organizationId !== context.organizationId) {
+        return { event: 'error', message: 'Unauthorized' };
+      }
+    } else if (data.channel.startsWith('inventory:')) {
+      const orgId = data.channel.split(':')[1];
+      if (orgId !== context.organizationId) {
+        return { event: 'error', message: 'Unauthorized' };
+      }
+    }
+
+    client.join(data.channel);
+
+    if (data.options?.rewind) {
+      const history = await this.redis.getHistory(data.channel);
+      const limit = data.options.rewind;
+      const messagesToSend = history.slice(-limit);
+      for (const msg of messagesToSend) {
+        client.emit(msg.event, msg.data);
+      }
+    }
+
+    return { event: 'joined', data: data.channel };
+  }
+
+  @SubscribeMessage('presence:enter')
+  async handlePresenceEnter(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string, metadata?: any },
+  ) {
+    const context = (client as any).v3Context;
+    if (!context) return { event: 'error', message: 'Unauthorized' };
+
+    // Same security check as join
+    if (data.channel.startsWith('order:')) {
+      const orderId = data.channel.split(':')[1];
+      const order = await this.prisma.client.transaction.findUnique({
+        where: { id: orderId },
+        select: { organizationId: true },
+      });
+      if (!order || order.organizationId !== context.organizationId) {
+        return { event: 'error', message: 'Unauthorized' };
+      }
+    } else if (data.channel.startsWith('inventory:')) {
+      const orgId = data.channel.split(':')[1];
+      if (orgId !== context.organizationId) {
+        return { event: 'error', message: 'Unauthorized' };
+      }
+    }
+
+    const clientId = context.memberId || client.id;
+    await this.redis.enterPresence(data.channel, clientId, data.metadata);
+
+    const members = await this.redis.getPresence(data.channel);
+    this.server.to(data.channel).emit('presence:update', { channel: data.channel, members });
+
+    return { event: 'presence:entered', members };
+  }
+
+  @SubscribeMessage('presence:get')
+  async handlePresenceGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string },
+  ) {
+    const members = await this.redis.getPresence(data.channel);
+    return members;
+  }
+
+  @SubscribeMessage('history:get')
+  async handleHistoryGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string, limit?: number },
+  ) {
+    const history = await this.redis.getHistory(data.channel);
+    const limit = data.limit || 100;
+    return history.slice(-limit);
   }
 
   @SubscribeMessage('subscribe:order')
@@ -76,12 +181,25 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
     return { event: 'subscribed', room };
   }
 
-  // Helper method to emit events from services
-  sendToOrder(orderId: string, event: string, data: any) {
-    this.server.to(`order:${orderId}`).emit(event, data);
+  @SubscribeMessage('publish')
+  async handlePublish(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string, event: string, data: any },
+  ) {
+    await this.redis.saveMessage(data.channel, data.event, data.data);
+    this.server.to(data.channel).emit(data.event, data.data);
   }
 
-  sendToInventory(organizationId: string, event: string, data: any) {
-    this.server.to(`inventory:${organizationId}`).emit(event, data);
+  // Helper method to emit events from services
+  async sendToOrder(orderId: string, event: string, data: any) {
+    const channel = `order:${orderId}`;
+    await this.redis.saveMessage(channel, event, data);
+    this.server.to(channel).emit(event, data);
+  }
+
+  async sendToInventory(organizationId: string, event: string, data: any) {
+    const channel = `inventory:${organizationId}`;
+    await this.redis.saveMessage(channel, event, data);
+    this.server.to(channel).emit(event, data);
   }
 }
