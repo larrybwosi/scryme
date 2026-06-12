@@ -17,7 +17,7 @@ import {
   getDeviceSetupTokens,
   getDeviceRegistry,
   createDeviceSetupToken,
-} from "@repo/shared";
+} from "@repo/shared/server";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 

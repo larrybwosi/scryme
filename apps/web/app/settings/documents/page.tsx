@@ -6,12 +6,11 @@ import { TemplateSelector } from "./template-selector";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
+  TabsContent,
 } from "@repo/ui/components/ui/tabs";
-import { FileText, Settings2, Palette } from "lucide-react";
-import { InvoiceConfigForm } from "./invoice-config-form";
+import { Palette, Settings2, FileText } from "lucide-react";
 
 // Helper function to convert Decimal to number
 const convertDecimalsToNumbers = (obj: any): any => {
@@ -54,7 +53,7 @@ const convertDecimalsToNumbers = (obj: any): any => {
 export default async function DocumentsSettingsPage() {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
-    redirect(`/login?callbackUrl=/settings/documents`);
+    redirect("/login");
   }
 
   // Use select to get only the fields we need
@@ -165,12 +164,11 @@ export default async function DocumentsSettingsPage() {
                 "default"
               }
               organization={processedOrganization}
-              invoiceConfig={invoiceConfig}
             />
           </TabsContent>
 
           <TabsContent value="configuration" className="max-w-3xl outline-none">
-            <InvoiceConfigForm initialConfig={invoiceConfig} />
+            {/*<InvoiceConfigForm initialConfig={invoiceConfig} />*/}
           </TabsContent>
         </Tabs>
       </div>
