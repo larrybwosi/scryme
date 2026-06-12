@@ -27,13 +27,13 @@ export class ImageService {
         const originalUrl = await this.getOriginalUrl(id);
         const response = await axios.get(originalUrl, { responseType: 'arraybuffer' });
         imageBuffer = Buffer.from(response.data);
-        contentType = response.headers['content-type'];
+        contentType = response.headers['content-type'] as string;
       } else {
         // RustFS / S3
         const url = await storageService.getSignedUrl(id, 60);
         const response = await axios.get(url, { responseType: 'arraybuffer' });
         imageBuffer = Buffer.from(response.data);
-        contentType = response.headers['content-type'];
+        contentType = response.headers['content-type'] as string;
       }
 
       let transformer = sharp(imageBuffer);
@@ -51,7 +51,7 @@ export class ImageService {
 
       if (format === 'webp') {
         transformer = transformer.webp({ quality });
-      } else if (format === 'jpeg' || format === 'jpg') {
+      } else if (format === 'jpeg' || (format as string) === 'jpg') {
         transformer = transformer.jpeg({ quality });
       } else if (format === 'png') {
         transformer = transformer.png({ quality });
