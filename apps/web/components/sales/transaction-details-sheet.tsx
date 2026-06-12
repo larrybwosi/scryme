@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -55,13 +55,7 @@ export function TransactionDetailsSheet({
   const [isLoading, setIsLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (transactionId && isOpen) {
-      fetchTransaction();
-    }
-  }, [transactionId, isOpen]);
-
-  const fetchTransaction = async () => {
+  const fetchTransaction = useCallback(async () => {
     if (!transactionId) return;
     setIsLoading(true);
     try {
@@ -72,7 +66,13 @@ export function TransactionDetailsSheet({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [transactionId]);
+
+  useEffect(() => {
+    if (transactionId && isOpen) {
+      fetchTransaction();
+    }
+  }, [transactionId, isOpen, fetchTransaction]);
 
   const handleStatusUpdate = async (status: string) => {
     if (!transaction) return;
