@@ -45,6 +45,38 @@ services:
       timeout: 5s
       retries: 5
 
+  rustfs-perms:
+    image: alpine
+    user: root
+    volumes:
+      - rustfs_data:/fix_path
+    command: chown -R 10001:10001 /fix_path
+    networks:
+      - scryme-network
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
+      - RUSTFS_CONSOLE_ENABLE=true
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs_data:/data
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    networks:
+      - scryme-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -121,6 +153,7 @@ services:
 
 volumes:
   postgres_data:
+  rustfs_data:
 
 networks:
   scryme-network:
