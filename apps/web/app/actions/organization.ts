@@ -93,6 +93,21 @@ export async function updateOrganizationSettings(data: {
   return settings;
 }
 
+export async function updateInvoiceTemplate(templateId: string): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const settings = await db.organizationSettings.update({
+    where: { organizationId: auth.organizationId },
+    data: {
+      defaultInvoiceTemplate: templateId,
+    },
+  });
+
+  revalidatePath("/settings/documents");
+  return settings;
+}
+
 export async function getOrganizationSettings(): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
