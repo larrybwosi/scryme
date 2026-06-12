@@ -1,6 +1,6 @@
 {
   "productName": "Scryme Bakery",
-  "version": "4.2.0",
+  "version": "5.0.0",
   "identifier": "app.scryme.bakery",
   "build": {
     "beforeDevCommand": "pnpm dev",
