@@ -445,25 +445,36 @@ export class PosService {
     const notificationChannel = `organization:${organizationId}:notifications`;
     const organizationChannel = `organization:${organizationId}:*`;
 
-    const tokenRequest = await ably.auth.requestToken({
-      clientId: memberId,
-      capability: JSON.stringify({
-        "order-*": ["subscribe", "publish"],
-        "cashier-notifications": ["subscribe"],
-        "channel:*": ["subscribe", "publish", "history"],
-        "session:*": ["subscribe", "publish", "history"],
-        "system:*": ["subscribe", "publish", "history"],
-        "presence:*": ["subscribe", "publish", "history", "presence"],
-        "store:*": ["subscribe", "publish", "history", "presence"],
-        [paymentChannel]: ["subscribe"],
-        [notificationChannel]: ["subscribe"],
-        [organizationChannel]: ["subscribe", "publish", "history", "presence"],
-      }),
-      ttl: 3600 * 1000,
-      timestamp: Date.now(),
-    });
+    const provider = process.env.REALTIME_PROVIDER || 'ably';
 
-    return { tokenRequest, metadata: { organizationId, paymentChannel } };
+    let tokenRequest: any;
+
+    if (provider === 'ably') {
+      tokenRequest = await ably.auth.requestToken({
+        clientId: memberId,
+        capability: JSON.stringify({
+          "order-*": ["subscribe", "publish"],
+          "cashier-notifications": ["subscribe"],
+          "channel:*": ["subscribe", "publish", "history"],
+          "session:*": ["subscribe", "publish", "history"],
+          "system:*": ["subscribe", "publish", "history"],
+          "presence:*": ["subscribe", "publish", "history", "presence"],
+          "store:*": ["subscribe", "publish", "history", "presence"],
+          [paymentChannel]: ["subscribe"],
+          [notificationChannel]: ["subscribe"],
+          [organizationChannel]: ["subscribe", "publish", "history", "presence"],
+        }),
+        ttl: 3600 * 1000,
+        timestamp: Date.now(),
+      });
+    } else {
+      tokenRequest = {
+        token: 'socketio-placeholder-token',
+        clientId: memberId,
+      };
+    }
+
+    return { tokenRequest, provider, metadata: { organizationId, paymentChannel } };
   }
 
   async getInventory(ctx: V2ApiContext, query: any) {

@@ -21,8 +21,10 @@ export class RealtimeController {
         throw new UnauthorizedException({ error: 'Missing organization context', code: 'MISSING_ORG_CONTEXT' });
       }
 
-      // Use either the memberId or the deviceId as the Ably clientId
+      // Use either the memberId or the deviceId as the clientId
       const clientId = memberId || ctxDeviceId || 'anonymous';
+
+      const provider = process.env.REALTIME_PROVIDER || 'ably';
 
       const paymentChannel = `organization:${organizationId}:payments`;
       const notificationChannel = `organization:${organizationId}:notifications`;
@@ -42,15 +44,25 @@ export class RealtimeController {
         capability[`pos:${ctx.locationId}:sales`] = ['subscribe', 'publish', 'history'];
       }
 
-      const tokenRequest = await ably.auth.requestToken({
-        clientId,
-        capability: JSON.stringify(capability),
-        ttl: 3600 * 1000,
-        timestamp: Date.now(),
-      });
+      let tokenRequest: any = null;
+      if (provider === 'ably') {
+        tokenRequest = await ably.auth.requestToken({
+          clientId,
+          capability: JSON.stringify(capability),
+          ttl: 3600 * 1000,
+          timestamp: Date.now(),
+        });
+      } else {
+        // Socket.io simplified auth for now
+        tokenRequest = {
+          token: 'socketio-placeholder-token',
+          clientId,
+        };
+      }
 
       return {
         tokenRequest,
+        provider,
         channels: {
           payments: paymentChannel,
           notifications: notificationChannel,
