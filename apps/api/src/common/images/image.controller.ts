@@ -1,5 +1,4 @@
 import { Controller, Get, Param, Query, Res, HttpStatus } from '@nestjs/common';
-import { FastifyReply } from 'fastify';
 import { ImageService } from './image.service';
 import { AllowPublic } from '../decorators/auth.decorator';
 
@@ -11,11 +10,11 @@ export class ImageController {
   @AllowPublic()
   async getImage(
     @Param('id') id: string,
+    @Res() res: any,
     @Query('w') w?: string,
     @Query('h') h?: string,
     @Query('q') q?: string,
     @Query('fm') fm?: string,
-    @Res() res?: FastifyReply,
   ) {
     const width = w ? parseInt(w, 10) : undefined;
     const height = h ? parseInt(h, 10) : undefined;
