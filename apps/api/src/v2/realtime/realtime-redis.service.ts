@@ -66,8 +66,4 @@ export class RealtimeRedisService {
     const twoMinsAgo = Date.now() - (120 * 1000);
     return Object.values(members).filter(m => m.timestamp > twoMinsAgo);
   }
-
-  async keys(pattern: string): Promise<string[]> {
-    return this.redis.keys(pattern);
-  }
 }

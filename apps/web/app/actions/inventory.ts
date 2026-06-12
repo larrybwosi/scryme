@@ -744,6 +744,89 @@ export async function updateStockAlert(data: {
   return result;
 }
 
+export async function createVariant(data: {
+  productId: string;
+  name: string;
+  sku: string;
+  buyingPrice: number;
+  retailPrice: number;
+  initialStock?: number;
+}): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    const variant = await tx.productVariant.create({
+      data: {
+        productId: data.productId,
+        name: data.name,
+        sku: data.sku,
+        buyingPrice: new Decimal(data.buyingPrice),
+        retailPrice: new Decimal(data.retailPrice),
+        attributes: {},
+      },
+    });
+
+    const defaultLocation =
+      (await tx.inventoryLocation.findFirst({
+        where: { organizationId: context.organizationId, isDefault: true },
+      })) ||
+      (await tx.inventoryLocation.findFirst({
+        where: { organizationId: context.organizationId },
+      }));
+
+    if (defaultLocation) {
+      const stockAmount = data.initialStock || 0;
+      await tx.productVariantStock.create({
+        data: {
+          productId: data.productId,
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+          currentStock: new Decimal(stockAmount),
+          availableStock: new Decimal(stockAmount),
+          organizationId: context.organizationId,
+        },
+      });
+    }
+
+    revalidatePath(`/inventory/products/${data.productId}`);
+    return variant;
+  });
+}
+
+export async function updateVariant(
+  id: string,
+  data: {
+    name?: string;
+    sku?: string;
+    buyingPrice?: number;
+    retailPrice?: number;
+  },
+): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const variant = await db.productVariant.update({
+    where: { id },
+    data: {
+      name: data.name,
+      sku: data.sku,
+      buyingPrice:
+        data.buyingPrice !== undefined
+          ? new Decimal(data.buyingPrice)
+          : undefined,
+      retailPrice:
+        data.retailPrice !== undefined
+          ? new Decimal(data.retailPrice)
+          : undefined,
+    },
+  });
+
+  revalidatePath(`/inventory/products/${variant.productId}`);
+  return variant;
+}
+
 export async function reorderProduct(
   variantId: string,
 ): Promise<{ success: boolean; message: string }> {

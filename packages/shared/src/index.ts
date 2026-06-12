@@ -10,15 +10,12 @@ export * from "./api/v2/utils/products";
 export * from "./api/v2/utils/deliveries";
 export * from "./api/v2/utils/customers";
 export * from "./api/v2/utils/client/formatting";
-export * from "./realtime";
+export type { PresenceMember } from "./realtime/types";
+export { applyDelta } from "./realtime/delta";
 export * from "./types/action-response";
 export * from "./lib/validations/sale";
 export * from "./lib/validations/order";
 export * from "./lib/services/unit-calculation.service";
-export * from "./redis";
-export * from "./services/openloyalty";
 
 // Actions
 export * from "./actions/api-management";
-
-export * from "./storage";
