@@ -1,4 +1,4 @@
-import { PaymentMethod, PaymentStatus, Prisma } from '@repo/db';
+import { PaymentMethod, PaymentStatus, Prisma } from '@repo/db/client';
 import { z } from 'zod';
 
 const kenyanPhoneRegex = /^(?:254|\+254|0)?(7(?:(?:[129][0-9])|(?:0[0-8])|(?:4[0-1]))[0-9]{6})$/;
