@@ -215,10 +215,13 @@ export const Mappers = {
       };
     });
 
+    const transactionDate = transaction.createdAt ? new Date(transaction.createdAt) : new Date();
+    const validDate = isNaN(transactionDate.getTime()) ? new Date() : transactionDate;
+
     const verificationHash = generateVerificationHash({
       invoiceNumber: transaction.number,
       grandTotal,
-      date: new Date(transaction.createdAt).toISOString(),
+      date: validDate.toISOString(),
       organizationName: transaction.organization?.name || 'Organization',
     });
 
@@ -240,8 +243,8 @@ export const Mappers = {
     return {
       id: transaction.id,
       invoiceNumber: transaction.number,
-      date: new Date(transaction.createdAt).toLocaleDateString(),
-      dueDate: transaction.dueDate ? new Date(transaction.dueDate).toLocaleDateString() : new Date(transaction.createdAt).toLocaleDateString(),
+      date: validDate.toLocaleDateString(),
+      dueDate: transaction.dueDate ? new Date(transaction.dueDate).toLocaleDateString() : validDate.toLocaleDateString(),
       status: transaction.status || 'PAID',
       currencySymbol,
       currency: defaultCurrency,

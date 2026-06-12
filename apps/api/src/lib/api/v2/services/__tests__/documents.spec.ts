@@ -40,6 +40,7 @@ describe("Documents Service", () => {
     const mockTransaction = {
       id: "txn_1",
       number: "INV-001",
+      createdAt: new Date(),
       organization: { settings: {} },
       customer: { addresses: [] },
       items: [],
