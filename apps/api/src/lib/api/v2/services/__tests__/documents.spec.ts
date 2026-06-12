@@ -19,9 +19,13 @@ vi.mock("@repo/db", () => {
   };
 });
 
-vi.mock("@react-pdf/renderer", () => ({
-  renderToStream: vi.fn().mockResolvedValue("mock-stream"),
-}));
+vi.mock("@react-pdf/renderer", async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    renderToStream: vi.fn().mockResolvedValue("mock-stream"),
+  };
+});
 
 vi.mock("@repo/documents/v2/InvoiceTemplate", () => ({
   InvoiceTemplate: () => null,
@@ -36,6 +40,7 @@ describe("Documents Service", () => {
     const mockTransaction = {
       id: "txn_1",
       number: "INV-001",
+      createdAt: new Date(),
       organization: { settings: {} },
       customer: { addresses: [] },
       items: [],

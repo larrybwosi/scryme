@@ -41,6 +41,7 @@ export { ReceiptDocument } from './templates/Receipt';
 export { ReceiptDocument as GenericReceiptDocument } from './templates/Receipt';
 export {
   INVOICE_TEMPLATES,
+  INVOICE_TEMPLATE_METADATA,
   getInvoiceTemplate,
   renderInvoiceTemplate,
   type InvoiceData as GenericInvoiceData,
@@ -58,6 +59,7 @@ export * from './v2/InvoiceTemplate';
 export { ReceiptTemplate as ReceiptTemplateV2, type ReceiptPDFData as ReceiptPDFDataV2 } from './v2/ReceiptTemplate';
 export * from './v2/StockRequestTemplate';
 export * from './v2/StockTransferTemplate';
+export * from './mock-data';
 
 export {
   ReceiptDocument as POSReceiptDocument,
