@@ -20,7 +20,7 @@ export default async function PurchasesPage(props: {
     getSuppliers(),
     getInventoryProducts({}),
   ]);
-  console.log({ suppliers, products });
+
   return (
     <Suspense>
       <div className="space-y-6">
