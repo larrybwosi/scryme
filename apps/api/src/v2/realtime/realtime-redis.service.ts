@@ -12,6 +12,10 @@ export class RealtimeRedisService {
 
   constructor(private readonly redis: RedisService) {}
 
+  async keys(pattern: string): Promise<string[]> {
+    return this.redis.keys(pattern);
+  }
+
   // History with atomic LPUSH/LTRIM
   async saveMessage(channel: string, event: string, data: any) {
     const key = `${this.HISTORY_PREFIX}${channel}`;
@@ -61,5 +65,9 @@ export class RealtimeRedisService {
 
     const twoMinsAgo = Date.now() - (120 * 1000);
     return Object.values(members).filter(m => m.timestamp > twoMinsAgo);
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.redis.keys(pattern);
   }
 }
