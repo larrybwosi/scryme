@@ -40,3 +40,18 @@ export interface C2BRegistrationResponse {
   OriginatorConversationID: string;
   ResponseDescription: string;
 }
+
+export interface TransactionStatusResponse {
+  ResponseCode: string;
+  ResponseDescription: string;
+  ConversationID: string;
+  OriginatorConversationID: string;
+  ResultCode?: string;
+  ResultDesc?: string;
+  ResultParameters?: {
+    ResultParameter: Array<{
+      Key: string;
+      Value: any;
+    }>;
+  };
+}
