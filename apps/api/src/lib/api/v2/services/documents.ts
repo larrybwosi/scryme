@@ -44,12 +44,13 @@ export async function getDocumentStream(
   let data: any;
   let filename: string;
 
-  const { InvoiceTemplate } = await import('@repo/documents/v2/InvoiceTemplate');
+  const { getInvoiceTemplate } = await import('@repo/documents');
   const { ReceiptTemplate } = await import('@repo/documents/v2/ReceiptTemplate');
 
   switch (type) {
     case 'invoice':
-      DocumentComponent = InvoiceTemplate;
+      const selectedTemplate = template || transaction.organization?.settings?.defaultInvoiceTemplate;
+      DocumentComponent = getInvoiceTemplate(selectedTemplate);
       data = Mappers.toInvoiceData(transaction);
       filename = `Invoice_${transaction.number}.pdf`;
       break;
