@@ -3,7 +3,9 @@ import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 import { renderToStream } from "@react-pdf/renderer";
 import { createElement } from "react";
-import { SimpleInvoicePDF, GenericReceiptDocument } from "@repo/documents";
+import { Mappers } from "@repo/documents/server";
+import { getInvoiceTemplate, GenericReceiptDocument } from "@repo/documents";
+import QRCode from "qrcode";
 
 export async function GET(
   req: NextRequest,
@@ -17,6 +19,7 @@ export async function GET(
   const { id } = await params;
   const searchParams = req.nextUrl.searchParams;
   const type = searchParams.get("type") || "invoice"; // invoice or receipt
+  const template = searchParams.get("template");
 
   const transaction = await db.transaction.findUnique({
     where: {
@@ -24,10 +27,19 @@ export async function GET(
       organizationId: auth.organizationId,
     },
     include: {
-      customer: true,
+      customer: {
+        include: {
+          addresses: true,
+        },
+      },
       items: true,
-      organization: true,
+      organization: {
+        include: {
+          settings: true,
+        },
+      },
       location: true,
+      payments: true,
     },
   });
 
@@ -35,35 +47,10 @@ export async function GET(
     return new NextResponse("Not Found", { status: 404 });
   }
 
-  // Prepare data for templates
-  const documentData: any = {
-    invoiceNumber: transaction.number,
-    date: transaction.createdAt,
-    customer: {
-      name: transaction.customer?.name || "Walk-in Customer",
-      email: transaction.customer?.email,
-      address: "", // Could fetch from customer addresses
-    },
-    items: transaction.items.map((item: any) => ({
-      description: `${item.productName} - ${item.variantName}`,
-      quantity: item.quantity,
-      unitPrice: Number(item.unitPrice),
-      total: Number(item.lineTotal),
-    })),
-    subtotal: Number(transaction.subtotal),
-    tax: Number(transaction.taxTotal),
-    discount: Number(transaction.discountTotal),
-    total: Number(transaction.finalTotal),
-    currency: transaction.currencyCode || "USD",
-    organization: {
-      name: transaction.organization.name,
-      // logo: transaction.organization.logoUrl,
-    },
-  };
-
   try {
     let stream;
     if (type === "receipt") {
+      const documentData = Mappers.toReceiptData(transaction);
       // Using GenericReceiptDocument or similar from @repo/documents
       stream = await renderToStream(
         createElement(
@@ -72,10 +59,21 @@ export async function GET(
         ) as any,
       );
     } else {
+      const selectedTemplate = template || transaction.organization?.settings?.defaultInvoiceTemplate;
+      const DocumentComponent = getInvoiceTemplate(selectedTemplate);
+      const documentData = Mappers.toInvoiceData(transaction);
+
+      let qrCode = "";
+      try {
+        qrCode = await QRCode.toDataURL(transaction.number);
+      } catch (err) {
+        console.error("Failed to generate QR code", err);
+      }
+
       stream = await renderToStream(
         createElement(
-          SimpleInvoicePDF as any,
-          { data: documentData } as any,
+          DocumentComponent as any,
+          { data: documentData, qrCode } as any,
         ) as any,
       );
     }
