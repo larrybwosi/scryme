@@ -53,4 +53,33 @@ export class MpesaController {
   async verifyPayment(@Param('transactionId') transactionId: string) {
     return this.mpesaService.verifyPayment(transactionId);
   }
+
+  @Get('search-unclaimed/:organizationId')
+  @ApiOperation({ summary: 'Search for unclaimed M-Pesa payments' })
+  async searchUnclaimed(
+    @Param('organizationId') organizationId: string,
+    @Req() req: FastifyRequest & { query: { q: string } }
+  ) {
+    const query = (req.query as any).q || '';
+    return this.mpesaService.searchUnclaimedPayments(organizationId, query);
+  }
+
+  @Post('claim')
+  @ApiOperation({ summary: 'Claim an unclaimed M-Pesa payment' })
+  async claimPayment(
+    @Body() body: { organizationId: string; unclaimedPaymentId: string; transactionId: string; memberId: string }
+  ) {
+    return this.mpesaService.claimPayment(
+      body.organizationId,
+      body.unclaimedPaymentId,
+      body.transactionId,
+      body.memberId
+    );
+  }
+
+  @Post('verify-safaricom')
+  @ApiOperation({ summary: 'Verify transaction code with Safaricom' })
+  async verifySafaricom(@Body() body: { organizationId: string; transactionCode: string }) {
+    return this.mpesaService.verifyWithSafaricom(body.organizationId, body.transactionCode);
+  }
 }

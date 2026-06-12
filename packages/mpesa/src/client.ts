@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { MpesaCredentials, STKPushResponse, STKQueryResponse, C2BRegistrationResponse } from './types';
+import { MpesaCredentials, STKPushResponse, STKQueryResponse, C2BRegistrationResponse, TransactionStatusResponse } from './types';
 
 export class MpesaClient {
   private baseUrl: string;
@@ -127,6 +127,38 @@ export class MpesaClient {
       return response.data;
     } catch (error: any) {
       console.error('M-Pesa C2B Registration Error:', error?.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async getTransactionStatus(params: {
+    transactionCode: string;
+    callbackUrl: string;
+    remarks?: string;
+    occasion?: string;
+  }): Promise<TransactionStatusResponse> {
+    const token = await this.getAccessToken();
+
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/mpesa/transactionstatus/v1/query`,
+        {
+          Initiator: this.credentials.mpesaInitiatorPass || 'system',
+          SecurityCredential: this.credentials.mpesaPassKey || 'system', // TODO: Implement RSA encryption with Safaricom Public Key
+          CommandID: 'TransactionStatusQuery',
+          TransactionID: params.transactionCode,
+          PartyA: this.credentials.mpesaShortCode,
+          IdentifierType: this.credentials.mpesaType === 'TILL' ? '2' : '4',
+          ResultURL: params.callbackUrl,
+          QueueTimeOutURL: params.callbackUrl,
+          Remarks: params.remarks || 'Transaction Status Query',
+          Occasion: params.occasion || 'Verification',
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('M-Pesa Transaction Status Error:', error?.response?.data || error.message);
       throw error;
     }
   }
