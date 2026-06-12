@@ -20,14 +20,9 @@ import { toast } from 'sonner';
 interface TemplateSelectorProps {
   initialTemplateId: string;
   organization: any;
-  invoiceConfig?: any;
 }
 
-export function TemplateSelector({
-  initialTemplateId,
-  organization,
-  invoiceConfig,
-}: TemplateSelectorProps) {
+export function TemplateSelector({ initialTemplateId, organization }: TemplateSelectorProps) {
   const [selectedId, setSelectedId] = useState(initialTemplateId);
   const [previewId, setPreviewId] = useState(initialTemplateId);
   const [isPending, startTransition] = useTransition();
@@ -50,8 +45,6 @@ export function TemplateSelector({
     phone: organization?.phone,
     email: organization?.email,
     logo: organization?.logo,
-    invoiceNumber: `${invoiceConfig?.invoicePrefix || "INV-"}${invoiceConfig?.nextInvoiceNumber || "001"}`,
-    notes: invoiceConfig?.footerText || "Thank you for your business!",
   });
 
   return (

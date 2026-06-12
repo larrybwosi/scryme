@@ -71,7 +71,7 @@ export async function acceptInvitationByToken(token: string) {
 
   // Clear session cache to reflect the new organization immediately
   try {
-    const { getRedisClient } = await import("@repo/shared");
+    const { getRedisClient } = await import("@repo/shared/server");
     const redis = await getRedisClient();
     await redis.del(`session-cache:${auth.user.id}`);
   } catch (e) {

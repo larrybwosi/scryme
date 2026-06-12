@@ -18,10 +18,8 @@ export default async function DashboardPage(props: {
   const searchParams = await props.searchParams;
   const timeframe = searchParams.timeframe || "month";
 
-  const auth = await getServerAuth();
-  if (!auth) {
-    redirect("/login?callbackUrl=/dashboard");
-  }
+  const auth = (await getServerAuth())!;
+  console.log(auth);
 
   const [data, organization] = await Promise.all([
     getDashboardData(timeframe),

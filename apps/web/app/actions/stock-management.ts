@@ -145,50 +145,9 @@ export async function getStockTransferList(): Promise<any[]> {
       fromLocation: { select: { name: true } },
       toLocation: { select: { name: true } },
       requestedBy: { select: { user: { select: { name: true } } } },
-      _count: {
-        select: { items: true },
-      },
     },
     orderBy: { requestedDate: "desc" },
   });
-}
-
-export async function getStockTransferStats(): Promise<{
-  total: number;
-  pending: number;
-  inTransit: number;
-  completed: number;
-}> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    return { total: 0, pending: 0, inTransit: 0, completed: 0 };
-  }
-
-  const [total, pending, inTransit, completed] = await Promise.all([
-    db.stockTransfer.count({
-      where: { organizationId: context.organizationId },
-    }),
-    db.stockTransfer.count({
-      where: {
-        organizationId: context.organizationId,
-        status: { in: ["PENDING_APPROVAL", "APPROVED"] },
-      },
-    }),
-    db.stockTransfer.count({
-      where: {
-        organizationId: context.organizationId,
-        status: { in: ["SHIPPED", "IN_TRANSIT"] },
-      },
-    }),
-    db.stockTransfer.count({
-      where: {
-        organizationId: context.organizationId,
-        status: "COMPLETED",
-      },
-    }),
-  ]);
-
-  return { total, pending, inTransit, completed };
 }
 
 export async function createStockTransfer(data: {
