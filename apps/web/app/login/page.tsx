@@ -173,9 +173,13 @@ const LoginPageContent = () => {
   // ✅ FIX: moved router.push out of render into a useEffect
   useEffect(() => {
     if (session.data) {
-      router.push("/dashboard");
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [session.data, router]);
+  }, [session.data, router, callbackUrl]);
 
   const {
     register: registerLogin,
