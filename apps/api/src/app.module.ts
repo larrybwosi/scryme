@@ -1,6 +1,6 @@
 import { Module, MiddlewareConsumer, RequestMethod, NestModule } from '@nestjs/common';
 import { APP_GUARD, RouterModule } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { GraphQLModule } from '@nestjs/graphql';
 import { MercuriusDriver, MercuriusDriverConfig } from '@nestjs/mercurius';
 import { AppController } from './app.controller';
@@ -68,6 +68,10 @@ import { env } from '@repo/env';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: V2AuthGuard,
