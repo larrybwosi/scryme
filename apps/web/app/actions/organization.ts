@@ -93,6 +93,58 @@ export async function updateOrganizationSettings(data: {
   return settings;
 }
 
+export async function updateOrganization(data: {
+  name?: string;
+  description?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  logo?: string;
+  banner?: string;
+}): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const organization = await db.organization.update({
+    where: { id: auth.organizationId },
+    data,
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  return organization;
+}
+
+export async function uploadOrganizationAsset(
+  formData: FormData,
+  type: "logo" | "banner"
+): Promise<string> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file provided");
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const filename = `${type}-${auth.organizationId}-${Date.now()}-${file.name}`;
+
+  const { storageService } = await import("@repo/shared");
+  const result = await storageService.upload(buffer, filename, file.type);
+
+  // Storage service might return an object with a URL or just the ID/URL
+  const url = typeof result === "string" ? result : (result as any).url;
+
+  await db.organization.update({
+    where: { id: auth.organizationId },
+    data: {
+      [type]: url,
+    },
+  });
+
+  revalidatePath("/settings");
+  return url;
+}
+
 export async function updateInvoiceTemplate(templateId: string): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
@@ -115,6 +167,40 @@ export async function getOrganizationSettings(): Promise<any> {
   return db.organizationSettings.findUnique({
     where: { organizationId: auth.organizationId },
   });
+}
+
+export async function getInvoiceConfig(): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  return db.invoiceConfig.findUnique({
+    where: { organizationId: auth.organizationId },
+  });
+}
+
+export async function updateInvoiceConfig(data: {
+  invoicePrefix?: string;
+  nextInvoiceNumber?: number;
+  footerText?: string;
+  showTaxBreakdown?: boolean;
+  showTerms?: boolean;
+  showNotes?: boolean;
+  showLineNumbers?: boolean;
+}): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const config = await db.invoiceConfig.upsert({
+    where: { organizationId: auth.organizationId },
+    update: data,
+    create: {
+      ...data,
+      organizationId: auth.organizationId,
+    },
+  });
+
+  revalidatePath("/settings/documents");
+  return config;
 }
 
 export async function checkSlugAvailability(slug: string) {

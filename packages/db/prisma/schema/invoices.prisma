@@ -176,6 +176,10 @@ model InvoiceConfig {
 
   defaultTemplate String @default("default")
 
+  // Numbering Configuration
+  invoicePrefix     String @default("INV-")
+  nextInvoiceNumber Int    @default(1)
+
   // Branding Overrides
   primaryColor   String?
   logoUrl        String?
@@ -194,6 +198,7 @@ model InvoiceConfig {
   // Default Content
   defaultTerms String? @db.Text
   defaultNotes String? @db.Text
+  footerText   String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
