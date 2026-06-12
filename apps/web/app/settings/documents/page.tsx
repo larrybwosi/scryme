@@ -13,17 +13,93 @@ import {
 import { FileText, Settings2, Palette } from "lucide-react";
 import { InvoiceConfigForm } from "./invoice-config-form";
 
+// Helper function to convert Decimal to number
+const convertDecimalsToNumbers = (obj: any): any => {
+  if (!obj) return obj;
+
+  const converted = { ...obj };
+
+  // Convert Decimal fields to numbers
+  if (
+    converted.defaultTaxRate &&
+    typeof converted.defaultTaxRate === "object"
+  ) {
+    converted.defaultTaxRate = Number(converted.defaultTaxRate);
+  }
+  if (
+    converted.highValueTaxThreshold &&
+    typeof converted.highValueTaxThreshold === "object"
+  ) {
+    converted.highValueTaxThreshold = Number(converted.highValueTaxThreshold);
+  }
+  if (converted.mileageRate && typeof converted.mileageRate === "object") {
+    converted.mileageRate = Number(converted.mileageRate);
+  }
+  if (
+    converted.minMarginThreshold &&
+    typeof converted.minMarginThreshold === "object"
+  ) {
+    converted.minMarginThreshold = Number(converted.minMarginThreshold);
+  }
+  if (
+    converted.priceApprovalThreshold &&
+    typeof converted.priceApprovalThreshold === "object"
+  ) {
+    converted.priceApprovalThreshold = Number(converted.priceApprovalThreshold);
+  }
+
+  return converted;
+};
+
 export default async function DocumentsSettingsPage() {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     redirect(`/login?callbackUrl=/settings/documents`);
   }
 
+  // Use select to get only the fields we need
   const [organization, invoiceConfig] = await Promise.all([
     db.organization.findUnique({
       where: { id: auth.organizationId },
-      include: {
-        settings: true,
+      select: {
+        id: true,
+        name: true,
+        settings: {
+          select: {
+            id: true,
+            defaultInvoiceTemplate: true,
+            defaultCurrency: true,
+            defaultTimezone: true,
+            defaultTaxRate: true,
+            inventoryPolicy: true,
+            lowStockThreshold: true,
+            negativeStock: true,
+            country: true,
+            taxIntegrationEnabled: true,
+            highValueTaxThreshold: true,
+            enableCapacityTracking: true,
+            enforceSpatialConstraints: true,
+            enableProductDimensions: true,
+            defaultDimensionUnit: true,
+            defaultWeightUnit: true,
+            defaultTaxId: true,
+            multiAdminRoleApproval: true,
+            auditLogRetentionDays: true,
+            enforceMfa: true,
+            enableAutoCheckout: true,
+            autoCheckoutTime: true,
+            enableBakerySystem: true,
+            enabledPlugins: true,
+            mileageRate: true,
+            supplierInvoiceReminderSchedule: true,
+            priceSyncMode: true,
+            supplierSelectionStrategy: true,
+            minMarginThreshold: true,
+            priceApprovalThreshold: true,
+            telegramBotEnabled: true,
+            discordBotEnabled: true,
+          },
+        },
       },
     }),
     db.invoiceConfig.findUnique({
@@ -34,6 +110,12 @@ export default async function DocumentsSettingsPage() {
   if (!organization) {
     redirect("/dashboard");
   }
+
+  // Convert Decimal fields to numbers for client consumption
+  const processedOrganization = {
+    ...organization,
+    settings: convertDecimalsToNumbers(organization.settings),
+  };
 
   return (
     <Suspense>
@@ -79,9 +161,10 @@ export default async function DocumentsSettingsPage() {
 
             <TemplateSelector
               initialTemplateId={
-                organization.settings?.defaultInvoiceTemplate || "default"
+                processedOrganization.settings?.defaultInvoiceTemplate ||
+                "default"
               }
-              organization={organization}
+              organization={processedOrganization}
               invoiceConfig={invoiceConfig}
             />
           </TabsContent>
