@@ -500,6 +500,7 @@ export async function getInventoryProducts(params: {
         id: product.id,
         variantId: variant.id,
         name: product.name,
+        variantName: variant.name,
         sku: variant.sku || product.sku,
         category: product.category.name,
         supplier: product.suppliers[0]?.supplier.name || "N/A",
@@ -791,6 +792,7 @@ export type InventoryProduct = {
   id: string;
   variantId: string;
   name: string;
+  variantName: string;
   sku: string;
   category: string;
   supplier: string;

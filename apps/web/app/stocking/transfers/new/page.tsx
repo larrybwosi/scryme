@@ -1,9 +1,6 @@
 import React from "react";
 import { PageHeader } from "../../../../components/page-header";
-import {
-  getInventoryLocations,
-  getInventoryProducts,
-} from "../../../actions/inventory";
+import { getInventoryLocations } from "../../../actions/inventory";
 import { createStockTransfer } from "../../../actions/stock-management";
 import { Button } from "@repo/ui/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
@@ -12,43 +9,24 @@ import { redirect } from "next/navigation";
 import { NewTransferForm } from "../../../../components/stocking/new-transfer-form";
 
 export default async function NewTransferPage() {
-  const [locations, products] = await Promise.all([
-    getInventoryLocations(),
-    getInventoryProducts({ stockLevel: "all" }),
-  ]);
+  const locations = await getInventoryLocations();
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSave = async (data: {
+    fromLocationId: string;
+    toLocationId: string;
+    items: { variantId: string; quantity: number }[];
+    notes?: string;
+  }) => {
     "use server";
-    const fromLocationId = formData.get("fromLocationId") as string;
-    const toLocationId = formData.get("toLocationId") as string;
-    const notes = formData.get("notes") as string;
-
-    // In a real app, you'd handle multiple items dynamically.
-    // For this prototype, we'll pick them from the form.
-    const items: { variantId: string; quantity: number }[] = [];
-    const variantId = formData.get("variantId") as string;
-    const quantity = Number(formData.get("quantity"));
-
-    if (variantId && quantity) {
-      items.push({ variantId, quantity });
-    }
-
-    if (items.length > 0) {
-      await createStockTransfer({
-        fromLocationId,
-        toLocationId,
-        items,
-        notes,
-      });
-      redirect("/stocking/transfers");
-    }
+    await createStockTransfer(data);
+    redirect("/stocking/transfers");
   };
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
       <div className="flex items-center gap-4">
         <Link href="/stocking/transfers">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="rounded-full bg-white shadow-sm">
             <ArrowLeft size={20} />
           </Button>
         </Link>
@@ -60,9 +38,8 @@ export default async function NewTransferPage() {
       </div>
 
       <NewTransferForm
-        products={products}
         locations={locations}
-        onSave={handleSubmit}
+        onSave={handleSave}
       />
     </div>
   );
