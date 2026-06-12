@@ -27,6 +27,7 @@ import {
   ShoppingBag,
   Tag,
   Clock,
+  Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFormattedCurrency } from '@/lib/utils';
@@ -41,6 +42,7 @@ import { usePosStore } from '@/store/store';
 import { PaymentMethod, PaymentStatus, useProcessSale } from '@/hooks/sales';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { MpesaFlowType, ProcessSaleInput, ProcessSaleInputSchema } from '@/lib/validation/transactions';
+import { useMpesaSearch, useMpesaClaim, useMpesaVerifySafaricom } from '@/hooks/mpesa';
 import { cn } from '@/lib/utils';
 import { shiftService } from '@/lib/shift-service';
 import { emit } from '@tauri-apps/api/event';
@@ -72,7 +74,7 @@ interface AddedPayment {
   meta?: any;
 }
 
-type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR';
+type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'SEARCH';
 type MpesaStatus = 'IDLE' | 'WAITING' | 'SUCCESS' | 'FAILED';
 type PaymentTab = 'CASH' | 'MOBILE_PAYMENT' | 'CREDIT_CARD' | 'GIFT_CARD' | 'INSURANCE';
 
@@ -274,12 +276,17 @@ const PaymentModal = ({
 
   // M-Pesa
   const [mpesaMode, setMpesaMode] = useState<MpesaMode>('STK');
+  const [mpesaSearchQuery, setMpesaSearchQuery] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState(customer?.phone || '');
   const [mpesaWaiting, setMpesaWaiting] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('IDLE');
   const [detectedPayment, setDetectedPayment] = useState<any>(null);
 
   const { mutateAsync: createSale, isPending: isProcessing } = useProcessSale();
+  const { data: unclaimedPayments, isLoading: isSearchingMpesa } = useMpesaSearch(mpesaSearchQuery);
+  const { mutateAsync: claimMpesaPayment, isPending: isClaimingMpesa } = useMpesaClaim();
+  const { mutateAsync: verifyWithSafaricom, isPending: isVerifyingSafaricom } = useMpesaVerifySafaricom();
+
   const { openPhysicalDrawer } = useCashDrawer();
   const [activeShift, setActiveShift] = useState<any>(null);
 
@@ -905,8 +912,8 @@ const PaymentModal = ({
                   {selectedTab === 'MOBILE_PAYMENT' && (
                     <div className="space-y-4">
                       {/* Mode toggle */}
-                      <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-muted">
-                        {(['STK', 'QR', 'PAYBILL', 'BUY_GOODS'] as MpesaMode[]).map(mode => (
+                      <div className="grid grid-cols-5 gap-1.5 p-1.5 bg-muted">
+                        {(['STK', 'QR', 'PAYBILL', 'BUY_GOODS', 'SEARCH'] as MpesaMode[]).map(mode => (
                           <button
                             key={mode}
                             onClick={() => {
@@ -921,7 +928,7 @@ const PaymentModal = ({
                                 : 'text-muted-foreground hover:text-foreground'
                             )}
                           >
-                            {mode.replace('_', ' ')}
+                            {mode === 'SEARCH' ? 'MANUAL' : mode.replace('_', ' ')}
                           </button>
                         ))}
                       </div>
@@ -1018,6 +1025,82 @@ const PaymentModal = ({
                               <Loader2 className="w-3 h-3 animate-spin" /> Awaiting exact amount…
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* Manual Search */}
+                      {mpesaMode === 'SEARCH' && (
+                        <div className="space-y-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              value={mpesaSearchQuery}
+                              onChange={e => setMpesaSearchQuery(e.target.value)}
+                              placeholder="Code, Phone or Name..."
+                              className="pl-9 h-11"
+                            />
+                          </div>
+
+                          <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                            {isSearchingMpesa ? (
+                              <div className="flex items-center justify-center py-8">
+                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                              </div>
+                            ) : unclaimedPayments?.length ? (
+                              unclaimedPayments.map((payment: any) => (
+                                <div
+                                  key={payment.id}
+                                  className="p-3 border bg-background hover:border-primary/50 transition-colors flex items-center justify-between group"
+                                >
+                                  <div>
+                                    <p className="text-sm font-bold">{payment.transId}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {payment.msisdn} • {formatCurrency(payment.amount)}
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground opacity-70">
+                                      {new Date(payment.transTime).toLocaleString()}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    className="h-8 px-3 text-xs"
+                                    onClick={() => {
+                                      handlePaymentMatch({
+                                        receipt: payment.transId,
+                                        amount: Number(payment.amount),
+                                        phone: payment.msisdn,
+                                      });
+                                    }}
+                                  >
+                                    Link
+                                  </Button>
+                                </div>
+                              ))
+                            ) : mpesaSearchQuery.length >= 3 ? (
+                              <div className="text-center py-8 border border-dashed rounded-lg">
+                                <p className="text-sm text-muted-foreground">No matching payments found</p>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="mt-1 h-auto py-0"
+                                  disabled={isVerifyingSafaricom}
+                                  onClick={async () => {
+                                    if (!useAuthStore.getState().currentLocation?.organizationId) return;
+                                    await verifyWithSafaricom({
+                                      organizationId: useAuthStore.getState().currentLocation!.organizationId!,
+                                      transactionCode: mpesaSearchQuery,
+                                    });
+                                  }}
+                                >
+                                  Request Safaricom verification?
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 text-muted-foreground text-xs">
+                                Enter at least 3 characters to search
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

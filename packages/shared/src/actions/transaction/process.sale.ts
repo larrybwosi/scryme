@@ -363,6 +363,24 @@ export async function processSale(
             processedAt:
               splitStatus === PaymentStatus.COMPLETED ? new Date() : undefined,
           });
+
+          // Link to unclaimed payment if reference is provided
+          if (paymentSplit.method === PaymentMethod.MPESA && paymentSplit.reference) {
+            const unclaimed = await tx.unclaimedPayment.findUnique({
+              where: { transId: paymentSplit.reference },
+            });
+
+            if (unclaimed && !unclaimed.claimed) {
+              await tx.unclaimedPayment.update({
+                where: { id: unclaimed.id },
+                data: {
+                  claimed: true,
+                  claimedAt: new Date(),
+                  claimedByUserId: memberId || 'system',
+                },
+              });
+            }
+          }
         }
 
         // --- 6. Transaction Status ---
