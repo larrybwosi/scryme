@@ -4,6 +4,8 @@ import { FilterBar } from '../../../components/filter-bar';
 import { getTransactions } from '../../actions/sales';
 import { TransactionTable } from '../../../components/sales/transaction-table';
 import { TransactionType, TransactionStatus, PaymentStatus } from '@repo/db/client';
+import { getOrganizationContext } from '@/app/actions/auth';
+import { RealtimeTransactionWrapper } from '../../../components/sales/realtime-transaction-wrapper';
 
 export default async function TransactionsPage(props: {
   searchParams: Promise<{
@@ -15,6 +17,7 @@ export default async function TransactionsPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
+  const context = await getOrganizationContext();
 
   const transactions = await getTransactions({
     search: searchParams.q,
@@ -39,7 +42,10 @@ export default async function TransactionsPage(props: {
 
       <FilterBar />
 
-      <TransactionTable transactions={transactions} />
+      <RealtimeTransactionWrapper
+        initialTransactions={transactions}
+        organizationId={context?.organizationId}
+      />
     </div>
   );
 }
