@@ -1,68 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-
-// --- Interfaces ---
-
-export interface BusinessInvoiceItem {
-  qty: number;
-  itemDescription: string;
-  unitPrice: number;
-  total: number;
-}
-
-export interface PaymentMethodItem {
-  methodName: string;
-  details: string[];
-}
-
-export interface InstallmentDetails {
-  isInstallment: boolean;
-  totalAmountPaidSoFar: number;
-  balanceDue: number;
-  note?: string;
-}
-
-export interface BusinessInvoiceData {
-  /**
-   * Optional logo image. Accepts:
-   *  - A base64 data URI:  "data:image/png;base64,iVBOR..."
-   *  - A remote URL:       "https://example.com/logo.png"
-   * When omitted the logo area is hidden; the org name fills its space.
-   */
-  logo?: string;
-  organizationName: string;
-  organizationDescription?: string;
-  currencySettings: {
-    code: string;
-    locale: string;
-  };
-  invoiceNumber: string;
-  dateOfIssue: string;
-  dueDate: string;
-  billTo: {
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  billFrom: {
-    name: string;
-    address: string;
-    phone: string;
-    email: string;
-  };
-  items: BusinessInvoiceItem[];
-  taxRate: number;
-  isTaxInclusive?: boolean;
-  paymentMethods: PaymentMethodItem[];
-  installmentDetails?: InstallmentDetails;
-  termsAndConditions: string;
-  signature: {
-    name: string;
-    title: string;
-  };
-}
+import { InvoiceData } from './invoice-templates';
 
 // ---------------------------------------------------------------------------
 // Brand palette — red & green used structurally, not decoratively.
@@ -419,66 +357,19 @@ const fmt = (amount: number, code: string, locale: string): string => {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData }) => {
-  const data: BusinessInvoiceData = {
-    ...inputData,
-    organizationName: inputData.organizationName || inputData.company?.name || inputData.organization?.name,
-    currencySettings: inputData.currencySettings || {
-      code: inputData.currency || 'USD',
-      locale: 'en-US',
-    },
-    invoiceNumber: inputData.invoiceNumber,
-    dateOfIssue: inputData.date,
-    dueDate: inputData.dueDate || inputData.date,
-    billTo: inputData.billTo || {
-      name: inputData.client?.name || inputData.customerName,
-      address: typeof inputData.client?.address === 'string' ? inputData.client.address : '',
-      city: '',
-      state: '',
-      zipCode: '',
-    },
-    billFrom: inputData.billFrom || {
-      name: inputData.company?.name || inputData.organization?.name,
-      address: inputData.company?.address || inputData.organization?.address,
-      phone: inputData.company?.phone || inputData.organization?.phone,
-      email: inputData.company?.email || inputData.organization?.email,
-    },
-    items: inputData.items.map((item: any) => ({
-      qty: item.qty || item.quantity,
-      itemDescription: item.description || item.itemDescription,
-      unitPrice: item.unitPrice || item.price,
-      total: item.amount || item.total,
-    })),
-    taxRate: inputData.taxRate || (inputData.tax / inputData.subtotal) * 100 || 0,
-    paymentMethods: inputData.paymentMethods || (inputData.payment?.availableMethods || []).map((m: string) => ({
-      methodName: m,
-      details: [],
-    })),
-    termsAndConditions: inputData.termsAndConditions || inputData.payment?.terms || '',
-    signature: inputData.signature || {
-      name: '',
-      title: '',
-    },
-  };
-  const { code, locale } = data.currencySettings;
-  const isInclusive = data.isTaxInclusive ?? false;
+export const BusinessInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoiceData }) => {
+  const { code, locale } = invoiceData.currencySettings || { code: invoiceData.currency, locale: 'en-US' };
+  const isInclusive = invoiceData.isTaxInclusive ?? false;
 
-  const lineSum = data.items.reduce((s, i) => s + i.total, 0);
-  let subTotal: number, taxAmount: number, grandTotal: number;
+  const subTotal = invoiceData.subtotal;
+  const taxAmount = invoiceData.tax;
+  const grandTotal = invoiceData.total || invoiceData.grandTotal || (subTotal + taxAmount);
 
-  if (isInclusive) {
-    grandTotal = lineSum;
-    subTotal = grandTotal / (1 + data.taxRate / 100);
-    taxAmount = grandTotal - subTotal;
-  } else {
-    subTotal = lineSum;
-    taxAmount = subTotal * (data.taxRate / 100);
-    grandTotal = subTotal + taxAmount;
-  }
+  const isInstallment = invoiceData.installmentDetails?.isInstallment;
+  const amountPaid = invoiceData.amountPaid || (invoiceData.installmentDetails?.totalAmountPaidSoFar ?? 0);
+  const balanceDue = invoiceData.balanceDue ?? invoiceData.installmentDetails?.balanceDue ?? (grandTotal - amountPaid);
 
-  const isInstallment = data.installmentDetails?.isInstallment;
-  const amountPaid = data.installmentDetails?.totalAmountPaidSoFar ?? 0;
-  const balanceDue = data.installmentDetails?.balanceDue ?? grandTotal - amountPaid;
+  const logo = invoiceData.logo || invoiceData.logoUrl || (invoiceData.company?.logo || invoiceData.company?.logoUrl);
 
   return (
     <Document>
@@ -493,18 +384,18 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
         <View style={S.header}>
           <View style={S.headerLeft}>
             <Text style={S.invoiceLabel}>INVOICE</Text>
-            <Text style={S.invoiceNumber}>{data.invoiceNumber}</Text>
+            <Text style={S.invoiceNumber}>{invoiceData.invoiceNumber}</Text>
           </View>
 
           <View style={S.headerRight}>
-            {/* Logo section — renders when data.logo is provided */}
-            {data.logo ? (
+            {/* Logo section — renders when logo is provided */}
+            {logo ? (
               <View style={S.logoContainer}>
-                <Image src={data.logo} style={S.logo} />
+                <Image src={logo as string} style={S.logo} />
               </View>
             ) : null}
-            <Text style={S.orgName}>{data.organizationName}</Text>
-            {data.organizationDescription && <Text style={S.orgDescription}>{data.organizationDescription}</Text>}
+            <Text style={S.orgName}>{invoiceData.organizationName || invoiceData.company.name}</Text>
+            {(invoiceData.organizationDescription || invoiceData.company.tagline) && <Text style={S.orgDescription}>{invoiceData.organizationDescription || invoiceData.company.tagline}</Text>}
           </View>
         </View>
 
@@ -516,13 +407,13 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
           {/* Meta row */}
           <View style={S.metaRow}>
             {[
-              { label: 'DATE OF ISSUE', value: data.dateOfIssue },
-              { label: 'DUE DATE', value: data.dueDate },
-              { label: 'CURRENCY', value: data.currencySettings.code },
+              { label: 'DATE OF ISSUE', value: invoiceData.date },
+              { label: 'DUE DATE', value: invoiceData.dueDate },
+              { label: 'CURRENCY', value: code || invoiceData.currency },
             ].map(m => (
               <View key={m.label} style={S.metaCell}>
                 <Text style={S.metaLabel}>{m.label}</Text>
-                <Text style={S.metaValue}>{m.value}</Text>
+                <Text style={S.metaValue}>{m.value as string}</Text>
               </View>
             ))}
           </View>
@@ -533,18 +424,18 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
           <View style={S.billingSection}>
             <View style={S.billCol}>
               <Text style={S.billSectionLabel}>BILLED TO</Text>
-              <Text style={S.billName}>{data.billTo.name}</Text>
-              <Text style={S.billText}>{data.billTo.address}</Text>
+              <Text style={S.billName}>{invoiceData.billTo?.name || invoiceData.client.name}</Text>
+              <Text style={S.billText}>{typeof invoiceData.billTo?.address === 'string' ? invoiceData.billTo.address : invoiceData.customerAddress}</Text>
               <Text style={S.billText}>
-                {data.billTo.city}, {data.billTo.state} {data.billTo.zipCode}
+                {invoiceData.billTo?.city}, {invoiceData.billTo?.state} {invoiceData.billTo?.zipCode}
               </Text>
             </View>
             <View style={S.billColRight}>
               <Text style={S.billSectionLabelGreen}>FROM</Text>
-              <Text style={S.billNameRight}>{data.billFrom.name}</Text>
-              <Text style={S.billTextRight}>{data.billFrom.address}</Text>
-              <Text style={S.billTextRight}>{data.billFrom.phone}</Text>
-              <Text style={S.billTextRight}>{data.billFrom.email}</Text>
+              <Text style={S.billNameRight}>{invoiceData.billFrom?.name || invoiceData.company.name}</Text>
+              <Text style={S.billTextRight}>{invoiceData.billFrom?.address || invoiceData.company.address}</Text>
+              <Text style={S.billTextRight}>{invoiceData.billFrom?.phone || invoiceData.company.phone}</Text>
+              <Text style={S.billTextRight}>{invoiceData.billFrom?.email || invoiceData.company.email}</Text>
             </View>
           </View>
 
@@ -557,20 +448,20 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
               <Text style={[S.tableHeadCell, S.colTotal]}>AMOUNT</Text>
             </View>
 
-            {data.items.map((item, i) => (
+            {invoiceData.items.map((item, i) => (
               <View key={i} style={i % 2 === 0 ? S.tableRowEven : S.tableRowOdd}>
                 <View style={S.colQty}>
-                  <Text style={S.tableCell}>{item.qty}</Text>
+                  <Text style={S.tableCell}>{item.qty || item.quantity}</Text>
                 </View>
                 <View style={S.colDesc}>
-                  <Text style={S.tableCellMuted}>{item.itemDescription}</Text>
+                  <Text style={S.tableCellMuted}>{item.itemDescription || item.description || item.itemName}</Text>
                 </View>
                 <View style={S.colPrice}>
-                  <Text style={[S.tableCell, { textAlign: 'right' }]}>{fmt(item.unitPrice, code, locale)}</Text>
+                  <Text style={[S.tableCell, { textAlign: 'right' }]}>{fmt(item.unitPrice || item.price || item.rate, code || 'USD', locale || 'en-US')}</Text>
                 </View>
                 <View style={S.colTotal}>
                   <Text style={[S.tableCell, { textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>
-                    {fmt(item.total, code, locale)}
+                    {fmt(item.total || item.amount, code || 'USD', locale || 'en-US')}
                   </Text>
                 </View>
               </View>
@@ -582,32 +473,32 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
             <View style={S.totalsBox}>
               <View style={S.totalRow}>
                 <Text style={S.totalLabel}>{isInclusive ? 'Subtotal (excl. tax)' : 'Subtotal'}</Text>
-                <Text style={S.totalValue}>{fmt(subTotal, code, locale)}</Text>
+                <Text style={S.totalValue}>{fmt(subTotal, code || 'USD', locale || 'en-US')}</Text>
               </View>
               <View style={S.totalRow}>
-                <Text style={S.totalLabel}>Tax ({data.taxRate}%)</Text>
-                <Text style={S.totalValue}>{fmt(taxAmount, code, locale)}</Text>
+                <Text style={S.totalLabel}>Tax ({invoiceData.taxRate}%)</Text>
+                <Text style={S.totalValue}>{fmt(taxAmount, code || 'USD', locale || 'en-US')}</Text>
               </View>
 
               {isInstallment ? (
                 <>
                   <View style={S.invoiceTotalRow}>
                     <Text style={S.invoiceTotalLabel}>Invoice Total</Text>
-                    <Text style={S.invoiceTotalValue}>{fmt(grandTotal, code, locale)}</Text>
+                    <Text style={S.invoiceTotalValue}>{fmt(grandTotal, code || 'USD', locale || 'en-US')}</Text>
                   </View>
                   <View style={S.amountPaidRow}>
                     <Text style={S.amountPaidLabel}>Less: Amount Paid</Text>
-                    <Text style={S.amountPaidValue}>({fmt(amountPaid, code, locale)})</Text>
+                    <Text style={S.amountPaidValue}>({fmt(amountPaid, code || 'USD', locale || 'en-US')})</Text>
                   </View>
                   <View style={S.balanceDueRow}>
                     <Text style={S.balanceDueLabel}>Balance Due</Text>
-                    <Text style={S.balanceDueValue}>{fmt(balanceDue, code, locale)}</Text>
+                    <Text style={S.balanceDueValue}>{fmt(balanceDue, code || 'USD', locale || 'en-US')}</Text>
                   </View>
                 </>
               ) : (
                 <View style={S.grandTotalRow}>
                   <Text style={S.grandTotalLabel}>Total Due</Text>
-                  <Text style={S.grandTotalValue}>{fmt(grandTotal, code, locale)}</Text>
+                  <Text style={S.grandTotalValue}>{fmt(grandTotal, code || 'USD', locale || 'en-US')}</Text>
                 </View>
               )}
             </View>
@@ -617,14 +508,14 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
           <View style={S.footerSection}>
             <View style={S.footerCol}>
               <Text style={[S.footerLabel, S.footerLabelRed]}>TERMS & CONDITIONS</Text>
-              <Text style={S.footerText}>{data.termsAndConditions}</Text>
+              <Text style={S.footerText}>{invoiceData.termsAndConditions || invoiceData.payment.terms}</Text>
             </View>
             <View style={S.footerCol}>
               <Text style={[S.footerLabel, S.footerLabelGreen]}>PAYMENT METHODS</Text>
-              {data.paymentMethods.map((m, i) => (
+              {(invoiceData.paymentMethods || (invoiceData.payment.availableMethods || []).map(m => ({ methodName: m, details: [] }))).map((m, i) => (
                 <View key={i} style={S.paymentMethodBox}>
                   <Text style={S.paymentMethodTitle}>{m.methodName}</Text>
-                  {m.details.map((line, j) => (
+                  {m.details && m.details.map((line, j) => (
                     <Text key={j} style={S.paymentMethodDetail}>
                       {line}
                     </Text>
@@ -639,13 +530,13 @@ export const BusinessInvoicePDF: React.FC<{ data: any }> = ({ data: inputData })
             <View>
               <Text style={S.thankText}>Thank you for your business.</Text>
               <Text style={S.tagline}>
-                {data.organizationName} · {data.billFrom.email}
+                {invoiceData.organizationName || invoiceData.company.name} · {invoiceData.company.email}
               </Text>
             </View>
             <View style={S.signatureBlock}>
               <View style={S.signatureLine} />
-              <Text style={S.signatureName}>{data.signature.name}</Text>
-              <Text style={S.signatureTitle}>{data.signature.title}</Text>
+              <Text style={S.signatureName}>{invoiceData.signature?.name}</Text>
+              <Text style={S.signatureTitle}>{invoiceData.signature?.title}</Text>
             </View>
           </View>
         </View>
