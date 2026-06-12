@@ -103,6 +103,25 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return { event: 'presence:left', members };
   }
 
+  @SubscribeMessage('presence:get')
+  async handlePresenceGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string },
+  ) {
+    const members = await this.redis.getPresence(data.channel);
+    return members;
+  }
+
+  @SubscribeMessage('history:get')
+  async handleHistoryGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string, limit?: number },
+  ) {
+    const history = await this.redis.getHistory(data.channel);
+    const limit = data.limit || 100;
+    return history.slice(-limit);
+  }
+
   @SubscribeMessage('publish')
   async handlePublish(
     @ConnectedSocket() client: Socket,

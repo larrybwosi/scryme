@@ -135,6 +135,25 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
     return { event: 'presence:entered', members };
   }
 
+  @SubscribeMessage('presence:get')
+  async handlePresenceGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string },
+  ) {
+    const members = await this.redis.getPresence(data.channel);
+    return members;
+  }
+
+  @SubscribeMessage('history:get')
+  async handleHistoryGet(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string, limit?: number },
+  ) {
+    const history = await this.redis.getHistory(data.channel);
+    const limit = data.limit || 100;
+    return history.slice(-limit);
+  }
+
   @SubscribeMessage('subscribe:order')
   async handleSubscribeOrder(@ConnectedSocket() client: Socket, @MessageBody() data: { orderId: string }) {
     const context = (client as any).v3Context;
