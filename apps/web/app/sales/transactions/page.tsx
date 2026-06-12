@@ -32,9 +32,9 @@ export default async function TransactionsPage(props: {
         icon={<ReceiptText className="w-7 h-7" />}
         action={{
           label: 'New Order',
-          onClick: `/sales/new`,
+          href: '/sales/new',
           icon: <Plus className="w-4 h-4" />
-        } as any}
+        }}
       />
 
       <FilterBar />

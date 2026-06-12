@@ -1,6 +1,6 @@
 import { Module, MiddlewareConsumer, RequestMethod, NestModule } from '@nestjs/common';
 import { APP_GUARD, RouterModule } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { GraphQLModule } from '@nestjs/graphql';
 import { MercuriusDriver, MercuriusDriverConfig } from '@nestjs/mercurius';
 import { AppController } from './app.controller';
@@ -12,6 +12,7 @@ import { V2Module, V2_SUB_MODULES } from './v2/v2.module';
 import { V3Module, V3_SUB_MODULES } from './v3/v3.module';
 
 import { UploadModule } from './common/upload/upload.module';
+import { ImageModule } from './common/images/image.module';
 import { WindmillModule } from './common/Windmill/WindmillModule';
 import { ZitadelModule } from './zitadel/zitadel.module';
 import { MpesaModule } from './common/mpesa.module';
@@ -48,6 +49,7 @@ import { env } from '@repo/env';
     V2Module,
     V3Module,
     UploadModule,
+    ImageModule,
     WindmillModule,
     ZitadelModule,
     MpesaModule,
@@ -68,6 +70,10 @@ import { env } from '@repo/env';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: V2AuthGuard,

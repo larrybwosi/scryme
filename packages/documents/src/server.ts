@@ -186,42 +186,105 @@ export const Mappers = {
     const defaultCurrency = transaction.organization?.settings?.defaultCurrency || 'USD';
     const currencySymbol = options.currencySymbolMap?.[defaultCurrency] || defaultCurrency;
 
+    const netTotal = Number(transaction.subtotal);
+    const totalTaxes = Number(transaction.taxTotal);
+    const grandTotal = Number(transaction.finalTotal);
+    const amountPaid = transaction.payments?.reduce((acc: number, p: any) => acc + Number(p.amount), 0) || 0;
+    const balanceDue = Math.max(0, grandTotal - amountPaid);
+
+    const items = transaction.items.map((item: any) => {
+      const quantity = Number(item.quantity);
+      const rate = Number(item.unitPrice);
+      const amount = Number(item.subtotal || item.lineTotal);
+      const description = `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`;
+
+      return {
+        // V1 fields
+        qty: quantity,
+        description,
+        price: rate,
+        amount,
+        // Alias for some templates
+        quantity,
+        total: amount,
+        unitPrice: rate,
+        // V2 fields
+        itemCode: item.sku || item.id,
+        itemName: item.productName,
+        rate,
+      };
+    });
+
+    const transactionDate = transaction.createdAt ? new Date(transaction.createdAt) : new Date();
+    const validDate = isNaN(transactionDate.getTime()) ? new Date() : transactionDate;
+
+    const verificationHash = generateVerificationHash({
+      invoiceNumber: transaction.number,
+      grandTotal,
+      date: validDate.toISOString(),
+      organizationName: transaction.organization?.name || 'Organization',
+    });
+
+    const companyData = {
+      name: transaction.organization?.name,
+      address: formatAddress(transaction.organization?.address),
+      phone: transaction.organization?.phone,
+      email: transaction.organization?.email,
+      logo: transaction.organization?.logo,
+    };
+
+    const clientData = {
+      name: transaction.customer?.name || 'Walk-in Customer',
+      email: transaction.customer?.email || '',
+      address: transaction.customer?.addresses?.[0] || {},
+      phone: transaction.customer?.phone,
+    };
+
     return {
       id: transaction.id,
       invoiceNumber: transaction.number,
-      date: new Date(transaction.createdAt).toLocaleDateString(),
-      dueDate: new Date(transaction.createdAt).toLocaleDateString(),
-      currencySymbol: currencySymbol,
+      date: validDate.toLocaleDateString(),
+      dueDate: transaction.dueDate ? new Date(transaction.dueDate).toLocaleDateString() : validDate.toLocaleDateString(),
+      status: transaction.status || 'PAID',
+      currencySymbol,
       currency: defaultCurrency,
-      customerName: transaction.customer?.name || '',
-      customerAddress: formatAddress(transaction.customer?.addresses?.[0]),
-      company: {
-        name: transaction.organization?.name,
-        address: transaction.organization?.address,
-        phone: transaction.organization?.phone,
-        email: transaction.organization?.email,
-        logo: transaction.organization?.logo,
-      },
-      client: {
-        name: transaction.customer?.name || '',
-        email: transaction.customer?.email || '',
-        address: transaction.customer?.addresses?.[0] || {},
-      },
+
+      // V1 expectations
+      customerName: clientData.name,
+      customerAddress: formatAddress(clientData.address),
+      company: companyData,
+      organization: companyData,
+      client: clientData,
+      billingAddress: clientData.address,
+      shippingAddress: clientData.address,
+
+      // V2 expectations
+      organizationName: companyData.name,
+      organizationAddress: companyData.address,
+      logoUrl: companyData.logo,
+      customerEmail: clientData.email,
+
+      items,
+
+      // Totals
+      subtotal: netTotal,
+      tax: totalTaxes,
+      shipping: Number(transaction.shippingTotal || 0),
+      total: grandTotal,
+
+      // V2 totals
+      netTotal,
+      totalTaxes,
+      grandTotal,
+      amountPaid,
+      balanceDue,
+
       payment: {
         terms: 'Payment due upon receipt.',
         availableMethods: ['CASH', 'CREDIT_CARD', 'MOBILE_PAYMENT', 'BANK_TRANSFER'],
       },
-      items: transaction.items.map((item: any) => ({
-        qty: item.quantity,
-        description: `${item.productName} - ${item.variantName || ''}`,
-        price: Number(item.unitPrice),
-        amount: Number(item.subtotal || item.lineTotal),
-      })),
-      subtotal: Number(transaction.subtotal),
-      tax: Number(transaction.taxTotal),
-      shipping: Number(transaction.shippingTotal || 0),
-      total: Number(transaction.finalTotal),
       notes: transaction.notes,
+      verificationHash,
     };
   }
 };

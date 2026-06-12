@@ -11,6 +11,14 @@ export interface IRedisClient {
   incr: (key: string) => Promise<number>;
   expire: (key: string, ttl: number) => Promise<number>;
   ttl: (key: string) => Promise<number>;
+  // List operations
+  lpush: (key: string, ...values: string[]) => Promise<number>;
+  ltrim: (key: string, start: number, stop: number) => Promise<string>;
+  lrange: (key: string, start: number, stop: number) => Promise<string[]>;
+  // Hash operations for Presence
+  hset: (key: string, field: string, value: string) => Promise<number>;
+  hdel: (key: string, ...fields: string[]) => Promise<number>;
+  hgetall: (key: string) => Promise<Record<string, string>>;
 }
 
 @Injectable()
@@ -39,6 +47,12 @@ export class RedisService implements OnModuleInit {
         incr: (key: string) => upstash.incr(key),
         expire: (key: string, ttl: number) => upstash.expire(key, ttl),
         ttl: (key: string) => upstash.ttl(key),
+        lpush: (key: string, ...values: string[]) => upstash.lpush(key, ...values),
+        ltrim: (key: string, start: number, stop: number) => upstash.ltrim(key, start, stop),
+        lrange: (key: string, start: number, stop: number) => upstash.lrange(key, start, stop),
+        hset: (key: string, field: string, value: string) => upstash.hset(key, { [field]: value }),
+        hdel: (key: string, ...fields: string[]) => upstash.hdel(key, ...fields),
+        hgetall: (key: string) => upstash.hgetall(key) as Promise<Record<string, string>>,
       };
     } else {
       const ioredis = new Redis(env.REDIS_URL || `redis://${env.REDIS_HOST}:${env.REDIS_PORT}`);
@@ -56,6 +70,12 @@ export class RedisService implements OnModuleInit {
         incr: (key: string) => ioredis.incr(key),
         expire: (key: string, ttl: number) => ioredis.expire(key, ttl),
         ttl: (key: string) => ioredis.ttl(key),
+        lpush: (key: string, ...values: string[]) => ioredis.lpush(key, ...values),
+        ltrim: (key: string, start: number, stop: number) => ioredis.ltrim(key, start, stop),
+        lrange: (key: string, start: number, stop: number) => ioredis.lrange(key, start, stop),
+        hset: (key: string, field: string, value: string) => ioredis.hset(key, field, value),
+        hdel: (key: string, ...fields: string[]) => ioredis.hdel(key, ...fields),
+        hgetall: (key: string) => ioredis.hgetall(key),
       };
     }
   }
@@ -108,5 +128,37 @@ export class RedisService implements OnModuleInit {
 
   async ttl(key: string): Promise<number> {
     return this.client.ttl(key);
+  }
+
+  // New list methods
+  async lpush(key: string, ...values: string[]): Promise<number> {
+    return this.client.lpush(key, ...values);
+  }
+
+  async ltrim(key: string, start: number, stop: number): Promise<string> {
+    return this.client.ltrim(key, start, stop);
+  }
+
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    return this.client.lrange(key, start, stop);
+  }
+
+  // New hash methods
+  async hset(key: string, field: string, value: any): Promise<number> {
+    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    return this.client.hset(key, field, stringValue);
+  }
+
+  async hdel(key: string, ...fields: string[]): Promise<number> {
+    return this.client.hdel(key, ...fields);
+  }
+
+  async hgetall<T>(key: string): Promise<Record<string, T>> {
+    const data = await this.client.hgetall(key);
+    const parsed: Record<string, T> = {};
+    for (const [field, value] of Object.entries(data)) {
+      parsed[field] = this.parseRedisJSON<T>(value) as T;
+    }
+    return parsed;
   }
 }
