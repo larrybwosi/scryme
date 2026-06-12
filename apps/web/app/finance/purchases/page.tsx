@@ -1,10 +1,10 @@
 import { ShoppingBag, Plus } from "lucide-react";
-import { PageHeader } from "../../../components/page-header";
-import { FilterBar } from "../../../components/filter-bar";
-import { PurchaseTable } from "../../../components/purchase-table";
-import { getPurchases } from "../../actions/purchases";
-import { getSuppliers, getInventoryProducts } from "../../actions/inventory";
-import { PurchaseDialog } from "../../../components/finance/purchase-dialog";
+import { PageHeader } from "@/components/page-header";
+import { FilterBar } from "@/components/filter-bar";
+import { PurchaseTable } from "@/components/purchase-table";
+import { getPurchases } from "@/app/actions/purchases";
+import { getSuppliers, getInventoryProducts } from "@/app/actions/inventory";
+import { PurchaseDialog } from "@/components/finance/purchase-dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { Suspense } from "react";
 
