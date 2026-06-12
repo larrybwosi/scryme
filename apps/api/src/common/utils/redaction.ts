@@ -7,7 +7,21 @@
  */
 export function redactSensitiveData(
   data: any,
-  sensitiveKeys: string[] = ['password', 'pin', 'token', 'clientSecret', 'client_secret', 'secret'],
+  sensitiveKeys: string[] = [
+    'password',
+    'pin',
+    'token',
+    'clientSecret',
+    'client_secret',
+    'secret',
+    'apiKey',
+    'api_key',
+    'access_token',
+    'refresh_token',
+    'otp',
+    'passcode',
+    'cvv',
+  ],
 ): any {
   if (data === null || data === undefined) {
     return data;

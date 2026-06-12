@@ -1,5 +1,12 @@
 import { Plus, MoreHorizontal, Star } from "lucide-react";
 import React from "react";
+import Link from "next/link";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 interface PageHeaderProps {
   title: string;
@@ -9,6 +16,8 @@ interface PageHeaderProps {
   action?: {
     label: string;
     onClick?: () => void;
+    href?: string;
+    icon?: React.ReactNode;
   };
   children?: React.ReactNode;
 }
@@ -21,6 +30,26 @@ export function PageHeader({
   action,
   children,
 }: PageHeaderProps) {
+  const ActionButton = action ? (
+    <Button
+      asChild={!!action.href}
+      onClick={action.onClick}
+      className="bg-[#4a9c6d] hover:bg-[#3d825b] text-white shadow-sm"
+    >
+      {action.href ? (
+        <Link href={action.href}>
+          {action.icon || <Plus className="w-4 h-4" />}
+          {action.label}
+        </Link>
+      ) : (
+        <>
+          {action.icon || <Plus className="w-4 h-4" />}
+          {action.label}
+        </>
+      )}
+    </Button>
+  ) : null;
+
   return (
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-4">
@@ -32,7 +61,17 @@ export function PageHeader({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-            <Star className="w-5 h-5 text-muted-foreground hover:text-yellow-400 cursor-pointer transition-colors" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Add to favorites"
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
+                  <Star className="w-5 h-5 text-muted-foreground hover:text-yellow-400 cursor-pointer transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Add to favorites</TooltipContent>
+            </Tooltip>
           </div>
           {(subtitle || description) && (
             <p className="text-sm text-muted-foreground">
@@ -44,15 +83,15 @@ export function PageHeader({
 
       <div className="flex items-center gap-3">
         {children}
-        {action && (
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#4a9c6d] text-white rounded-lg text-sm font-semibold hover:bg-[#3d825b] transition-colors shadow-sm">
-            <Plus className="w-4 h-4" />
-            {action.label}
-          </button>
-        )}
-        <button className="p-2 bg-white border border-border rounded-lg hover:bg-muted transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
-        </button>
+        {ActionButton}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" aria-label="More options">
+              <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>More options</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

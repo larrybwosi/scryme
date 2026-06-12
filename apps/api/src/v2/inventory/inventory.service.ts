@@ -5,13 +5,16 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { realtimeService } from "@repo/shared";
+import { ApiRealtimeService } from "../../common/services/realtime.service";
 import type { V2ApiContext } from "@repo/shared/server";
 import { paginate } from "../../v3/common/utils/pagination";
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private realtime: ApiRealtimeService
+  ) {}
 
   async getInventory(ctx: V2ApiContext, query: any) {
     const { organizationId } = ctx;
@@ -267,7 +270,7 @@ export class InventoryService {
     const result = await this.adjustStock(data);
 
     // Publish update
-    await realtimeService.publish(
+    await this.realtime.publish(
       `organization:${data.organizationId}:inventory`,
       "stock-update",
       {
