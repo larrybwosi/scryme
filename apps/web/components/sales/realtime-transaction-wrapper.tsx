@@ -17,53 +17,53 @@ export function RealtimeTransactionWrapper({
 }) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [isRealtime, setIsRealtime] = useState(false);
-  // const { subscribe } = useRealtime();
+  const { subscribe } = useRealtime();
 
-  // useEffect(() => {
-  //   setTransactions(initialTransactions);
-  // }, [initialTransactions]);
+  useEffect(() => {
+    setTransactions(initialTransactions);
+  }, [initialTransactions]);
 
-  // useEffect(() => {
-  //   if (!isRealtime || !organizationId) return;
+  useEffect(() => {
+    if (!isRealtime || !organizationId) return;
 
-  //   console.log(`Subscribing to org:${organizationId}:transactions`);
+    console.log(`Subscribing to org:${organizationId}:transactions`);
 
-  //   const unsubscribe = subscribe(
-  //     `org:${organizationId}:transactions`,
-  //     "transaction:created",
-  //     (newTrx) => {
-  //       console.log("New transaction received:", newTrx);
-  //       toast.info(`New Transaction: ${newTrx.number}`, {
-  //         description: `${newTrx.customerName} - ${newTrx.finalTotal}`,
-  //       });
+    const unsubscribe = subscribe(
+      `org:${organizationId}:transactions`,
+      "transaction:created",
+      (newTrx) => {
+        console.log("New transaction received:", newTrx);
+        toast.info(`New Transaction: ${newTrx.number}`, {
+          description: `${newTrx.customerName} - ${newTrx.finalTotal}`,
+        });
 
-  //       setTransactions((prev) => {
-  //         // Prevent duplicates
-  //         if (prev.find((t) => t.id === newTrx.id)) return prev;
+        setTransactions((prev) => {
+          // Prevent duplicates
+          if (prev.find((t) => t.id === newTrx.id)) return prev;
 
-  //         // Re-format slightly to match table expectations if needed
-  //         // The table expects things like trx.customer.name, trx._count.items
-  //         const formattedTrx = {
-  //           ...newTrx,
-  //           customer: { name: newTrx.customerName },
-  //           _count: { items: 0 }, // We don't have item count in the payload
-  //           location: { name: "..." },
-  //         };
+          // Re-format slightly to match table expectations if needed
+          // The table expects things like trx.customer.name, trx._count.items
+          const formattedTrx = {
+            ...newTrx,
+            customer: { name: newTrx.customerName },
+            _count: { items: 0 }, // We don't have item count in the payload
+            location: { name: "..." },
+          };
 
-  //         return [formattedTrx, ...prev];
-  //       });
-  //     },
-  //   );
+          return [formattedTrx, ...prev];
+        });
+      },
+    );
 
-  //   return () => {
-  //     unsubscribe();
-  //   };
-  // }, [isRealtime, organizationId, subscribe]);
+    return () => {
+      unsubscribe();
+    };
+  }, [isRealtime, organizationId, subscribe]);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        {/*<Button
+        <Button
           variant="outline"
           size="sm"
           onClick={() => setIsRealtime(!isRealtime)}
@@ -85,7 +85,7 @@ export function RealtimeTransactionWrapper({
               View Real-time
             </>
           )}
-        </Button>*/}
+        </Button>
       </div>
 
       <TransactionTable transactions={transactions} />

@@ -23,6 +23,7 @@ export {
 } from "./lib/provisioning/common";
 export { provisionDeviceV2 } from "./lib/provisioning/v2";
 export { provisionDeviceV3 } from "./lib/provisioning/v3";
+export { createDelta } from "./realtime/delta";
 export * from "./api/v2/utils/products";
 export * from "./api/v2/utils/deliveries";
 export * from "./api/v2/utils/customers";
