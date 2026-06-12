@@ -24,6 +24,15 @@ const sdk = getSDK({
   }
 });
 
+
+// Load persistent member token if available
+if (typeof window !== 'undefined') {
+  const memberToken = localStorage.getItem('bakery_member_token');
+  if (memberToken) {
+    sdk.setMemberToken(memberToken);
+  }
+}
+
 // If in Tauri, attempt to load the provisioned API Key from keyring and settings
 if (isTauri()) {
   // Load settings to check for custom API URL

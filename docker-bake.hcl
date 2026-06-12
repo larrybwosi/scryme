@@ -15,7 +15,7 @@ variable "NEXT_PUBLIC_API_URL" {
 }
 
 variable "BETTER_AUTH_SECRET" {
-  default = "mock-secret-for-build"
+  default = ""
 }
 
 target "api" {
