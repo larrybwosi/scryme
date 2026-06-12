@@ -1,7 +1,3 @@
-export function verifyToken(token: string): any {
-  return { valid: true };
-}
-
-export function verifyDocumentToken(token: string): any {
-  return { valid: true, type: 'stub', id: 'stub', orgId: 'stub' };
-}
+// Stubs removed for security reasons.
+// Use proper authentication from @repo/shared/server.
+export {};
