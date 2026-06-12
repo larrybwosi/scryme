@@ -1,0 +1,171 @@
+
+> web@2.2.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 751ms
+○ Compiling proxy ...
+
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0cjz-ob._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1098:30)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1169:30)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1449:30)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+ GET /stocking/transfers 404 in 3.2s (next.js: -232369µs, proxy.ts: 3.2s, application-code: 247ms)
+[browser] Uncaught Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0cjz-ob._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (../../packages/auth/src/approvals/index.ts:167:1)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (../../packages/auth/src/index.ts:25:1)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (../../packages/auth/src/logic/has-member-permission.ts:56:1)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+○ Compiling /_not-found/page ...
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_db_src_client_ts_0bf3ukh._.js:5:30)
+    at <unknown> (../../packages/shared/src/api/v2/utils/deliveries.ts:1:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:362:30)
+    at <unknown> (../../packages/shared/src/index.ts:10:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:2342:30)
+    at <unknown> (app/layout.tsx:5:1)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:77:30)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:168:47)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_db_src_client_ts_0bf3ukh._.js:5:30)
+    at <unknown> (../../packages/shared/src/api/v2/utils/deliveries.ts:1:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:362:30)
+    at <unknown> (../../packages/shared/src/index.ts:10:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:2342:30)
+    at <unknown> (app/layout.tsx:5:1)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:77:30)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:168:47)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0cjz-ob._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1098:30)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1169:30)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1449:30)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+ GET /stocking/transfers/new 404 in 41ms (next.js: -14304µs, proxy.ts: 37ms, application-code: 19ms)
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_db_src_client_ts_0bf3ukh._.js:5:30)
+    at <unknown> (../../packages/shared/src/api/v2/utils/deliveries.ts:1:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:362:30)
+    at <unknown> (../../packages/shared/src/index.ts:10:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:2342:30)
+    at <unknown> (app/layout.tsx:5:1)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:77:30)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:168:47)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_db_src_client_ts_0bf3ukh._.js:5:30)
+    at <unknown> (../../packages/shared/src/api/v2/utils/deliveries.ts:1:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:362:30)
+    at <unknown> (../../packages/shared/src/index.ts:10:1)
+    at module evaluation (.next/dev/server/chunks/ssr/packages_shared_src_0ogva61._.js:2342:30)
+    at <unknown> (app/layout.tsx:5:1)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:77:30)
+    at module evaluation (.next/dev/server/chunks/ssr/apps_web_0wnus49._.js:168:47)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+[browser] Uncaught Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0cjz-ob._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (../../packages/auth/src/approvals/index.ts:167:1)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (../../packages/auth/src/index.ts:25:1)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (../../packages/auth/src/logic/has-member-permission.ts:56:1)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
