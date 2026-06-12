@@ -4,7 +4,7 @@ import { IOrderRepository } from '../../domain/repositories/order-repository.int
 import { RequestB2BQuoteDto } from '../dto/request-b2b-quote.dto';
 import { PricingResolverService } from '../../../catalog/application/services/pricing-resolver.service';
 import { WebhookService } from '../../../webhooks/infrastructure/services/webhook.service';
-import { V3RealtimeGateway } from '../../../../common/realtime/v3-realtime.gateway';
+import { ApiRealtimeService } from '../../../../../common/services/realtime.service';
 
 @Injectable()
 export class RequestB2BQuoteUseCase {
@@ -14,7 +14,7 @@ export class RequestB2BQuoteUseCase {
     private readonly prisma: PrismaService,
     private readonly pricingResolver: PricingResolverService,
     private readonly webhookService: WebhookService,
-    private readonly realtimeGateway: V3RealtimeGateway,
+    private readonly realtimeService: ApiRealtimeService,
   ) {}
 
   async execute(organizationId: string, dto: RequestB2BQuoteDto) {
@@ -156,7 +156,7 @@ export class RequestB2BQuoteUseCase {
     });
 
     // 6. Trigger events
-    this.realtimeGateway.sendToOrder(quote.id, 'quote.created', quote);
+    await this.realtimeService.publish(`order:${quote.id}`, 'quote.created', quote);
     await this.webhookService.dispatch('quote.created', organizationId, quote);
 
     return quote;

@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException, forwardRef } from '@nestjs/common';
 import { IOrderRepository } from '../../domain/repositories/order-repository.interface';
-import { V3RealtimeGateway } from '../../../../common/realtime/v3-realtime.gateway';
+import { ApiRealtimeService } from '../../../../../common/services/realtime.service';
 import { WebhookService } from '../../../webhooks/infrastructure/services/webhook.service';
 import { LoyaltyService } from '../../../loyalty/application/loyalty.service';
 import { InvoiceUseCase } from '../../../finance/application/use-cases/invoice.use-case';
@@ -10,7 +10,7 @@ export class UpdateOrderStatusUseCase {
   constructor(
     @Inject(IOrderRepository)
     private readonly orderRepository: IOrderRepository,
-    private readonly realtimeGateway: V3RealtimeGateway,
+    private readonly realtimeService: ApiRealtimeService,
     private readonly webhookService: WebhookService,
     private readonly loyaltyService: LoyaltyService,
     @Inject(forwardRef(() => InvoiceUseCase))
@@ -31,7 +31,7 @@ export class UpdateOrderStatusUseCase {
       await this.handleOrderCompletion(order);
     }
 
-    this.realtimeGateway.sendToOrder(orderId, 'order.updated', updatedOrder);
+    await this.realtimeService.publish(`order:${orderId}`, 'order.updated', updatedOrder);
     await this.webhookService.dispatch('order.updated', order.organizationId, updatedOrder);
 
     return updatedOrder;
