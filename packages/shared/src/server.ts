@@ -14,7 +14,6 @@ export * from "./services/openloyalty";
 export * from "./services/customer";
 export * from "./actions/transaction/process.sale";
 export * from "./actions/transaction/orders";
-export * from "./actions/transaction/orders";
 export * from "./actions/organization/mpesa-trigger.service";
 export * from "./lib/services/navari.service";
 export {
@@ -24,3 +23,10 @@ export {
 } from "./lib/provisioning/common";
 export { provisionDeviceV2 } from "./lib/provisioning/v2";
 export { provisionDeviceV3 } from "./lib/provisioning/v3";
+export * from "./api/v2/utils/products";
+export * from "./api/v2/utils/deliveries";
+export * from "./api/v2/utils/customers";
+export * from "./lib/services/unit-calculation.service";
+export * from "./lib/services/conversion.service";
+export * from "./actions/api-management";
+export * from "./lib/services/conversion.service";

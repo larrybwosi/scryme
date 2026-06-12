@@ -127,7 +127,7 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: trx.currencyCode || 'USD' }).format(trx.finalTotal)}
                     </span>
                     <span className="text-[10px] text-zinc-500">
-                      {trx._count.items} items
+                      {trx._count?.items ?? 0} items
                     </span>
                   </div>
                 </td>

@@ -3,13 +3,9 @@ import { PageHeader } from "@/components/page-header";
 import { OrderForm } from "@/components/sales/order-form";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
-import { redirect } from "next/navigation";
 
 export default async function NewOrderPage() {
   const auth = await getServerAuth();
-  if (!auth) {
-    redirect("/login?callbackUrl=/sales/new");
-  }
 
   const customers = await db.customer.findMany({
     where: { organizationId: auth?.organizationId },

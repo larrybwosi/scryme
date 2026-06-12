@@ -1,4 +1,4 @@
-import { PaymentMethod, PaymentStatus, Prisma } from '@repo/db';
+import { PaymentMethod, PaymentStatus, Prisma } from '@repo/db/client';
 import { z } from 'zod';
 
 const kenyanPhoneRegex = /^(?:254|\+254|0)?(7(?:(?:[129][0-9])|(?:0[0-8])|(?:4[0-1]))[0-9]{6})$/;
@@ -28,10 +28,10 @@ export const ProcessSaleInputSchema = z.object({
     cartItems: z
       .array(
         z.object({
-            productId: z.string().min(1, 'Product ID cannot be empty'),
+            productId: z.string().optional().nullable(),
             variantId: z.string().min(1, 'Variant ID cannot be empty'),
             quantity: z.number().int('Quantity must be a whole number').positive('Quantity must be greater than zero'),
-            sellingUnitId: z.string().min(1, 'Selling unit ID cannot be empty'),
+            sellingUnitId: z.string().optional().nullable(),
         })
       )
       .min(1, 'At least one cart item is required'),
