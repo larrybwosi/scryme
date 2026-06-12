@@ -48,12 +48,13 @@ export async function getDocumentStream(
   const { ReceiptTemplate } = await import('@repo/documents/v2/ReceiptTemplate');
 
   switch (type) {
-    case 'invoice':
+    case 'invoice': {
       const selectedTemplate = template || transaction.organization?.settings?.defaultInvoiceTemplate;
       DocumentComponent = getInvoiceTemplate(selectedTemplate);
       data = Mappers.toInvoiceData(transaction);
       filename = `Invoice_${transaction.number}.pdf`;
       break;
+    }
     case 'receipt':
       DocumentComponent = ReceiptTemplate;
       data = Mappers.toReceiptData(transaction);
