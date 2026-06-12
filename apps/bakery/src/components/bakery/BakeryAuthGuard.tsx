@@ -262,6 +262,13 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
     try {
         const response = await sdk.auth.terminalLogin(cardId, pin);
         const member = response.member;
+        const token = response.token;
+
+        if (token) {
+          sdk.setMemberToken(token);
+          localStorage.setItem('bakery_member_token', token);
+        }
+
         localStorage.setItem('bakery_user', JSON.stringify(member));
         setHasMemberToken(true);
         toast.success(`Welcome back, ${member.name}`);
@@ -279,7 +286,12 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
       }
       try {
           setIsSsoLoading(true);
-          await sdk.bakery.sso();
+          const response = await sdk.bakery.sso();
+          const token = response.token;
+          if (token) {
+            sdk.setMemberToken(token);
+            localStorage.setItem('bakery_member_token', token);
+          }
           setHasMemberToken(true);
           toast.success('Authenticated via Dashboard SSO');
       } catch (error) {
@@ -296,6 +308,7 @@ export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
         setHasDeviceKey(false);
         setHasMemberToken(false);
         localStorage.removeItem('bakery_local_mode');
+        localStorage.removeItem('bakery_member_token');
         setIsLocalMode(false);
         setIsLocalAuthenticated(false);
         sessionStorage.removeItem('bakery_local_authenticated');
