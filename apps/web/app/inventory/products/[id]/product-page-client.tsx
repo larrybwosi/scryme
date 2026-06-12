@@ -57,13 +57,32 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from 'sonner';
-import { updateProduct, bulkDeleteVariants, updateVariantStatus } from '../../../actions/inventory';
+import { updateProduct, bulkDeleteVariants, updateVariantStatus, createVariant, updateVariant } from '../../../actions/inventory';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 
 export function ProductPageClient({ product: initialProduct, categories, suppliers, locations }: any) {
   const [product, setProduct] = useState(initialProduct);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
+
+  // Variant Dialog State
+  const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false);
+  const [editingVariant, setEditingVariant] = useState<any>(null);
+  const [variantForm, setVariantForm] = useState({
+    name: '',
+    sku: '',
+    buyingPrice: 0,
+    retailPrice: 0,
+    initialStock: 0
+  });
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -268,7 +287,20 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                      <CardTitle>Product Variants</CardTitle>
                      <CardDescription>Manage different sizes, colors, or materials.</CardDescription>
                    </div>
-                   <Button className="gap-2 bg-zinc-900 hover:bg-zinc-800">
+                   <Button
+                    className="gap-2 bg-zinc-900 hover:bg-zinc-800"
+                    onClick={() => {
+                      setEditingVariant(null);
+                      setVariantForm({
+                        name: '',
+                        sku: `${product.sku}-${(product.variants?.length || 0) + 1}`,
+                        buyingPrice: Number(product.variants?.[0]?.buyingPrice || 0),
+                        retailPrice: Number(product.variants?.[0]?.retailPrice || 0),
+                        initialStock: 0
+                      });
+                      setIsVariantDialogOpen(true);
+                    }}
+                   >
                      <Plus className="w-4 h-4" /> Add Variant
                    </Button>
                  </CardHeader>
@@ -330,9 +362,39 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                                    </Button>
                                  </DropdownMenuTrigger>
                                  <DropdownMenuContent align="end">
-                                   <DropdownMenuItem><Edit className="w-4 h-4 mr-2"/> Edit Details</DropdownMenuItem>
+                                   <DropdownMenuItem onClick={() => {
+                                      setEditingVariant(v);
+                                      setVariantForm({
+                                        name: v.name,
+                                        sku: v.sku,
+                                        buyingPrice: Number(v.buyingPrice),
+                                        retailPrice: Number(v.retailPrice),
+                                        initialStock: 0
+                                      });
+                                      setIsVariantDialogOpen(true);
+                                   }}>
+                                     <Edit className="w-4 h-4 mr-2"/> Edit Details
+                                   </DropdownMenuItem>
                                    <DropdownMenuItem><ImageIcon className="w-4 h-4 mr-2"/> Manage Media</DropdownMenuItem>
-                                   <DropdownMenuItem className="text-red-600"><Trash2 className="w-4 h-4 mr-2"/> Delete</DropdownMenuItem>
+                                   <DropdownMenuItem
+                                     className="text-red-600"
+                                     disabled={product.variants?.length <= 1}
+                                     onClick={async () => {
+                                       if (confirm('Are you sure you want to delete this variant?')) {
+                                          await bulkDeleteVariants([v.id]);
+                                          toast.success('Variant deleted');
+                                          // Note: You'd ideally want a way to refresh the local 'product' state here
+                                          // but for now revalidatePath in the action should handle it on next load.
+                                          // A better UX would be to update the state.
+                                          setProduct({
+                                            ...product,
+                                            variants: product.variants.filter((varItem: any) => varItem.id !== v.id)
+                                          });
+                                       }
+                                     }}
+                                   >
+                                     <Trash2 className="w-4 h-4 mr-2"/> Delete
+                                   </DropdownMenuItem>
                                  </DropdownMenuContent>
                                </DropdownMenu>
                              </TableCell>
@@ -357,11 +419,15 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                           variant="outline"
                           size="sm"
                           className="text-red-600"
-                          disabled={selectedVariants.length === 0}
+                          disabled={selectedVariants.length === 0 || selectedVariants.length >= (product.variants?.length || 0)}
                           onClick={async () => {
                             if (confirm('Are you sure you want to delete these variants?')) {
                               await bulkDeleteVariants(selectedVariants);
                               toast.success('Variants deleted');
+                              setProduct({
+                                ...product,
+                                variants: product.variants.filter((v: any) => !selectedVariants.includes(v.id))
+                              });
                               setSelectedVariants([]);
                             }
                           }}
@@ -654,6 +720,107 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
            </Card>
         </div>
       </div>
+
+      <Dialog open={isVariantDialogOpen} onOpenChange={setIsVariantDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{editingVariant ? 'Edit Variant' : 'Add New Variant'}</DialogTitle>
+            <DialogDescription>
+              {editingVariant ? 'Update the details of your variant.' : 'Create a new variant for this product.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="v-name">Variant Name</Label>
+              <Input
+                id="v-name"
+                placeholder="e.g. XL / Red"
+                value={variantForm.name}
+                onChange={(e) => setVariantForm({...variantForm, name: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="v-sku">SKU</Label>
+              <Input
+                id="v-sku"
+                value={variantForm.sku}
+                onChange={(e) => setVariantForm({...variantForm, sku: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="v-buying">Buying Price</Label>
+                <Input
+                  id="v-buying"
+                  type="number"
+                  value={variantForm.buyingPrice}
+                  onChange={(e) => setVariantForm({...variantForm, buyingPrice: Number(e.target.value)})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="v-retail">Retail Price</Label>
+                <Input
+                  id="v-retail"
+                  type="number"
+                  value={variantForm.retailPrice}
+                  onChange={(e) => setVariantForm({...variantForm, retailPrice: Number(e.target.value)})}
+                />
+              </div>
+            </div>
+            {!editingVariant && (
+              <div className="grid gap-2">
+                <Label htmlFor="v-stock">Initial Stock</Label>
+                <Input
+                  id="v-stock"
+                  type="number"
+                  value={variantForm.initialStock}
+                  onChange={(e) => setVariantForm({...variantForm, initialStock: Number(e.target.value)})}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsVariantDialogOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-zinc-900"
+              onClick={async () => {
+                try {
+                  if (editingVariant) {
+                    await updateVariant(editingVariant.id, variantForm);
+                    toast.success('Variant updated');
+                    // Manually update local state for better UX
+                    setProduct({
+                      ...product,
+                      variants: product.variants.map((v: any) =>
+                        v.id === editingVariant.id ? { ...v, ...variantForm } : v
+                      )
+                    });
+                  } else {
+                    const newVariant = await createVariant({
+                      productId: product.id,
+                      ...variantForm
+                    });
+                    toast.success('Variant created');
+                    // Add to local state
+                    setProduct({
+                      ...product,
+                      variants: [...(product.variants || []), {
+                        ...newVariant,
+                        variantStocks: [{ currentStock: variantForm.initialStock }] // Mock for display
+                      }]
+                    });
+                  }
+                  setIsVariantDialogOpen(false);
+                } catch (e) {
+                  toast.error('Operation failed');
+                }
+              }}
+            >
+              {editingVariant ? 'Save Changes' : 'Create Variant'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
