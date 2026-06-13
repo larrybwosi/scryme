@@ -14,7 +14,8 @@ import {
   ArrowLeftRight,
   AlertTriangle,
   LayoutGrid,
-  ArrowRight
+  ArrowRight,
+  ShoppingCart
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
@@ -52,15 +53,17 @@ export default async function StockingDashboard({
       icon: Package,
       description: "Across all categories",
       color: "text-blue-600",
-      bg: "bg-blue-50"
+      bg: "bg-blue-50",
+      link: "/stocking/list"
     },
     {
-      title: "Total Items",
-      value: stats.totalStockItems.toLocaleString(),
-      icon: TrendingUp,
-      description: "Current physical stock",
-      color: "text-green-600",
-      bg: "bg-green-50"
+      title: "Stock Requests",
+      value: "View All",
+      icon: ShoppingCart,
+      description: "Manage branch requests",
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+      link: "/stocking/requests"
     },
     {
       title: "Pending Transfers",
@@ -68,7 +71,8 @@ export default async function StockingDashboard({
       icon: ArrowLeftRight,
       description: "Awaiting action",
       color: "text-amber-600",
-      bg: "bg-amber-50"
+      bg: "bg-amber-50",
+      link: "/stocking/transfers"
     },
     {
       title: "Low Stock Alerts",
@@ -76,7 +80,8 @@ export default async function StockingDashboard({
       icon: AlertTriangle,
       description: "Requires attention",
       color: "text-red-600",
-      bg: "bg-red-50"
+      bg: "bg-red-50",
+      link: "/stocking/reorder-rules"
     }
   ];
 
@@ -91,20 +96,22 @@ export default async function StockingDashboard({
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                  <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                  <p className="text-xs text-gray-400 mt-1">{stat.description}</p>
+          <Link key={i} href={stat.link}>
+            <Card className="hover:border-blue-200 transition-colors cursor-pointer h-full">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                    <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                    <p className="text-xs text-gray-400 mt-1">{stat.description}</p>
+                  </div>
+                  <div className={`p-3 rounded-xl ${stat.bg}`}>
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

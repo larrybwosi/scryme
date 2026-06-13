@@ -1,0 +1,33 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@3.0.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 533ms
+○ Compiling proxy ...
+
+◇ injected env (17) from ../../.env // tip: ◈ secrets for agents [www.dotenvx.com]
+[2m2026-06-13T06:10:16.393Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly.
+[2m2026-06-13T06:10:16.396Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx @better-auth/cli secret` or `openssl rand -base64 32`.
+[2m2026-06-13T06:10:16.397Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+○ Compiling /login ...
+◇ injected env (17) from ../../.env // tip: ◈ secrets for agents [www.dotenvx.com]
+ GET /login 200 in 6.3s (next.js: 5.5s, proxy.ts: 8ms, application-code: 843ms)
+ POST /login 200 in 144ms (next.js: 9ms, proxy.ts: 18ms, application-code: 118ms)
+[browser] 06:10:24.903 Ably: Connection state: failed; reason: [_ErrorInfo: unable to handle request; no application id found in request; statusCode=401; code=40101; see https://help.ably.io/error/40101 ] (<anonymous>)
+ GET /login 200 in 156ms (next.js: 10ms, proxy.ts: 12ms, application-code: 134ms)
+ POST /login 200 in 173ms (next.js: 13ms, proxy.ts: 17ms, application-code: 144ms)
+○ Compiling /api/auth/[...all] ...
+[browser] 06:10:27.044 Ably: Connection state: failed; reason: [_ErrorInfo: unable to handle request; no application id found in request; statusCode=401; code=40101; see https://help.ably.io/error/40101 ] (<anonymous>)
+◇ injected env (17) from ../../.env // tip: ◈ encrypted .env [www.dotenvx.com]
+[2m2026-06-13T06:10:32.710Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly.
+[2m2026-06-13T06:10:32.712Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx @better-auth/cli secret` or `openssl rand -base64 32`.
+[2m2026-06-13T06:10:32.712Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+◇ injected env (17) from ../../.env // tip: ⌘ enable debugging { debug: true }
+[2m2026-06-13T06:10:37.053Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Base URL could not be determined. Please set a valid base URL using the baseURL config option or the BETTER_AUTH_URL environment variable. Without this, callbacks and redirects may not work correctly.
+[2m2026-06-13T06:10:37.056Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx @better-auth/cli secret` or `openssl rand -base64 32`.
+[2m2026-06-13T06:10:37.056Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+ GET /api/auth/get-session 200 in 10.9s (next.js: 10.8s, proxy.ts: 9ms, application-code: 77ms)
