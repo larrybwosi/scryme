@@ -27,55 +27,66 @@ import {
   Tspan,
   LinearGradient,
   RadialGradient,
-} from '@react-pdf/renderer';
-import { createElement, ReactElement } from 'react';
+} from "@react-pdf/renderer";
+import { createElement, ReactElement } from "react";
 
-export * from './types';
-export * from './templates/invoice';
-export * from './templates/Waybill';
-export { BatchProductionForm } from './templates/Bakery-batch';
-export * from './templates/PackingList';
-export * from './templates/StockReport';
-export * from './templates/AnalyticsExport';
-export { ReceiptDocument } from './templates/Receipt';
-export { ReceiptDocument as GenericReceiptDocument } from './templates/Receipt';
+export * from "./types";
+export * from "./templates/invoice";
+export * from "./templates/Waybill";
+export { BatchProductionForm } from "./templates/Bakery-batch";
+export * from "./templates/PackingList";
+export * from "./templates/StockReport";
+export * from "./templates/AnalyticsExport";
+export { ReceiptDocument } from "./templates/Receipt";
+export { ReceiptDocument as GenericReceiptDocument } from "./templates/Receipt";
 export {
   INVOICE_TEMPLATES,
   INVOICE_TEMPLATE_METADATA,
   getInvoiceTemplate,
   renderInvoiceTemplate,
   type InvoiceData as GenericInvoiceData,
-  type InvoiceTemplateType
-} from './templates/invoice-templates';
-export { InvoicePDF as SimpleInvoicePDF } from './templates/InvoicePDF';
-export { InvoicePDF as Temp3InvoicePDF } from './templates/Invoice.temp3';
-export { BusinessInvoicePDF as Temp4InvoicePDF } from './templates/Invoice.temp4';
-export { ModernInvoicePDF } from './templates/Invoice.temp5';
-export { BusinessInvoicePDF as DenvisInvoicePDF } from './templates/denvis.temp.6';
-export { InvoicePDF as Temp2InvoicePDF } from './templates/invoice.temp2';
-export { ThermalReceiptPDF, type ThermalReceiptData } from './templates/ThermalReceiptForRestaurants';
+  type InvoiceTemplateType,
+} from "./templates/invoice-templates";
+export { InvoicePDF as SimpleInvoicePDF } from "./templates/InvoicePDF";
+export { InvoicePDF as Temp3InvoicePDF } from "./templates/Invoice.temp3";
+export { BusinessInvoicePDF as Temp4InvoicePDF } from "./templates/Invoice.temp4";
+export { ModernInvoicePDF } from "./templates/Invoice.temp5";
+export { BusinessInvoicePDF as DenvisInvoicePDF } from "./templates/denvis.temp.6";
+export { InvoicePDF as Temp2InvoicePDF } from "./templates/invoice.temp2";
+export {
+  ThermalReceiptPDF,
+  type ThermalReceiptData,
+} from "./templates/ThermalReceiptForRestaurants";
 
-export * from './v2/InvoiceTemplate';
-export { ReceiptTemplate as ReceiptTemplateV2, type ReceiptPDFData as ReceiptPDFDataV2 } from './v2/ReceiptTemplate';
-export * from './v2/StockRequestTemplate';
-export * from './v2/StockTransferTemplate';
-export * from './mock-data';
+export * from "./v2/InvoiceTemplate";
+export {
+  ReceiptTemplate as ReceiptTemplateV2,
+  type ReceiptPDFData as ReceiptPDFDataV2,
+} from "./v2/ReceiptTemplate";
+export * from "./v2/StockRequestTemplate";
+export * from "./v2/StockTransferTemplate";
+export * from "./v2/StockRequestListTemplate";
+export * from "./v2/AggregatedStockRequestListTemplate";
+export * from "./v2/StockTransferListTemplate";
+export * from "./mock-data";
 
 export {
   ReceiptDocument as POSReceiptDocument,
   InvoiceDocument as POSInvoiceDocument,
   type ReceiptData as POSReceiptData,
-  type CartItem as POSCartItem
-} from './templates/pos/POSDocuments';
-export * from './templates/pos/SaleReceiptPDF';
+  type CartItem as POSCartItem,
+} from "./templates/pos/POSDocuments";
+export * from "./templates/pos/SaleReceiptPDF";
 
 export const DocumentGenerator: any = {
   toBuffer: renderToBuffer,
   toStream: renderToStream,
   toFile: renderToFile,
   toString: renderToString,
-  createElement: (type: any, props: any, ...children: any[]) => createElement(type, props, ...children),
-  renderToStream: (element: ReactElement<any>) => renderToStream(element as any),
+  createElement: (type: any, props: any, ...children: any[]) =>
+    createElement(type, props, ...children),
+  renderToStream: (element: ReactElement<any>) =>
+    renderToStream(element as any),
   Document,
   Page,
   Text,
