@@ -370,36 +370,27 @@ jobs:
           projectPath: apps/pos
 
       # tauri-action uploads latest.json as "latest.json" for retail and
-      # "latest-<variant>.json" for others. We still need to download and re-upload
-      # the merged cross-platform file in finalize-release, so we grab it here as
-      # an artifact to pass between jobs.
-      - name: Download latest.json from release and upload as artifact
+      # "latest-<variant>.json" for others. We still need to merge these per-platform
+      # files into a single cross-platform latest.json in finalize-release.
+      # To avoid race conditions and 'gh release download' failures, we grab the
+      # locally generated file directly from the build target.
+      - name: Prepare latest.json artifact
         if: matrix.variant != 'standalone'
         shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VARIANT="${{ matrix.variant }}"
-          VERSION="${{ needs.set-version.outputs.version }}"
-          TAG="v$VERSION"
+          # Find the updater JSON. Tauri 2 puts it in the bundle directory.
+          # We search apps/pos/src-tauri/target for any latest.json
+          LOCAL_JSON=$(find apps/pos/src-tauri/target -name "latest.json" | head -n 1)
 
-          if [ "$VARIANT" = "retail" ]; then
-            ASSET_NAME="latest.json"
-          else
-            ASSET_NAME="latest-$VARIANT.json"
-          fi
-
-          # Retry up to 5 times — the release asset may not be immediately visible
-          for i in $(seq 1 5); do
-            gh release download "$TAG" --pattern "$ASSET_NAME" --output "latest-${VARIANT}-${{ matrix.target_group }}.json" && break
-            echo "Attempt $i failed, retrying in 10s..."
-            sleep 10
-          done
-
-          if [ ! -f "latest-${VARIANT}-${{ matrix.target_group }}.json" ]; then
-            echo "Failed to download $ASSET_NAME after 5 attempts"
+          if [ -z "$LOCAL_JSON" ]; then
+            echo "❌ Error: latest.json not found in target directory."
+            find apps/pos/src-tauri/target -maxdepth 5 || true
             exit 1
           fi
+
+          echo "Found latest.json at: $LOCAL_JSON"
+          cp "$LOCAL_JSON" "latest-${VARIANT}-${{ matrix.target_group }}.json"
 
       - name: Upload latest.json artifact
         if: matrix.variant != 'standalone'
