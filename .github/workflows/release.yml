@@ -343,6 +343,7 @@ jobs:
       - name: Generate .env file for build
         shell: bash
         run: |
+          echo "VITE_API_URL=${{ secrets.POS_API_URL || 'https://dealioerp.vercel.app' }}" > apps/pos/.env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> apps/pos/src-tauri/.env
           echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> apps/pos/src-tauri/.env
           echo "POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}" >> apps/pos/src-tauri/.env
@@ -353,9 +354,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_API_URL: ${{ secrets.POS_API_URL || 'https://dealioerp.vercel.app' }}
         with:
           tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "POS v${{ needs.set-version.outputs.version }}"
+          releaseName: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           # Let tauri-action handle latest.json generation and upload instead of
@@ -470,7 +472,7 @@ jobs:
       - name: Inject environment variables and updater config
         shell: bash
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.scryme.app/api/v2' }}
+          VITE_API_URL: ${{ secrets.BAKERY_API_URL || 'https://api.scryme.app/api/v2' }}
           BAKERY_UPDATE_URL: ${{ secrets.BAKERY_UPDATE_URL || 'https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}' }}
           TAURI_PUBLIC_KEY: ${{ secrets.BAKERY_TAURI_PUBLIC_KEY || 'dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg==' }}
         run: |
@@ -490,9 +492,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.BAKERY_TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.BAKERY_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_API_URL: ${{ secrets.BAKERY_API_URL || 'https://api.scryme.app/api/v2' }}
         with:
           tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "Bakery v${{ needs.set-version.outputs.version }}"
+          releaseName: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           projectPath: apps/bakery
