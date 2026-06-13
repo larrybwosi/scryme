@@ -1,35 +1,7 @@
 // components/InvoicePDF.tsx
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-
-// Define the invoice data structure
-export interface InvoiceItem {
-  description: string;
-  quantity: number;
-  rate: number;
-}
-
-export interface InvoiceData {
-  clientName: string;
-  companyName: string;
-  invoiceNo: string;
-  date: string;
-  invoiceTo: {
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-    country: string;
-    postalCode: string;
-  };
-  items: InvoiceItem[];
-  gstRate: number; // GST rate as percentage (e.g., 10 for 10%)
-  bankDetails: {
-    accountNo: string;
-    sortCode: string;
-  };
-  paymentTerms: string;
-}
+import { InvoiceData } from './invoice-templates';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -207,21 +179,21 @@ const styles = StyleSheet.create({
   },
 });
 
-export const InvoicePDF: React.FC<{ data: any }> = ({ data }) => {
+export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
   // Calculate totals
   const items = data.items.map((item: any) => ({
-    description: item.description,
-    quantity: item.quantity || item.qty,
+    description: item.description || item.itemName,
+    quantity: item.qty || item.quantity,
     rate: item.rate || item.unitPrice || item.price,
   }));
-  const subtotal = items.reduce((sum: number, item: any) => sum + item.quantity * item.rate, 0);
-  const gstRate = data.gstRate || (data.tax / subtotal) * 100 || 0;
-  const gstAmount = subtotal * (gstRate / 100);
-  const total = data.total || subtotal + gstAmount;
+  const subtotal = data.subtotal;
+  const gstRate = data.gstRate || data.taxRate || (data.tax / subtotal) * 100 || 0;
+  const gstAmount = data.tax;
+  const total = data.total || data.grandTotal || 0;
 
   const invoiceTo = data.invoiceTo || {
     name: data.client.name,
-    address: typeof data.client.address === 'string' ? data.client.address : '',
+    address: data.client.address,
     city: '',
     state: '',
     country: '',
@@ -243,18 +215,20 @@ export const InvoicePDF: React.FC<{ data: any }> = ({ data }) => {
           <View style={styles.headerRow}>
             <View style={styles.leftColumn}>
               <Text style={styles.label}>Client Name</Text>
-              <Text style={styles.value}>{data.client?.name || data.clientName}</Text>
+              <Text style={styles.value}>{data.client?.name || (data as any).clientName}</Text>
               <Text style={styles.label}>Company Name</Text>
-              <Text style={styles.value}>{data.company?.name || data.companyName}</Text>
+              <Text style={styles.value}>{data.company?.name || (data as any).companyName}</Text>
               <Text style={styles.label}>Invoice No</Text>
-              <Text style={styles.value}>{data.invoiceNumber || data.invoiceNo}</Text>
+              <Text style={styles.value}>{data.invoiceNumber || (data as any).invoiceNo}</Text>
               <Text style={styles.value}>{data.date}</Text>
             </View>
 
             <View style={styles.rightColumn}>
               <Text style={styles.invoiceToLabel}>Invoice to</Text>
               <Text style={styles.invoiceToName}>{invoiceTo.name}</Text>
-              <Text style={[styles.value, { fontSize: 9 }]}>{invoiceTo.address}</Text>
+              <Text style={[styles.value, { fontSize: 9 }]}>
+                {typeof invoiceTo.address === 'string' ? invoiceTo.address : ''}
+              </Text>
               <Text style={[styles.value, { fontSize: 9 }]}>
                 {invoiceTo.city}
                 {invoiceTo.state ? `, ${invoiceTo.state}` : ''}
@@ -280,7 +254,7 @@ export const InvoicePDF: React.FC<{ data: any }> = ({ data }) => {
               <Text style={styles.qty}>{item.quantity}</Text>
               <Text style={styles.rate}>
                 {data.currencySymbol || '$'}
-                {item.rate}
+                {item.rate.toFixed(2)}
               </Text>
             </View>
           ))}
@@ -322,12 +296,12 @@ export const InvoicePDF: React.FC<{ data: any }> = ({ data }) => {
         {/* Payment Terms */}
         <View style={[styles.paymentSection, { marginTop: 15 }]}>
           <Text style={styles.sectionTitle}>Payment Terms</Text>
-          <Text style={styles.paymentTerms}>{data.payment?.terms || data.paymentTerms}</Text>
+          <Text style={styles.paymentTerms}>{data.payment?.terms || data.paymentTerms || (data as any).paymentTerms}</Text>
         </View>
 
         {/* Signature */}
         <View style={styles.signatureSection}>
-          <Text style={styles.signatureText}>Robert William</Text>
+          <Text style={styles.signatureText}>{data.signature?.name || 'Authorized'}</Text>
           <Text style={styles.signatureLabel}>Signature</Text>
         </View>
       </Page>

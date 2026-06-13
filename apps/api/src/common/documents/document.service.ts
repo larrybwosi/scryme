@@ -6,7 +6,7 @@ import {
   StockTransferTemplate,
   StockTransferPDFData,
   InvoiceTemplate,
-  InvoicePDFData,
+  GenericInvoiceData,
   ReceiptTemplateV2,
   ReceiptPDFDataV2
 } from '@repo/documents';
@@ -33,14 +33,14 @@ export class DocumentService {
     );
     return (await DocumentGenerator.renderToStream(element)) as unknown as Readable;
   }
-  async generateInvoicePDF(data: InvoicePDFData): Promise<Readable> {
+  async generateInvoicePDF(data: GenericInvoiceData): Promise<Readable> {
     // Generate verification hash if not present
     if (!data.verificationHash) {
       data.verificationHash = generateVerificationHash({
         invoiceNumber: data.invoiceNumber,
-        grandTotal: data.grandTotal,
+        grandTotal: data.grandTotal || data.total,
         date: data.date,
-        organizationName: data.organizationName
+        organizationName: data.organizationName || data.company.name
       });
     }
     const element = DocumentGenerator.createElement(InvoiceTemplate, { data });

@@ -4,7 +4,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { IOrderRepository } from '../../../domain/repositories/order-repository.interface';
 import { PricingResolverService } from '../../../../catalog/application/services/pricing-resolver.service';
 import { WebhookService } from '../../../../webhooks/infrastructure/services/webhook.service';
-import { V3RealtimeGateway } from '../../../../../common/realtime/v3-realtime.gateway';
+import { ApiRealtimeService } from '@/common/services/realtime.service';
 import { BadRequestException } from '@nestjs/common';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -25,8 +25,8 @@ describe('RequestB2BQuoteUseCase', () => {
     dispatch: vi.fn(),
   };
 
-  const mockRealtimeGateway = {
-    sendToOrder: vi.fn(),
+  const mockRealtimeService = {
+    publish: vi.fn(),
   };
 
   const mockPrisma = {
@@ -50,7 +50,7 @@ describe('RequestB2BQuoteUseCase', () => {
           useValue: { resolveVariantPrice: vi.fn() },
         },
         { provide: WebhookService, useValue: mockWebhookService },
-        { provide: V3RealtimeGateway, useValue: mockRealtimeGateway },
+        { provide: ApiRealtimeService, useValue: mockRealtimeService },
       ],
     }).compile();
 

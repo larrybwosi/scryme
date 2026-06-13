@@ -287,8 +287,24 @@ class UnitCalculationService {
     }
 
     if (stockDeductionNeeded > 0) {
-      if (!allowNegativeStock) {
-        const totalAvailable = availableBatches.reduce(
+      // 1. Check if we have summary stock even if batches are missing or insufficient
+      const stockRecord = await tx.productVariantStock.findUnique({
+        where: { variantId_locationId: { variantId, locationId } },
+      });
+
+      const summaryAvailable = stockRecord
+        ? new Decimal(stockRecord.availableStock as any).toNumber()
+        : 0;
+
+      if (summaryAvailable >= stockDeductionNeeded) {
+        // We have enough summary stock. We'll proceed without batch allocation for the remainder.
+        // This handles cases where batches might be out of sync or missing.
+        totalCostForLineItem = totalCostForLineItem.add(
+          new Decimal(buyingPrice).mul(stockDeductionNeeded),
+        );
+        stockDeductionNeeded = 0;
+      } else if (!allowNegativeStock) {
+        const totalAvailableInBatches = availableBatches.reduce(
           (sum, b) =>
             sum +
             new Decimal(b.currentQuantity as unknown as string).toNumber(),
@@ -299,13 +315,15 @@ class UnitCalculationService {
             ? `${params.productName} (${params.variantName})`
             : `variant ${variantId}`;
         throw new Error(
-          `Insufficient stock for ${displayName}. Required: ${initialDeductionNeeded}, Available: ${totalAvailable}.`,
+          `Insufficient stock for ${displayName}. Required: ${initialDeductionNeeded}, Available (Batches): ${totalAvailableInBatches}, Available (Summary): ${summaryAvailable}.`,
         );
+      } else {
+        // If negative stock allowed, assume cost is current buying price
+        totalCostForLineItem = totalCostForLineItem.add(
+          new Decimal(buyingPrice).mul(stockDeductionNeeded),
+        );
+        stockDeductionNeeded = 0;
       }
-      // If negative stock allowed, assume cost is current buying price
-      totalCostForLineItem = totalCostForLineItem.add(
-        new Decimal(buyingPrice).mul(stockDeductionNeeded),
-      );
     }
 
     const unitCost =

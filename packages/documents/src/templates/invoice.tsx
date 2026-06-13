@@ -1,4 +1,5 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { InvoiceData } from './invoice-templates';
 
 // Define a professional color palette
 const getColors = (primaryColor = '#1f2937', accentColor = '#ef4444') => ({
@@ -118,9 +119,9 @@ const getStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
 });
 
 // Create Document Component
-export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
+export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: string }) => {
   const invoiceData = data;
-  const branding = data.branding || (data.organization ? { primaryColor: data.organization.primaryColor } : {});
+  const branding = data.organization ? { primaryColor: (data.organization as any).primaryColor } : {};
   const colors = getColors(branding.primaryColor);
   const styles = getStyles(colors);
 
@@ -131,17 +132,19 @@ export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
 
   // Helper function to format a structured address object (from JSON)
   const formatAddress = (address: any) => {
-    if (!address || typeof address !== 'object') {
-      return 'No address details available.';
-    }
+    if (!address) return 'No address details available.';
+    if (typeof address === 'string') return address;
+
     // Assumes address is a structured object like { street, city, state, zipCode, country }
     const parts = [
-      address.street,
-      address.city && address.state ? `${address.city}, ${address.state} ${address.zipCode || ''}`.trim() : null,
+      address.street || address.street1,
+      address.city && address.state ? `${address.city}, ${address.state} ${address.postalCode || address.zipCode || ''}`.trim() : null,
       address.country,
     ];
     return parts.filter(Boolean).join('\n');
   };
+
+  const logo = invoiceData.logo || invoiceData.logoUrl || (invoiceData.company?.logo || invoiceData.company?.logoUrl);
 
   return (
     <Document>
@@ -149,7 +152,7 @@ export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.companyInfo}>
-            {invoiceData.company.logo && <Image src={invoiceData.company.logo} style={{ height: 40, marginBottom: 8, objectFit: 'contain' }} />}
+            {logo && <Image src={logo as string} style={{ height: 40, marginBottom: 8, objectFit: 'contain' }} />}
             <Text style={styles.companyName}>{invoiceData.company.name || 'Company Name'}</Text>
             <Text style={styles.companyDetails}>
               {invoiceData.company.address || 'Company Address'}
@@ -171,7 +174,7 @@ export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
             <Text style={styles.addressDetails}>
               {invoiceData.client.name}
               {'\n'}
-              {formatAddress(invoiceData.billingAddress)}
+              {formatAddress(invoiceData.billingAddress || invoiceData.client.address)}
               {'\n'}
               {invoiceData.client.email}
             </Text>
@@ -198,10 +201,10 @@ export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
           </View>
           {invoiceData.items.map((item: any, index: number) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={[styles.tableCol, styles.colQty]}>{item.qty}</Text>
-              <Text style={[styles.tableCol, styles.colDesc]}>{item.description}</Text>
-              <Text style={[styles.tableCol, styles.colPrice]}>{formatCurrency(item.price)}</Text>
-              <Text style={[styles.tableCol, styles.colAmount]}>{formatCurrency(item.amount)}</Text>
+              <Text style={[styles.tableCol, styles.colQty]}>{item.qty || item.quantity}</Text>
+              <Text style={[styles.tableCol, styles.colDesc]}>{item.description || item.itemName}</Text>
+              <Text style={[styles.tableCol, styles.colPrice]}>{formatCurrency(item.price || item.unitPrice || item.rate)}</Text>
+              <Text style={[styles.tableCol, styles.colAmount]}>{formatCurrency(item.amount || item.total)}</Text>
             </View>
           ))}
         </View>
@@ -223,7 +226,7 @@ export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
             </View>
             <View style={styles.grandTotalRow}>
               <Text style={styles.grandTotalText}>Total</Text>
-              <Text style={styles.grandTotalText}>{formatCurrency(invoiceData.total)}</Text>
+              <Text style={styles.grandTotalText}>{formatCurrency(invoiceData.total || invoiceData.grandTotal)}</Text>
             </View>
           </View>
         </View>
@@ -238,11 +241,11 @@ export const InvoicePDF = ({ data, qrCode }: { data: any; qrCode: string }) => {
           )}
           <View style={{ marginTop: 12 }}>
             <Text style={styles.sectionTitle}>Payment Terms</Text>
-            <Text>{invoiceData.payment.terms}</Text>
+            <Text>{invoiceData.payment.terms || invoiceData.paymentTerms}</Text>
           </View>
           <View style={{ marginTop: 12 }}>
             <Text style={styles.sectionTitle}>Available Payment Methods</Text>
-            <Text>We accept: {invoiceData.payment.availableMethods.join(', ').replace(/_/g, ' ')}</Text>
+            <Text>We accept: {(invoiceData.payment.availableMethods || []).join(', ').replace(/_/g, ' ')}</Text>
           </View>
         </View>
 
