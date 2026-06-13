@@ -31,6 +31,8 @@ import {
   Receipt,
   Building2,
   Calendar,
+  Paperclip,
+  Plus,
 } from "lucide-react";
 import {
   getTransactionById,
@@ -39,6 +41,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
 import { AddPaymentModal } from "./add-payment-modal";
+import { addAttachmentToPayment } from "../../app/actions/sales";
 
 interface TransactionDetailsSheetProps {
   transactionId: string | null;
@@ -82,6 +85,26 @@ export function TransactionDetailsSheet({
       fetchTransaction();
     } catch (error) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleAddAttachment = async (paymentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // NOTE: In a real production environment, you would upload the file to a storage provider
+      // like S3, Google Cloud Storage, or Cloudinary and use the returned permanent URL.
+      await addAttachmentToPayment(paymentId, {
+        fileName: file.name,
+        fileUrl: `https://storage.example.com/payments/${Date.now()}-${file.name}`,
+        mimeType: file.type,
+        sizeBytes: file.size,
+      });
+      toast.success("Attachment added to payment");
+      fetchTransaction();
+    } catch (error) {
+      toast.error("Failed to add attachment");
     }
   };
 
@@ -311,36 +334,104 @@ export function TransactionDetailsSheet({
                 value="payments"
                 className="mt-4 space-y-4 outline-none"
               >
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {transaction.payments?.length > 0 ? (
                     transaction.payments.map((payment: any) => (
                       <div
                         key={payment.id}
-                        className="bg-white border border-zinc-200/80 rounded-xl p-4 flex items-center justify-between shadow-sm shadow-zinc-100/50"
+                        className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm shadow-zinc-100/50 space-y-3"
                       >
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-600 shadow-sm">
-                            <CreditCard className="w-4 h-4 text-zinc-500" />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-600 shadow-sm">
+                              <CreditCard className="w-4 h-4 text-zinc-500" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="font-mono text-sm font-semibold text-zinc-900 block">
+                                {formatCurrency(payment.amount)}
+                              </span>
+                              <span className="text-[11px] text-zinc-400 block font-medium">
+                                {payment.method.replace(/_/g, " ")} •{" "}
+                                {format(
+                                  new Date(payment.createdAt),
+                                  "MMM d, yyyy HH:mm",
+                                )}
+                              </span>
+                            </div>
                           </div>
-                          <div className="space-y-0.5">
-                            <span className="font-mono text-sm font-semibold text-zinc-900 block">
-                              {formatCurrency(payment.amount)}
-                            </span>
-                            <span className="text-[11px] text-zinc-400 block font-medium">
-                              {payment.method.replace(/_/g, " ")} •{" "}
-                              {format(
-                                new Date(payment.createdAt),
-                                "MMM d, yyyy HH:mm",
-                              )}
-                            </span>
-                          </div>
+                          <Badge
+                            variant="outline"
+                            className="bg-emerald-50/60 text-emerald-700 border-emerald-200 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5"
+                          >
+                            {payment.status}
+                          </Badge>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="bg-emerald-50/60 text-emerald-700 border-emerald-200 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5"
-                        >
-                          {payment.status}
-                        </Badge>
+
+                        {/* Cheque Details & Notes */}
+                        {(payment.method === "CHEQUE" || payment.notes) && (
+                          <div className="bg-zinc-50/50 rounded-lg p-2.5 border border-zinc-100 text-[11px] space-y-1.5">
+                            {payment.method === "CHEQUE" && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Bank Name</span>
+                                  <span className="text-zinc-700 font-semibold">{payment.bankName || 'N/A'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Cheque Date</span>
+                                  <span className="text-zinc-700 font-semibold">
+                                    {payment.chequeDate ? format(new Date(payment.chequeDate), 'MMM d, yyyy') : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            {payment.notes && (
+                              <div>
+                                <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Payment Notes</span>
+                                <p className="text-zinc-600 italic leading-relaxed">{payment.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Attachments Section */}
+                        <div className="space-y-2">
+                           <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Attachments</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 gap-1"
+                                onClick={() => document.getElementById(`payment-att-${payment.id}`)?.click()}
+                              >
+                                <Plus className="w-3 h-3" /> Add Proof
+                              </Button>
+                              <input
+                                id={`payment-att-${payment.id}`}
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => handleAddAttachment(payment.id, e)}
+                              />
+                           </div>
+
+                           {payment.attachments?.length > 0 ? (
+                             <div className="flex flex-wrap gap-2">
+                               {payment.attachments.map((att: any) => (
+                                 <a
+                                   key={att.id}
+                                   href={att.fileUrl}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                                 >
+                                   <Paperclip className="w-3 h-3 text-zinc-400" />
+                                   <span className="max-w-[100px] truncate">{att.fileName}</span>
+                                 </a>
+                               ))}
+                             </div>
+                           ) : (
+                             <p className="text-[10px] text-zinc-400 italic">No attachments found</p>
+                           )}
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -351,15 +442,16 @@ export function TransactionDetailsSheet({
                     </div>
                   )}
 
-                  <Button
-                    className="w-full gap-2 h-10 text-xs font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm mt-1"
-                    variant="outline"
-                    onClick={() => setIsPaymentModalOpen(true)}
-                    disabled={transaction.paymentStatus === "PAID"}
-                  >
-                    <CreditCard className="w-3.5 h-3.5 text-zinc-500" />
-                    Register Payment Transaction
-                  </Button>
+                  {transaction.type !== "POS_SALE" && transaction.paymentStatus !== "PAID" && (
+                    <Button
+                      className="w-full gap-2 h-10 text-xs font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm mt-1"
+                      variant="outline"
+                      onClick={() => setIsPaymentModalOpen(true)}
+                    >
+                      <CreditCard className="w-3.5 h-3.5 text-zinc-500" />
+                      Register Payment Transaction
+                    </Button>
+                  )}
                 </div>
               </TabsContent>
 
