@@ -10,7 +10,7 @@ import {
 import { getOrganizationContext } from "@/app/actions/auth";
 import { RealtimeTransactionWrapper } from "../../../components/sales/realtime-transaction-wrapper";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
 async function TransactionList({
   searchParams,
