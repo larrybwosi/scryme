@@ -59,6 +59,9 @@ export * from './v2/InvoiceTemplate';
 export { ReceiptTemplate as ReceiptTemplateV2, type ReceiptPDFData as ReceiptPDFDataV2 } from './v2/ReceiptTemplate';
 export * from './v2/StockRequestTemplate';
 export * from './v2/StockTransferTemplate';
+export * from './v2/StockRequestListTemplate';
+export * from './v2/AggregatedStockRequestListTemplate';
+export * from './v2/StockTransferListTemplate';
 export * from './mock-data';
 
 export {
