@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
-import { renderToStream } from "@react-pdf/renderer";
 import { createElement } from "react";
-import { StockRequestListTemplate } from "@repo/documents";
+import { StockRequestListTemplate, DocumentGenerator } from "@repo/documents";
 import { getStockRequestList } from "@/app/actions/stock-management";
 import { format } from "date-fns";
 
@@ -39,8 +38,8 @@ export async function GET(req: NextRequest) {
   };
 
   try {
-    const stream = await renderToStream(
-      createElement(StockRequestListTemplate, { data: documentData })
+    const stream = await DocumentGenerator.renderToStream(
+      createElement(StockRequestListTemplate as any, { data: documentData } as any) as any
     );
 
     return new NextResponse(stream as any, {
