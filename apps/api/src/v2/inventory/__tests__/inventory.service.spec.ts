@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InventoryService } from '../inventory.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ApiRealtimeService } from '../../../common/services/realtime.service';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('InventoryService', () => {
@@ -11,6 +12,12 @@ describe('InventoryService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InventoryService,
+        {
+          provide: ApiRealtimeService,
+          useValue: {
+            publish: vi.fn(),
+          },
+        },
         {
           provide: PrismaService,
           useValue: {

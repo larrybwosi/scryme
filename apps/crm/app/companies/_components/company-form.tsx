@@ -3,6 +3,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useFieldArray } from 'react-hook-form';
 import { businessAccountSchema, type BusinessAccountFormValues } from '../../../lib/validations';
 import { createCompany, updateCompany } from '../../actions/companies';
 import { useOrg } from '../../../components/org-context';
@@ -16,6 +17,7 @@ import {
 } from '@repo/ui/components/ui/form';
 import { Input } from '@repo/ui/components/ui/input';
 import { Button } from '@repo/ui/components/ui/button';
+import { Plus, Trash2, Contact } from 'lucide-react';
 
 interface CompanyFormProps {
   initialData?: BusinessAccountFormValues & { id: string };
@@ -29,7 +31,13 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
     defaultValues: initialData || {
       name: '',
       taxId: '',
+      contacts: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "contacts",
   });
 
   const onSubmit = async (values: BusinessAccountFormValues) => {
@@ -74,6 +82,79 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             </FormItem>
           )}
         />
+
+        {!initialData && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pt-4">
+              <div className="flex items-center gap-2">
+                <Contact size={16} className="text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Contacts</h3>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ name: '', email: '', phone: '' })}
+                className="h-8 text-[12px]"
+              >
+                <Plus size={14} className="mr-1" /> Add Contact
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="p-3 border border-border rounded-lg bg-muted/30 space-y-3 relative group">
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <FormField
+                    control={form.control}
+                    name={`contacts.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input placeholder="Contact Name" {...field} className="h-8 text-[13px]" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`contacts.${index}.email`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input placeholder="Email" {...field} className="h-8 text-[13px]" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`contacts.${index}.phone`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input placeholder="Phone" {...field} className="h-8 text-[13px]" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="pt-4 flex justify-end gap-3">
           <Button type="submit" disabled={form.formState.isSubmitting}>
             {initialData ? 'Update' : 'Create'} Company

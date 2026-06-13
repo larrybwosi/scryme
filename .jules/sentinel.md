@@ -20,3 +20,21 @@
 - Use a recursive redaction utility for all request/response logging.
 - Ensure global exception filters return generic messages for unhandled non-HttpExceptions in production.
 - Always explicitly specify JWT algorithms to prevent algorithm-switching attacks.
+
+## 2026-06-20 - [Global Rate Limiting and Enhanced Redaction]
+**Vulnerability:** 1) ThrottlerModule was configured but not registered as a global guard, leaving endpoints unprotected by default. 2) Sensitive data redaction list was missing modern identifiers like 'apiKey' and 'access_token'. 3) V3 Auth bootstrap was blocked by global V2AuthGuard.
+
+**Learning:** Having a security module (like Throttler) configured in the imports is not enough; it must be registered as an APP_GUARD to provide baseline protection for all endpoints.
+
+**Prevention:**
+- Always register ThrottlerGuard globally and use @SkipThrottle() for the few endpoints that need it.
+- Maintain a comprehensive redaction list that includes all variations of credentials used in the app (apiKey, api_key, token, secret, etc.).
+- When adding global guards, ensure authentication bootstrap endpoints (like token exchange) are explicitly marked as @AllowPublic() to prevent lockouts.
+## 2026-06-11 - [Mitigated Authentication DoS and Brute-force Risks]
+**Vulnerability:** 1) The API lacked global rate limiting, exposing all endpoints to brute-force and DoS attacks. 2) The `V3AuthService` PIN validation performed an $O(N)$ operation by iterating through all active members and executing `bcrypt.compare` on each, which is computationally expensive and highly exploitable for DoS.
+
+**Learning:** Authentication loops that involve heavy cryptographic operations must be avoided or strictly rate-limited. Relying on per-endpoint guards is error-prone; global defaults should always favor security.
+
+**Prevention:**
+- Enable `ThrottlerGuard` globally to provide a baseline defense for all endpoints.
+- Avoid $O(N)$ cryptographic loops in authentication logic. Store salts or use search-optimized hashing strategies if direct lookups are needed, or ensure strict rate limits are applied specifically to these endpoints.

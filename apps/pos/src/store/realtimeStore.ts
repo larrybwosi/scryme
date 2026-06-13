@@ -46,7 +46,7 @@ interface RealtimeState {
   error: string | null;
   initialize: () => void;
   publish: (channel: string, event: string, data: any) => Promise<void>;
-  subscribe: (channel: string, event: string, callback: (data: any) => void) => () => void;
+  subscribe: (channel: string, event: string, callback: (data: any) => void, options?: { rewind?: number }) => () => void;
 }
 
 export const useRealtimeStore = create<RealtimeState>((set, get) => ({
@@ -87,7 +87,10 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         const locationId = authStore.currentLocation?.id;
         const member = authStore.currentMember;
         if (locationId && member) {
-            socket.emit('join', { channel: `presence:${locationId}` });
+            socket.emit('presence:enter', {
+                channel: `presence:${locationId}`,
+                metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() }
+            });
         }
       });
 
@@ -188,15 +191,16 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
     }
   },
 
-  subscribe: (channelName, event, callback) => {
+  subscribe: (channelName, event, callback, options) => {
     const { provider, ablyClient, socketClient } = get();
     if (provider === 'ably' && ablyClient) {
-      const channel = ablyClient.channels.get(channelName);
+      const channelNameWithRewind = options?.rewind ? `[?rewind=${options.rewind}]${channelName}` : channelName;
+      const channel = ablyClient.channels.get(channelNameWithRewind);
       const internalCallback = (message: any) => callback(message.data);
       channel.subscribe(event, internalCallback);
       return () => channel.unsubscribe(event, internalCallback);
     } else if (provider === 'socketio' && socketClient) {
-      socketClient.emit('join', { channel: channelName });
+      socketClient.emit('join', { channel: channelName, options });
       const internalCallback = (data: any) => {
           callback(data);
       };

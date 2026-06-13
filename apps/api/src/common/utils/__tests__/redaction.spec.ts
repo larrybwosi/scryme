@@ -6,10 +6,14 @@ describe('redactSensitiveData', () => {
       username: 'jules',
       password: 'mypassword',
       pin: '1234',
+      apiKey: 'key123',
+      otp: '654321',
     };
     const redacted = redactSensitiveData(data);
     expect(redacted.password).toBe('[REDACTED]');
     expect(redacted.pin).toBe('[REDACTED]');
+    expect(redacted.apiKey).toBe('[REDACTED]');
+    expect(redacted.otp).toBe('[REDACTED]');
     expect(redacted.username).toBe('jules');
   });
 

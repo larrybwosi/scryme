@@ -1,11 +1,35 @@
 services:
+  # --- REVERSE PROXY ---
+  traefik:
+    image: traefik:v3.1
+    restart: always
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      scryme-prod-network:
+        aliases:
+          - scryme.local
+          - crm.scryme.local
+          - api.scryme.local
+          - auth.scryme.local
+          - windmill.scryme.local
+
+  # --- DATABASES ---
   db:
     image: postgres:17-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-dbuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dbpassword}
-      POSTGRES_DB: ${POSTGRES_DB:-app_db}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     networks:
@@ -16,6 +40,41 @@ services:
       timeout: 5s
       retries: 5
 
+  zitadel-db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${ZITADEL_DB_USER}
+      POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      POSTGRES_DB: ${ZITADEL_DB_NAME}
+    volumes:
+      - zitadel_data:/var/lib/postgresql/data
+    networks:
+      - scryme-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  windmill-db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${WINDMILL_DB_USER}
+      POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD}
+      POSTGRES_DB: ${WINDMILL_DB_NAME}
+    volumes:
+      - windmill_data:/var/lib/postgresql/data
+    networks:
+      - scryme-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- INFRASTRUCTURE ---
   redis:
     image: redis:7-alpine
     restart: always
@@ -24,72 +83,238 @@ services:
       - redis_prod_data:/data
     networks:
       - scryme-prod-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
       - rabbitmq_prod_data:/var/lib/rabbitmq
     networks:
       - scryme-prod-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  rustfs-perms:
+    image: alpine
+    user: root
+    volumes:
+      - rustfs_prod_data:/fix_path
+    command: chown -R 10001:10001 /fix_path
+    networks:
+      - scryme-prod-network
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
+      - RUSTFS_CONSOLE_ENABLE=true
+    volumes:
+      - rustfs_prod_data:/data
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    networks:
+      - scryme-prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.local}`)"
+      - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
+      - "traefik.http.routers.rustfs-console.rule=Host(`${RUSTFS_CONSOLE_DOMAIN:-storage-console.scryme.local}`)"
+      - "traefik.http.services.rustfs-console.loadbalancer.server.port=9001"
+
+  mailpit:
+    image: axllent/mailpit
+    restart: always
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # UI
+    networks:
+      - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_HOST:-mail.scryme.local}`)"
+      - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+
+  # --- AUTHENTICATION (ZITADEL) ---
+  zitadel-setup:
+    image: zitadel/zitadel:latest
+    command: 'setup'
+    environment:
+      - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
+      - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
+      - ZITADEL_DATABASE_POSTGRES_USER=${ZITADEL_DB_USER}
+      - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD}
+      - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME}
+      - ZITADEL_DATABASE_POSTGRES_SSL_MODE=disable
+    depends_on:
+      zitadel-db:
+        condition: service_healthy
+    networks:
+      - scryme-prod-network
+
+  zitadel:
+    image: zitadel/zitadel:latest
+    restart: always
+    command: 'start-noprint'
+    environment:
+      - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
+      - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
+      - ZITADEL_DATABASE_POSTGRES_USER=${ZITADEL_DB_USER}
+      - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD}
+      - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME}
+      - ZITADEL_DATABASE_POSTGRES_SSL_MODE=disable
+      - ZITADEL_EXTERNALDOMAIN=${ZITADEL_DOMAIN:-auth.scryme.local}
+      - ZITADEL_EXTERNALPORT=80
+      - ZITADEL_EXTERNALSECURE=false
+    depends_on:
+      zitadel-setup:
+        condition: service_completed_successfully
+    networks:
+      - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.zitadel.rule=Host(`${ZITADEL_DOMAIN:-auth.scryme.local}`)"
+      - "traefik.http.services.zitadel.loadbalancer.server.port=8080"
+
+  # --- AUTOMATION (WINDMILL) ---
+  windmill-server:
+    image: ghcr.io/windmill-labs/windmill:latest
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
+      - MODE=server
+    depends_on:
+      windmill-db:
+        condition: service_healthy
+    networks:
+      - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.windmill.rule=Host(`${WINDMILL_DOMAIN:-windmill.scryme.local}`)"
+      - "traefik.http.services.windmill.loadbalancer.server.port=8000"
+
+  windmill-worker:
+    image: ghcr.io/windmill-labs/windmill:latest
+    restart: always
+    environment:
+      - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
+      - MODE=worker
+    depends_on:
+      - windmill-server
+    networks:
+      - scryme-prod-network
+
+  # --- APPLICATIONS ---
   api:
-    image: scryme-api:latest # Use locally built image or registry path
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: scryme-api:latest
     restart: always
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_URL: ${RABBITMQ_URL}
       PORT: 4000
       NODE_ENV: production
-      ZITADEL_API_URL: ${ZITADEL_API_URL}
+      ZITADEL_API_URL: http://${ZITADEL_DOMAIN:-auth.scryme.local}
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
+      ZITADEL_ORG_ID: ${ZITADEL_ORG_ID}
+      ZITADEL_PROJECT_ID: ${ZITADEL_PROJECT_ID}
       JWT_SECRET: ${JWT_SECRET}
+      WINDMILL_BASE_URL: http://windmill-server:8000
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      traefik:
         condition: service_started
     networks:
       - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
+      - "traefik.http.services.api.loadbalancer.server.port=4000"
 
   crm:
+    build:
+      context: .
+      dockerfile: apps/crm/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-crm:latest
     restart: always
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
       PORT: 3001
       NODE_ENV: production
-      ZITADEL_API_URL: ${ZITADEL_API_URL}
+      ZITADEL_API_URL: http://${ZITADEL_DOMAIN:-auth.scryme.local}
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
       - api
     networks:
       - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
+      - "traefik.http.services.crm.loadbalancer.server.port=3001"
 
   web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-web:latest
     restart: always
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
       PORT: 3000
       NODE_ENV: production
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
       - api
     networks:
       - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
 
 volumes:
   postgres_prod_data:
+  zitadel_data:
+  windmill_data:
   redis_prod_data:
   rabbitmq_prod_data:
+  rustfs_prod_data:
 
 networks:
   scryme-prod-network:

@@ -12,14 +12,24 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - scryme-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:latest
+    image: redis:alpine
     restart: always
     ports:
       - '6379:6379'
     networks:
       - scryme-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -29,48 +39,103 @@ services:
       - '15672:15672'
     networks:
       - scryme-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rustfs-perms:
+    image: alpine
+    user: root
+    volumes:
+      - rustfs_data:/fix_path
+    command: chown -R 10001:10001 /fix_path
+    networks:
+      - scryme-network
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
+      - RUSTFS_CONSOLE_ENABLE=true
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs_data:/data
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    networks:
+      - scryme-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
-    image: ghcr.io/larrybwosi/scryme-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: scryme-api:latest
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
-      # Zitadel configuration placeholders
       - ZITADEL_API_URL=${ZITADEL_API_URL}
       - ZITADEL_ORG_ID=${ZITADEL_ORG_ID}
       - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID}
     ports:
       - '3002:4000'
     depends_on:
-      - db
-      - redis
-      - rabbitmq
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - scryme-network
 
   crm:
-    image: ghcr.io/larrybwosi/scryme-crm:latest
+    build:
+      context: .
+      dockerfile: apps/crm/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+    image: scryme-crm:latest
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - PORT=3001
-      # Zitadel configuration placeholders
       - ZITADEL_API_URL=${ZITADEL_API_URL}
       - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
     ports:
       - '3001:3001'
     depends_on:
-      - db
-      - api
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
     networks:
       - scryme-network
 
   web:
-    image: ghcr.io/larrybwosi/scryme-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+    image: scryme-web:latest
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -79,13 +144,16 @@ services:
     ports:
       - '3000:3000'
     depends_on:
-      - db
-      - api
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
     networks:
       - scryme-network
 
 volumes:
   postgres_data:
+  rustfs_data:
 
 networks:
   scryme-network:

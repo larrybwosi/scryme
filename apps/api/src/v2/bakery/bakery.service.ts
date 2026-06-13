@@ -63,9 +63,19 @@ export class BakeryService {
         where: { organizationId },
         take: 5,
         orderBy: { scheduledStartAt: "desc" },
-        include: {
-          recipe: true,
-          leadBaker: { include: { member: { include: { user: true } } } },
+        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
+        select: {
+          id: true,
+          batchNumber: true,
+          status: true,
+          scheduledStartAt: true,
+          productionDate: true,
+          recipe: { select: { id: true, name: true } },
+          leadBaker: {
+            select: {
+              member: { select: { user: { select: { name: true } } } },
+            },
+          },
         },
       }),
       this.prisma.client.recipe.count({ where: { organizationId } }),
@@ -408,11 +418,54 @@ export class BakeryService {
 
     return this.prisma.client.batch.findMany({
       where,
-      include: {
-        recipe: true,
-        leadBaker: { include: { member: { include: { user: true } } } },
-        systemUnit: true,
-        orgUnit: true,
+      // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
+      select: {
+        id: true,
+        batchNumber: true,
+        status: true,
+        plannedQuantity: true,
+        actualQuantity: true,
+        scheduledStartAt: true,
+        notes: true,
+        createdAt: true,
+        updatedAt: true,
+        recipeId: true,
+        organizationId: true,
+        leadBakerId: true,
+        systemUnitId: true,
+        orgUnitId: true,
+        startedAt: true,
+        completedAt: true,
+        cancelledAt: true,
+        duration: true,
+        productionDate: true,
+        expiresAt: true,
+        expirationStatus: true,
+        shelfLifeDays: true,
+        tags: true,
+        recipe: {
+          select: {
+            id: true,
+            name: true,
+            yieldQuantity: true,
+            systemUnitId: true,
+          },
+        },
+        leadBaker: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
+        systemUnit: { select: { id: true, name: true, symbol: true } },
+        orgUnit: { select: { id: true, name: true, symbol: true } },
       },
       orderBy: { scheduledStartAt: "desc" },
     });

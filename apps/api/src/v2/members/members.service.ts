@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { type V2ApiContext } from '@repo/shared/server';
-import { MemberRole } from '@repo/db';
+import { type V2ApiContext, createMemberToken } from '@repo/shared/server';
+import { MemberRole, Status } from '@repo/db';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
@@ -118,5 +118,91 @@ export class MembersService {
       where: { id, organizationId },
       data: { pinHash },
     });
+  }
+
+  async login(ctx: V2ApiContext, cardId: string, pin: string) {
+    const { organizationId, locationId } = ctx;
+
+    if (!locationId) {
+      throw new BadRequestException('Device is not associated with a location');
+    }
+
+    const member = await this.prisma.client.member.findFirst({
+      where: {
+        organizationId,
+        cardId,
+        isActive: true,
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    if (!member || !member.pinHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPinValid = await bcrypt.compare(pin, member.pinHash);
+    if (!isPinValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Perform check-in logic
+    const activeLog = await this.prisma.client.attendanceLog.findFirst({
+      where: { memberId: member.id, checkOutTime: null },
+    });
+
+    let attendanceLogId = activeLog?.id;
+
+    if (!activeLog) {
+      await this.prisma.client.$transaction(async (tx) => {
+        const log = await tx.attendanceLog.create({
+          data: {
+            organizationId,
+            memberId: member.id,
+            checkInTime: new Date(),
+            checkInLocationId: locationId,
+            notes: 'Checked in via terminal login',
+          },
+        });
+
+        await tx.member.update({
+          where: { id: member.id },
+          data: {
+            isCheckedIn: true,
+            lastCheckInTime: new Date(),
+            currentCheckInLocationId: locationId,
+            currentAttendanceLogId: log.id,
+            status: Status.ONLINE,
+          },
+        });
+        attendanceLogId = log.id;
+      });
+    }
+
+    const token = await createMemberToken(member.id, organizationId, attendanceLogId!);
+
+    // Return non-sensitive member info formatted for POS/Bakery
+    return {
+      token,
+      member: {
+        id: member.id,
+        name: member.user.name,
+        email: member.user.email,
+        role: member.role,
+        image: member.user.image,
+        organizationId: member.organizationId,
+        locationId,
+      },
+      restoredSession: !!activeLog,
+    };
   }
 }

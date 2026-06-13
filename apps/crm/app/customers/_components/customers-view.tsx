@@ -56,8 +56,8 @@ export function CustomersView() {
     isLoading,
     mutate,
   } = useSWR(
-    organizationId ? ["customers", organizationId] : null,
-    () => getCustomers(organizationId),
+    organizationId ? ["customers-b2c", organizationId] : null,
+    () => getCustomers(organizationId, { type: 'B2C' }),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -187,7 +187,7 @@ export function CustomersView() {
               <SheetHeader>
                 <SheetTitle>Add New Customer</SheetTitle>
               </SheetHeader>
-              <CustomerForm onSuccess={handleCustomerSuccess} />
+              <CustomerForm onSuccess={handleCustomerSuccess} type="B2C" />
             </SheetContent>
           </Sheet>
         </div>
@@ -353,6 +353,7 @@ export function CustomersView() {
                               <CustomerForm
                                 initialData={customer}
                                 onSuccess={handleCustomerSuccess}
+                                type="B2C"
                               />
                             </SheetContent>
                           </Sheet>

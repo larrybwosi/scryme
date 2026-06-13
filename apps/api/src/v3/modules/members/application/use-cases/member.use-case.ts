@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RedisService } from '@/redis/redis.service';
 import { CreateMemberDto, UpdateMemberDto, MemberQueryDto } from '../dto/member.dto';
 import { MemberRole, MembershipStatus, ApprovalRequestType, ApprovalStatus, AuditLogAction, AuditEntityType, Status } from '@repo/db';
 import * as bcrypt from 'bcryptjs';
 import { emitMemberCreated, emitMemberRoleChanged, emitEvent } from '@repo/windmill/server';
+import { createMemberToken } from '@repo/shared/server';
 
 @Injectable()
 export class MemberUseCase {
@@ -375,5 +376,80 @@ export class MemberUseCase {
     });
 
     return member;
+  }
+
+  async login(organizationId: string, locationId: string, cardId: string, pin: string) {
+    if (!locationId) {
+      throw new BadRequestException('Device is not associated with a location');
+    }
+
+    const member = await this.prisma.client.member.findFirst({
+      where: {
+        organizationId,
+        cardId,
+        isActive: true,
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    if (!member || !member.pinHash) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPinValid = await bcrypt.compare(pin, member.pinHash);
+    if (!isPinValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Perform check-in logic
+    const activeLog = await this.prisma.client.attendanceLog.findFirst({
+      where: { memberId: member.id, checkOutTime: null },
+    });
+
+    let attendanceLogId = activeLog?.id;
+
+    if (!activeLog) {
+      await this.prisma.client.$transaction(async (tx) => {
+        const log = await tx.attendanceLog.create({
+          data: {
+            organizationId,
+            memberId: member.id,
+            checkInTime: new Date(),
+            checkInLocationId: locationId,
+            notes: 'Checked in via terminal login',
+          },
+        });
+
+        await tx.member.update({
+          where: { id: member.id },
+          data: {
+            isCheckedIn: true,
+            lastCheckInTime: new Date(),
+            currentCheckInLocationId: locationId,
+            currentAttendanceLogId: log.id,
+            status: Status.ONLINE,
+          },
+        });
+        attendanceLogId = log.id;
+      });
+    }
+
+    const token = await createMemberToken(member.id, organizationId, attendanceLogId!);
+
+    return {
+      token,
+      member: this.mapToResponse(member),
+      restoredSession: !!activeLog,
+    };
   }
 }

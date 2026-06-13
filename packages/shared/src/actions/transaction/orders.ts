@@ -18,6 +18,7 @@ import {
   CreateOrderInputSchema,
 } from "../../lib/validations/order";
 import { unitCalculationService } from "../../lib/services/unit-calculation.service";
+import { realtimeService } from "../../realtime";
 import { z } from "zod";
 
 // --- STATS FUNCTION ---
@@ -451,6 +452,21 @@ export async function createOrder(
 
     // 8. --- Audit Log (Post-Transaction) ---
     if (transactionId) {
+      // --- Real-time Notification ---
+      realtimeService
+        .publish(`org:${organizationId}:transactions`, "transaction:created", {
+          id: result.id,
+          number: result.number,
+          type: result.type,
+          status: result.status,
+          finalTotal: result.finalTotal,
+          customerName: result.customer?.name || "Walk-in Customer",
+          createdAt: result.createdAt,
+        })
+        .catch((err) =>
+          console.error("Failed to publish real-time update:", err),
+        );
+
       await createAuditLog(db, {
         organizationId,
         memberId,

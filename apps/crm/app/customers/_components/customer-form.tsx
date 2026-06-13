@@ -27,9 +27,10 @@ import {
 interface CustomerFormProps {
   initialData?: CustomerFormValues & { id: string };
   onSuccess: () => void;
+  type?: 'B2C' | 'CONTACT';
 }
 
-export function CustomerForm({ initialData, onSuccess }: CustomerFormProps) {
+export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerFormProps) {
   const { organizationId } = useOrg();
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -38,7 +39,7 @@ export function CustomerForm({ initialData, onSuccess }: CustomerFormProps) {
       email: '',
       phone: '',
       company: '',
-      customerType: 'B2C',
+      customerType: type,
       taxId: '',
       isActive: true,
       deliveryNotes: '',
@@ -113,28 +114,7 @@ export function CustomerForm({ initialData, onSuccess }: CustomerFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="customerType"
-          render={({ field }: { field: any }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="B2C">B2C</SelectItem>
-                  <SelectItem value="B2B">B2B</SelectItem>
-                  <SelectItem value="Enterprise">Enterprise</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* For B2C individuals, the type is fixed as B2C to maintain view consistency */}
         <FormField
           control={form.control}
           name="taxId"
