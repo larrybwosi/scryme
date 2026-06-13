@@ -135,12 +135,29 @@ export async function getStockDistributionByLocation(): Promise<any[]> {
   }));
 }
 
-export async function getStockTransferList(): Promise<any[]> {
+export async function getStockTransferList(params?: {
+  search?: string;
+  status?: string;
+}): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
+  const where: any = { organizationId: context.organizationId };
+
+  if (params?.status && params.status !== "all") {
+    where.status = params.status;
+  }
+
+  if (params?.search) {
+    where.OR = [
+      { transferNumber: { contains: params.search, mode: "insensitive" } },
+      { fromLocation: { name: { contains: params.search, mode: "insensitive" } } },
+      { toLocation: { name: { contains: params.search, mode: "insensitive" } } },
+    ];
+  }
+
   return db.stockTransfer.findMany({
-    where: { organizationId: context.organizationId },
+    where,
     include: {
       fromLocation: { select: { name: true } },
       toLocation: { select: { name: true } },
@@ -658,12 +675,29 @@ export async function getStockLevels(params: {
   return results;
 }
 
-export async function getStockRequestList(): Promise<any[]> {
+export async function getStockRequestList(params?: {
+  search?: string;
+  status?: string;
+}): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
+  const where: any = { organizationId: context.organizationId };
+
+  if (params?.status && params.status !== "all") {
+    where.status = params.status;
+  }
+
+  if (params?.search) {
+    where.OR = [
+      { requestNumber: { contains: params.search, mode: "insensitive" } },
+      { toLocation: { name: { contains: params.search, mode: "insensitive" } } },
+      { requestedBy: { user: { name: { contains: params.search, mode: "insensitive" } } } },
+    ];
+  }
+
   return db.stockRequest.findMany({
-    where: { organizationId: context.organizationId },
+    where,
     include: {
       toLocation: { select: { name: true } },
       requestedBy: { select: { user: { select: { name: true } } } },
@@ -762,18 +796,30 @@ export async function getStockRequestDetails(id: string): Promise<any> {
   });
 }
 
-export async function getAggregatedStockRequests(): Promise<any[]> {
+export async function getAggregatedStockRequests(params?: {
+  search?: string;
+}): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
+  const itemWhere: any = {
+    stockRequest: {
+      organizationId: context.organizationId,
+      status: { in: ["PENDING", "APPROVED", "PARTIALLY_FULFILLED"] },
+    },
+  };
+
+  if (params?.search) {
+    itemWhere.OR = [
+      { variant: { product: { name: { contains: params.search, mode: "insensitive" } } } },
+      { variant: { name: { contains: params.search, mode: "insensitive" } } },
+      { variant: { sku: { contains: params.search, mode: "insensitive" } } },
+    ];
+  }
+
   // Get all pending or partially fulfilled items
   const items = await db.stockRequestItem.findMany({
-    where: {
-      stockRequest: {
-        organizationId: context.organizationId,
-        status: { in: ["PENDING", "APPROVED", "PARTIALLY_FULFILLED"] },
-      },
-    },
+    where: itemWhere,
     include: {
       variant: {
         include: {
