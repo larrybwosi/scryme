@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Save, Globe, Coins, Package, Building2, Mail, Phone, MapPin } from "lucide-react";
+import { Save, Globe, Coins, Package, Building2, Mail, Phone, MapPin, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -109,7 +109,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
               <CardHeader>
                 <CardTitle className="text-lg">Profile Information</CardTitle>
                 <CardDescription>
-                  Update your organization's public profile and contact details.
+                  Update your organization&apos;s public profile and contact details.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -149,7 +149,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
               <CardHeader>
                 <CardTitle className="text-lg">Regional Settings</CardTitle>
                 <CardDescription>
-                  Configure your organization's currency and timezone preferences.
+                  Configure your organization&apos;s currency and timezone preferences.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -227,7 +227,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                     {...form.register("lowStockThreshold", { valueAsNumber: true })}
                   />
                   <p className="text-xs text-zinc-500">
-                    Units remaining before a product is flagged as "Low Stock".
+                    Units remaining before a product is flagged as &quot;Low Stock&quot;.
                   </p>
                 </div>
               </CardContent>
