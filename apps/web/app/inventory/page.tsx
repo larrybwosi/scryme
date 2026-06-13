@@ -9,8 +9,9 @@ import { InventoryTable } from "../../components/inventory/inventory-table";
 import { InventoryFilters } from "../../components/inventory/inventory-filters";
 import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Filter, RotateCw, LayoutGrid } from "lucide-react";
+import { Plus, Filter, RotateCw, LayoutGrid, Download } from "lucide-react";
 import { ProductSheet } from "../../components/inventory/product-sheet";
+import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";
 
 export default async function InventoryPage({
@@ -60,6 +61,12 @@ export default async function InventoryPage({
             <RotateCw size={16} />
             <span>Reorder</span>
           </Button>
+          <ProductImport>
+            <Button variant="outline" className="gap-2">
+              <Download size={16} />
+              <span>Import</span>
+            </Button>
+          </ProductImport>
           <ProductSheet categories={categories}>
             <Button className="gap-2">
               <Plus size={16} />

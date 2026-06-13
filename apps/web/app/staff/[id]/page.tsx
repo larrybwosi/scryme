@@ -31,6 +31,7 @@ export default async function StaffMemberPage({ params }: { params: { id: string
   }
 
   const member = result.data;
+  const stats = result.stats;
 
   return (
     <div className="flex flex-col gap-8 p-8 bg-gray-50/50 min-h-screen">
@@ -57,7 +58,7 @@ export default async function StaffMemberPage({ params }: { params: { id: string
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 outline-none">
-          <StaffOverview stats={member.stats} />
+          <StaffOverview stats={stats} />
           <StaffActivity
             transactions={member.transactions}
             attendanceLogs={member.attendanceLogs}
@@ -66,7 +67,7 @@ export default async function StaffMemberPage({ params }: { params: { id: string
 
         <TabsContent value="performance" className="outline-none">
           <StaffPerformance
-            stats={member.stats}
+            stats={stats}
             transactions={member.transactions}
           />
         </TabsContent>

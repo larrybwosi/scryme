@@ -1,10 +1,10 @@
 "use server";
 
-import { db } from "@repo/db";
+import { db, DeviceRegistry, ApiKey, InventoryLocation } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 
-export async function getDevices() {
+export async function getDevices(): Promise<(DeviceRegistry & { location: InventoryLocation; apiKey: ApiKey })[]> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 

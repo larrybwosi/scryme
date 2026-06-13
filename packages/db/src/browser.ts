@@ -4,4 +4,4 @@
 // No Node.js dependencies — zero runtime weight for type imports.
 // ============================================================
 
-export * from "../generated/index";
+export * from "../generated/browser";
