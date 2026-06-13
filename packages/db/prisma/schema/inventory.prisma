@@ -410,6 +410,7 @@ model InventoryLocation {
   storageUnits           StorageUnit[]
   checkedInMembers       Member[]
   checkInAttendanceLogs  AttendanceLog[] @relation("CheckInLocationLogs")
+  pettyCashFunds         PettyCashFund[]
   checkOutAttendanceLogs AttendanceLog[] @relation("CheckOutLocationLogs")
 
   defaultProducts           Product[]                  @relation("ProductDefaultLocation")

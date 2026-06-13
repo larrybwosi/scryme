@@ -328,6 +328,9 @@ model PettyCashFund {
   responsibleMemberId String
   responsibleMember   Member    @relation("ResponsibleForFund", fields: [responsibleMemberId], references: [id], onDelete: Restrict)
 
+  locationId     String?
+  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
   isActive       Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

@@ -154,16 +154,40 @@ export class ExpenseUseCase {
     });
   }
 
-  async getExpenses(organizationId: string, filters: any) {
+  async getExpenses(
+    organizationId: string,
+    filters: {
+      status?: ExpenseStatus;
+      categoryId?: string;
+      locationId?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+  ) {
+    const { startDate, endDate, ...restFilters } = filters;
+    const where: Prisma.ExpenseWhereInput = {
+      organizationId,
+      ...restFilters,
+      deletedAt: null,
+    };
+
+    if (startDate || endDate) {
+      where.expenseDate = {
+        ...(startDate && { gte: new Date(startDate) }),
+        ...(endDate && { lte: new Date(endDate) }),
+      };
+    }
+
     return await this.prisma.client.expense.findMany({
-      where: { organizationId, ...filters, deletedAt: null },
+      where,
       include: {
         category: true,
         member: { include: { user: { select: { name: true, email: true } } } },
         pettyCashFund: true,
         utilityAccount: true,
+        location: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { expenseDate: 'desc' },
     });
   }
 

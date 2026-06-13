@@ -41,11 +41,15 @@ export async function getExpenses(params: {
   search?: string;
   status?: string;
   categoryId?: string;
+  locationId?: string;
+  startDate?: string;
+  endDate?: string;
 }): Promise<
   (Expense & {
     category: ExpenseCategory;
     member: Member & { user: User };
     supplier: Supplier | null;
+    location: any | null;
   })[]
 > {
   const { auth } = await checkPermission([
@@ -70,8 +74,19 @@ export async function getExpenses(params: {
     where.status = params.status as ExpenseStatus;
   }
 
-  if (params.categoryId) {
+  if (params.categoryId && params.categoryId !== "all") {
     where.categoryId = params.categoryId;
+  }
+
+  if (params.locationId && params.locationId !== "all") {
+    where.locationId = params.locationId;
+  }
+
+  if (params.startDate || params.endDate) {
+    where.expenseDate = {
+      ...(params.startDate && { gte: new Date(params.startDate) }),
+      ...(params.endDate && { lte: new Date(params.endDate) }),
+    };
   }
 
   return await db.expense.findMany({
@@ -84,10 +99,25 @@ export async function getExpenses(params: {
         },
       },
       supplier: true,
+      location: true,
     },
     orderBy: {
       expenseDate: "desc",
     },
+  });
+}
+
+export async function getInventoryLocations() {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
+
+  return await db.inventoryLocation.findMany({
+    where: { organizationId: auth.organizationId, isActive: true },
+    orderBy: { name: "asc" },
   });
 }
 
