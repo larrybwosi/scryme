@@ -278,6 +278,12 @@ model Payment {
   updatedAt       DateTime           @updatedAt
   notes           String?
 
+  // Cheque details
+  chequeDate DateTime?
+  bankName   String?
+
+  attachments Attachment[]
+
   @@index([transactionId])
   @@index([status])
   @@index([payoutId])
