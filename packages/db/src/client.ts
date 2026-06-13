@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated";
+import { PrismaClient } from "../generated/client";
 import { env } from "@repo/env";
 
 const globalForPrisma = global as unknown as {
@@ -20,6 +20,6 @@ export const prisma =
 
 if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 export const db = prisma;
-export * from "../generated";
-import { Prisma } from "../generated";
+export * from "../generated/client";
+import { Prisma } from "../generated/client";
 export const Decimal = Prisma.Decimal;
