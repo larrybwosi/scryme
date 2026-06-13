@@ -30,9 +30,6 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             format!("{}/api/v2", api_base_url.trim_end_matches('/'))
         };
 
-        // Refine V3 API URL construction
-        let v3_api_url = api_base_url.replace("/api/v2", "/api/v3");
-
         let api_key = match get_api_key(&pool).await {
             Ok(Some(key)) => key,
             _ => {
@@ -87,10 +84,17 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             }
         }
 
-        // Periodic units sync
+        // Periodic units sync (V2)
         if let Ok(Some(api_key)) = get_api_key(&pool).await {
-            if let Err(e) = sync_units(&client, &v3_api_url, &pool, &api_key).await {
+            if let Err(e) = sync_units(&client, &api_base_url, &pool, &api_key).await {
                 log::warn!("Periodic units sync failed: {}", e);
+            }
+        }
+
+        // Two-way sync for Recipes and Batches
+        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+            if let Err(e) = sync_recipes_and_batches(&client, &api_base_url, &pool, &api_key).await {
+                log::warn!("Recipes and batches sync failed: {}", e);
             }
         }
 
@@ -100,26 +104,10 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
 
 async fn sync_units(
     client: &reqwest::Client,
-    v3_api_url: &str,
+    api_base_url: &str,
     pool: &SqlitePool,
     api_key: &str,
 ) -> BackendResult<()> {
-    // 0. Get organization slug
-    let org_slug: Option<(String,)> = sqlx::query_as(
-        "SELECT o.slug FROM organizations o JOIN bakery_settings s ON s.organization_id = o.id LIMIT 1"
-    )
-    .fetch_optional(pool)
-    .await?;
-
-    // If we can't find an organization slug, we can't use the V3 API which is scoped by slug
-    let slug = match org_slug {
-        Some((s,)) => s,
-        None => {
-            log::warn!("No organization slug found, skipping units sync");
-            return Ok(());
-        }
-    };
-
     // 1. Get last sync time
     let last_sync_time: Option<String> = sqlx::query_scalar(
         "SELECT MAX(updated_at) FROM (SELECT updated_at FROM system_units UNION SELECT updated_at FROM organization_units)"
@@ -129,12 +117,11 @@ async fn sync_units(
 
     let url = match last_sync_time {
         Some(ts) => format!(
-            "{}/{}/units?lastSync={}",
-            v3_api_url,
-            slug,
+            "{}/units/sync?lastSync={}",
+            api_base_url,
             urlencoding::encode(&ts)
         ),
-        None => format!("{}/{}/units", v3_api_url, slug),
+        None => format!("{}/units/sync", api_base_url),
     };
 
     let res = client.get(&url).header("X-API-KEY", api_key).send().await?;
@@ -143,7 +130,16 @@ async fn sync_units(
         return Err(BackendError::Network(res.error_for_status().unwrap_err()));
     }
 
-    let sync_data: crate::models::UnitsSyncResponse = res.json().await?;
+    // Wrap response to match V2 sync output
+    #[derive(Debug, serde::Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct V2UnitsSyncResponse {
+        system_units: Vec<crate::models::SystemUnit>,
+        organization_units: Vec<crate::models::OrganizationUnit>,
+        // Ignore other fields for now
+    }
+
+    let sync_data: V2UnitsSyncResponse = res.json().await?;
 
     // 2. Update local database
     let mut tx = pool.begin().await?;
@@ -226,6 +222,99 @@ async fn sync_units(
     Ok(())
 }
 
+async fn sync_recipes_and_batches(
+    client: &reqwest::Client,
+    api_base_url: &str,
+    pool: &SqlitePool,
+    api_key: &str,
+) -> BackendResult<()> {
+    // 1. Sync Recipes (Downstream)
+    let recipes_url = format!("{}/bakery/recipes", api_base_url);
+    let res = client.get(&recipes_url).header("X-API-KEY", api_key).send().await?;
+    if res.status().is_success() {
+        let recipes: Vec<crate::models::Recipe> = res.json().await?;
+        for recipe in recipes {
+            sqlx::query(
+                "INSERT INTO recipes (id, name, description, category_id, produces_variant_id, yield_quantity, yield_unit, prep_time, bake_time, difficulty, instructions, organization_id, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    description = excluded.description,
+                    category_id = excluded.category_id,
+                    produces_variant_id = excluded.produces_variant_id,
+                    yield_quantity = excluded.yield_quantity,
+                    yield_unit = excluded.yield_unit,
+                    prep_time = excluded.prep_time,
+                    bake_time = excluded.bake_time,
+                    difficulty = excluded.difficulty,
+                    instructions = excluded.instructions,
+                    updated_at = excluded.updated_at"
+            )
+            .bind(&recipe.id)
+            .bind(&recipe.name)
+            .bind(&recipe.description)
+            .bind(&recipe.category_id)
+            .bind(&recipe.produces_variant_id)
+            .bind(recipe.yield_quantity)
+            .bind(&recipe.yield_unit)
+            .bind(recipe.prep_time)
+            .bind(recipe.bake_time)
+            .bind(&recipe.difficulty)
+            .bind(&recipe.instructions)
+            .bind(&recipe.organization_id)
+            .bind(recipe.created_at)
+            .bind(recipe.updated_at)
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    // 2. Sync Batches (Downstream)
+    let batches_url = format!("{}/bakery/batches", api_base_url);
+    let res = client.get(&batches_url).header("X-API-KEY", api_key).send().await?;
+    if res.status().is_success() {
+        let batches: Vec<crate::models::Batch> = res.json().await?;
+        for batch in batches {
+            sqlx::query(
+                "INSERT INTO batches (id, number, name, status, recipe_id, planned_date, planned_quantity, actual_quantity, completed_quantity, started_at, completed_at, cancelled_at, organization_id, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET
+                    number = excluded.number,
+                    name = excluded.name,
+                    status = excluded.status,
+                    recipe_id = excluded.recipe_id,
+                    planned_date = excluded.planned_date,
+                    planned_quantity = excluded.planned_quantity,
+                    actual_quantity = excluded.actual_quantity,
+                    completed_quantity = excluded.completed_quantity,
+                    started_at = excluded.started_at,
+                    completed_at = excluded.completed_at,
+                    cancelled_at = excluded.cancelled_at,
+                    updated_at = excluded.updated_at"
+            )
+            .bind(&batch.id)
+            .bind(&batch.number)
+            .bind(&batch.name)
+            .bind(&batch.status)
+            .bind(&batch.recipe_id)
+            .bind(batch.planned_date)
+            .bind(batch.planned_quantity)
+            .bind(batch.actual_quantity)
+            .bind(batch.completed_quantity)
+            .bind(batch.started_at)
+            .bind(batch.completed_at)
+            .bind(batch.cancelled_at)
+            .bind(&batch.organization_id)
+            .bind(batch.created_at)
+            .bind(batch.updated_at)
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
 async fn get_api_key(pool: &SqlitePool) -> BackendResult<Option<String>> {
     // 1. Try to get from database first
     let res: Option<(Option<String>,)> =
@@ -300,7 +389,7 @@ async fn sync_item(
 
     let (entity_path, is_bakery_scoped) = match item.entity_type.as_str() {
         "BATCH" => ("batches".to_string(), true),
-        "RECIPE" => ("formulas".to_string(), true),
+        "RECIPE" => ("recipes".to_string(), true), // Map RECIPE to /bakery/recipes
         "TEMPLATE" => ("templates".to_string(), true),
         "CATEGORY" => ("categories".to_string(), true),
         "BAKER" => ("bakers".to_string(), true),
@@ -320,10 +409,37 @@ async fn sync_item(
             .post(&url)
             .body(item.payload.clone())
             .header("Content-Type", "application/json"),
-        "UPDATE" | "UPDATE_STATUS" => client
+        "UPDATE" => client
             .patch(format!("{}/{}", url, item.entity_id))
             .body(item.payload.clone())
             .header("Content-Type", "application/json"),
+        "UPDATE_STATUS" => {
+            // Handle specific status updates for batches
+            if item.entity_type == "BATCH" {
+                let status_payload: serde_json::Value = serde_json::from_str(&item.payload).unwrap_or_default();
+                let status = status_payload["status"].as_str().unwrap_or("");
+                let action = match status {
+                    "IN_PROGRESS" => "start",
+                    "COMPLETED" => "complete",
+                    "CANCELLED" => "cancel",
+                    _ => "update"
+                };
+
+                if action == "update" {
+                    client.patch(format!("{}/{}", url, item.entity_id))
+                        .body(item.payload.clone())
+                        .header("Content-Type", "application/json")
+                } else {
+                    client.post(format!("{}/{}/{}", url, item.entity_id, action))
+                        .body(item.payload.clone())
+                        .header("Content-Type", "application/json")
+                }
+            } else {
+                client.patch(format!("{}/{}", url, item.entity_id))
+                    .body(item.payload.clone())
+                    .header("Content-Type", "application/json")
+            }
+        },
         "DELETE" => client.delete(format!("{}/{}", url, item.entity_id)),
         _ => {
             return Err(BackendError::Internal(format!(
