@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -36,13 +36,7 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    if (initialTransaction && isOpen) {
-      fetchTransaction();
-    }
-  }, [initialTransaction, isOpen]);
-
-  const fetchTransaction = async () => {
+  const fetchTransaction = useCallback(async () => {
     if (!initialTransaction) return;
     setIsLoading(true);
     try {
@@ -53,7 +47,13 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [initialTransaction]);
+
+  useEffect(() => {
+    if (initialTransaction && isOpen) {
+      fetchTransaction();
+    }
+  }, [initialTransaction, isOpen, fetchTransaction]);
 
   const handleCreateFulfillment = async () => {
     if (!transaction) return;
