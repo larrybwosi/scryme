@@ -1,7 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MemberRole, MembershipStatus, Status } from '@repo/db';
-import { IsEmail, IsEnum, IsOptional, IsString, IsArray, IsBoolean } from 'class-validator';
-import { PaginationQueryDto } from '@/v3/common/dto/pagination.dto';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { MemberRole, MembershipStatus, Status } from "@repo/db";
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsArray,
+  IsBoolean,
+} from "class-validator";
+import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
 
 export class MemberQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: MemberRole })
@@ -170,6 +177,16 @@ export class MemberRoleDto {
   name: string;
 }
 
+export class TerminalLoginDto {
+  @ApiProperty()
+  @IsString()
+  cardId: string;
+
+  @ApiProperty()
+  @IsString()
+  pin: string;
+}
+
 export class MemberResponseDto {
   @ApiProperty()
   id: string;
@@ -209,4 +226,15 @@ export class MemberResponseDto {
 
   @ApiPropertyOptional({ type: [MemberRoleDto] })
   roleGroups?: MemberRoleDto[];
+}
+
+export class TerminalLoginResponseDto {
+  @ApiProperty()
+  token: string;
+
+  @ApiProperty()
+  member: MemberResponseDto;
+
+  @ApiPropertyOptional()
+  restoredSession?: boolean;
 }

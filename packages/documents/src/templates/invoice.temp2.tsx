@@ -1,49 +1,5 @@
 import { Document, Image, Page, StyleSheet, Text, View, Font } from '@react-pdf/renderer';
-
-// --- 1. TYPE DEFINITIONS ---
-// For type safety and better developer experience.
-export interface InvoiceItem {
-  qty: number;
-  description: string;
-  price: number;
-  amount: number;
-}
-
-export interface InvoiceData {
-  invoiceNumber: string;
-  date: string;
-  currencySymbol: string;
-  subtotal: number;
-  tax: number;
-  total: number;
-  items: InvoiceItem[];
-  company: {
-    name: string;
-    logoUrl?: string; // Optional company logo
-    address: string;
-    city: string;
-    email: string;
-    phone: string;
-    website: string;
-  };
-  client: {
-    name: string;
-    company?: string;
-    address: {
-      street: string;
-      city: string;
-      state: string;
-      zipCode: string;
-      country: string;
-    };
-    email: string;
-  };
-  notes?: string;
-  payment: {
-    terms?: string;
-    availableMethods?: string[];
-  };
-}
+import { InvoiceData } from './invoice-templates';
 
 // --- 2. STYLING ---
 // A modern and professional color palette and style guide.
@@ -55,15 +11,6 @@ const colors = {
   lightGray: '#F0F2F5',
   border: '#E1E5E8',
 };
-
-// TIP: Register custom fonts for a more branded look.
-// Font.register({
-//   family: 'Lato',
-//   fonts: [
-//     { src: 'path/to/Lato-Regular.ttf' },
-//     { src: 'path/to/Lato-Bold.ttf', fontWeight: 'bold' },
-//   ],
-// });
 
 const styles = StyleSheet.create({
   // Page and General
@@ -182,17 +129,21 @@ const styles = StyleSheet.create({
 // Kept outside the component for clarity and reusability.
 const formatCurrency = (amount: number, symbol: string) => `${symbol}${amount.toFixed(2)}`;
 
-const formatClientAddress = (client: InvoiceData['client']) =>
-  [
+const formatClientAddress = (client: InvoiceData['client']) => {
+  const address = client.address;
+  if (typeof address === 'string') return address;
+
+  return [
     client.name,
     client.company,
-    client.address.street,
-    `${client.address.city}, ${client.address.state} ${client.address.zipCode}`,
-    client.address.country,
+    address.street || address.street1,
+    address.city && address.state ? `${address.city}, ${address.state} ${address.postalCode || address.zipCode || ''}`.trim() : null,
+    address.country,
     client.email,
   ]
     .filter(Boolean) // Remove any empty/null parts
     .join('\n');
+}
 
 // --- 4. SUB-COMPONENTS ---
 // Breaking down the invoice into smaller, manageable parts.
@@ -200,7 +151,7 @@ const formatClientAddress = (client: InvoiceData['client']) =>
 const InvoiceHeader = ({ invoice }: { invoice: InvoiceData }) => (
   <View style={styles.headerView}>
     <View>
-      {invoice.company.logoUrl && <Image style={styles.companyLogo} src={invoice.company.logoUrl} />}
+      {(invoice.company.logoUrl || invoice.company.logo) && <Image style={styles.companyLogo} src={(invoice.company.logoUrl || invoice.company.logo) as string} />}
       <Text style={styles.h3}>{invoice.company.name}</Text>
       <Text style={styles.address}>
         {invoice.company.address}
@@ -241,10 +192,10 @@ const InvoiceTable = ({ invoice }: { invoice: InvoiceData }) => (
     </View>
     {invoice.items.map((item, index) => (
       <View key={index} style={styles.tableRow}>
-        <Text style={[styles.tableCell, styles.colDesc]}>{item.description}</Text>
-        <Text style={[styles.tableCell, styles.colQty]}>{item.qty}</Text>
-        <Text style={[styles.tableCell, styles.colPrice]}>{formatCurrency(item.price, invoice.currencySymbol)}</Text>
-        <Text style={[styles.tableCell, styles.colAmount]}>{formatCurrency(item.amount, invoice.currencySymbol)}</Text>
+        <Text style={[styles.tableCell, styles.colDesc]}>{item.description || item.itemName}</Text>
+        <Text style={[styles.tableCell, styles.colQty]}>{item.qty || item.quantity}</Text>
+        <Text style={[styles.tableCell, styles.colPrice]}>{formatCurrency(item.price || item.unitPrice || item.rate, invoice.currencySymbol)}</Text>
+        <Text style={[styles.tableCell, styles.colAmount]}>{formatCurrency(item.amount || item.total, invoice.currencySymbol)}</Text>
       </View>
     ))}
   </View>
@@ -263,7 +214,7 @@ const InvoiceTotals = ({ invoice }: { invoice: InvoiceData }) => (
       </View>
       <View style={styles.grandTotalRow}>
         <Text style={styles.grandTotalText}>Total</Text>
-        <Text style={styles.grandTotalText}>{formatCurrency(invoice.total, invoice.currencySymbol)}</Text>
+        <Text style={styles.grandTotalText}>{formatCurrency(invoice.total || invoice.grandTotal || 0, invoice.currencySymbol)}</Text>
       </View>
     </View>
   </View>
@@ -277,16 +228,16 @@ const NotesAndTerms = ({ invoice }: { invoice: InvoiceData }) => (
         <Text>{invoice.notes}</Text>
       </View>
     )}
-    {invoice.payment.terms && (
+    {(invoice.payment.terms || invoice.paymentTerms) && (
       <View style={{ marginBottom: 12 }}>
         <Text style={styles.h3}>Payment Terms</Text>
-        <Text>{invoice.payment.terms}</Text>
+        <Text>{invoice.payment.terms || invoice.paymentTerms}</Text>
       </View>
     )}
-    {invoice.payment.availableMethods && (
+    {(invoice.payment.availableMethods || invoice.paymentMethods) && (
       <View>
         <Text style={styles.h3}>Payment Methods</Text>
-        <Text>We accept: {invoice.payment.availableMethods.join(', ').replace(/_/g, ' ')}</Text>
+        <Text>We accept: {(invoice.payment.availableMethods || []).join(', ').replace(/_/g, ' ')}</Text>
       </View>
     )}
   </View>

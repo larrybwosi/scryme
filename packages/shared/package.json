@@ -16,6 +16,8 @@
     "dev": "echo \"no dev needed\""
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1067.0",
+    "@aws-sdk/s3-request-presigner": "^3.1067.0",
     "@prisma/client": "^7.8.0",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
@@ -34,7 +36,6 @@
     "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.525.0",
-    "minio": "^8.0.7",
     "qrcode": "^1.5.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

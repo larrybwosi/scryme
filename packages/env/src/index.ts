@@ -22,7 +22,7 @@ const serverSchema = z.object({
   PORT: z.coerce.number().default(3001),
 
   // Auth
-  BETTER_AUTH_SECRET: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -57,6 +57,12 @@ const serverSchema = z.object({
   GITHUB_OWNER: z.string().default("larrybwosi"),
   GITHUB_REPO: z.string().default("dealio"),
   GITHUB_TOKEN: z.string().optional(),
+
+  // OpenObserve
+  OPENOBSERVE_URL: z.string().url().optional(),
+  OPENOBSERVE_ORG: z.string().optional(),
+  OPENOBSERVE_STREAM: z.string().optional(),
+  OPENOBSERVE_TOKEN: z.string().optional(),
 });
 
 const clientSchema = z.object({
@@ -163,6 +169,11 @@ function getRawEnv() {
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+    // OpenObserve
+    OPENOBSERVE_URL: process.env.OPENOBSERVE_URL,
+    OPENOBSERVE_ORG: process.env.OPENOBSERVE_ORG,
+    OPENOBSERVE_STREAM: process.env.OPENOBSERVE_STREAM,
+    OPENOBSERVE_TOKEN: process.env.OPENOBSERVE_TOKEN,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,

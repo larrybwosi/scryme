@@ -1,4 +1,4 @@
-import { FulfillmentType, PaymentMethod, TransactionType } from "@repo/db";
+import { FulfillmentType, PaymentMethod, TransactionType } from "@repo/db/client";
 import { z } from "zod";
 
 export enum OrderTransactionStatus {

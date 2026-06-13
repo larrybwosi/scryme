@@ -1,5 +1,7 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
+@import "@repo/ui/globals.css";
+@plugin "tailwindcss-animate";
+@source "../../../packages/ui/src/**/*.tsx";
 
 /* --- Plugins --- */
 @plugin "tailwindcss-animate";

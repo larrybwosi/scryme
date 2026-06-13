@@ -1,6 +1,6 @@
 import { MpesaService } from '../service';
 import { db } from '@repo/db';
-import { realtimeService } from '@repo/shared';
+import { realtimeService } from '@repo/shared/server';
 import { MpesaClient } from '../client';
 
 jest.mock('@repo/db', () => ({

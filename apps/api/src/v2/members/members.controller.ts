@@ -59,4 +59,10 @@ export class MembersController {
   async changeMemberPin(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body('pin') pin: string) {
     return this.membersService.changeMemberPin(ctx, id, pin);
   }
+
+  @Post('login')
+  @ApiOperation({ summary: 'Login member via terminal' })
+  async login(@v2Context() ctx: V2ApiContext, @Body() body: { cardId: string; pin: string }) {
+    return this.membersService.login(ctx, body.cardId, body.pin);
+  }
 }

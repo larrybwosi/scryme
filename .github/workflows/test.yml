@@ -22,6 +22,21 @@ jobs:
       crm: ${{ steps.changes.outputs.crm }}
       web: ${{ steps.changes.outputs.web }}
       packages: ${{ steps.changes.outputs.packages }}
+      pkg_auth: ${{ steps.changes.outputs.pkg_auth }}
+      pkg_config_eslint: ${{ steps.changes.outputs.pkg_config_eslint }}
+      pkg_config_typescript: ${{ steps.changes.outputs.pkg_config_typescript }}
+      pkg_crm: ${{ steps.changes.outputs.pkg_crm }}
+      pkg_db: ${{ steps.changes.outputs.pkg_db }}
+      pkg_documents: ${{ steps.changes.outputs.pkg_documents }}
+      pkg_env: ${{ steps.changes.outputs.pkg_env }}
+      pkg_mpesa: ${{ steps.changes.outputs.pkg_mpesa }}
+      pkg_notifications: ${{ steps.changes.outputs.pkg_notifications }}
+      pkg_sdk: ${{ steps.changes.outputs.pkg_sdk }}
+      pkg_shared: ${{ steps.changes.outputs.pkg_shared }}
+      pkg_suppliers: ${{ steps.changes.outputs.pkg_suppliers }}
+      pkg_ui: ${{ steps.changes.outputs.pkg_ui }}
+      pkg_windmill: ${{ steps.changes.outputs.pkg_windmill }}
+      pkg_zitadel: ${{ steps.changes.outputs.pkg_zitadel }}
       workflow: ${{ steps.changes.outputs.workflow }}
       test_workflow: ${{ steps.changes.outputs.test_workflow }}
     steps:
@@ -46,6 +61,36 @@ jobs:
               - 'apps/web/**'
             packages:
               - 'packages/**'
+            pkg_auth:
+              - 'packages/auth/**'
+            pkg_config_eslint:
+              - 'packages/config-eslint/**'
+            pkg_config_typescript:
+              - 'packages/config-typescript/**'
+            pkg_crm:
+              - 'packages/crm/**'
+            pkg_db:
+              - 'packages/db/**'
+            pkg_documents:
+              - 'packages/documents/**'
+            pkg_env:
+              - 'packages/env/**'
+            pkg_mpesa:
+              - 'packages/mpesa/**'
+            pkg_notifications:
+              - 'packages/notifications/**'
+            pkg_sdk:
+              - 'packages/sdk/**'
+            pkg_shared:
+              - 'packages/shared/**'
+            pkg_suppliers:
+              - 'packages/suppliers/**'
+            pkg_ui:
+              - 'packages/ui/**'
+            pkg_windmill:
+              - 'packages/windmill/**'
+            pkg_zitadel:
+              - 'packages/zitadel/**'
             test_workflow:
               - '.github/workflows/test.yml'
             workflow:
@@ -105,24 +150,80 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-lint-
 
-      - name: Lint and Type Check
+      - name: Lint and Type Check Apps
         run: |
+          APPS_CHANGED=false
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+            APPS_CHANGED=true
+          fi
+
+          PKG_CHANGED="${{ needs.filter.outputs.packages }}"
+          ROOT_CHANGED=false
           if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            pnpm turbo lint type-check --concurrency=1
-          else
+            ROOT_CHANGED=true
+          fi
+
+          if [ "$APPS_CHANGED" == "true" ] || [ "$PKG_CHANGED" == "true" ]; then
             FILTER=""
             if [ "${{ needs.filter.outputs.pos }}" == "true" ]; then FILTER="$FILTER --filter=pos..."; fi
             if [ "${{ needs.filter.outputs.bakery }}" == "true" ]; then FILTER="$FILTER --filter=bakery..."; fi
             if [ "${{ needs.filter.outputs.api }}" == "true" ]; then FILTER="$FILTER --filter=api..."; fi
             if [ "${{ needs.filter.outputs.crm }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
             if [ "${{ needs.filter.outputs.web }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
-            if [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=@repo/*..."; fi
 
             if [ -n "$FILTER" ]; then
-              pnpm turbo lint type-check $FILTER --concurrency=1
+              echo "Running lint and type-check for changed apps..."
+              pnpm turbo lint type-check $FILTER
             else
-              echo "No JS/TS changes detected, skipping lint and type-check"
+              echo "No changed apps to check"
             fi
+          elif [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Root changes detected and no app/pkg changes, checking all apps..."
+            pnpm turbo lint type-check --filter="./apps/*"
+          else
+            echo "No JS/TS changes detected, skipping"
+          fi
+
+      - name: Lint and Type Check Packages
+        run: |
+          APPS_CHANGED=false
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+            APPS_CHANGED=true
+          fi
+
+          PKG_CHANGED="${{ needs.filter.outputs.packages }}"
+          ROOT_CHANGED=false
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            ROOT_CHANGED=true
+          fi
+
+          if [ "$APPS_CHANGED" == "true" ] || [ "$PKG_CHANGED" == "true" ]; then
+            FILTER=""
+            if [ "${{ needs.filter.outputs.pkg_auth }}" == "true" ]; then FILTER="$FILTER --filter=@repo/auth..."; fi
+            if [ "${{ needs.filter.outputs.pkg_config_eslint }}" == "true" ]; then FILTER="$FILTER --filter=@repo/eslint-config..."; fi
+            if [ "${{ needs.filter.outputs.pkg_config_typescript }}" == "true" ]; then FILTER="$FILTER --filter=@repo/typescript-config..."; fi
+            if [ "${{ needs.filter.outputs.pkg_crm }}" == "true" ]; then FILTER="$FILTER --filter=@repo/crm..."; fi
+            if [ "${{ needs.filter.outputs.pkg_db }}" == "true" ]; then FILTER="$FILTER --filter=@repo/db..."; fi
+            if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ]; then FILTER="$FILTER --filter=@repo/documents..."; fi
+            if [ "${{ needs.filter.outputs.pkg_env }}" == "true" ]; then FILTER="$FILTER --filter=@repo/env..."; fi
+            if [ "${{ needs.filter.outputs.pkg_mpesa }}" == "true" ]; then FILTER="$FILTER --filter=@repo/mpesa..."; fi
+            if [ "${{ needs.filter.outputs.pkg_notifications }}" == "true" ]; then FILTER="$FILTER --filter=@repo/notifications..."; fi
+            if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@repo/sdk..."; fi
+            if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
+            if [ "${{ needs.filter.outputs.pkg_suppliers }}" == "true" ]; then FILTER="$FILTER --filter=@repo/suppliers..."; fi
+            if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
+            if [ "${{ needs.filter.outputs.pkg_windmill }}" == "true" ]; then FILTER="$FILTER --filter=@repo/windmill..."; fi
+            if [ "${{ needs.filter.outputs.pkg_zitadel }}" == "true" ]; then FILTER="$FILTER --filter=@repo/zitadel..."; fi
+
+            if [ -n "$FILTER" ]; then
+              echo "Running lint and type-check for changed packages..."
+              pnpm turbo lint type-check $FILTER
+            else
+              echo "No changed packages to check"
+            fi
+          elif [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Root changes detected and no app/pkg changes, checking all packages..."
+            pnpm turbo lint type-check --filter="./packages/*"
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
@@ -287,6 +388,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--max-old-space-size=8192"
+      BETTER_AUTH_SECRET: "mock-secret-for-build"
+      NEXT_PUBLIC_API_URL: "http://localhost:3002"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -311,25 +414,27 @@ jobs:
 
       - name: Build
         run: |
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            pnpm turbo build --filter=api... --filter=crm... --filter=web... --concurrency=1
-          else
-            FILTER=""
-            if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-              FILTER="$FILTER --filter=api..."
-            fi
-            if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-              FILTER="$FILTER --filter=crm..."
-            fi
-            if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-              FILTER="$FILTER --filter=web..."
-            fi
+          APPS_CHANGED=false
+          if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+            APPS_CHANGED=true
+          fi
 
-            if [ -n "$FILTER" ]; then
-              pnpm turbo build $FILTER --concurrency=1
-            else
-              echo "No changes requiring build-verify detected"
-            fi
+          ROOT_CHANGED=false
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            ROOT_CHANGED=true
+          fi
+
+          if [ "$APPS_CHANGED" == "true" ]; then
+            FILTER=""
+            if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=api..."; fi
+            if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
+            if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
+            pnpm turbo build $FILTER
+          elif [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Root changes detected and no app changes, building all apps..."
+            pnpm turbo build --filter=api... --filter=crm... --filter=web...
+          else
+            echo "No app changes requiring build-verify detected"
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres

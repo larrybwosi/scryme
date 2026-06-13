@@ -13,7 +13,21 @@ export const getSDK = (config: SDKConfig) => {
   });
 
   client.interceptors.response.use(
-    (response: AxiosResponse) => response,
+    (response: AxiosResponse) => {
+      // If it matches the StandardResponse format, unwrap it
+      if (
+        response.data &&
+        response.data.success === true &&
+        response.data.data !== undefined &&
+        (response.data.timestamp || response.data.meta)
+      ) {
+        return {
+          ...response,
+          data: response.data.data,
+        };
+      }
+      return response;
+    },
     (error: any) => {
       if (error.response?.status === 401 && config.onUnauthorized) {
         config.onUnauthorized();
@@ -43,6 +57,7 @@ export const getSDK = (config: SDKConfig) => {
     auth: {
       getAuthStatus: () => sdk.client.get("/auth/status"),
       logout: () => sdk.client.post("/auth/logout"),
+      terminalLogin: (cardId: string, pin: string) => sdk.client.post("/members/login", { cardId, pin }),
     },
     catalog: {
       getProducts: (params?: any) => sdk.client.get("/catalog/products", { params }),
@@ -69,6 +84,7 @@ export const getSDK = (config: SDKConfig) => {
     },
     bakery: {
       getAuthStatus: () => sdk.client.get("/bakery/auth/status"),
+      getMe: () => sdk.client.get("/devices/me"),
       sso: () => sdk.client.post("/bakery/auth/sso"),
       logout: () => sdk.client.post("/bakery/auth/logout"),
       getOverview: () => sdk.client.get("/bakery"),
@@ -120,6 +136,12 @@ export const getSDK = (config: SDKConfig) => {
       createIngredient: (data: any) => sdk.client.post("/bakery/ingredients", data),
       updateIngredient: (id: string, data: any) => sdk.client.patch(`/bakery/ingredients/${id}`, data),
       deleteIngredient: (id: string) => sdk.client.delete(`/bakery/ingredients/${id}`),
+    },
+    workflows: {
+      getAvailable: () => sdk.client.get("/workflows/available"),
+      provision: (data: { path: string; settings: any }) => sdk.client.post("/workflows/provision", data),
+      trigger: (data: { path: string; inputs: any }) => sdk.client.post("/workflows/trigger", data),
+      getHistory: (params?: { path?: string }) => sdk.client.get("/workflows/history", { params }),
     },
   };
 

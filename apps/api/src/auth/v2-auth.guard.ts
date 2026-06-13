@@ -7,6 +7,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { validateDeviceKey, verifyMemberToken, verifyZitadelJwt, ROLE_PERMISSIONS, V2ApiContext } from '@repo/shared/server';
 import { ALLOW_PUBLIC_KEY } from '../common/decorators/auth.decorator';
+import { OpenObserveService } from '../common/services/openobserve.service';
 import { FastifyRequest } from 'fastify';
 import { db } from '@repo/db';
 import { env } from '@repo/env';
@@ -18,7 +19,8 @@ export class V2AuthGuard implements CanActivate {
     private prisma: PrismaService,
     private redis: RedisService,
     private zitadelCustomer: ZitadelCustomerService,
-    @InjectQueue('zitadel-sync') private zitadelSyncQueue: Queue
+    @InjectQueue('zitadel-sync') private zitadelSyncQueue: Queue,
+    private openObserve: OpenObserveService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -137,6 +139,14 @@ export class V2AuthGuard implements CanActivate {
     }
 
     if (!isPublic && !deviceAuth && !memberAuth && !bearerAuth) {
+      this.openObserve.logAuthFailure({
+        ip: ipAddress,
+        userAgent,
+        reason: 'Authentication required',
+        path: request.url,
+        method: request.method,
+        correlationId,
+      });
       throw new UnauthorizedException('Authentication required');
     }
 
@@ -149,7 +159,10 @@ export class V2AuthGuard implements CanActivate {
       authType = bearerAuth.authType;
     }
 
+    request.openObserveService = this.openObserve;
+
     request.v2Context = {
+      openObserveService: this.openObserve,
       organizationId: deviceAuth?.organizationId || memberAuth?.organizationId || bearerAuth?.organizationId || '',
       deviceId: deviceAuth?.deviceId,
       locationId: deviceAuth?.locationId,
@@ -166,6 +179,18 @@ export class V2AuthGuard implements CanActivate {
       userAgent,
       requestStartTime: Date.now(),
     };
+
+    this.openObserve.logAuthSuccess({
+      ip: ipAddress,
+      userAgent,
+      path: request.url,
+      method: request.method,
+      authType,
+      organizationId: request.v2Context.organizationId,
+      deviceId: request.v2Context.deviceId,
+      memberId: request.v2Context.memberId,
+      correlationId,
+    });
 
     return true;
   }

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -31,6 +31,7 @@ import {
   ArrowLeftRight,
   ShieldCheck,
   FileText,
+  Zap,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -95,6 +96,12 @@ const sidebarConfig: SidebarSection[] = [
     ],
   },
   {
+    title: "AUTOMATIONS",
+    items: [
+      { title: "Workflows", icon: Zap, href: "/workflows" },
+    ],
+  },
+  {
     title: "ACCOUNTING",
     items: [
       {
@@ -109,7 +116,16 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Approvals", href: "/finance/approvals" },
         ],
       },
-      { title: "Settings", icon: Settings, href: "/settings" },
+      {
+        title: "Settings",
+        icon: Settings,
+        href: "/settings",
+        items: [
+          { title: "Organization", href: "/settings" },
+          { title: "Documents", href: "/settings/documents" },
+          { title: "Authorized Devices", href: "/settings/devices" },
+        ],
+      },
     ],
   },
 ];
@@ -118,6 +134,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
   const pathname = usePathname();
+  const router = useRouter();
 
   const toggleSubmenu = (title: string) => {
     setOpenMenus((prev) =>
@@ -192,11 +209,13 @@ export function Sidebar() {
 
                 const itemContent = (
                   <button
-                    onClick={() =>
-                      hasSubmenu && !isCollapsed
-                        ? toggleSubmenu(item.title)
-                        : null
-                    }
+                    onClick={() => {
+                      if (hasSubmenu && !isCollapsed) {
+                        toggleSubmenu(item.title);
+                      } else {
+                        router.push(item.href);
+                      }
+                    }}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                       isActive

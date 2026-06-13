@@ -23,6 +23,7 @@ import { StockAlertModal } from "./stock-alert-modal";
 import { StockHistoryDrawer } from "./stock-history-drawer";
 import { type InventoryProduct, reorderProduct, deleteProduct, getCategories } from "../../app/actions/inventory";
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowUpDown, Loader2, Package, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Image from 'next/image';
@@ -122,7 +123,9 @@ export function InventoryTable({ data }: InventoryTableProps) {
                         <Package className="w-5 h-5 text-gray-400" />
                       )}
                     </div>
-                    <span className="font-medium text-sm">{item.name}</span>
+                    <Link href={`/inventory/products/${item.id}`} className="font-medium text-sm hover:underline hover:text-zinc-900">
+                      {item.name}
+                    </Link>
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-gray-500">{item.sku}</TableCell>
@@ -210,12 +213,11 @@ export function InventoryTable({ data }: InventoryTableProps) {
                         <History className="mr-2 h-4 w-4" />
                         <span>Stock History</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => {
-                        setSelectedItem(item);
-                        setIsProductSheetOpen(true);
-                      }}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        <span>Edit Product</span>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/inventory/products/${item.id}`}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          <span>Edit Details</span>
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600"

@@ -8,6 +8,7 @@ import {
 import { FastifyReply } from 'fastify';
 import { ApiError } from '@repo/shared/server';
 import { env } from '@repo/env';
+import { OpenObserveService } from '../services/openobserve.service';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -35,6 +36,38 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // In production, don't leak generic error messages
       message =
         env.NODE_ENV === 'development' ? exception.message : 'Internal server error';
+    }
+
+    // Log to OpenObserve if it's an auth error or unhandled exception
+    try {
+      const openObserveService = host.switchToHttp().getRequest().v2Context?.openObserveService ||
+                                host.switchToHttp().getRequest().openObserveService;
+
+      if (openObserveService) {
+        const request = ctx.getRequest<any>();
+        const ip = (request.headers['x-forwarded-for'] as string) || request.ip || 'unknown';
+        const correlationId = request.headers['x-correlation-id'] || request.v2Context?.correlationId;
+
+        if (status === HttpStatus.UNAUTHORIZED || status === HttpStatus.FORBIDDEN) {
+          openObserveService.logAuthFailure({
+            ip,
+            userAgent: request.headers['user-agent'] || 'unknown',
+            reason: message,
+            path: request.url,
+            method: request.method,
+            correlationId,
+          });
+        } else if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
+          openObserveService.logException(exception, {
+            path: request.url,
+            method: request.method,
+            ip,
+            correlationId,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to log to OpenObserve from filter:', e);
     }
 
     response.status(status).send({
