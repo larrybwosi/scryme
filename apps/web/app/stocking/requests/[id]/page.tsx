@@ -1,9 +1,9 @@
 import React from "react";
-import { PageHeader } from "../../../../components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { ShoppingCart, ArrowLeft, Clock, MapPin, User, FileText } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
-import { getStockRequestDetails } from "../../../actions/stock-management";
+import { getStockRequestDetails } from "@/app/actions/stock-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";

@@ -14,8 +14,8 @@ import {
   SelectValue
 } from "@repo/ui/components/ui/select";
 import { Plus, Trash2, Save, ShoppingCart } from "lucide-react";
-import { ProductVariantSelect } from "../product-variant-select";
-import { createStockRequest } from "../../app/actions/stock-management";
+import { ProductVariantSelect } from "@/components/product-variant-select";
+import { createStockRequest } from "@/app/actions/stock-management";
 import { useRouter } from "next/navigation";
 import { useToast } from "@repo/ui/components/ui/use-toast";
 

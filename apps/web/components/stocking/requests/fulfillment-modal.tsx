@@ -21,7 +21,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Truck, ShoppingCart, Package } from "lucide-react";
-import { fulfillStockRequestItems, getStockRequestLocations } from "../../app/actions/stock-management";
+import { fulfillStockRequestItems, getStockRequestLocations } from "@/app/actions/stock-management";
 import { useToast } from "@repo/ui/components/ui/use-toast";
 
 interface AggregatedItem {

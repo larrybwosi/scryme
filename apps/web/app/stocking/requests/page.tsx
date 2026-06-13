@@ -1,13 +1,13 @@
 import React from "react";
-import { PageHeader } from "../../../components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { ShoppingCart, Plus, ListFilter } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
-import { getStockRequestList, getAggregatedStockRequests } from "../../actions/stock-management";
+import { getStockRequestList, getAggregatedStockRequests } from "@/app/actions/stock-management";
 import Link from "next/link";
-import { StockRequestTable } from "../../../components/stocking/requests/stock-request-table";
-import { AggregatedRequestTable } from "../../../components/stocking/requests/aggregated-request-table";
+import { StockRequestTable } from "@/components/stocking/requests/stock-request-table";
+import { AggregatedRequestTable } from "@/components/stocking/requests/aggregated-request-table";
 
 export default async function StockRequestsPage() {
   const [requests, aggregatedItems] = await Promise.all([
