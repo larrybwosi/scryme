@@ -4,7 +4,7 @@ import { db } from "@repo/db";
 import { getServerAuth, auth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { MemberRole, MembershipStatus } from "@repo/db";
+import { MemberRole, MembershipStatus, Member, User } from "@repo/db";
 import * as argon2 from "argon2";
 import { randomBytes, randomInt } from "crypto";
 
@@ -147,7 +147,7 @@ export async function updateMemberRole(memberId: string, role: MemberRole) {
   return { success: true };
 }
 
-export async function getStaffMemberDetail(memberId: string) {
+export async function getStaffMemberDetail(memberId: string): Promise<{ success: boolean; data?: any; error?: string; stats?: any }> {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
     return { success: false, error: "Unauthorized" };
@@ -245,7 +245,7 @@ export async function getStaffMemberDetail(memberId: string) {
     };
   });
 
-  return { success: true, data: { ...member, stats } };
+  return { success: true, data: member, stats };
 }
 
 export async function updateMemberCustomization(

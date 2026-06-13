@@ -959,3 +959,218 @@ export async function getStockAdjustmentHistory(variantId: string): Promise<
     take: 10,
   });
 }
+
+export type ProductImportData = {
+  name: string;
+  sku: string;
+  categoryName: string;
+  buyingPrice: number;
+  retailPrice: number;
+  initialStock?: number;
+  description?: string;
+  barcode?: string;
+};
+
+export async function importProducts(
+  products: ProductImportData[],
+  strategy: "skip" | "replace"
+): Promise<{
+  success: number;
+  skipped: number;
+  replaced: number;
+  failed: number;
+  errors: string[];
+}> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
+
+  const results = {
+    success: 0,
+    skipped: 0,
+    replaced: 0,
+    failed: 0,
+    errors: [] as string[],
+  };
+
+  // Pre-fetch all categories for the organization to optimize lookups
+  const existingCategories = await db.category.findMany({
+    where: { organizationId: context.organizationId },
+  });
+
+  const categoryMap = new Map(existingCategories.map((c) => [c.name.toLowerCase(), c.id]));
+
+  for (const productData of products) {
+    try {
+      await db.$transaction(async (tx) => {
+        // 1. Handle Category
+        let categoryId = categoryMap.get(productData.categoryName.toLowerCase());
+        if (!categoryId) {
+          const newCategory = await tx.category.create({
+            data: {
+              name: productData.categoryName,
+              organizationId: context.organizationId,
+              code: `${context.organizationId}-${productData.categoryName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+            },
+          });
+          categoryId = newCategory.id;
+          categoryMap.set(productData.categoryName.toLowerCase(), categoryId);
+        }
+
+        // 2. Check for existing product/variant by SKU
+        const existingVariant = await tx.productVariant.findFirst({
+          where: {
+            sku: productData.sku,
+            product: { organizationId: context.organizationId },
+          },
+          include: { product: true },
+        });
+
+        if (existingVariant) {
+          if (strategy === "skip") {
+            results.skipped++;
+            return;
+          } else {
+            // Replace/Update strategy
+            await tx.product.update({
+              where: { id: existingVariant.productId },
+              data: {
+                name: productData.name,
+                description: productData.description,
+                categoryId: categoryId,
+              },
+            });
+
+            await tx.productVariant.update({
+              where: { id: existingVariant.id },
+              data: {
+                buyingPrice: new Decimal(productData.buyingPrice),
+                retailPrice: new Decimal(productData.retailPrice),
+                barcode: productData.barcode,
+              },
+            });
+
+            results.replaced++;
+            return;
+          }
+        }
+
+        // 3. Create New Product
+        const product = await tx.product.create({
+          data: {
+            name: productData.name,
+            sku: productData.sku,
+            description: productData.description,
+            categoryId: categoryId,
+            organizationId: context.organizationId,
+            type: "FINISHED_GOOD",
+            barcode: productData.barcode,
+          },
+        });
+
+        // 4. Create Default Variant
+        const variant = await tx.productVariant.create({
+          data: {
+            productId: product.id,
+            name: "Default",
+            sku: productData.sku,
+            barcode: productData.barcode,
+            buyingPrice: new Decimal(productData.buyingPrice),
+            retailPrice: new Decimal(productData.retailPrice),
+            attributes: {},
+          },
+        });
+
+        // 5. Handle Initial Stock
+        if (productData.initialStock && productData.initialStock > 0) {
+          const defaultLocation =
+            (await tx.inventoryLocation.findFirst({
+              where: { organizationId: context.organizationId, isDefault: true },
+            })) ||
+            (await tx.inventoryLocation.findFirst({
+              where: { organizationId: context.organizationId },
+            }));
+
+          if (defaultLocation) {
+            await tx.productVariantStock.create({
+              data: {
+                productId: product.id,
+                variantId: variant.id,
+                locationId: defaultLocation.id,
+                currentStock: new Decimal(productData.initialStock),
+                availableStock: new Decimal(productData.initialStock),
+                organizationId: context.organizationId,
+              },
+            });
+
+            const batch = await tx.stockBatch.create({
+              data: {
+                organizationId: context.organizationId,
+                variantId: variant.id,
+                locationId: defaultLocation.id,
+                initialQuantity: new Decimal(productData.initialStock),
+                currentQuantity: new Decimal(productData.initialStock),
+                purchasePrice: new Decimal(productData.buyingPrice),
+                receivedDate: new Date(),
+                batchNumber: `IMPORT-${variant.sku}-${Date.now().toString().slice(-4)}`,
+              },
+            });
+
+            const adjustment = await tx.stockAdjustment.create({
+              data: {
+                variantId: variant.id,
+                locationId: defaultLocation.id,
+                memberId: context.memberId,
+                quantity: new Decimal(productData.initialStock),
+                reason: "INITIAL_STOCK",
+                notes: "Initial stock from CSV import",
+                status: "APPROVED",
+                organizationId: context.organizationId,
+                stockBatchId: batch.id,
+              },
+            });
+
+            await tx.stockMovement.create({
+              data: {
+                variantId: variant.id,
+                quantity: new Decimal(productData.initialStock),
+                toLocationId: defaultLocation.id,
+                movementType: "INITIAL_STOCK",
+                adjustmentId: adjustment.id,
+                memberId: context.memberId,
+                notes: "Initial stock from CSV import",
+                organizationId: context.organizationId,
+                stockBatchId: batch.id,
+              },
+            });
+          }
+        } else {
+            // Create empty stock record for default location if possible
+            const defaultLocation = await tx.inventoryLocation.findFirst({
+                where: { organizationId: context.organizationId },
+            });
+            if (defaultLocation) {
+                await tx.productVariantStock.create({
+                    data: {
+                        productId: product.id,
+                        variantId: variant.id,
+                        locationId: defaultLocation.id,
+                        currentStock: new Decimal(0),
+                        availableStock: new Decimal(0),
+                        organizationId: context.organizationId,
+                    },
+                });
+            }
+        }
+
+        results.success++;
+      });
+    } catch (error: any) {
+      results.failed++;
+      results.errors.push(`Failed to import ${productData.name}: ${error.message}`);
+    }
+  }
+
+  revalidatePath("/inventory");
+  return results;
+}
