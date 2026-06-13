@@ -1,5 +1,11 @@
 # crm
 
+## 4.0.0
+
+### Major Changes
+
+- b8c8ff5: nothing much
+
 ## 3.0.0
 
 ### Major Changes
