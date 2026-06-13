@@ -1,5 +1,11 @@
 # bakery
 
+## 6.0.0
+
+### Major Changes
+
+- b8c8ff5: nothing much
+
 ## 5.0.0
 
 ### Major Changes

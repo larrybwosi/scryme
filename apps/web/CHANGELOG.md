@@ -4,6 +4,12 @@
 
 ### Major Changes
 
+- b8c8ff5: nothing much
+
+## 3.0.0
+
+### Major Changes
+
 - 7fc4a5f: nothing
 
 ### Minor Changes
