@@ -1,6 +1,5 @@
 import { db, Payment, UnclaimedPayment } from '@repo/db';
-import { realtimeService } from '@repo/shared';
-import { decrypt } from '@repo/shared/server';
+import { realtimeService, decrypt } from '@repo/shared/server';
 import { MpesaClient } from './client';
 import { MpesaTriggerInput, MpesaCallbackPayload, MpesaC2BPayload, MpesaCredentials } from './types';
 import {
@@ -465,5 +464,151 @@ export class MpesaService {
     });
 
     return { success: !!unclaimed, verified: !!unclaimed, unclaimed };
+  }
+
+  /**
+   * Search for unclaimed payments by receipt code, phone, or name.
+   */
+  async searchUnclaimedPayments(organizationId: string, query: string) {
+    const isPhone = /^[0-9+]+$/.test(query);
+
+    return db.unclaimedPayment.findMany({
+      where: {
+        organizationId,
+        claimed: false,
+        OR: [
+          { transId: { contains: query, mode: 'insensitive' } },
+          { msisdn: { contains: query } },
+          { firstName: { contains: query, mode: 'insensitive' } },
+          { middleName: { contains: query, mode: 'insensitive' } },
+          { lastName: { contains: query, mode: 'insensitive' } },
+          { billRefNumber: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { transTime: 'desc' },
+      take: 20,
+    });
+  }
+
+  /**
+   * Claims an unclaimed payment and links it to a transaction.
+   */
+  async claimPayment(organizationId: string, unclaimedPaymentId: string, transactionId: string, memberId: string) {
+    const unclaimed = await db.unclaimedPayment.findUnique({
+      where: { id: unclaimedPaymentId },
+    });
+
+    if (!unclaimed) throw new Error('Unclaimed payment not found');
+    if (unclaimed.claimed) throw new Error('Payment already claimed');
+
+    const transaction = await db.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!transaction) throw new Error('Transaction not found');
+
+    return db.$transaction(async (tx: any) => {
+      // Create a payment record
+      const payment = await tx.payment.create({
+        data: {
+          transactionId: transaction.id,
+          organizationId,
+          method: 'MPESA',
+          status: 'PAID',
+          amount: unclaimed.amount,
+          amountReceived: unclaimed.amount,
+          gatewayTxnId: unclaimed.transId,
+          gatewayResponse: unclaimed.rawResponse as any,
+          payerPhone: unclaimed.msisdn,
+          payerName: [unclaimed.firstName, unclaimed.middleName, unclaimed.lastName].filter(Boolean).join(' '),
+          processedAt: new Date(),
+          referenceNumber: unclaimed.billRefNumber,
+          notes: `Manually claimed by member ${memberId}`,
+        },
+      });
+
+      // Update unclaimed payment
+      await tx.unclaimedPayment.update({
+        where: { id: unclaimedPaymentId },
+        data: {
+          claimed: true,
+          claimedAt: new Date(),
+          claimedByUserId: memberId,
+          paymentId: payment.id,
+        },
+      });
+
+      // Update transaction status
+      await this.updateTransactionOnPayment(tx, transaction.id, Number(unclaimed.amount));
+
+      // Realtime notification
+      await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
+        transactionId: transaction.id,
+        status: 'COMPLETED',
+        data: {
+          receipt: unclaimed.transId,
+          amount: unclaimed.amount,
+        },
+      });
+
+      return payment;
+    });
+  }
+
+  /**
+   * Manually verify a transaction code against Safaricom's API.
+   */
+  async verifyWithSafaricom(organizationId: string, transactionCode: string) {
+    // 1. Check DB first (standard verifyPayment does this, but let's be explicit)
+    const existingPayment = await db.payment.findFirst({
+      where: { gatewayTxnId: transactionCode, organizationId },
+    });
+
+    if (existingPayment) {
+      return { verified: true, source: 'DB', payment: existingPayment };
+    }
+
+    const unclaimed = await db.unclaimedPayment.findFirst({
+      where: { transId: transactionCode, organizationId },
+    });
+
+    if (unclaimed) {
+      return { verified: true, source: 'UNCLAIMED', unclaimed };
+    }
+
+    // 2. Query Safaricom if not found locally
+    const config = await db.paymentCredentials.findUnique({
+      where: { organizationId },
+    });
+
+    if (!config) throw new Error('M-Pesa not configured');
+
+    const credentials: MpesaCredentials = {
+      mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
+      mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
+      mpesaShortCode: config.mpesaShortCode,
+      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : '',
+      mpesaType: config.mpesaType as any,
+      environment: config.environment as any,
+      mpesaInitiatorPass: config.mpesaInitiatorPass ? decrypt(config.mpesaInitiatorPass) : undefined,
+    };
+
+    const client = new MpesaClient(credentials);
+    try {
+      const response = await client.getTransactionStatus({
+        transactionCode,
+        callbackUrl: `${process.env.MPESA_CALLBACK_BASE_URL}/api/v2/payments/mpesa/webhooks/transaction-status/${organizationId}`,
+      });
+
+      return {
+        verified: false,
+        source: 'SAFARICOM',
+        message: 'Request sent to Safaricom. Please wait for callback or check again in a moment.',
+        response,
+      };
+    } catch (error: any) {
+      console.error('Safaricom verification error:', error);
+      throw new Error(`Failed to verify with Safaricom: ${error.message}`);
+    }
   }
 }

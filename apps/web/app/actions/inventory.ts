@@ -8,6 +8,7 @@ import {
   Decimal,
   StockAdjustment,
   ProductVariant,
+  Prisma,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
@@ -262,9 +263,12 @@ export async function updateProduct(
     sku?: string;
     slug?: string;
     categoryId?: string;
+    description?: string;
+    detailedDescription?: string;
     buyingPrice?: number;
     retailPrice?: number;
     imageUrls?: string[];
+    tags?: string[];
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -278,7 +282,10 @@ export async function updateProduct(
         sku: data.sku,
         slug: data.slug,
         categoryId: data.categoryId,
+        description: data.description,
+        detailedDescription: data.detailedDescription,
         imageUrls: data.imageUrls,
+        tags: data.tags,
       },
     });
 
@@ -366,6 +373,13 @@ export async function getProduct(id: string): Promise<any> {
       variants: {
         include: {
           variantStocks: true,
+          priceListItems: true,
+          pricingRules: true,
+        },
+      },
+      suppliers: {
+        include: {
+          supplier: true,
         },
       },
     },
@@ -730,6 +744,89 @@ export async function updateStockAlert(data: {
   return result;
 }
 
+export async function createVariant(data: {
+  productId: string;
+  name: string;
+  sku: string;
+  buyingPrice: number;
+  retailPrice: number;
+  initialStock?: number;
+}): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    const variant = await tx.productVariant.create({
+      data: {
+        productId: data.productId,
+        name: data.name,
+        sku: data.sku,
+        buyingPrice: new Decimal(data.buyingPrice),
+        retailPrice: new Decimal(data.retailPrice),
+        attributes: {},
+      },
+    });
+
+    const defaultLocation =
+      (await tx.inventoryLocation.findFirst({
+        where: { organizationId: context.organizationId, isDefault: true },
+      })) ||
+      (await tx.inventoryLocation.findFirst({
+        where: { organizationId: context.organizationId },
+      }));
+
+    if (defaultLocation) {
+      const stockAmount = data.initialStock || 0;
+      await tx.productVariantStock.create({
+        data: {
+          productId: data.productId,
+          variantId: variant.id,
+          locationId: defaultLocation.id,
+          currentStock: new Decimal(stockAmount),
+          availableStock: new Decimal(stockAmount),
+          organizationId: context.organizationId,
+        },
+      });
+    }
+
+    revalidatePath(`/inventory/products/${data.productId}`);
+    return variant;
+  });
+}
+
+export async function updateVariant(
+  id: string,
+  data: {
+    name?: string;
+    sku?: string;
+    buyingPrice?: number;
+    retailPrice?: number;
+  },
+): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const variant = await db.productVariant.update({
+    where: { id },
+    data: {
+      name: data.name,
+      sku: data.sku,
+      buyingPrice:
+        data.buyingPrice !== undefined
+          ? new Decimal(data.buyingPrice)
+          : undefined,
+      retailPrice:
+        data.retailPrice !== undefined
+          ? new Decimal(data.retailPrice)
+          : undefined,
+    },
+  });
+
+  revalidatePath(`/inventory/products/${variant.productId}`);
+  return variant;
+}
+
 export async function reorderProduct(
   variantId: string,
 ): Promise<{ success: boolean; message: string }> {
@@ -799,6 +896,37 @@ export type InventoryProduct = {
   unitPrice: number;
   image?: string;
 };
+
+export async function bulkDeleteVariants(variantIds: string[]): Promise<Prisma.BatchPayload> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.productVariant.deleteMany({
+    where: {
+      id: { in: variantIds },
+      product: { organizationId: context.organizationId },
+    },
+  });
+
+  revalidatePath("/inventory");
+  return result;
+}
+
+export async function updateVariantStatus(variantIds: string[], isActive: boolean): Promise<Prisma.BatchPayload> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.productVariant.updateMany({
+    where: {
+      id: { in: variantIds },
+      product: { organizationId: context.organizationId },
+    },
+    data: { isActive },
+  });
+
+  revalidatePath("/inventory");
+  return result;
+}
 
 export async function getStockAdjustmentHistory(variantId: string): Promise<
   (StockAdjustment & {

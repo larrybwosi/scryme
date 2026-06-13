@@ -3,7 +3,7 @@ import { IOrderRepository } from '../../domain/repositories/order-repository.int
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WebhookService } from '../../../webhooks/infrastructure/services/webhook.service';
-import { V3RealtimeGateway } from '../../../../common/realtime/v3-realtime.gateway';
+import { ApiRealtimeService } from '../../../../../common/services/realtime.service';
 import { emitOrderPlaced } from '@repo/windmill/server';
 import { createOrder, CreateOrderInput } from '@repo/shared/server';
 
@@ -14,7 +14,7 @@ export class CreateOrderUseCase {
     private readonly orderRepository: IOrderRepository,
     private readonly prisma: PrismaService,
     private readonly webhookService: WebhookService,
-    private readonly realtimeGateway: V3RealtimeGateway
+    private readonly realtimeService: ApiRealtimeService
   ) {}
 
   async execute(organizationId: string, dto: CreateOrderDto, memberId: string) {
@@ -37,7 +37,7 @@ export class CreateOrderUseCase {
     }
 
     // 4. Trigger events
-    this.realtimeGateway.sendToOrder(order.id, 'order.created', order);
+    await this.realtimeService.publish(`order:${order.id}`, 'order.created', order);
     await this.webhookService.dispatch('order.created', organizationId, order);
 
     // 5. Emit Windmill event

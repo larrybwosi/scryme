@@ -18,6 +18,7 @@ import {
 
 import { navariService } from "../../lib/services/navari.service";
 import { unitCalculationService } from "../../lib/services/unit-calculation.service";
+import { realtimeService } from "../../realtime";
 
 // ==========================================
 // HELPER: TAX & COMPLIANCE CALCULATOR
@@ -363,6 +364,24 @@ export async function processSale(
             processedAt:
               splitStatus === PaymentStatus.COMPLETED ? new Date() : undefined,
           });
+
+          // Link to unclaimed payment if reference is provided
+          if (paymentSplit.method === PaymentMethod.MPESA && paymentSplit.reference) {
+            const unclaimed = await tx.unclaimedPayment.findUnique({
+              where: { transId: paymentSplit.reference },
+            });
+
+            if (unclaimed && !unclaimed.claimed) {
+              await tx.unclaimedPayment.update({
+                where: { id: unclaimed.id },
+                data: {
+                  claimed: true,
+                  claimedAt: new Date(),
+                  claimedByUserId: memberId || 'system',
+                },
+              });
+            }
+          }
         }
 
         // --- 6. Transaction Status ---
@@ -691,6 +710,19 @@ export async function processSale(
         fulfillments: { include: { items: true } },
       },
     });
+
+    // --- 11. Real-time Notification ---
+    realtimeService
+      .publish(`org:${organizationId}:transactions`, "transaction:created", {
+        id: result.id,
+        number: result.number,
+        type: result.type,
+        status: result.status,
+        finalTotal: result.finalTotal,
+        customerName: completeTransaction?.customer?.name || "Walk-in Customer",
+        createdAt: result.createdAt,
+      })
+      .catch((err) => console.error("Failed to publish real-time update:", err));
 
     return {
       success: true,

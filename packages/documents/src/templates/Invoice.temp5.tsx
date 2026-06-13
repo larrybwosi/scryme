@@ -1,51 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer';
-
-// Define the invoice data structure
-export interface ModernInvoiceItem {
-  description: string;
-  details: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-}
-
-export interface ModernInvoiceData {
-  companyLogo?: string;
-  companyName: string;
-  companyTagline: string;
-  companyAddress: {
-    city: string;
-    street: string;
-    zipCode: string;
-  };
-  companyContact: {
-    phone: string;
-    fax: string;
-    email: string;
-  };
-  invoiceTo: {
-    name: string;
-    address: string;
-    phone: string;
-    fax: string;
-    email: string; // Added email to match target UI better if available
-  };
-  website: string;
-  invoiceDate: string;
-  invoiceNo: string;
-  items: ModernInvoiceItem[];
-  taxRate: number; // Tax rate as percentage (e.g., 7 for 7%)
-  discount: number; // Discount as percentage (e.g., 10 for 10%)
-  terms: string;
-  paymentInformation: string;
-  signature: {
-    name: string;
-    title: string;
-  };
-  termsAndConditions: string;
-  footerWebsite: string;
-}
+import { InvoiceData } from './invoice-templates';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -357,51 +312,51 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ModernInvoicePDF: React.FC<{ data: any }> = ({ data: inputData }) => {
-  const data: ModernInvoiceData = {
-    ...inputData,
-    companyName: inputData.companyName || inputData.company?.name || inputData.organization?.name,
-    companyTagline: inputData.companyTagline || '',
-    companyAddress: inputData.companyAddress || {
-      city: '',
-      street: inputData.company?.address || inputData.organization?.address || '',
+export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoiceData }) => {
+  const data = {
+    ...invoiceData,
+    companyName: invoiceData.companyName || invoiceData.company.name,
+    companyTagline: invoiceData.companyTagline || invoiceData.company.tagline || '',
+    companyAddress: {
+      city: invoiceData.company.city || '',
+      street: invoiceData.company.address,
       zipCode: '',
     },
-    companyContact: inputData.companyContact || {
-      phone: inputData.company?.phone || inputData.organization?.phone || '',
+    companyContact: invoiceData.companyContact || {
+      phone: invoiceData.company.phone || '',
       fax: '',
-      email: inputData.company?.email || inputData.organization?.email || '',
+      email: invoiceData.company.email || '',
     },
-    invoiceTo: inputData.invoiceTo || {
-      name: inputData.client?.name || inputData.customerName,
-      address: typeof inputData.client?.address === 'string' ? inputData.client.address : '',
-      phone: '',
+    invoiceTo: invoiceData.invoiceTo || {
+      name: invoiceData.client.name,
+      address: typeof invoiceData.client.address === 'string' ? invoiceData.client.address : '',
+      phone: invoiceData.client.phone || '',
       fax: '',
-      email: inputData.client?.email || '',
+      email: invoiceData.client.email || '',
     },
-    website: inputData.website || inputData.company?.website || '',
-    invoiceDate: inputData.date,
-    invoiceNo: inputData.invoiceNumber,
-    items: inputData.items.map((item: any) => ({
-      description: item.description,
-      details: '',
+    website: invoiceData.website || invoiceData.company.website || '',
+    invoiceDate: invoiceData.date,
+    invoiceNo: invoiceData.invoiceNumber,
+    items: invoiceData.items.map((item: any) => ({
+      description: item.description || item.itemName,
+      details: item.details || '',
       quantity: item.qty || item.quantity,
-      unitPrice: item.unitPrice || item.price,
+      unitPrice: item.unitPrice || item.price || item.rate,
       total: item.amount || item.total,
     })),
-    taxRate: inputData.taxRate || (inputData.tax / inputData.subtotal) * 100 || 0,
-    discount: inputData.discount || 0,
-    terms: inputData.terms || inputData.payment?.terms || '',
-    paymentInformation: inputData.paymentInformation || (inputData.payment?.availableMethods || []).join(', '),
-    signature: inputData.signature || { name: '', title: '' },
-    termsAndConditions: inputData.termsAndConditions || inputData.payment?.terms || '',
-    footerWebsite: inputData.footerWebsite || inputData.company?.website || '',
+    taxRate: invoiceData.taxRate || (invoiceData.tax / invoiceData.subtotal) * 100 || 0,
+    discount: invoiceData.discount || 0,
+    terms: invoiceData.terms || invoiceData.payment.terms || '',
+    paymentInformation: invoiceData.paymentInformation || (invoiceData.payment.availableMethods || []).join(', '),
+    signature: invoiceData.signature || { name: '', title: '' },
+    termsAndConditions: invoiceData.termsAndConditions || invoiceData.payment.terms || '',
+    footerWebsite: invoiceData.footerWebsite || invoiceData.company.website || '',
   };
   // Calculate totals
-  const subtotal = data.items.reduce((sum, item) => sum + item.total, 0);
-  const taxAmount = subtotal * (data.taxRate / 100);
-  const discountAmount = subtotal * (data.discount / 100);
-  const totalDue = subtotal + taxAmount - discountAmount;
+  const subtotal = invoiceData.subtotal;
+  const taxAmount = invoiceData.tax;
+  const discountAmount = (invoiceData as any).discountAmount || 0;
+  const totalDue = invoiceData.total || invoiceData.grandTotal || 0;
 
   return (
     <Document>
@@ -420,7 +375,7 @@ export const ModernInvoicePDF: React.FC<{ data: any }> = ({ data: inputData }) =
 
           <View style={styles.headerRight}>
             <Text style={styles.headerText}>
-              {data.companyAddress.city}, {data.companyAddress.street} {data.companyAddress.zipCode}
+              {data.companyAddress.city && `${data.companyAddress.city}, `}{data.companyAddress.street} {data.companyAddress.zipCode}
             </Text>
             <Text style={styles.headerText}>Phone: {data.companyContact.phone}</Text>
             <Text style={styles.headerText}>Fax: {data.companyContact.fax}</Text>
@@ -450,7 +405,7 @@ export const ModernInvoicePDF: React.FC<{ data: any }> = ({ data: inputData }) =
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Total Due:</Text>
                 <Text style={styles.infoValueLarge}>
-                  $ {totalDue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {invoiceData.currencySymbol} {totalDue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
               </View>
               <View style={styles.infoRow}>
@@ -488,12 +443,12 @@ export const ModernInvoicePDF: React.FC<{ data: any }> = ({ data: inputData }) =
                 </View>
                 <View style={styles.itemPrice}>
                   <Text style={styles.tableCell}>
-                    $ {item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {invoiceData.currencySymbol} {item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </Text>
                 </View>
                 <View style={styles.itemTotal}>
                   <Text style={styles.tableCell}>
-                    $ {item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {invoiceData.currencySymbol} {item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </Text>
                 </View>
               </View>
@@ -515,22 +470,22 @@ export const ModernInvoicePDF: React.FC<{ data: any }> = ({ data: inputData }) =
           <View style={styles.rightBottom}>
             <View style={styles.totalsRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>$ {subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+              <Text style={styles.totalValue}>{invoiceData.currencySymbol} {subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
             </View>
             <View style={styles.totalsRow}>
-              <Text style={styles.totalLabel}>Tax Rate {data.taxRate}%</Text>
-              <Text style={styles.totalValue}>$ {taxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+              <Text style={styles.totalLabel}>Tax Rate {data.taxRate.toFixed(1)}%</Text>
+              <Text style={styles.totalValue}>{invoiceData.currencySymbol} {taxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalLabel}>Discount {data.discount}%</Text>
               <Text style={styles.discountValue}>
-                - $ {discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                - {invoiceData.currencySymbol} {discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </Text>
             </View>
             <View style={[styles.totalsRow, styles.grandTotalRow]}>
               <Text style={styles.grandTotalLabel}>Total Due:</Text>
               <Text style={styles.grandTotalValue}>
-                $ {totalDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {invoiceData.currencySymbol} {totalDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </View>

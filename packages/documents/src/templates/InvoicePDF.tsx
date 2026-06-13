@@ -1,10 +1,8 @@
-// components/documents/InvoicePDF.tsx
-
 import React from 'react';
-import { Page, Document, Image, StyleSheet, Text, View, Font } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View, Font } from '@react-pdf/renderer';
+import { InvoiceData } from './invoice-templates';
 
 // Register a professional and clean font (e.g., Lato from Google Fonts)
-// Download the .ttf files and place them in your `public/fonts` directory
 Font.register({
   family: 'Lato',
   fonts: [
@@ -13,11 +11,10 @@ Font.register({
   ],
 });
 
-// Define styles for the invoice
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Lato',
-    fontSize: 11,
+    fontSize: 10,
     padding: 30,
     color: '#333',
     backgroundColor: '#fff',
@@ -31,9 +28,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#4A90E2',
     paddingBottom: 10,
   },
-  companyLogo: {
-    width: 60,
-    height: 60,
+  companyName: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   invoiceTitle: {
     fontSize: 28,
@@ -65,6 +62,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 2,
   },
+  label: {
+    fontSize: 9,
+    color: '#777',
+    marginBottom: 2,
+  },
   table: {
     width: '100%',
     marginBottom: 20,
@@ -74,8 +76,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#4A90E2',
     color: '#fff',
     padding: 5,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
   },
   tableRow: {
     flexDirection: 'row',
@@ -111,40 +111,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  totalsSection: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  totalSection: {
+    alignItems: 'flex-end',
     marginTop: 10,
   },
-  totalsTable: {
-    width: '40%',
-  },
-  totalsRow: {
+  totalRow: {
     flexDirection: 'row',
+    width: '40%',
     justifyContent: 'space-between',
     padding: 3,
   },
-  totalsLabel: {
-    fontSize: 10,
-  },
-  totalsValue: {
-    fontSize: 10,
-    textAlign: 'right',
-  },
-  grandTotalRow: {
+  grandTotal: {
+    fontWeight: 'bold',
+    fontSize: 12,
     marginTop: 5,
     paddingTop: 5,
     borderTopWidth: 2,
     borderTopColor: '#4A90E2',
-  },
-  grandTotalLabel: {
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  grandTotalValue: {
-    fontWeight: 'bold',
-    fontSize: 12,
-    textAlign: 'right',
   },
   footer: {
     position: 'absolute',
@@ -163,110 +146,91 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   qrCode: {
-    width: 80, // Larger QR Code
+    width: 80,
     height: 80,
   },
 });
 
 interface InvoicePDFProps {
-  data: any; // Define a proper type for your invoice data
-  qrCode: string;
+  data: InvoiceData;
+  qrCode?: string;
 }
 
-export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => {
-  const invoiceData = data;
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          {/* You can use a real company logo here */}
-          {/* <Image style={styles.companyLogo} src={invoiceData.company.logo} /> */}
+export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.companyName}>{data.company?.name}</Text>
+          <Text style={styles.text}>{data.company?.address}</Text>
+        </View>
+        <View style={styles.companyInfo}>
           <Text style={styles.invoiceTitle}>INVOICE</Text>
-          <View style={styles.companyInfo}>
-            <Text style={{ ...styles.text, fontWeight: 'bold', fontSize: 12 }}>{invoiceData.company.name}</Text>
-            <Text style={styles.text}>{invoiceData.company.address}</Text>
-            <Text style={styles.text}>{invoiceData.company.phone}</Text>
-            <Text style={styles.text}>{invoiceData.company.email}</Text>
-          </View>
+          <Text style={styles.text}>#{data.invoiceNumber}</Text>
+          <Text style={styles.text}>{data.date}</Text>
         </View>
+      </View>
 
-        {/* Bill To & Invoice Details */}
-        <View style={styles.section}>
-          <View style={styles.billTo}>
-            <Text style={styles.sectionTitle}>Bill To</Text>
-            <Text style={{ ...styles.text, fontWeight: 'bold' }}>{invoiceData.client.name}</Text>
-            <Text style={styles.text}>{invoiceData.client.address}</Text>
-            <Text style={styles.text}>{invoiceData.client.email}</Text>
-          </View>
-          <View style={styles.invoiceDetails}>
-            <Text style={styles.sectionTitle}>Invoice Details</Text>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>Invoice #:</Text> {invoiceData.invoiceNumber}
+      {/* Bill To & Invoice Details Info */}
+      <View style={styles.section}>
+        <View style={styles.billTo}>
+          <Text style={styles.sectionTitle}>Bill To</Text>
+          <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.customerName}</Text>
+          <Text style={styles.text}>{data.customerAddress}</Text>
+        </View>
+      </View>
+
+      {/* Items Table */}
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.headerText, styles.colDescription]}>Description</Text>
+          <Text style={[styles.headerText, styles.colQty]}>Qty</Text>
+          <Text style={[styles.headerText, styles.colPrice]}>Unit Price</Text>
+          <Text style={[styles.headerText, styles.colAmount]}>Amount</Text>
+        </View>
+        {data.items?.map((item: any, i: number) => (
+          <View key={i} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}>
+            <Text style={styles.colDescription}>{item.description || item.itemName}</Text>
+            <Text style={styles.colQty}>{item.qty || item.quantity}</Text>
+            <Text style={styles.colPrice}>
+              {data.currencySymbol}{(item.price || item.unitPrice || item.rate || 0).toFixed(2)}
             </Text>
-            <Text style={styles.text}>
-              <Text style={{ fontWeight: 'bold' }}>Date:</Text> {invoiceData.date}
+            <Text style={styles.colAmount}>
+              {data.currencySymbol}{(item.amount || item.total || ((item.qty || item.quantity || 0) * (item.price || item.unitPrice || 0))).toFixed(2)}
             </Text>
           </View>
-        </View>
+        ))}
+      </View>
 
-        {/* Items Table */}
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.headerText, styles.colDescription]}>Description</Text>
-            <Text style={[styles.headerText, styles.colQty]}>Qty</Text>
-            <Text style={[styles.headerText, styles.colPrice]}>Unit Price</Text>
-            <Text style={[styles.headerText, styles.colAmount]}>Amount</Text>
-          </View>
-          {invoiceData.items.map((item: any, index: number) => (
-            <View key={index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowAlt : {}]}>
-              <Text style={styles.colDescription}>{item.description}</Text>
-              <Text style={styles.colQty}>{item.qty}</Text>
-              <Text style={styles.colPrice}>
-                {invoiceData.currencySymbol} {item.price ? item.price.toFixed(2) : item.unitPrice.toFixed(2)}
-              </Text>
-              <Text style={styles.colAmount}>
-                {invoiceData.currencySymbol} {item.amount ? item.amount.toFixed(2) : (item.qty * item.unitPrice).toFixed(2)}
-              </Text>
-            </View>
-          ))}
+      {/* Totals Section */}
+      <View style={styles.totalSection}>
+        <View style={styles.totalRow}>
+          <Text>Subtotal</Text>
+          <Text>{data.currencySymbol}{(data.subtotal || 0).toFixed(2)}</Text>
         </View>
+        <View style={styles.totalRow}>
+          <Text>Tax</Text>
+          <Text>{data.currencySymbol}{(data.tax || 0).toFixed(2)}</Text>
+        </View>
+        <View style={[styles.totalRow, styles.grandTotal]}>
+          <Text>Total</Text>
+          <Text>{data.currencySymbol}{(data.total || data.grandTotal || 0).toFixed(2)}</Text>
+        </View>
+      </View>
 
-        {/* Totals */}
-        <View style={styles.totalsSection}>
-          <View style={styles.totalsTable}>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Subtotal</Text>
-              <Text style={styles.totalsValue}>
-                {invoiceData.currencySymbol} {invoiceData.subtotal.toFixed(2)}
-              </Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Tax</Text>
-              <Text style={styles.totalsValue}>
-                {invoiceData.currencySymbol} {invoiceData.tax.toFixed(2)}
-              </Text>
-            </View>
-            <View style={[styles.totalsRow, styles.grandTotalRow]}>
-              <Text style={styles.grandTotalLabel}>Total Due</Text>
-              <Text style={styles.grandTotalValue}>
-                {invoiceData.currencySymbol} {invoiceData.total.toFixed(2)}
-              </Text>
-            </View>
-          </View>
+      {/* Footer with Notes & QR Code */}
+      <View style={styles.footer}>
+        <View style={{ flex: 1, marginRight: 20 }}>
+          {data.notes && (
+            <>
+              <Text style={styles.sectionTitle}>Notes</Text>
+              <Text style={styles.footerText}>{data.notes}</Text>
+            </>
+          )}
         </View>
-
-        {/* Footer with QR Code */}
-        <View style={styles.footer}>
-          <View>
-            <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={styles.footerText}>{invoiceData.notes}</Text>
-            <Text style={{ ...styles.sectionTitle, marginTop: 10 }}>Payment Terms</Text>
-            <Text style={styles.footerText}>{invoiceData.payment.terms}</Text>
-          </View>
-          <Image style={styles.qrCode} src={qrCode} />
-        </View>
-      </Page>
-    </Document>
-  );
-};
+        {qrCode && <Image style={styles.qrCode} src={qrCode} />}
+      </View>
+    </Page>
+  </Document>
+);

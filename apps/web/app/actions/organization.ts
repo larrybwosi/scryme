@@ -60,7 +60,7 @@ export async function createOrganization(data: {
 
   // Clear session cache to reflect the new organization immediately
   try {
-    const { getRedisClient } = await import("@repo/shared");
+    const { getRedisClient } = await import("@repo/shared/server");
     const redis = await getRedisClient();
     await redis.del(`session-cache:${auth.user.id}`);
   } catch (e) {
@@ -90,6 +90,21 @@ export async function updateOrganizationSettings(data: {
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  return settings;
+}
+
+export async function updateInvoiceTemplate(templateId: string): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const settings = await db.organizationSettings.update({
+    where: { organizationId: auth.organizationId },
+    data: {
+      defaultInvoiceTemplate: templateId,
+    },
+  });
+
+  revalidatePath("/settings/documents");
   return settings;
 }
 
