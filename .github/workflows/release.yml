@@ -379,6 +379,8 @@ jobs:
       - name: Prepare latest.json artifact
         if: matrix.variant != 'standalone'
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VARIANT="${{ matrix.variant }}"
           # Find the updater JSON. Tauri 2 puts it in the bundle directory.

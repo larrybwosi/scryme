@@ -17,6 +17,9 @@ model Attachment {
   transactionId      String?
   transactions        Transaction?      @relation(fields: [transactionId], references: [id])
 
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
   purchaseId  String?
   purchase    Purchase?  @relation(fields: [purchaseId], references: [id])
   expenseId  String?

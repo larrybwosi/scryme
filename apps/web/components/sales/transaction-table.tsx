@@ -25,11 +25,13 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { cn } from "@repo/ui/lib/utils";
 import { TransactionDetailsSheet } from './transaction-details-sheet';
+import { ManageDeliveryModal } from './manage-delivery-modal';
 
 export function TransactionTable({ transactions }: { transactions: any[] }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paymentTrx, setPaymentTrx] = useState<any>(null);
   const [viewTransactionId, setViewTransactionId] = useState<string | null>(null);
+  const [manageDeliveryTrx, setManageDeliveryTrx] = useState<any>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev =>
@@ -137,7 +139,19 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
                    <StatusBadge status={trx.status} />
                 </td>
                 <td className="px-6 py-4">
-                   <PaymentStatusBadge status={trx.paymentStatus} />
+                  <div className="flex flex-col gap-1.5 min-w-[120px]">
+                    <PaymentStatusBadge status={trx.paymentStatus} />
+                    <div className="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden border border-zinc-200/50">
+                      <div
+                        className={cn(
+                          "h-full transition-all duration-500",
+                          trx.paymentStatus === 'PAID' ? "bg-emerald-500" :
+                          trx.paymentStatus === 'PARTIALLY_PAID' ? "bg-amber-500" : "bg-zinc-300"
+                        )}
+                        style={{ width: `${Math.min(100, (Number(trx.totalPaid || 0) / Number(trx.finalTotal || 1)) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <DropdownMenu>
@@ -151,10 +165,12 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
                       <DropdownMenuItem onClick={() => setViewTransactionId(trx.id)}>
                         <Eye className="mr-2 h-4 w-4" /> View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setPaymentTrx(trx)}>
-                        <CreditCard className="mr-2 h-4 w-4" /> Add Payment
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      {trx.type !== "POS_SALE" && trx.paymentStatus !== "PAID" && (
+                        <DropdownMenuItem onClick={() => setPaymentTrx(trx)}>
+                          <CreditCard className="mr-2 h-4 w-4" /> Add Payment
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => setManageDeliveryTrx(trx)}>
                         <Truck className="mr-2 h-4 w-4" /> Manage Delivery
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -201,6 +217,12 @@ export function TransactionTable({ transactions }: { transactions: any[] }) {
         transactionId={viewTransactionId}
         isOpen={!!viewTransactionId}
         onClose={() => setViewTransactionId(null)}
+      />
+
+      <ManageDeliveryModal
+        transaction={manageDeliveryTrx}
+        isOpen={!!manageDeliveryTrx}
+        onClose={() => setManageDeliveryTrx(null)}
       />
     </div>
   );

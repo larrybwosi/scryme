@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -17,9 +17,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import {
-  format
-} from 'date-fns';
+import { format } from "date-fns";
 import {
   Package,
   Truck,
@@ -29,16 +27,21 @@ import {
   MapPin,
   FileText,
   CheckCircle2,
-  AlertCircle,
-  ArrowRight,
-  MoreVertical,
   Download,
   Receipt,
-} from 'lucide-react';
-import { getTransactionById, updateTransactionStatus } from '../../app/actions/sales';
+  Building2,
+  Calendar,
+  Paperclip,
+  Plus,
+} from "lucide-react";
+import {
+  getTransactionById,
+  updateTransactionStatus,
+} from "../../app/actions/sales";
 import { cn } from "@repo/ui/lib/utils";
-import { toast } from 'sonner';
-import { AddPaymentModal } from './add-payment-modal';
+import { toast } from "sonner";
+import { AddPaymentModal } from "./add-payment-modal";
+import { addAttachmentToPayment } from "../../app/actions/sales";
 
 interface TransactionDetailsSheetProps {
   transactionId: string | null;
@@ -62,7 +65,7 @@ export function TransactionDetailsSheet({
       const data = await getTransactionById(transactionId);
       setTransaction(data);
     } catch (error) {
-      toast.error('Failed to fetch transaction details');
+      toast.error("Failed to fetch transaction details");
     } finally {
       setIsLoading(false);
     }
@@ -81,16 +84,43 @@ export function TransactionDetailsSheet({
       toast.success(`Status updated to ${status}`);
       fetchTransaction();
     } catch (error) {
-      toast.error('Failed to update status');
+      toast.error("Failed to update status");
     }
+  };
+
+  const handleAddAttachment = async (paymentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // NOTE: In a real production environment, you would upload the file to a storage provider
+      // like S3, Google Cloud Storage, or Cloudinary and use the returned permanent URL.
+      await addAttachmentToPayment(paymentId, {
+        fileName: file.name,
+        fileUrl: `https://storage.example.com/payments/${Date.now()}-${file.name}`,
+        mimeType: file.type,
+        sizeBytes: file.size,
+      });
+      toast.success("Attachment added to payment");
+      fetchTransaction();
+    } catch (error) {
+      toast.error("Failed to add attachment");
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: transaction?.currencyCode || "USD",
+    }).format(amount);
   };
 
   if (!transaction && isLoading) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="sm:max-w-[600px]">
+        <SheetContent className="sm:max-w-[650px]">
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900" />
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-900 border-t-transparent" />
           </div>
         </SheetContent>
       </Sheet>
@@ -101,265 +131,476 @@ export function TransactionDetailsSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-[700px] p-0 flex flex-col h-full bg-zinc-50/50">
-        <div className="p-6 bg-white border-b sticky top-0 z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <SheetTitle className="text-2xl font-bold">{transaction.number}</SheetTitle>
-                <Badge variant="outline" className="uppercase font-bold text-[10px]">
+      <SheetContent className="sm:max-w-[720px] p-0 flex flex-col h-full bg-zinc-50 border-l border-zinc-200">
+        {/* Header Block */}
+        <div className="p-6 bg-white border-b border-zinc-200 sticky top-0 z-10 shadow-sm shadow-zinc-100/40">
+          <div className="flex items-start justify-between mb-6">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5">
+                <SheetTitle className="text-xl font-mono tracking-tight font-semibold text-zinc-900">
+                  {transaction.number}
+                </SheetTitle>
+                <Badge
+                  variant="secondary"
+                  className="font-mono text-[10px] tracking-wider uppercase bg-zinc-100 text-zinc-700 hover:bg-zinc-100 rounded border border-zinc-200/60 px-1.5 py-0"
+                >
                   {transaction.type}
                 </Badge>
               </div>
-              <p className="text-sm text-zinc-500">
-                Created on {format(new Date(transaction.createdAt), 'PPPP p')}
+              <p className="text-xs text-zinc-500 flex items-center gap-1.5 font-medium">
+                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                Created{" "}
+                {format(
+                  new Date(transaction.createdAt),
+                  "MMM d, yyyy • hh:mm a",
+                )}
               </p>
             </div>
+
             <div className="flex items-center gap-2">
-               <Button variant="outline" size="sm" className="gap-2" asChild>
-                 <a href={`/api/sales/documents/${transaction.id}?type=invoice`} download>
-                   <Download className="w-4 h-4" />
-                   Invoice
-                 </a>
-               </Button>
-               <Button variant="outline" size="sm" className="gap-2" asChild>
-                 <a href={`/api/sales/documents/${transaction.id}?type=receipt`} download>
-                   <Receipt className="w-4 h-4" />
-                   Receipt
-                 </a>
-               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
+                asChild
+              >
+                <a
+                  href={`/api/sales/documents/${transaction.id}?type=invoice`}
+                  download
+                >
+                  <Download className="w-3.5 h-3.5 text-zinc-500" />
+                  Invoice
+                </a>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
+                asChild
+              >
+                <a
+                  href={`/api/sales/documents/${transaction.id}?type=receipt`}
+                  download
+                >
+                  <Receipt className="w-3.5 h-3.5 text-zinc-500" />
+                  Receipt
+                </a>
+              </Button>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase font-bold text-zinc-400">Status</span>
+          {/* Metric Summary Bar */}
+          <div className="grid grid-cols-3 gap-4 bg-zinc-50/70 rounded-lg p-3.5 border border-zinc-200/60">
+            <div className="space-y-1">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+                Order Status
+              </span>
               <StatusBadge status={transaction.status} />
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase font-bold text-zinc-400">Payment</span>
+            <div className="space-y-1 border-l border-zinc-200/80 pl-4">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+                Payment Status
+              </span>
               <PaymentStatusBadge status={transaction.paymentStatus} />
             </div>
-            <div className="flex flex-col gap-1 ml-auto text-right">
-              <span className="text-[10px] uppercase font-bold text-zinc-400">Total Amount</span>
-              <span className="text-xl font-bold text-zinc-900">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(transaction.finalTotal)}
+            <div className="space-y-0.5 border-l border-zinc-200/80 pl-4 text-right">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+                Total Gross Amount
+              </span>
+              <span className="text-lg font-semibold tracking-tight font-mono text-zinc-900">
+                {formatCurrency(transaction.finalTotal)}
               </span>
             </div>
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
-          <div className="p-6 space-y-8">
-            {/* Timeline Workflow */}
-            <section>
-              <h3 className="text-sm font-bold text-zinc-900 mb-6 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Order Workflow
+        {/* Dynamic Content Panel */}
+        <ScrollArea className="flex-1 bg-zinc-50">
+          <div className="p-6 space-y-6">
+            {/* Timeline Workflow Component */}
+            <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-sm shadow-zinc-100/50">
+              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                Fulfillment Workflow Line
               </h3>
-              <TransactionTimeline transaction={transaction} />
-            </section>
+              <TransactionTimeline currentStatus={transaction.status} />
+            </div>
 
+            {/* Core Tab System */}
             <Tabs defaultValue="items" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-zinc-100 p-1">
-                <TabsTrigger value="items">Items ({transaction.items?.length || 0})</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
-                <TabsTrigger value="details">Customer & Delivery</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-3 bg-zinc-200/60 p-1 border border-zinc-200/40 rounded-lg">
+                <TabsTrigger
+                  value="items"
+                  className="text-xs font-medium data-[state=active]:shadow-sm"
+                >
+                  Line Items ({transaction.items?.length || 0})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="payments"
+                  className="text-xs font-medium data-[state=active]:shadow-sm"
+                >
+                  Ledger & Payments
+                </TabsTrigger>
+                <TabsTrigger
+                  value="details"
+                  className="text-xs font-medium data-[state=active]:shadow-sm"
+                >
+                  Entity Details
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="items" className="mt-6">
-                <div className="bg-white border rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-zinc-50 border-b">
-                      <tr>
-                        <th className="px-4 py-3 font-semibold text-zinc-600">Product</th>
-                        <th className="px-4 py-3 font-semibold text-zinc-600 text-center">Qty</th>
-                        <th className="px-4 py-3 font-semibold text-zinc-600 text-right">Unit</th>
-                        <th className="px-4 py-3 font-semibold text-zinc-600 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {transaction.items?.map((item: any) => (
-                        <tr key={item.id}>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-zinc-900">{item.productName}</span>
-                              <span className="text-xs text-zinc-500">{item.variantName} ({item.sku})</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-center">{item.quantity}</td>
-                          <td className="px-4 py-3 text-right">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(item.unitPrice)}
-                          </td>
-                          <td className="px-4 py-3 text-right font-medium">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(item.lineTotal)}
-                          </td>
+              {/* Items Panel */}
+              <TabsContent value="items" className="mt-4 outline-none">
+                <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm shadow-zinc-100/50">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-zinc-50/70 border-b border-zinc-200/80">
+                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider">
+                            Product / SKU
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider text-center w-16">
+                            Qty
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider text-right w-28">
+                            Unit Price
+                          </th>
+                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider text-right w-28">
+                            Total
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-zinc-50/50 font-medium">
-                      <tr>
-                        <td colSpan={3} className="px-4 py-2 text-right text-zinc-500 text-xs uppercase">Subtotal</td>
-                        <td className="px-4 py-2 text-right">
-                           {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(transaction.subtotal)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={3} className="px-4 py-2 text-right text-zinc-500 text-xs uppercase">Tax</td>
-                        <td className="px-4 py-2 text-right">
-                           {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(transaction.taxTotal)}
-                        </td>
-                      </tr>
-                      <tr className="text-zinc-900 border-t">
-                        <td colSpan={3} className="px-4 py-3 text-right font-bold uppercase">Final Total</td>
-                        <td className="px-4 py-3 text-right font-bold text-lg">
-                           {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(transaction.finalTotal)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 font-medium text-zinc-700">
+                        {transaction.items?.map((item: any) => (
+                          <tr
+                            key={item.id}
+                            className="hover:bg-zinc-50/40 transition-colors"
+                          >
+                            <td className="px-4 py-3">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-semibold text-zinc-900">
+                                  {item.productName}
+                                </span>
+                                <span className="text-[11px] font-mono text-zinc-400 font-normal">
+                                  {item.variantName
+                                    ? `${item.variantName} • `
+                                    : ""}
+                                  {item.sku}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono text-zinc-600">
+                              {item.quantity}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-zinc-600">
+                              {formatCurrency(item.unitPrice)}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono font-semibold text-zinc-900">
+                              {formatCurrency(item.lineTotal)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Financial Reconciliation Summary */}
+                  <div className="bg-zinc-50/50 border-t border-zinc-200/80 p-4 font-medium text-xs space-y-2.5 w-full ml-auto sm:max-w-[340px]">
+                    <div className="flex justify-between text-zinc-500">
+                      <span>Subtotal</span>
+                      <span className="font-mono text-zinc-700">
+                        {formatCurrency(transaction.subtotal)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-zinc-500">
+                      <span>Tax Ledger</span>
+                      <span className="font-mono text-zinc-700">
+                        {formatCurrency(transaction.taxTotal)}
+                      </span>
+                    </div>
+                    <Separator className="bg-zinc-200/60 my-1" />
+                    <div className="flex justify-between items-baseline text-zinc-900">
+                      <span className="font-semibold">Grand Total</span>
+                      <span className="font-mono text-base font-bold text-zinc-950 tracking-tight">
+                        {formatCurrency(transaction.finalTotal)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="payments" className="mt-6">
-                 <div className="space-y-4">
-                    {transaction.payments?.length > 0 ? (
-                      transaction.payments.map((payment: any) => (
-                        <div key={payment.id} className="bg-white border rounded-xl p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                              <CreditCard className="w-5 h-5" />
+              {/* Payments Panel */}
+              <TabsContent
+                value="payments"
+                className="mt-4 space-y-4 outline-none"
+              >
+                <div className="space-y-3">
+                  {transaction.payments?.length > 0 ? (
+                    transaction.payments.map((payment: any) => (
+                      <div
+                        key={payment.id}
+                        className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm shadow-zinc-100/50 space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-600 shadow-sm">
+                              <CreditCard className="w-4 h-4 text-zinc-500" />
                             </div>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-zinc-900">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: transaction.currencyCode || 'USD' }).format(payment.amount)}
+                            <div className="space-y-0.5">
+                              <span className="font-mono text-sm font-semibold text-zinc-900 block">
+                                {formatCurrency(payment.amount)}
                               </span>
-                              <span className="text-xs text-zinc-500">
-                                {payment.method.replace(/_/g, ' ')} • {format(new Date(payment.createdAt), 'MMM d, HH:mm')}
+                              <span className="text-[11px] text-zinc-400 block font-medium">
+                                {payment.method.replace(/_/g, " ")} •{" "}
+                                {format(
+                                  new Date(payment.createdAt),
+                                  "MMM d, yyyy HH:mm",
+                                )}
                               </span>
                             </div>
                           </div>
-                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <Badge
+                            variant="outline"
+                            className="bg-emerald-50/60 text-emerald-700 border-emerald-200 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5"
+                          >
                             {payment.status}
                           </Badge>
                         </div>
-                      ))
-                    ) : (
-                      <div className="bg-white border rounded-xl p-8 text-center">
-                        <p className="text-zinc-500 text-sm">No payments recorded yet.</p>
+
+                        {/* Cheque Details & Notes */}
+                        {(payment.method === "CHEQUE" || payment.notes) && (
+                          <div className="bg-zinc-50/50 rounded-lg p-2.5 border border-zinc-100 text-[11px] space-y-1.5">
+                            {payment.method === "CHEQUE" && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Bank Name</span>
+                                  <span className="text-zinc-700 font-semibold">{payment.bankName || 'N/A'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Cheque Date</span>
+                                  <span className="text-zinc-700 font-semibold">
+                                    {payment.chequeDate ? format(new Date(payment.chequeDate), 'MMM d, yyyy') : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            {payment.notes && (
+                              <div>
+                                <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Payment Notes</span>
+                                <p className="text-zinc-600 italic leading-relaxed">{payment.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Attachments Section */}
+                        <div className="space-y-2">
+                           <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Attachments</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-1.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 gap-1"
+                                onClick={() => document.getElementById(`payment-att-${payment.id}`)?.click()}
+                              >
+                                <Plus className="w-3 h-3" /> Add Proof
+                              </Button>
+                              <input
+                                id={`payment-att-${payment.id}`}
+                                type="file"
+                                className="hidden"
+                                onChange={(e) => handleAddAttachment(payment.id, e)}
+                              />
+                           </div>
+
+                           {payment.attachments?.length > 0 ? (
+                             <div className="flex flex-wrap gap-2">
+                               {payment.attachments.map((att: any) => (
+                                 <a
+                                   key={att.id}
+                                   href={att.fileUrl}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                                 >
+                                   <Paperclip className="w-3 h-3 text-zinc-400" />
+                                   <span className="max-w-[100px] truncate">{att.fileName}</span>
+                                 </a>
+                               ))}
+                             </div>
+                           ) : (
+                             <p className="text-[10px] text-zinc-400 italic">No attachments found</p>
+                           )}
+                        </div>
                       </div>
-                    )}
+                    ))
+                  ) : (
+                    <div className="bg-white border border-dashed border-zinc-200 rounded-xl p-8 text-center">
+                      <p className="text-zinc-400 text-xs font-medium">
+                        No financial transactions recorded.
+                      </p>
+                    </div>
+                  )}
+
+                  {transaction.type !== "POS_SALE" && transaction.paymentStatus !== "PAID" && (
                     <Button
-                      className="w-full gap-2 py-6 text-base font-bold"
+                      className="w-full gap-2 h-10 text-xs font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm mt-1"
                       variant="outline"
                       onClick={() => setIsPaymentModalOpen(true)}
-                      disabled={transaction.paymentStatus === 'PAID'}
                     >
-                      <CreditCard className="w-4 h-4" />
-                      Add New Payment
+                      <CreditCard className="w-3.5 h-3.5 text-zinc-500" />
+                      Register Payment Transaction
                     </Button>
-                 </div>
+                  )}
+                </div>
               </TabsContent>
 
-              <TabsContent value="details" className="mt-6 space-y-6">
+              {/* Customer & Location Panel */}
+              <TabsContent
+                value="details"
+                className="mt-4 space-y-4 outline-none"
+              >
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white border rounded-xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase flex items-center gap-2">
-                      <User className="w-3 h-3" /> Customer Information
+                  <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3 shadow-sm shadow-zinc-100/50">
+                    <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
+                      <User className="w-3 h-3 text-zinc-400" /> Account Profile
                     </h4>
-                    <div className="space-y-1">
-                      <p className="font-bold text-zinc-900">{transaction.customer?.name || 'Walk-in Customer'}</p>
-                      <p className="text-sm text-zinc-500">{transaction.customer?.email || 'No email'}</p>
-                      <p className="text-sm text-zinc-500">{transaction.customer?.phone || 'No phone'}</p>
+                    <div className="text-xs space-y-1">
+                      <p className="font-semibold text-zinc-900">
+                        {transaction.customer?.name || "Anonymous Customer"}
+                      </p>
+                      <p className="text-zinc-500 font-mono text-[11px]">
+                        {transaction.customer?.email ||
+                          "No electronic billing mail"}
+                      </p>
+                      <p className="text-zinc-500 font-mono text-[11px]">
+                        {transaction.customer?.phone ||
+                          "No active contact record"}
+                      </p>
                     </div>
                   </div>
-                  <div className="bg-white border rounded-xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-zinc-400 uppercase flex items-center gap-2">
-                      <MapPin className="w-3 h-3" /> Sales Location
+
+                  <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3 shadow-sm shadow-zinc-100/50">
+                    <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
+                      <MapPin className="w-3 h-3 text-zinc-400" /> Hub &
+                      Management
                     </h4>
-                    <div className="space-y-1">
-                      <p className="font-bold text-zinc-900">{transaction.location?.name}</p>
-                      <p className="text-sm text-zinc-500">Managed by {transaction.member?.user?.name}</p>
+                    <div className="text-xs space-y-1">
+                      <p className="font-semibold text-zinc-900 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-zinc-400" />{" "}
+                        {transaction.location?.name}
+                      </p>
+                      <p className="text-zinc-500">
+                        Corporate Member:{" "}
+                        <span className="text-zinc-700 font-medium">
+                          {transaction.member?.user?.name}
+                        </span>
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border rounded-xl p-4 space-y-4">
-                  <h4 className="text-xs font-bold text-zinc-400 uppercase flex items-center gap-2">
-                    <Truck className="w-3 h-3" /> Fulfillment Tracking
+                {/* Logistics Block */}
+                <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3.5 shadow-sm shadow-zinc-100/50">
+                  <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
+                    <Truck className="w-3 h-3 text-zinc-400" /> Order
+                    Fulfillment Registry
                   </h4>
                   {transaction.fulfillments?.length > 0 ? (
                     <div className="space-y-4">
                       {transaction.fulfillments.map((f: any) => (
-                        <div key={f.id} className="flex items-start gap-4">
-                          <div className="mt-1">
-                             <Truck className="w-5 h-5 text-indigo-600" />
+                        <div
+                          key={f.id}
+                          className="flex items-start gap-3 text-xs"
+                        >
+                          <div className="mt-0.5 p-1.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-600">
+                            <Truck className="w-3.5 h-3.5" />
                           </div>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-zinc-900">{f.type} Fulfillment</span>
-                              <Badge variant="outline">{f.status}</Badge>
+                              <span className="font-semibold text-zinc-900">
+                                {f.type} Dispatched
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] uppercase tracking-wider bg-zinc-50 px-1.5 font-semibold text-zinc-600 rounded"
+                              >
+                                {f.status}
+                              </Badge>
                             </div>
-                            <p className="text-xs text-zinc-500">
-                              Method: {f.type} {f.carrier && `via ${f.carrier}`}
+                            <p className="text-[11px] text-zinc-500">
+                              Provider Method: {f.type}{" "}
+                              {f.carrier && `via ${f.carrier}`}
                             </p>
                             {f.trackingNumber && (
-                               <p className="text-xs text-zinc-900 font-medium">Tracking: {f.trackingNumber}</p>
+                              <p className="text-[11px] font-mono text-zinc-900 bg-zinc-50 border border-zinc-100 inline-block px-1.5 py-0.5 rounded mt-1">
+                                Tracking Ref: {f.trackingNumber}
+                              </p>
                             )}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-zinc-500 italic">No fulfillment records found.</p>
+                    <p className="text-xs text-zinc-400 italic">
+                      No historical logistics/fulfillment updates initialized.
+                    </p>
                   )}
                 </div>
 
+                {/* Audit & Manifest Notes */}
                 {transaction.notes && (
-                   <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-                     <h4 className="text-xs font-bold text-amber-900 uppercase mb-2">Order Notes</h4>
-                     <p className="text-sm text-amber-800">{transaction.notes}</p>
-                   </div>
+                  <div className="bg-amber-50/40 border border-amber-200/60 rounded-xl p-4 space-y-1.5">
+                    <h4 className="text-[10px] font-semibold text-amber-800 uppercase tracking-wider">
+                      Internal Operations Memo
+                    </h4>
+                    <p className="text-xs text-amber-900/90 leading-relaxed font-medium">
+                      {transaction.notes}
+                    </p>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
           </div>
         </ScrollArea>
 
-        <div className="p-6 bg-white border-t flex gap-3">
+        {/* Global Action Footer */}
+        <div className="p-4 bg-white border-t border-zinc-200 flex items-center gap-3 shadow-md shadow-zinc-900/10">
           <Button
             variant="outline"
-            className="flex-1"
-            onClick={() => handleStatusUpdate('CANCELLED')}
-            disabled={['COMPLETED', 'CANCELLED'].includes(transaction.status)}
+            className="flex-1 h-10 text-xs font-semibold text-red-600 border-zinc-200 hover:bg-red-50/50 hover:border-red-200 hover:text-red-700 transition-colors"
+            onClick={() => handleStatusUpdate("CANCELLED")}
+            disabled={["COMPLETED", "CANCELLED"].includes(transaction.status)}
           >
             Cancel Order
           </Button>
-          {transaction.status === 'PENDING_CONFIRMATION' && (
+
+          {transaction.status === "PENDING_CONFIRMATION" && (
             <Button
-              className="flex-1 bg-zinc-900 hover:bg-zinc-800"
-              onClick={() => handleStatusUpdate('CONFIRMED')}
+              className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
+              onClick={() => handleStatusUpdate("CONFIRMED")}
             >
-              Confirm Order
+              Approve Statement
             </Button>
           )}
-          {transaction.status === 'CONFIRMED' && (
+          {transaction.status === "CONFIRMED" && (
             <Button
-              className="flex-1 bg-zinc-900 hover:bg-zinc-800"
-              onClick={() => handleStatusUpdate('PROCESSING')}
+              className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
+              onClick={() => handleStatusUpdate("PROCESSING")}
             >
-              Start Processing
+              Release to Processing
             </Button>
           )}
-           {transaction.status === 'PROCESSING' && (
+          {transaction.status === "PROCESSING" && (
             <Button
-              className="flex-1 bg-zinc-900 hover:bg-zinc-800"
-              onClick={() => handleStatusUpdate('COMPLETED')}
+              className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
+              onClick={() => handleStatusUpdate("COMPLETED")}
             >
-              Complete Order
+              Mark Dispatch Completed
             </Button>
           )}
         </div>
+
         <AddPaymentModal
           transaction={transaction}
           isOpen={isPaymentModalOpen}
@@ -373,52 +614,74 @@ export function TransactionDetailsSheet({
   );
 }
 
-function TransactionTimeline({ transaction }: { transaction: any }) {
+function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
   const stages = [
-    { key: 'DRAFT', label: 'Drafted', icon: FileText },
-    { key: 'PENDING_CONFIRMATION', label: 'Placed', icon: Clock },
-    { key: 'CONFIRMED', label: 'Confirmed', icon: CheckCircle2 },
-    { key: 'PROCESSING', label: 'Processing', icon: Package },
-    { key: 'READY', label: 'Ready', icon: CheckCircle2 },
-    { key: 'COMPLETED', label: 'Delivered', icon: Truck },
+    { key: "DRAFT", label: "Draft" },
+    { key: "PENDING_CONFIRMATION", label: "Placed" },
+    { key: "CONFIRMED", label: "Confirmed" },
+    { key: "PROCESSING", label: "Processing" },
+    { key: "READY", label: "Staged" },
+    { key: "COMPLETED", label: "Delivered" },
   ];
 
-  // Logic to find current index and past stages
-  const statusOrder = stages.map(s => s.key);
-  const currentIndex = statusOrder.indexOf(transaction.status);
+  const statusOrder = stages.map((s) => s.key);
+  const currentIndex = statusOrder.indexOf(currentStatus);
 
   return (
-    <div className="relative flex justify-between items-start w-full">
-      {/* Background Line */}
-      <div className="absolute top-5 left-0 right-0 h-0.5 bg-zinc-100 z-0 mx-6" />
+    <div className="relative flex justify-between items-center w-full px-2 pt-2 pb-4">
+      {/* Visual Alignment Connector Bar */}
+      <div className="absolute top-[15px] left-4 right-4 h-[2px] bg-zinc-100 z-0" />
+
+      {/* Progress tracking line */}
+      <div
+        className="absolute top-[15px] left-4 h-[2px] bg-emerald-600 transition-all duration-500 z-0"
+        style={{
+          width: `${currentIndex >= 0 ? (currentIndex / (stages.length - 1)) * 94 : 0}%`,
+        }}
+      />
 
       {stages.map((stage, idx) => {
-        const isCompleted = idx < currentIndex || (transaction.status === 'COMPLETED' && idx <= currentIndex);
+        const isCompleted =
+          idx < currentIndex ||
+          (currentStatus === "COMPLETED" && idx <= currentIndex);
         const isCurrent = idx === currentIndex;
-        const Icon = stage.icon;
 
         return (
-          <div key={stage.key} className="relative z-10 flex flex-col items-center gap-2 group">
+          <div
+            key={stage.key}
+            className="relative z-10 flex flex-col items-center gap-2"
+          >
             <div
               className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2",
-                isCompleted ? "bg-emerald-600 border-emerald-600 text-white" :
-                isCurrent ? "bg-white border-zinc-900 text-zinc-900 ring-4 ring-zinc-100" :
-                "bg-white border-zinc-200 text-zinc-300"
+                "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 border-2",
+                isCompleted
+                  ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
+                  : isCurrent
+                    ? "bg-white border-zinc-900 ring-4 ring-zinc-100 shadow-sm"
+                    : "bg-white border-zinc-200 text-zinc-300",
               )}
             >
-              {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+              {isCompleted && (
+                <CheckCircle2 className="w-2.5 h-2.5 text-white stroke-[3px]" />
+              )}
+              {isCurrent && (
+                <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full" />
+              )}
             </div>
-            <div className="flex flex-col items-center">
-              <span className={cn(
-                "text-[10px] font-bold uppercase tracking-wider",
-                isCompleted ? "text-emerald-700" : isCurrent ? "text-zinc-900" : "text-zinc-400"
-              )}>
+
+            <div className="absolute top-6 flex flex-col items-center min-w-[65px] text-center">
+              <span
+                className={cn(
+                  "text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap",
+                  isCompleted
+                    ? "text-emerald-700 font-bold"
+                    : isCurrent
+                      ? "text-zinc-900 font-bold"
+                      : "text-zinc-400",
+                )}
+              >
                 {stage.label}
               </span>
-              {isCurrent && (
-                <span className="text-[9px] text-zinc-500 font-medium">In Progress</span>
-              )}
             </div>
           </div>
         );
@@ -429,31 +692,43 @@ function TransactionTimeline({ transaction }: { transaction: any }) {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    PENDING_CONFIRMATION: "bg-amber-50 text-amber-700 border-amber-200",
-    CONFIRMED: "bg-blue-50 text-blue-700 border-blue-200",
-    PROCESSING: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    CANCELLED: "bg-red-50 text-red-700 border-red-200",
-    DRAFT: "bg-zinc-50 text-zinc-700 border-zinc-200",
+    COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+    PENDING_CONFIRMATION: "bg-amber-50 text-amber-700 border-amber-200/60",
+    CONFIRMED: "bg-blue-50 text-blue-700 border-blue-200/60",
+    PROCESSING: "bg-indigo-50 text-indigo-700 border-indigo-200/60",
+    CANCELLED: "bg-red-50 text-red-700 border-red-200/60",
+    DRAFT: "bg-zinc-50 text-zinc-600 border-zinc-200",
   };
 
   return (
-    <Badge variant="outline" className={cn("font-bold px-3 py-1", styles[status] || "bg-zinc-50 text-zinc-700 border-zinc-200")}>
-      {status.replace(/_/g, ' ')}
+    <Badge
+      variant="outline"
+      className={cn(
+        "font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded",
+        styles[status] || "bg-zinc-50 text-zinc-600 border-zinc-200",
+      )}
+    >
+      {status.replace(/_/g, " ")}
     </Badge>
   );
 }
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    PAID: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    UNPAID: "bg-red-50 text-red-700 border-red-200",
-    PARTIALLY_PAID: "bg-amber-50 text-amber-700 border-amber-200",
+    PAID: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+    UNPAID: "bg-red-50 text-red-700 border-red-200/60",
+    PARTIALLY_PAID: "bg-amber-50 text-amber-700 border-amber-200/60",
   };
 
   return (
-    <Badge variant="outline" className={cn("font-bold px-3 py-1", styles[status] || "bg-zinc-50 text-zinc-700 border-zinc-200")}>
-      {status.replace(/_/g, ' ')}
+    <Badge
+      variant="outline"
+      className={cn(
+        "font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded",
+        styles[status] || "bg-zinc-50 text-zinc-600 border-zinc-200",
+      )}
+    >
+      {status.replace(/_/g, " ")}
     </Badge>
   );
 }
