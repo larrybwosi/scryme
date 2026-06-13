@@ -66,6 +66,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 export function ProductPageClient({ product: initialProduct, categories, suppliers, locations }: any) {
   const [product, setProduct] = useState(initialProduct);
@@ -119,11 +124,22 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
       {/* Sticky Header */}
       <div className="sticky top-0 z-20 bg-white border-b px-8 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
-          <Link href="/inventory">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                aria-label="Back to inventory"
+              >
+                <Link href="/inventory">
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Back to inventory</TooltipContent>
+          </Tooltip>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-zinc-900">{product.name}</h1>
@@ -245,9 +261,14 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                         <div key={i} className="relative aspect-square rounded-lg border overflow-hidden group">
                            <Image src={url} alt={`Product ${i}`} fill className="object-cover" />
                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <Button size="icon" variant="secondary" className="h-8 w-8">
-                                <Trash2 className="w-4 h-4 text-red-600" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="secondary" className="h-8 w-8" aria-label="Delete image">
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete image</TooltipContent>
+                              </Tooltip>
                            </div>
                         </div>
                       ))}
@@ -356,11 +377,16 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                              </TableCell>
                              <TableCell>
                                <DropdownMenu>
-                                 <DropdownMenuTrigger asChild>
-                                   <Button variant="ghost" size="icon">
-                                     <MoreHorizontal className="w-4 h-4" />
-                                   </Button>
-                                 </DropdownMenuTrigger>
+                                 <Tooltip>
+                                   <TooltipTrigger asChild>
+                                     <DropdownMenuTrigger asChild>
+                                       <Button variant="ghost" size="icon" aria-label="More options">
+                                         <MoreHorizontal className="w-4 h-4" />
+                                       </Button>
+                                     </DropdownMenuTrigger>
+                                   </TooltipTrigger>
+                                   <TooltipContent>More options</TooltipContent>
+                                 </Tooltip>
                                  <DropdownMenuContent align="end">
                                    <DropdownMenuItem onClick={() => {
                                       setEditingVariant(v);
@@ -535,9 +561,14 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                                 {variantStocks[0]?.currentStock ? Number(variantStocks[0].currentStock) : 0}
                               </TableCell>
                               <TableCell>
-                                <Button variant="ghost" size="icon">
-                                  <ChevronRight className="w-4 h-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" aria-label="View location details">
+                                      <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>View location details</TooltipContent>
+                                </Tooltip>
                               </TableCell>
                             </TableRow>
                           );
@@ -622,11 +653,16 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                              </TableCell>
                              <TableCell>
                                <DropdownMenu>
-                                 <DropdownMenuTrigger asChild>
-                                   <Button variant="ghost" size="icon">
-                                     <MoreHorizontal className="w-4 h-4" />
-                                   </Button>
-                                 </DropdownMenuTrigger>
+                                 <Tooltip>
+                                   <TooltipTrigger asChild>
+                                     <DropdownMenuTrigger asChild>
+                                       <Button variant="ghost" size="icon" aria-label="More options">
+                                         <MoreHorizontal className="w-4 h-4" />
+                                       </Button>
+                                     </DropdownMenuTrigger>
+                                   </TooltipTrigger>
+                                   <TooltipContent>More options</TooltipContent>
+                                 </Tooltip>
                                  <DropdownMenuContent align="end">
                                    <DropdownMenuItem>View Supplier</DropdownMenuItem>
                                    <DropdownMenuItem>Update Pricing</DropdownMenuItem>
