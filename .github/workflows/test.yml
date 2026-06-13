@@ -95,6 +95,7 @@ jobs:
               - '.github/workflows/test.yml'
             workflow:
               - '.github/workflows/**'
+              - '!.github/workflows/test.yml'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
@@ -159,7 +160,7 @@ jobs:
 
           PKG_CHANGED="${{ needs.filter.outputs.packages }}"
           ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
             ROOT_CHANGED=true
           fi
 
@@ -193,7 +194,7 @@ jobs:
 
           PKG_CHANGED="${{ needs.filter.outputs.packages }}"
           ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
             ROOT_CHANGED=true
           fi
 
@@ -420,7 +421,7 @@ jobs:
           fi
 
           ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
             ROOT_CHANGED=true
           fi
 
