@@ -1,12 +1,12 @@
 import React from 'react';
-import { PageHeader } from "../../components/page-header";
+import { PageHeader } from "@/components/page-header";
 import {
   getStockDashboardStats,
   getStockMovementsChartData,
   getStockDistributionByLocation,
   getStockLevels
-} from "../actions/stock-management";
-import { getInventoryLocations } from "../actions/inventory";
+} from "@/app/actions/stock-management";
+import { getInventoryLocations } from "@/app/actions/inventory";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import {
   TrendingUp,
@@ -19,9 +19,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
-import { StockCharts } from "../../components/stocking/stock-charts";
-import { StockLevelsTable } from "../../components/stocking/stock-levels-table";
-import { StockLevelsFilters } from "../../components/stocking/stock-levels-filters";
+import { StockCharts } from "@/components/stocking/stock-charts";
+import { StockLevelsTable } from "@/components/stocking/stock-levels-table";
+import { StockLevelsFilters } from "@/components/stocking/stock-levels-filters";
 
 export default async function StockingDashboard({
   searchParams

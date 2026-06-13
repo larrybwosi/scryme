@@ -186,7 +186,9 @@ export default async function StockRequestDetailsPage({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600 italic">"{request.justification}"</p>
+                <p className="text-sm text-gray-600 italic">
+                  &ldquo;{request.justification}&rdquo;
+                </p>
               </CardContent>
             </Card>
           )}
