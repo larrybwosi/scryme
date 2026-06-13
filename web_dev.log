@@ -1,40 +1,59 @@
- WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
 
-> scryme@ dev /app
-> turbo run dev --filter web
+> web@3.0.0 dev /app/apps/web
+> next dev
 
-• turbo 2.9.18
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 554ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
 
-   • Packages in scope: web
-   • Running dev in 1 packages
-   • Remote caching disabled
+○ Compiling proxy ...
 
-web:dev: cache bypass, force executing b8a109568c1eb5e2
-web:dev:
-web:dev: > web@3.0.0 dev /app/apps/web
-web:dev: > next dev
-web:dev:
-web:dev: ⚠ Port 3000 is in use by an unknown process, using available port 3001 instead.
-web:dev: ▲ Next.js 16.2.0 (Turbopack)
-web:dev: - Local:         http://localhost:3001
-web:dev: - Network:       http://192.168.0.2:3001
-web:dev: ✓ Ready in 1022ms
-web:dev: ⨯ Another next dev server is already running.
-web:dev:
-web:dev: - Local:        http://localhost:3000
-web:dev: - PID:          121970
-web:dev: - Dir:          /app/apps/web
-web:dev: - Log:          .next/dev/logs/next-development.log
-web:dev:
-web:dev: Run kill 121970 to stop it.
-web:dev: [?25h
-web:dev:  ELIFECYCLE  Command failed with exit code 1.
- ERROR  web#dev: command (/app/apps/web) /home/jules/.local/share/pnpm/.tools/pnpm/10.34.1/bin/pnpm run dev exited (1)
-
- Tasks:    0 successful, 1 total
-Cached:    0 cached, 1 total
-  Time:    3.768s
-Failed:    web#dev
-
- ERROR  run failed: command  exited (1)
- ELIFECYCLE  Command failed with exit code 1.
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_01jpvhd._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1098:30)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1169:30)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_04birem._.js:1449:30)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+ GET /inventory 404 in 2.9s (next.js: -158459µs, proxy.ts: 2.9s, application-code: 164ms)
+[browser] Uncaught Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:238:11)
+    at module evaluation (../../packages/env/src/index.ts:245:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_01jpvhd._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (../../packages/auth/src/approvals/index.ts:167:1)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (../../packages/auth/src/index.ts:25:1)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (../../packages/auth/src/logic/has-member-permission.ts:56:1)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0hl~ugv._.js:5:30)
+  236 |       parsed.error.flatten().fieldErrors,
+  237 |     );
+> 238 |     throw new Error("Invalid environment variables");
+      |           ^
+  239 |   }
+  240 |
+  241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+○ Compiling /_not-found/page ...
