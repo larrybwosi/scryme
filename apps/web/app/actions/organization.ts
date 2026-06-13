@@ -72,25 +72,59 @@ export async function createOrganization(data: {
 }
 
 export async function updateOrganizationSettings(data: {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  logo?: string;
+  banner?: string;
   defaultCurrency?: string;
   defaultTimezone?: string;
   country?: string;
+  lowStockThreshold?: number;
+  negativeStock?: boolean;
 }): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  const settings = await db.organizationSettings.upsert({
-    where: { organizationId: auth.organizationId },
-    update: data,
-    create: {
-      ...data,
-      organizationId: auth.organizationId,
-    },
+  const {
+    name,
+    email,
+    phone,
+    address,
+    logo,
+    banner,
+    ...settingsData
+  } = data;
+
+  const result = await db.$transaction(async (tx) => {
+    const org = await tx.organization.update({
+      where: { id: auth.organizationId },
+      data: {
+        name,
+        email,
+        phone,
+        address,
+        logo,
+        banner,
+      },
+    });
+
+    const settings = await tx.organizationSettings.upsert({
+      where: { organizationId: auth.organizationId },
+      update: settingsData,
+      create: {
+        ...settingsData,
+        organizationId: auth.organizationId,
+      },
+    });
+
+    return { ...org, settings };
   });
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
-  return settings;
+  return result;
 }
 
 export async function updateInvoiceTemplate(templateId: string): Promise<any> {
@@ -112,9 +146,14 @@ export async function getOrganizationSettings(): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  return db.organizationSettings.findUnique({
-    where: { organizationId: auth.organizationId },
+  const org = await db.organization.findUnique({
+    where: { id: auth.organizationId },
+    include: {
+      settings: true,
+    },
   });
+
+  return org;
 }
 
 export async function checkSlugAvailability(slug: string) {

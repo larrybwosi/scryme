@@ -14,8 +14,8 @@ export default async function SettingsPage() {
         icon={<Settings className="w-7 h-7" />}
       />
 
-      <div className="max-w-2xl">
-        <SettingsForm initialSettings={settings} />
+      <div className="max-w-4xl">
+        <SettingsForm initialData={settings} />
       </div>
     </div>
   );
