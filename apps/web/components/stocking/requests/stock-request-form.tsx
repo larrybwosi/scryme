@@ -17,7 +17,7 @@ import { Plus, Trash2, Save, ShoppingCart } from "lucide-react";
 import { ProductVariantSelect } from "@/components/product-variant-select";
 import { createStockRequest } from "@/app/actions/stock-management";
 import { useRouter } from "next/navigation";
-import { useToast } from "@repo/ui/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface Location {
   id: string;
@@ -32,7 +32,7 @@ interface SelectedItem {
   quantity: number;
 }
 
-export function StockRequestForm({ locations }: { locations: Location[] }) {
+export function StockRequestForm({ locations, variants }: { locations: Location[], variants: any[] }) {
   const [toLocationId, setToLocationId] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
   const [justification, setJustification] = useState("");
@@ -43,18 +43,18 @@ export function StockRequestForm({ locations }: { locations: Location[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleAddItem = () => {
     if (!currentVariantId) return;
 
-    // In a real scenario, we'd fetch the variant details here or have them pre-loaded
-    // For now, let's assume we have a way to get them or just use placeholders
+    const variant = variants.find(v => v.variantId === currentVariantId);
+    if (!variant) return;
+
     const newItem: SelectedItem = {
       variantId: currentVariantId,
-      variantName: "Selected Variant", // This should be dynamic
-      productName: "Product", // This should be dynamic
-      sku: "SKU", // This should be dynamic
+      variantName: variant.variantName,
+      productName: variant.name,
+      sku: variant.sku,
       quantity: currentQuantity
     };
 
@@ -69,11 +69,7 @@ export function StockRequestForm({ locations }: { locations: Location[] }) {
 
   const handleSubmit = async () => {
     if (!toLocationId || selectedItems.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please select a location and add at least one item.",
-        variant: "destructive"
-      });
+      toast.error("Please select a location and add at least one item.");
       return;
     }
 
@@ -89,17 +85,10 @@ export function StockRequestForm({ locations }: { locations: Location[] }) {
         }))
       });
 
-      toast({
-        title: "Success",
-        description: "Stock request created successfully."
-      });
+      toast.success("Stock request created successfully.");
       router.push("/stocking/requests");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create stock request.",
-        variant: "destructive"
-      });
+      toast.error("Failed to create stock request.");
     } finally {
       setIsSubmitting(false);
     }
@@ -116,12 +105,10 @@ export function StockRequestForm({ locations }: { locations: Location[] }) {
             <div className="flex gap-4 items-end">
               <div className="flex-1">
                 <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Search Product</Label>
-                {/* ProductVariantSelect needs variants list. In a real app we'd fetch these.
-                    For now, I'll assume we can search them. */}
-                <Input
-                   placeholder="Enter Variant ID..."
+                <ProductVariantSelect
+                   variants={variants.map(v => ({ id: v.variantId, name: v.variantName, productName: v.name, sku: v.sku }))}
                    value={currentVariantId}
-                   onChange={(e) => setCurrentVariantId(e.target.value)}
+                   onValueChange={setCurrentVariantId}
                 />
               </div>
               <div className="w-24">
@@ -158,7 +145,8 @@ export function StockRequestForm({ locations }: { locations: Location[] }) {
                     selectedItems.map((item, index) => (
                       <tr key={index} className="border-b last:border-0">
                         <td className="px-4 py-2">
-                          <div className="font-medium">{item.variantId}</div>
+                          <div className="font-medium">{item.productName}</div>
+                          <div className="text-xs text-gray-400">{item.variantName} • {item.sku}</div>
                         </td>
                         <td className="px-4 py-2 text-center">{item.quantity}</td>
                         <td className="px-4 py-2 text-right">

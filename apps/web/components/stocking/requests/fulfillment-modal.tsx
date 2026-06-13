@@ -22,7 +22,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Truck, ShoppingCart, Package } from "lucide-react";
 import { fulfillStockRequestItems, getStockRequestLocations } from "@/app/actions/stock-management";
-import { useToast } from "@repo/ui/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface AggregatedItem {
   variantId: string;
@@ -57,19 +57,17 @@ export function FulfillmentModal({ isOpen, onClose, item }: FulfillmentModalProp
     Object.fromEntries(item.requests.map(r => [r.requestId, r.remaining]))
   );
 
-  const { toast } = useToast();
-
   useEffect(() => {
     getStockRequestLocations().then(setLocations);
   }, []);
 
   const handleFulfill = async () => {
     if (activeTab === 'TRANSFER' && !fromLocationId) {
-      toast({ title: "Error", description: "Please select a source branch.", variant: "destructive" });
+      toast.error("Please select a source branch.");
       return;
     }
     if (activeTab === 'PURCHASE' && !supplierId) {
-      toast({ title: "Error", description: "Please select a supplier.", variant: "destructive" });
+      toast.error("Please select a supplier.");
       return;
     }
 
@@ -78,7 +76,7 @@ export function FulfillmentModal({ isOpen, onClose, item }: FulfillmentModalProp
       .map(([requestId, quantity]) => ({ requestId, quantity }));
 
     if (itemsToFulfill.length === 0) {
-      toast({ title: "Error", description: "Please specify quantities to fulfill.", variant: "destructive" });
+      toast.error("Please specify quantities to fulfill.");
       return;
     }
 
@@ -92,10 +90,10 @@ export function FulfillmentModal({ isOpen, onClose, item }: FulfillmentModalProp
         items: itemsToFulfill,
         notes
       });
-      toast({ title: "Success", description: "Fulfillment created successfully." });
+      toast.success("Fulfillment created successfully.");
       onClose();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to fulfill items.", variant: "destructive" });
+      toast.error(error.message || "Failed to fulfill items.");
     } finally {
       setIsSubmitting(false);
     }
