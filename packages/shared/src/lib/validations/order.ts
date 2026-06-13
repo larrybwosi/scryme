@@ -4,6 +4,7 @@ import { z } from "zod";
 export enum OrderTransactionStatus {
   PENDING_CONFIRMATION = "PENDING_CONFIRMATION",
   CONFIRMED = "CONFIRMED",
+  DRAFT = "DRAFT",
 }
 
 export const OrderItemInputSchema = z.object({

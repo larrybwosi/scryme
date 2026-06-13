@@ -10,6 +10,7 @@ import {
   PaymentStatus,
   PaymentMethod,
   FulfillmentStatus,
+  FulfillmentType,
   MemberRole,
   Prisma,
 } from "@repo/db/client";
@@ -127,7 +128,11 @@ export async function getTransactionById(id: string) {
           },
         },
       },
-      payments: true,
+      payments: {
+        include: {
+          attachments: true,
+        },
+      },
       fulfillments: {
         include: {
           items: true,
@@ -268,6 +273,9 @@ export async function addPayment(
     method: PaymentMethod;
     reference?: string;
     notes?: string;
+    chequeDate?: Date;
+    bankName?: string;
+    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
@@ -287,7 +295,16 @@ export async function addPayment(
       method: data.method,
       referenceNumber: data.reference,
       notes: data.notes,
+      chequeDate: data.chequeDate,
+      bankName: data.bankName,
       status: "COMPLETED",
+      attachments: data.attachments ? {
+        create: data.attachments.map(att => ({
+          ...att,
+          organizationId: auth.organizationId!,
+          memberId: auth.memberId!,
+        }))
+      } : undefined,
     },
   });
 
@@ -377,7 +394,68 @@ export async function updateFulfillmentStatus(
   return fulfillment;
 }
 
-export async function createOrderAction(data: any) {
+export async function addAttachmentToPayment(
+  paymentId: string,
+  data: {
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    sizeBytes?: number;
+    description?: string;
+  }
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const attachment = await db.attachment.create({
+    data: {
+      ...data,
+      paymentId,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
+    },
+  });
+
+  return attachment;
+}
+
+export async function createFulfillment(data: {
+  transactionId: string;
+  type: FulfillmentType;
+  items: { transactionItemId: string; quantity: number }[];
+  shippingAddressId?: string;
+  pickupLocationId?: string;
+}) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.create({
+    data: {
+      transactionId: data.transactionId,
+      type: data.type,
+      shippingAddressId: data.shippingAddressId,
+      pickupLocationId: data.pickupLocationId,
+      status: "PENDING",
+      items: {
+        create: data.items.map((item) => ({
+          transactionItemId: item.transactionItemId,
+          quantity: item.quantity,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/sales/transactions");
+  revalidatePath("/sales/deliveries");
+  return fulfillment;
+}
+
+export async function createOrderAction(data: {
+  type: TransactionType;
+  customerId: string;
+  locationId: string;
+  items: any[];
+  notes?: string;
+  discountAmount?: number;
+}) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
   // console.log(data);
   if (data.type === "POS_SALE") {
@@ -425,11 +503,18 @@ export async function createOrderAction(data: any) {
 
   // Import shared logic for QUOTE and SALES_ORDER
   const { createOrder } = await import("@repo/shared/server");
+  const { OrderTransactionStatus } = await import("@repo/shared/server");
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,
     type: data.type === "QUOTE" ? "QUOTE" : "SALES_ORDER",
-    status: data.type === "QUOTE" ? "DRAFT" : "PENDING_CONFIRMATION",
+    status:
+      data.type === "QUOTE"
+        ? OrderTransactionStatus.DRAFT
+        : OrderTransactionStatus.PENDING_CONFIRMATION,
+    payments: [],
+    shippingFee: 0,
+    discountAmount: data.discountAmount || 0,
     fulfillment: {
       type: "DELIVERY", // Default
       pickupLocationId: data.locationId,
