@@ -19,7 +19,7 @@ export async function generateTransactionQR(transactionId: string, organizationI
   const secret = process.env.QR_SIGNING_SECRET;
   if (!secret) throw new Error('QR_SIGNING_SECRET is not set');
   const payload: QRPayload = { transactionId, organizationId };
-  const token = jwt.sign(payload, secret, { expiresIn: '24h' });
+  const token = jwt.sign(payload, secret, { expiresIn: '24h', algorithm: 'HS256' });
 
   try {
     const dataUrl = await QRCode.toDataURL(token, {
@@ -42,7 +42,7 @@ export function verifyQRToken(token: string): QRPayload | null {
   const secret = process.env.QR_SIGNING_SECRET;
   if (!secret) throw new Error('QR_SIGNING_SECRET is not set');
   try {
-    const decoded = jwt.verify(token, secret) as QRPayload;
+    const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as QRPayload;
     return decoded;
   } catch (err) {
     console.error('Invalid or expired QR token:', err);
