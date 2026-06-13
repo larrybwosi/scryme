@@ -10,9 +10,14 @@ export function generateVerificationHash(data: {
   grandTotal: number;
   date: string;
   organizationName: string;
-}, secret: string = process.env.DOCUMENT_SIGNING_SECRET || 'default_secret'): string {
+}, secret?: string): string {
+  const effectiveSecret = secret || process.env.DOCUMENT_SIGNING_SECRET;
+  if (!effectiveSecret) {
+    throw new Error('DOCUMENT_SIGNING_SECRET is not set');
+  }
+
   const content = `${data.invoiceNumber}-${data.grandTotal}-${data.date}-${data.organizationName}`;
-  return crypto.createHmac('sha256', secret)
+  return crypto.createHmac('sha256', effectiveSecret)
     .update(content)
     .digest('hex')
     .substring(0, 16)

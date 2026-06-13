@@ -19,3 +19,8 @@
 **Vulnerability:** The `StandalonePosService` was storing both `StandaloneSetupKey` (one-time tokens) and `StandaloneDeviceKey` (long-lived keys) as plaintext in the database. It also performed direct database lookups using these plaintext secrets.
 **Learning:** Plaintext storage of secrets is a critical vulnerability. In this case, the schema used `@unique` constraints on the secret fields themselves, which prevents using non-deterministic hashing (like Argon2) or encryption without a separate identifier (like a prefix or key ID).
 **Prevention:** For secrets that must be used as unique identifiers for lookups without schema changes, store a deterministic hash (e.g., SHA-256) instead of the plaintext. For new security-sensitive models, always include a public `prefix` or `keyId` field to enable more robust security patterns (Argon2 + AES-256-GCM).
+
+## 2026-06-14 - [Hardcoded Secret Fallback and Dangerous Security Stubs]
+**Vulnerability:** Found a hardcoded fallback `'default_secret'` for document verification hashes in `packages/documents/src/server.ts` and dangerous security stubs in `apps/api/src/lib/api/v2/security/tokens.ts` that bypassed authentication by always returning `true`.
+**Learning:** Hardcoded fallbacks are "ticking time bombs" that can lead to security breaches if environment variables are missing. Stubs used for testing or early development can be accidentally left in the codebase, creating massive backdoors.
+**Prevention:** Never use hardcoded fallbacks for security-sensitive secrets. Implement fail-fast checks to ensure all required secrets are present at runtime. Regularly audit the codebase for stubs or "TODO" comments in security-critical paths.
