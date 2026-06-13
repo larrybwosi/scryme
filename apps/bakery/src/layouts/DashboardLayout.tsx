@@ -61,8 +61,7 @@ export function DashboardLayout() {
   )?.label || 'Dashboard';
 
   return (
-    <BakeryAuthGuard>
-      <SidebarProvider defaultOpen={true} forceDefaultOpen={true}>
+    <SidebarProvider defaultOpen={true} forceDefaultOpen={true}>
         <div className="flex min-h-screen w-full bg-background font-sans">
           <Sidebar collapsible="none" className="border-r border-sidebar-border shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
             <SidebarHeader className="h-16 flex items-center px-6 border-b border-sidebar-border/50 bg-sidebar/50 backdrop-blur-sm">
@@ -160,6 +159,5 @@ export function DashboardLayout() {
           </SidebarInset>
         </div>
       </SidebarProvider>
-    </BakeryAuthGuard>
   );
 }

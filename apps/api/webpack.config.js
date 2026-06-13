@@ -15,7 +15,7 @@ module.exports = function (options) {
       options.plugins.splice(forkTsPluginIndex, 1);
     } else {
       // In production/build, keep it but ensure memory limit is sufficient
-      options.plugins[forkTsPluginIndex].options.typescript.memoryLimit = 4096;
+      options.plugins[forkTsPluginIndex].options.typescript.memoryLimit = 8192;
     }
   }
 
