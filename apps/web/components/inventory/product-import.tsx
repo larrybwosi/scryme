@@ -113,12 +113,13 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
           toast.error("The CSV file is empty");
           return;
         }
-        setCsvData(results.data);
-        setHeaders(Object.keys(results.data[0]));
+        const data = results.data as any[];
+        setCsvData(data);
+        setHeaders(Object.keys(data[0]));
 
         // Auto-mapping attempt
         const initialMappings: Record<string, string> = {};
-        const csvHeaders = Object.keys(results.data[0]);
+        const csvHeaders = Object.keys(data[0]);
 
         ALL_FIELDS.forEach(field => {
             const match = csvHeaders.find(h =>

@@ -57,3 +57,6 @@ https://nextjs.org/telemetry
   240 |
   241 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
 ○ Compiling /_not-found/page ...
+✓ Compiled in 2.3s
+✓ Compiled in 2.7s
+✓ Compiled in 1387ms
