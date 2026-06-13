@@ -1,6 +1,6 @@
 "use server";
 
-import { db, StockTransferStatus, MovementType, AlertStatus } from "@repo/db";
+import { db, StockTransferStatus, MovementType, AlertStatus, StockRequestStatus, StockRequestPriority } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 import {
@@ -135,12 +135,29 @@ export async function getStockDistributionByLocation(): Promise<any[]> {
   }));
 }
 
-export async function getStockTransferList(): Promise<any[]> {
+export async function getStockTransferList(params?: {
+  search?: string;
+  status?: string;
+}): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
+  const where: any = { organizationId: context.organizationId };
+
+  if (params?.status && params.status !== "all") {
+    where.status = params.status;
+  }
+
+  if (params?.search) {
+    where.OR = [
+      { transferNumber: { contains: params.search, mode: "insensitive" } },
+      { fromLocation: { name: { contains: params.search, mode: "insensitive" } } },
+      { toLocation: { name: { contains: params.search, mode: "insensitive" } } },
+    ];
+  }
+
   return db.stockTransfer.findMany({
-    where: { organizationId: context.organizationId },
+    where,
     include: {
       fromLocation: { select: { name: true } },
       toLocation: { select: { name: true } },
@@ -656,4 +673,372 @@ export async function getStockLevels(params: {
   }
 
   return results;
+}
+
+export async function getStockRequestList(params?: {
+  search?: string;
+  status?: string;
+}): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const where: any = { organizationId: context.organizationId };
+
+  if (params?.status && params.status !== "all") {
+    where.status = params.status;
+  }
+
+  if (params?.search) {
+    where.OR = [
+      { requestNumber: { contains: params.search, mode: "insensitive" } },
+      { toLocation: { name: { contains: params.search, mode: "insensitive" } } },
+      { requestedBy: { user: { name: { contains: params.search, mode: "insensitive" } } } },
+    ];
+  }
+
+  return db.stockRequest.findMany({
+    where,
+    include: {
+      toLocation: { select: { name: true } },
+      requestedBy: { select: { user: { select: { name: true } } } },
+      _count: { select: { items: true } },
+    },
+    orderBy: { requestDate: "desc" },
+  });
+}
+
+export async function createStockRequest(data: {
+  toLocationId: string;
+  priority: StockRequestPriority;
+  items: { variantId: string; quantity: number }[];
+  justification?: string;
+}): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId || !context.user.id)
+    throw new Error("Unauthorized");
+
+  const requestNumber = `REQ-${Date.now()}`;
+
+  const result = await db.$transaction(async (tx) => {
+    let totalEstimatedCost = new Decimal(0);
+
+    const itemsData = await Promise.all(
+      data.items.map(async (item) => {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { buyingPrice: true },
+        });
+        const unitCost = variant?.buyingPrice || new Decimal(0);
+        totalEstimatedCost = totalEstimatedCost.add(unitCost.mul(item.quantity));
+
+        return {
+          variantId: item.variantId,
+          requestedQuantity: new Decimal(item.quantity),
+          unitCostAtRequest: unitCost,
+        };
+      }),
+    );
+
+    const request = await tx.stockRequest.create({
+      data: {
+        organizationId: context.organizationId,
+        requestNumber,
+        toLocationId: data.toLocationId,
+        priority: data.priority,
+        justification: data.justification,
+        requestedById: context.user.id,
+        status: "PENDING",
+        totalEstimatedCost,
+        items: {
+          create: itemsData,
+        },
+      },
+    });
+
+    return request;
+  });
+
+  revalidatePath("/stocking/requests");
+  return result;
+}
+
+export async function getStockRequestDetails(id: string): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return null;
+
+  return db.stockRequest.findUnique({
+    where: { id, organizationId: context.organizationId },
+    include: {
+      toLocation: true,
+      requestedBy: { include: { user: true } },
+      approvedBy: { include: { user: true } },
+      items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      },
+      transfers: {
+        include: {
+          fromLocation: true,
+          toLocation: true,
+        }
+      },
+      purchases: {
+        include: {
+          supplier: true,
+        }
+      },
+    },
+  });
+}
+
+export async function getAggregatedStockRequests(params?: {
+  search?: string;
+}): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const itemWhere: any = {
+    stockRequest: {
+      organizationId: context.organizationId,
+      status: { in: ["PENDING", "APPROVED", "PARTIALLY_FULFILLED"] },
+    },
+  };
+
+  if (params?.search) {
+    itemWhere.OR = [
+      { variant: { product: { name: { contains: params.search, mode: "insensitive" } } } },
+      { variant: { name: { contains: params.search, mode: "insensitive" } } },
+      { variant: { sku: { contains: params.search, mode: "insensitive" } } },
+    ];
+  }
+
+  // Get all pending or partially fulfilled items
+  const items = await db.stockRequestItem.findMany({
+    where: itemWhere,
+    include: {
+      variant: {
+        include: {
+          product: true,
+        },
+      },
+      stockRequest: {
+        include: {
+          toLocation: true,
+        }
+      }
+    },
+  });
+
+  // Aggregate by variantId
+  const aggregationMap = new Map<string, any>();
+
+  items.forEach((item) => {
+    const remaining = new Decimal(item.requestedQuantity).minus(item.allocatedQuantity);
+    if (remaining.lte(0)) return;
+
+    const existing = aggregationMap.get(item.variantId);
+    if (existing) {
+      existing.totalRequested = existing.totalRequested.add(item.requestedQuantity);
+      existing.totalAllocated = existing.totalAllocated.add(item.allocatedQuantity);
+      existing.totalRemaining = existing.totalRemaining.add(remaining);
+      existing.requests.push({
+        requestId: item.stockRequestId,
+        requestNumber: item.stockRequest.requestNumber,
+        locationName: item.stockRequest.toLocation.name,
+        quantity: item.requestedQuantity,
+        remaining: remaining,
+      });
+    } else {
+      aggregationMap.set(item.variantId, {
+        variantId: item.variantId,
+        sku: item.variant.sku,
+        name: item.variant.product.name,
+        variantName: item.variant.name,
+        totalRequested: new Decimal(item.requestedQuantity),
+        totalAllocated: new Decimal(item.allocatedQuantity),
+        totalRemaining: remaining,
+        requests: [{
+          requestId: item.stockRequestId,
+          requestNumber: item.stockRequest.requestNumber,
+          locationName: item.stockRequest.toLocation.name,
+          quantity: item.requestedQuantity,
+          remaining: remaining,
+        }],
+      });
+    }
+  });
+
+  return Array.from(aggregationMap.values()).map(item => ({
+    ...item,
+    totalRequested: item.totalRequested.toNumber(),
+    totalAllocated: item.totalAllocated.toNumber(),
+    totalRemaining: item.totalRemaining.toNumber(),
+    requests: item.requests.map((r: any) => ({
+        ...r,
+        quantity: r.quantity.toNumber(),
+        remaining: r.remaining.toNumber(),
+    }))
+  }));
+}
+
+export async function getStockRequestLocations(): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  return db.inventoryLocation.findMany({
+    where: { organizationId: context.organizationId, isActive: true },
+    select: { id: true, name: true },
+  });
+}
+
+export async function fulfillStockRequestItems(data: {
+  variantId: string;
+  fulfillmentType: 'TRANSFER' | 'PURCHASE';
+  fromLocationId?: string; // for TRANSFER
+  supplierId?: string; // for PURCHASE
+  items: { requestId: string; quantity: number }[];
+  notes?: string;
+}): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId || !context.user.id)
+    throw new Error("Unauthorized");
+
+  const result = await db.$transaction(async (tx) => {
+    // 1. Create the fulfillment record (StockTransfer or Purchase)
+    if (data.fulfillmentType === 'TRANSFER') {
+      if (!data.fromLocationId) throw new Error("Source location required for transfer");
+
+      // For transfers, we might need multiple transfers if requests have different target locations
+      // But to keep it simple, if they select items from different requests, we should group by target location
+      const requests = await tx.stockRequest.findMany({
+        where: { id: { in: data.items.map(i => i.requestId) } }
+      });
+
+      const targetLocationIds = Array.from(new Set(requests.map(r => r.toLocationId)));
+
+      for (const toLocationId of targetLocationIds) {
+        const itemsForThisLocation = data.items.filter(i => {
+            const req = requests.find(r => r.id === i.requestId);
+            return req?.toLocationId === toLocationId;
+        });
+
+        if (itemsForThisLocation.length === 0) continue;
+
+        const transferNumber = `TRF-REQ-${Date.now()}`;
+        const transfer = await tx.stockTransfer.create({
+          data: {
+            organizationId: context.organizationId,
+            transferNumber,
+            fromLocationId: data.fromLocationId,
+            toLocationId,
+            notes: data.notes || "Fulfillment from aggregated request",
+            requestedById: context.user.id,
+            status: "PENDING_APPROVAL",
+            items: {
+              create: await Promise.all(itemsForThisLocation.map(async (item) => {
+                const variant = await tx.productVariant.findUnique({
+                  where: { id: data.variantId },
+                  select: { buyingPrice: true },
+                });
+                return {
+                  variantId: data.variantId,
+                  requestedQuantity: new Decimal(item.quantity),
+                  unitCost: variant?.buyingPrice || new Decimal(0),
+                };
+              })),
+            },
+          },
+        });
+
+        // Update allocated quantity in StockRequestItem
+        for (const item of itemsForThisLocation) {
+          await tx.stockRequestItem.updateMany({
+            where: { stockRequestId: item.requestId, variantId: data.variantId },
+            data: {
+              allocatedQuantity: { increment: item.quantity },
+            },
+          });
+        }
+      }
+    } else {
+      // PURCHASE
+      if (!data.supplierId) throw new Error("Supplier required for purchase");
+
+      const purchaseNumber = `PO-REQ-${Date.now()}`;
+
+      const variant = await tx.productVariant.findUnique({
+        where: { id: data.variantId },
+        select: { buyingPrice: true },
+      });
+      const unitCost = variant?.buyingPrice || new Decimal(0);
+
+      const totalQuantity = data.items.reduce((acc, i) => acc + i.quantity, 0);
+      const totalAmount = unitCost.mul(totalQuantity);
+
+      const purchase = await tx.purchase.create({
+        data: {
+          organizationId: context.organizationId,
+          purchaseNumber,
+          supplierId: data.supplierId,
+          memberId: context.user.id,
+          orderDate: new Date(),
+          status: "ORDERED",
+          subTotal: totalAmount,
+          totalAmount: totalAmount,
+          notes: data.notes || "Consolidated procurement from requests",
+          items: {
+            create: [{
+              variantId: data.variantId,
+              orderedQuantity: totalQuantity,
+              unitCost: unitCost,
+              totalCost: totalAmount,
+            }]
+          }
+        }
+      });
+
+      // Update allocated quantity in StockRequestItem
+      for (const item of data.items) {
+        await tx.stockRequestItem.updateMany({
+          where: { stockRequestId: item.requestId, variantId: data.variantId },
+          data: {
+            allocatedQuantity: { increment: item.quantity },
+          },
+        });
+      }
+    }
+
+    // Update Request Status if fully allocated
+    const requestIds = Array.from(new Set(data.items.map(i => i.requestId)));
+    for (const rid of requestIds) {
+      const items = await tx.stockRequestItem.findMany({
+        where: { stockRequestId: rid }
+      });
+
+      const allAllocated = items.every(item =>
+        new Decimal(item.allocatedQuantity).gte(item.requestedQuantity)
+      );
+
+      const someAllocated = items.some(item =>
+        new Decimal(item.allocatedQuantity).gt(0)
+      );
+
+      await tx.stockRequest.update({
+        where: { id: rid },
+        data: {
+          status: allAllocated ? "APPROVED" : someAllocated ? "PARTIALLY_FULFILLED" : "PENDING"
+        }
+      });
+    }
+
+    return { success: true };
+  });
+
+  revalidatePath("/stocking/requests");
+  return result;
 }

@@ -1,5 +1,11 @@
 # api
 
+## 3.0.0
+
+### Major Changes
+
+- b8c8ff5: nothing much
+
 ## 2.0.0
 
 ### Major Changes
