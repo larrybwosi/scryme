@@ -509,7 +509,7 @@ export async function getInventoryProducts(params: {
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
       const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-      const lowStockThreshold = product.lowStockThreshold || 5;
+      const lowStockThreshold = product.lowStockThreshold || 0;
 
       let status: "High" | "Low" | "Out of Stock" | "Normal" = "Normal";
       if (totalStock.isZero()) {
