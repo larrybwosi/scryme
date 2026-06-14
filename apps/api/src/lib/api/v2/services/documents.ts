@@ -47,7 +47,7 @@ export async function getDocumentStream(
   let qrCode: string = '';
 
   const { getInvoiceTemplate } = await import('@repo/documents');
-  const { ReceiptTemplate } = await import('@repo/documents/v2/ReceiptTemplate');
+  const { ReceiptTemplate } = await import('@repo/documents/templates/v2/ReceiptTemplate');
 
   switch (type) {
     case 'invoice': {

@@ -1,4 +1,4 @@
-import { InvoiceData } from './templates/invoice-templates';
+import { InvoiceData } from './templates/v1/invoice-templates';
 import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData } from './types';
 import * as crypto from 'crypto';
 
@@ -67,10 +67,17 @@ export const Mappers = {
 
     return {
       id: fulfillment?.id || transaction.id,
+      number: transaction.number,
       orderNumber: transaction.number,
       date: fulfillment?.createdAt || transaction.createdAt || new Date(),
       qrCodeUrl,
-      logoUrl: transaction.organization?.logo,
+      branding: {
+        logoUrl: transaction.organization?.logo,
+        companyName: transaction.organization?.name || 'Sender',
+        companyAddress: senderAddress,
+        companyPhone: transaction.location?.phone || transaction.organization?.phone,
+        companyEmail: transaction.organization?.email,
+      },
       sender: {
         name: transaction.organization?.name || 'Sender',
         address: senderAddress,
@@ -95,6 +102,8 @@ export const Mappers = {
    */
   toReceiptData(transaction: any): ReceiptData {
     return {
+      id: transaction.id,
+      number: transaction.number,
       receiptNumber: transaction.number,
       orderNumber: transaction.number,
       date: transaction.createdAt,
@@ -111,6 +120,9 @@ export const Mappers = {
         unitPrice: Number(item.unitPrice),
         totalPrice: Number(item.lineTotal || item.subtotal),
         sku: item.sku,
+        itemName: item.productName,
+        rate: Number(item.unitPrice),
+        amount: Number(item.lineTotal || item.subtotal),
       })),
       subtotal: Number(transaction.subtotal),
       tax: Number(transaction.taxTotal),
@@ -137,9 +149,12 @@ export const Mappers = {
     activeFiltersText?: string
   ): TransactionAnalyticsExportData {
     return {
-      organization: {
-        name: organization?.name || 'Organization',
-        logo: organization?.logo,
+      id: organization?.id || 'org',
+      number: 'ANALYTICS-' + new Date().getTime(),
+      date: new Date(),
+      branding: {
+        companyName: organization?.name || 'Organization',
+        logoUrl: organization?.logo,
       },
       dateRangeText,
       activeFiltersText,
@@ -166,13 +181,15 @@ export const Mappers = {
   toStockReportData(report: any): StockReportData {
     const data = typeof report.data === 'string' ? JSON.parse(report.data) : report.data;
     return {
-      name: report.name,
-      date: new Date(report.createdAt).toLocaleString(),
-      generatedBy: report.generatedBy?.user?.name || 'System',
-      organization: {
-        name: report.organization?.name || 'Organization',
-        logo: report.organization?.logo,
+      id: report.id,
+      number: 'STOCK-' + report.id,
+      date: report.createdAt,
+      branding: {
+        companyName: report.organization?.name || 'Organization',
+        logoUrl: report.organization?.logo,
       },
+      name: report.name,
+      generatedBy: report.generatedBy?.user?.name || 'System',
       items: (data?.items || []).map((item: any) => ({
         productName: item.name || item.productName,
         variantName: item.variantName || '',
@@ -204,21 +221,16 @@ export const Mappers = {
       const description = `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`;
 
       return {
-        // V1 fields
-        qty: quantity,
+        id: item.id,
         description,
-        price: rate,
-        amount,
-        // Alias for some templates
         quantity,
-        total: amount,
         unitPrice: rate,
-        // V2 fields
+        totalPrice: amount,
+        sku: item.sku || item.id,
         itemCode: item.sku || item.id,
         itemName: item.productName,
         rate,
-        // Other fields
-        itemDescription: description,
+        amount,
         details: '',
       };
     });
@@ -239,149 +251,56 @@ export const Mappers = {
       ? { street: transaction.organization.address }
       : (transaction.organization?.address || {});
 
-    const companyData = {
-      name: transaction.organization?.name,
-      address: formatAddress(transaction.organization?.address),
-      city: orgAddressObj.city || '',
-      phone: transaction.organization?.phone,
-      email: transaction.organization?.email,
-      logo: transaction.organization?.logo,
+    const branding = {
+      companyName: transaction.organization?.name,
+      companyAddress: formatAddress(transaction.organization?.address),
+      companyPhone: transaction.organization?.phone,
+      companyEmail: transaction.organization?.email,
       logoUrl: transaction.organization?.logo,
-      website: transaction.organization?.website || '',
-      tagline: transaction.organization?.description || '',
+      companyWebsite: transaction.organization?.website || '',
+      companyTagline: transaction.organization?.description || '',
+      primaryColor: transaction.organization?.primaryColor,
     };
 
     const customerAddressObj = transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
-    const clientData = {
-      name: transaction.customer?.name || 'Walk-in Customer',
-      email: transaction.customer?.email || '',
-      address: customerAddressObj,
-      phone: transaction.customer?.phone,
-      company: transaction.customer?.company || '',
-    };
 
     const paymentTerms = 'Payment due upon receipt.';
-    const availableMethods = ['CASH', 'CREDIT_CARD', 'MOBILE_PAYMENT', 'BANK_TRANSFER'];
 
     return {
       id: transaction.id,
-      invoiceNumber: transaction.number,
-      invoiceNo: transaction.number,
       number: transaction.number,
+      invoiceNumber: transaction.number,
       date: formattedDate,
-      dateOfIssue: formattedDate,
-      invoiceDate: formattedDate,
       dueDate: formattedDueDate,
       status: transaction.status || 'PAID',
 
       currencySymbol,
       currency: defaultCurrency,
-      currencyCode: defaultCurrency,
-      currencySettings: {
-        code: defaultCurrency,
-        locale: 'en-US',
-      },
 
-      customerName: clientData.name,
-      customerEmail: clientData.email,
-      customerAddress: formatAddress(clientData.address),
-      customerPhone: clientData.phone,
+      branding,
 
-      client: clientData,
-      invoiceTo: {
-        name: clientData.name,
-        address: formatAddress(clientData.address),
-        city: clientData.address?.city || '',
-        state: clientData.address?.state || '',
-        country: clientData.address?.country || '',
-        postalCode: clientData.address?.postalCode || clientData.address?.zipCode || '',
-        phone: clientData.phone,
-        email: clientData.email,
-      },
-      billTo: {
-        name: clientData.name,
-        address: formatAddress(clientData.address),
-        city: clientData.address?.city || '',
-        state: clientData.address?.state || '',
-        zipCode: clientData.address?.postalCode || clientData.address?.zipCode || '',
-        phone: clientData.phone,
-        email: clientData.email,
-      },
-      billingAddress: clientData.address,
-      shippingAddress: clientData.address,
-
-      company: companyData,
-      organization: {
-        ...companyData,
-        description: transaction.organization?.description,
-        primaryColor: transaction.organization?.primaryColor,
-      },
-      billFrom: {
-        name: companyData.name,
-        address: companyData.address,
-        phone: companyData.phone,
-        email: companyData.email,
-        city: companyData.city,
-        state: orgAddressObj.state || '',
-      },
-      organizationName: companyData.name,
-      organizationAddress: companyData.address,
-      organizationDescription: transaction.organization?.description || '',
-      companyName: companyData.name,
-      companyTagline: companyData.tagline,
-      companyContact: {
-        phone: companyData.phone || '',
-        fax: '',
-        email: companyData.email || '',
-      },
-      logo: companyData.logo,
-      logoUrl: companyData.logo,
-      website: companyData.website,
-      footerWebsite: companyData.website,
+      customerName: transaction.customer?.name || 'Walk-in Customer',
+      customerEmail: transaction.customer?.email || '',
+      customerAddress: formatAddress(customerAddressObj),
+      customerPhone: transaction.customer?.phone,
 
       items,
 
       subtotal: netTotal,
-      netTotal,
       tax: totalTaxes,
-      taxTotal: totalTaxes,
-      totalTaxes,
-      gstRate: netTotal > 0 ? (totalTaxes / netTotal) * 100 : 0,
-      taxRate: netTotal > 0 ? (totalTaxes / netTotal) * 100 : 0,
-      discount: discountTotal,
-      discountTotal,
-      shipping: Number(transaction.shippingTotal || 0),
-      shippingTotal: Number(transaction.shippingTotal || 0),
       total: grandTotal,
-      grandTotal,
+      discount: discountTotal,
+      shipping: Number(transaction.shippingTotal || 0),
       amountPaid,
       balanceDue,
 
-      payment: {
-        terms: paymentTerms,
-        availableMethods: availableMethods,
-        paymentTerms: paymentTerms,
-      },
-      paymentMethods: availableMethods.map(m => ({ methodName: m, details: [] })),
       paymentTerms: paymentTerms,
-      paymentInformation: availableMethods.join(', '),
       bankDetails: {
         accountNo: 'N/A',
         sortCode: 'N/A',
       },
-      installmentDetails: {
-        isInstallment: false,
-        totalAmountPaidSoFar: amountPaid,
-        balanceDue: balanceDue,
-      },
 
       notes: transaction.notes,
-      terms: paymentTerms,
-      termsAndConditions: paymentTerms,
-      signature: {
-        name: '',
-        title: '',
-      },
       verificationHash,
     };
   }

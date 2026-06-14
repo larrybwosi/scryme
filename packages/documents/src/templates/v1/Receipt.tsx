@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 import { format } from "date-fns";
-import { ReceiptData } from "../types";
+import { ReceiptData } from "../../types";
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 // primaryColor drives the accent band + grand total bar.

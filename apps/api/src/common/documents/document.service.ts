@@ -38,9 +38,9 @@ export class DocumentService {
     if (!data.verificationHash) {
       data.verificationHash = generateVerificationHash({
         invoiceNumber: data.invoiceNumber,
-        grandTotal: data.grandTotal || data.total,
-        date: data.date,
-        organizationName: data.organizationName || data.company.name
+        grandTotal: data.total,
+        date: String(data.date),
+        organizationName: data.branding?.companyName || 'Organization'
       });
     }
     const element = DocumentGenerator.createElement(InvoiceTemplate, { data });
