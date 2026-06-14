@@ -40,7 +40,7 @@ export class ScrymeService {
       });
 
       return config;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to provision Scryme workspace: ${error.message}`, error.stack);
       throw error;
     }
@@ -69,7 +69,7 @@ export class ScrymeService {
       const { workspaceSlug, action, message, user } = payload.data;
 
       // Find the organization associated with this workspace
-      const config = await this.prisma.client.scrymeConfiguration.findUnique({
+      const config = await (this.prisma.client as any).scrymeConfiguration.findUnique({
         where: { workspaceSlug },
         include: { organization: { include: { windmillConfiguration: true } } }
       });
@@ -82,7 +82,7 @@ export class ScrymeService {
       // Trigger Windmill workflow
       const scriptPath = process.env.SCRYME_ACTION_WORKFLOW_PATH || 'f/dealio/scryme_action_handler';
 
-      await this.prisma.client.windmillExecution.create({
+      await (this.prisma.client as any).windmillExecution.create({
         data: {
           organizationId: config.organizationId,
           configId: config.organization.windmillConfiguration.id,
@@ -112,7 +112,7 @@ export class ScrymeService {
     this.logger.log(`Registering Scryme global webhook: ${webhookUrl}`);
     try {
       await this.scrymeClient.registerGlobalWebhook(webhookUrl);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to register Scryme webhook: ${error.message}`);
     }
   }

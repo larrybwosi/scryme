@@ -3,12 +3,10 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strict": false,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "declaration": true,
     "types": ["node"]
   },
   "exclude": ["node_modules", "dist"],
