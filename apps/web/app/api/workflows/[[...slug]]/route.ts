@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 
-// Mock scripts replicated from apps/api/src/v2/workflows/workflows.service.ts
+// Expanded mock scripts with formatting and grouping
 const mockScripts = [
   {
     path: 'f/dealio/customer_onboarding',
@@ -11,8 +11,8 @@ const mockScripts = [
     schema: {
       type: 'object',
       properties: {
-        sendWelcomeEmail: { type: 'boolean', title: 'Send Welcome Email', default: true },
-        crmFolder: { type: 'string', title: 'CRM Folder Name', default: 'New Leads' },
+        sendWelcomeEmail: { type: 'boolean', title: 'Send Welcome Email', default: true, group: 'Email Configuration' },
+        crmFolder: { type: 'string', title: 'CRM Folder Name', default: 'New Leads', group: 'CRM Settings' },
       },
     },
   },
@@ -23,8 +23,14 @@ const mockScripts = [
     schema: {
       type: 'object',
       properties: {
-        threshold: { type: 'number', title: 'Default Threshold', default: 10 },
-        notificationEmail: { type: 'string', title: 'Alert Email', default: 'procurement@example.com' },
+        threshold: { type: 'number', title: 'Default Threshold', default: 10, group: 'Alert Thresholds' },
+        notificationEmail: {
+          type: 'string',
+          title: 'Alert Recipient',
+          format: 'member',
+          description: 'Select a staff member to receive alerts',
+          group: 'Notification Settings'
+        },
       },
     },
   },
@@ -35,26 +41,105 @@ const mockScripts = [
     schema: {
       type: 'object',
       properties: {
-        recipients: { type: 'string', title: 'Recipient Emails (comma separated)', default: 'admin@example.com' },
-        includeCharts: { type: 'boolean', title: 'Include Visual Charts', default: true },
+        recipients: {
+          type: 'string',
+          title: 'Recipient Member',
+          format: 'member',
+          group: 'Distribution'
+        },
+        includeCharts: { type: 'boolean', title: 'Include Visual Charts', default: true, group: 'Report Content' },
+      },
+    },
+  },
+  {
+    path: 'f/dealio/mpesa_transaction_alert',
+    name: 'M-Pesa Transaction Alert',
+    description: 'Real-time alerts for incoming M-Pesa payments above a certain value.',
+    schema: {
+      type: 'object',
+      properties: {
+        minAmount: { type: 'number', title: 'Minimum Amount', default: 1000, group: 'Conditions' },
+        alertRecipient: {
+          type: 'string',
+          title: 'Alert Recipient',
+          format: 'member',
+          group: 'Notification'
+        },
+      },
+    },
+  },
+  {
+    path: 'f/dealio/daily_inventory_summary',
+    name: 'Daily Inventory Summary',
+    description: 'End-of-day summary of stock movements and current levels.',
+    schema: {
+      type: 'object',
+      properties: {
+        summaryRecipient: {
+          type: 'string',
+          title: 'Summary Recipient',
+          format: 'member',
+          group: 'Distribution'
+        },
+        includeStockValuation: { type: 'boolean', title: 'Include Valuation', default: false, group: 'Content' },
+      },
+    },
+  },
+  {
+    path: 'f/dealio/daily_sales_per_branch',
+    name: 'Daily Sales Per Branch',
+    description: 'Detailed sales breakdown for each location/branch.',
+    schema: {
+      type: 'object',
+      properties: {
+        recipient: {
+          type: 'string',
+          title: 'Recipient',
+          format: 'member',
+          group: 'Distribution'
+        },
+      },
+    },
+  },
+  {
+    path: 'f/dealio/best_seller_notification',
+    name: 'Best Seller Notification',
+    description: 'Weekly notification of top performing products.',
+    schema: {
+      type: 'object',
+      properties: {
+        recipient: {
+          type: 'string',
+          title: 'Recipient',
+          format: 'member',
+          group: 'Distribution'
+        },
+        topCount: { type: 'number', title: 'Number of Products', default: 5, group: 'Settings' },
       },
     },
   },
 ];
 
 async function getAvailableWorkflows(organizationId: string) {
-  const config = await db.windmillConfiguration.findUnique({
+  const workflows = await db.windmillWorkflow.findMany({
     where: { organizationId },
   });
 
-  return mockScripts.map(script => ({
-    ...script,
-    isProvisioned: !!config,
-  }));
+  return mockScripts.map(script => {
+    const provisioned = workflows.find(w => w.path === script.path);
+    return {
+      ...script,
+      isProvisioned: !!provisioned,
+      settings: provisioned?.settings || {},
+    };
+  });
 }
 
 async function provisionWorkflow(organizationId: string, path: string, settings: any) {
   if (!path) throw new Error("Path is required");
+
+  const script = mockScripts.find(s => s.path === path);
+  if (!script) throw new Error("Workflow script not found");
 
   let config = await db.windmillConfiguration.findUnique({
     where: { organizationId },
@@ -71,6 +156,26 @@ async function provisionWorkflow(organizationId: string, path: string, settings:
       },
     });
   }
+
+  await db.windmillWorkflow.upsert({
+    where: {
+      organizationId_path: {
+        organizationId,
+        path,
+      },
+    },
+    create: {
+      organizationId,
+      configId: config.id,
+      path,
+      name: script.name,
+      description: script.description,
+      settings: settings as any,
+    },
+    update: {
+      settings: settings as any,
+    },
+  });
 
   return { success: true, message: `Workflow ${path} provisioned successfully`, configId: config.id };
 }
@@ -98,9 +203,7 @@ async function triggerWorkflow(organizationId: string, path: string, inputs: any
     },
   });
 
-  // In a real production app, this would be handled by a proper background worker or Windmill callback.
-  // For the purpose of this task (replicating functionality from apps/api), we keep it as is,
-  // but acknowledging that in serverless it might not always finish.
+  // Simulation of background execution
   (async () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
