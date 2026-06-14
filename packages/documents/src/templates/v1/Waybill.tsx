@@ -1,7 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 import { format } from 'date-fns';
-import { WaybillData, Address } from '../types';
+import { WaybillData, Address } from '../../types';
 
 // --- Types ---
 export type WaybillFormat = 'A4' | 'THERMAL';
@@ -340,7 +340,8 @@ const formatAddress = (address: string | Address | undefined): string => {
 
 // --- Component: A4 View ---
 const A4Waybill = ({ data }: { data: WaybillData }) => {
-  const styles = getA4Styles(data.meta?.primaryColor || (data as any).branding?.primaryColor);
+  const branding = data.branding;
+  const styles = getA4Styles(branding?.primaryColor);
   return (
   <Page size="A4" style={styles.page}>
     {/* Accent Bar */}
@@ -349,8 +350,8 @@ const A4Waybill = ({ data }: { data: WaybillData }) => {
     {/* Header */}
     <View style={styles.header}>
       <View style={styles.logoArea}>
-        {data.logoUrl && <Image src={data.logoUrl} style={styles.logo} />}
-        <Text style={styles.companyName}>{data.sender.name}</Text>
+        {branding?.logoUrl && <Image src={branding.logoUrl} style={styles.logo} />}
+        <Text style={styles.companyName}>{branding?.companyName || data.sender.name}</Text>
         <Text style={styles.serviceType}>{data.meta?.serviceType || 'Logistics Service'}</Text>
       </View>
       <View style={styles.docInfo}>
@@ -440,7 +441,8 @@ const A4Waybill = ({ data }: { data: WaybillData }) => {
 };
 
 const ThermalWaybill = ({ data }: { data: WaybillData }) => {
-  const thermalStyles = getThermalStyles(data.meta?.primaryColor || (data as any).branding?.primaryColor);
+  const branding = data.branding;
+  const thermalStyles = getThermalStyles(branding?.primaryColor);
   return (
   <Page size={[226, 800]} style={thermalStyles.page}>
     {/* Accent Bar */}
@@ -449,7 +451,7 @@ const ThermalWaybill = ({ data }: { data: WaybillData }) => {
     {/* Header */}
     <View style={thermalStyles.header}>
       <Text style={thermalStyles.title}>WAYBILL</Text>
-      <Text style={thermalStyles.companyText}>{data.sender.name}</Text>
+      <Text style={thermalStyles.companyText}>{branding?.companyName || data.sender.name}</Text>
       <Text style={thermalStyles.metaText}>{format(new Date(data.date), 'dd/MM/yyyy HH:mm')}</Text>
     </View>
 

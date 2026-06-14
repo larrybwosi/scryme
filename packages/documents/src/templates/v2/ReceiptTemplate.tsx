@@ -6,11 +6,8 @@ import {
   Document,
   StyleSheet,
   Image,
-  Svg,
-  Line,
-  Rect,
 } from "@react-pdf/renderer";
-import { commonStyles as styles } from "./document-styles";
+import { ReceiptData } from "../../types";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -336,37 +333,17 @@ const MetaField = ({
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
-export interface ReceiptPDFData {
-  receiptNumber: string;
-  transactionId: string;
-  date: string;
-  customerName: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  organizationName: string;
-  organizationAddress?: string;
-  logoUrl?: string;
-  paymentMethod: string;
-  items: Array<{
-    itemName: string;
-    quantity: number;
-    rate: number;
-    amount: number;
-  }>;
-  subtotal: number;
-  taxTotal: number;
-  discountTotal: number;
-  finalTotal: number;
-  amountReceived?: number;
-  change?: number;
-  currency?: string;
-}
+export type ReceiptPDFData = ReceiptData;
 
 const fmt = (n: number, currency = "") =>
   `${currency}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
-  const currency = data.currency ?? "";
+  const currency = data.currencySymbol ?? data.currency ?? "";
+  const branding = data.branding;
+  const logoUrl = branding?.logoUrl;
+  const orgName = branding?.companyName || "Our Company";
+  const orgAddress = branding?.companyAddress;
 
   return (
     <Document>
@@ -374,9 +351,9 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
         {/* ── Header Band ── */}
         <View style={s.headerBand}>
           <View>
-            {data.logoUrl && (
+            {logoUrl && (
               <Image
-                src={data.logoUrl}
+                src={logoUrl}
                 style={{
                   height: 28,
                   marginBottom: 8,
@@ -385,9 +362,9 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
                 }}
               />
             )}
-            <Text style={s.orgName}>{data.organizationName}</Text>
-            {data.organizationAddress && (
-              <Text style={s.orgAddress}>{data.organizationAddress}</Text>
+            <Text style={s.orgName}>{orgName}</Text>
+            {orgAddress && (
+              <Text style={s.orgAddress}>{orgAddress}</Text>
             )}
           </View>
           <View>
@@ -404,12 +381,12 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           {/* Customer block */}
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Billed to</Text>
-            <Text style={s.metaValue}>{data.customerName}</Text>
-            {data.customerEmail && (
-              <Text style={s.metaSub}>{data.customerEmail}</Text>
+            <Text style={s.metaValue}>{data.customer.name}</Text>
+            {data.customer.email && (
+              <Text style={s.metaSub}>{data.customer.email}</Text>
             )}
-            {data.customerPhone && (
-              <Text style={s.metaSub}>{data.customerPhone}</Text>
+            {data.customer.phone && (
+              <Text style={s.metaSub}>{data.customer.phone}</Text>
             )}
             <View style={s.paidBadge}>
               <Text style={s.paidBadgeText}>✓ Paid</Text>
@@ -420,9 +397,9 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           <View style={[s.metaBlock, { alignItems: "flex-end" }]}>
             <Text style={s.metaLabel}>Transaction details</Text>
             <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
-              <MetaField label="Date" value={data.date} />
-              <MetaField label="Payment method" value={data.paymentMethod} />
-              <MetaField label="Transaction ID" value={data.transactionId} />
+              <MetaField label="Date" value={String(data.date)} />
+              <MetaField label="Payment method" value={data.paymentMethod || "N/A"} />
+              <MetaField label="Transaction ID" value={data.id} />
             </View>
           </View>
         </View>
@@ -448,10 +425,10 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
 
         {data.items.map((item, i) => (
           <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-            <Text style={s.cellDesc}>{item.itemName}</Text>
+            <Text style={s.cellDesc}>{item.itemName || item.description}</Text>
             <Text style={s.cellQty}>{item.quantity}</Text>
-            <Text style={s.cellRate}>{fmt(item.rate, currency)}</Text>
-            <Text style={s.cellAmt}>{fmt(item.amount, currency)}</Text>
+            <Text style={s.cellRate}>{fmt(item.rate || item.unitPrice || 0, currency)}</Text>
+            <Text style={s.cellAmt}>{fmt(item.amount || item.totalPrice || 0, currency)}</Text>
           </View>
         ))}
 
@@ -463,24 +440,24 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
               <Text style={s.totalsValue}>{fmt(data.subtotal, currency)}</Text>
             </View>
 
-            {data.discountTotal > 0 && (
+            {(data.discountTotal || 0) > 0 && (
               <View style={s.totalsRow}>
                 <Text style={s.totalsLabel}>Discount</Text>
                 <Text style={s.discountValue}>
-                  − {fmt(data.discountTotal, currency)}
+                  − {fmt(data.discountTotal || 0, currency)}
                 </Text>
               </View>
             )}
 
             <View style={s.totalsRow}>
               <Text style={s.totalsLabel}>Tax</Text>
-              <Text style={s.totalsValue}>{fmt(data.taxTotal, currency)}</Text>
+              <Text style={s.totalsValue}>{fmt(data.tax, currency)}</Text>
             </View>
 
             <View style={s.grandTotalBar}>
               <Text style={s.grandTotalLabel}>Amount paid</Text>
               <Text style={s.grandTotalValue}>
-                {fmt(data.finalTotal, currency)}
+                {fmt(data.total, currency)}
               </Text>
             </View>
 
@@ -509,15 +486,15 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
             <Text style={s.thankYou}>Thank you for your business.</Text>
             <Text style={s.footerSub}>
               This is an official payment receipt issued by{" "}
-              {data.organizationName}.{"\n"}
+              {orgName}.{"\n"}
               Please retain this document for your records.
             </Text>
           </View>
           <View style={s.footerRight}>
             <Text style={s.footerMeta}>
-              <Text style={s.footerBoldMeta}>{data.organizationName}</Text>
+              <Text style={s.footerBoldMeta}>{orgName}</Text>
               {"\n"}Receipt #{data.receiptNumber}
-              {"\n"}Issued {data.date}
+              {"\n"}Issued {String(data.date)}
             </Text>
           </View>
         </View>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Page, Text, View, Document, Image, StyleSheet } from '@react-pdf/renderer';
 import { format } from 'date-fns';
-import { PackingListData, DocumentFormat, Address } from '../types';
-import { getA4CommonStyles } from '../styles';
+import { PackingListData, DocumentFormat, Address } from '../../types';
+import { getA4CommonStyles } from '../../styles';
 
 const formatAddress = (address: string | Address | undefined) => {
   if (!address) return '';

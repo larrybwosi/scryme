@@ -4,7 +4,7 @@ import { db } from "@repo/db";
 import { renderToStream } from "@react-pdf/renderer";
 import { createElement } from "react";
 import { Mappers } from "@repo/documents/server";
-import { getInvoiceTemplate, GenericReceiptDocument } from "@repo/documents";
+import { getInvoiceTemplate, ReceiptTemplateV2 } from "@repo/documents";
 import QRCode from "qrcode";
 
 export async function GET(
@@ -51,10 +51,9 @@ export async function GET(
     let stream;
     if (type === "receipt") {
       const documentData = Mappers.toReceiptData(transaction);
-      // Using GenericReceiptDocument or similar from @repo/documents
       stream = await renderToStream(
         createElement(
-          GenericReceiptDocument as any,
+          ReceiptTemplateV2 as any,
           { data: documentData } as any,
         ) as any,
       );
