@@ -211,6 +211,172 @@ export class SchemaService {
       },
     });
 
-    return { person, company };
+    // Standard Lead Object
+    const lead = await this.createObject({
+      name: "lead",
+      label: "Lead",
+      labelPlural: "Leads",
+      icon: "UserPlus",
+      organizationId,
+      isSystem: true,
+    });
+
+    const leadFields: CreateFieldInput[] = [
+      {
+        objectId: lead.id,
+        name: "name",
+        label: "Name",
+        type: CrmFieldType.TEXT,
+        isRequired: true,
+        order: 1,
+        isSystem: true,
+      },
+      {
+        objectId: lead.id,
+        name: "email",
+        label: "Email",
+        type: CrmFieldType.EMAIL,
+        order: 2,
+        isSystem: true,
+      },
+      {
+        objectId: lead.id,
+        name: "phone",
+        label: "Phone",
+        type: CrmFieldType.PHONE,
+        order: 3,
+        isSystem: true,
+      },
+      {
+        objectId: lead.id,
+        name: "company",
+        label: "Company",
+        type: CrmFieldType.TEXT,
+        order: 4,
+        isSystem: true,
+      },
+      {
+        objectId: lead.id,
+        name: "status",
+        label: "Status",
+        type: CrmFieldType.SELECT,
+        options: [
+          { label: "New", value: "new", color: "#3b82f6" },
+          { label: "Contacted", value: "contacted", color: "#f59e0b" },
+          { label: "Qualified", value: "qualified", color: "#10b981" },
+          { label: "Unqualified", value: "unqualified", color: "#ef4444" },
+        ],
+        defaultValue: "new",
+        order: 5,
+        isSystem: true,
+      },
+      {
+        objectId: lead.id,
+        name: "source",
+        label: "Source",
+        type: CrmFieldType.TEXT,
+        order: 6,
+        isSystem: true,
+      },
+    ];
+
+    for (const field of leadFields) {
+      await this.createField(field, organizationId);
+    }
+
+    // Standard Deal Object
+    const deal = await this.createObject({
+      name: "deal",
+      label: "Deal",
+      labelPlural: "Deals",
+      icon: "TrendingUp",
+      organizationId,
+      isSystem: true,
+    });
+
+    const dealFields: CreateFieldInput[] = [
+      {
+        objectId: deal.id,
+        name: "name",
+        label: "Name",
+        type: CrmFieldType.TEXT,
+        isRequired: true,
+        order: 1,
+        isSystem: true,
+      },
+      {
+        objectId: deal.id,
+        name: "amount",
+        label: "Amount",
+        type: CrmFieldType.NUMBER,
+        order: 2,
+        isSystem: true,
+      },
+      {
+        objectId: deal.id,
+        name: "stage",
+        label: "Stage",
+        type: CrmFieldType.SELECT,
+        options: [
+          { label: "Discovery", value: "discovery" },
+          { label: "Qualification", value: "qualification" },
+          { label: "Proposal", value: "proposal" },
+          { label: "Negotiation", value: "negotiation" },
+          { label: "Closed Won", value: "closed_won" },
+          { label: "Closed Lost", value: "closed_lost" },
+        ],
+        defaultValue: "discovery",
+        order: 3,
+        isSystem: true,
+      },
+      {
+        objectId: deal.id,
+        name: "probability",
+        label: "Probability (%)",
+        type: CrmFieldType.NUMBER,
+        order: 4,
+        isSystem: true,
+      },
+      {
+        objectId: deal.id,
+        name: "expectedCloseDate",
+        label: "Expected Close Date",
+        type: CrmFieldType.DATE,
+        order: 5,
+        isSystem: true,
+      },
+    ];
+
+    for (const field of dealFields) {
+      await this.createField(field, organizationId);
+    }
+
+    // Standard Relationship: Company -> Deals
+    await this.prisma.crmRelationshipDefinition.create({
+      data: {
+        organizationId,
+        name: "company_deals",
+        type: "ONE_TO_MANY",
+        sourceObjectId: company.id,
+        targetObjectId: deal.id,
+        sourceLabel: "Deals",
+        targetLabel: "Company",
+      },
+    });
+
+    // Standard Relationship: Person -> Deals
+    await this.prisma.crmRelationshipDefinition.create({
+      data: {
+        organizationId,
+        name: "person_deals",
+        type: "ONE_TO_MANY",
+        sourceObjectId: person.id,
+        targetObjectId: deal.id,
+        sourceLabel: "Deals",
+        targetLabel: "Contact",
+      },
+    });
+
+    return { person, company, lead, deal };
   }
 }
