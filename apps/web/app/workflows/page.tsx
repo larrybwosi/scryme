@@ -37,12 +37,6 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { PageHeader } from "../../components/page-header";
 import { Breadcrumbs } from "../../components/breadcrumbs";
-import {
-  getAvailableWorkflowsAction as getAvailableWorkflows,
-  provisionWorkflowAction as provisionWorkflow,
-  triggerWorkflowAction as triggerWorkflow,
-  getWorkflowHistoryAction as getWorkflowHistory,
-} from "../actions/workflows";
 import { toast } from "sonner";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 
@@ -72,9 +66,10 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
-// Fetcher function that extracts data from API response
+// Fetcher function that extracts data from local API response
 const workflowsFetcher = async (): Promise<Workflow[]> => {
-  const response = await getAvailableWorkflows();
+  const res = await fetch("/api/workflows/available");
+  const response = await res.json();
   if (response.success && response.data) {
     return response.data;
   }
@@ -82,7 +77,8 @@ const workflowsFetcher = async (): Promise<Workflow[]> => {
 };
 
 const historyFetcher = async (path: string): Promise<WorkflowHistory[]> => {
-  const response = await getWorkflowHistory(path);
+  const res = await fetch(`/api/workflows/history?path=${encodeURIComponent(path)}`);
+  const response = await res.json();
   if (response.success && response.data) {
     return response.data;
   }
@@ -146,10 +142,16 @@ export default function WorkflowsPage() {
 
     setIsProvisioning(true);
     try {
-      const response = await provisionWorkflow(
-        selectedWorkflow.path,
-        configValues,
-      );
+      const res = await fetch("/api/workflows/provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: selectedWorkflow.path,
+          settings: configValues,
+        }),
+      });
+      const response = await res.json();
+
       if (response.success) {
         toast.success("Workflow provisioned successfully");
         setIsProvisionSheetOpen(false);
@@ -167,7 +169,16 @@ export default function WorkflowsPage() {
   const handleTrigger = async (workflow: Workflow) => {
     setIsTriggering(true);
     try {
-      const response = await triggerWorkflow(workflow.path, {});
+      const res = await fetch("/api/workflows/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: workflow.path,
+          inputs: {},
+        }),
+      });
+      const response = await res.json();
+
       if (response.success) {
         toast.success("Workflow execution started");
         setSelectedWorkflow(workflow);
