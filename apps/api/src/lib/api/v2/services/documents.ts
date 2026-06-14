@@ -46,8 +46,7 @@ export async function getDocumentStream(
   let filename: string;
   let qrCode: string = '';
 
-  const { getInvoiceTemplate } = await import('@repo/documents');
-  const { ReceiptTemplate } = await import('@repo/documents/v2/ReceiptTemplate');
+  const { getInvoiceTemplate, ReceiptTemplateV2 } = await import('@repo/documents');
 
   switch (type) {
     case 'invoice': {
@@ -65,7 +64,7 @@ export async function getDocumentStream(
       break;
     }
     case 'receipt':
-      DocumentComponent = ReceiptTemplate;
+      DocumentComponent = ReceiptTemplateV2;
       data = Mappers.toReceiptData(transaction);
       filename = `Receipt_${transaction.number}.pdf`;
       break;

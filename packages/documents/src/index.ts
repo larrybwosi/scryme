@@ -31,14 +31,16 @@ import {
 import { createElement, ReactElement } from "react";
 
 export * from "./types";
-export * from "./templates/invoice";
-export * from "./templates/Waybill";
-export { BatchProductionForm } from "./templates/Bakery-batch";
-export * from "./templates/PackingList";
-export * from "./templates/StockReport";
-export * from "./templates/AnalyticsExport";
-export { ReceiptDocument } from "./templates/Receipt";
-export { ReceiptDocument as GenericReceiptDocument } from "./templates/Receipt";
+
+// V1 Templates
+export * from "./templates/v1/invoice";
+export * from "./templates/v1/Waybill";
+export { BatchProductionForm } from "./templates/v1/Bakery-batch";
+export * from "./templates/v1/PackingList";
+export * from "./templates/v1/StockReport";
+export * from "./templates/v1/AnalyticsExport";
+export { ReceiptDocument } from "./templates/v1/Receipt";
+export { ReceiptDocument as GenericReceiptDocument } from "./templates/v1/Receipt";
 export {
   INVOICE_TEMPLATES,
   INVOICE_TEMPLATE_METADATA,
@@ -46,37 +48,35 @@ export {
   renderInvoiceTemplate,
   type InvoiceData as GenericInvoiceData,
   type InvoiceTemplateType,
-} from "./templates/invoice-templates";
-export { InvoicePDF as SimpleInvoicePDF } from "./templates/InvoicePDF";
-export { InvoicePDF as Temp3InvoicePDF } from "./templates/Invoice.temp3";
-export { BusinessInvoicePDF as Temp4InvoicePDF } from "./templates/Invoice.temp4";
-export { ModernInvoicePDF } from "./templates/Invoice.temp5";
-export { BusinessInvoicePDF as DenvisInvoicePDF } from "./templates/denvis.temp.6";
-export { InvoicePDF as Temp2InvoicePDF } from "./templates/invoice.temp2";
+} from "./templates/v1/invoice-templates";
+export { InvoicePDF as SimpleInvoicePDF } from "./templates/v1/InvoicePDF";
+export { InvoicePDF as Temp2InvoicePDF } from "./templates/v1/invoice.temp2";
 export {
   ThermalReceiptPDF,
   type ThermalReceiptData,
-} from "./templates/ThermalReceiptForRestaurants";
-
-export * from "./v2/InvoiceTemplate";
-export {
-  ReceiptTemplate as ReceiptTemplateV2,
-  type ReceiptPDFData as ReceiptPDFDataV2,
-} from "./v2/ReceiptTemplate";
-export * from "./v2/StockRequestTemplate";
-export * from "./v2/StockTransferTemplate";
-export * from "./v2/StockRequestListTemplate";
-export * from "./v2/AggregatedStockRequestListTemplate";
-export * from "./v2/StockTransferListTemplate";
-export * from "./mock-data";
+} from "./templates/v1/ThermalReceiptForRestaurants";
 
 export {
   ReceiptDocument as POSReceiptDocument,
   InvoiceDocument as POSInvoiceDocument,
   type ReceiptData as POSReceiptData,
   type CartItem as POSCartItem,
-} from "./templates/pos/POSDocuments";
-export * from "./templates/pos/SaleReceiptPDF";
+} from "./templates/v1/pos/POSDocuments";
+export * from "./templates/v1/pos/SaleReceiptPDF";
+
+// V2 Templates
+export * from "./templates/v2/InvoiceTemplate";
+export {
+  ReceiptTemplate as ReceiptTemplateV2,
+  type ReceiptPDFData as ReceiptPDFDataV2,
+} from "./templates/v2/ReceiptTemplate";
+export * from "./templates/v2/StockRequestTemplate";
+export * from "./templates/v2/StockTransferTemplate";
+export * from "./templates/v2/StockRequestListTemplate";
+export * from "./templates/v2/AggregatedStockRequestListTemplate";
+export * from "./templates/v2/StockTransferListTemplate";
+
+export * from "./mock-data";
 
 export const DocumentGenerator: any = {
   toBuffer: renderToBuffer,

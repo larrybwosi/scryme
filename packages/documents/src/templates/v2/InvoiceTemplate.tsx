@@ -2,7 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { commonStyles as styles } from './document-styles';
 import { PDFHeader, PDFFooter, PDFGrid, PDFCol, PDFTable, PDFTableRow, PDFTableCell } from './PDFComponents';
-import { InvoiceData } from '../templates/invoice-templates';
+import { InvoiceData } from '../../types';
 
 const invoiceStyles = StyleSheet.create({
   totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 20 },
@@ -14,13 +14,19 @@ const invoiceStyles = StyleSheet.create({
   verificationCode: { marginTop: 10, fontSize: 7, color: '#666', fontFamily: 'Courier' }
 });
 
-export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => (
+export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
+  const branding = data.branding;
+  const logoUrl = branding?.logoUrl;
+  const orgName = branding?.companyName;
+  const orgAddress = branding?.companyAddress;
+
+  return (
   <Document>
     <Page size="A4" style={styles.page}>
       <PDFHeader
-        logoUrl={(data.logoUrl || data.logo || data.company.logo || data.company.logoUrl) as string}
-        orgName={data.organizationName || data.company.name}
-        orgAddress={data.organizationAddress || data.company.address}
+        logoUrl={logoUrl}
+        orgName={orgName}
+        orgAddress={orgAddress}
         title="INVOICE"
         number={`#${data.invoiceNumber}`}
       />
@@ -29,7 +35,7 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => (
           <PDFCol label="Bill To" value={data.customerName}>{data.customerEmail && <Text style={styles.tableCell}>{data.customerEmail}</Text>}</PDFCol>
           <PDFCol style={{ alignItems: 'flex-end' }}>
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ marginRight: 20 }}><Text style={styles.label}>Date</Text><Text style={styles.value}>{data.date}</Text></View>
+              <View style={{ marginRight: 20 }}><Text style={styles.label}>Date</Text><Text style={styles.value}>{String(data.date)}</Text></View>
               <View><Text style={styles.label}>Status</Text><Text style={styles.value}>{data.status}</Text></View>
             </View>
           </PDFCol>
@@ -46,10 +52,10 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => (
           </PDFTableRow>
           {data.items.map((item, i) => (
             <PDFTableRow key={i}>
-              <View style={[styles.tableCol, { width: '40%' }]}><Text style={styles.tableCell}>{item.itemName || item.description}</Text><Text style={{ fontSize: 7, color: '#666' }}>{item.itemCode}</Text></View>
-              <PDFTableCell width="15%">{item.quantity || item.qty}</PDFTableCell>
-              <PDFTableCell width="20%">{((item.rate || item.unitPrice || item.price) as number).toFixed(2)}</PDFTableCell>
-              <PDFTableCell width="25%">{((item.amount || item.total) as number).toFixed(2)}</PDFTableCell>
+              <View style={[styles.tableCol, { width: '40%' }]}><Text style={styles.tableCell}>{item.itemName || item.description}</Text><Text style={{ fontSize: 7, color: '#666' }}>{item.itemCode || item.sku}</Text></View>
+              <PDFTableCell width="15%">{item.quantity}</PDFTableCell>
+              <PDFTableCell width="20%">{(item.rate || item.unitPrice || 0).toFixed(2)}</PDFTableCell>
+              <PDFTableCell width="25%">{(item.amount || item.totalPrice || 0).toFixed(2)}</PDFTableCell>
             </PDFTableRow>
           ))}
         </PDFTable>
@@ -58,7 +64,7 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => (
         <View style={invoiceStyles.totalsTable}>
           <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Net Total</Text><Text style={styles.value}>{data.subtotal.toFixed(2)}</Text></View>
           <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Tax</Text><Text style={styles.value}>{data.tax.toFixed(2)}</Text></View>
-          <View style={[invoiceStyles.totalsRow, invoiceStyles.grandTotal]}><Text style={{ fontWeight: 'bold' }}>Grand Total</Text><Text style={{ fontWeight: 'bold' }}>{(data.total || data.grandTotal || 0).toFixed(2)}</Text></View>
+          <View style={[invoiceStyles.totalsRow, invoiceStyles.grandTotal]}><Text style={{ fontWeight: 'bold' }}>Grand Total</Text><Text style={{ fontWeight: 'bold' }}>{data.total.toFixed(2)}</Text></View>
           {data.amountPaid !== undefined && (
             <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Amount Paid</Text><Text style={styles.value}>{data.amountPaid.toFixed(2)}</Text></View>
           )}
@@ -74,7 +80,8 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => (
           {data.verificationHash && <Text style={invoiceStyles.verificationCode}>Ver: {data.verificationHash}</Text>}
         </View>
       </View>
-      <PDFFooter orgName={data.organizationName || data.company.name} docType="Official Invoice Document" />
+      <PDFFooter orgName={orgName} docType="Official Invoice Document" />
     </Page>
   </Document>
-);
+  );
+};
