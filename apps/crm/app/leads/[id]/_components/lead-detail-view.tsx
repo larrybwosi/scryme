@@ -44,6 +44,8 @@ function DetailViewInner({ lead }: LeadDetailViewProps) {
     followups: lead.followUps?.length || 0,
   };
 
+  const availableTabs: TabId[] = ['notes', 'activities', 'followups'];
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Top bar */}
@@ -102,7 +104,7 @@ function DetailViewInner({ lead }: LeadDetailViewProps) {
         {/* Right content */}
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* We reuse DetailTabs but might need to filter them for leads */}
-          <DetailTabs activeTab={tab} customerId={lead.id} counts={counts} />
+          <DetailTabs activeTab={tab} customerId={lead.id} counts={counts} availableTabs={availableTabs} />
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
             <TabContent lead={lead} tab={tab} />
           </div>

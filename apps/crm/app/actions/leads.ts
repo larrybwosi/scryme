@@ -52,7 +52,7 @@ export async function createLead(data: any, organizationId: string) {
   }
 }
 
-export async function qualifyLead(leadId: string, organizationId: string) {
+export async function qualifyLead(leadId: string, organizationId: string, options?: { createDeal?: boolean, dealName?: string, dealAmount?: number }) {
   try {
     const lead = await db.crmRecord.findUnique({
       where: { id: leadId },
@@ -75,7 +75,45 @@ export async function qualifyLead(leadId: string, organizationId: string) {
         }
     });
 
-    // 2. Update lead status to qualified
+    // 2. Optional: Create a Deal
+    if (options?.createDeal) {
+        const dealDef = await db.crmObjectDefinition.findUnique({
+            where: { organizationId_name: { organizationId, name: 'deal' } }
+        });
+
+        if (dealDef) {
+            const deal = await db.crmRecord.create({
+                data: {
+                    objectId: dealDef.id,
+                    organizationId,
+                    data: {
+                        name: options.dealName || `Deal for ${leadData.name}`,
+                        amount: options.dealAmount || 0,
+                        stage: 'qualification',
+                    }
+                }
+            });
+
+            // Associate customer with deal
+            const customerRecord = await db.customer.findUnique({ where: { id: customer.id } });
+            if (customerRecord?.crmRecordId) {
+                const rel = await db.crmRelationshipDefinition.findUnique({
+                    where: { organizationId_name: { organizationId, name: 'contact_deals' } }
+                });
+                if (rel) {
+                    await db.crmAssociation.create({
+                        data: {
+                            relationshipId: rel.id,
+                            sourceRecordId: customerRecord.crmRecordId,
+                            targetRecordId: deal.id,
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    // 3. Update lead status to qualified
     await db.crmRecord.update({
         where: { id: leadId },
         data: {
@@ -89,6 +127,7 @@ export async function qualifyLead(leadId: string, organizationId: string) {
     revalidatePath('/leads');
     revalidatePath('/customers');
     revalidatePath('/contacts');
+    revalidatePath('/pipeline');
 
     return { success: true, customerId: customer.id };
   } catch (error) {

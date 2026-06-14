@@ -5,8 +5,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from '@repo/ui/components/ui/card';
 import { cn } from '@repo/ui/lib/utils';
-import { Calendar, DollarSign, Building2 } from 'lucide-react';
+import { Calendar, DollarSign, Building2, User } from 'lucide-react';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface KanbanCardProps {
   deal: any;
@@ -37,6 +38,14 @@ export function KanbanCard({ deal, isOverlay }: KanbanCardProps) {
     ? format(new Date(deal.data.expectedCloseDate), 'MMM d, yyyy')
     : null;
 
+  const associatedCompany = deal.targetAssociations?.find((a: any) =>
+    a.sourceRecord?.businessAccount
+  )?.sourceRecord?.businessAccount;
+
+  const associatedContact = deal.targetAssociations?.find((a: any) =>
+    a.sourceRecord?.customer
+  )?.sourceRecord?.customer;
+
   return (
     <div
       ref={setNodeRef}
@@ -54,9 +63,11 @@ export function KanbanCard({ deal, isOverlay }: KanbanCardProps) {
       )}>
         <CardContent className="p-4 space-y-3">
           <div className="flex flex-col gap-1">
-            <h4 className="text-[13.5px] font-semibold text-foreground group-hover:text-primary transition-colors">
-              {deal.data.name}
-            </h4>
+            <Link href={`/pipeline/${deal.id}`} className="hover:underline">
+              <h4 className="text-[13.5px] font-semibold text-foreground group-hover:text-primary transition-colors">
+                {deal.data.name}
+              </h4>
+            </Link>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -67,13 +78,28 @@ export function KanbanCard({ deal, isOverlay }: KanbanCardProps) {
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Building2 size={13} />
-              <span className="text-[11.5px] truncate">
-                {/* We'd normally show the company name here from relationships */}
-                No Company
-              </span>
-            </div>
+            {associatedCompany ? (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Building2 size={13} />
+                <span className="text-[11.5px] truncate text-foreground font-medium">
+                  {associatedCompany.name}
+                </span>
+              </div>
+            ) : associatedContact ? (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <User size={13} />
+                <span className="text-[11.5px] truncate text-foreground font-medium">
+                  {associatedContact.name}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Building2 size={13} />
+                <span className="text-[11.5px] truncate">
+                  No Association
+                </span>
+              </div>
+            )}
           </div>
 
           {expectedCloseDate && (

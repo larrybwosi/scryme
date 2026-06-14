@@ -16,6 +16,18 @@ export async function getDeals(organizationId: string) {
         objectId: dealDef.id,
         organizationId,
       },
+      include: {
+        targetAssociations: {
+          include: {
+            sourceRecord: {
+              include: {
+                customer: true,
+                businessAccount: true,
+              }
+            }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
   } catch (error) {
@@ -52,8 +64,10 @@ export async function updateDealStage(dealId: string, stage: string) {
   }
 }
 
-export async function createDeal(data: any, organizationId: string) {
+export async function createDeal(input: any, organizationId: string) {
     try {
+        const { associatedCustomerId, associatedCompanyId, ...data } = input;
+
         const dealDef = await db.crmObjectDefinition.findUnique({
             where: { organizationId_name: { organizationId, name: 'deal' } }
         });
@@ -68,10 +82,41 @@ export async function createDeal(data: any, organizationId: string) {
             }
         });
 
+        // Handle associations
+        if (associatedCustomerId && associatedCustomerId !== 'none') {
+            const customer = await db.customer.findUnique({ where: { id: associatedCustomerId } });
+            if (customer?.crmRecordId) {
+                await createAssociation(customer.crmRecordId, deal.id, 'contact_deals', organizationId);
+            }
+        }
+
+        if (associatedCompanyId && associatedCompanyId !== 'none') {
+            const company = await db.businessAccount.findUnique({ where: { id: associatedCompanyId } });
+            if (company?.crmRecordId) {
+                await createAssociation(company.crmRecordId, deal.id, 'company_deals', organizationId);
+            }
+        }
+
         revalidatePath('/pipeline');
         return { success: true, data: deal };
     } catch (error) {
         console.error('Error creating deal:', error);
-        return { success: false };
+        return { success: false, error: (error as any).message };
     }
+}
+
+async function createAssociation(sourceId: string, targetId: string, relationshipName: string, organizationId: string) {
+    const rel = await db.crmRelationshipDefinition.findUnique({
+        where: { organizationId_name: { organizationId, name: relationshipName } }
+    });
+
+    if (!rel) return;
+
+    await db.crmAssociation.create({
+        data: {
+            relationshipId: rel.id,
+            sourceRecordId: sourceId,
+            targetRecordId: targetId,
+        }
+    });
 }

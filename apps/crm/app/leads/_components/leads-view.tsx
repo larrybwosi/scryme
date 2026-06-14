@@ -34,6 +34,16 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
 import { StatusBadge } from "../../../components/ui/status-badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@repo/ui/components/ui/dialog";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
 
 const PAGE_SIZE = 10;
 
@@ -43,6 +53,11 @@ export function LeadsView() {
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [qualifyingId, setQualifyingId] = useState<string | null>(null);
+  const [isQualifyDialogOpen, setIsQualifyDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [createDeal, setCreateDeal] = useState(false);
+  const [dealName, setDealName] = useState("");
+  const [dealAmount, setDealAmount] = useState("0");
 
   const {
     data: leads = [],
@@ -78,12 +93,26 @@ export function LeadsView() {
     filtered.length === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
-  const handleQualify = async (id: string) => {
+  const openQualifyDialog = (lead: any) => {
+    setSelectedLead(lead);
+    setDealName(`Deal for ${lead.data.name}`);
+    setDealAmount("0");
+    setCreateDeal(false);
+    setIsQualifyDialogOpen(true);
+  };
+
+  const handleQualify = async () => {
+    if (!selectedLead) return;
     try {
-      setQualifyingId(id);
-      const result = await qualifyLead(id, organizationId);
+      setQualifyingId(selectedLead.id);
+      const result = await qualifyLead(selectedLead.id, organizationId, {
+        createDeal,
+        dealName,
+        dealAmount: parseFloat(dealAmount) || 0
+      });
       if (result.success) {
         toast.success("Lead qualified and converted to customer");
+        setIsQualifyDialogOpen(false);
         mutate();
       } else {
         toast.error(result.error || "Failed to qualify lead");
@@ -233,7 +262,7 @@ export function LeadsView() {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 gap-1.5 text-[11.5px]"
-                                onClick={() => handleQualify(lead.id)}
+                                onClick={() => openQualifyDialog(lead)}
                                 disabled={qualifyingId === lead.id}
                             >
                                 <CheckCircle2 size={14} className="text-green-600" />
@@ -275,6 +304,57 @@ export function LeadsView() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isQualifyDialogOpen} onOpenChange={setIsQualifyDialogOpen}>
+         <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>Qualify Lead</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                    This will convert <strong>{selectedLead?.data.name}</strong> into a customer.
+                </p>
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="createDeal"
+                        checked={createDeal}
+                        onCheckedChange={(checked) => setCreateDeal(!!checked)}
+                    />
+                    <Label htmlFor="createDeal" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Create a deal in the pipeline
+                    </Label>
+                </div>
+
+                {createDeal && (
+                    <div className="space-y-4 pt-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="dealName">Deal Name</Label>
+                            <Input
+                                id="dealName"
+                                value={dealName}
+                                onChange={(e) => setDealName(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="dealAmount">Expected Amount</Label>
+                            <Input
+                                id="dealAmount"
+                                type="number"
+                                value={dealAmount}
+                                onChange={(e) => setDealAmount(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsQualifyDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleQualify} disabled={!!qualifyingId}>
+                    {qualifyingId ? "Qualifying..." : "Confirm Qualification"}
+                </Button>
+            </DialogFooter>
+         </DialogContent>
+      </Dialog>
     </div>
   );
 }
