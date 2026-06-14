@@ -38,6 +38,7 @@ export default async function InventoryPage({
       stockLevel: params.stockLevel as any,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
+      groupByProduct: true,
     }),
     getInventoryLocations(),
     getCategories(),

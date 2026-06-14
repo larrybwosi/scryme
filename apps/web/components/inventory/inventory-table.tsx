@@ -113,7 +113,7 @@ export function InventoryTable({ data }: InventoryTableProps) {
             </TableRow>
           ) : (
             data.map((item) => (
-              <TableRow key={item.variantId}>
+              <TableRow key={item.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center overflow-hidden relative">
@@ -162,7 +162,13 @@ export function InventoryTable({ data }: InventoryTableProps) {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm font-medium">${item.unitPrice.toFixed(2)}</TableCell>
+                <TableCell className="text-sm font-medium">
+                  {item.minPrice !== undefined && item.maxPrice !== undefined && item.minPrice !== item.maxPrice ? (
+                    `$${item.minPrice.toFixed(2)} - $${item.maxPrice.toFixed(2)}`
+                  ) : (
+                    `$${item.unitPrice.toFixed(2)}`
+                  )}
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
