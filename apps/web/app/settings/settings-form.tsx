@@ -559,7 +559,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       </p>
                       <p className="text-xs text-zinc-500 leading-relaxed max-w-md">
                         Products with stock at or below this quantity are
-                        flagged as "Low Stock" across dashboards and reports.
+                        flagged as &ldquo;Low Stock&rdquo; across dashboards and reports.
                         Applies globally unless overridden per location.
                       </p>
                     </div>

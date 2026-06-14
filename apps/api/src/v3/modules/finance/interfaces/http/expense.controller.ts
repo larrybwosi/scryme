@@ -35,15 +35,24 @@ export class ExpenseController {
   @ApiOperation({ summary: 'List all expenses' })
   @ApiQuery({ name: 'status', required: false, enum: ExpenseStatus })
   @ApiQuery({ name: 'categoryId', required: false })
+  @ApiQuery({ name: 'locationId', required: false })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
   @Permissions('expense:view')
   async getExpenses(
     @Req() req,
     @Query('status') status?: ExpenseStatus,
     @Query('categoryId') categoryId?: string,
+    @Query('locationId') locationId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
     const filters = {
       ...(status && { status }),
       ...(categoryId && { categoryId }),
+      ...(locationId && { locationId }),
+      ...(startDate && { startDate }),
+      ...(endDate && { endDate }),
     };
     return this.expenseUseCase.getExpenses(req.organization.id, filters);
   }
