@@ -1,5 +1,5 @@
-import { Document, Image, Page, StyleSheet, Text, View, Font } from '@react-pdf/renderer';
-import { InvoiceData } from './invoice-templates';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { InvoiceData } from '../../types';
 
 // --- 2. STYLING ---
 // A modern and professional color palette and style guide.
@@ -15,7 +15,7 @@ const colors = {
 const styles = StyleSheet.create({
   // Page and General
   page: {
-    fontFamily: 'Helvetica', // Replace with your custom font e.g., 'Lato'
+    fontFamily: 'Helvetica',
     fontSize: 10,
     padding: 40,
     backgroundColor: colors.background,
@@ -126,61 +126,52 @@ const styles = StyleSheet.create({
 });
 
 // --- 3. HELPER FUNCTIONS ---
-// Kept outside the component for clarity and reusability.
-const formatCurrency = (amount: number, symbol: string) => `${symbol}${amount.toFixed(2)}`;
-
-const formatClientAddress = (client: InvoiceData['client']) => {
-  const address = client.address;
-  if (typeof address === 'string') return address;
-
-  return [
-    client.name,
-    client.company,
-    address.street || address.street1,
-    address.city && address.state ? `${address.city}, ${address.state} ${address.postalCode || address.zipCode || ''}`.trim() : null,
-    address.country,
-    client.email,
-  ]
-    .filter(Boolean) // Remove any empty/null parts
-    .join('\n');
-}
+const formatCurrency = (amount: number, symbol?: string) => `${symbol || ''}${amount.toFixed(2)}`;
 
 // --- 4. SUB-COMPONENTS ---
-// Breaking down the invoice into smaller, manageable parts.
+const InvoiceHeader = ({ invoice }: { invoice: InvoiceData }) => {
+  const branding = invoice.branding;
+  return (
+    <View style={styles.headerView}>
+      <View>
+        {branding?.logoUrl && <Image style={styles.companyLogo} src={branding.logoUrl} />}
+        <Text style={styles.h3}>{branding?.companyName || 'Company Name'}</Text>
+        <Text style={styles.address}>
+          {branding?.companyAddress || ''}
+        </Text>
+      </View>
+      <View style={styles.companyDetails}>
+        <Text style={styles.h1}>INVOICE</Text>
+        <Text style={{ color: colors.accent, fontWeight: 'bold' }}>#{invoice.invoiceNumber}</Text>
+        <Text>Date Issued: {String(invoice.date)}</Text>
+      </View>
+    </View>
+  );
+};
 
-const InvoiceHeader = ({ invoice }: { invoice: InvoiceData }) => (
-  <View style={styles.headerView}>
-    <View>
-      {(invoice.company.logoUrl || invoice.company.logo) && <Image style={styles.companyLogo} src={(invoice.company.logoUrl || invoice.company.logo) as string} />}
-      <Text style={styles.h3}>{invoice.company.name}</Text>
-      <Text style={styles.address}>
-        {invoice.company.address}
-        {'\n'}
-        {invoice.company.city}
-      </Text>
+const ClientInformation = ({ invoice }: { invoice: InvoiceData }) => {
+  const branding = invoice.branding;
+  return (
+    <View style={[styles.clientInfoView, styles.section]}>
+      <View>
+        <Text style={styles.h2}>Billed To</Text>
+        <Text style={styles.address}>
+          {invoice.customerName}
+          {'\n'}
+          {invoice.customerAddress}
+          {'\n'}
+          {invoice.customerEmail}
+        </Text>
+      </View>
+      <View style={{ textAlign: 'right' }}>
+        <Text style={styles.h2}>Contact</Text>
+        <Text>{branding?.companyEmail}</Text>
+        <Text>{branding?.companyPhone}</Text>
+        <Text>{branding?.companyWebsite}</Text>
+      </View>
     </View>
-    <View style={styles.companyDetails}>
-      <Text style={styles.h1}>INVOICE</Text>
-      <Text style={{ color: colors.accent, fontWeight: 'bold' }}>#{invoice.invoiceNumber}</Text>
-      <Text>Date Issued: {invoice.date}</Text>
-    </View>
-  </View>
-);
-
-const ClientInformation = ({ invoice }: { invoice: InvoiceData }) => (
-  <View style={[styles.clientInfoView, styles.section]}>
-    <View>
-      <Text style={styles.h2}>Billed To</Text>
-      <Text style={styles.address}>{formatClientAddress(invoice.client)}</Text>
-    </View>
-    <View style={{ textAlign: 'right' }}>
-      <Text style={styles.h2}>Contact</Text>
-      <Text>{invoice.company.email}</Text>
-      <Text>{invoice.company.phone}</Text>
-      <Text>{invoice.company.website}</Text>
-    </View>
-  </View>
-);
+  );
+};
 
 const InvoiceTable = ({ invoice }: { invoice: InvoiceData }) => (
   <View style={[styles.table, styles.section]}>
@@ -193,9 +184,9 @@ const InvoiceTable = ({ invoice }: { invoice: InvoiceData }) => (
     {invoice.items.map((item, index) => (
       <View key={index} style={styles.tableRow}>
         <Text style={[styles.tableCell, styles.colDesc]}>{item.description || item.itemName}</Text>
-        <Text style={[styles.tableCell, styles.colQty]}>{item.qty || item.quantity}</Text>
-        <Text style={[styles.tableCell, styles.colPrice]}>{formatCurrency(item.price || item.unitPrice || item.rate, invoice.currencySymbol)}</Text>
-        <Text style={[styles.tableCell, styles.colAmount]}>{formatCurrency(item.amount || item.total, invoice.currencySymbol)}</Text>
+        <Text style={[styles.tableCell, styles.colQty]}>{item.quantity}</Text>
+        <Text style={[styles.tableCell, styles.colPrice]}>{formatCurrency(item.unitPrice || item.rate || 0, invoice.currencySymbol)}</Text>
+        <Text style={[styles.tableCell, styles.colAmount]}>{formatCurrency(item.totalPrice || item.amount || item.totalPrice || 0, invoice.currencySymbol)}</Text>
       </View>
     ))}
   </View>
@@ -214,7 +205,7 @@ const InvoiceTotals = ({ invoice }: { invoice: InvoiceData }) => (
       </View>
       <View style={styles.grandTotalRow}>
         <Text style={styles.grandTotalText}>Total</Text>
-        <Text style={styles.grandTotalText}>{formatCurrency(invoice.total || invoice.grandTotal || 0, invoice.currencySymbol)}</Text>
+        <Text style={styles.grandTotalText}>{formatCurrency(invoice.total, invoice.currencySymbol)}</Text>
       </View>
     </View>
   </View>
@@ -228,16 +219,10 @@ const NotesAndTerms = ({ invoice }: { invoice: InvoiceData }) => (
         <Text>{invoice.notes}</Text>
       </View>
     )}
-    {(invoice.payment.terms || invoice.paymentTerms) && (
+    {invoice.paymentTerms && (
       <View style={{ marginBottom: 12 }}>
         <Text style={styles.h3}>Payment Terms</Text>
-        <Text>{invoice.payment.terms || invoice.paymentTerms}</Text>
-      </View>
-    )}
-    {(invoice.payment.availableMethods || invoice.paymentMethods) && (
-      <View>
-        <Text style={styles.h3}>Payment Methods</Text>
-        <Text>We accept: {(invoice.payment.availableMethods || []).join(', ').replace(/_/g, ' ')}</Text>
+        <Text>{invoice.paymentTerms}</Text>
       </View>
     )}
   </View>
@@ -246,23 +231,21 @@ const NotesAndTerms = ({ invoice }: { invoice: InvoiceData }) => (
 const InvoiceFooter = ({ invoice, qrCode }: { invoice: InvoiceData; qrCode?: string }) => (
   <View style={styles.footer} fixed>
     <Text>Thank you for your business.</Text>
-    {qrCode && <Image style={styles.footerQRCode} src={qrCode} />}
+    {(qrCode || invoice.qrCode) && <Image style={styles.footerQRCode} src={qrCode || invoice.qrCode} />}
   </View>
 );
 
 // --- 5. MAIN COMPONENT ---
-// The final document, composed of all the smaller parts.
 export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: string }) => {
-  const invoiceData = data;
   return (
-    <Document title={`Invoice #${invoiceData.invoiceNumber}`}>
+    <Document title={`Invoice #${data.invoiceNumber}`}>
       <Page size="A4" style={styles.page}>
-        <InvoiceHeader invoice={invoiceData} />
-        <ClientInformation invoice={invoiceData} />
-        <InvoiceTable invoice={invoiceData} />
-        <InvoiceTotals invoice={invoiceData} />
-        <NotesAndTerms invoice={invoiceData} />
-        <InvoiceFooter invoice={invoiceData} qrCode={qrCode} />
+        <InvoiceHeader invoice={data} />
+        <ClientInformation invoice={data} />
+        <InvoiceTable invoice={data} />
+        <InvoiceTotals invoice={data} />
+        <NotesAndTerms invoice={data} />
+        <InvoiceFooter invoice={data} qrCode={qrCode} />
       </Page>
     </Document>
   );

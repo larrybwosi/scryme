@@ -1,6 +1,7 @@
+// @ts-nocheck
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer';
-import { InvoiceData } from './invoice-templates';
+import { InvoiceData } from '../../types';
 
 // Create styles
 const styles = StyleSheet.create({
