@@ -318,7 +318,6 @@ export function WorkflowManager({
 
                                 {cond.type === "LOCATION" && (
                                   <Select
-                                    className="flex-1"
                                     value={cond.locationId}
                                     onValueChange={(val) => {
                                       const newSteps = [...editingWorkflow.steps];
@@ -339,7 +338,6 @@ export function WorkflowManager({
 
                                 {cond.type === "EXPENSE_CATEGORY" && (
                                   <Select
-                                    className="flex-1"
                                     value={cond.expenseCategoryId}
                                     onValueChange={(val) => {
                                       const newSteps = [...editingWorkflow.steps];
