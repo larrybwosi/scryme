@@ -450,7 +450,7 @@ export default function WorkflowsPage() {
               {selectedWorkflow?.isProvisioned ? "Edit Settings" : "Provision Workflow"}
             </SheetTitle>
             <SheetDescription className="text-base">
-              Configure <strong>{selectedWorkflow?.name}</strong> to match your organization's needs.
+              Configure <strong>{selectedWorkflow?.name}</strong> to match your organization&apos;s needs.
             </SheetDescription>
           </SheetHeader>
 
