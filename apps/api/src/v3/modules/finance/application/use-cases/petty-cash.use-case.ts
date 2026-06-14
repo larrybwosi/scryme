@@ -1,14 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreatePettyCashFundDto, TopUpPettyCashFundDto } from '../dto/finance.dto';
-import { Prisma, PettyCashTransactionType } from '@repo/db';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import {
+  CreatePettyCashFundDto,
+  TopUpPettyCashFundDto,
+} from "../dto/finance.dto";
+import { Prisma, PettyCashTransactionType } from "@repo/db";
 
 @Injectable()
 export class PettyCashUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async createFund(organizationId: string, dto: CreatePettyCashFundDto) {
-    return await this.prisma.client.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       const fund = await tx.pettyCashFund.create({
         data: {
           name: dto.name,
@@ -16,7 +23,7 @@ export class PettyCashUseCase {
           amount: new Prisma.Decimal(dto.floatAmount),
           responsibleMemberId: dto.responsibleMemberId,
           organizationId: organizationId,
-          currencyCode: dto.currencyCode || 'KES',
+          currencyCode: dto.currencyCode || "KES",
         },
       });
 
@@ -25,7 +32,7 @@ export class PettyCashUseCase {
           fundId: fund.id,
           type: PettyCashTransactionType.TOP_UP,
           amount: new Prisma.Decimal(dto.floatAmount),
-          description: 'Initial float setup',
+          description: "Initial float setup",
           memberId: dto.responsibleMemberId,
         },
       });
@@ -34,14 +41,19 @@ export class PettyCashUseCase {
     });
   }
 
-  async topUpFund(organizationId: string, fundId: string, dto: TopUpPettyCashFundDto, memberId: string) {
-    return await this.prisma.client.$transaction(async tx => {
+  async topUpFund(
+    organizationId: string,
+    fundId: string,
+    dto: TopUpPettyCashFundDto,
+    memberId: string,
+  ) {
+    return await this.prisma.client.$transaction(async (tx) => {
       const fund = await tx.pettyCashFund.findFirst({
         where: { id: fundId, organizationId },
       });
 
       if (!fund) {
-        throw new NotFoundException('Petty cash fund not found');
+        throw new NotFoundException("Petty cash fund not found");
       }
 
       const updatedFund = await tx.pettyCashFund.update({
@@ -56,7 +68,7 @@ export class PettyCashUseCase {
           fundId,
           type: PettyCashTransactionType.TOP_UP,
           amount: new Prisma.Decimal(dto.amount),
-          description: dto.description || 'Fund top-up',
+          description: dto.description || "Fund top-up",
           memberId,
         },
       });
@@ -101,7 +113,7 @@ export class PettyCashUseCase {
     });
 
     if (!fund) {
-      throw new NotFoundException('Petty cash fund not found');
+      throw new NotFoundException("Petty cash fund not found");
     }
 
     return fund;
@@ -113,7 +125,7 @@ export class PettyCashUseCase {
     });
 
     if (!fund) {
-      throw new NotFoundException('Petty cash fund not found');
+      throw new NotFoundException("Petty cash fund not found");
     }
 
     return await this.prisma.client.pettyCashTransaction.findMany({
@@ -129,7 +141,7 @@ export class PettyCashUseCase {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 }

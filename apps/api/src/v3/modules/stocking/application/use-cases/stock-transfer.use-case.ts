@@ -1,22 +1,38 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateTransferDto, ShipTransferDto, ReceiveTransferDto } from '../dto/transfer.dto';
-import { PaginationQueryDto, paginate } from '@/v3/common/utils/pagination';
-import { InventoryMovementService } from '../../../inventory/application/services/inventory-movement.service';
-import { emitStockTransferCreated, emitStockTransferShipped, emitStockTransferReceived } from '@repo/windmill/server';
-import { MovementType, StockTransferStatus } from '@repo/db';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import {
+  CreateTransferDto,
+  ShipTransferDto,
+  ReceiveTransferDto,
+} from "../dto/transfer.dto";
+import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
+import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
+import {
+  emitStockTransferCreated,
+  emitStockTransferShipped,
+  emitStockTransferReceived,
+} from "@repo/windmill/server";
+import { MovementType, StockTransferStatus } from "@repo/db";
 
 @Injectable()
 export class StockTransferUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryMovementService: InventoryMovementService
+    private readonly inventoryMovementService: InventoryMovementService,
   ) {}
 
-  async create(organizationId: string, memberId: string, dto: CreateTransferDto) {
+  async create(
+    organizationId: string,
+    memberId: string,
+    dto: CreateTransferDto,
+  ) {
     const transferNumber = `TR-${Date.now()}`;
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const transfer = await tx.stockTransfer.create({
         data: {
           organizationId,
@@ -28,7 +44,7 @@ export class StockTransferUseCase {
           priority: dto.priority,
           notes: dto.notes,
           items: {
-            create: dto.items.map(item => ({
+            create: dto.items.map((item) => ({
               variantId: item.variantId,
               requestedQuantity: item.requestedQuantity,
               unitCost: 0,
@@ -49,26 +65,30 @@ export class StockTransferUseCase {
         fromLocation: transfer.fromLocation.name,
         toLocation: transfer.toLocation.name,
         priority: transfer.priority,
-        items: transfer.items.map(i => ({
-          variantName: `${i.variant.product.name} ${i.variant.name || ''}`,
+        items: transfer.items.map((i) => ({
+          variantName: `${i.variant.product.name} ${i.variant.name || ""}`,
           quantity: Number(i.requestedQuantity),
         })),
-      }).catch(err => console.error('[v3 StockTransfer] Failed to emit created event:', err));
+      }).catch((err) =>
+        console.error("[v3 StockTransfer] Failed to emit created event:", err),
+      );
 
       return transfer;
     });
   }
 
   async approve(organizationId: string, memberId: string, transferId: string) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const transfer = await tx.stockTransfer.findUnique({
         where: { id: transferId, organizationId },
         include: { items: true },
       });
 
-      if (!transfer) throw new NotFoundException('Transfer not found');
+      if (!transfer) throw new NotFoundException("Transfer not found");
       if (transfer.status !== StockTransferStatus.PENDING_APPROVAL) {
-        throw new BadRequestException('Transfer is not in pending approval status');
+        throw new BadRequestException(
+          "Transfer is not in pending approval status",
+        );
       }
 
       for (const item of transfer.items) {
@@ -81,9 +101,12 @@ export class StockTransferUseCase {
           },
         });
 
-        if (!stock || Number(stock.availableStock) < Number(item.requestedQuantity)) {
+        if (
+          !stock ||
+          Number(stock.availableStock) < Number(item.requestedQuantity)
+        ) {
           throw new BadRequestException(
-            `Insufficient available stock for variant ${item.variantId} at source location`
+            `Insufficient available stock for variant ${item.variantId} at source location`,
           );
         }
 
@@ -111,21 +134,33 @@ export class StockTransferUseCase {
     });
   }
 
-  async ship(organizationId: string, memberId: string, transferId: string, dto: ShipTransferDto) {
-    return this.prisma.client.$transaction(async tx => {
+  async ship(
+    organizationId: string,
+    memberId: string,
+    transferId: string,
+    dto: ShipTransferDto,
+  ) {
+    return this.prisma.client.$transaction(async (tx) => {
       const transfer = await tx.stockTransfer.findUnique({
         where: { id: transferId, organizationId },
         include: { items: { include: { variant: true } } },
       });
 
-      if (!transfer) throw new NotFoundException('Transfer not found');
+      if (!transfer) throw new NotFoundException("Transfer not found");
       if (transfer.status !== StockTransferStatus.APPROVED) {
-        throw new BadRequestException('Transfer must be approved before shipping');
+        throw new BadRequestException(
+          "Transfer must be approved before shipping",
+        );
       }
 
       for (const itemDto of dto.items) {
-        const item = transfer.items.find(i => i.id === itemDto.transferItemId);
-        if (!item) throw new NotFoundException(`Item ${itemDto.transferItemId} not found`);
+        const item = transfer.items.find(
+          (i) => i.id === itemDto.transferItemId,
+        );
+        if (!item)
+          throw new NotFoundException(
+            `Item ${itemDto.transferItemId} not found`,
+          );
 
         await tx.productVariantStock.update({
           where: {
@@ -148,12 +183,15 @@ export class StockTransferUseCase {
             currentQuantity: { gt: 0 },
             id: itemDto.stockBatchId || undefined,
           },
-          orderBy: { receivedDate: 'asc' },
+          orderBy: { receivedDate: "asc" },
         });
 
         for (const batch of batches) {
           if (remainingToDeduct <= 0) break;
-          const deduction = Math.min(Number(batch.currentQuantity), remainingToDeduct);
+          const deduction = Math.min(
+            Number(batch.currentQuantity),
+            remainingToDeduct,
+          );
 
           await tx.stockBatch.update({
             where: { id: batch.id },
@@ -169,7 +207,7 @@ export class StockTransferUseCase {
             fromLocationId: transfer.fromLocationId,
             movementType: MovementType.TRANSFER,
             referenceId: transfer.id,
-            referenceType: 'StockTransfer',
+            referenceType: "StockTransfer",
             notes: `Shipped via Transfer #${transfer.transferNumber}`,
           });
 
@@ -177,7 +215,9 @@ export class StockTransferUseCase {
         }
 
         if (remainingToDeduct > 0) {
-          throw new BadRequestException(`Insufficient stock in specified batches for ${item.variant.sku}`);
+          throw new BadRequestException(
+            `Insufficient stock in specified batches for ${item.variant.sku}`,
+          );
         }
 
         await tx.stockTransferItem.update({
@@ -207,27 +247,42 @@ export class StockTransferUseCase {
         shippedAt: updatedTransfer.shippedDate!.toISOString(),
         carrier: updatedTransfer.carrier || undefined,
         trackingNumber: updatedTransfer.trackingNumber || undefined,
-      }).catch(err => console.error('[v3 StockTransfer] Failed to emit shipped event:', err));
+      }).catch((err) =>
+        console.error("[v3 StockTransfer] Failed to emit shipped event:", err),
+      );
 
       return updatedTransfer;
     });
   }
 
-  async receive(organizationId: string, memberId: string, transferId: string, dto: ReceiveTransferDto) {
-    return this.prisma.client.$transaction(async tx => {
+  async receive(
+    organizationId: string,
+    memberId: string,
+    transferId: string,
+    dto: ReceiveTransferDto,
+  ) {
+    return this.prisma.client.$transaction(async (tx) => {
       const transfer = await tx.stockTransfer.findUnique({
         where: { id: transferId, organizationId },
         include: { items: { include: { variant: true } } },
       });
 
-      if (!transfer) throw new NotFoundException('Transfer not found');
-      if (transfer.status !== StockTransferStatus.SHIPPED && transfer.status !== StockTransferStatus.IN_TRANSIT) {
-        throw new BadRequestException('Transfer is not in a shippable state');
+      if (!transfer) throw new NotFoundException("Transfer not found");
+      if (
+        transfer.status !== StockTransferStatus.SHIPPED &&
+        transfer.status !== StockTransferStatus.IN_TRANSIT
+      ) {
+        throw new BadRequestException("Transfer is not in a shippable state");
       }
 
       for (const itemDto of dto.items) {
-        const item = transfer.items.find(i => i.id === itemDto.transferItemId);
-        if (!item) throw new NotFoundException(`Item ${itemDto.transferItemId} not found`);
+        const item = transfer.items.find(
+          (i) => i.id === itemDto.transferItemId,
+        );
+        if (!item)
+          throw new NotFoundException(
+            `Item ${itemDto.transferItemId} not found`,
+          );
 
         await tx.productVariantStock.upsert({
           where: {
@@ -272,7 +327,7 @@ export class StockTransferUseCase {
           toLocationId: transfer.toLocationId,
           movementType: MovementType.TRANSFER,
           referenceId: transfer.id,
-          referenceType: 'StockTransfer',
+          referenceType: "StockTransfer",
           notes: `Received via Transfer #${transfer.transferNumber}`,
         });
 
@@ -298,8 +353,10 @@ export class StockTransferUseCase {
         transferId: completedTransfer.id,
         transferNumber: completedTransfer.transferNumber,
         receivedAt: completedTransfer.receivedDate!.toISOString(),
-        receivedBy: completedTransfer.receivedBy?.user.name || 'Unknown',
-      }).catch(err => console.error('[v3 StockTransfer] Failed to emit received event:', err));
+        receivedBy: completedTransfer.receivedBy?.user.name || "Unknown",
+      }).catch((err) =>
+        console.error("[v3 StockTransfer] Failed to emit received event:", err),
+      );
 
       return completedTransfer;
     });
@@ -310,8 +367,8 @@ export class StockTransferUseCase {
       this.prisma.client.stockTransfer,
       pagination,
       { organizationId },
-      { requestedDate: 'desc' },
-      { include: { fromLocation: true, toLocation: true, requestedBy: true } }
+      { requestedDate: "desc" },
+      { include: { fromLocation: true, toLocation: true, requestedBy: true } },
     );
   }
 
@@ -338,7 +395,7 @@ export class StockTransferUseCase {
       },
     });
 
-    if (!transfer) throw new NotFoundException('Transfer not found');
+    if (!transfer) throw new NotFoundException("Transfer not found");
     return transfer;
   }
 }

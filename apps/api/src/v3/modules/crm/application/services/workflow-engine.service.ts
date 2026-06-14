@@ -1,4 +1,4 @@
-import { db } from '@repo/db';
+import { db } from "@repo/db";
 
 export class WorkflowExecutionEngine {
   /**
@@ -13,7 +13,7 @@ export class WorkflowExecutionEngine {
 
     // Find trigger node
     const nodes = workflow.nodes as any[];
-    const triggerNode = nodes.find(n => n.type === 'trigger');
+    const triggerNode = nodes.find((n) => n.type === "trigger");
 
     if (!triggerNode) return;
 
@@ -22,9 +22,9 @@ export class WorkflowExecutionEngine {
       data: {
         workflowId,
         recordId,
-        status: 'RUNNING',
+        status: "RUNNING",
         currentNodeId: triggerNode.id,
-      }
+      },
     });
 
     // Execute next steps
@@ -37,27 +37,27 @@ export class WorkflowExecutionEngine {
   async executeNextNodes(instanceId: string) {
     const instance = await db.campaignWorkflowInstance.findUnique({
       where: { id: instanceId },
-      include: { workflow: true }
+      include: { workflow: true },
     });
 
-    if (!instance || instance.status !== 'RUNNING') return;
+    if (!instance || instance.status !== "RUNNING") return;
 
     const edges = instance.workflow.edges as any[];
     const nodes = instance.workflow.nodes as any[];
 
     // Find outgoing edges from current node
-    const nextEdges = edges.filter(e => e.source === instance.currentNodeId);
+    const nextEdges = edges.filter((e) => e.source === instance.currentNodeId);
 
     if (nextEdges.length === 0) {
       await db.campaignWorkflowInstance.update({
         where: { id: instanceId },
-        data: { status: 'COMPLETED' }
+        data: { status: "COMPLETED" },
       });
       return;
     }
 
     for (const edge of nextEdges) {
-      const nextNode = nodes.find(n => n.id === edge.target);
+      const nextNode = nodes.find((n) => n.id === edge.target);
       if (!nextNode) continue;
 
       await this.executeNode(instanceId, nextNode);
@@ -68,25 +68,27 @@ export class WorkflowExecutionEngine {
    * Execute a specific node
    */
   private async executeNode(instanceId: string, node: any) {
-    console.log(`Executing node ${node.id} (${node.type}) for instance ${instanceId}`);
+    console.log(
+      `Executing node ${node.id} (${node.type}) for instance ${instanceId}`,
+    );
 
     // Update current node
     await db.campaignWorkflowInstance.update({
       where: { id: instanceId },
-      data: { currentNodeId: node.id }
+      data: { currentNodeId: node.id },
     });
 
-    if (node.type === 'action') {
+    if (node.type === "action") {
       const { type, label } = node.data;
 
       // Simulate action execution
       console.log(`[ACTION] Executing ${type}: ${label}`);
 
       // If it's a task, we could create a CrmFollowUp here
-      if (type === 'TASK') {
+      if (type === "TASK") {
         const instance = await db.campaignWorkflowInstance.findUnique({
-           where: { id: instanceId },
-           include: { workflow: { include: { organization: true } } }
+          where: { id: instanceId },
+          include: { workflow: { include: { organization: true } } },
         });
 
         if (instance) {
@@ -97,30 +99,35 @@ export class WorkflowExecutionEngine {
               title: label,
               description: `Automated task from workflow: ${instance.workflow.name}`,
               dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Due in 1 day
-              status: 'PENDING',
-              priority: 'MEDIUM',
-            }
+              status: "PENDING",
+              priority: "MEDIUM",
+            },
           });
         }
       }
 
       // Proceed to next nodes
       await this.executeNextNodes(instanceId);
-    } else if (node.type === 'delay') {
-      const duration = node.data.duration || '1 Hour';
+    } else if (node.type === "delay") {
+      const duration = node.data.duration || "1 Hour";
       console.log(`[DELAY] Scheduling resume for ${instanceId} in ${duration}`);
 
       let delayMs = 3600000; // Default 1 hour
-      if (duration.includes('Day')) delayMs = 86400000;
-      if (duration.includes('Week')) delayMs = 604800000;
+      if (duration.includes("Day")) delayMs = 86400000;
+      if (duration.includes("Week")) delayMs = 604800000;
 
       await db.campaignWorkflowInstance.update({
         where: { id: instanceId },
-        data: { status: 'HALTED' }
+        data: { status: "HALTED" },
       });
 
-      const { workflowQueue } = await import('../../infrastructure/queues/workflow.queue');
-      await workflowQueue.add('resume-workflow', { instanceId }, { delay: delayMs });
+      const { workflowQueue } =
+        await import("../../infrastructure/queues/workflow.queue");
+      await workflowQueue.add(
+        "resume-workflow",
+        { instanceId },
+        { delay: delayMs },
+      );
     }
   }
 }

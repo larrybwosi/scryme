@@ -6,16 +6,18 @@ import {
   OnGatewayDisconnect,
   MessageBody,
   ConnectedSocket,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { RealtimeRedisService } from './realtime-redis.service';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { RealtimeRedisService } from "./realtime-redis.service";
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: "*",
   },
 })
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class RealtimeGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -31,20 +33,20 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     // Cleanup presence in all rooms the client was in
     // For simplicity, we search all presence keys and remove this client
-    const presenceKeys = await this.redis.keys('realtime:presence:*');
+    const presenceKeys = await this.redis.keys("realtime:presence:*");
     for (const key of presenceKeys) {
-      const channel = key.replace('realtime:presence:', '');
+      const channel = key.replace("realtime:presence:", "");
       await this.redis.leavePresence(channel, clientId);
 
       const members = await this.redis.getPresence(channel);
-      this.server.to(channel).emit('presence:update', { channel, members });
+      this.server.to(channel).emit("presence:update", { channel, members });
     }
   }
 
-  @SubscribeMessage('join')
+  @SubscribeMessage("join")
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, options?: { rewind?: number } },
+    @MessageBody() data: { channel: string; options?: { rewind?: number } },
   ) {
     client.join(data.channel);
     console.log(`Client ${client.id} joined room: ${data.channel}`);
@@ -60,35 +62,37 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       }
     }
 
-    return { event: 'joined', data: data.channel };
+    return { event: "joined", data: data.channel };
   }
 
-  @SubscribeMessage('leave')
+  @SubscribeMessage("leave")
   handleLeaveRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
   ) {
     client.leave(data.channel);
     console.log(`Client ${client.id} left room: ${data.channel}`);
-    return { event: 'left', data: data.channel };
+    return { event: "left", data: data.channel };
   }
 
-  @SubscribeMessage('presence:enter')
+  @SubscribeMessage("presence:enter")
   async handlePresenceEnter(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, metadata?: any },
+    @MessageBody() data: { channel: string; metadata?: any },
   ) {
     const clientId = client.handshake.auth.clientId || client.id;
     await this.redis.enterPresence(data.channel, clientId, data.metadata);
 
     // Broadcast presence update to the room
     const members = await this.redis.getPresence(data.channel);
-    this.server.to(data.channel).emit('presence:update', { channel: data.channel, members });
+    this.server
+      .to(data.channel)
+      .emit("presence:update", { channel: data.channel, members });
 
-    return { event: 'presence:entered', members };
+    return { event: "presence:entered", members };
   }
 
-  @SubscribeMessage('presence:leave')
+  @SubscribeMessage("presence:leave")
   async handlePresenceLeave(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
@@ -98,12 +102,14 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
     // Broadcast presence update
     const members = await this.redis.getPresence(data.channel);
-    this.server.to(data.channel).emit('presence:update', { channel: data.channel, members });
+    this.server
+      .to(data.channel)
+      .emit("presence:update", { channel: data.channel, members });
 
-    return { event: 'presence:left', members };
+    return { event: "presence:left", members };
   }
 
-  @SubscribeMessage('presence:get')
+  @SubscribeMessage("presence:get")
   async handlePresenceGet(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
@@ -112,20 +118,20 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     return members;
   }
 
-  @SubscribeMessage('history:get')
+  @SubscribeMessage("history:get")
   async handleHistoryGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, limit?: number },
+    @MessageBody() data: { channel: string; limit?: number },
   ) {
     const history = await this.redis.getHistory(data.channel);
     const limit = data.limit || 100;
     return history.slice(-limit);
   }
 
-  @SubscribeMessage('publish')
+  @SubscribeMessage("publish")
   async handlePublish(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, event: string, data: any },
+    @MessageBody() data: { channel: string; event: string; data: any },
   ) {
     console.log(`Client ${client.id} attempting to publish to ${data.channel}`);
 

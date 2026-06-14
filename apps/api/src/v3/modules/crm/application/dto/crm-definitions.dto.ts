@@ -1,46 +1,54 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsEnum, IsInt, IsJSON } from 'class-validator';
-import { CrmFieldType } from '@repo/db';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsJSON,
+} from "class-validator";
+import { CrmFieldType } from "@repo/db";
 
 export class CreateCrmObjectDto {
-  @ApiProperty({ example: 'deal' })
+  @ApiProperty({ example: "deal" })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'Deal' })
+  @ApiProperty({ example: "Deal" })
   @IsString()
   @IsNotEmpty()
   label: string;
 
-  @ApiProperty({ example: 'Deals' })
+  @ApiProperty({ example: "Deals" })
   @IsString()
   @IsNotEmpty()
   labelPlural: string;
 
-  @ApiProperty({ example: 'Sales opportunities' })
+  @ApiProperty({ example: "Sales opportunities" })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 'briefcase' })
+  @ApiProperty({ example: "briefcase" })
   @IsString()
   @IsOptional()
   icon?: string;
 }
 
 export class CreateCrmFieldDto {
-  @ApiProperty({ example: 'stage' })
+  @ApiProperty({ example: "stage" })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'Stage' })
+  @ApiProperty({ example: "Stage" })
   @IsString()
   @IsNotEmpty()
   label: string;
 
-  @ApiProperty({ enum: CrmFieldType, example: 'SELECT' })
+  @ApiProperty({ enum: CrmFieldType, example: "SELECT" })
   @IsEnum(CrmFieldType)
   type: CrmFieldType;
 

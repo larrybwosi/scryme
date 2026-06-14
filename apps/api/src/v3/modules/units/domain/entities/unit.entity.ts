@@ -1,4 +1,4 @@
-import { UnitType, IndustryCategory } from '@repo/db';
+import { UnitType, IndustryCategory } from "@repo/db";
 
 export class SystemUnit {
   constructor(

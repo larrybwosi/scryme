@@ -1,19 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateCrmNoteDto } from '../dto/crm.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmNoteDto } from "../dto/crm.dto";
 
 @Injectable()
 export class CrmNoteService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createNote(organizationId: string, memberId: string | null, dto: CreateCrmNoteDto) {
+  async createNote(
+    organizationId: string,
+    memberId: string | null,
+    dto: CreateCrmNoteDto,
+  ) {
     // Verify record exists and belongs to org
     const record = await this.prisma.client.crmRecord.findFirst({
       where: { id: dto.recordId, organizationId },
     });
 
     if (!record) {
-      throw new NotFoundException('CRM Record not found');
+      throw new NotFoundException("CRM Record not found");
     }
 
     return this.prisma.client.crmNote.create({
@@ -22,7 +26,9 @@ export class CrmNoteService {
         organizationId,
         content: dto.content,
         createdById: memberId,
-        timelineDate: dto.timelineDate ? new Date(dto.timelineDate) : new Date(),
+        timelineDate: dto.timelineDate
+          ? new Date(dto.timelineDate)
+          : new Date(),
       },
     });
   }
@@ -30,7 +36,7 @@ export class CrmNoteService {
   async getNotesForRecord(organizationId: string, recordId: string) {
     return this.prisma.client.crmNote.findMany({
       where: { recordId, organizationId },
-      orderBy: { timelineDate: 'desc' },
+      orderBy: { timelineDate: "desc" },
       include: {
         createdBy: {
           select: {

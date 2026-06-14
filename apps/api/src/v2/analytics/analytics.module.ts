@@ -1,2 +1,3 @@
-import { Module } from '@nestjs/common';
-@Module({}) export class AnalyticsModule {}
+import { Module } from "@nestjs/common";
+@Module({})
+export class AnalyticsModule {}

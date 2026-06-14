@@ -1,10 +1,25 @@
-import { Controller, Get, Query, Param, Post, Body, Patch, Delete, Put, Res, UsePipes } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { BakeryService } from './bakery.service';
-import { v2Context } from '../../common/decorators/v2-context.decorator';
-import { RequirePermission, AllowPublic } from '../../common/decorators/auth.decorator';
-import type { V2ApiContext } from '@repo/shared/server';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import {
+  Controller,
+  Get,
+  Query,
+  Param,
+  Post,
+  Body,
+  Patch,
+  Delete,
+  Put,
+  Res,
+  UsePipes,
+} from "@nestjs/common";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { BakeryService } from "./bakery.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import {
+  RequirePermission,
+  AllowPublic,
+} from "../../common/decorators/auth.decorator";
+import type { V2ApiContext } from "@repo/shared/server";
+import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import {
   CreateRecipeSchema,
   UpdateRecipeSchema,
@@ -23,251 +38,299 @@ import {
   AdjustPartnerWalletSchema,
   ReceiveIngredientsSchema,
   DispatchDeliverySchema,
-  ReconcileDeliverySchema
-} from './bakery.schema';
+  ReconcileDeliverySchema,
+} from "./bakery.schema";
 
-@ApiTags('Bakery')
-@Controller('bakery')
+@ApiTags("Bakery")
+@Controller("bakery")
 export class BakeryController {
   constructor(private readonly bakeryService: BakeryService) {}
 
   @Get()
-  @RequirePermission('bakery:batch:view')
+  @RequirePermission("bakery:batch:view")
   async getOverview(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getBakeryOverview(ctx);
   }
 
   // Ingredients
-  @Get('ingredients')
-  @RequirePermission('bakery:recipe:view')
+  @Get("ingredients")
+  @RequirePermission("bakery:recipe:view")
   async getIngredients(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getIngredients(ctx);
   }
 
-  @Get('ingredients/records')
-  @RequirePermission('bakery:recipe:view')
+  @Get("ingredients/records")
+  @RequirePermission("bakery:recipe:view")
   async getIngredientRecords(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getIngredientRecords(ctx);
   }
 
   // Recipes
-  @Get('recipes')
-  @RequirePermission('bakery:recipe:view')
+  @Get("recipes")
+  @RequirePermission("bakery:recipe:view")
   async getRecipes(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getRecipes(ctx);
   }
 
-  @Get('recipes/:id')
-  @RequirePermission('bakery:recipe:view')
-  async getRecipe(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Get("recipes/:id")
+  @RequirePermission("bakery:recipe:view")
+  async getRecipe(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.getRecipe(ctx, id);
   }
 
-  @Post('recipes')
-  @RequirePermission('bakery:recipe:manage')
+  @Post("recipes")
+  @RequirePermission("bakery:recipe:manage")
   @UsePipes(new ZodValidationPipe(CreateRecipeSchema))
   async createRecipe(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createRecipe(ctx, data);
   }
 
-  @Patch('recipes/:id')
-  @RequirePermission('bakery:recipe:manage')
+  @Patch("recipes/:id")
+  @RequirePermission("bakery:recipe:manage")
   @UsePipes(new ZodValidationPipe(UpdateRecipeSchema))
-  async updateRecipe(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
+  async updateRecipe(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.updateRecipe(ctx, id, data);
   }
 
-  @Delete('recipes/:id')
-  @RequirePermission('bakery:recipe:manage')
-  async deleteRecipe(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Delete("recipes/:id")
+  @RequirePermission("bakery:recipe:manage")
+  async deleteRecipe(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.deleteRecipe(ctx, id);
   }
 
-  @Post('recipes/:id/duplicate')
-  @RequirePermission('bakery:recipe:manage')
-  async duplicateRecipe(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Post("recipes/:id/duplicate")
+  @RequirePermission("bakery:recipe:manage")
+  async duplicateRecipe(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.duplicateRecipe(ctx, id);
   }
 
-  @Post('recipes/generate')
-  @RequirePermission('bakery:recipe:manage')
-  async generateRecipeAi(@v2Context() ctx: V2ApiContext, @Body('prompt') prompt: string) {
+  @Post("recipes/generate")
+  @RequirePermission("bakery:recipe:manage")
+  async generateRecipeAi(
+    @v2Context() ctx: V2ApiContext,
+    @Body("prompt") prompt: string,
+  ) {
     return this.bakeryService.generateRecipeAi(ctx, prompt);
   }
 
   // Batches
-  @Get('batches')
-  @RequirePermission('bakery:batch:view')
+  @Get("batches")
+  @RequirePermission("bakery:batch:view")
   async getBatches(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.bakeryService.getBatches(ctx, query);
   }
 
-  @Get('batches/:id')
-  @RequirePermission('bakery:batch:view')
-  async getBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Get("batches/:id")
+  @RequirePermission("bakery:batch:view")
+  async getBatch(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.getBatch(ctx, id);
   }
 
-  @Get('batches/:id/traceability')
-  @RequirePermission('bakery:batch:view')
-  async getBatchTraceability(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Get("batches/:id/traceability")
+  @RequirePermission("bakery:batch:view")
+  async getBatchTraceability(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.getBatchTraceability(ctx, id);
   }
 
-  @Post('batches')
-  @RequirePermission('bakery:batch:manage')
+  @Post("batches")
+  @RequirePermission("bakery:batch:manage")
   @UsePipes(new ZodValidationPipe(CreateBatchSchema))
   async createBatch(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createBatch(ctx, data);
   }
 
-  @Patch('batches/:id')
-  @RequirePermission('bakery:batch:manage')
+  @Patch("batches/:id")
+  @RequirePermission("bakery:batch:manage")
   @UsePipes(new ZodValidationPipe(UpdateBatchSchema))
-  async updateBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
+  async updateBatch(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.updateBatch(ctx, id, data);
   }
 
-  @Delete('batches/:id')
-  @RequirePermission('bakery:batch:manage')
-  async deleteBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Delete("batches/:id")
+  @RequirePermission("bakery:batch:manage")
+  async deleteBatch(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.deleteBatch(ctx, id);
   }
 
-  @Post('batches/:id/start')
-  @RequirePermission('bakery:batch:manage')
-  async startBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Post("batches/:id/start")
+  @RequirePermission("bakery:batch:manage")
+  async startBatch(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.startBatch(ctx, id);
   }
 
-  @Post('batches/:id/complete')
-  @RequirePermission('bakery:batch:manage')
+  @Post("batches/:id/complete")
+  @RequirePermission("bakery:batch:manage")
   @UsePipes(new ZodValidationPipe(CompleteBatchSchema))
-  async completeBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
+  async completeBatch(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.completeBatch(ctx, id, data);
   }
 
-  @Post('batches/:id/cancel')
-  @RequirePermission('bakery:batch:manage')
-  async cancelBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Post("batches/:id/cancel")
+  @RequirePermission("bakery:batch:manage")
+  async cancelBatch(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.cancelBatch(ctx, id);
   }
 
-  @Post('batches/:id/duplicate')
-  @RequirePermission('bakery:batch:manage')
-  async duplicateBatch(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Post("batches/:id/duplicate")
+  @RequirePermission("bakery:batch:manage")
+  async duplicateBatch(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.duplicateBatch(ctx, id);
   }
 
   // Templates
-  @Get('templates')
-  @RequirePermission('bakery:template:view')
+  @Get("templates")
+  @RequirePermission("bakery:template:view")
   async getTemplates(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getTemplates(ctx);
   }
 
-  @Post('templates')
-  @RequirePermission('bakery:template:manage')
+  @Post("templates")
+  @RequirePermission("bakery:template:manage")
   @UsePipes(new ZodValidationPipe(CreateTemplateSchema))
   async createTemplate(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createTemplate(ctx, data);
   }
 
-  @Patch('templates/:id')
-  @RequirePermission('bakery:template:manage')
+  @Patch("templates/:id")
+  @RequirePermission("bakery:template:manage")
   @UsePipes(new ZodValidationPipe(UpdateTemplateSchema))
-  async updateTemplate(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
+  async updateTemplate(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.updateTemplate(ctx, id, data);
   }
 
-  @Delete('templates/:id')
-  @RequirePermission('bakery:template:manage')
-  async deleteTemplate(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Delete("templates/:id")
+  @RequirePermission("bakery:template:manage")
+  async deleteTemplate(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.deleteTemplate(ctx, id);
   }
 
-  @Post('templates/:id/duplicate')
-  @RequirePermission('bakery:template:manage')
-  async duplicateTemplate(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Post("templates/:id/duplicate")
+  @RequirePermission("bakery:template:manage")
+  async duplicateTemplate(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.duplicateTemplate(ctx, id);
   }
 
-  @Post('templates/:id/create-batch')
-  @RequirePermission('bakery:batch:manage')
-  async createBatchFromTemplate(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Post("templates/:id/create-batch")
+  @RequirePermission("bakery:batch:manage")
+  async createBatchFromTemplate(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.createBatchFromTemplate(ctx, id);
   }
 
   // Categories
-  @Get('categories')
-  @RequirePermission('bakery:recipe:view')
+  @Get("categories")
+  @RequirePermission("bakery:recipe:view")
   async getCategories(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getCategories(ctx);
   }
 
-  @Get('categories/:id')
-  @RequirePermission('bakery:recipe:view')
-  async getCategory(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Get("categories/:id")
+  @RequirePermission("bakery:recipe:view")
+  async getCategory(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.getCategory(ctx, id);
   }
 
-  @Post('categories')
-  @RequirePermission('bakery:recipe:manage')
+  @Post("categories")
+  @RequirePermission("bakery:recipe:manage")
   @UsePipes(new ZodValidationPipe(CreateBakeryCategorySchema))
   async createCategory(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createCategory(ctx, data);
   }
 
-  @Put('categories/:id')
-  @RequirePermission('bakery:recipe:manage')
+  @Put("categories/:id")
+  @RequirePermission("bakery:recipe:manage")
   @UsePipes(new ZodValidationPipe(UpdateBakeryCategorySchema))
-  async updateCategory(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
+  async updateCategory(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.updateCategory(ctx, id, data);
   }
 
-  @Delete('categories/:id')
-  @RequirePermission('bakery:recipe:manage')
-  async deleteCategory(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Delete("categories/:id")
+  @RequirePermission("bakery:recipe:manage")
+  async deleteCategory(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
     return this.bakeryService.deleteCategory(ctx, id);
   }
 
   // Settings & Bakers
-  @Get('settings')
-  @RequirePermission('bakery:settings:manage')
+  @Get("settings")
+  @RequirePermission("bakery:settings:manage")
   async getSettings(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getSettings(ctx);
   }
 
-  @Put('settings')
-  @RequirePermission('bakery:settings:manage')
+  @Put("settings")
+  @RequirePermission("bakery:settings:manage")
   @UsePipes(new ZodValidationPipe(UpdateBakerySettingsSchema))
   async updateSettings(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.updateSettings(ctx, data);
   }
 
-  @Get('bakers')
-  @RequirePermission('bakery:settings:manage')
+  @Get("bakers")
+  @RequirePermission("bakery:settings:manage")
   async getBakers(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getBakers(ctx);
   }
 
-  @Post('bakers')
-  @RequirePermission('bakery:settings:manage')
+  @Post("bakers")
+  @RequirePermission("bakery:settings:manage")
   @UsePipes(new ZodValidationPipe(AddBakerSchema))
   async addBaker(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.addBaker(ctx, data);
   }
 
-  @Patch('bakers/:id')
-  @RequirePermission('bakery:settings:manage')
+  @Patch("bakers/:id")
+  @RequirePermission("bakery:settings:manage")
   @UsePipes(new ZodValidationPipe(UpdateBakerSchema))
-  async updateBaker(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
+  async updateBaker(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.updateBaker(ctx, id, data);
   }
 
-  @Delete('bakers/:id')
-  @RequirePermission('bakery:settings:manage')
-  async removeBaker(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
+  @Delete("bakers/:id")
+  @RequirePermission("bakery:settings:manage")
+  async removeBaker(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.bakeryService.removeBaker(ctx, id);
   }
 
@@ -294,14 +357,22 @@ export class BakeryController {
   @Patch("partners/:id")
   @RequirePermission("bakery:batch:manage")
   @UsePipes(new ZodValidationPipe(UpdateDeliveryPartnerSchema))
-  async updatePartner(@v2Context() ctx: V2ApiContext, @Param("id") id: string, @Body() data: any) {
+  async updatePartner(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.updatePartner(ctx, id, data);
   }
 
   @Post("partners/:id/wallet/adjust")
   @RequirePermission("bakery:batch:manage")
   @UsePipes(new ZodValidationPipe(AdjustPartnerWalletSchema))
-  async adjustPartnerWallet(@v2Context() ctx: V2ApiContext, @Param("id") id: string, @Body() data: any) {
+  async adjustPartnerWallet(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
     return this.bakeryService.adjustPartnerWallet(ctx, id, data);
   }
 
@@ -325,17 +396,21 @@ export class BakeryController {
     return this.bakeryService.getActiveDeliveries(ctx);
   }
 
-  @Post('ingredients/receive')
-  @RequirePermission('bakery:batch:manage')
+  @Post("ingredients/receive")
+  @RequirePermission("bakery:batch:manage")
   @UsePipes(new ZodValidationPipe(ReceiveIngredientsSchema))
   async receiveIngredients(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.receiveIngredients(ctx, data);
   }
 
   @AllowPublic()
-  @Get('update/:target/:current_version')
-  @ApiOperation({ summary: 'Get latest update for Bakery app' })
-  async getUpdate(@Param('target') target: string, @Param('current_version') currentVersion: string, @Res() res: any) {
+  @Get("update/:target/:current_version")
+  @ApiOperation({ summary: "Get latest update for Bakery app" })
+  async getUpdate(
+    @Param("target") target: string,
+    @Param("current_version") currentVersion: string,
+    @Res() res: any,
+  ) {
     const update = await this.bakeryService.getUpdate(target, currentVersion);
     if (!update) {
       return res.status(204).send();

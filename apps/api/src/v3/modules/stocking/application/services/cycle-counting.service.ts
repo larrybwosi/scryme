@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { StockTakeStatus, AutomationFrequency } from '@repo/db';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { StockTakeStatus, AutomationFrequency } from "@repo/db";
 
 @Injectable()
 export class CycleCountingService {
@@ -65,9 +65,9 @@ export class CycleCountingService {
         stockTakeNumber,
         status: StockTakeStatus.PLANNED,
         scheduledDate: new Date(),
-        notes: `Automatically generated from Cycle Count Config: ${config.name}. Included ABC: ${config.includeABC?.join(',') || 'All'}`,
+        notes: `Automatically generated from Cycle Count Config: ${config.name}. Included ABC: ${config.includeABC?.join(",") || "All"}`,
         items: {
-          create: stock.map(s => ({
+          create: stock.map((s) => ({
             variantId: s.variantId,
             systemQuantity: s.currentStock,
           })),

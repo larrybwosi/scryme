@@ -1,7 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MemberRole, InvitationStatus } from '@repo/db';
-import { IsEmail, IsEnum, IsOptional, IsString, IsArray, IsDateString, IsBoolean } from 'class-validator';
-import { PaginationQueryDto } from '@/v3/common/dto/pagination.dto';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { MemberRole, InvitationStatus } from "@repo/db";
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsArray,
+  IsDateString,
+  IsBoolean,
+} from "class-validator";
+import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
 
 export class InvitationQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: InvitationStatus })

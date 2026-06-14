@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
-import { IProductRepository } from '../../domain/repositories/product-repository.interface';
-import { CreateProductUseCase } from './create-product.use-case';
-import { Product } from '../../domain/entities/product.entity';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { IProductRepository } from "../../domain/repositories/product-repository.interface";
+import { CreateProductUseCase } from "./create-product.use-case";
+import { Product } from "../../domain/entities/product.entity";
 
-describe('CreateProductUseCase', () => {
+describe("CreateProductUseCase", () => {
   let useCase: CreateProductUseCase;
   let productRepository: any;
 
@@ -13,21 +13,26 @@ describe('CreateProductUseCase', () => {
       save: vi.fn() as any,
     };
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CreateProductUseCase, { provide: IProductRepository, useValue: productRepository }],
+      providers: [
+        CreateProductUseCase,
+        { provide: IProductRepository, useValue: productRepository },
+      ],
     }).compile();
 
     useCase = module.get<CreateProductUseCase>(CreateProductUseCase);
   });
 
-  it('should create and save a product', async () => {
+  it("should create and save a product", async () => {
     const dto = {
-      name: 'New Product',
-      description: 'A great product',
-      organizationId: 'org-1',
+      name: "New Product",
+      description: "A great product",
+      organizationId: "org-1",
       price: 10.99,
     };
 
-    productRepository.save.mockImplementation((p: Product) => Promise.resolve(p));
+    productRepository.save.mockImplementation((p: Product) =>
+      Promise.resolve(p),
+    );
 
     const result = await useCase.execute(dto);
 

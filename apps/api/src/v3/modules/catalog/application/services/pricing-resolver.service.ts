@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class PricingResolverService {
@@ -12,7 +12,13 @@ export class PricingResolverService {
     businessAccountId?: string;
     quantity?: number;
   }): Promise<{ unitPrice: number; priceListId?: string }> {
-    const { variantId, organizationId, customerId, businessAccountId, quantity = 1 } = params;
+    const {
+      variantId,
+      organizationId,
+      customerId,
+      businessAccountId,
+      quantity = 1,
+    } = params;
 
     // 1. Get variant details (fallback wholesale price)
     const variant = await this.prisma.client.productVariant.findUnique({
@@ -21,7 +27,7 @@ export class PricingResolverService {
     });
 
     if (!variant) {
-      throw new Error('Variant not found');
+      throw new Error("Variant not found");
     }
 
     // 2. Resolve applicable price lists
@@ -38,7 +44,7 @@ export class PricingResolverService {
         validFrom: { lte: new Date() },
         validTo: { gte: new Date() },
       },
-      orderBy: { priority: 'desc' },
+      orderBy: { priority: "desc" },
       include: {
         items: {
           where: {
@@ -46,7 +52,7 @@ export class PricingResolverService {
             isActive: true,
             minQuantity: { lte: quantity },
           },
-          orderBy: { minQuantity: 'desc' },
+          orderBy: { minQuantity: "desc" },
           take: 1,
         },
       },
@@ -63,7 +69,10 @@ export class PricingResolverService {
     }
 
     // 4. Fallback to wholesalePrice then retailPrice
-    const finalPrice = variant.wholesalePrice?.toNumber() || variant.retailPrice?.toNumber() || 0;
+    const finalPrice =
+      variant.wholesalePrice?.toNumber() ||
+      variant.retailPrice?.toNumber() ||
+      0;
 
     return { unitPrice: finalPrice };
   }

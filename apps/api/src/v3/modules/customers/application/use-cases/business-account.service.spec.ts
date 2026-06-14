@@ -1,10 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { BusinessAccountService } from './business-account.service';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CrmSyncService } from '../../../crm/infrastructure/services/crm-sync.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { BusinessAccountService } from "./business-account.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 
-describe('BusinessAccountService', () => {
+describe("BusinessAccountService", () => {
   let service: BusinessAccountService;
   let prisma: any;
   let crmSyncService: any;
@@ -35,11 +35,11 @@ describe('BusinessAccountService', () => {
     service = module.get<BusinessAccountService>(BusinessAccountService);
   });
 
-  it('should create a business account and trigger CRM sync', async () => {
-    const orgId = 'org-123';
-    const dto = { name: 'Acme Corp', taxId: 'TAX-123' };
+  it("should create a business account and trigger CRM sync", async () => {
+    const orgId = "org-123";
+    const dto = { name: "Acme Corp", taxId: "TAX-123" };
 
-    const mockBA = { id: 'ba-123', ...dto, organizationId: orgId };
+    const mockBA = { id: "ba-123", ...dto, organizationId: orgId };
 
     prisma.client.businessAccount.create.mockResolvedValue(mockBA);
     crmSyncService.enqueueSyncBusinessAccount.mockResolvedValue({});
@@ -49,7 +49,10 @@ describe('BusinessAccountService', () => {
     expect(prisma.client.businessAccount.create).toHaveBeenCalledWith({
       data: { ...dto, organizationId: orgId },
     });
-    expect(crmSyncService.enqueueSyncBusinessAccount).toHaveBeenCalledWith(orgId, 'ba-123');
-    expect(result.id).toBe('ba-123');
+    expect(crmSyncService.enqueueSyncBusinessAccount).toHaveBeenCalledWith(
+      orgId,
+      "ba-123",
+    );
+    expect(result.id).toBe("ba-123");
   });
 });

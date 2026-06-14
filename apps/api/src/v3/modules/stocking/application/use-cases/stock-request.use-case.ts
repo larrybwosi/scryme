@@ -1,8 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { PaginationQueryDto, paginate } from '@/v3/common/utils/pagination';
-import { StockRequestStatus, StockTransferStatus, PurchaseStatus } from '@repo/db';
-import { FulfillFromTransferDto, FulfillFromPurchaseDto } from '../dto/stock-request-fulfillment.dto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
+import {
+  StockRequestStatus,
+  StockTransferStatus,
+  PurchaseStatus,
+} from "@repo/db";
+import {
+  FulfillFromTransferDto,
+  FulfillFromPurchaseDto,
+} from "../dto/stock-request-fulfillment.dto";
 
 @Injectable()
 export class StockRequestUseCase {
@@ -13,8 +24,14 @@ export class StockRequestUseCase {
       this.prisma.client.stockRequest,
       pagination,
       { organizationId },
-      { requestDate: 'desc' },
-      { include: { fromLocation: true, toLocation: true, requestedBy: { include: { user: true } } } }
+      { requestDate: "desc" },
+      {
+        include: {
+          fromLocation: true,
+          toLocation: true,
+          requestedBy: { include: { user: true } },
+        },
+      },
     );
   }
 
@@ -41,7 +58,7 @@ export class StockRequestUseCase {
       },
     });
 
-    if (!request) throw new NotFoundException('Stock request not found');
+    if (!request) throw new NotFoundException("Stock request not found");
     return request;
   }
 
@@ -51,9 +68,9 @@ export class StockRequestUseCase {
         where: { id: requestId, organizationId },
       });
 
-      if (!request) throw new NotFoundException('Stock request not found');
+      if (!request) throw new NotFoundException("Stock request not found");
       if (request.status !== StockRequestStatus.PENDING) {
-        throw new BadRequestException('Request is not in pending status');
+        throw new BadRequestException("Request is not in pending status");
       }
 
       return tx.stockRequest.update({
@@ -67,16 +84,26 @@ export class StockRequestUseCase {
     });
   }
 
-  async fulfillFromTransfer(organizationId: string, memberId: string, requestId: string, dto: FulfillFromTransferDto) {
+  async fulfillFromTransfer(
+    organizationId: string,
+    memberId: string,
+    requestId: string,
+    dto: FulfillFromTransferDto,
+  ) {
     return this.prisma.client.$transaction(async (tx) => {
       const request = await tx.stockRequest.findUnique({
         where: { id: requestId, organizationId },
         include: { items: true },
       });
 
-      if (!request) throw new NotFoundException('Stock request not found');
-      if (request.status !== StockRequestStatus.APPROVED && request.status !== StockRequestStatus.PARTIALLY_FULFILLED) {
-        throw new BadRequestException('Request must be approved before fulfillment');
+      if (!request) throw new NotFoundException("Stock request not found");
+      if (
+        request.status !== StockRequestStatus.APPROVED &&
+        request.status !== StockRequestStatus.PARTIALLY_FULFILLED
+      ) {
+        throw new BadRequestException(
+          "Request must be approved before fulfillment",
+        );
       }
 
       const transferNumber = `TR-REQ-${request.requestNumber}-${Date.now()}`;
@@ -90,18 +117,24 @@ export class StockRequestUseCase {
           fromLocationId: dto.fromLocationId,
           toLocationId: request.toLocationId,
           status: StockTransferStatus.PENDING_APPROVAL,
-          notes: dto.notes || `Fulfillment for Request ${request.requestNumber}`,
+          notes:
+            dto.notes || `Fulfillment for Request ${request.requestNumber}`,
           requestedById: memberId,
           items: {
-            create: dto.items.map(item => {
-                const reqItem = request.items.find(ri => ri.variantId === item.variantId);
-                if (!reqItem) throw new BadRequestException(`Variant ${item.variantId} not in original request`);
+            create: dto.items.map((item) => {
+              const reqItem = request.items.find(
+                (ri) => ri.variantId === item.variantId,
+              );
+              if (!reqItem)
+                throw new BadRequestException(
+                  `Variant ${item.variantId} not in original request`,
+                );
 
-                return {
-                    variantId: item.variantId,
-                    requestedQuantity: item.requestedQuantity,
-                    unitCost: reqItem.unitCostAtRequest,
-                };
+              return {
+                variantId: item.variantId,
+                requestedQuantity: item.requestedQuantity,
+                unitCost: reqItem.unitCostAtRequest,
+              };
             }),
           },
         },
@@ -121,16 +154,26 @@ export class StockRequestUseCase {
     });
   }
 
-  async fulfillFromPurchase(organizationId: string, memberId: string, requestId: string, dto: FulfillFromPurchaseDto) {
+  async fulfillFromPurchase(
+    organizationId: string,
+    memberId: string,
+    requestId: string,
+    dto: FulfillFromPurchaseDto,
+  ) {
     return this.prisma.client.$transaction(async (tx) => {
       const request = await tx.stockRequest.findUnique({
         where: { id: requestId, organizationId },
         include: { items: true },
       });
 
-      if (!request) throw new NotFoundException('Stock request not found');
-      if (request.status !== StockRequestStatus.APPROVED && request.status !== StockRequestStatus.PARTIALLY_FULFILLED) {
-        throw new BadRequestException('Request must be approved before fulfillment');
+      if (!request) throw new NotFoundException("Stock request not found");
+      if (
+        request.status !== StockRequestStatus.APPROVED &&
+        request.status !== StockRequestStatus.PARTIALLY_FULFILLED
+      ) {
+        throw new BadRequestException(
+          "Request must be approved before fulfillment",
+        );
       }
 
       const purchaseNumber = `PO-REQ-${request.requestNumber}-${Date.now()}`;
@@ -148,14 +191,15 @@ export class StockRequestUseCase {
           supplierId: dto.supplierId,
           purchaseNumber,
           orderDate: new Date(),
-          currency: 'KES',
+          currency: "KES",
           subTotal,
           totalAmount: subTotal,
           status: PurchaseStatus.ORDERED,
-          notes: dto.notes || `Fulfillment for Request ${request.requestNumber}`,
+          notes:
+            dto.notes || `Fulfillment for Request ${request.requestNumber}`,
           memberId: memberId,
           items: {
-            create: dto.items.map(item => ({
+            create: dto.items.map((item) => ({
               variantId: item.variantId,
               orderedQuantity: item.orderedQuantity,
               unitCost: item.unitCost,

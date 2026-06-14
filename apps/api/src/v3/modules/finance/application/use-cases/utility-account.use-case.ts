@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateUtilityAccountDto } from '../dto/finance.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateUtilityAccountDto } from "../dto/finance.dto";
 
 @Injectable()
 export class UtilityAccountUseCase {
@@ -27,13 +27,13 @@ export class UtilityAccountUseCase {
       include: {
         expenses: {
           take: 10,
-          orderBy: { expenseDate: 'desc' },
+          orderBy: { expenseDate: "desc" },
         },
       },
     });
 
     if (!account) {
-      throw new NotFoundException('Utility account not found');
+      throw new NotFoundException("Utility account not found");
     }
 
     return account;

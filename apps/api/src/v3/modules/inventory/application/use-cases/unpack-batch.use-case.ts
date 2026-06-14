@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { InventoryMovementService } from '../services/inventory-movement.service';
-import { MovementType, StockAdjustmentReason } from '@repo/db';
-import { Decimal } from 'decimal.js';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { InventoryMovementService } from "../services/inventory-movement.service";
+import { MovementType, StockAdjustmentReason } from "@repo/db";
+import { Decimal } from "decimal.js";
 
 export interface UnpackBatchDto {
   batchId: string;
@@ -18,11 +22,11 @@ export interface UnpackBatchDto {
 export class UnpackBatchUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryMovementService: InventoryMovementService
+    private readonly inventoryMovementService: InventoryMovementService,
   ) {}
 
   async execute(organizationId: string, memberId: string, dto: UnpackBatchDto) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       // 1. Find the bulk batch
       const bulkBatch = await tx.stockBatch.findUnique({
         where: { id: dto.batchId, organizationId },
@@ -33,19 +37,27 @@ export class UnpackBatchUseCase {
       });
 
       if (!bulkBatch) {
-        throw new NotFoundException('Bulk stock batch not found.');
+        throw new NotFoundException("Bulk stock batch not found.");
       }
 
-      if (new Decimal(bulkBatch.currentQuantity.toString()).lessThan(dto.quantityToUnpack)) {
-        throw new BadRequestException('Insufficient quantity in bulk batch.');
+      if (
+        new Decimal(bulkBatch.currentQuantity.toString()).lessThan(
+          dto.quantityToUnpack,
+        )
+      ) {
+        throw new BadRequestException("Insufficient quantity in bulk batch.");
       }
 
-      const totalBaseUnitsExpected = new Decimal(dto.quantityToUnpack).mul(dto.unitsPerPackage);
+      const totalBaseUnitsExpected = new Decimal(dto.quantityToUnpack).mul(
+        dto.unitsPerPackage,
+      );
       const damagedQty = new Decimal(dto.damagedQuantity || 0);
       const netBaseUnitsToReceive = totalBaseUnitsExpected.minus(damagedQty);
 
       if (netBaseUnitsToReceive.isNegative()) {
-        throw new BadRequestException('Damaged quantity cannot exceed total units in unpacked packages.');
+        throw new BadRequestException(
+          "Damaged quantity cannot exceed total units in unpacked packages.",
+        );
       }
 
       // 2. Decrement the bulk batch
@@ -65,7 +77,7 @@ export class UnpackBatchUseCase {
         fromLocationId: bulkBatch.locationId,
         movementType: MovementType.UNPACK_OUT,
         stockBatchId: bulkBatch.id,
-        notes: `Unpacking ${dto.quantityToUnpack} units to ${bulkBatch.variant.product.name}. ${dto.notes || ''}`,
+        notes: `Unpacking ${dto.quantityToUnpack} units to ${bulkBatch.variant.product.name}. ${dto.notes || ""}`,
       });
 
       // 4. Create or update the base unit batch
@@ -79,7 +91,9 @@ export class UnpackBatchUseCase {
           parentId: bulkBatch.id,
           initialQuantity: netBaseUnitsToReceive,
           currentQuantity: netBaseUnitsToReceive,
-          purchasePrice: new Decimal(bulkBatch.purchasePrice.toString()).div(dto.unitsPerPackage),
+          purchasePrice: new Decimal(bulkBatch.purchasePrice.toString()).div(
+            dto.unitsPerPackage,
+          ),
           receivedDate: bulkBatch.receivedDate,
           expiryDate: bulkBatch.expiryDate,
           systemUnitId: dto.targetSystemUnitId,
@@ -112,9 +126,11 @@ export class UnpackBatchUseCase {
             parentId: bulkBatch.id,
             initialQuantity: damagedQty,
             currentQuantity: 0, // Immediately deducted as adjustment
-            purchasePrice: new Decimal(bulkBatch.purchasePrice.toString()).div(dto.unitsPerPackage),
+            purchasePrice: new Decimal(bulkBatch.purchasePrice.toString()).div(
+              dto.unitsPerPackage,
+            ),
             isQuarantined: true,
-            quarantineReason: 'Damaged during unpacking',
+            quarantineReason: "Damaged during unpacking",
             systemUnitId: dto.targetSystemUnitId,
             orgUnitId: dto.targetOrgUnitId,
           },
@@ -145,9 +161,15 @@ export class UnpackBatchUseCase {
         });
 
         // 6a. Auto-create Purchase Return for damages
-        if (bulkBatch.supplierId && bulkBatch.purchaseItemId && bulkBatch.purchaseItem?.purchaseId) {
-          const returnCount = await tx.purchaseReturn.count({ where: { organizationId } });
-          const returnNumber = `RET-UNPACK-${(returnCount + 1).toString().padStart(4, '0')}`;
+        if (
+          bulkBatch.supplierId &&
+          bulkBatch.purchaseItemId &&
+          bulkBatch.purchaseItem?.purchaseId
+        ) {
+          const returnCount = await tx.purchaseReturn.count({
+            where: { organizationId },
+          });
+          const returnNumber = `RET-UNPACK-${(returnCount + 1).toString().padStart(4, "0")}`;
 
           await tx.purchaseReturn.create({
             data: {
@@ -156,16 +178,26 @@ export class UnpackBatchUseCase {
               supplierId: bulkBatch.supplierId,
               purchaseId: bulkBatch.purchaseItem.purchaseId,
               returnDate: new Date(),
-              reason: `Damages found during unpacking of batch ${bulkBatch.batchNumber}: ${dto.notes || 'No notes provided'}`,
-              status: 'REQUESTED',
-              totalValue: damagedQty.mul(new Decimal(bulkBatch.purchasePrice.toString()).div(dto.unitsPerPackage)),
+              reason: `Damages found during unpacking of batch ${bulkBatch.batchNumber}: ${dto.notes || "No notes provided"}`,
+              status: "REQUESTED",
+              totalValue: damagedQty.mul(
+                new Decimal(bulkBatch.purchasePrice.toString()).div(
+                  dto.unitsPerPackage,
+                ),
+              ),
               items: {
                 create: {
                   purchaseItemId: bulkBatch.purchaseItemId,
                   quantity: damagedQty.toNumber(),
-                  unitCost: new Decimal(bulkBatch.purchasePrice.toString()).div(dto.unitsPerPackage),
-                  totalRefund: damagedQty.mul(new Decimal(bulkBatch.purchasePrice.toString()).div(dto.unitsPerPackage)),
-                  reason: 'DAMAGED_ON_UNPACK',
+                  unitCost: new Decimal(bulkBatch.purchasePrice.toString()).div(
+                    dto.unitsPerPackage,
+                  ),
+                  totalRefund: damagedQty.mul(
+                    new Decimal(bulkBatch.purchasePrice.toString()).div(
+                      dto.unitsPerPackage,
+                    ),
+                  ),
+                  reason: "DAMAGED_ON_UNPACK",
                 },
               },
             },
