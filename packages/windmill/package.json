@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@repo/db": "workspace:*",
-    "@repo/notifications": "workspace:*",
+    "@repo/scryme": "workspace:*",
     "axios": "^1.15.2",
     "clsx": "^2.1.1",
     "handlebars": "^4.7.9",

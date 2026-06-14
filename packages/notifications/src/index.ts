@@ -1,6 +1,7 @@
 import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
+import { ScrymeChatApiClient } from "@repo/scryme";
 
 // Register helpers for report construction
 Handlebars.registerHelper("table", function (data: any[], options: any) {
@@ -142,8 +143,11 @@ export class NotificationEngine {
 
     try {
       for (const channel of dispatch.channels) {
-        if (channel === "WEBHOOK" || channel === "DISCORD") {
+        if (channel === "WEBHOOK") {
           await this.deliverWebhook(dispatch);
+        }
+        if (channel === "SCRYME") {
+          await this.deliverScryme(dispatch);
         }
         if (channel === "DISCORD") {
           await this.deliverDiscord(dispatch);
@@ -272,6 +276,39 @@ export class NotificationEngine {
       subject: dispatch.finalSubject || "Notification",
       html: dispatch.finalContent,
     });
+  }
+
+  private async deliverScryme(dispatch: any) {
+    const config = await db.scrymeConfiguration.findUnique({
+      where: { organizationId: dispatch.organizationId },
+    });
+
+    if (!config || !config.isActive || !config.workspaceSlug) {
+      console.warn(
+        `Scryme Chat not configured or inactive for organization ${dispatch.organizationId}`,
+      );
+      return;
+    }
+
+    const scrymeClient = new ScrymeChatApiClient();
+
+    // Determine channel - default to 'notifications' if not provided in data
+    const channelSlug = dispatch.data?.scrymeChannel || "notifications";
+
+    let message: any = {
+      content: dispatch.finalContent,
+    };
+
+    // If template provides actions in data
+    if (dispatch.data?.scrymeActions) {
+      message.actions = dispatch.data.scrymeActions;
+    }
+
+    await scrymeClient.sendMessage(
+      config.workspaceSlug,
+      channelSlug,
+      message,
+    );
   }
 }
 

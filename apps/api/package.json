@@ -44,6 +44,7 @@
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/mpesa": "workspace:*",
+    "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/suppliers": "workspace:*",
     "@repo/windmill": "workspace:*",

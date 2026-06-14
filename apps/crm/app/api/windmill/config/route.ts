@@ -8,24 +8,29 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const config = await db.windmillConfiguration.findUnique({
-    where: { organizationId: auth.organizationId },
-  });
+  const [config, scrymeConfig] = await Promise.all([
+    db.windmillConfiguration.findUnique({
+      where: { organizationId: auth.organizationId },
+    }),
+    db.scrymeConfiguration.findUnique({
+      where: { organizationId: auth.organizationId },
+    }),
+  ]);
 
-  if (!config) {
+  if (!config && !scrymeConfig) {
     return NextResponse.json({ configured: false });
   }
 
   return NextResponse.json({
     configured: true,
-    windmillBaseUrl: config.windmillBaseUrl,
-    windmillApiKeyMasked: '••••••••••••••••',
-    webhookSecretMasked: config.webhookSecret ? '••••••••••••••••' : null,
-    workspaceId: config.workspaceId,
-    workspaceName: config.workspaceName,
-    scrymeChatWorkspaceId: config.scrymeChatWorkspaceId,
-    scrymeChatWorkspaceSlug: config.scrymeChatWorkspaceSlug,
-    isActive: config.isActive,
+    windmillBaseUrl: config?.windmillBaseUrl,
+    windmillApiKeyMasked: config?.windmillApiKey ? '••••••••••••••••' : null,
+    webhookSecretMasked: config?.webhookSecret ? '••••••••••••••••' : null,
+    workspaceId: config?.workspaceId,
+    workspaceName: config?.workspaceName,
+    scrymeChatWorkspaceId: scrymeConfig?.workspaceId,
+    scrymeChatWorkspaceSlug: scrymeConfig?.workspaceSlug,
+    isActive: config?.isActive || scrymeConfig?.isActive,
   });
 }
 

@@ -6,7 +6,7 @@
  */
 
 import { db as prisma, type Customer, type CrmRecord, type Invoice, type Transaction } from "@repo/db";
-import { runAutomation } from '@repo/windmill/server';
+// import { runAutomation } from '@repo/windmill/server';
 import type { ActionResponse } from "../../types/action-response";
 import { LoyaltyService } from './loyalty.service';
 
@@ -217,7 +217,7 @@ export const CustomerService = {
 
         // Trigger Windmill notification for new customer registration
         try {
-          await runAutomation({
+          /* await runAutomation({
             organizationId,
             scriptPath: 'f/dealio/customer-registration-alert',
             dealioEventType: 'customer_registration',
@@ -227,7 +227,7 @@ export const CustomerService = {
               customerEmail: email,
               eventType: 'customer_registration',
             },
-          });
+          }); */
         } catch (error) {
           console.error('[CustomerService] Failed to trigger registration notification:', error);
         }
