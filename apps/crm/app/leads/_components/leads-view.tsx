@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import useSWR from "swr";
+import Link from "next/link";
 import {
   UserPlus,
   Search,

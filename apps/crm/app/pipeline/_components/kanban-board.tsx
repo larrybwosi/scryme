@@ -9,9 +9,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragStart,
-  DragOver,
-  DragEnd,
+  type DragStartEvent as DragStart,
+  type DragOverEvent as DragOver,
+  type DragEndEvent as DragEnd,
   defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 import {
@@ -22,7 +22,6 @@ import {
 } from '@dnd-kit/sortable';
 import { KanbanColumn } from './kanban-column';
 import { KanbanCard } from './kanban-card';
-import { Deal } from '../types';
 
 interface KanbanBoardProps {
   deals: any[];
