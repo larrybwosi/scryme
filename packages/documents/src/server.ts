@@ -77,6 +77,7 @@ export const Mappers = {
         companyAddress: senderAddress,
         companyPhone: transaction.location?.phone || transaction.organization?.phone,
         companyEmail: transaction.organization?.email,
+        primaryColor: transaction.organization?.primaryColor,
       },
       sender: {
         name: transaction.organization?.name || 'Sender',
@@ -116,9 +117,9 @@ export const Mappers = {
       items: transaction.items.map((item: any) => ({
         id: item.id,
         description: `${item.productName} ${item.variantName || ''}`,
-        quantity: item.quantity,
-        unitPrice: Number(item.unitPrice),
-        totalPrice: Number(item.lineTotal || item.subtotal),
+        quantity: item.quantity, qty: item.quantity,
+        unitPrice: Number(item.unitPrice), price: Number(item.unitPrice),
+        totalPrice: Number(item.lineTotal || item.subtotal), total: Number(item.lineTotal || item.subtotal),
         sku: item.sku,
         itemName: item.productName,
         rate: Number(item.unitPrice),
@@ -135,6 +136,7 @@ export const Mappers = {
         companyName: transaction.organization?.name,
         companyAddress: formatAddress(transaction.organization?.address),
         logoUrl: transaction.organization?.logo,
+        primaryColor: transaction.organization?.primaryColor,
       },
     };
   },
@@ -155,6 +157,7 @@ export const Mappers = {
       branding: {
         companyName: organization?.name || 'Organization',
         logoUrl: organization?.logo,
+        primaryColor: organization?.primaryColor,
       },
       dateRangeText,
       activeFiltersText,
@@ -167,8 +170,8 @@ export const Mappers = {
         items: t.items.map((item: any) => ({
           productName: item.productName || item.variant?.product?.name,
           variantName: item.variantName || item.variant?.name,
-          quantity: item.quantity,
-          unitPrice: Number(item.unitPrice),
+          quantity: item.quantity, qty: item.quantity,
+          unitPrice: Number(item.unitPrice), price: Number(item.unitPrice),
           subtotal: Number(item.subtotal),
         })),
       })),
@@ -187,6 +190,7 @@ export const Mappers = {
       branding: {
         companyName: report.organization?.name || 'Organization',
         logoUrl: report.organization?.logo,
+        primaryColor: report.organization?.primaryColor,
       },
       name: report.name,
       generatedBy: report.generatedBy?.user?.name || 'System',
@@ -271,6 +275,7 @@ export const Mappers = {
       number: transaction.number,
       invoiceNumber: transaction.number,
       date: formattedDate,
+      invoiceDate: formattedDate,
       dueDate: formattedDueDate,
       status: transaction.status || 'PAID',
 

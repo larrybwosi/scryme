@@ -127,6 +127,11 @@ export interface InvoiceData extends BaseDocumentData {
 
   items: Array<DocumentItem & {
     details?: string;
+    // Legacy compatibility fields
+    qty?: number;
+    price?: number;
+    total?: number;
+    itemDescription?: string;
   }>;
 
   subtotal: number;
@@ -145,4 +150,42 @@ export interface InvoiceData extends BaseDocumentData {
 
   verificationHash?: string;
   qrCode?: string;
+  invoiceNo?: string;
+  invoiceDate?: string;
+
+  // Legacy compatibility fields for top-level
+  grandTotal?: number;
+  taxRate?: number;
+  gstRate?: number;
+  isTaxInclusive?: boolean;
+  currencyCode?: string;
+  currencySettings?: {
+    code: string;
+    locale: string;
+  };
+  client?: any;
+  company?: any;
+  organization?: any;
+  billTo?: any;
+  billFrom?: any;
+  invoiceTo?: any;
+  billingAddress?: any;
+  shippingAddress?: any;
+  organizationName?: string;
+  organizationAddress?: string;
+  organizationDescription?: string;
+  companyName?: string;
+  companyTagline?: string;
+  companyContact?: any;
+  logo?: string | null;
+  logoUrl?: string | null;
+  website?: string | null;
+  footerWebsite?: string;
+  payment?: any;
+  paymentMethods?: any;
+  paymentInformation?: string;
+  installmentDetails?: any;
+  terms?: string;
+  termsAndConditions?: string;
+  signature?: any;
 }
