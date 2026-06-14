@@ -53,7 +53,7 @@ const REQUIRED_FIELDS = [
 ];
 
 const OPTIONAL_FIELDS = [
-  { key: "initialStock", label: "Initial Stock" },
+  { key: "initialStock", label: "Default Variant Stock" },
   { key: "description", label: "Description" },
   { key: "barcode", label: "Barcode" },
 ];

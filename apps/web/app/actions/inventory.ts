@@ -490,40 +490,46 @@ export async function getInventoryProducts(params: {
     },
   });
 
-  // Flatten and filter by stock level if needed
-  let results = products.flatMap((product) =>
-    product.variants.map((variant) => {
-      const stocks = variant.variantStocks;
-      const currentStock = stocks.reduce(
-        (acc, s) => acc.plus(s.currentStock),
-        new Decimal(0),
-      );
-      const lowStockThreshold =
-        variant.reorderPoint || product.lowStockThreshold || 0;
+  // Map to products and calculate aggregated values
+  let results = products.map((product) => {
+    const allVariantStocks = product.variants.flatMap((v) => v.variantStocks);
+    const totalStock = allVariantStocks.reduce(
+      (acc, s) => acc.plus(s.currentStock),
+      new Decimal(0),
+    );
 
-      let status: "High" | "Low" | "Out of Stock" | "Normal" = "Normal";
-      if (currentStock.isZero()) {
-        status = "Out of Stock";
-      } else if (currentStock.lessThanOrEqualTo(lowStockThreshold)) {
-        status = "Low";
-      } else if (currentStock.greaterThan(lowStockThreshold * 2)) {
-        status = "High";
-      }
+    const prices = product.variants.map(
+      (v) => Number(v.retailPrice) || Number(v.buyingPrice),
+    );
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
-      return {
-        id: product.id,
-        variantId: variant.id,
-        name: product.name,
-        sku: variant.sku || product.sku,
-        category: product.category.name,
-        supplier: product.suppliers[0]?.supplier.name || "N/A",
-        currentStock: currentStock.toNumber(),
-        status,
-        unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
-        image: product.imageUrls[0],
-      };
-    }),
-  );
+    const lowStockThreshold = product.lowStockThreshold || 5;
+
+    let status: "High" | "Low" | "Out of Stock" | "Normal" = "Normal";
+    if (totalStock.isZero()) {
+      status = "Out of Stock";
+    } else if (totalStock.lessThanOrEqualTo(lowStockThreshold)) {
+      status = "Low";
+    } else if (totalStock.greaterThan(lowStockThreshold * 2)) {
+      status = "High";
+    }
+
+    return {
+      id: product.id,
+      variantId: product.variants[0]?.id || "", // Fallback to first variant for actions
+      name: product.name,
+      sku: product.sku, // Base SKU of the product
+      category: product.category.name,
+      supplier: product.suppliers[0]?.supplier.name || "N/A",
+      currentStock: totalStock.toNumber(),
+      status,
+      unitPrice: minPrice,
+      minPrice,
+      maxPrice,
+      image: product.imageUrls[0],
+    };
+  });
 
   if (stockLevel && stockLevel !== "all") {
     results = results.filter((r) => {
@@ -894,6 +900,8 @@ export type InventoryProduct = {
   currentStock: number;
   status: "High" | "Low" | "Out of Stock" | "Normal";
   unitPrice: number;
+  minPrice?: number;
+  maxPrice?: number;
   image?: string;
 };
 
