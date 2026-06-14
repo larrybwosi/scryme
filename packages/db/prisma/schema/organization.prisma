@@ -185,6 +185,9 @@ model Organization {
   windmillConfiguration WindmillConfiguration?
   windmillExecutions    WindmillExecution[]
 
+  // Scryme Integration
+  scrymeConfiguration ScrymeConfiguration?
+
   reportAutomations ReportAutomation[]
   reportChannels    ReportChannel[]
 

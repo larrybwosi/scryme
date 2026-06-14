@@ -1,6 +1,6 @@
 import { db, ApprovalWorkflow } from "@repo/db";
 import { runAutomation } from "./service";
-import { notificationEngine } from "@repo/notifications";
+import { notificationEngine } from "./notification";
 import { ApprovalActionType, ApprovalMode, ConditionType } from "@repo/db";
 
 export interface WorkflowTriggerData {
