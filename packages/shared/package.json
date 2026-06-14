@@ -21,6 +21,7 @@
     "@prisma/client": "^7.8.0",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
+    "@repo/scryme": "workspace:*",
     "@sanity/client": "^7.22.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/qrcode": "^1.5.6",
