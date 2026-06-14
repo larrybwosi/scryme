@@ -10,6 +10,7 @@ const tabs = [
   { label: 'Purchases', href: '/finance/purchases' },
   { label: 'Utilities', href: '/finance/utilities' },
   { label: 'Approvals', href: '/finance/approvals' },
+  { label: 'Settings', href: '/finance/settings' },
 ];
 
 export function FinanceTabs() {
