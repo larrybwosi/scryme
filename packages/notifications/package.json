@@ -11,7 +11,6 @@
   "dependencies": {
     "@repo/db": "workspace:*",
     "@repo/scryme": "workspace:*",
-    "@repo/shared": "workspace:*",
     "@repo/typescript-config": "workspace:^",
     "axios": "^1.6.2",
     "handlebars": "^4.7.8",
