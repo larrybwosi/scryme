@@ -37,14 +37,27 @@ export class RegisterPettyCashUseCase {
     // 2. Identify the petty cash fund for this location (or organization default)
     let fundId = dto.pettyCashFundId;
     if (!fundId) {
-      const fund = await this.prisma.client.pettyCashFund.findFirst({
-        where: {
-          organizationId,
-          isActive: true,
-          // In a more advanced setup, we might link funds to locations.
-          // For now, we pick the first active one if not specified.
-        },
-      });
+      // Try to find a fund specifically for this location
+      let fund = null;
+      if (locationId) {
+        fund = await this.prisma.client.pettyCashFund.findFirst({
+          where: {
+            organizationId,
+            locationId,
+            isActive: true,
+          },
+        });
+      }
+
+      // Fallback to any active fund if location-specific one is not found
+      if (!fund) {
+        fund = await this.prisma.client.pettyCashFund.findFirst({
+          where: {
+            organizationId,
+            isActive: true,
+          },
+        });
+      }
       fundId = fund?.id;
     }
 
@@ -61,6 +74,7 @@ export class RegisterPettyCashUseCase {
       pettyCashFundId: fundId,
       locationId: locationId || undefined,
       expenseDate: new Date().toISOString(),
+      receiptUrl: dto.receiptUrl,
     });
   }
 

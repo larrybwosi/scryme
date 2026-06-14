@@ -22,4 +22,9 @@ export class RegisterPettyCashDto {
   @IsString()
   @IsOptional()
   pettyCashFundId?: string;
+
+  @ApiPropertyOptional({ example: 'https://storage.example.com/receipt.jpg' })
+  @IsString()
+  @IsOptional()
+  receiptUrl?: string;
 }
