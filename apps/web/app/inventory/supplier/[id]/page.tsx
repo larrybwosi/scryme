@@ -53,7 +53,7 @@ export default async function SupplierDetailsPage({
     <div className="flex flex-col min-h-screen bg-[#F8F9FB]">
       {/* ── Page Header ── */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-8 pt-6 pb-0">
+        <div className=" mx-auto px-8 pt-6 pb-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-400 uppercase tracking-widest mb-5">
             <Building2 size={13} />
@@ -181,7 +181,7 @@ export default async function SupplierDetailsPage({
         <Tabs defaultValue="catalog" className="flex-1 flex flex-col">
           {/* Tab bar */}
           <div className="bg-white border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-8">
+            <div className=" mx-auto px-8">
               <TabsList className="h-auto bg-transparent p-0 gap-0 rounded-none border-none flex">
                 {[
                   {
@@ -220,7 +220,7 @@ export default async function SupplierDetailsPage({
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 max-w-7xl mx-auto w-full px-8 py-7">
+          <div className="flex-1  mx-auto w-full px-8 py-7">
             {/* ── Product Catalog ── */}
             <TabsContent
               value="catalog"

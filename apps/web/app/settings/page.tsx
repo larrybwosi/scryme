@@ -7,14 +7,14 @@ export default async function SettingsPage() {
   const settings = await getOrganizationSettings();
 
   return (
-    <div className="w-full space-y-6 p-6 lg:p-10">
+    <div className="w-full space-y-6 p-6">
       <PageHeader
         title="Organization Settings"
         subtitle="Manage your organization's global configuration and preferences"
         icon={<Settings className="w-7 h-7" />}
       />
 
-      <div className="max-w-4xl">
+      <div>
         <SettingsForm initialData={settings} />
       </div>
     </div>

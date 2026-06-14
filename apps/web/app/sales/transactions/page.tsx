@@ -72,7 +72,7 @@ export default async function TransactionsPage(props: {
       - py-6 handles top/bottom page spacing
       - max-w-7xl (optional) keeps your dashboard content tight and readable
     */
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader
         title="Transactions"
         subtitle="Manage sales, quotes, and orders"
