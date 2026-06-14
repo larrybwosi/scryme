@@ -21,10 +21,6 @@ model WindmillConfiguration {
   workspaceId   String?  @unique // The ID or slug of the workspace in Windmill
   workspaceName String?
 
-  // Scryme Chat Provisioning
-  scrymeChatWorkspaceId   String? @unique
-  scrymeChatWorkspaceSlug String? @unique
-
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())

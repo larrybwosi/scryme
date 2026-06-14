@@ -78,35 +78,11 @@ export class WindmillTemplateService {
         workspaceSlug,
       );
 
-      // Also provision Scryme Chat if credentials exist
-      let scrymeChatWorkspaceId = config.scrymeChatWorkspaceId;
-      let scrymeChatWorkspaceSlug = config.scrymeChatWorkspaceSlug;
-
-      if (
-        !scrymeChatWorkspaceId &&
-        process.env.SCRYME_CHAT_CLIENT_ID &&
-        process.env.SCRYME_CHAT_CLIENT_SECRET
-      ) {
-        try {
-          const scrymeClient = new ScrymeChatApiClient();
-          const scrymeWorkspace = await scrymeClient.createWorkspace(
-            orgName,
-            workspaceSlug,
-          );
-          scrymeChatWorkspaceId = scrymeWorkspace.id;
-          scrymeChatWorkspaceSlug = scrymeWorkspace.slug;
-        } catch (e) {
-          console.error("Failed to provision Scryme Chat workspace:", e);
-        }
-      }
-
       config = await prisma.windmillConfiguration.update({
         where: { organizationId },
         data: {
           workspaceId: workspaceSlug,
           workspaceName: orgName,
-          scrymeChatWorkspaceId,
-          scrymeChatWorkspaceSlug,
         },
       });
     }
