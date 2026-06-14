@@ -144,7 +144,23 @@ export class WindmillTemplateService {
    * Scans the templates directory and returns a list of available templates with metadata.
    */
   static async getTemplates(): Promise<WindmillTemplate[]> {
-    const templatesDir = path.join(__dirname, "../templates");
+    // In some environments (like Next.js), __dirname might not point where we expect.
+    // We try to find the templates directory relative to the package root.
+    let templatesDir = path.join(__dirname, "../templates");
+
+    try {
+      await fs.access(templatesDir);
+    } catch (e) {
+      // Fallback for different build structures (e.g. if we are in dist/services/)
+      templatesDir = path.join(process.cwd(), "../../packages/windmill/templates");
+      try {
+        await fs.access(templatesDir);
+      } catch (e2) {
+        // Final fallback for monorepo root
+        templatesDir = path.join(process.cwd(), "packages/windmill/templates");
+      }
+    }
+
     const templates: WindmillTemplate[] = [];
 
     await this.walkTemplates(
