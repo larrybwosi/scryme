@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db, WindmillExecutionStatus } from "@repo/db";
 // @ts-ignore
-import { WindmillTemplateService, runAutomation, getWindmillClientForOrg } from "@repo/windmill/server";
+import { WindmillTemplateService, runAutomation, getWindmillClientForOrg } from "@repo/windmill";
 
 async function getAvailableWorkflows(organizationId: string) {
   const [provisionedWorkflows, templates] = await Promise.all([
