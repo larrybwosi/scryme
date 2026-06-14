@@ -49,7 +49,7 @@ export default async function FinanceSettingsPage() {
     <div className="w-full space-y-6">
       <PageHeader
         title="Finance Settings"
-        subtitle="Manage your organization's financial policies and approval workflows"
+        subtitle="Manage your organization&apos;s financial policies and approval workflows"
         icon={<Settings className="w-7 h-7" />}
       />
 

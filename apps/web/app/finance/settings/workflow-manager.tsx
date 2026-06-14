@@ -403,7 +403,7 @@ export function WorkflowManager({
                                       <SelectItem value="ROLE">By Member Role</SelectItem>
                                       <SelectItem value="SPECIFIC_MEMBER">Specific Member</SelectItem>
                                       <SelectItem value="WINDMILL_SCRIPT">Windmill Script</SelectItem>
-                                      <SelectItem value="SUBMITTER_MANAGER">Submitter's Manager</SelectItem>
+                                      <SelectItem value="SUBMITTER_MANAGER">Submitter&apos;s Manager</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
