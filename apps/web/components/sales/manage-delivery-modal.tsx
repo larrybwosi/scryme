@@ -20,7 +20,8 @@ import {
   Clock,
   ClipboardCheck
 } from 'lucide-react';
-import { getTransactionById, createFulfillment, updateFulfillmentStatus, reconcileFulfillment } from '../../app/actions/sales';
+import { getTransactionById, createFulfillment, updateFulfillmentStatus, approveFulfillment } from '../../app/actions/sales';
+import { DeliveryReconciliationModal } from './delivery-reconciliation-modal';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from "@repo/ui/lib/utils";
@@ -35,6 +36,7 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
   const [transaction, setTransaction] = useState<any>(initialTransaction);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [reconcileFulfillmentId, setReconcileFulfillmentId] = useState<string | null>(null);
 
   const fetchTransaction = useCallback(async () => {
     if (!initialTransaction) return;
@@ -90,17 +92,30 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
     }
   };
 
-  const handleReconcile = async (id: string) => {
+  const handleReconcile = (id: string) => {
+    setReconcileFulfillmentId(id);
+  };
+
+  const handleApprove = async (id: string) => {
     try {
-      await reconcileFulfillment(id, { notes: 'Reconciled from management modal' });
-      toast.success("Delivery reconciled");
-      fetchTransaction();
+        await approveFulfillment(id);
+        toast.success("Proof approved and delivery completed");
+        fetchTransaction();
     } catch (error) {
-      toast.error("Failed to reconcile delivery");
+        toast.error("Failed to approve proof");
     }
   };
 
   return (
+    <>
+    {reconcileFulfillmentId && (
+        <DeliveryReconciliationModal
+            fulfillmentId={reconcileFulfillmentId}
+            isOpen={!!reconcileFulfillmentId}
+            onClose={() => setReconcileFulfillmentId(null)}
+            onSuccess={fetchTransaction}
+        />
+    )}
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-zinc-50">
         <DialogHeader className="p-6 bg-white border-b border-zinc-200">
@@ -177,9 +192,14 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
                               Mark as Delivered
                             </Button>
                           )}
-                          {!f.isReconciled && (f.status === 'DELIVERED' || f.status === 'COMPLETED') && (
+                          {!f.isReconciled && (f.status === 'SHIPPED' || f.status === 'READY') && (
                             <Button size="sm" variant="outline" className="h-8 text-[11px] flex-1 gap-1.5" onClick={() => handleReconcile(f.id)}>
-                              <ClipboardCheck className="w-3.5 h-3.5" /> Reconcile
+                              <ClipboardCheck className="w-3.5 h-3.5" /> Record Proof
+                            </Button>
+                          )}
+                          {!f.isReconciled && (f.status === 'DELIVERED') && (
+                            <Button size="sm" className="h-8 text-[11px] flex-1 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleApprove(f.id)}>
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve Proof
                             </Button>
                           )}
                           {f.isReconciled && (
@@ -217,5 +237,6 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
