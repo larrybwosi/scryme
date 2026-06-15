@@ -1,5 +1,5 @@
 import { InvoiceData } from './templates/v1/invoice-templates';
-import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData } from './types';
+import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData, DeliveryNoteData } from './types';
 import * as crypto from 'crypto';
 
 /**
@@ -329,5 +329,50 @@ export const Mappers = {
       footerText: config.footerText,
       verificationHash,
     };
+  },
+
+  /**
+   * Maps a Transaction entity to DeliveryNoteData.
+   */
+  toDeliveryNoteData(transaction: any, fulfillment?: any): DeliveryNoteData {
+    const senderAddress = formatAddress(transaction.location?.address) || formatAddress(transaction.organization?.address) || 'Main Office';
+
+    const shippingAddressObj = fulfillment?.shippingAddress || transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
+    const recipientAddress = formatAddress(shippingAddressObj);
+    const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
+    const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
+
+    return {
+      id: fulfillment?.id || transaction.id,
+      number: `DN-${transaction.number}`,
+      orderNumber: transaction.number,
+      date: fulfillment?.createdAt || transaction.createdAt || new Date(),
+      branding: {
+        logoUrl: transaction.organization?.logo,
+        companyName: transaction.organization?.name || 'Sender',
+        companyAddress: senderAddress,
+        companyPhone: transaction.location?.phone || transaction.organization?.phone,
+        companyEmail: transaction.organization?.email,
+        primaryColor: transaction.organization?.primaryColor,
+      },
+      customer: {
+        name: transaction.customer?.name || 'Walk-in Customer',
+        email: transaction.customer?.email,
+        phone: transaction.customer?.phone,
+      },
+      shippingAddress: recipientAddress,
+      items: transaction.items.map((item: any) => ({
+        id: item.id,
+        description: `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`,
+        quantity: item.quantity,
+        sku: item.sku,
+      })),
+      notes: fulfillment?.deliveryNotes || transaction.notes,
+    };
   }
 };
+
+export { WaybillDocument } from './templates/v1/Waybill';
+export { DeliveryNoteDocument } from './templates/v1/DeliveryNote';
+export { InvoicePDF as SimpleInvoicePDF } from './templates/v1/InvoicePDF';
+export { DocumentGenerator } from './index';
