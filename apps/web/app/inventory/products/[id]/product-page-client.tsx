@@ -17,6 +17,12 @@ import {
   ChevronRight,
   ExternalLink,
   Edit,
+  Scale,
+  RefreshCw,
+  PlusCircle,
+  XCircle,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -57,7 +63,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from 'sonner';
-import { updateProduct, bulkDeleteVariants, updateVariantStatus, createVariant, updateVariant } from '../../../actions/inventory';
+import { ImageUpload } from "../../../../components/image-upload";
+import {
+  updateProduct,
+  bulkDeleteVariants,
+  updateVariantStatus,
+  createVariant,
+  updateVariant,
+  updateVariantUnits,
+  generateProductSlug,
+  updateReorderRule,
+} from '../../../actions/inventory';
 import {
   Dialog,
   DialogContent,
@@ -72,7 +88,14 @@ import {
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 
-export function ProductPageClient({ product: initialProduct, categories, suppliers, locations }: any) {
+export function ProductPageClient({
+  product: initialProduct,
+  categories,
+  suppliers,
+  locations,
+  systemUnits,
+  organizationUnits
+}: any) {
   const [product, setProduct] = useState(initialProduct);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
@@ -81,12 +104,15 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
   // Variant Dialog State
   const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false);
   const [editingVariant, setEditingVariant] = useState<any>(null);
-  const [variantForm, setVariantForm] = useState({
+  const [variantForm, setVariantForm] = useState<any>({
     name: '',
     sku: '',
+    barcode: '',
     buyingPrice: 0,
     retailPrice: 0,
-    initialStock: 0
+    initialStock: 0,
+    isActive: true,
+    attributes: {}
   });
 
   const handleSave = async () => {
@@ -95,10 +121,20 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
       await updateProduct(product.id, {
         name: product.name,
         sku: product.sku,
+        slug: product.slug,
         categoryId: product.categoryId,
         description: product.description,
         detailedDescription: product.detailedDescription,
         tags: product.tags,
+        type: product.type,
+        brand: product.brand,
+        rating: Number(product.rating),
+        isNew: product.isNew,
+        isFeatured: product.isFeatured,
+        lowStockThreshold: Number(product.lowStockThreshold),
+        isActive: product.isActive,
+        buyingPrice: product.variants?.[0]?.buyingPrice,
+        retailPrice: product.variants?.[0]?.retailPrice,
       });
       toast.success('Product updated successfully');
     } catch (error) {
@@ -106,6 +142,11 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleGenerateSlug = async () => {
+    const slug = await generateProductSlug(product.name);
+    setProduct({ ...product, slug });
   };
 
   const handleBulkStatusUpdate = async (isActive: boolean) => {
@@ -146,11 +187,14 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
               <Badge variant="outline" className="bg-zinc-100 border-zinc-200">
                 {product.sku}
               </Badge>
-              {product.isActive ? (
-                 <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Active</Badge>
-              ) : (
-                 <Badge variant="secondary">Inactive</Badge>
-              )}
+              <select
+                className="h-7 text-[10px] font-bold uppercase rounded border border-zinc-200 bg-white px-2"
+                value={product.isActive ? "active" : "inactive"}
+                onChange={(e) => setProduct({...product, isActive: e.target.value === "active"})}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
             </div>
             <div className="flex items-center gap-2 text-xs text-zinc-500">
                <span>Inventory</span>
@@ -186,6 +230,7 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                   { value: 'overview', label: 'Overview', icon: Package },
                   { value: 'variants', label: 'Variants', icon: Layers },
                   { value: 'pricing', label: 'Pricing & Rules', icon: DollarSign },
+                  { value: 'units', label: 'Units', icon: Scale },
                   { value: 'inventory', label: 'Stock & Locations', icon: History },
                   { value: 'suppliers', label: 'Suppliers', icon: Truck },
                 ].map((tab) => (
@@ -222,21 +267,46 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                         <Input id="sku" value={product.sku} onChange={(e) => setProduct({...product, sku: e.target.value})} />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="barcode">Barcode (EAN/UPC)</Label>
-                        <Input id="barcode" defaultValue={product.barcode || ''} />
+                        <Label htmlFor="type">Product Type</Label>
+                        <select
+                          id="type"
+                          className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                          value={product.type}
+                          onChange={(e) => setProduct({...product, type: e.target.value})}
+                        >
+                          <option value="FINISHED_GOOD">Finished Good</option>
+                          <option value="RAW_MATERIAL">Raw Material</option>
+                          <option value="MERCHANDISE">Merchandise</option>
+                          <option value="OTHER">Other</option>
+                        </select>
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="category">Category</Label>
-                      <select
-                        className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                        value={product.categoryId}
-                        onChange={(e) => setProduct({...product, categoryId: e.target.value})}
-                      >
-                        {categories.map((c: any) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
+                      <Label htmlFor="slug">Product Slug</Label>
+                      <div className="flex gap-2">
+                        <Input id="slug" value={product.slug || ''} onChange={(e) => setProduct({...product, slug: e.target.value})} />
+                        <Button variant="outline" size="icon" onClick={handleGenerateSlug} title="Generate slug">
+                          <RefreshCw className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="category">Category</Label>
+                        <select
+                          className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                          value={product.categoryId}
+                          onChange={(e) => setProduct({...product, categoryId: e.target.value})}
+                        >
+                          {categories.map((c: any) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="brand">Brand</Label>
+                        <Input id="brand" value={product.brand || ''} onChange={(e) => setProduct({...product, brand: e.target.value})} />
+                      </div>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="description">Short Description</Label>
@@ -256,27 +326,11 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                     <CardDescription>Product images and gallery.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-3 gap-4">
-                      {product.imageUrls?.map((url: string, i: number) => (
-                        <div key={i} className="relative aspect-square rounded-lg border overflow-hidden group">
-                           <Image src={url} alt={`Product ${i}`} fill className="object-cover" />
-                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="icon" variant="secondary" className="h-8 w-8" aria-label="Delete image">
-                                    <Trash2 className="w-4 h-4 text-red-600" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Delete image</TooltipContent>
-                              </Tooltip>
-                           </div>
-                        </div>
-                      ))}
-                      <button className="aspect-square rounded-lg border-2 border-dashed border-zinc-200 flex flex-col items-center justify-center gap-2 hover:border-zinc-900 hover:bg-zinc-50 transition-all text-zinc-400 hover:text-zinc-900">
-                        <ImageIcon className="w-6 h-6" />
-                        <span className="text-xs font-medium">Add Image</span>
-                      </button>
-                    </div>
+                    <ImageUpload
+                      value={product.imageUrls || []}
+                      onChange={(urls) => setProduct({ ...product, imageUrls: urls })}
+                      maxImages={6}
+                    />
                   </CardContent>
                   <CardFooter className="bg-zinc-50/50 border-t py-3">
                     <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Recommended: 1000x1000px JPG/PNG</p>
@@ -393,9 +447,12 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                                       setVariantForm({
                                         name: v.name,
                                         sku: v.sku,
+                                        barcode: v.barcode || '',
                                         buyingPrice: Number(v.buyingPrice),
                                         retailPrice: Number(v.retailPrice),
-                                        initialStock: 0
+                                        initialStock: 0,
+                                        isActive: v.isActive,
+                                        attributes: v.attributes || {}
                                       });
                                       setIsVariantDialogOpen(true);
                                    }}>
@@ -465,6 +522,244 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                </Card>
             </TabsContent>
 
+            {/* UNITS TAB */}
+            <TabsContent value="units" className="space-y-6 mt-0">
+               {product.variants?.map((variant: any) => (
+                 <Card key={variant.id} className="border-none shadow-sm ring-1 ring-zinc-200">
+                    <CardHeader>
+                       <CardTitle>Units for Variant: {variant.name}</CardTitle>
+                       <CardDescription>Configure primary and selling units.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-8">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                             <Label>Base Unit (Primary Inventory Unit)</Label>
+                             <select
+                                className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                                value={variant.baseUnitId || variant.baseOrgUnitId || ""}
+                                onChange={async (e) => {
+                                   const val = e.target.value;
+                                   const isOrg = organizationUnits.some((u: any) => u.id === val);
+                                   const updatedVariant = {
+                                      ...variant,
+                                      baseUnitId: isOrg ? null : val,
+                                      baseOrgUnitId: isOrg ? val : null,
+                                   };
+                                   await updateVariantUnits(variant.id, updatedVariant);
+                                   setProduct({
+                                      ...product,
+                                      variants: product.variants.map((v: any) => v.id === variant.id ? updatedVariant : v)
+                                   });
+                                   toast.success("Units updated");
+                                }}
+                             >
+                                <option value="">Select Unit...</option>
+                                <optgroup label="System Units">
+                                   {systemUnits.map((u: any) => (
+                                      <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
+                                   ))}
+                                </optgroup>
+                                <optgroup label="Organization Units">
+                                   {organizationUnits.map((u: any) => (
+                                      <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
+                                   ))}
+                                </optgroup>
+                             </select>
+                          </div>
+                          <div className="space-y-4">
+                             <Label>Stocking Unit (Purchasing Unit)</Label>
+                             <select
+                                className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                                value={variant.stockingUnitId || variant.stockingOrgUnitId || ""}
+                                onChange={async (e) => {
+                                   const val = e.target.value;
+                                   const isOrg = organizationUnits.some((u: any) => u.id === val);
+                                   const updatedVariant = {
+                                      ...variant,
+                                      stockingUnitId: isOrg ? null : val,
+                                      stockingOrgUnitId: isOrg ? val : null,
+                                   };
+                                   await updateVariantUnits(variant.id, updatedVariant);
+                                   setProduct({
+                                      ...product,
+                                      variants: product.variants.map((v: any) => v.id === variant.id ? updatedVariant : v)
+                                   });
+                                   toast.success("Units updated");
+                                }}
+                             >
+                                <option value="">Select Unit...</option>
+                                <optgroup label="System Units">
+                                   {systemUnits.map((u: any) => (
+                                      <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
+                                   ))}
+                                </optgroup>
+                                <optgroup label="Organization Units">
+                                   {organizationUnits.map((u: any) => (
+                                      <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
+                                   ))}
+                                </optgroup>
+                             </select>
+                          </div>
+                       </div>
+
+                       <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                             <Label className="text-base font-bold">Selling Units</Label>
+                             <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={async () => {
+                                   const newSellingUnits = [
+                                      ...(variant.sellingUnits || []),
+                                      { systemUnitId: null, orgUnitId: null, retailPrice: Number(variant.retailPrice), conversionMultiplier: 1, isActive: true }
+                                   ];
+                                   await updateVariantUnits(variant.id, {
+                                      ...variant,
+                                      sellingUnits: newSellingUnits
+                                   });
+                                   setProduct({
+                                      ...product,
+                                      variants: product.variants.map((v: any) => v.id === variant.id ? { ...v, sellingUnits: newSellingUnits } : v)
+                                   });
+                                   toast.success("Selling unit added");
+                                }}
+                             >
+                                <PlusCircle className="w-4 h-4" /> Add Selling Unit
+                             </Button>
+                          </div>
+                          <Table>
+                             <TableHeader>
+                                <TableRow>
+                                   <TableHead>Unit</TableHead>
+                                   <TableHead>Conversion Multiplier</TableHead>
+                                   <TableHead>Retail Price</TableHead>
+                                   <TableHead>Wholesale Price</TableHead>
+                                   <TableHead>Status</TableHead>
+                                   <TableHead className="w-12"></TableHead>
+                                </TableRow>
+                             </TableHeader>
+                             <TableBody>
+                                {variant.sellingUnits?.map((su: any, idx: number) => (
+                                   <TableRow key={su.id || idx}>
+                                      <TableCell>
+                                         <select
+                                            className="w-full h-9 px-2 rounded border border-zinc-200 text-xs"
+                                            value={su.systemUnitId || su.orgUnitId || ""}
+                                            onChange={async (e) => {
+                                               const val = e.target.value;
+                                               const isOrg = organizationUnits.some((u: any) => u.id === val);
+                                               const updated = [...variant.sellingUnits];
+                                               updated[idx] = { ...su, systemUnitId: isOrg ? null : val, orgUnitId: isOrg ? val : null };
+                                               await updateVariantUnits(variant.id, { ...variant, sellingUnits: updated });
+                                               setProduct({
+                                                  ...product,
+                                                  variants: product.variants.map((v: any) => v.id === variant.id ? { ...v, sellingUnits: updated } : v)
+                                               });
+                                            }}
+                                         >
+                                            <option value="">Select...</option>
+                                            <optgroup label="System Units">
+                                               {systemUnits.map((u: any) => (
+                                                  <option key={u.id} value={u.id}>{u.symbol}</option>
+                                               ))}
+                                            </optgroup>
+                                            <optgroup label="Organization Units">
+                                               {organizationUnits.map((u: any) => (
+                                                  <option key={u.id} value={u.id}>{u.symbol}</option>
+                                               ))}
+                                            </optgroup>
+                                         </select>
+                                      </TableCell>
+                                      <TableCell>
+                                         <Input
+                                            type="number"
+                                            className="h-9"
+                                            value={su.conversionMultiplier}
+                                            onChange={(e) => {
+                                               const val = Number(e.target.value);
+                                               const updated = [...variant.sellingUnits];
+                                               updated[idx] = { ...su, conversionMultiplier: val };
+                                               setProduct({
+                                                  ...product,
+                                                  variants: product.variants.map((v: any) => v.id === variant.id ? { ...v, sellingUnits: updated } : v)
+                                               });
+                                            }}
+                                            onBlur={() => {
+                                               updateVariantUnits(variant.id, { ...variant, sellingUnits: variant.sellingUnits });
+                                            }}
+                                         />
+                                      </TableCell>
+                                      <TableCell>
+                                         <Input
+                                            type="number"
+                                            className="h-9"
+                                            value={su.wholesalePrice || ""}
+                                            onChange={(e) => {
+                                               const val = Number(e.target.value);
+                                               const updated = [...variant.sellingUnits];
+                                               updated[idx] = { ...su, wholesalePrice: val };
+                                               setProduct({
+                                                  ...product,
+                                                  variants: product.variants.map((v: any) => v.id === variant.id ? { ...v, sellingUnits: updated } : v)
+                                               });
+                                            }}
+                                            onBlur={() => {
+                                               updateVariantUnits(variant.id, { ...variant, sellingUnits: variant.sellingUnits });
+                                            }}
+                                         />
+                                      </TableCell>
+                                      <TableCell>
+                                         <Input
+                                            type="number"
+                                            className="h-9"
+                                            value={su.retailPrice}
+                                            onChange={(e) => {
+                                               const val = Number(e.target.value);
+                                               const updated = [...variant.sellingUnits];
+                                               updated[idx] = { ...su, retailPrice: val };
+                                               setProduct({
+                                                  ...product,
+                                                  variants: product.variants.map((v: any) => v.id === variant.id ? { ...v, sellingUnits: updated } : v)
+                                               });
+                                            }}
+                                            onBlur={() => {
+                                               updateVariantUnits(variant.id, { ...variant, sellingUnits: variant.sellingUnits });
+                                            }}
+                                         />
+                                      </TableCell>
+                                      <TableCell>
+                                         <Badge variant={su.isActive ? "default" : "secondary"}>
+                                            {su.isActive ? "Active" : "Inactive"}
+                                         </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                         <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={async () => {
+                                               const updated = variant.sellingUnits.filter((_: any, i: number) => i !== idx);
+                                               await updateVariantUnits(variant.id, { ...variant, sellingUnits: updated });
+                                               setProduct({
+                                                  ...product,
+                                                  variants: product.variants.map((v: any) => v.id === variant.id ? { ...v, sellingUnits: updated } : v)
+                                               });
+                                               toast.success("Selling unit removed");
+                                            }}
+                                         >
+                                            <Trash2 className="w-4 h-4 text-red-500" />
+                                         </Button>
+                                      </TableCell>
+                                   </TableRow>
+                                ))}
+                             </TableBody>
+                          </Table>
+                       </div>
+                    </CardContent>
+                 </Card>
+               ))}
+            </TabsContent>
+
             {/* PRICING TAB */}
             <TabsContent value="pricing" className="space-y-6 mt-0">
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -476,7 +771,15 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                     <CardContent>
                        <div className="relative">
                           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
-                          <Input className="pl-9 text-2xl font-bold h-14" defaultValue={Number(product.variants?.[0]?.retailPrice || 0).toFixed(2)} />
+                          <Input
+                            className="pl-9 text-2xl font-bold h-14"
+                            value={Number(product.variants?.[0]?.retailPrice || 0)}
+                            onChange={(e) => {
+                               const updatedVariants = [...product.variants];
+                               updatedVariants[0] = { ...updatedVariants[0], retailPrice: Number(e.target.value) };
+                               setProduct({ ...product, variants: updatedVariants });
+                            }}
+                          />
                        </div>
                     </CardContent>
                  </Card>
@@ -488,7 +791,15 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                     <CardContent>
                        <div className="relative">
                           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
-                          <Input className="pl-9 text-2xl font-bold h-14" defaultValue={Number(product.variants?.[0]?.buyingPrice || 0).toFixed(2)} />
+                          <Input
+                            className="pl-9 text-2xl font-bold h-14"
+                            value={Number(product.variants?.[0]?.buyingPrice || 0)}
+                            onChange={(e) => {
+                               const updatedVariants = [...product.variants];
+                               updatedVariants[0] = { ...updatedVariants[0], buyingPrice: Number(e.target.value) };
+                               setProduct({ ...product, variants: updatedVariants });
+                            }}
+                          />
                        </div>
                     </CardContent>
                  </Card>
@@ -504,6 +815,31 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                     </CardContent>
                  </Card>
                </div>
+
+               <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                  <CardHeader>
+                    <CardTitle>Loyalty & Points</CardTitle>
+                    <CardDescription>Configure points earned on purchase.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <Label>Base Points (Product Level)</Label>
+                       <Input
+                         type="number"
+                         value={product.pointsOnPurchase || 0}
+                         onChange={(e) => setProduct({...product, pointsOnPurchase: Number(e.target.value)})}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <Label>Points Override</Label>
+                       <Input
+                         type="number"
+                         value={product.loyaltyPointsOverride || 0}
+                         onChange={(e) => setProduct({...product, loyaltyPointsOverride: Number(e.target.value)})}
+                       />
+                    </div>
+                  </CardContent>
+               </Card>
 
                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
                  <CardHeader className="flex flex-row items-center justify-between">
@@ -529,6 +865,150 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
 
             {/* INVENTORY TAB */}
             <TabsContent value="inventory" className="space-y-6 mt-0">
+               <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                 <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Automated Reorder Rules</CardTitle>
+                      <CardDescription>Manage thresholds and auto-replenishment settings.</CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={async () => {
+                        const newRule = {
+                          productId: product.id,
+                          locationId: locations[0]?.id,
+                          minQuantity: 5,
+                          maxQuantity: 20,
+                          reorderQuantity: 15,
+                          isActive: true,
+                          autoGenerate: false
+                        };
+                        const rule = await updateReorderRule(newRule);
+                        setProduct({
+                          ...product,
+                          reorderRules: [...(product.reorderRules || []), { ...rule, location: locations[0] }]
+                        });
+                        toast.success("Reorder rule added");
+                      }}
+                    >
+                       <PlusCircle className="w-4 h-4" /> Add Rule
+                    </Button>
+                 </CardHeader>
+                 <CardContent className="p-0">
+                    <Table>
+                       <TableHeader>
+                          <TableRow>
+                             <TableHead>Location</TableHead>
+                             <TableHead>Threshold (Min/Max)</TableHead>
+                             <TableHead>Order Qty</TableHead>
+                             <TableHead>Preferred Supplier</TableHead>
+                             <TableHead>Auto</TableHead>
+                             <TableHead>Status</TableHead>
+                          </TableRow>
+                       </TableHeader>
+                       <TableBody>
+                          {product.reorderRules?.map((rule: any) => (
+                             <TableRow key={rule.id}>
+                                <TableCell className="font-medium">{rule.location?.name}</TableCell>
+                                <TableCell>
+                                   <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        className="w-16 h-8 text-xs"
+                                        value={Number(rule.minQuantity)}
+                                        onChange={async (e) => {
+                                          const val = Number(e.target.value);
+                                          await updateReorderRule({ ...rule, minQuantity: val });
+                                          setProduct({
+                                            ...product,
+                                            reorderRules: product.reorderRules.map((r: any) => r.id === rule.id ? { ...r, minQuantity: val } : r)
+                                          });
+                                        }}
+                                      />
+                                      <span className="text-zinc-400">/</span>
+                                      <Input
+                                        type="number"
+                                        className="w-16 h-8 text-xs"
+                                        value={Number(rule.maxQuantity)}
+                                        onChange={async (e) => {
+                                          const val = Number(e.target.value);
+                                          await updateReorderRule({ ...rule, maxQuantity: val });
+                                          setProduct({
+                                            ...product,
+                                            reorderRules: product.reorderRules.map((r: any) => r.id === rule.id ? { ...r, maxQuantity: val } : r)
+                                          });
+                                        }}
+                                      />
+                                   </div>
+                                </TableCell>
+                                <TableCell>
+                                   <Input
+                                      type="number"
+                                      className="w-16 h-8 text-xs"
+                                      value={Number(rule.reorderQuantity)}
+                                      onChange={async (e) => {
+                                        const val = Number(e.target.value);
+                                        await updateReorderRule({ ...rule, reorderQuantity: val });
+                                        setProduct({
+                                          ...product,
+                                          reorderRules: product.reorderRules.map((r: any) => r.id === rule.id ? { ...r, reorderQuantity: val } : r)
+                                        });
+                                      }}
+                                   />
+                                </TableCell>
+                                <TableCell>
+                                   <select
+                                      className="h-8 rounded border border-zinc-200 text-xs"
+                                      value={rule.preferredSupplierId || ""}
+                                      onChange={async (e) => {
+                                        const val = e.target.value || null;
+                                        await updateReorderRule({ ...rule, preferredSupplierId: val });
+                                        setProduct({
+                                          ...product,
+                                          reorderRules: product.reorderRules.map((r: any) => r.id === rule.id ? { ...r, preferredSupplierId: val } : r)
+                                        });
+                                      }}
+                                   >
+                                      <option value="">None</option>
+                                      {suppliers.map((s: any) => (
+                                         <option key={s.id} value={s.id}>{s.name}</option>
+                                      ))}
+                                   </select>
+                                </TableCell>
+                                <TableCell>
+                                   <input
+                                      type="checkbox"
+                                      checked={rule.autoGenerate}
+                                      onChange={async (e) => {
+                                        const val = e.target.checked;
+                                        await updateReorderRule({ ...rule, autoGenerate: val });
+                                        setProduct({
+                                          ...product,
+                                          reorderRules: product.reorderRules.map((r: any) => r.id === rule.id ? { ...r, autoGenerate: val } : r)
+                                        });
+                                      }}
+                                   />
+                                </TableCell>
+                                <TableCell>
+                                   <Badge variant={rule.isActive ? "default" : "secondary"}>
+                                      {rule.isActive ? "Active" : "Inactive"}
+                                   </Badge>
+                                </TableCell>
+                             </TableRow>
+                          ))}
+                          {(!product.reorderRules || product.reorderRules.length === 0) && (
+                             <TableRow>
+                                <TableCell colSpan={6} className="h-24 text-center text-zinc-500 italic">
+                                   No reorder rules configured.
+                                </TableCell>
+                             </TableRow>
+                          )}
+                       </TableBody>
+                    </Table>
+                 </CardContent>
+               </Card>
+
                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
                  <CardHeader>
                    <CardTitle>Stock by Location</CardTitle>
@@ -586,27 +1066,46 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
                          <div className="space-y-0.5">
-                            <Label className="text-base font-bold">Low Stock Alerts</Label>
-                            <p className="text-sm text-zinc-500">Notify when stock falls below threshold.</p>
+                            <Label className="text-base font-bold">Low Stock Threshold</Label>
+                            <p className="text-sm text-zinc-500">Global threshold for stock alerts.</p>
                          </div>
-                         <input type="checkbox" className="w-10 h-6 rounded-full" checked />
                       </div>
                       <div className="grid gap-2">
                          <Label htmlFor="threshold">Alert Threshold</Label>
-                         <Input id="threshold" type="number" defaultValue={product.lowStockThreshold || 10} />
+                         <Input
+                           id="threshold"
+                           type="number"
+                           value={product.lowStockThreshold || 0}
+                           onChange={(e) => setProduct({...product, lowStockThreshold: Number(e.target.value)})}
+                         />
                       </div>
                    </div>
                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
                          <div className="space-y-0.5">
-                            <Label className="text-base font-bold">Expiry Tracking</Label>
-                            <p className="text-sm text-zinc-500">Track expiration dates for this product.</p>
+                            <Label className="text-base font-bold">Product Rating & Visibility</Label>
+                            <p className="text-sm text-zinc-500">Manage featured status and ratings.</p>
                          </div>
-                         <input type="checkbox" className="w-10 h-6 rounded-full" />
                       </div>
-                      <div className="grid gap-2">
-                         <Label htmlFor="expiry">Shelf Life (Days)</Label>
-                         <Input id="expiry" type="number" placeholder="Enter days..." />
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="isFeatured"
+                              checked={product.isFeatured}
+                              onChange={(e) => setProduct({...product, isFeatured: e.target.checked})}
+                            />
+                            <Label htmlFor="isFeatured">Featured</Label>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="isNew"
+                              checked={product.isNew}
+                              onChange={(e) => setProduct({...product, isNew: e.target.checked})}
+                            />
+                            <Label htmlFor="isNew">New Arrival</Label>
+                         </div>
                       </div>
                    </div>
                  </CardContent>
@@ -733,11 +1232,30 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
               <CardContent className="space-y-4">
                  <div className="grid gap-2">
                     <Label htmlFor="tags">Tags</Label>
-                    <Input id="tags" placeholder="Add tag..." />
+                    <Input
+                      id="tags"
+                      placeholder="Add tag and press Enter..."
+                      onKeyDown={(e: any) => {
+                        if (e.key === 'Enter') {
+                          const val = e.currentTarget.value.trim();
+                          if (val && !product.tags?.includes(val)) {
+                            setProduct({ ...product, tags: [...(product.tags || []), val] });
+                            e.currentTarget.value = '';
+                          }
+                        }
+                      }}
+                    />
                     <div className="flex flex-wrap gap-2 mt-2">
                        {product.tags?.map((tag: string) => (
-                          <Badge key={tag} variant="secondary" className="bg-zinc-100 border-zinc-200 hover:bg-zinc-200 transition-colors cursor-pointer">
-                             {tag}
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="bg-zinc-100 border-zinc-200 hover:bg-zinc-200 transition-colors cursor-pointer flex items-center gap-1"
+                            onClick={() => {
+                              setProduct({ ...product, tags: product.tags.filter((t: string) => t !== tag) });
+                            }}
+                          >
+                             {tag} <XCircle className="w-3 h-3" />
                           </Badge>
                        )) || (
                           <span className="text-xs text-zinc-400 italic">No tags added</span>
@@ -765,23 +1283,67 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
               {editingVariant ? 'Update the details of your variant.' : 'Create a new variant for this product.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="v-name">Variant Name</Label>
-              <Input
-                id="v-name"
-                placeholder="e.g. XL / Red"
-                value={variantForm.name}
-                onChange={(e) => setVariantForm({...variantForm, name: e.target.value})}
-              />
+          <div className="grid gap-4 py-4 overflow-y-auto max-h-[60vh] px-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="v-name">Variant Name</Label>
+                <Input
+                  id="v-name"
+                  placeholder="e.g. XL / Red"
+                  value={variantForm.name}
+                  onChange={(e) => setVariantForm({...variantForm, name: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="v-sku">SKU</Label>
+                <Input
+                  id="v-sku"
+                  value={variantForm.sku}
+                  onChange={(e) => setVariantForm({...variantForm, sku: e.target.value})}
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="v-sku">SKU</Label>
-              <Input
-                id="v-sku"
-                value={variantForm.sku}
-                onChange={(e) => setVariantForm({...variantForm, sku: e.target.value})}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="v-reorder-point">Reorder Point</Label>
+                <Input
+                  id="v-reorder-point"
+                  type="number"
+                  value={variantForm.reorderPoint || 0}
+                  onChange={(e) => setVariantForm({...variantForm, reorderPoint: Number(e.target.value)})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="v-reorder-qty">Reorder Qty</Label>
+                <Input
+                  id="v-reorder-qty"
+                  type="number"
+                  value={variantForm.reorderQty || 0}
+                  onChange={(e) => setVariantForm({...variantForm, reorderQty: Number(e.target.value)})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               <div className="grid gap-2">
+                  <Label htmlFor="v-barcode">Barcode</Label>
+                  <Input
+                    id="v-barcode"
+                    value={variantForm.barcode || ""}
+                    onChange={(e) => setVariantForm({...variantForm, barcode: e.target.value})}
+                  />
+               </div>
+               <div className="grid gap-2">
+                  <Label htmlFor="v-status">Status</Label>
+                  <select
+                     id="v-status"
+                     className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                     value={variantForm.isActive ? "true" : "false"}
+                     onChange={(e) => setVariantForm({...variantForm, isActive: e.target.value === "true"})}
+                  >
+                     <option value="true">Active</option>
+                     <option value="false">Inactive</option>
+                  </select>
+               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -814,6 +1376,54 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                 />
               </div>
             )}
+
+            <div className="space-y-4 pt-4 border-t">
+               <div className="flex items-center justify-between">
+                  <Label className="font-bold">Variant Attributes</Label>
+                  <Button
+                     size="sm"
+                     variant="ghost"
+                     onClick={() => {
+                        const key = prompt("Attribute name (e.g. Color)");
+                        if (key) {
+                           setVariantForm({
+                              ...variantForm,
+                              attributes: { ...variantForm.attributes, [key]: "" }
+                           });
+                        }
+                     }}
+                  >
+                     <PlusCircle className="w-4 h-4 mr-2" /> Add
+                  </Button>
+               </div>
+               {Object.entries(variantForm.attributes || {}).map(([key, value]: [string, any]) => (
+                  <div key={key} className="flex gap-2 items-center">
+                     <Badge variant="outline" className="min-w-[80px]">{key}</Badge>
+                     <Input
+                        value={value}
+                        onChange={(e) => setVariantForm({
+                           ...variantForm,
+                           attributes: { ...variantForm.attributes, [key]: e.target.value }
+                        })}
+                        placeholder="Value..."
+                     />
+                     <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                           const updated = { ...variantForm.attributes };
+                           delete updated[key];
+                           setVariantForm({ ...variantForm, attributes: updated });
+                        }}
+                     >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                     </Button>
+                  </div>
+               ))}
+               {Object.keys(variantForm.attributes || {}).length === 0 && (
+                  <p className="text-xs text-zinc-400 italic">No attributes defined.</p>
+               )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsVariantDialogOpen(false)}>Cancel</Button>
@@ -822,7 +1432,13 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
               onClick={async () => {
                 try {
                   if (editingVariant) {
-                    await updateVariant(editingVariant.id, variantForm);
+                await updateVariant(editingVariant.id, {
+                  ...variantForm,
+                  buyingPrice: Number(variantForm.buyingPrice),
+                  retailPrice: Number(variantForm.retailPrice),
+                  reorderPoint: Number(variantForm.reorderPoint || 0),
+                  reorderQty: Number(variantForm.reorderQty || 0),
+                });
                     toast.success('Variant updated');
                     // Manually update local state for better UX
                     setProduct({
@@ -834,7 +1450,10 @@ export function ProductPageClient({ product: initialProduct, categories, supplie
                   } else {
                     const newVariant = await createVariant({
                       productId: product.id,
-                      ...variantForm
+                  ...variantForm,
+                  buyingPrice: Number(variantForm.buyingPrice),
+                  retailPrice: Number(variantForm.retailPrice),
+                  initialStock: Number(variantForm.initialStock || 0),
                     });
                     toast.success('Variant created');
                     // Add to local state
