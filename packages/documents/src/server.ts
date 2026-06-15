@@ -255,15 +255,20 @@ export const Mappers = {
       ? { street: transaction.organization.address }
       : (transaction.organization?.address || {});
 
+    const config = transaction.organization?.invoiceConfig || {};
+
     const branding = {
-      companyName: transaction.organization?.name,
-      companyAddress: formatAddress(transaction.organization?.address),
-      companyPhone: transaction.organization?.phone,
-      companyEmail: transaction.organization?.email,
-      logoUrl: transaction.organization?.logo,
-      companyWebsite: transaction.organization?.website || '',
+      companyName: config.companyName || transaction.organization?.name,
+      companyAddress: config.companyAddress || formatAddress(transaction.organization?.address),
+      companyPhone: config.companyPhone || transaction.organization?.phone,
+      companyEmail: config.companyEmail || transaction.organization?.email,
+      logoUrl: config.logoUrl || transaction.organization?.logo,
+      companyWebsite: config.companyWebsite || transaction.organization?.website || '',
       companyTagline: transaction.organization?.description || '',
-      primaryColor: transaction.organization?.primaryColor,
+      primaryColor: config.primaryColor || transaction.organization?.primaryColor,
+      showPoweredBy: config.showPoweredBy ?? true,
+      watermarkText: config.watermarkText,
+      customFields: config.customFields,
     };
 
     const customerAddressObj = transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
@@ -305,7 +310,9 @@ export const Mappers = {
         sortCode: 'N/A',
       },
 
-      notes: transaction.notes,
+      notes: transaction.notes || config.defaultNotes,
+      termsAndConditions: config.defaultTerms,
+      footerText: config.footerText,
       verificationHash,
     };
   }

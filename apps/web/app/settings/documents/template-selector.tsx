@@ -25,11 +25,13 @@ import { cn } from "@repo/ui/lib/utils";
 interface TemplateSelectorProps {
   initialTemplateId: string;
   organization: any;
+  invoiceConfig?: any;
 }
 
 export function TemplateSelector({
   initialTemplateId,
   organization,
+  invoiceConfig,
 }: TemplateSelectorProps) {
   const [selectedId, setSelectedId] = useState(initialTemplateId);
   const [previewId, setPreviewId] = useState(initialTemplateId);
@@ -49,13 +51,35 @@ export function TemplateSelector({
   };
 
   const SelectedTemplateComponent = getInvoiceTemplate(previewId);
+
+  // Apply invoice config overrides to mock data
   const mockData = getMockInvoiceData({
-    name: organization?.name,
-    address: organization?.address,
-    phone: organization?.phone,
-    email: organization?.email,
-    logo: organization?.logo,
+    name: invoiceConfig?.companyName || organization?.name,
+    address: invoiceConfig?.companyAddress || organization?.address,
+    phone: invoiceConfig?.companyPhone || organization?.phone,
+    email: invoiceConfig?.companyEmail || organization?.email,
+    logo: invoiceConfig?.logoUrl || organization?.logo,
   });
+
+  // Inject additional config into mockData for preview
+  if (mockData.branding) {
+    mockData.branding.primaryColor =
+      invoiceConfig?.primaryColor || mockData.branding.primaryColor;
+    mockData.branding.showPoweredBy = invoiceConfig?.showPoweredBy ?? true;
+    mockData.branding.watermarkText = invoiceConfig?.watermarkText;
+  }
+  mockData.footerText = invoiceConfig?.footerText;
+  mockData.notes = mockData.notes || invoiceConfig?.defaultNotes;
+  mockData.termsAndConditions =
+    mockData.termsAndConditions || invoiceConfig?.defaultTerms;
+
+  // Handle invoice numbering preview
+  const startNumber = invoiceConfig?.invoiceNumberStart || 1;
+  const padding = invoiceConfig?.invoiceNumberPadding || 0;
+  const prefix = invoiceConfig?.invoiceNumberPrefix || "";
+  const suffix = invoiceConfig?.invoiceNumberSuffix || "";
+  const formattedNumber = `${prefix}${String(startNumber).padStart(padding, "0")}${suffix}`;
+  mockData.invoiceNumber = formattedNumber;
 
   const previewTemplate = INVOICE_TEMPLATE_METADATA.find(
     (t) => t.id === previewId,
@@ -66,10 +90,12 @@ export function TemplateSelector({
 
   return (
     <div
-      className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.08),0_4px_16px_0_rgba(0,0,0,0.06)] h-[720px]"
+      className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.08),0_4px_16px_0_rgba(0,0,0,0.06)]"
       style={{
         borderRadius: "8px",
         border: "1px solid #D1D5DB",
+        height: "calc(100vh - 200px)", // Adjusted for full viewport height minus header/padding
+        minHeight: "600px",
       }}
     >
       {/* ── Left Panel — Template List ───────────────────────────── */}

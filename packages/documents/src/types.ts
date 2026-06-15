@@ -7,6 +7,9 @@ export interface BrandingOptions {
   companyPhone?: string;
   companyWebsite?: string;
   companyTagline?: string;
+  showPoweredBy?: boolean;
+  watermarkText?: string;
+  customFields?: Record<string, any>;
 }
 
 export interface Address {
@@ -181,6 +184,7 @@ export interface InvoiceData extends BaseDocumentData {
   logoUrl?: string | null;
   website?: string | null;
   footerWebsite?: string;
+  footerText?: string;
   payment?: any;
   paymentMethods?: any;
   paymentInformation?: string;
