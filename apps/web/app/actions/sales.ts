@@ -468,13 +468,18 @@ export async function createFulfillment(data: {
 export async function createOrderAction(data: {
   type: TransactionType;
   customerId: string;
+  businessAccountId?: string;
   locationId: string;
   items: any[];
   notes?: string;
+  termsAndConditions?: string;
   discountAmount?: number;
+  shippingFee?: number;
+  deliveryPartnerId?: string;
+  shippingAddressId?: string;
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
-  // console.log(data);
+
   if (data.type === "POS_SALE") {
     const { processSale } = await import("@repo/shared/server");
 
@@ -486,6 +491,7 @@ export async function createOrderAction(data: {
       })),
       locationId: data.locationId,
       customerId: data.customerId,
+      businessAccountId: data.businessAccountId,
       discountAmount: data.discountAmount,
       notes: data.notes,
       payments: [
@@ -499,7 +505,9 @@ export async function createOrderAction(data: {
                 (item.taxAmount || 0) -
                 (item.discountAmount || 0),
               0,
-            ) - (data.discountAmount || 0),
+            ) -
+            (data.discountAmount || 0) +
+            (data.shippingFee || 0),
         },
       ],
       enableStockTracking: true,
@@ -524,17 +532,20 @@ export async function createOrderAction(data: {
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,
+    businessAccountId: data.businessAccountId,
     type: data.type === "QUOTE" ? "QUOTE" : "SALES_ORDER",
     status:
       data.type === "QUOTE"
         ? OrderTransactionStatus.DRAFT
         : OrderTransactionStatus.PENDING_CONFIRMATION,
     payments: [],
-    shippingFee: 0,
+    shippingFee: data.shippingFee || 0,
     discountAmount: data.discountAmount || 0,
+    deliveryPartnerId: data.deliveryPartnerId,
     fulfillment: {
       type: "DELIVERY", // Default
       pickupLocationId: data.locationId,
+      shippingAddressId: data.shippingAddressId,
     },
   });
 
@@ -677,6 +688,27 @@ export async function approveFulfillment(id: string) {
   revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${fulfillment.transactionId}`);
   return result;
+}
+
+export async function uploadFileAction(formData: FormData) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file provided");
+
+  const { storageService } = await import("@repo/shared/server");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await storageService.upload(
+    buffer,
+    file.name,
+    file.type,
+  );
+
+  return {
+    fileName: file.name,
+    fileUrl: result.url,
+    mimeType: file.type,
+    sizeBytes: file.size,
+  };
 }
 
 export async function uploadFulfillmentAttachment(

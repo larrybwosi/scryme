@@ -395,6 +395,8 @@ export async function createOrder(
             ...orderData, // contains customerId, organizationId, etc.
             organizationId,
             memberId,
+            deliveryPartnerId: validation.data.deliveryPartnerId,
+            termsAndConditions: validation.data.termsAndConditions,
             number: orderNumber,
             type: orderData.type ?? TransactionType.ONLINE_ORDER,
             status:
@@ -421,6 +423,15 @@ export async function createOrder(
                 organizationId,
               })),
             },
+            attachments: validation.data.attachments
+              ? {
+                  create: validation.data.attachments.map((a) => ({
+                    ...a,
+                    organizationId,
+                    memberId,
+                  })),
+                }
+              : undefined,
             taxes: { create: appliedTaxesCreateData },
 
             fulfillments: fulfillment

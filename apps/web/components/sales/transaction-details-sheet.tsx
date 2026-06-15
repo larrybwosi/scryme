@@ -37,11 +37,12 @@ import {
 import {
   getTransactionById,
   updateTransactionStatus,
+  uploadFileAction,
+  addAttachmentToPayment,
 } from "../../app/actions/sales";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
 import { AddPaymentModal } from "./add-payment-modal";
-import { addAttachmentToPayment } from "../../app/actions/sales";
 
 interface TransactionDetailsSheetProps {
   transactionId: string | null;
@@ -96,18 +97,21 @@ export function TransactionDetailsSheet({
     if (!file) return;
 
     try {
-      // NOTE: In a real production environment, you would upload the file to a storage provider
-      // like S3, Google Cloud Storage, or Cloudinary and use the returned permanent URL.
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadResult = await uploadFileAction(formData);
+
       await addAttachmentToPayment(paymentId, {
-        fileName: file.name,
-        fileUrl: `https://storage.example.com/payments/${Date.now()}-${file.name}`,
-        mimeType: file.type,
-        sizeBytes: file.size,
+        fileName: uploadResult.fileName,
+        fileUrl: uploadResult.fileUrl,
+        mimeType: uploadResult.mimeType,
+        sizeBytes: uploadResult.sizeBytes,
       });
       toast.success("Attachment added to payment");
       fetchTransaction();
     } catch (error) {
       toast.error("Failed to add attachment");
+      console.error(error);
     }
   };
 
