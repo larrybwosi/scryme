@@ -24,3 +24,8 @@
 **Vulnerability:** Found a hardcoded fallback `'default_secret'` for document verification hashes in `packages/documents/src/server.ts` and dangerous security stubs in `apps/api/src/lib/api/v2/security/tokens.ts` that bypassed authentication by always returning `true`.
 **Learning:** Hardcoded fallbacks are "ticking time bombs" that can lead to security breaches if environment variables are missing. Stubs used for testing or early development can be accidentally left in the codebase, creating massive backdoors.
 **Prevention:** Never use hardcoded fallbacks for security-sensitive secrets. Implement fail-fast checks to ensure all required secrets are present at runtime. Regularly audit the codebase for stubs or "TODO" comments in security-critical paths.
+
+## 2026-06-14 - [Unauthenticated File Upload & Broken Implementation]
+**Vulnerability:** The `UploadController` had an endpoint (`/api/upload`) marked as `@Public()`, allowing any unauthenticated user to upload arbitrary files. It also contained a functional bug where it attempted to call a non-existent method `uploadFile` on the `storageService`.
+**Learning:** Publicly accessible upload endpoints are a high-risk vector for Remote Code Execution (RCE) and Denial of Service (DoS) if not properly restricted and validated. In this case, the endpoint was also broken, which might have hidden it from casual discovery but didn't reduce the risk.
+**Prevention:** Never mark file upload endpoints as public by default. Always enforce authentication and specific permissions (e.g., `common:upload`). Ensure that storage service abstractions are correctly implemented and tested across the entire codebase.
