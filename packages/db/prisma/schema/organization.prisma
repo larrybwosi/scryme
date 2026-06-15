@@ -546,8 +546,10 @@ model OrganizationSettings {
   enableAutoCheckout Boolean @default(false)
   autoCheckoutTime   String? // Store as "HH:mm" in organization's local timezone (e.g., "17:00")
   enableBakerySystem     Boolean @default(false) // Add this line
-  enabledPlugins         Json    @default("[]")
-  defaultInvoiceTemplate String  @default("default")
+  enabledPlugins          Json    @default("[]")
+  defaultInvoiceTemplate  String  @default("default")
+  defaultReceiptTemplate  String  @default("default")
+  defaultWaybillTemplate  String  @default("default")
 
   // --- Expense Settings ---
   mileageRate            Decimal @default(0) @db.Decimal(19, 4)
