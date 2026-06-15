@@ -2,16 +2,8 @@ import React, { Suspense } from "react";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
-import { TemplateSelector } from "./template-selector";
-import { InvoiceConfigForm } from "./invoice-config-form";
+import { EnhancedDocumentSettings } from "./enhanced-settings";
 import { Separator } from "@repo/ui/components/ui/separator";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@repo/ui/components/ui/tabs";
-import { Palette, Settings2, FileText } from "lucide-react";
 
 // Helper function to convert Decimal to number
 const convertDecimalsToNumbers = (obj: any): any => {
@@ -68,6 +60,8 @@ export default async function DocumentsSettingsPage() {
           select: {
             id: true,
             defaultInvoiceTemplate: true,
+            defaultReceiptTemplate: true,
+            defaultWaybillTemplate: true,
             defaultCurrency: true,
             defaultTimezone: true,
             defaultTaxRate: true,
@@ -122,57 +116,20 @@ export default async function DocumentsSettingsPage() {
       <div className="space-y-6 p-2">
         <div className="flex flex-col gap-1">
           <h3 className="text-2xl font-bold tracking-tight">
-            Document Settings
+            Document Management
           </h3>
           <p className="text-sm text-muted-foreground">
-            Professionalize your business presence with custom document
-            templates and numbering.
+            Manage your organization&apos;s customer-facing documents, templates, and professional branding.
           </p>
         </div>
         <Separator className="bg-muted/60" />
 
-        <Tabs defaultValue="templates" className="w-full">
-          <TabsList className="bg-muted/40 p-1 mb-6">
-            <TabsTrigger
-              value="templates"
-              className="flex items-center gap-2 px-6"
-            >
-              <Palette className="w-4 h-4" /> Templates
-            </TabsTrigger>
-            <TabsTrigger
-              value="configuration"
-              className="flex items-center gap-2 px-6"
-            >
-              <Settings2 className="w-4 h-4" /> Configuration
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="templates" className="space-y-4 outline-none">
-            <div className="flex flex-col gap-1 mb-4">
-              <h4 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-600" />
-                Invoice Templates
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Select the default template for all generated invoices across
-                the platform.
-              </p>
-            </div>
-
-            <TemplateSelector
-              initialTemplateId={
-                processedOrganization.settings?.defaultInvoiceTemplate ||
-                "default"
-              }
-              organization={processedOrganization}
-              invoiceConfig={invoiceConfig}
-            />
-          </TabsContent>
-
-          <TabsContent value="configuration" className="max-w-4xl outline-none">
-            <InvoiceConfigForm initialConfig={invoiceConfig} />
-          </TabsContent>
-        </Tabs>
+        <div className="mt-8">
+          <EnhancedDocumentSettings
+            organization={processedOrganization}
+            invoiceConfig={invoiceConfig}
+          />
+        </div>
       </div>
     </Suspense>
   );
