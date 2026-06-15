@@ -192,6 +192,15 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
       },
     });
 
+    // 5. Generate Proof Documents (Background)
+    const { documentService } = await import('../../../lib/services/document.service');
+    documentService.generateAndAttachProofDocuments({
+        transactionId,
+        fulfillmentId: fulfillment.id,
+        organizationId,
+        memberId
+    }).catch(err => console.error('Failed to generate proof documents:', err));
+
     return fulfillment;
   });
 }

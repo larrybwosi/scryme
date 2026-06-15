@@ -193,3 +193,11 @@ export interface InvoiceData extends BaseDocumentData {
   termsAndConditions?: string;
   signature?: any;
 }
+
+export interface DeliveryNoteData extends BaseDocumentData {
+  orderNumber: string;
+  customer: ContactInfo;
+  shippingAddress: string | Address;
+  items: DocumentItem[];
+  otp?: string;
+}

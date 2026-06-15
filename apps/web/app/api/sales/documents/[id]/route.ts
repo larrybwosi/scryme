@@ -3,7 +3,7 @@ import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 import { renderToStream } from "@react-pdf/renderer";
 import { createElement } from "react";
-import { Mappers } from "@repo/documents/server";
+import { Mappers, DeliveryNoteDocument } from "@repo/documents/server";
 import { getInvoiceTemplate, ReceiptTemplateV2 } from "@repo/documents";
 import QRCode from "qrcode";
 
@@ -18,7 +18,7 @@ export async function GET(
 
   const { id } = await params;
   const searchParams = req.nextUrl.searchParams;
-  const type = searchParams.get("type") || "invoice"; // invoice or receipt
+  const type = searchParams.get("type") || "invoice"; // invoice, receipt, or delivery-note
   const template = searchParams.get("template");
 
   const transaction = await db.transaction.findUnique({
@@ -27,6 +27,9 @@ export async function GET(
       organizationId: auth.organizationId,
     },
     include: {
+      fulfillments: {
+        include: { shippingAddress: true }
+      },
       customer: {
         include: {
           addresses: true,
@@ -54,6 +57,14 @@ export async function GET(
       stream = await renderToStream(
         createElement(
           ReceiptTemplateV2 as any,
+          { data: documentData } as any,
+        ) as any,
+      );
+    } else if (type === "delivery-note") {
+      const documentData = Mappers.toDeliveryNoteData(transaction, transaction.fulfillments[0]);
+      stream = await renderToStream(
+        createElement(
+          DeliveryNoteDocument as any,
           { data: documentData } as any,
         ) as any,
       );

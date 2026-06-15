@@ -28,6 +28,7 @@ export * from "./api/v2/utils/products";
 export * from "./api/v2/utils/deliveries";
 export * from "./api/v2/utils/customers";
 export * from "./lib/services/unit-calculation.service";
+export * from "./lib/services/document.service";
 export * from "./lib/services/conversion.service";
 export * from "./actions/api-management";
 export * from "./lib/services/conversion.service";
