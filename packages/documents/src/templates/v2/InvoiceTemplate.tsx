@@ -32,11 +32,38 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
       />
       <View style={styles.section}>
         <PDFGrid>
-          <PDFCol label="Bill To" value={data.customerName}>{data.customerEmail && <Text style={styles.tableCell}>{data.customerEmail}</Text>}</PDFCol>
+          <PDFCol label="Bill To" value={data.customerName}>
+            {data.customerEmail && <Text style={styles.tableCell}>{data.customerEmail}</Text>}
+            {data.customerPhone && <Text style={styles.tableCell}>{data.customerPhone}</Text>}
+            {data.customerAddress && <Text style={styles.tableCell}>{data.customerAddress}</Text>}
+          </PDFCol>
           <PDFCol style={{ alignItems: 'flex-end' }}>
-            <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row', marginBottom: 10 }}>
               <View style={{ marginRight: 20 }}><Text style={styles.label}>Date</Text><Text style={styles.value}>{String(data.date)}</Text></View>
-              <View><Text style={styles.label}>Status</Text><Text style={styles.value}>{data.status}</Text></View>
+              <View><Text style={styles.label}>Status</Text><Text style={[styles.value, { color: (data.status === 'PAID' || data.status === 'COMPLETED') ? '#059669' : '#dc2626' }]}>{data.status}</Text></View>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              {data.locationName && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={styles.label}>Location: </Text>
+                  <Text style={[styles.value, { fontSize: 8 }]}>{data.locationName}</Text>
+                </View>
+              )}
+              {data.createdBy && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={styles.label}>Created By: </Text>
+                  <Text style={[styles.value, { fontSize: 8 }]}>{data.createdBy}</Text>
+                </View>
+              )}
+              {data.tags && data.tags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                  {data.tags.map((tag, i) => (
+                    <View key={i} style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 7, color: '#4b5563', fontWeight: 'bold' }}>{tag.toUpperCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </PDFCol>
         </PDFGrid>
@@ -50,10 +77,13 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
             <PDFTableCell width="20%" isHeader>Rate</PDFTableCell>
             <PDFTableCell width="25%" isHeader>Amount</PDFTableCell>
           </PDFTableRow>
-          {data.items.map((item, i) => (
+          {(data.items || []).map((item, i) => (
             <PDFTableRow key={i}>
-              <View style={[styles.tableCol, { width: '40%' }]}><Text style={styles.tableCell}>{item.itemName || item.description}</Text><Text style={{ fontSize: 7, color: '#666' }}>{item.itemCode || item.sku}</Text></View>
-              <PDFTableCell width="15%">{item.quantity}</PDFTableCell>
+              <View style={[styles.tableCol, { width: '40%' }]}>
+                <Text style={styles.tableCell}>{item.itemName || item.description || 'Item'}</Text>
+                <Text style={{ fontSize: 7, color: '#666' }}>{item.itemCode || item.sku}</Text>
+              </View>
+              <PDFTableCell width="15%">{item.quantity || 0}</PDFTableCell>
               <PDFTableCell width="20%">{(item.rate || item.unitPrice || 0).toFixed(2)}</PDFTableCell>
               <PDFTableCell width="25%">{(item.amount || item.totalPrice || 0).toFixed(2)}</PDFTableCell>
             </PDFTableRow>
@@ -62,14 +92,14 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
       </View>
       <View style={invoiceStyles.totalsSection}>
         <View style={invoiceStyles.totalsTable}>
-          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Net Total</Text><Text style={styles.value}>{data.subtotal.toFixed(2)}</Text></View>
-          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Tax</Text><Text style={styles.value}>{data.tax.toFixed(2)}</Text></View>
-          <View style={[invoiceStyles.totalsRow, invoiceStyles.grandTotal]}><Text style={{ fontWeight: 'bold' }}>Grand Total</Text><Text style={{ fontWeight: 'bold' }}>{data.total.toFixed(2)}</Text></View>
+          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Net Total</Text><Text style={styles.value}>{(data.subtotal || 0).toFixed(2)}</Text></View>
+          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Tax</Text><Text style={styles.value}>{(data.tax || 0).toFixed(2)}</Text></View>
+          <View style={[invoiceStyles.totalsRow, invoiceStyles.grandTotal]}><Text style={{ fontWeight: 'bold' }}>Grand Total</Text><Text style={{ fontWeight: 'bold' }}>{(data.total || 0).toFixed(2)}</Text></View>
           {data.amountPaid !== undefined && (
-            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Amount Paid</Text><Text style={styles.value}>{data.amountPaid.toFixed(2)}</Text></View>
+            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Amount Paid</Text><Text style={styles.value}>{(data.amountPaid || 0).toFixed(2)}</Text></View>
           )}
           {data.balanceDue !== undefined && (
-            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Balance Due</Text><Text style={[styles.value, { color: data.balanceDue > 0 ? '#dc2626' : '#059669' }]}>{data.balanceDue.toFixed(2)}</Text></View>
+            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Balance Due</Text><Text style={[styles.value, { color: data.balanceDue > 0 ? '#dc2626' : '#059669' }]}>{(data.balanceDue || 0).toFixed(2)}</Text></View>
           )}
         </View>
       </View>

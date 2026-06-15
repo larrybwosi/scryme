@@ -342,11 +342,13 @@ const buildStyles = (primaryColor = "#0C6E56") =>
   });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmtCurrency = (n: number) =>
-  n.toLocaleString("en-US", {
+const fmtCurrency = (n: number | undefined) => {
+  const val = n ?? 0;
+  return val.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
@@ -390,15 +392,15 @@ export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
           {/* Customer */}
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Billed to</Text>
-            <Text style={s.metaName}>{data.customer.name}</Text>
-            {data.customer.email && (
+            <Text style={s.metaName}>{data.customer?.name || 'Walk-in Customer'}</Text>
+            {data.customer?.email && (
               <Text style={s.metaSub}>{data.customer.email}</Text>
             )}
-            {data.customer.phone && (
+            {data.customer?.phone && (
               <Text style={s.metaSub}>{data.customer.phone}</Text>
             )}
             <View style={s.paidBadge}>
-              <Text style={s.paidBadgeText}>✓ Paid</Text>
+              <Text style={s.paidBadgeText}>✓ {data.status || 'Paid'}</Text>
             </View>
           </View>
 
@@ -420,6 +422,29 @@ export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
                 <Text style={s.metaLabel}>Receipt no.</Text>
                 <Text style={s.detailValue}>{data.receiptNumber}</Text>
               </View>
+            </View>
+            <View style={{ alignItems: 'flex-end', marginTop: 10 }}>
+              {data.locationName && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Location: </Text>
+                  <Text style={[s.detailValue, { fontSize: 8 }]}>{data.locationName}</Text>
+                </View>
+              )}
+              {data.createdBy && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Cashier: </Text>
+                  <Text style={[s.detailValue, { fontSize: 8 }]}>{data.createdBy}</Text>
+                </View>
+              )}
+              {data.tags && data.tags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                  {data.tags.map((tag, i) => (
+                    <View key={i} style={{ backgroundColor: C.surface, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 7, color: C.inkMid, fontFamily: "Helvetica-Bold" }}>{tag.toUpperCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -443,16 +468,16 @@ export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
           </Text>
         </View>
 
-        {data.items.map((item, i) => (
+        {(data.items || []).map((item, i) => (
           <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-            <Text style={[s.tableCell, s.colDesc]}>{item.description}</Text>
-            <Text style={[s.tableCellMuted, s.colQty]}>{item.quantity}</Text>
+            <Text style={[s.tableCell, s.colDesc]}>{item.description || item.itemName || 'Item'}</Text>
+            <Text style={[s.tableCellMuted, s.colQty]}>{item.quantity || 0}</Text>
             <Text style={[s.tableCellMuted, s.colPrice]}>
-              {fmtCurrency(item.unitPrice ?? 0)}
+              {fmtCurrency(item.unitPrice ?? item.rate ?? 0)}
             </Text>
             <Text style={[s.tableCellBold, s.colTotal]}>
               {fmtCurrency(
-                item.totalPrice ?? item.quantity * (item.unitPrice ?? 0),
+                item.totalPrice ?? item.amount ?? (item.quantity || 0) * (item.unitPrice || item.rate || 0),
               )}
             </Text>
           </View>
