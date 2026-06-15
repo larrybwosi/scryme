@@ -6,20 +6,22 @@ import {
   OnGatewayDisconnect,
   MessageBody,
   ConnectedSocket,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { V3AuthService } from '../../modules/auth/infrastructure/services/v3-auth.service';
-import { UseGuards } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { RealtimeRedisService } from '../../../v2/realtime/realtime-redis.service';
+} from "@nestjs/websockets";
+import {Server, Socket} from "socket.io";
+import {V3AuthService} from "../../modules/auth/infrastructure/services/v3-auth.service";
+import {UseGuards} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {RealtimeRedisService} from "../../../v2/realtime/realtime-redis.service";
 
 @WebSocketGateway({
-  namespace: 'v3',
+  namespace: "v3",
   cors: {
-    origin: '*',
+    origin: "*",
   },
 })
-export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class V3RealtimeGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -31,7 +33,9 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token || client.handshake.headers.authorization?.split(' ')[1];
+      const token =
+        client.handshake.auth.token ||
+        client.handshake.headers.authorization?.split(" ")[1];
       if (!token) {
         client.disconnect();
         return;
@@ -40,9 +44,11 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
       const payload = await this.v3AuthService.verifyToken(token);
       (client as any).v3Context = payload;
 
-      console.log(`V3 Client connected: ${client.id} (Org: ${payload.orgSlug})`);
+      console.log(
+        `V3 Client connected: ${client.id} (Org: ${payload.orgSlug})`,
+      );
     } catch (error: any) {
-      console.error('V3 WS Connection error:', error.message);
+      console.error("V3 WS Connection error:", error.message);
       client.disconnect();
     }
   }
@@ -52,38 +58,38 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
     const context = (client as any).v3Context;
     const clientId = context?.memberId || client.id;
 
-    const presenceKeys = await this.redis.keys('realtime:presence:*');
+    const presenceKeys = await this.redis.keys("realtime:presence:*");
     for (const key of presenceKeys) {
-      const channel = key.replace('realtime:presence:', '');
+      const channel = key.replace("realtime:presence:", "");
       await this.redis.leavePresence(channel, clientId);
 
       const members = await this.redis.getPresence(channel);
-      this.server.to(channel).emit('presence:update', { channel, members });
+      this.server.to(channel).emit("presence:update", {channel, members});
     }
   }
 
-  @SubscribeMessage('join')
+  @SubscribeMessage("join")
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, options?: { rewind?: number } },
+    @MessageBody() data: {channel: string; options?: {rewind?: number}},
   ) {
     const context = (client as any).v3Context;
-    if (!context) return { event: 'error', message: 'Unauthorized' };
+    if (!context) return {event: "error", message: "Unauthorized"};
 
     // Basic ownership check for common V3 patterns
-    if (data.channel.startsWith('order:')) {
-      const orderId = data.channel.split(':')[1];
+    if (data.channel.startsWith("order:")) {
+      const orderId = data.channel.split(":")[1];
       const order = await this.prisma.client.transaction.findUnique({
-        where: { id: orderId },
-        select: { organizationId: true },
+        where: {id: orderId},
+        select: {organizationId: true},
       });
       if (!order || order.organizationId !== context.organizationId) {
-        return { event: 'error', message: 'Unauthorized' };
+        return {event: "error", message: "Unauthorized"};
       }
-    } else if (data.channel.startsWith('inventory:')) {
-      const orgId = data.channel.split(':')[1];
+    } else if (data.channel.startsWith("inventory:")) {
+      const orgId = data.channel.split(":")[1];
       if (orgId !== context.organizationId) {
-        return { event: 'error', message: 'Unauthorized' };
+        return {event: "error", message: "Unauthorized"};
       }
     }
 
@@ -98,31 +104,31 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
       }
     }
 
-    return { event: 'joined', data: data.channel };
+    return {event: "joined", data: data.channel};
   }
 
-  @SubscribeMessage('presence:enter')
+  @SubscribeMessage("presence:enter")
   async handlePresenceEnter(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, metadata?: any },
+    @MessageBody() data: {channel: string; metadata?: any},
   ) {
     const context = (client as any).v3Context;
-    if (!context) return { event: 'error', message: 'Unauthorized' };
+    if (!context) return {event: "error", message: "Unauthorized"};
 
     // Same security check as join
-    if (data.channel.startsWith('order:')) {
-      const orderId = data.channel.split(':')[1];
+    if (data.channel.startsWith("order:")) {
+      const orderId = data.channel.split(":")[1];
       const order = await this.prisma.client.transaction.findUnique({
-        where: { id: orderId },
-        select: { organizationId: true },
+        where: {id: orderId},
+        select: {organizationId: true},
       });
       if (!order || order.organizationId !== context.organizationId) {
-        return { event: 'error', message: 'Unauthorized' };
+        return {event: "error", message: "Unauthorized"};
       }
-    } else if (data.channel.startsWith('inventory:')) {
-      const orgId = data.channel.split(':')[1];
+    } else if (data.channel.startsWith("inventory:")) {
+      const orgId = data.channel.split(":")[1];
       if (orgId !== context.organizationId) {
-        return { event: 'error', message: 'Unauthorized' };
+        return {event: "error", message: "Unauthorized"};
       }
     }
 
@@ -130,61 +136,66 @@ export class V3RealtimeGateway implements OnGatewayConnection, OnGatewayDisconne
     await this.redis.enterPresence(data.channel, clientId, data.metadata);
 
     const members = await this.redis.getPresence(data.channel);
-    this.server.to(data.channel).emit('presence:update', { channel: data.channel, members });
+    this.server
+      .to(data.channel)
+      .emit("presence:update", {channel: data.channel, members});
 
-    return { event: 'presence:entered', members };
+    return {event: "presence:entered", members};
   }
 
-  @SubscribeMessage('presence:get')
+  @SubscribeMessage("presence:get")
   async handlePresenceGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string },
+    @MessageBody() data: {channel: string},
   ) {
     const members = await this.redis.getPresence(data.channel);
     return members;
   }
 
-  @SubscribeMessage('history:get')
+  @SubscribeMessage("history:get")
   async handleHistoryGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, limit?: number },
+    @MessageBody() data: {channel: string; limit?: number},
   ) {
     const history = await this.redis.getHistory(data.channel);
     const limit = data.limit || 100;
     return history.slice(-limit);
   }
 
-  @SubscribeMessage('subscribe:order')
-  async handleSubscribeOrder(@ConnectedSocket() client: Socket, @MessageBody() data: { orderId: string }) {
+  @SubscribeMessage("subscribe:order")
+  async handleSubscribeOrder(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {orderId: string},
+  ) {
     const context = (client as any).v3Context;
 
     // Verify ownership
     const order = await this.prisma.client.transaction.findUnique({
-      where: { id: data.orderId },
-      select: { organizationId: true },
+      where: {id: data.orderId},
+      select: {organizationId: true},
     });
 
     if (!order || order.organizationId !== context.organizationId) {
-      return { event: 'error', message: 'Unauthorized or not found' };
+      return {event: "error", message: "Unauthorized or not found"};
     }
 
     const room = `order:${data.orderId}`;
     client.join(room);
-    return { event: 'subscribed', room };
+    return {event: "subscribed", room};
   }
 
-  @SubscribeMessage('subscribe:inventory')
+  @SubscribeMessage("subscribe:inventory")
   handleSubscribeInventory(@ConnectedSocket() client: Socket) {
     const context = (client as any).v3Context;
     const room = `inventory:${context.organizationId}`;
     client.join(room);
-    return { event: 'subscribed', room };
+    return {event: "subscribed", room};
   }
 
-  @SubscribeMessage('publish')
+  @SubscribeMessage("publish")
   async handlePublish(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { channel: string, event: string, data: any },
+    @MessageBody() data: {channel: string; event: string; data: any},
   ) {
     await this.redis.saveMessage(data.channel, data.event, data.data);
     this.server.to(data.channel).emit(data.event, data.data);

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import {z} from "zod";
 
 export const RecipeIngredientSchema = z.object({
   ingredientVariantId: z.string().min(1),
@@ -20,7 +20,7 @@ export const CreateRecipeSchema = z.object({
   prepTime: z.number().int().optional().nullable(),
   bakeTime: z.number().int().optional().nullable(),
   totalTime: z.number().int().optional().nullable(),
-  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD', 'EXPERT']).optional(),
+  difficulty: z.enum(["EASY", "MEDIUM", "HARD", "EXPERT"]).optional(),
   temperatureCelsius: z.number().int().optional().nullable(),
   servingSize: z.string().optional().nullable(),
   instructions: z.string().optional().nullable(),
@@ -47,7 +47,9 @@ export const CreateBatchSchema = z.object({
 });
 
 export const UpdateBatchSchema = CreateBatchSchema.partial().extend({
-  status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
+  status: z
+    .enum(["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"])
+    .optional(),
 });
 
 export const CompleteBatchSchema = z.object({
@@ -56,10 +58,14 @@ export const CompleteBatchSchema = z.object({
   wasteReason: z.string().optional().nullable(),
   qcData: z.any().optional(),
   notes: z.string().optional().nullable(),
-  ingredientConsumptions: z.array(z.object({
-    stockBatchId: z.string().min(1),
-    quantity: z.number().positive(),
-  })).optional(),
+  ingredientConsumptions: z
+    .array(
+      z.object({
+        stockBatchId: z.string().min(1),
+        quantity: z.number().positive(),
+      }),
+    )
+    .optional(),
 });
 
 export const CreateTemplateSchema = z.object({
@@ -89,7 +95,7 @@ export const UpdateBakerySettingsSchema = z.object({
   defaultBakerId: z.string().optional().nullable(),
   autoCreateDailyBatches: z.boolean().optional(),
   expiryWarningDays: z.number().int().optional(),
-  authMode: z.enum(['SSO', 'CARD_PIN']).optional(),
+  authMode: z.enum(["SSO", "CARD_PIN"]).optional(),
   batchPrefix: z.string().optional(),
   batchSeparator: z.string().optional(),
   batchDateFormat: z.string().optional(),
@@ -114,16 +120,29 @@ export const CreateDeliveryPartnerSchema = z.object({
   address: z.string().optional().nullable(),
   commissionRate: z.number().optional().nullable(),
   fixedFee: z.number().optional().nullable(),
-  benefitType: z.enum(['COMMISSION', 'FIXED_FEE', 'PROFIT_MARGIN', 'NONE']).optional(),
-  reconciliationPolicy: z.enum(['RETURN_TO_STOCK', 'MARK_AS_WASTE', 'PARTNER_CHARGED']).optional(),
+  benefitType: z
+    .enum(["COMMISSION", "FIXED_FEE", "PROFIT_MARGIN", "NONE"])
+    .optional(),
+  reconciliationPolicy: z
+    .enum(["RETURN_TO_STOCK", "MARK_AS_WASTE", "PARTNER_CHARGED"])
+    .optional(),
   isActive: z.boolean().optional(),
 });
 
-export const UpdateDeliveryPartnerSchema = CreateDeliveryPartnerSchema.partial();
+export const UpdateDeliveryPartnerSchema =
+  CreateDeliveryPartnerSchema.partial();
 
 export const AdjustPartnerWalletSchema = z.object({
   amount: z.number(),
-  type: z.enum(['BENEFIT_ACCRUAL', 'WITHDRAWAL', 'ADJUSTMENT', 'RECONCILIATION_CHARGE', 'DEPOSIT']).optional(),
+  type: z
+    .enum([
+      "BENEFIT_ACCRUAL",
+      "WITHDRAWAL",
+      "ADJUSTMENT",
+      "RECONCILIATION_CHARGE",
+      "DEPOSIT",
+    ])
+    .optional(),
   notes: z.string().optional().nullable(),
 });
 
@@ -131,14 +150,18 @@ export const ReceiveIngredientsSchema = z.object({
   receiptReference: z.string().min(1),
   receiptDate: z.string().or(z.date()).optional(),
   notes: z.string().optional().nullable(),
-  lines: z.array(z.object({
-    ingredientId: z.string().min(1),
-    quantity: z.number().positive(),
-    unitCost: z.number().nonnegative(),
-    lotNumber: z.string().optional().nullable(),
-    expiryDate: z.string().or(z.date()).optional().nullable(),
-    supplier: z.string().optional().nullable(),
-  })).min(1),
+  lines: z
+    .array(
+      z.object({
+        ingredientId: z.string().min(1),
+        quantity: z.number().positive(),
+        unitCost: z.number().nonnegative(),
+        lotNumber: z.string().optional().nullable(),
+        expiryDate: z.string().or(z.date()).optional().nullable(),
+        supplier: z.string().optional().nullable(),
+      }),
+    )
+    .min(1),
 });
 
 export const DispatchDeliverySchema = z.object({
@@ -150,6 +173,6 @@ export const DispatchDeliverySchema = z.object({
 
 export const ReconcileDeliverySchema = z.object({
   fulfillmentId: z.string().min(1),
-  status: z.enum(['DELIVERED', 'FAILED', 'RETURNED']),
+  status: z.enum(["DELIVERED", "FAILED", "RETURNED"]),
   notes: z.string().optional().nullable(),
 });

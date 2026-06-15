@@ -19,8 +19,8 @@ export class StockBatchEntity {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly children?: StockBatchEntity[],
-    public readonly supplier?: { name: string; email: string | null },
-    public readonly variant?: { name: string; sku: string },
+    public readonly supplier?: {name: string; email: string | null},
+    public readonly variant?: {name: string; sku: string},
     public readonly movements?: any[],
   ) {}
 }

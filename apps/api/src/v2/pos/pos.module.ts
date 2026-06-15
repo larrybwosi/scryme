@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
-import { PosController } from './pos.controller';
-import { PosService } from './pos.service';
-import { PosSaleService } from './pos-sale.service';
-import { InventoryModule } from '../inventory/inventory.module';
-import { PosCustomerService } from './pos-customer.service';
+import {Module} from "@nestjs/common";
+import {PosController} from "./pos.controller";
+import {PosService} from "./pos.service";
+import {PosSaleService} from "./pos-sale.service";
+import {InventoryModule} from "../inventory/inventory.module";
+import {PosCustomerService} from "./pos-customer.service";
 
 @Module({
   imports: [InventoryModule],

@@ -1,18 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateCrmActivityDto } from '../dto/crm-activity.dto';
+import {Injectable, NotFoundException} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {CreateCrmActivityDto} from "../dto/crm-activity.dto";
 
 @Injectable()
 export class CrmActivityService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createActivity(organizationId: string, memberId: string | null, dto: CreateCrmActivityDto) {
+  async createActivity(
+    organizationId: string,
+    memberId: string | null,
+    dto: CreateCrmActivityDto,
+  ) {
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: { id: dto.recordId, organizationId },
+      where: {id: dto.recordId, organizationId},
     });
 
     if (!record) {
-      throw new NotFoundException('CRM Record not found');
+      throw new NotFoundException("CRM Record not found");
     }
 
     return this.prisma.client.crmActivity.create({
@@ -30,18 +34,18 @@ export class CrmActivityService {
   async getTimeline(organizationId: string, recordId: string) {
     const [notes, activities] = await Promise.all([
       this.prisma.client.crmNote.findMany({
-        where: { recordId, organizationId },
+        where: {recordId, organizationId},
         include: {
           createdBy: {
-            select: { id: true, user: { select: { name: true, image: true } } },
+            select: {id: true, user: {select: {name: true, image: true}}},
           },
         },
       }),
       this.prisma.client.crmActivity.findMany({
-        where: { recordId, organizationId },
+        where: {recordId, organizationId},
         include: {
           member: {
-            select: { id: true, user: { select: { name: true, image: true } } },
+            select: {id: true, user: {select: {name: true, image: true}}},
           },
         },
       }),
@@ -51,7 +55,7 @@ export class CrmActivityService {
     const timeline = [
       ...notes.map(n => ({
         id: n.id,
-        type: 'NOTE',
+        type: "NOTE",
         content: n.content,
         timestamp: n.timelineDate,
         createdBy: n.createdBy,
@@ -66,6 +70,8 @@ export class CrmActivityService {
       })),
     ];
 
-    return timeline.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return timeline.sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+    );
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
+import {Injectable, NotFoundException} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import type {V2ApiContext} from "@repo/shared/server";
 
 @Injectable()
 export class UnitsService {
@@ -8,21 +8,21 @@ export class UnitsService {
 
   async getSystemUnits() {
     return this.prisma.client.systemUnit.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
+      where: {isActive: true},
+      orderBy: {sortOrder: "asc"},
     });
   }
 
   async getOrganizationUnits(ctx: V2ApiContext) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     return this.prisma.client.organizationUnit.findMany({
-      where: { organizationId, isActive: true },
-      include: { baseSystemUnit: true },
+      where: {organizationId, isActive: true},
+      include: {baseSystemUnit: true},
     });
   }
 
   async createOrganizationUnit(ctx: V2ApiContext, data: any) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     return this.prisma.client.organizationUnit.create({
       data: {
         ...data,
@@ -32,24 +32,24 @@ export class UnitsService {
   }
 
   async updateOrganizationUnit(ctx: V2ApiContext, id: string, data: any) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     return this.prisma.client.organizationUnit.update({
-      where: { id, organizationId },
+      where: {id, organizationId},
       data,
     });
   }
 
   async deleteOrganizationUnit(ctx: V2ApiContext, id: string) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     // We do a soft delete for consistency
     return this.prisma.client.organizationUnit.update({
-      where: { id, organizationId },
-      data: { isActive: false },
+      where: {id, organizationId},
+      data: {isActive: false},
     });
   }
 
   async syncUnits(ctx: V2ApiContext, lastSync?: string) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     const since = lastSync ? new Date(lastSync) : new Date(0);
 
     const [
@@ -61,30 +61,30 @@ export class UnitsService {
     ] = await Promise.all([
       this.prisma.client.systemUnit.findMany({
         where: {
-          updatedAt: { gt: since },
+          updatedAt: {gt: since},
         },
       }),
       this.prisma.client.organizationUnit.findMany({
         where: {
           organizationId,
-          updatedAt: { gt: since },
+          updatedAt: {gt: since},
         },
       }),
       this.prisma.client.unitConversion.findMany({
         where: {
-          updatedAt: { gt: since },
+          updatedAt: {gt: since},
         },
       }),
       this.prisma.client.orgUnitConversion.findMany({
         where: {
           organizationId,
-          updatedAt: { gt: since },
+          updatedAt: {gt: since},
         },
       }),
       this.prisma.client.productUnitConversion.findMany({
         where: {
-          product: { organizationId },
-          updatedAt: { gt: since },
+          product: {organizationId},
+          updatedAt: {gt: since},
         },
       }),
     ]);

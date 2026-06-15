@@ -1,21 +1,34 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreatePurchaseDto, ReceivePurchaseDto } from '../dto/purchase.dto';
-import { PurchaseStatus, MovementType, QualityCheckStatus, SerialNumberStatus } from '@repo/db';
-import { PaginationQueryDto, paginate } from '@/v3/common/utils/pagination';
-import { InventoryMovementService } from '../../../inventory/application/services/inventory-movement.service';
-import { emitPurchaseApprovalRequested } from '@repo/windmill/server';
-import { PricingManagementService } from '../../../catalog/application/services/pricing-management.service';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {CreatePurchaseDto, ReceivePurchaseDto} from "../dto/purchase.dto";
+import {
+  PurchaseStatus,
+  MovementType,
+  QualityCheckStatus,
+  SerialNumberStatus,
+} from "@repo/db";
+import {PaginationQueryDto, paginate} from "@/v3/common/utils/pagination";
+import {InventoryMovementService} from "../../../inventory/application/services/inventory-movement.service";
+import {emitPurchaseApprovalRequested} from "@repo/windmill/server";
+import {PricingManagementService} from "../../../catalog/application/services/pricing-management.service";
 
 @Injectable()
 export class PurchaseOrderUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly inventoryMovementService: InventoryMovementService,
-    private readonly pricingManagementService: PricingManagementService
+    private readonly pricingManagementService: PricingManagementService,
   ) {}
 
-  async create(organizationId: string, memberId: string, dto: CreatePurchaseDto) {
+  async create(
+    organizationId: string,
+    memberId: string,
+    dto: CreatePurchaseDto,
+  ) {
     const purchaseNumber = `PO-${Date.now()}`;
 
     return this.prisma.client.$transaction(async tx => {
@@ -32,8 +45,10 @@ export class PurchaseOrderUseCase {
           purchaseNumber,
           orderDate: new Date(),
           dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
-          expectedDate: dto.expectedDate ? new Date(dto.expectedDate) : undefined,
-          currency: dto.currency || 'KES',
+          expectedDate: dto.expectedDate
+            ? new Date(dto.expectedDate)
+            : undefined,
+          currency: dto.currency || "KES",
           subTotal,
           shippingCost: dto.shippingCost || 0,
           totalAmount: subTotal + (dto.shippingCost || 0),
@@ -52,7 +67,7 @@ export class PurchaseOrderUseCase {
         },
         include: {
           items: true,
-          member: { include: { user: true } },
+          member: {include: {user: true}},
         },
       });
 
@@ -60,25 +75,35 @@ export class PurchaseOrderUseCase {
       await emitPurchaseApprovalRequested(organizationId, {
         purchaseOrderId: purchase.id,
         orderNumber: purchase.purchaseNumber,
-        requestedBy: purchase.member.user.name || 'Unknown',
+        requestedBy: purchase.member.user.name || "Unknown",
         totalAmount: Number(purchase.totalAmount),
         currency: purchase.currency,
-      }).catch(err => console.error('[v3 PurchaseOrder] Failed to emit Windmill event:', err));
+      }).catch(err =>
+        console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
+      );
 
       return purchase;
     });
   }
 
-  async receive(organizationId: string, memberId: string, purchaseId: string, dto: ReceivePurchaseDto) {
+  async receive(
+    organizationId: string,
+    memberId: string,
+    purchaseId: string,
+    dto: ReceivePurchaseDto,
+  ) {
     return this.prisma.client.$transaction(async tx => {
       const purchase = await tx.purchase.findUnique({
-        where: { id: purchaseId, organizationId },
-        include: { items: { include: { variant: true } } },
+        where: {id: purchaseId, organizationId},
+        include: {items: {include: {variant: true}}},
       });
 
-      if (!purchase) throw new NotFoundException('Purchase order not found');
-      if (purchase.status === PurchaseStatus.COMPLETED || purchase.status === PurchaseStatus.RECEIVED) {
-        throw new BadRequestException('Purchase order already received');
+      if (!purchase) throw new NotFoundException("Purchase order not found");
+      if (
+        purchase.status === PurchaseStatus.COMPLETED ||
+        purchase.status === PurchaseStatus.RECEIVED
+      ) {
+        throw new BadRequestException("Purchase order already received");
       }
 
       const receipt = await tx.stockReceipt.create({
@@ -92,8 +117,13 @@ export class PurchaseOrderUseCase {
       });
 
       for (const itemDto of dto.items) {
-        const purchaseItem = purchase.items.find(i => i.id === itemDto.purchaseItemId);
-        if (!purchaseItem) throw new NotFoundException(`Purchase item ${itemDto.purchaseItemId} not found`);
+        const purchaseItem = purchase.items.find(
+          i => i.id === itemDto.purchaseItemId,
+        );
+        if (!purchaseItem)
+          throw new NotFoundException(
+            `Purchase item ${itemDto.purchaseItemId} not found`,
+          );
 
         let totalReceivedForItem = 0;
 
@@ -110,7 +140,9 @@ export class PurchaseOrderUseCase {
               currentQuantity: batchDto.quantity,
               purchasePrice: purchaseItem.unitCost,
               landedCost: batchDto.landedCost, // Manual entry support
-              expiryDate: batchDto.expiryDate ? new Date(batchDto.expiryDate) : null,
+              expiryDate: batchDto.expiryDate
+                ? new Date(batchDto.expiryDate)
+                : null,
               receivedDate: new Date(),
               storageUnitId: batchDto.storageUnitId,
               positionId: batchDto.positionId,
@@ -152,17 +184,17 @@ export class PurchaseOrderUseCase {
             // If QC failed, quarantine the batch
             if (batchDto.qcResults.status === QualityCheckStatus.FAILED) {
               await tx.stockBatch.update({
-                where: { id: batch.id },
+                where: {id: batch.id},
                 data: {
                   isQuarantined: true,
-                  quarantineReason: 'Failed QC on receipt',
+                  quarantineReason: "Failed QC on receipt",
                 },
               });
 
               // Update Serial Numbers to Quarantined
               await tx.serialNumber.updateMany({
-                where: { stockBatchId: batch.id },
-                data: { status: SerialNumberStatus.QUARANTINED },
+                where: {stockBatchId: batch.id},
+                data: {status: SerialNumberStatus.QUARANTINED},
               });
             }
           }
@@ -177,7 +209,7 @@ export class PurchaseOrderUseCase {
             movementType: MovementType.PURCHASE_RECEIPT,
             serialNumbers: batchDto.serialNumbers,
             referenceId: purchase.id,
-            referenceType: 'Purchase',
+            referenceType: "Purchase",
             notes: `Received from PO #${purchase.purchaseNumber}`,
           });
 
@@ -189,8 +221,8 @@ export class PurchaseOrderUseCase {
               },
             },
             update: {
-              currentStock: { increment: batchDto.quantity },
-              availableStock: { increment: batchDto.quantity },
+              currentStock: {increment: batchDto.quantity},
+              availableStock: {increment: batchDto.quantity},
             },
             create: {
               organizationId,
@@ -206,26 +238,32 @@ export class PurchaseOrderUseCase {
         }
 
         await tx.purchaseItem.update({
-          where: { id: purchaseItem.id },
+          where: {id: purchaseItem.id},
           data: {
-            receivedQuantity: { increment: totalReceivedForItem },
-            rejectedQuantity: { increment: itemDto.rejectedQuantity || 0 },
+            receivedQuantity: {increment: totalReceivedForItem},
+            rejectedQuantity: {increment: itemDto.rejectedQuantity || 0},
             qualityCheckStatus:
-              (itemDto.rejectedQuantity || 0) > 0 ? QualityCheckStatus.FAILED : QualityCheckStatus.PASSED,
+              (itemDto.rejectedQuantity || 0) > 0
+                ? QualityCheckStatus.FAILED
+                : QualityCheckStatus.PASSED,
           },
         });
       }
 
       const updatedPurchase = await tx.purchase.findUnique({
-        where: { id: purchaseId },
-        include: { items: true },
+        where: {id: purchaseId},
+        include: {items: true},
       });
 
-      const allReceived = updatedPurchase?.items.every(i => i.receivedQuantity >= i.orderedQuantity);
-      const someReceived = updatedPurchase?.items.some(i => i.receivedQuantity > 0);
+      const allReceived = updatedPurchase?.items.every(
+        i => i.receivedQuantity >= i.orderedQuantity,
+      );
+      const someReceived = updatedPurchase?.items.some(
+        i => i.receivedQuantity > 0,
+      );
 
       await tx.purchase.update({
-        where: { id: purchaseId },
+        where: {id: purchaseId},
         data: {
           status: allReceived
             ? PurchaseStatus.RECEIVED
@@ -238,17 +276,19 @@ export class PurchaseOrderUseCase {
 
       // Trigger price recalculation for all items received in this PO
       for (const itemDto of dto.items) {
-        const purchaseItem = purchase.items.find(i => i.id === itemDto.purchaseItemId);
+        const purchaseItem = purchase.items.find(
+          i => i.id === itemDto.purchaseItemId,
+        );
         if (purchaseItem) {
           await this.pricingManagementService.handleCostChange(
             {
               organizationId,
               variantId: purchaseItem.variantId,
-              source: 'PURCHASE_ORDER',
+              source: "PURCHASE_ORDER",
               sourceId: purchaseId,
               newCost: Number(purchaseItem.unitCost),
             },
-            tx
+            tx,
           );
         }
       }
@@ -259,13 +299,13 @@ export class PurchaseOrderUseCase {
 
   async approve(organizationId: string, memberId: string, purchaseId: string) {
     const purchase = await this.prisma.client.purchase.findUnique({
-      where: { id: purchaseId, organizationId },
+      where: {id: purchaseId, organizationId},
     });
 
-    if (!purchase) throw new NotFoundException('Purchase order not found');
+    if (!purchase) throw new NotFoundException("Purchase order not found");
 
     return this.prisma.client.purchase.update({
-      where: { id: purchaseId },
+      where: {id: purchaseId},
       data: {
         status: PurchaseStatus.APPROVED,
         updatedAt: new Date(),
@@ -277,9 +317,9 @@ export class PurchaseOrderUseCase {
     return paginate(
       this.prisma.client.purchase,
       pagination,
-      { organizationId },
-      { orderDate: 'desc' },
-      { include: { supplier: true, member: true } }
+      {organizationId},
+      {orderDate: "desc"},
+      {include: {supplier: true, member: true}},
     );
   }
 }

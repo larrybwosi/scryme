@@ -1,13 +1,13 @@
-import { Module, Global } from '@nestjs/common';
+import {Module, Global} from "@nestjs/common";
 
 @Global()
 @Module({
   providers: [
     {
-      provide: 'WINDMILL_SERVICE',
+      provide: "WINDMILL_SERVICE",
       useValue: {},
     },
   ],
-  exports: ['WINDMILL_SERVICE'],
+  exports: ["WINDMILL_SERVICE"],
 })
 export class WindmillModule {}

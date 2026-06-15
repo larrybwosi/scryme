@@ -1,5 +1,5 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IStockBatchRepository } from '../../domain/repositories/stock-batch-repository.interface';
+import {Injectable, Inject, NotFoundException} from "@nestjs/common";
+import {IStockBatchRepository} from "../../domain/repositories/stock-batch-repository.interface";
 
 @Injectable()
 export class TraceBatchUseCase {
@@ -13,11 +13,16 @@ export class TraceBatchUseCase {
     let batch = await this.stockBatchRepository.findById(identifier);
 
     if (!batch) {
-      batch = await this.stockBatchRepository.findByBatchNumber(identifier, organizationId);
+      batch = await this.stockBatchRepository.findByBatchNumber(
+        identifier,
+        organizationId,
+      );
     }
 
     if (!batch || batch.organizationId !== organizationId) {
-      throw new NotFoundException(`Batch with identifier ${identifier} not found`);
+      throw new NotFoundException(
+        `Batch with identifier ${identifier} not found`,
+      );
     }
 
     return this.stockBatchRepository.getTraceability(batch.id);

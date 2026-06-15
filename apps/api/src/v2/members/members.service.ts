@@ -1,20 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { type V2ApiContext, createMemberToken } from '@repo/shared/server';
-import { MemberRole, Status } from '@repo/db';
-import * as bcrypt from 'bcryptjs';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {type V2ApiContext, createMemberToken} from "@repo/shared/server";
+import {MemberRole, Status} from "@repo/db";
+import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class MembersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMembers(ctx: V2ApiContext, query: any) {
-    const { organizationId } = ctx;
-    const { role, isActive } = query;
+    const {organizationId} = ctx;
+    const {role, isActive} = query;
 
-    const where: any = { organizationId };
+    const where: any = {organizationId};
     if (role) where.role = role;
-    if (isActive !== undefined) where.isActive = isActive === 'true';
+    if (isActive !== undefined) where.isActive = isActive === "true";
 
     return this.prisma.client.member.findMany({
       where,
@@ -32,9 +37,9 @@ export class MembersService {
   }
 
   async getMember(ctx: V2ApiContext, id: string) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     const member = await this.prisma.client.member.findFirst({
-      where: { id, organizationId },
+      where: {id, organizationId},
       include: {
         user: {
           select: {
@@ -47,22 +52,22 @@ export class MembersService {
       },
     });
 
-    if (!member) throw new NotFoundException('Member not found');
+    if (!member) throw new NotFoundException("Member not found");
     return member;
   }
 
   async createMember(ctx: V2ApiContext, data: any) {
-    const { organizationId } = ctx;
-    const { email, name, role, pin, cardId, ...otherData } = data;
+    const {organizationId} = ctx;
+    const {email, name, role, pin, cardId, ...otherData} = data;
 
     // Check if user exists or create one
     let user = await this.prisma.client.user.findUnique({
-      where: { email },
+      where: {email},
     });
 
     if (!user) {
       user = await this.prisma.client.user.create({
-        data: { email, name },
+        data: {email, name},
       });
     }
 
@@ -81,50 +86,50 @@ export class MembersService {
   }
 
   async updateMember(ctx: V2ApiContext, id: string, data: any) {
-    const { organizationId } = ctx;
-    const { pin, ...updateData } = data;
+    const {organizationId} = ctx;
+    const {pin, ...updateData} = data;
 
     if (pin) {
       updateData.pinHash = await bcrypt.hash(pin, 10);
     }
 
     return this.prisma.client.member.update({
-      where: { id, organizationId },
+      where: {id, organizationId},
       data: updateData,
     });
   }
 
   async deleteMember(ctx: V2ApiContext, id: string) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     // Soft delete
     return this.prisma.client.member.update({
-      where: { id, organizationId },
-      data: { deletedAt: new Date(), isActive: false },
+      where: {id, organizationId},
+      data: {deletedAt: new Date(), isActive: false},
     });
   }
 
   async unbanMember(ctx: V2ApiContext, id: string) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     return this.prisma.client.member.update({
-      where: { id, organizationId },
-      data: { isActive: true },
+      where: {id, organizationId},
+      data: {isActive: true},
     });
   }
 
   async changeMemberPin(ctx: V2ApiContext, id: string, pin: string) {
-    const { organizationId } = ctx;
+    const {organizationId} = ctx;
     const pinHash = await bcrypt.hash(pin, 10);
     return this.prisma.client.member.update({
-      where: { id, organizationId },
-      data: { pinHash },
+      where: {id, organizationId},
+      data: {pinHash},
     });
   }
 
   async login(ctx: V2ApiContext, cardId: string, pin: string) {
-    const { organizationId, locationId } = ctx;
+    const {organizationId, locationId} = ctx;
 
     if (!locationId) {
-      throw new BadRequestException('Device is not associated with a location');
+      throw new BadRequestException("Device is not associated with a location");
     }
 
     const member = await this.prisma.client.member.findFirst({
@@ -147,35 +152,35 @@ export class MembersService {
     });
 
     if (!member || !member.pinHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const isPinValid = await bcrypt.compare(pin, member.pinHash);
     if (!isPinValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     // Perform check-in logic
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: { memberId: member.id, checkOutTime: null },
+      where: {memberId: member.id, checkOutTime: null},
     });
 
     let attendanceLogId = activeLog?.id;
 
     if (!activeLog) {
-      await this.prisma.client.$transaction(async (tx) => {
+      await this.prisma.client.$transaction(async tx => {
         const log = await tx.attendanceLog.create({
           data: {
             organizationId,
             memberId: member.id,
             checkInTime: new Date(),
             checkInLocationId: locationId,
-            notes: 'Checked in via terminal login',
+            notes: "Checked in via terminal login",
           },
         });
 
         await tx.member.update({
-          where: { id: member.id },
+          where: {id: member.id},
           data: {
             isCheckedIn: true,
             lastCheckInTime: new Date(),
@@ -188,7 +193,11 @@ export class MembersService {
       });
     }
 
-    const token = await createMemberToken(member.id, organizationId, attendanceLogId!);
+    const token = await createMemberToken(
+      member.id,
+      organizationId,
+      attendanceLogId!,
+    );
 
     // Return non-sensitive member info formatted for POS/Bakery
     return {

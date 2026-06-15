@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { IStockBatchRepository } from '../../domain/repositories/stock-batch-repository.interface';
-import { StockBatchEntity } from '../../domain/entities/stock-batch.entity';
+import {Injectable} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {IStockBatchRepository} from "../../domain/repositories/stock-batch-repository.interface";
+import {StockBatchEntity} from "../../domain/entities/stock-batch.entity";
 
 @Injectable()
 export class PrismaStockBatchRepository implements IStockBatchRepository {
@@ -28,15 +28,19 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
       batch.createdAt,
       batch.updatedAt,
       batch.children?.map(c => this.mapToEntity(c)),
-      batch.supplier ? { name: batch.supplier.name, email: batch.supplier.email } : undefined,
-      batch.variant ? { name: batch.variant.name, sku: batch.variant.sku } : undefined,
-      batch.movements
+      batch.supplier
+        ? {name: batch.supplier.name, email: batch.supplier.email}
+        : undefined,
+      batch.variant
+        ? {name: batch.variant.name, sku: batch.variant.sku}
+        : undefined,
+      batch.movements,
     );
   }
 
   async findById(id: string): Promise<StockBatchEntity | null> {
     const batch = await this.prisma.client.stockBatch.findUnique({
-      where: { id },
+      where: {id},
       include: {
         supplier: true,
         variant: true,
@@ -45,9 +49,12 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     return batch ? this.mapToEntity(batch) : null;
   }
 
-  async findByBatchNumber(batchNumber: string, organizationId: string): Promise<StockBatchEntity | null> {
+  async findByBatchNumber(
+    batchNumber: string,
+    organizationId: string,
+  ): Promise<StockBatchEntity | null> {
     const batch = await this.prisma.client.stockBatch.findFirst({
-      where: { batchNumber, organizationId },
+      where: {batchNumber, organizationId},
       include: {
         supplier: true,
         variant: true,
@@ -61,7 +68,7 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     // or we can just fetch top level and user can drill down.
     // For enterprise, we might want a few levels.
     const batch = await this.prisma.client.stockBatch.findUnique({
-      where: { id },
+      where: {id},
       include: {
         parent: true,
         children: {
@@ -76,7 +83,7 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
 
   async getTraceability(id: string): Promise<StockBatchEntity | null> {
     const batch = await this.prisma.client.stockBatch.findUnique({
-      where: { id },
+      where: {id},
       include: {
         supplier: true,
         variant: {
@@ -95,7 +102,7 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
             },
           },
           orderBy: {
-            movementDate: 'desc',
+            movementDate: "desc",
           },
         },
         parent: {
@@ -117,7 +124,7 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
 
   async update(id: string, data: any): Promise<StockBatchEntity> {
     const batch = await this.prisma.client.stockBatch.update({
-      where: { id },
+      where: {id},
       data,
     });
     return this.mapToEntity(batch);

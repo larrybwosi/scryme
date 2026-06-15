@@ -1,9 +1,9 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { PosController } from "../pos.controller";
-import { PosService } from "../pos.service";
-import { PosSaleService } from "../pos-sale.service";
-import { V2ApiContext } from "@repo/shared/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {Test, TestingModule} from "@nestjs/testing";
+import {PosController} from "../pos.controller";
+import {PosService} from "../pos.service";
+import {PosSaleService} from "../pos-sale.service";
+import {V2ApiContext} from "@repo/shared/server";
+import {beforeEach, describe, expect, it, vi} from "vitest";
 
 describe("PosController", () => {
   let controller: PosController;
@@ -36,8 +36,8 @@ describe("PosController", () => {
 
   describe("processSale", () => {
     it("should call handleSale on PosSaleService", async () => {
-      const mockCtx: any = { organizationId: "org_1" };
-      const mockBody = { cartItems: [] };
+      const mockCtx: any = {organizationId: "org_1"};
+      const mockBody = {cartItems: []};
 
       vi.mocked(posSaleService.handleSale).mockResolvedValue({
         success: true,
@@ -45,7 +45,7 @@ describe("PosController", () => {
 
       const result = await controller.processSale(mockCtx, mockBody, "true");
 
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({success: true});
       expect(posSaleService.handleSale).toHaveBeenCalledWith(
         mockCtx,
         mockBody,

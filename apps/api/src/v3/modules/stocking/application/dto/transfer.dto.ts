@@ -1,7 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
-import { StockRequestPriority } from '@repo/db';
+import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+} from "class-validator";
+import {Type} from "class-transformer";
+import {StockRequestPriority} from "@repo/db";
 
 export class CreateTransferItemDto {
   @ApiProperty()
@@ -25,7 +33,7 @@ export class CreateTransferDto {
   @IsNotEmpty()
   toLocationId: string;
 
-  @ApiPropertyOptional({ enum: StockRequestPriority })
+  @ApiPropertyOptional({enum: StockRequestPriority})
   @IsEnum(StockRequestPriority)
   @IsOptional()
   priority?: StockRequestPriority = StockRequestPriority.MEDIUM;
@@ -35,9 +43,9 @@ export class CreateTransferDto {
   @IsOptional()
   notes?: string;
 
-  @ApiProperty({ type: [CreateTransferItemDto] })
+  @ApiProperty({type: [CreateTransferItemDto]})
   @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested({each: true})
   @Type(() => CreateTransferItemDto)
   items: CreateTransferItemDto[];
 }
@@ -69,9 +77,9 @@ export class ShipTransferDto {
   @IsOptional()
   trackingNumber?: string;
 
-  @ApiProperty({ type: [ShipTransferItemDto] })
+  @ApiProperty({type: [ShipTransferItemDto]})
   @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested({each: true})
   @Type(() => ShipTransferItemDto)
   items: ShipTransferItemDto[];
 }
@@ -88,9 +96,9 @@ export class ReceiveTransferItemDto {
 }
 
 export class ReceiveTransferDto {
-  @ApiProperty({ type: [ReceiveTransferItemDto] })
+  @ApiProperty({type: [ReceiveTransferItemDto]})
   @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested({each: true})
   @Type(() => ReceiveTransferItemDto)
   items: ReceiveTransferItemDto[];
 }

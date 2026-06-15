@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "@/prisma/prisma.service";
-import { db, LoyaltyTransactionType, VoucherStatus } from "@repo/db";
+import {Injectable} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {db, LoyaltyTransactionType, VoucherStatus} from "@repo/db";
 import {
   emitLoyaltyPointsAwarded,
   emitLoyaltyVoucherCreated,
@@ -12,7 +12,7 @@ export class LoyaltyService {
 
   async calculatePointsForTransaction(transactionId: string) {
     const transaction = await db.transaction.findUnique({
-      where: { id: transactionId },
+      where: {id: transactionId},
       include: {
         items: {
           include: {
@@ -26,9 +26,9 @@ export class LoyaltyService {
         organization: {
           include: {
             loyaltyPrograms: {
-              where: { isActive: true },
+              where: {isActive: true},
               include: {
-                rules: { where: { isActive: true } },
+                rules: {where: {isActive: true}},
                 tiers: true,
               },
             },
@@ -82,7 +82,7 @@ export class LoyaltyService {
 
     // 2. Process Currency-based points (General rule)
     const currencyRule = program.rules.find(
-      (r) => r.ruleType === "POINTS_PER_CURRENCY",
+      r => r.ruleType === "POINTS_PER_CURRENCY",
     );
     if (currencyRule && currencyRule.currencyAmount) {
       const spendPoints =
@@ -96,7 +96,7 @@ export class LoyaltyService {
     // 3. Apply Tier Multiplier
     const customerBalance = transaction.customer.loyaltyPoints;
     const applicableTier = program.tiers
-      .filter((t) => customerBalance >= t.minPoints)
+      .filter(t => customerBalance >= t.minPoints)
       .sort((a, b) => b.minPoints - a.minPoints)[0];
 
     if (applicableTier) {
@@ -118,14 +118,14 @@ export class LoyaltyService {
     if (points === 0) return;
 
     const program = await db.loyaltyProgram.findFirst({
-      where: { organizationId, isActive: true },
+      where: {organizationId, isActive: true},
     });
 
     if (!program) return;
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       const customer = await tx.customer.update({
-        where: { id: customerId },
+        where: {id: customerId},
         data: {
           loyaltyPoints: {
             increment: points,
@@ -156,7 +156,7 @@ export class LoyaltyService {
         points,
         balanceAfter: customer.loyaltyPoints,
         description,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Loyalty] Failed to emit Windmill event:", err),
       );
 
@@ -170,25 +170,25 @@ export class LoyaltyService {
     organizationId: string,
   ) {
     const reward = await db.loyaltyReward.findUnique({
-      where: { id: rewardId },
-      include: { program: true },
+      where: {id: rewardId},
+      include: {program: true},
     });
 
     if (!reward || !reward.isActive)
       throw new Error("Reward not found or inactive");
 
     const customer = await db.customer.findUnique({
-      where: { id: customerId },
+      where: {id: customerId},
     });
 
     if (!customer || customer.loyaltyPoints < reward.pointsRequired) {
       throw new Error("Insufficient points");
     }
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // 1. Deduct points
       const updatedCustomer = await tx.customer.update({
-        where: { id: customerId },
+        where: {id: customerId},
         data: {
           loyaltyPoints: {
             decrement: reward.pointsRequired,
@@ -235,7 +235,7 @@ export class LoyaltyService {
         voucherCode: voucher.code,
         rewardName: reward.name,
         expiresAt: voucher.expiresAt.toISOString(),
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Loyalty] Failed to emit Windmill event:", err),
       );
 
@@ -245,7 +245,7 @@ export class LoyaltyService {
 
   async getCustomerStatus(customerId: string, organizationId: string) {
     return await db.customer.findUnique({
-      where: { id: customerId },
+      where: {id: customerId},
       select: {
         id: true,
         loyaltyPoints: true,
@@ -261,7 +261,7 @@ export class LoyaltyService {
     organizationId: string,
   ) {
     const voucher = await db.loyaltyVoucher.findUnique({
-      where: { code },
+      where: {code},
       include: {
         reward: true,
         program: true,

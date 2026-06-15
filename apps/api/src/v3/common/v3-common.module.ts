@@ -1,8 +1,8 @@
-import { Module, Global } from '@nestjs/common';
-import { AuditService } from './services/audit.service';
-import { V3RealtimeGateway } from './realtime/v3-realtime.gateway';
-import { V3AuthModule } from '../modules/auth/auth.module';
-import { RealtimeModule } from '../../v2/realtime/realtime.module';
+import {Module, Global} from "@nestjs/common";
+import {AuditService} from "./services/audit.service";
+import {V3RealtimeGateway} from "./realtime/v3-realtime.gateway";
+import {V3AuthModule} from "../modules/auth/auth.module";
+import {RealtimeModule} from "../../v2/realtime/realtime.module";
 
 @Global()
 @Module({

@@ -1,21 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { UnpackBatchUseCase, UnpackBatchDto } from './unpack-batch.use-case';
-import { StockTransferStatus, MovementType } from '@repo/db';
-import { Decimal } from 'decimal.js';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {UnpackBatchUseCase, UnpackBatchDto} from "./unpack-batch.use-case";
+import {StockTransferStatus, MovementType} from "@repo/db";
+import {Decimal} from "decimal.js";
 
 @Injectable()
 export class ScanUnpackBatchUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly unpackBatchUseCase: UnpackBatchUseCase
+    private readonly unpackBatchUseCase: UnpackBatchUseCase,
   ) {}
 
   async execute(organizationId: string, memberId: string, batchId: string) {
     return this.prisma.client.$transaction(async tx => {
       // 1. Find the batch and its related transfer item
       const batch = await tx.stockBatch.findUnique({
-        where: { id: batchId, organizationId },
+        where: {id: batchId, organizationId},
         include: {
           variant: {
             include: {
@@ -30,7 +34,10 @@ export class ScanUnpackBatchUseCase {
             where: {
               stockTransfer: {
                 status: {
-                  in: [StockTransferStatus.SHIPPED, StockTransferStatus.IN_TRANSIT],
+                  in: [
+                    StockTransferStatus.SHIPPED,
+                    StockTransferStatus.IN_TRANSIT,
+                  ],
                 },
               },
             },
@@ -39,12 +46,14 @@ export class ScanUnpackBatchUseCase {
       });
 
       if (!batch) {
-        throw new NotFoundException('Stock batch not found.');
+        throw new NotFoundException("Stock batch not found.");
       }
 
       const transferItem = batch.transferItems[0];
       if (!transferItem) {
-        throw new BadRequestException('Batch is not associated with an active transfer (SHIPPED or IN_TRANSIT).');
+        throw new BadRequestException(
+          "Batch is not associated with an active transfer (SHIPPED or IN_TRANSIT).",
+        );
       }
 
       const transfer = transferItem.stockTransfer;
@@ -54,7 +63,7 @@ export class ScanUnpackBatchUseCase {
       const quantityToReceive = new Decimal(batch.currentQuantity.toString());
 
       await tx.stockTransferItem.update({
-        where: { id: transferItem.id },
+        where: {id: transferItem.id},
         data: {
           receivedQuantity: {
             increment: quantityToReceive,
@@ -67,16 +76,19 @@ export class ScanUnpackBatchUseCase {
 
       // 4. Identify unpack parameters
       const supplierInfo = batch.variant.suppliers.find(
-        s => s.supplierId === batch.supplierId
+        s => s.supplierId === batch.supplierId,
       );
 
-      const unitsPerPackage = (supplierInfo?.unitsPerPackage != null)
-        ? new Decimal(supplierInfo.unitsPerPackage.toString()).toNumber()
-        : 24; // Default fallback
+      const unitsPerPackage =
+        supplierInfo?.unitsPerPackage != null
+          ? new Decimal(supplierInfo.unitsPerPackage.toString()).toNumber()
+          : 24; // Default fallback
 
       const unpackDto: UnpackBatchDto = {
         batchId: batch.id,
-        quantityToUnpack: new Decimal(batch.currentQuantity.toString()).toNumber(),
+        quantityToUnpack: new Decimal(
+          batch.currentQuantity.toString(),
+        ).toNumber(),
         unitsPerPackage,
         targetSystemUnitId: batch.variant.baseUnitId,
         targetOrgUnitId: batch.variant.baseOrgUnitId,
@@ -91,14 +103,16 @@ export class ScanUnpackBatchUseCase {
 
       // Re-implementing the core logic here to ensure it's in the SAME transaction
 
-      const totalBaseUnitsExpected = new Decimal(unpackDto.quantityToUnpack).mul(unpackDto.unitsPerPackage);
+      const totalBaseUnitsExpected = new Decimal(
+        unpackDto.quantityToUnpack,
+      ).mul(unpackDto.unitsPerPackage);
       const netBaseUnitsToReceive = totalBaseUnitsExpected; // Assuming no damages during auto-scan-unpack
 
       // Decrement the bulk batch
       await tx.stockBatch.update({
-        where: { id: batch.id },
+        where: {id: batch.id},
         data: {
-          currentQuantity: { decrement: unpackDto.quantityToUnpack },
+          currentQuantity: {decrement: unpackDto.quantityToUnpack},
         },
       });
 
@@ -115,7 +129,9 @@ export class ScanUnpackBatchUseCase {
           parentId: batch.id,
           initialQuantity: netBaseUnitsToReceive,
           currentQuantity: netBaseUnitsToReceive,
-          purchasePrice: new Decimal(batch.purchasePrice.toString()).div(unitsPerPackage),
+          purchasePrice: new Decimal(batch.purchasePrice.toString()).div(
+            unitsPerPackage,
+          ),
           receivedDate: new Date(),
           expiryDate: batch.expiryDate,
           systemUnitId: unpackDto.targetSystemUnitId,
@@ -135,7 +151,7 @@ export class ScanUnpackBatchUseCase {
           fromLocationId: transfer.fromLocationId,
           movementType: MovementType.TRANSFER, // It's being received and unpacked
           stockBatchId: batch.id,
-          referenceType: 'StockTransfer',
+          referenceType: "StockTransfer",
           referenceId: transfer.id,
           notes: `Shipped and unpacked via QR scan.`,
         },
@@ -163,8 +179,8 @@ export class ScanUnpackBatchUseCase {
           },
         },
         update: {
-          currentStock: { increment: netBaseUnitsToReceive },
-          availableStock: { increment: netBaseUnitsToReceive },
+          currentStock: {increment: netBaseUnitsToReceive},
+          availableStock: {increment: netBaseUnitsToReceive},
         },
         create: {
           organizationId,

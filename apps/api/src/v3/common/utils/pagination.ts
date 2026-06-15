@@ -1,16 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import {ApiProperty} from "@nestjs/swagger";
+import {IsOptional, IsInt, Min, Max, IsString} from "class-validator";
+import {Type} from "class-transformer";
 
 export class PaginationQueryDto {
-  @ApiProperty({ required: false, default: 0 })
+  @ApiProperty({required: false, default: 0})
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   offset?: number = 0;
 
-  @ApiProperty({ required: false, default: 20 })
+  @ApiProperty({required: false, default: 20})
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -18,7 +18,7 @@ export class PaginationQueryDto {
   @Max(100)
   limit?: number = 20;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({required: false})
   @IsOptional()
   @IsString()
   cursor?: string;
@@ -48,10 +48,10 @@ export async function paginate<T>(
   repository: any,
   query: PaginationQueryDto,
   where: any = {},
-  orderBy: any = { createdAt: 'desc' },
-  options: { select?: any; include?: any } = {},
+  orderBy: any = {createdAt: "desc"},
+  options: {select?: any; include?: any} = {},
 ) {
-  const { limit = 20, offset = 0, cursor } = query;
+  const {limit = 20, offset = 0, cursor} = query;
 
   const findManyArgs: any = {
     where,
@@ -61,7 +61,7 @@ export async function paginate<T>(
   };
 
   if (cursor) {
-    findManyArgs.cursor = { id: cursor };
+    findManyArgs.cursor = {id: cursor};
     findManyArgs.skip = 1; // Skip the cursor itself
   } else {
     findManyArgs.skip = offset;
@@ -69,10 +69,11 @@ export async function paginate<T>(
 
   const [data, total] = await Promise.all([
     repository.findMany(findManyArgs),
-    repository.count({ where }),
+    repository.count({where}),
   ]);
 
-  const nextCursor = data.length === limit ? data[data.length - 1].id : undefined;
+  const nextCursor =
+    data.length === limit ? data[data.length - 1].id : undefined;
 
   return {
     data,

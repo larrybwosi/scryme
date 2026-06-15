@@ -1,23 +1,32 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { SubmitReconciliationDto } from '../dto/reconciliation.dto';
-import { ReconciliationStatus, StockAdjustmentReason, AdjustmentStatus, MovementType } from '@repo/db';
-import { PaginationQueryDto, paginate } from '@/v3/common/utils/pagination';
-import { InventoryMovementService } from '../../../inventory/application/services/inventory-movement.service';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {SubmitReconciliationDto} from "../dto/reconciliation.dto";
+import {
+  ReconciliationStatus,
+  StockAdjustmentReason,
+  AdjustmentStatus,
+  MovementType,
+} from "@repo/db";
+import {PaginationQueryDto, paginate} from "@/v3/common/utils/pagination";
+import {InventoryMovementService} from "../../../inventory/application/services/inventory-movement.service";
 
 @Injectable()
 export class PhysicalReconciliationUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryMovementService: InventoryMovementService
+    private readonly inventoryMovementService: InventoryMovementService,
   ) {}
 
   async generateCountSheet(organizationId: string, locationId: string) {
     const stock = await this.prisma.client.productVariantStock.findMany({
-      where: { organizationId, locationId, currentStock: { gt: 0 } },
+      where: {organizationId, locationId, currentStock: {gt: 0}},
       include: {
         variant: {
-          include: { product: true },
+          include: {product: true},
         },
       },
     });
@@ -31,7 +40,11 @@ export class PhysicalReconciliationUseCase {
     }));
   }
 
-  async submit(organizationId: string, memberId: string, dto: SubmitReconciliationDto) {
+  async submit(
+    organizationId: string,
+    memberId: string,
+    dto: SubmitReconciliationDto,
+  ) {
     return this.prisma.client.$transaction(async tx => {
       let totalExpectedValue = 0;
       let totalActualValue = 0;
@@ -46,7 +59,7 @@ export class PhysicalReconciliationUseCase {
               locationId: dto.locationId,
             },
           },
-          include: { variant: true },
+          include: {variant: true},
         });
 
         const expectedQty = Number(stock?.currentStock || 0);
@@ -94,16 +107,21 @@ export class PhysicalReconciliationUseCase {
     });
   }
 
-  async approve(organizationId: string, memberId: string, reconciliationId: string) {
+  async approve(
+    organizationId: string,
+    memberId: string,
+    reconciliationId: string,
+  ) {
     return this.prisma.client.$transaction(async tx => {
       const reconciliation = await tx.stockReconciliation.findUnique({
-        where: { id: reconciliationId, organizationId },
-        include: { items: true },
+        where: {id: reconciliationId, organizationId},
+        include: {items: true},
       });
 
-      if (!reconciliation) throw new NotFoundException('Reconciliation not found');
+      if (!reconciliation)
+        throw new NotFoundException("Reconciliation not found");
       if (reconciliation.status !== ReconciliationStatus.PENDING_REVIEW) {
-        throw new BadRequestException('Reconciliation is not pending review');
+        throw new BadRequestException("Reconciliation is not pending review");
       }
 
       for (const item of reconciliation.items) {
@@ -131,8 +149,8 @@ export class PhysicalReconciliationUseCase {
               },
             },
             data: {
-              currentStock: { increment: item.varianceQuantity },
-              availableStock: { increment: item.varianceQuantity },
+              currentStock: {increment: item.varianceQuantity},
+              availableStock: {increment: item.varianceQuantity},
             },
           });
 
@@ -145,17 +163,20 @@ export class PhysicalReconciliationUseCase {
               where: {
                 variantId: item.productVariantId,
                 locationId: reconciliation.locationId,
-                currentQuantity: { gt: 0 },
+                currentQuantity: {gt: 0},
               },
-              orderBy: { receivedDate: 'asc' },
+              orderBy: {receivedDate: "asc"},
             });
 
             for (const batch of batches) {
               if (remainingVariance >= 0) break;
-              const deduction = Math.min(Number(batch.currentQuantity), Math.abs(remainingVariance));
+              const deduction = Math.min(
+                Number(batch.currentQuantity),
+                Math.abs(remainingVariance),
+              );
               await tx.stockBatch.update({
-                where: { id: batch.id },
-                data: { currentQuantity: { decrement: deduction } },
+                where: {id: batch.id},
+                data: {currentQuantity: {decrement: deduction}},
               });
               remainingVariance += deduction;
             }
@@ -180,23 +201,32 @@ export class PhysicalReconciliationUseCase {
             memberId,
             variantId: item.productVariantId,
             quantity: Math.abs(Number(item.varianceQuantity)),
-            fromLocationId: Number(item.varianceQuantity) < 0 ? reconciliation.locationId : null,
-            toLocationId: Number(item.varianceQuantity) > 0 ? reconciliation.locationId : null,
-            movementType: Number(item.varianceQuantity) > 0 ? MovementType.ADJUSTMENT_IN : MovementType.ADJUSTMENT_OUT,
+            fromLocationId:
+              Number(item.varianceQuantity) < 0
+                ? reconciliation.locationId
+                : null,
+            toLocationId:
+              Number(item.varianceQuantity) > 0
+                ? reconciliation.locationId
+                : null,
+            movementType:
+              Number(item.varianceQuantity) > 0
+                ? MovementType.ADJUSTMENT_IN
+                : MovementType.ADJUSTMENT_OUT,
             referenceId: adjustment.id,
-            referenceType: 'StockAdjustment',
+            referenceType: "StockAdjustment",
             notes: `Reconciliation adjustment`,
           });
         }
 
         await tx.reconciliationItem.update({
-          where: { id: item.id },
-          data: { adjustmentCreated: true, resolutionType: 'ADJUST' },
+          where: {id: item.id},
+          data: {adjustmentCreated: true, resolutionType: "ADJUST"},
         });
       }
 
       return tx.stockReconciliation.update({
-        where: { id: reconciliationId },
+        where: {id: reconciliationId},
         data: {
           status: ReconciliationStatus.COMPLETED,
           completedBy: memberId,
@@ -211,9 +241,9 @@ export class PhysicalReconciliationUseCase {
     return paginate(
       this.prisma.client.stockReconciliation,
       pagination,
-      { organizationId },
-      { reconciliationDate: 'desc' },
-      { include: { location: true, initiatedByMember: true } }
+      {organizationId},
+      {reconciliationDate: "desc"},
+      {include: {location: true, initiatedByMember: true}},
     );
   }
 }
