@@ -35,6 +35,7 @@ export * from "./types";
 // V1 Templates
 export * from "./templates/v1/invoice";
 export * from "./templates/v1/Waybill";
+export * from "./templates/v1/DeliveryNote";
 export { BatchProductionForm } from "./templates/v1/Bakery-batch";
 export * from "./templates/v1/PackingList";
 export * from "./templates/v1/StockReport";

@@ -452,6 +452,16 @@ export async function createFulfillment(data: {
 
   revalidatePath("/sales/transactions");
   revalidatePath("/sales/deliveries");
+
+  // Background generation of proof documents
+  const { documentService } = await import('@repo/shared/server');
+  documentService.generateAndAttachProofDocuments({
+      transactionId: fulfillment.transactionId,
+      fulfillmentId: fulfillment.id,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
+  }).catch(err => console.error('Failed to generate proof documents:', err));
+
   return fulfillment;
 }
 
@@ -578,22 +588,125 @@ export async function reconcileFulfillment(
   data: {
     notes?: string;
     receivedBy?: string;
+    otp?: string;
+    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  const fulfillment = await db.fulfillment.update({
+  const fulfillment = await db.fulfillment.findUnique({
     where: { id },
+    include: { attachments: true }
+  });
+
+  if (!fulfillment) throw new Error("Fulfillment not found");
+
+  // If OTP is provided, verify it
+  if (data.otp && fulfillment.confirmationToken && data.otp !== fulfillment.confirmationToken) {
+    throw new Error("Invalid verification code");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const updatedFulfillment = await tx.fulfillment.update({
+      where: { id },
+      data: {
+        // We don't mark as reconciled yet, staff will do that
+        receivedBy: data.receivedBy,
+        deliveryNotes: data.notes,
+        status: "DELIVERED", // Mark as delivered once OTP is verified
+        deliveredAt: new Date(),
+        attachments: data.attachments ? {
+          create: data.attachments.map(att => ({
+            ...att,
+            organizationId: auth.organizationId!,
+            memberId: auth.memberId!,
+            transactionId: fulfillment.transactionId,
+          }))
+        } : undefined,
+      },
+    });
+
+    // Update Transaction status to DELIVERED as well
+    await tx.transaction.update({
+      where: { id: fulfillment.transactionId },
+      data: { status: "DELIVERED" }
+    });
+
+    return updatedFulfillment;
+  });
+
+  revalidatePath("/sales/deliveries");
+  revalidatePath("/sales/transactions");
+  return result;
+}
+
+export async function approveFulfillment(id: string) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.findUnique({
+    where: { id },
+    include: { transaction: true }
+  });
+
+  if (!fulfillment) throw new Error("Fulfillment not found");
+
+  const result = await db.$transaction(async (tx) => {
+    const updatedFulfillment = await tx.fulfillment.update({
+      where: { id },
+      data: {
+        isReconciled: true,
+        reconciledAt: new Date(),
+        reconciledBy: auth.memberId,
+        status: "COMPLETED",
+      },
+    });
+
+    // When staff approves, mark the transaction as completed
+    await tx.transaction.update({
+      where: { id: fulfillment.transactionId },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
+    return updatedFulfillment;
+  });
+
+  revalidatePath("/sales/deliveries");
+  revalidatePath("/sales/transactions");
+  revalidatePath(`/sales/transactions/${fulfillment.transactionId}`);
+  return result;
+}
+
+export async function uploadFulfillmentAttachment(
+  fulfillmentId: string,
+  data: {
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    sizeBytes?: number;
+    description?: string;
+  }
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.findUnique({
+    where: { id: fulfillmentId }
+  });
+
+  if (!fulfillment) throw new Error("Fulfillment not found");
+
+  const attachment = await db.attachment.create({
     data: {
-      isReconciled: true,
-      reconciledAt: new Date(),
-      reconciledBy: auth.memberId,
-      receivedBy: data.receivedBy,
-      deliveryNotes: data.notes,
-      status: "COMPLETED",
+      ...data,
+      fulfillmentId,
+      transactionId: fulfillment.transactionId,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
     },
   });
 
   revalidatePath("/sales/deliveries");
-  return fulfillment;
+  return attachment;
 }

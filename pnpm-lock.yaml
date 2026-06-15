@@ -1469,6 +1469,9 @@ importers:
       '@repo/documents':
         specifier: workspace:*
         version: link:../documents
+      '@repo/notifications':
+        specifier: workspace:*
+        version: link:../notifications
       '@repo/scryme':
         specifier: workspace:*
         version: link:../scryme
