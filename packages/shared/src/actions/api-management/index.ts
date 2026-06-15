@@ -13,7 +13,10 @@ export async function createV3ApiClient(data: {
 }) {
   const clientId = `v3_${crypto.randomBytes(16).toString("hex")}`;
   const rawSecret = crypto.randomBytes(32).toString("hex");
-  const encryptedSecret = encrypt(rawSecret);
+
+  // Securely hash and encrypt the secret
+  const argonHash = await argon2.hash(rawSecret);
+  const encryptedSecret = encrypt(argonHash);
 
   const client = await db.v3ApiClient.create({
     data: {
@@ -56,7 +59,10 @@ export async function updateV3ApiClient(id: string, organizationId: string, data
 
 export async function regenerateV3ClientSecret(id: string, organizationId: string) {
   const rawSecret = crypto.randomBytes(32).toString("hex");
-  const encryptedSecret = encrypt(rawSecret);
+
+  // Securely hash and encrypt the secret
+  const argonHash = await argon2.hash(rawSecret);
+  const encryptedSecret = encrypt(argonHash);
 
   await db.v3ApiClient.updateMany({
     where: { id, organizationId },
