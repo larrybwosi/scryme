@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@repo
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Button } from '@repo/ui/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { Input } from '@repo/ui/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import {
@@ -166,13 +167,28 @@ export const DeliveriesTab: React.FC<DeliveriesTabProps> = ({ deliveries, isLoad
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           {delivery.type === 'PO' && (
-                            <Button variant="ghost" size="icon" onClick={(e) => handleDownloadPO(e, delivery.id)}>
-                              <Download className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => handleDownloadPO(e, delivery.id)}
+                                  aria-label="Download Purchase Order"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Download PO</TooltipContent>
+                            </Tooltip>
                           )}
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" aria-label="View Details">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>View Details</TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
                     </TableRow>
