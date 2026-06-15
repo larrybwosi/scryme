@@ -1,12 +1,12 @@
-import { Controller, All, Req, Res } from '@nestjs/common';
-import { FastifyRequest, FastifyReply } from 'fastify';
-import { AuthService } from './auth.service';
+import {Controller, All, Req, Res} from "@nestjs/common";
+import {FastifyRequest, FastifyReply} from "fastify";
+import {AuthService} from "./auth.service";
 
-@Controller('auth')
+@Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @All('*')
+  @All("*")
   async handleAuth(@Req() req: any, @Res() res: any) {
     const protocol = req.protocol;
     const host = req.hostname;

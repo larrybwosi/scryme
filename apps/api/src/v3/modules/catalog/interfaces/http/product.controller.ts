@@ -1,25 +1,44 @@
-import { Controller, Get, Post, Body, UseGuards, UseInterceptors, Req, Query, Patch, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { GetProductsUseCase } from '../../application/use-cases/get-products.use-case';
-import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
-import { MultiTenancyGuard } from '@/v3/common/guards/multi-tenancy.guard';
-import { PermissionsGuard } from '@/v3/common/guards/permissions.guard';
-import { AuditInterceptor } from '../../../../common/interceptors/audit.interceptor';
-import { StandardResponseInterceptor } from '@/v3/common/interceptors/standard-response.interceptor';
-import { Permissions } from '@/v3/common/decorators/permissions.decorator';
-import { CreateProductDto, ProductResponseDto } from '../../application/dto/product.dto';
-import { UpdateSupplierProductDto } from '../../application/dto/supplier-product.dto';
-import { ReviewPriceChangeDto } from '../../application/dto/price-change.dto';
-import { ApiErrorResponseDto } from '@/v3/common/dto/response.dto';
-import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
-import { PaginationQueryDto } from '@/v3/common/utils/pagination';
-import { PricingManagementService } from '../../application/services/pricing-management.service';
-import { PrismaService } from '@/prisma/prisma.service';
-import { ReviewPriceChangeUseCase } from '../../application/use-cases/review-price-change.use-case';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  UseInterceptors,
+  Req,
+  Query,
+  Patch,
+  Param,
+} from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from "@nestjs/swagger";
+import {GetProductsUseCase} from "../../application/use-cases/get-products.use-case";
+import {CreateProductUseCase} from "../../application/use-cases/create-product.use-case";
+import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
+import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
+import {AuditInterceptor} from "../../../../common/interceptors/audit.interceptor";
+import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
+import {Permissions} from "@/v3/common/decorators/permissions.decorator";
+import {
+  CreateProductDto,
+  ProductResponseDto,
+} from "../../application/dto/product.dto";
+import {UpdateSupplierProductDto} from "../../application/dto/supplier-product.dto";
+import {ReviewPriceChangeDto} from "../../application/dto/price-change.dto";
+import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
+import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
+import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import {PricingManagementService} from "../../application/services/pricing-management.service";
+import {PrismaService} from "@/prisma/prisma.service";
+import {ReviewPriceChangeUseCase} from "../../application/use-cases/review-price-change.use-case";
 
-@ApiTags('V3 Catalog')
+@ApiTags("V3 Catalog")
 @ApiBearerAuth()
-@Controller(':orgSlug/catalog')
+@Controller(":orgSlug/catalog")
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ProductController {
@@ -28,29 +47,51 @@ export class ProductController {
     private readonly createProductUseCase: CreateProductUseCase,
     private readonly reviewPriceChangeUseCase: ReviewPriceChangeUseCase,
     private readonly pricingManagementService: PricingManagementService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
-  @Get('products')
-  @Permissions('catalog:product:read')
+  @Get("products")
+  @Permissions("catalog:product:read")
   @ApiOperation({
-    summary: 'Get all products for an organization',
-    operationId: 'Catalog_GetProducts',
+    summary: "Get all products for an organization",
+    operationId: "Catalog_GetProducts",
   })
-  @ApiResponse({ status: 200, type: [ProductResponseDto], description: 'List of products' })
-  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: 'Unauthorized' })
-  async getProducts(@Req() req: any, @Query() paginationQuery: PaginationQueryDto) {
-    return this.getProductsUseCase.execute(req.organization.id, paginationQuery);
+  @ApiResponse({
+    status: 200,
+    type: [ProductResponseDto],
+    description: "List of products",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  async getProducts(
+    @Req() req: any,
+    @Query() paginationQuery: PaginationQueryDto,
+  ) {
+    return this.getProductsUseCase.execute(
+      req.organization.id,
+      paginationQuery,
+    );
   }
 
-  @Post('products')
-  @Permissions('catalog:product:create')
+  @Post("products")
+  @Permissions("catalog:product:create")
   @ApiOperation({
-    summary: 'Create a new product',
-    operationId: 'Catalog_CreateProduct',
+    summary: "Create a new product",
+    operationId: "Catalog_CreateProduct",
   })
-  @ApiResponse({ status: 201, type: ProductResponseDto, description: 'Product created' })
-  @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: 'Invalid input' })
+  @ApiResponse({
+    status: 201,
+    type: ProductResponseDto,
+    description: "Product created",
+  })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: "Invalid input",
+  })
   async createProduct(@Req() req: any, @Body() body: CreateProductDto) {
     return this.createProductUseCase.execute({
       ...body,
@@ -58,18 +99,18 @@ export class ProductController {
     });
   }
 
-  @Patch('suppliers/:supplierId/products/:productId')
-  @Permissions('catalog:product:update')
+  @Patch("suppliers/:supplierId/products/:productId")
+  @Permissions("catalog:product:update")
   @ApiOperation({
-    summary: 'Update supplier product details and trigger price recalculation',
-    operationId: 'Catalog_UpdateSupplierProduct',
+    summary: "Update supplier product details and trigger price recalculation",
+    operationId: "Catalog_UpdateSupplierProduct",
   })
-  @ApiResponse({ status: 200, description: 'Supplier product updated' })
+  @ApiResponse({status: 200, description: "Supplier product updated"})
   async updateSupplierProduct(
     @Req() req: any,
-    @Param('supplierId') supplierId: string,
-    @Param('productId') productId: string,
-    @Body() body: UpdateSupplierProductDto
+    @Param("supplierId") supplierId: string,
+    @Param("productId") productId: string,
+    @Body() body: UpdateSupplierProductDto,
   ) {
     const organizationId = req.organization.id;
 
@@ -78,14 +119,14 @@ export class ProductController {
       if (body.isPreferred === true) {
         // Find the variantId first if not provided in request (it's in the DB)
         const current = await tx.productSupplier.findUnique({
-          where: { productId_supplierId: { productId, supplierId } },
-          select: { variantId: true },
+          where: {productId_supplierId: {productId, supplierId}},
+          select: {variantId: true},
         });
 
         if (current?.variantId) {
           await tx.productSupplier.updateMany({
-            where: { variantId: current.variantId, isPreferred: true },
-            data: { isPreferred: false },
+            where: {variantId: current.variantId, isPreferred: true},
+            data: {isPreferred: false},
           });
         }
       }
@@ -107,11 +148,11 @@ export class ProductController {
             {
               organizationId,
               variantId: updated.variantId,
-              source: 'SUPPLIER_UPDATE',
+              source: "SUPPLIER_UPDATE",
               sourceId: supplierId,
               newCost: body.costPrice ? Number(body.costPrice) : undefined,
             },
-            tx
+            tx,
           );
         }
       }
@@ -122,14 +163,17 @@ export class ProductController {
     return result;
   }
 
-  @Get('price-change-requests')
-  @Permissions('catalog:product:read')
+  @Get("price-change-requests")
+  @Permissions("catalog:product:read")
   @ApiOperation({
-    summary: 'Get all pending price change requests',
-    operationId: 'Catalog_GetPriceChangeRequests',
+    summary: "Get all pending price change requests",
+    operationId: "Catalog_GetPriceChangeRequests",
   })
-  async getPriceChangeRequests(@Req() req: any, @Query() pagination: PaginationQueryDto) {
-    const { limit = 20, offset = 0 } = pagination;
+  async getPriceChangeRequests(
+    @Req() req: any,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    const {limit = 20, offset = 0} = pagination;
     const organizationId = req.organization.id;
 
     /**
@@ -140,7 +184,7 @@ export class ProductController {
      */
     const [items, total] = await Promise.all([
       this.prisma.client.priceChangeRequest.findMany({
-        where: { organizationId },
+        where: {organizationId},
         select: {
           id: true,
           organizationId: true,
@@ -193,9 +237,9 @@ export class ProductController {
         },
         skip: offset,
         take: limit,
-        orderBy: { requestedAt: 'desc' },
+        orderBy: {requestedAt: "desc"},
       }),
-      this.prisma.client.priceChangeRequest.count({ where: { organizationId } }),
+      this.prisma.client.priceChangeRequest.count({where: {organizationId}}),
     ]);
 
     return {
@@ -206,16 +250,16 @@ export class ProductController {
     };
   }
 
-  @Post('price-change-requests/:id/review')
-  @Permissions('catalog:product:update')
+  @Post("price-change-requests/:id/review")
+  @Permissions("catalog:product:update")
   @ApiOperation({
-    summary: 'Approve or reject a price change request',
-    operationId: 'Catalog_ReviewPriceChangeRequest',
+    summary: "Approve or reject a price change request",
+    operationId: "Catalog_ReviewPriceChangeRequest",
   })
   async reviewPriceChangeRequest(
     @Req() req: any,
-    @Param('id') id: string,
-    @Body() body: ReviewPriceChangeDto
+    @Param("id") id: string,
+    @Body() body: ReviewPriceChangeDto,
   ) {
     return this.reviewPriceChangeUseCase.execute({
       organizationId: req.organization.id,

@@ -1,7 +1,7 @@
-import { getDocumentStream } from "../documents";
-import { prisma } from "@repo/db";
+import {getDocumentStream} from "../documents";
+import {prisma} from "@repo/db";
 import * as renderer from "@react-pdf/renderer";
-import { describe, expect, it, vi } from "vitest";
+import {describe, expect, it, vi} from "vitest";
 
 vi.mock("@repo/db", () => {
   const mockFindFirst = vi.fn();
@@ -19,8 +19,8 @@ vi.mock("@repo/db", () => {
   };
 });
 
-vi.mock("@react-pdf/renderer", async (importOriginal) => {
-  const actual = await importOriginal() as any;
+vi.mock("@react-pdf/renderer", async importOriginal => {
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     renderToStream: vi.fn().mockResolvedValue("mock-stream"),
@@ -41,8 +41,8 @@ describe("Documents Service", () => {
       id: "txn_1",
       number: "INV-001",
       createdAt: new Date(),
-      organization: { settings: {} },
-      customer: { addresses: [] },
+      organization: {settings: {}},
+      customer: {addresses: []},
       items: [],
       payments: [],
       location: {},

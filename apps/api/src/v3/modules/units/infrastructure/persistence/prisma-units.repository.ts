@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { IUnitsRepository } from '../../domain/repositories/units.repository.interface';
-import { SystemUnit, OrganizationUnit } from '../../domain/entities/unit.entity';
+import {Injectable} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {IUnitsRepository} from "../../domain/repositories/units.repository.interface";
+import {SystemUnit, OrganizationUnit} from "../../domain/entities/unit.entity";
 
 @Injectable()
 export class PrismaUnitsRepository implements IUnitsRepository {
@@ -19,7 +19,7 @@ export class PrismaUnitsRepository implements IUnitsRepository {
     });
 
     return units.map(
-      (u) =>
+      u =>
         new SystemUnit(
           u.id,
           u.name,
@@ -57,7 +57,7 @@ export class PrismaUnitsRepository implements IUnitsRepository {
     });
 
     return units.map(
-      (u) =>
+      u =>
         new OrganizationUnit(
           u.id,
           u.organizationId,

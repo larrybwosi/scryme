@@ -1,6 +1,6 @@
-import { Module, OnModuleInit } from '@nestjs/common';
-import { ScrymeService } from './scryme.service';
-import { ScrymeController } from './scryme.controller';
+import {Module, OnModuleInit} from "@nestjs/common";
+import {ScrymeService} from "./scryme.service";
+import {ScrymeController} from "./scryme.controller";
 
 @Module({
   providers: [ScrymeService],

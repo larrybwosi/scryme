@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
 import {
-  CreateCustomRoleDto, UpdateCustomRoleDto, CustomRoleQueryDto,
-  CreatePermissionSetDto, CreateRoleGroupDto
-} from '../dto/role-management.dto';
-import { AuditLogAction, AuditEntityType } from '@repo/db';
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {
+  CreateCustomRoleDto,
+  UpdateCustomRoleDto,
+  CustomRoleQueryDto,
+  CreatePermissionSetDto,
+  CreateRoleGroupDto,
+} from "../dto/role-management.dto";
+import {AuditLogAction, AuditEntityType} from "@repo/db";
 
 @Injectable()
 export class RoleManagementUseCase {
@@ -13,30 +20,34 @@ export class RoleManagementUseCase {
   // --- Custom Roles ---
 
   async getCustomRoles(organizationId: string, query: CustomRoleQueryDto) {
-    const { page = 1, limit = 10, search, isActive } = query;
+    const {page = 1, limit = 10, search, isActive} = query;
     const skip = (page - 1) * limit;
 
-    const where: any = { organizationId };
-    if (search) where.name = { contains: search, mode: 'insensitive' };
+    const where: any = {organizationId};
+    if (search) where.name = {contains: search, mode: "insensitive"};
     if (isActive !== undefined) where.isActive = isActive;
 
     const [total, items] = await Promise.all([
-      this.prisma.client.customRole.count({ where }),
+      this.prisma.client.customRole.count({where}),
       this.prisma.client.customRole.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { name: 'asc' },
+        orderBy: {name: "asc"},
       }),
     ]);
 
     return {
       items,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      meta: {total, page, limit, totalPages: Math.ceil(total / limit)},
     };
   }
 
-  async createCustomRole(organizationId: string, dto: CreateCustomRoleDto, actorId: string) {
+  async createCustomRole(
+    organizationId: string,
+    dto: CreateCustomRoleDto,
+    actorId: string,
+  ) {
     const role = await this.prisma.client.customRole.create({
       data: {
         ...dto,
@@ -52,15 +63,20 @@ export class RoleManagementUseCase {
         entityType: AuditEntityType.ROLE, // Using ROLE as it exists in AuditEntityType
         entityId: role.id,
         description: `Created custom role: ${role.name}`,
-      }
+      },
     });
 
     return role;
   }
 
-  async updateCustomRole(organizationId: string, id: string, dto: UpdateCustomRoleDto, actorId: string) {
+  async updateCustomRole(
+    organizationId: string,
+    id: string,
+    dto: UpdateCustomRoleDto,
+    actorId: string,
+  ) {
     const role = await this.prisma.client.customRole.update({
-      where: { id, organizationId },
+      where: {id, organizationId},
       data: dto,
     });
 
@@ -72,7 +88,7 @@ export class RoleManagementUseCase {
         entityType: AuditEntityType.ROLE,
         entityId: role.id,
         description: `Updated custom role: ${role.name}`,
-      }
+      },
     });
 
     return role;
@@ -80,7 +96,7 @@ export class RoleManagementUseCase {
 
   async deleteCustomRole(organizationId: string, id: string, actorId: string) {
     const role = await this.prisma.client.customRole.delete({
-      where: { id, organizationId },
+      where: {id, organizationId},
     });
 
     await this.prisma.client.auditLog.create({
@@ -91,7 +107,7 @@ export class RoleManagementUseCase {
         entityType: AuditEntityType.ROLE,
         entityId: role.id,
         description: `Deleted custom role: ${role.name}`,
-      }
+      },
     });
 
     return role;
@@ -101,11 +117,15 @@ export class RoleManagementUseCase {
 
   async getPermissionSets(organizationId: string) {
     return this.prisma.client.permissionSet.findMany({
-      where: { organizationId },
+      where: {organizationId},
     });
   }
 
-  async createPermissionSet(organizationId: string, dto: CreatePermissionSetDto, actorId: string) {
+  async createPermissionSet(
+    organizationId: string,
+    dto: CreatePermissionSetDto,
+    actorId: string,
+  ) {
     const set = await this.prisma.client.permissionSet.create({
       data: {
         ...dto,
@@ -120,20 +140,26 @@ export class RoleManagementUseCase {
 
   async getRoleGroups(organizationId: string) {
     return this.prisma.client.roleGroup.findMany({
-      where: { organizationId },
-      include: { permissionSets: true },
+      where: {organizationId},
+      include: {permissionSets: true},
     });
   }
 
-  async createRoleGroup(organizationId: string, dto: CreateRoleGroupDto, actorId: string) {
-    const { permissionSetIds, ...data } = dto;
+  async createRoleGroup(
+    organizationId: string,
+    dto: CreateRoleGroupDto,
+    actorId: string,
+  ) {
+    const {permissionSetIds, ...data} = dto;
     const group = await this.prisma.client.roleGroup.create({
       data: {
         ...data,
         organizationId,
-        permissionSets: permissionSetIds ? {
-          connect: permissionSetIds.map(id => ({ id }))
-        } : undefined,
+        permissionSets: permissionSetIds
+          ? {
+              connect: permissionSetIds.map(id => ({id})),
+            }
+          : undefined,
       },
     });
 
@@ -142,27 +168,37 @@ export class RoleManagementUseCase {
 
   // --- Member Assignments ---
 
-  async assignRolesToMember(organizationId: string, memberId: string, roleIds: string[], actorId: string) {
+  async assignRolesToMember(
+    organizationId: string,
+    memberId: string,
+    roleIds: string[],
+    actorId: string,
+  ) {
     const member = await this.prisma.client.member.update({
-      where: { id: memberId, organizationId },
+      where: {id: memberId, organizationId},
       data: {
         customRoles: {
-          connect: roleIds.map(id => ({ id }))
-        }
-      }
+          connect: roleIds.map(id => ({id})),
+        },
+      },
     });
 
     return member;
   }
 
-  async removeRolesFromMember(organizationId: string, memberId: string, roleIds: string[], actorId: string) {
+  async removeRolesFromMember(
+    organizationId: string,
+    memberId: string,
+    roleIds: string[],
+    actorId: string,
+  ) {
     const member = await this.prisma.client.member.update({
-      where: { id: memberId, organizationId },
+      where: {id: memberId, organizationId},
       data: {
         customRoles: {
-          disconnect: roleIds.map(id => ({ id }))
-        }
-      }
+          disconnect: roleIds.map(id => ({id})),
+        },
+      },
     });
 
     return member;

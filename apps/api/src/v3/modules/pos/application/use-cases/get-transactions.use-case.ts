@@ -1,20 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { V3ApiContext } from '@repo/shared/server';
+import {Injectable} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {V3ApiContext} from "@repo/shared/server";
 
 @Injectable()
 export class GetTransactionsUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(ctx: V3ApiContext, query: any) {
-    const { organizationId, memberId, locationId } = ctx;
-    const { status, type, customerId, startDate, endDate } = query;
+    const {organizationId, memberId, locationId} = ctx;
+    const {status, type, customerId, startDate, endDate} = query;
 
-    const where: any = { organizationId };
+    const where: any = {organizationId};
 
     // Contextual filtering
     if (locationId) where.locationId = locationId;
-    if (memberId && !ctx.permissions.includes('*')) {
+    if (memberId && !ctx.permissions.includes("*")) {
       where.memberId = memberId;
     }
 
@@ -28,23 +28,23 @@ export class GetTransactionsUseCase {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
-    const page = parseInt(query.page || '1', 10);
-    const limit = parseInt(query.limit || '50', 10);
+    const page = parseInt(query.page || "1", 10);
+    const limit = parseInt(query.limit || "50", 10);
     const skip = (page - 1) * limit;
 
     const [total, transactions] = await Promise.all([
-      this.prisma.client.transaction.count({ where }),
+      this.prisma.client.transaction.count({where}),
       this.prisma.client.transaction.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {createdAt: "desc"},
         // ⚡ Bolt Optimization: Use targeted select for relations to prevent over-fetching
         // of large JSON/Blob fields (like metadata, gatewayResponse, customFields) in lists.
         // Keeping top-level include for Transaction to ensure all scalar fields are present.
         // Impact: Reduces DB payload size by ~30-50% for transactions with many items or M-Pesa payments.
         include: {
-          customer: { select: { id: true, name: true } },
+          customer: {select: {id: true, name: true}},
           items: {
             select: {
               id: true,

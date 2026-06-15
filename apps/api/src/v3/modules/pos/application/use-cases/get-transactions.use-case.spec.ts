@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
-import { GetTransactionsUseCase } from './get-transactions.use-case';
-import { PrismaService } from '@/prisma/prisma.service';
+import {describe, it, expect, beforeEach, vi} from "vitest";
+import {Test, TestingModule} from "@nestjs/testing";
+import {GetTransactionsUseCase} from "./get-transactions.use-case";
+import {PrismaService} from "@/prisma/prisma.service";
 
-describe('GetTransactionsUseCase', () => {
+describe("GetTransactionsUseCase", () => {
   let useCase: GetTransactionsUseCase;
   let prisma: any;
 
@@ -19,27 +19,27 @@ describe('GetTransactionsUseCase', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetTransactionsUseCase,
-        { provide: PrismaService, useValue: prisma }
+        {provide: PrismaService, useValue: prisma},
       ],
     }).compile();
 
     useCase = module.get<GetTransactionsUseCase>(GetTransactionsUseCase);
   });
 
-  it('should fetch transactions with targeted select', async () => {
+  it("should fetch transactions with targeted select", async () => {
     const ctx = {
-      organizationId: 'org-1',
-      memberId: 'mem-1',
-      locationId: 'loc-1',
-      permissions: ['*'],
+      organizationId: "org-1",
+      memberId: "mem-1",
+      locationId: "loc-1",
+      permissions: ["*"],
     };
-    const query = { page: '1', limit: '10' };
+    const query = {page: "1", limit: "10"};
 
     prisma.client.transaction.count.mockResolvedValue(1);
     prisma.client.transaction.findMany.mockResolvedValue([
       {
-        id: 'tx-1',
-        number: 'TX-001',
+        id: "tx-1",
+        number: "TX-001",
         items: [],
         payments: [],
         customer: null,
@@ -59,16 +59,20 @@ describe('GetTransactionsUseCase', () => {
             select: expect.any(Object),
           }),
         }),
-      })
+      }),
     );
 
     // Verify specific fields are selected in items
     const findManyArgs = prisma.client.transaction.findMany.mock.calls[0][0];
-    expect(findManyArgs.include.items.select).toHaveProperty('id');
-    expect(findManyArgs.include.items.select).not.toHaveProperty('customFields');
+    expect(findManyArgs.include.items.select).toHaveProperty("id");
+    expect(findManyArgs.include.items.select).not.toHaveProperty(
+      "customFields",
+    );
 
     // Verify specific fields are selected in payments
-    expect(findManyArgs.include.payments.select).toHaveProperty('id');
-    expect(findManyArgs.include.payments.select).not.toHaveProperty('gatewayResponse');
+    expect(findManyArgs.include.payments.select).toHaveProperty("id");
+    expect(findManyArgs.include.payments.select).not.toHaveProperty(
+      "gatewayResponse",
+    );
   });
 });

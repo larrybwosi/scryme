@@ -1,18 +1,26 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateCrmObjectDto, CreateCrmFieldDto } from '../dto/crm-definitions.dto';
+import {Injectable, ConflictException, NotFoundException} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {
+  CreateCrmObjectDto,
+  CreateCrmFieldDto,
+} from "../dto/crm-definitions.dto";
 
 @Injectable()
 export class CrmDefinitionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createObjectDefinition(organizationId: string, dto: CreateCrmObjectDto) {
+  async createObjectDefinition(
+    organizationId: string,
+    dto: CreateCrmObjectDto,
+  ) {
     const existing = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: { organizationId, name: dto.name },
+      where: {organizationId, name: dto.name},
     });
 
     if (existing) {
-      throw new ConflictException(`Object definition with name "${dto.name}" already exists`);
+      throw new ConflictException(
+        `Object definition with name "${dto.name}" already exists`,
+      );
     }
 
     return this.prisma.client.crmObjectDefinition.create({
@@ -25,18 +33,22 @@ export class CrmDefinitionService {
 
   async getObjectDefinitions(organizationId: string) {
     return this.prisma.client.crmObjectDefinition.findMany({
-      where: { organizationId },
-      include: { fields: { orderBy: { order: 'asc' } } },
+      where: {organizationId},
+      include: {fields: {orderBy: {order: "asc"}}},
     });
   }
 
-  async createFieldDefinition(organizationId: string, objectId: string, dto: CreateCrmFieldDto) {
+  async createFieldDefinition(
+    organizationId: string,
+    objectId: string,
+    dto: CreateCrmFieldDto,
+  ) {
     const object = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: { id: objectId, organizationId },
+      where: {id: objectId, organizationId},
     });
 
     if (!object) {
-      throw new NotFoundException('Object definition not found');
+      throw new NotFoundException("Object definition not found");
     }
 
     return this.prisma.client.crmFieldDefinition.create({
@@ -49,16 +61,16 @@ export class CrmDefinitionService {
 
   async getFieldsForObject(organizationId: string, objectId: string) {
     const object = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: { id: objectId, organizationId },
+      where: {id: objectId, organizationId},
     });
 
     if (!object) {
-      throw new NotFoundException('Object definition not found');
+      throw new NotFoundException("Object definition not found");
     }
 
     return this.prisma.client.crmFieldDefinition.findMany({
-      where: { objectId },
-      orderBy: { order: 'asc' },
+      where: {objectId},
+      orderBy: {order: "asc"},
     });
   }
 }

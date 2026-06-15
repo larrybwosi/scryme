@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
-import { SuppliersModule } from '@repo/suppliers/server';
-import { CatalogController } from './catalog.controller';
-import { CatalogService } from './catalog.service';
-import { FavoritesController } from './favorites.controller';
-import { FavoritesService } from './favorites.service';
-import { ReviewsController } from './reviews.controller';
-import { ReviewsService } from './reviews.service';
-import { PrismaService } from '@/prisma/prisma.service';
+import {Module} from "@nestjs/common";
+import {SuppliersModule} from "@repo/suppliers/server";
+import {CatalogController} from "./catalog.controller";
+import {CatalogService} from "./catalog.service";
+import {FavoritesController} from "./favorites.controller";
+import {FavoritesService} from "./favorites.service";
+import {ReviewsController} from "./reviews.controller";
+import {ReviewsService} from "./reviews.service";
+import {PrismaService} from "@/prisma/prisma.service";
 
 @Module({
   imports: [SuppliersModule],
@@ -16,9 +16,9 @@ import { PrismaService } from '@/prisma/prisma.service';
     FavoritesService,
     ReviewsService,
     {
-      provide: 'PRISMA_SERVICE',
+      provide: "PRISMA_SERVICE",
       useExisting: PrismaService,
-    }
+    },
   ],
 })
 export class CatalogModule {}

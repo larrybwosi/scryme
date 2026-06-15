@@ -1,19 +1,35 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateTransferDto, ShipTransferDto, ReceiveTransferDto } from '../dto/transfer.dto';
-import { PaginationQueryDto, paginate } from '@/v3/common/utils/pagination';
-import { InventoryMovementService } from '../../../inventory/application/services/inventory-movement.service';
-import { emitStockTransferCreated, emitStockTransferShipped, emitStockTransferReceived } from '@repo/windmill/server';
-import { MovementType, StockTransferStatus } from '@repo/db';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import {PrismaService} from "@/prisma/prisma.service";
+import {
+  CreateTransferDto,
+  ShipTransferDto,
+  ReceiveTransferDto,
+} from "../dto/transfer.dto";
+import {PaginationQueryDto, paginate} from "@/v3/common/utils/pagination";
+import {InventoryMovementService} from "../../../inventory/application/services/inventory-movement.service";
+import {
+  emitStockTransferCreated,
+  emitStockTransferShipped,
+  emitStockTransferReceived,
+} from "@repo/windmill/server";
+import {MovementType, StockTransferStatus} from "@repo/db";
 
 @Injectable()
 export class StockTransferUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryMovementService: InventoryMovementService
+    private readonly inventoryMovementService: InventoryMovementService,
   ) {}
 
-  async create(organizationId: string, memberId: string, dto: CreateTransferDto) {
+  async create(
+    organizationId: string,
+    memberId: string,
+    dto: CreateTransferDto,
+  ) {
     const transferNumber = `TR-${Date.now()}`;
 
     return this.prisma.client.$transaction(async tx => {
@@ -38,7 +54,7 @@ export class StockTransferUseCase {
         include: {
           fromLocation: true,
           toLocation: true,
-          items: { include: { variant: { include: { product: true } } } },
+          items: {include: {variant: {include: {product: true}}}},
         },
       });
 
@@ -50,10 +66,12 @@ export class StockTransferUseCase {
         toLocation: transfer.toLocation.name,
         priority: transfer.priority,
         items: transfer.items.map(i => ({
-          variantName: `${i.variant.product.name} ${i.variant.name || ''}`,
+          variantName: `${i.variant.product.name} ${i.variant.name || ""}`,
           quantity: Number(i.requestedQuantity),
         })),
-      }).catch(err => console.error('[v3 StockTransfer] Failed to emit created event:', err));
+      }).catch(err =>
+        console.error("[v3 StockTransfer] Failed to emit created event:", err),
+      );
 
       return transfer;
     });
@@ -62,13 +80,15 @@ export class StockTransferUseCase {
   async approve(organizationId: string, memberId: string, transferId: string) {
     return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
-        where: { id: transferId, organizationId },
-        include: { items: true },
+        where: {id: transferId, organizationId},
+        include: {items: true},
       });
 
-      if (!transfer) throw new NotFoundException('Transfer not found');
+      if (!transfer) throw new NotFoundException("Transfer not found");
       if (transfer.status !== StockTransferStatus.PENDING_APPROVAL) {
-        throw new BadRequestException('Transfer is not in pending approval status');
+        throw new BadRequestException(
+          "Transfer is not in pending approval status",
+        );
       }
 
       for (const item of transfer.items) {
@@ -81,9 +101,12 @@ export class StockTransferUseCase {
           },
         });
 
-        if (!stock || Number(stock.availableStock) < Number(item.requestedQuantity)) {
+        if (
+          !stock ||
+          Number(stock.availableStock) < Number(item.requestedQuantity)
+        ) {
           throw new BadRequestException(
-            `Insufficient available stock for variant ${item.variantId} at source location`
+            `Insufficient available stock for variant ${item.variantId} at source location`,
           );
         }
 
@@ -95,14 +118,14 @@ export class StockTransferUseCase {
             },
           },
           data: {
-            reservedStock: { increment: item.requestedQuantity },
-            availableStock: { decrement: item.requestedQuantity },
+            reservedStock: {increment: item.requestedQuantity},
+            availableStock: {decrement: item.requestedQuantity},
           },
         });
       }
 
       return tx.stockTransfer.update({
-        where: { id: transferId },
+        where: {id: transferId},
         data: {
           status: StockTransferStatus.APPROVED,
           approvedById: memberId,
@@ -111,21 +134,31 @@ export class StockTransferUseCase {
     });
   }
 
-  async ship(organizationId: string, memberId: string, transferId: string, dto: ShipTransferDto) {
+  async ship(
+    organizationId: string,
+    memberId: string,
+    transferId: string,
+    dto: ShipTransferDto,
+  ) {
     return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
-        where: { id: transferId, organizationId },
-        include: { items: { include: { variant: true } } },
+        where: {id: transferId, organizationId},
+        include: {items: {include: {variant: true}}},
       });
 
-      if (!transfer) throw new NotFoundException('Transfer not found');
+      if (!transfer) throw new NotFoundException("Transfer not found");
       if (transfer.status !== StockTransferStatus.APPROVED) {
-        throw new BadRequestException('Transfer must be approved before shipping');
+        throw new BadRequestException(
+          "Transfer must be approved before shipping",
+        );
       }
 
       for (const itemDto of dto.items) {
         const item = transfer.items.find(i => i.id === itemDto.transferItemId);
-        if (!item) throw new NotFoundException(`Item ${itemDto.transferItemId} not found`);
+        if (!item)
+          throw new NotFoundException(
+            `Item ${itemDto.transferItemId} not found`,
+          );
 
         await tx.productVariantStock.update({
           where: {
@@ -135,8 +168,8 @@ export class StockTransferUseCase {
             },
           },
           data: {
-            currentStock: { decrement: itemDto.shippedQuantity },
-            reservedStock: { decrement: item.requestedQuantity },
+            currentStock: {decrement: itemDto.shippedQuantity},
+            reservedStock: {decrement: item.requestedQuantity},
           },
         });
 
@@ -145,19 +178,22 @@ export class StockTransferUseCase {
           where: {
             variantId: item.variantId,
             locationId: transfer.fromLocationId,
-            currentQuantity: { gt: 0 },
+            currentQuantity: {gt: 0},
             id: itemDto.stockBatchId || undefined,
           },
-          orderBy: { receivedDate: 'asc' },
+          orderBy: {receivedDate: "asc"},
         });
 
         for (const batch of batches) {
           if (remainingToDeduct <= 0) break;
-          const deduction = Math.min(Number(batch.currentQuantity), remainingToDeduct);
+          const deduction = Math.min(
+            Number(batch.currentQuantity),
+            remainingToDeduct,
+          );
 
           await tx.stockBatch.update({
-            where: { id: batch.id },
-            data: { currentQuantity: { decrement: deduction } },
+            where: {id: batch.id},
+            data: {currentQuantity: {decrement: deduction}},
           });
 
           await this.inventoryMovementService.recordMovement(tx, {
@@ -169,7 +205,7 @@ export class StockTransferUseCase {
             fromLocationId: transfer.fromLocationId,
             movementType: MovementType.TRANSFER,
             referenceId: transfer.id,
-            referenceType: 'StockTransfer',
+            referenceType: "StockTransfer",
             notes: `Shipped via Transfer #${transfer.transferNumber}`,
           });
 
@@ -177,11 +213,13 @@ export class StockTransferUseCase {
         }
 
         if (remainingToDeduct > 0) {
-          throw new BadRequestException(`Insufficient stock in specified batches for ${item.variant.sku}`);
+          throw new BadRequestException(
+            `Insufficient stock in specified batches for ${item.variant.sku}`,
+          );
         }
 
         await tx.stockTransferItem.update({
-          where: { id: item.id },
+          where: {id: item.id},
           data: {
             shippedQuantity: itemDto.shippedQuantity,
             stockBatchId: itemDto.stockBatchId,
@@ -190,7 +228,7 @@ export class StockTransferUseCase {
       }
 
       const updatedTransfer = await tx.stockTransfer.update({
-        where: { id: transferId },
+        where: {id: transferId},
         data: {
           status: StockTransferStatus.SHIPPED,
           shippedById: memberId,
@@ -207,27 +245,40 @@ export class StockTransferUseCase {
         shippedAt: updatedTransfer.shippedDate!.toISOString(),
         carrier: updatedTransfer.carrier || undefined,
         trackingNumber: updatedTransfer.trackingNumber || undefined,
-      }).catch(err => console.error('[v3 StockTransfer] Failed to emit shipped event:', err));
+      }).catch(err =>
+        console.error("[v3 StockTransfer] Failed to emit shipped event:", err),
+      );
 
       return updatedTransfer;
     });
   }
 
-  async receive(organizationId: string, memberId: string, transferId: string, dto: ReceiveTransferDto) {
+  async receive(
+    organizationId: string,
+    memberId: string,
+    transferId: string,
+    dto: ReceiveTransferDto,
+  ) {
     return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
-        where: { id: transferId, organizationId },
-        include: { items: { include: { variant: true } } },
+        where: {id: transferId, organizationId},
+        include: {items: {include: {variant: true}}},
       });
 
-      if (!transfer) throw new NotFoundException('Transfer not found');
-      if (transfer.status !== StockTransferStatus.SHIPPED && transfer.status !== StockTransferStatus.IN_TRANSIT) {
-        throw new BadRequestException('Transfer is not in a shippable state');
+      if (!transfer) throw new NotFoundException("Transfer not found");
+      if (
+        transfer.status !== StockTransferStatus.SHIPPED &&
+        transfer.status !== StockTransferStatus.IN_TRANSIT
+      ) {
+        throw new BadRequestException("Transfer is not in a shippable state");
       }
 
       for (const itemDto of dto.items) {
         const item = transfer.items.find(i => i.id === itemDto.transferItemId);
-        if (!item) throw new NotFoundException(`Item ${itemDto.transferItemId} not found`);
+        if (!item)
+          throw new NotFoundException(
+            `Item ${itemDto.transferItemId} not found`,
+          );
 
         await tx.productVariantStock.upsert({
           where: {
@@ -237,8 +288,8 @@ export class StockTransferUseCase {
             },
           },
           update: {
-            currentStock: { increment: itemDto.receivedQuantity },
-            availableStock: { increment: itemDto.receivedQuantity },
+            currentStock: {increment: itemDto.receivedQuantity},
+            availableStock: {increment: itemDto.receivedQuantity},
           },
           create: {
             organizationId,
@@ -272,25 +323,25 @@ export class StockTransferUseCase {
           toLocationId: transfer.toLocationId,
           movementType: MovementType.TRANSFER,
           referenceId: transfer.id,
-          referenceType: 'StockTransfer',
+          referenceType: "StockTransfer",
           notes: `Received via Transfer #${transfer.transferNumber}`,
         });
 
         await tx.stockTransferItem.update({
-          where: { id: item.id },
-          data: { receivedQuantity: itemDto.receivedQuantity },
+          where: {id: item.id},
+          data: {receivedQuantity: itemDto.receivedQuantity},
         });
       }
 
       const completedTransfer = await tx.stockTransfer.update({
-        where: { id: transferId },
+        where: {id: transferId},
         data: {
           status: StockTransferStatus.COMPLETED,
           receivedById: memberId,
           receivedDate: new Date(),
           completedDate: new Date(),
         },
-        include: { receivedBy: { include: { user: true } } },
+        include: {receivedBy: {include: {user: true}}},
       });
 
       // Emit Windmill Event
@@ -298,8 +349,10 @@ export class StockTransferUseCase {
         transferId: completedTransfer.id,
         transferNumber: completedTransfer.transferNumber,
         receivedAt: completedTransfer.receivedDate!.toISOString(),
-        receivedBy: completedTransfer.receivedBy?.user.name || 'Unknown',
-      }).catch(err => console.error('[v3 StockTransfer] Failed to emit received event:', err));
+        receivedBy: completedTransfer.receivedBy?.user.name || "Unknown",
+      }).catch(err =>
+        console.error("[v3 StockTransfer] Failed to emit received event:", err),
+      );
 
       return completedTransfer;
     });
@@ -309,22 +362,22 @@ export class StockTransferUseCase {
     return paginate(
       this.prisma.client.stockTransfer,
       pagination,
-      { organizationId },
-      { requestedDate: 'desc' },
-      { include: { fromLocation: true, toLocation: true, requestedBy: true } }
+      {organizationId},
+      {requestedDate: "desc"},
+      {include: {fromLocation: true, toLocation: true, requestedBy: true}},
     );
   }
 
   async findOne(organizationId: string, transferId: string) {
     const transfer = await this.prisma.client.stockTransfer.findUnique({
-      where: { id: transferId, organizationId },
+      where: {id: transferId, organizationId},
       include: {
         fromLocation: true,
         toLocation: true,
-        requestedBy: { include: { user: true } },
-        approvedBy: { include: { user: true } },
-        shippedBy: { include: { user: true } },
-        receivedBy: { include: { user: true } },
+        requestedBy: {include: {user: true}},
+        approvedBy: {include: {user: true}},
+        shippedBy: {include: {user: true}},
+        receivedBy: {include: {user: true}},
         organization: true,
         items: {
           include: {
@@ -338,7 +391,7 @@ export class StockTransferUseCase {
       },
     });
 
-    if (!transfer) throw new NotFoundException('Transfer not found');
+    if (!transfer) throw new NotFoundException("Transfer not found");
     return transfer;
   }
 }

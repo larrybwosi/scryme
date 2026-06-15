@@ -4,8 +4,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import { IStockBatchRepository } from "../../domain/repositories/stock-batch-repository.interface";
-import { PrismaService } from "@/prisma/prisma.service";
+import {IStockBatchRepository} from "../../domain/repositories/stock-batch-repository.interface";
+import {PrismaService} from "@/prisma/prisma.service";
 
 @Injectable()
 export class MergeBatchesUseCase {
@@ -29,7 +29,7 @@ export class MergeBatchesUseCase {
     }
 
     const batches = await Promise.all(
-      batchIds.map((id) => this.stockBatchRepository.findById(id)),
+      batchIds.map(id => this.stockBatchRepository.findById(id)),
     );
 
     // Validation
@@ -54,7 +54,7 @@ export class MergeBatchesUseCase {
       0,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Create the merged target batch
       const mergedBatch = await tx.stockBatch.create({
         data: {
@@ -72,7 +72,7 @@ export class MergeBatchesUseCase {
       // 2. Deplete and link source batches
       for (const batch of batches) {
         await tx.stockBatch.update({
-          where: { id: batch.id },
+          where: {id: batch.id},
           data: {
             currentQuantity: 0,
             // We could add a 'mergedIntoId' field if we wanted explicit back-link in schema,

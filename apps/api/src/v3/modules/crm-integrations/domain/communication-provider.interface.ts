@@ -12,13 +12,13 @@ export interface CommunicationProvider {
 
   // OAuth2 methods
   getAuthUrl(organizationId: string): string;
-  handleCallback(code: string): Promise<{ credentials: any; settings?: any }>;
+  handleCallback(code: string): Promise<{credentials: any; settings?: any}>;
 
   // Outbound
   sendMessage(
     integration: any,
-    message: { text: string; threadId?: string; channelId?: string }
-  ): Promise<{ externalId: string; threadId?: string }>;
+    message: {text: string; threadId?: string; channelId?: string},
+  ): Promise<{externalId: string; threadId?: string}>;
 
   // Inbound Parsing
   parseWebhookEvent(payload: any): Promise<CommunicationMessage[] | null>;

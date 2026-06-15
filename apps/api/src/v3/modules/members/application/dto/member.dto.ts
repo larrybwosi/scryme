@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { MemberRole, MembershipStatus, Status } from "@repo/db";
+import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import {MemberRole, MembershipStatus, Status} from "@repo/db";
 import {
   IsEmail,
   IsEnum,
@@ -8,15 +8,15 @@ import {
   IsArray,
   IsBoolean,
 } from "class-validator";
-import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
+import {PaginationQueryDto} from "@/v3/common/dto/pagination.dto";
 
 export class MemberQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ enum: MemberRole })
+  @ApiPropertyOptional({enum: MemberRole})
   @IsOptional()
   @IsEnum(MemberRole)
   role?: MemberRole;
 
-  @ApiPropertyOptional({ enum: MembershipStatus })
+  @ApiPropertyOptional({enum: MembershipStatus})
   @IsOptional()
   @IsEnum(MembershipStatus)
   membershipStatus?: MembershipStatus;
@@ -46,7 +46,7 @@ export class CreateMemberDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ enum: MemberRole })
+  @ApiProperty({enum: MemberRole})
   @IsEnum(MemberRole)
   role: MemberRole;
 
@@ -65,22 +65,22 @@ export class CreateMemberDto {
   @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   departmentIds?: string[];
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   customRoleIds?: string[];
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   roleGroupIds?: string[];
 }
 
@@ -90,12 +90,12 @@ export class UpdateMemberDto {
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ enum: MemberRole })
+  @ApiPropertyOptional({enum: MemberRole})
   @IsOptional()
   @IsEnum(MemberRole)
   role?: MemberRole;
 
-  @ApiPropertyOptional({ enum: MembershipStatus })
+  @ApiPropertyOptional({enum: MembershipStatus})
   @IsOptional()
   @IsEnum(MembershipStatus)
   membershipStatus?: MembershipStatus;
@@ -120,27 +120,27 @@ export class UpdateMemberDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ enum: Status })
+  @ApiPropertyOptional({enum: Status})
   @IsOptional()
   @IsEnum(Status)
   status?: Status;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   departmentIds?: string[];
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   customRoleIds?: string[];
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   roleGroupIds?: string[];
 }
 
@@ -194,16 +194,16 @@ export class MemberResponseDto {
   @ApiProperty()
   user: UserSummaryDto;
 
-  @ApiProperty({ enum: MemberRole })
+  @ApiProperty({enum: MemberRole})
   role: MemberRole;
 
-  @ApiProperty({ enum: MembershipStatus })
+  @ApiProperty({enum: MembershipStatus})
   membershipStatus: MembershipStatus;
 
   @ApiProperty()
   isActive: boolean;
 
-  @ApiProperty({ enum: Status })
+  @ApiProperty({enum: Status})
   status: Status;
 
   @ApiPropertyOptional()
@@ -218,13 +218,13 @@ export class MemberResponseDto {
   @ApiProperty()
   updatedAt: Date;
 
-  @ApiPropertyOptional({ type: [MemberDepartmentDto] })
+  @ApiPropertyOptional({type: [MemberDepartmentDto]})
   departments?: MemberDepartmentDto[];
 
-  @ApiPropertyOptional({ type: [MemberRoleDto] })
+  @ApiPropertyOptional({type: [MemberRoleDto]})
   customRoles?: MemberRoleDto[];
 
-  @ApiPropertyOptional({ type: [MemberRoleDto] })
+  @ApiPropertyOptional({type: [MemberRoleDto]})
   roleGroups?: MemberRoleDto[];
 }
 

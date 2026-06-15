@@ -3,18 +3,18 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { AuditService } from '../services/audit.service';
-import { GqlExecutionContext } from '@nestjs/graphql';
+} from "@nestjs/common";
+import {Observable} from "rxjs";
+import {tap, catchError} from "rxjs/operators";
+import {AuditService} from "../services/audit.service";
+import {GqlExecutionContext} from "@nestjs/graphql";
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   constructor(private readonly auditService: AuditService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const isGql = context.getType() === ('graphql' as any);
+    const isGql = context.getType() === ("graphql" as any);
     let request: any;
     let method: string;
     let url: string;
@@ -23,7 +23,7 @@ export class AuditInterceptor implements NestInterceptor {
       const gqlContext = GqlExecutionContext.create(context);
       request = gqlContext.getContext().reply.request;
       const info = gqlContext.getInfo();
-      method = 'GRAPHQL';
+      method = "GRAPHQL";
       url = info.fieldName;
     } else {
       request = context.switchToHttp().getRequest();
@@ -31,7 +31,7 @@ export class AuditInterceptor implements NestInterceptor {
       url = request.url;
     }
 
-    const { user, organization } = request;
+    const {user, organization} = request;
     const now = Date.now();
 
     return next.handle().pipe(
@@ -55,7 +55,7 @@ export class AuditInterceptor implements NestInterceptor {
           userId: user?.id,
           organizationId: organization?.id,
           duration,
-          metadata: { error: error.message },
+          metadata: {error: error.message},
         });
         throw error;
       }),

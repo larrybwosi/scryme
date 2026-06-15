@@ -1,6 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, IsDateString, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsEnum,
+} from "class-validator";
+import {Type} from "class-transformer";
 
 export class CreatePurchaseItemDto {
   @ApiProperty()
@@ -46,7 +55,7 @@ export class CreatePurchaseDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  currency?: string = 'KES';
+  currency?: string = "KES";
 
   @ApiPropertyOptional()
   @IsNumber()
@@ -58,9 +67,9 @@ export class CreatePurchaseDto {
   @IsOptional()
   notes?: string;
 
-  @ApiProperty({ type: [CreatePurchaseItemDto] })
+  @ApiProperty({type: [CreatePurchaseItemDto]})
   @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested({each: true})
   @Type(() => CreatePurchaseItemDto)
   items: CreatePurchaseItemDto[];
 }
@@ -100,9 +109,9 @@ export class BatchReceiptDto {
   @IsOptional()
   landedCost?: number;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   @IsOptional()
   serialNumbers?: string[];
 
@@ -111,7 +120,7 @@ export class BatchReceiptDto {
   qcResults?: {
     templateId: string;
     data: any;
-    status: 'PASSED' | 'FAILED';
+    status: "PASSED" | "FAILED";
     notes?: string;
   };
 
@@ -132,9 +141,9 @@ export class ReceivePurchaseItemDto {
   @IsNotEmpty()
   purchaseItemId: string;
 
-  @ApiProperty({ type: [BatchReceiptDto] })
+  @ApiProperty({type: [BatchReceiptDto]})
   @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested({each: true})
   @Type(() => BatchReceiptDto)
   batches: BatchReceiptDto[];
 
@@ -150,9 +159,9 @@ export class ReceivePurchaseDto {
   @IsNotEmpty()
   locationId: string;
 
-  @ApiProperty({ type: [ReceivePurchaseItemDto] })
+  @ApiProperty({type: [ReceivePurchaseItemDto]})
   @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested({each: true})
   @Type(() => ReceivePurchaseItemDto)
   items: ReceivePurchaseItemDto[];
 

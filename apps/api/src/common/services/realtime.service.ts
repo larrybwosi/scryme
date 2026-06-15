@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { RealtimeGateway } from '../../v2/realtime/realtime.gateway';
-import { V3RealtimeGateway } from '../../v3/common/realtime/v3-realtime.gateway';
-import { RealtimeRedisService } from '../../v2/realtime/realtime-redis.service';
-import { ably, createDelta } from '@repo/shared/server';
+import {Injectable} from "@nestjs/common";
+import {RealtimeGateway} from "../../v2/realtime/realtime.gateway";
+import {V3RealtimeGateway} from "../../v3/common/realtime/v3-realtime.gateway";
+import {RealtimeRedisService} from "../../v2/realtime/realtime-redis.service";
+import {ably, createDelta} from "@repo/shared/server";
 
 @Injectable()
 export class ApiRealtimeService {
@@ -12,10 +12,15 @@ export class ApiRealtimeService {
     private readonly redis: RealtimeRedisService,
   ) {}
 
-  async publish(channel: string, event: string, data: any, options?: { delta?: boolean }) {
-    const provider = process.env.REALTIME_PROVIDER || 'ably';
+  async publish(
+    channel: string,
+    event: string,
+    data: any,
+    options?: {delta?: boolean},
+  ) {
+    const provider = process.env.REALTIME_PROVIDER || "ably";
 
-    if (provider === 'socketio') {
+    if (provider === "socketio") {
       let finalData = data;
       let finalEvent = event;
 
@@ -33,10 +38,14 @@ export class ApiRealtimeService {
       // Save history for ALL channels in Socket.io
       await this.redis.saveMessage(channel, event, data);
 
-      if (channel.startsWith('v3:') || channel.includes('order:') || channel.includes('inventory:')) {
-         this.v3Gateway.server.to(channel).emit(finalEvent, finalData);
+      if (
+        channel.startsWith("v3:") ||
+        channel.includes("order:") ||
+        channel.includes("inventory:")
+      ) {
+        this.v3Gateway.server.to(channel).emit(finalEvent, finalData);
       } else {
-         this.v2Gateway.server.to(channel).emit(finalEvent, finalData);
+        this.v2Gateway.server.to(channel).emit(finalEvent, finalData);
       }
     } else {
       // Ably

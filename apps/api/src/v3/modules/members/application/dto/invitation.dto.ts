@@ -1,10 +1,18 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MemberRole, InvitationStatus } from '@repo/db';
-import { IsEmail, IsEnum, IsOptional, IsString, IsArray, IsDateString, IsBoolean } from 'class-validator';
-import { PaginationQueryDto } from '@/v3/common/dto/pagination.dto';
+import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import {MemberRole, InvitationStatus} from "@repo/db";
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsArray,
+  IsDateString,
+  IsBoolean,
+} from "class-validator";
+import {PaginationQueryDto} from "@/v3/common/dto/pagination.dto";
 
 export class InvitationQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ enum: InvitationStatus })
+  @ApiPropertyOptional({enum: InvitationStatus})
   @IsOptional()
   @IsEnum(InvitationStatus)
   status?: InvitationStatus;
@@ -20,26 +28,26 @@ export class CreateInvitationDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ enum: MemberRole })
+  @ApiProperty({enum: MemberRole})
   @IsEnum(MemberRole)
   role: MemberRole;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   departmentIds?: string[];
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   customRoleIds?: string[];
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({type: [String]})
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsString({each: true})
   roleGroupIds?: string[];
 
   @ApiPropertyOptional()
@@ -60,10 +68,10 @@ export class InvitationResponseDto {
   @ApiProperty()
   email: string;
 
-  @ApiProperty({ enum: MemberRole })
+  @ApiProperty({enum: MemberRole})
   role: MemberRole;
 
-  @ApiProperty({ enum: InvitationStatus })
+  @ApiProperty({enum: InvitationStatus})
   status: InvitationStatus;
 
   @ApiProperty()

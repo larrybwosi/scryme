@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
 
 export class AddToCartDto {
   @ApiProperty()
@@ -7,7 +7,7 @@ export class AddToCartDto {
   @ApiPropertyOptional()
   variantId?: string;
 
-  @ApiProperty({ default: 1 })
+  @ApiProperty({default: 1})
   quantity: number;
 
   @ApiPropertyOptional()
@@ -46,7 +46,7 @@ export class CartResponseDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ type: [CartItemDto] })
+  @ApiProperty({type: [CartItemDto]})
   items: CartItemDto[];
 
   @ApiPropertyOptional()

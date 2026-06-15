@@ -1,30 +1,37 @@
-import { Controller, Get, Delete, Headers, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
-import { env } from '@repo/env';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import * as crypto from 'node:crypto';
-import { PrismaService } from '@/prisma/prisma.service';
-import { AllowPublic } from '../../common/decorators/auth.decorator';
+import {
+  Controller,
+  Get,
+  Delete,
+  Headers,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import {env} from "@repo/env";
+import {ApiTags, ApiOperation} from "@nestjs/swagger";
+import * as crypto from "node:crypto";
+import {PrismaService} from "@/prisma/prisma.service";
+import {AllowPublic} from "../../common/decorators/auth.decorator";
 
 let startTime = Date.now();
 let requestCount = 0;
 let errorCount = 0;
 let totalResponseTime = 0;
 
-@ApiTags('Health')
-@Controller('health')
+@ApiTags("Health")
+@Controller("health")
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @AllowPublic()
   @Get()
-  @ApiOperation({ summary: 'Basic health check' })
+  @ApiOperation({summary: "Basic health check"})
   async getHealth() {
     try {
       await this.prisma.client.$queryRaw`SELECT 1`;
-      return { status: 'healthy', timestamp: new Date().toISOString() };
+      return {status: "healthy", timestamp: new Date().toISOString()};
     } catch (error) {
       throw new ServiceUnavailableException({
-        status: 'unhealthy',
+        status: "unhealthy",
         timestamp: new Date().toISOString(),
         error: error.message,
       });
@@ -32,15 +39,15 @@ export class HealthController {
   }
 
   @AllowPublic()
-  @Get('ping')
-  @ApiOperation({ summary: 'Simple ping' })
+  @Get("ping")
+  @ApiOperation({summary: "Simple ping"})
   async ping() {
-    return { message: 'pong', timestamp: new Date().toISOString() };
+    return {message: "pong", timestamp: new Date().toISOString()};
   }
 
   @AllowPublic()
-  @Get('enhanced')
-  @ApiOperation({ summary: 'Comprehensive system health check' })
+  @Get("enhanced")
+  @ApiOperation({summary: "Comprehensive system health check"})
   async getEnhanced() {
     const checkStartTime = performance.now();
     requestCount++;
@@ -50,15 +57,17 @@ export class HealthController {
       const systemCheck = this.checkSystem();
 
       const checks = [dbCheck, systemCheck];
-      const overallStatus = checks.some(c => c.status === 'unhealthy')
-        ? 'unhealthy'
-        : checks.some(c => c.status === 'degraded')
-          ? 'degraded'
-          : 'healthy';
+      const overallStatus = checks.some(c => c.status === "unhealthy")
+        ? "unhealthy"
+        : checks.some(c => c.status === "degraded")
+          ? "degraded"
+          : "healthy";
 
       const uptime = Math.floor((Date.now() - startTime) / 1000);
-      const errorRate = requestCount > 0 ? (errorCount / requestCount) * 100 : 0;
-      const avgResponseTime = requestCount > 0 ? totalResponseTime / requestCount : 0;
+      const errorRate =
+        requestCount > 0 ? (errorCount / requestCount) * 100 : 0;
+      const avgResponseTime =
+        requestCount > 0 ? totalResponseTime / requestCount : 0;
 
       const responseTime = performance.now() - checkStartTime;
       totalResponseTime += responseTime;
@@ -79,7 +88,7 @@ export class HealthController {
         },
       };
 
-      if (overallStatus === 'unhealthy') {
+      if (overallStatus === "unhealthy") {
         throw new ServiceUnavailableException(health);
       }
 
@@ -88,7 +97,7 @@ export class HealthController {
       if (error instanceof ServiceUnavailableException) throw error;
       errorCount++;
       throw new ServiceUnavailableException({
-        status: 'unhealthy',
+        status: "unhealthy",
         timestamp: new Date().toISOString(),
         error: error.message,
       });
@@ -96,9 +105,9 @@ export class HealthController {
   }
 
   @AllowPublic()
-  @Delete('metrics')
-  @ApiOperation({ summary: 'Reset in-process metrics' })
-  async resetMetrics(@Headers('x-admin-secret') secret: string) {
+  @Delete("metrics")
+  @ApiOperation({summary: "Reset in-process metrics"})
+  async resetMetrics(@Headers("x-admin-secret") secret: string) {
     const internalSecret = env.INTERNAL_ADMIN_SECRET;
 
     if (!internalSecret || !secret) {
@@ -108,8 +117,11 @@ export class HealthController {
     // Use timing-safe comparison to prevent timing attacks.
     // Hashing ensures both buffers have the same length before comparison,
     // preventing leakage of the secret's length.
-    const expectedHash = crypto.createHash('sha256').update(internalSecret).digest();
-    const actualHash = crypto.createHash('sha256').update(secret).digest();
+    const expectedHash = crypto
+      .createHash("sha256")
+      .update(internalSecret)
+      .digest();
+    const actualHash = crypto.createHash("sha256").update(secret).digest();
 
     if (!crypto.timingSafeEqual(expectedHash, actualHash)) {
       throw new UnauthorizedException();
@@ -119,7 +131,7 @@ export class HealthController {
     requestCount = 0;
     errorCount = 0;
     totalResponseTime = 0;
-    return { message: 'Metrics reset' };
+    return {message: "Metrics reset"};
   }
 
   private async checkDatabase() {
@@ -128,14 +140,17 @@ export class HealthController {
       await this.prisma.client.$queryRaw`SELECT 1`;
       const responseTime = performance.now() - start;
       return {
-        status: responseTime > 1000 ? 'degraded' : 'healthy',
-        message: responseTime > 1000 ? 'Database responding slowly' : 'Database connected',
+        status: responseTime > 1000 ? "degraded" : "healthy",
+        message:
+          responseTime > 1000
+            ? "Database responding slowly"
+            : "Database connected",
         responseTime: Math.round(responseTime),
       };
     } catch (error) {
       return {
-        status: 'unhealthy',
-        message: 'Database connection failed',
+        status: "unhealthy",
+        message: "Database connection failed",
         responseTime: Math.round(performance.now() - start),
       };
     }
@@ -147,14 +162,15 @@ export class HealthController {
     const memoryTotalMB = Math.round(memoryUsage.heapTotal / 1024 / 1024);
     const memoryUsagePercent = (memoryUsedMB / memoryTotalMB) * 100;
 
-    let status = 'healthy';
-    if (memoryUsagePercent > 90) status = 'unhealthy';
-    else if (memoryUsagePercent > 75) status = 'degraded';
+    let status = "healthy";
+    if (memoryUsagePercent > 90) status = "unhealthy";
+    else if (memoryUsagePercent > 75) status = "degraded";
 
     return {
       status,
-      message: status === 'healthy' ? 'System resources normal' : 'High memory usage',
-      details: { memory: { percentage: Math.round(memoryUsagePercent) } },
+      message:
+        status === "healthy" ? "System resources normal" : "High memory usage",
+      details: {memory: {percentage: Math.round(memoryUsagePercent)}},
     };
   }
 }
