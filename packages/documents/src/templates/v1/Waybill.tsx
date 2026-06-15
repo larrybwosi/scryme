@@ -494,3 +494,7 @@ const ThermalWaybill = ({ data }: { data: WaybillData }) => {
 export const WaybillDocument = ({ data, format }: { data: WaybillData; format?: WaybillFormat }) => {
   return <Document>{format === 'THERMAL' ? <ThermalWaybill data={data} /> : <A4Waybill data={data} />}</Document>;
 };
+
+export const WaybillPDF = ({ data, format }: { data: WaybillData; format?: WaybillFormat }) => {
+  return format === 'THERMAL' ? <ThermalWaybill data={data} /> : <A4Waybill data={data} />;
+};
