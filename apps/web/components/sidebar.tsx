@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import {
   Tooltip,
   TooltipContent,
@@ -12,11 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
-  CalendarDays,
-  BedDouble,
   ShoppingCart,
   Users,
-  UserSquare2,
   MapPin,
   Megaphone,
   FileBarChart,
@@ -28,9 +26,6 @@ import {
   Boxes,
   Package,
   TrendingUp,
-  ArrowLeftRight,
-  ShieldCheck,
-  FileText,
   Zap,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
@@ -77,6 +72,7 @@ const sidebarConfig: SidebarSection[] = [
         items: [
           { title: "Product List", href: "/inventory" },
           { title: "Suppliers", href: "/inventory/supplier" },
+          { title: "Units", href: "/inventory/units" },
         ],
       },
       {
@@ -97,9 +93,7 @@ const sidebarConfig: SidebarSection[] = [
   },
   {
     title: "AUTOMATIONS",
-    items: [
-      { title: "Workflows", icon: Zap, href: "/workflows" },
-    ],
+    items: [{ title: "Workflows", icon: Zap, href: "/workflows" }],
   },
   {
     title: "ACCOUNTING",
@@ -135,6 +129,16 @@ export function Sidebar() {
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
   const pathname = usePathname();
   const router = useRouter();
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+        },
+      },
+    });
+  };
 
   const toggleSubmenu = (title: string) => {
     setOpenMenus((prev) =>
@@ -250,7 +254,9 @@ export function Sidebar() {
                     {isCollapsed ? (
                       <Tooltip>
                         <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
-                        <TooltipContent side="right">{item.title}</TooltipContent>
+                        <TooltipContent side="right">
+                          {item.title}
+                        </TooltipContent>
                       </Tooltip>
                     ) : (
                       itemContent
@@ -314,6 +320,18 @@ export function Sidebar() {
               </TooltipTrigger>
               <TooltipContent side="right">Support</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleLogout}
+                  aria-label="Sign out"
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                >
+                  <LogOut size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign out</TooltipContent>
+            </Tooltip>
           </>
         ) : (
           <>
@@ -350,7 +368,18 @@ export function Sidebar() {
           )}
         </div>
         {!isCollapsed && (
-          <LogOut size={16} className="text-gray-400 cursor-pointer" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleLogout}
+                aria-label="Sign out"
+                className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+              >
+                <LogOut size={16} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Sign out</TooltipContent>
+          </Tooltip>
         )}
       </div>
     </aside>

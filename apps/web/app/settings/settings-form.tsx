@@ -4,19 +4,15 @@ import { useState, useTransition } from "react";
 import {
   Save,
   Globe,
-  Coins,
-  Package,
+  Warehouse,
   Building2,
   Mail,
   Phone,
   MapPin,
   Loader2,
-  ChevronRight,
   AlertCircle,
   CheckCircle2,
   Info,
-  ShieldCheck,
-  Warehouse,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,13 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@repo/ui/components/ui/card";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -71,25 +60,21 @@ type SectionId = "profile" | "localization" | "inventory";
 const NAV_SECTIONS: {
   id: SectionId;
   label: string;
-  description: string;
   icon: React.ReactNode;
 }[] = [
   {
     id: "profile",
     label: "Organization Profile",
-    description: "Name, contact details, branding",
     icon: <Building2 className="w-4 h-4" />,
   },
   {
     id: "localization",
     label: "Localization",
-    description: "Currency, timezone, region",
     icon: <Globe className="w-4 h-4" />,
   },
   {
     id: "inventory",
     label: "Inventory Policies",
-    description: "Stock rules & thresholds",
     icon: <Warehouse className="w-4 h-4" />,
   },
 ];
@@ -98,7 +83,7 @@ const NAV_SECTIONS: {
 
 function FieldGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
       {children}
     </div>
   );
@@ -121,18 +106,18 @@ function Field({
 }) {
   return (
     <div className={cn("space-y-1.5", fullWidth && "md:col-span-2")}>
-      <Label className="text-sm font-medium text-zinc-700">
+      <Label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </Label>
       {children}
       {error ? (
-        <p className="text-xs text-red-500 flex items-center gap-1">
+        <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
           <AlertCircle className="w-3 h-3" />
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs text-zinc-400">{hint}</p>
+        <p className="text-xs text-zinc-400 mt-1">{hint}</p>
       ) : null}
     </div>
   );
@@ -154,8 +139,8 @@ function IconInput({
       <Input
         {...props}
         className={cn(
-          "pl-9 bg-white border-zinc-200 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-colors h-9 text-sm",
-          error && "border-red-400 focus-visible:ring-red-400",
+          "pl-9 bg-white border-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 transition-colors h-9 text-sm rounded-lg",
+          error && "border-red-400 focus-visible:ring-red-400/20",
           props.className,
         )}
       />
@@ -173,17 +158,17 @@ function SectionHeader({
   badge?: string;
 }) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="flex items-start justify-between mb-8 pb-6 border-b border-zinc-100">
       <div>
-        <h2 className="text-base font-semibold text-zinc-900 tracking-tight">
+        <h2 className="text-lg font-semibold text-zinc-900 tracking-tight">
           {title}
         </h2>
-        <p className="text-sm text-zinc-500 mt-0.5">{description}</p>
+        <p className="text-sm text-zinc-500 mt-1 max-w-xl">{description}</p>
       </div>
       {badge && (
         <Badge
           variant="secondary"
-          className="text-xs bg-zinc-100 text-zinc-600 border border-zinc-200"
+          className="text-xs bg-blue-50 text-blue-700 border border-blue-100 font-medium"
         >
           {badge}
         </Badge>
@@ -204,20 +189,20 @@ function PolicyRow({
   children: React.ReactNode;
 }) {
   const riskColors = {
-    low: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    medium: "text-amber-600 bg-amber-50 border-amber-200",
-    high: "text-red-600 bg-red-50 border-red-200",
+    low: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    medium: "text-amber-700 bg-amber-50 border-amber-200",
+    high: "text-red-700 bg-red-50 border-red-200",
   };
 
   return (
-    <div className="flex items-start justify-between gap-6 py-5">
-      <div className="flex-1 space-y-0.5">
+    <div className="flex items-start justify-between gap-8 py-5 px-5">
+      <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-zinc-900">{title}</p>
           {risk && (
             <span
               className={cn(
-                "text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded border",
+                "text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border",
                 riskColors[risk],
               )}
             >
@@ -225,7 +210,7 @@ function PolicyRow({
             </span>
           )}
         </div>
-        <p className="text-xs text-zinc-500 leading-relaxed max-w-md">
+        <p className="text-xs text-zinc-500 leading-relaxed max-w-lg">
           {description}
         </p>
       </div>
@@ -280,28 +265,90 @@ export function SettingsForm({ initialData }: { initialData: any }) {
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-0"
+      className="flex flex-col h-screen bg-zinc-50"
     >
-      {/* Profile header (logo + banner) */}
-      <OrganizationProfileHeader
-        logo={form.watch("logo")}
-        banner={form.watch("banner")}
-        onLogoChange={(url) =>
-          form.setValue("logo", url, { shouldDirty: true })
-        }
-        onBannerChange={(url) =>
-          form.setValue("banner", url, { shouldDirty: true })
-        }
-        disabled={isPending}
-      />
+      {/* ── Top header bar ── */}
+      <div className="shrink-0 bg-white border-b border-zinc-200 px-8">
+        {/* Page title row */}
+        <div className="flex items-center justify-between h-16 border-b border-zinc-100">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center">
+              <Building2 className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-900 leading-none">
+                Organization Settings
+              </h1>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Manage your workspace configuration
+              </p>
+            </div>
+          </div>
 
-      {/* ── Settings body ── */}
-      <div className="flex gap-0 min-h-[520px] mt-6 rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-        {/* Sidebar nav */}
-        <aside className="w-64 shrink-0 border-r border-zinc-100 bg-zinc-50/60 py-4 px-3 flex flex-col gap-0.5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400 px-3 mb-2">
-            Settings
-          </p>
+          {/* Save bar inline */}
+          <div className="flex items-center gap-3">
+            <span
+              className={cn(
+                "text-xs transition-all duration-200",
+                isDirty
+                  ? "text-amber-600 flex items-center gap-1.5"
+                  : "text-zinc-400 flex items-center gap-1.5",
+              )}
+            >
+              {isDirty ? (
+                <>
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Unsaved changes
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  All changes saved
+                </>
+              )}
+            </span>
+
+            {isDirty && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => form.reset()}
+                disabled={isPending}
+                className="h-8 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
+              >
+                Discard
+              </Button>
+            )}
+
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isPending || !isDirty}
+              className={cn(
+                "h-8 text-xs font-semibold gap-1.5 transition-all rounded-lg",
+                isDirty
+                  ? "bg-zinc-900 text-white hover:bg-zinc-800"
+                  : "bg-zinc-100 text-zinc-400 cursor-default",
+              )}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  Save changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Horizontal tabs */}
+        <div className="flex items-center gap-0 -mb-px">
           {NAV_SECTIONS.map((section) => {
             const isActive = activeSection === section.id;
             return (
@@ -310,100 +357,118 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 type="button"
                 onClick={() => setActiveSection(section.id)}
                 className={cn(
-                  "w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-3 group transition-all duration-150",
+                  "flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all duration-150 whitespace-nowrap",
                   isActive
-                    ? "bg-white shadow-sm border border-zinc-200 text-zinc-900"
-                    : "text-zinc-500 hover:bg-white/60 hover:text-zinc-700",
+                    ? "border-zinc-900 text-zinc-900"
+                    : "border-transparent text-zinc-400 hover:text-zinc-600 hover:border-zinc-200",
                 )}
               >
                 <span
                   className={cn(
-                    "mt-0.5 transition-colors",
-                    isActive
-                      ? "text-blue-600"
-                      : "text-zinc-400 group-hover:text-zinc-500",
+                    "transition-colors",
+                    isActive ? "text-zinc-900" : "text-zinc-400",
                   )}
                 >
                   {section.icon}
                 </span>
-                <span className="flex flex-col gap-0">
-                  <span
-                    className={cn(
-                      "text-sm font-medium leading-tight",
-                      isActive ? "text-zinc-900" : "",
-                    )}
-                  >
-                    {section.label}
-                  </span>
-                  <span className="text-[11px] text-zinc-400 leading-snug mt-0.5">
-                    {section.description}
-                  </span>
-                </span>
-                {isActive && (
-                  <ChevronRight className="w-3.5 h-3.5 ml-auto mt-0.5 text-zinc-300 shrink-0" />
-                )}
+                {section.label}
               </button>
             );
           })}
-        </aside>
+        </div>
+      </div>
 
-        {/* Content panel */}
-        <main className="flex-1 py-8 px-8 overflow-y-auto">
+      {/* ── Scrollable content ── */}
+      <div className="flex-1 overflow-y-auto">
+        <div className=" mx-auto px-8 py-10">
           {/* ── Profile section ── */}
           {activeSection === "profile" && (
-            <div>
-              <SectionHeader
-                title="Organization Profile"
-                description="Manage your organization's public identity and contact information."
-              />
-
-              <FieldGroup>
-                <Field
-                  label="Organization Name"
-                  required
-                  error={errors.name?.message}
-                  fullWidth
-                >
-                  <Input
-                    {...form.register("name")}
-                    placeholder="Acme Corporation"
-                    className="bg-white border-zinc-200 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-9 text-sm"
+            <div className="space-y-8">
+              {/* Branding block */}
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100">
+                  <h3 className="text-sm font-semibold text-zinc-900">
+                    Branding
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Logo and banner shown on public-facing documents
+                  </p>
+                </div>
+                <div className="px-6 py-5">
+                  <OrganizationProfileHeader
+                    logo={form.watch("logo")}
+                    banner={form.watch("banner")}
+                    onLogoChange={(url) =>
+                      form.setValue("logo", url, { shouldDirty: true })
+                    }
+                    onBannerChange={(url) =>
+                      form.setValue("banner", url, { shouldDirty: true })
+                    }
+                    disabled={isPending}
                   />
-                </Field>
+                </div>
+              </div>
 
-                <Field label="Public Email" error={errors.email?.message}>
-                  <IconInput
-                    icon={<Mail className="w-4 h-4" />}
-                    {...form.register("email")}
-                    type="email"
-                    placeholder="contact@acme.com"
-                    error={!!errors.email}
-                  />
-                </Field>
+              {/* Contact details block */}
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100">
+                  <h3 className="text-sm font-semibold text-zinc-900">
+                    Identity &amp; Contact
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Displayed on invoices, receipts, and customer communications
+                  </p>
+                </div>
+                <div className="px-6 py-6">
+                  <FieldGroup>
+                    <Field
+                      label="Organization Name"
+                      required
+                      error={errors.name?.message}
+                      fullWidth
+                    >
+                      <Input
+                        {...form.register("name")}
+                        placeholder="Acme Corporation"
+                        className="bg-white border-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 h-9 text-sm rounded-lg"
+                      />
+                    </Field>
 
-                <Field label="Phone Number" error={errors.phone?.message}>
-                  <IconInput
-                    icon={<Phone className="w-4 h-4" />}
-                    {...form.register("phone")}
-                    type="tel"
-                    placeholder="+1 (555) 000-0000"
-                  />
-                </Field>
+                    <Field label="Public Email" error={errors.email?.message}>
+                      <IconInput
+                        icon={<Mail className="w-4 h-4" />}
+                        {...form.register("email")}
+                        type="email"
+                        placeholder="contact@acme.com"
+                        error={!!errors.email}
+                      />
+                    </Field>
 
-                <Field
-                  label="Address"
-                  error={errors.address?.message}
-                  fullWidth
-                >
-                  <IconInput
-                    icon={<MapPin className="w-4 h-4" />}
-                    {...form.register("address")}
-                    placeholder="123 Business Way, Suite 100"
-                  />
-                </Field>
-              </FieldGroup>
+                    <Field label="Phone Number" error={errors.phone?.message}>
+                      <IconInput
+                        icon={<Phone className="w-4 h-4" />}
+                        {...form.register("phone")}
+                        type="tel"
+                        placeholder="+1 (555) 000-0000"
+                      />
+                    </Field>
 
-              <div className="mt-8 p-4 rounded-lg bg-blue-50 border border-blue-100 flex gap-3">
+                    <Field
+                      label="Address"
+                      error={errors.address?.message}
+                      fullWidth
+                    >
+                      <IconInput
+                        icon={<MapPin className="w-4 h-4" />}
+                        {...form.register("address")}
+                        placeholder="123 Business Way, Suite 100"
+                      />
+                    </Field>
+                  </FieldGroup>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
                 <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                 <p className="text-xs text-blue-700 leading-relaxed">
                   Contact details appear on customer-facing documents such as
@@ -416,90 +481,103 @@ export function SettingsForm({ initialData }: { initialData: any }) {
 
           {/* ── Localization section ── */}
           {activeSection === "localization" && (
-            <div>
-              <SectionHeader
-                title="Localization"
-                description="Configure regional defaults for currency, time, and location across your organization."
-              />
+            <div className="space-y-8">
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100">
+                  <h3 className="text-sm font-semibold text-zinc-900">
+                    Regional Defaults
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Applied to all financial transactions, timestamps, and
+                    addresses across your organization
+                  </p>
+                </div>
+                <div className="px-6 py-6">
+                  <FieldGroup>
+                    <Field
+                      label="Default Currency"
+                      required
+                      hint="Applied to all financial transactions and reports."
+                      error={errors.defaultCurrency?.message}
+                    >
+                      <Select
+                        onValueChange={(val) =>
+                          form.setValue("defaultCurrency", val, {
+                            shouldDirty: true,
+                          })
+                        }
+                        value={form.watch("defaultCurrency")}
+                      >
+                        <SelectTrigger className="h-9 text-sm border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg">
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USD">USD — US Dollar</SelectItem>
+                          <SelectItem value="KES">
+                            KES — Kenyan Shilling
+                          </SelectItem>
+                          <SelectItem value="EUR">EUR — Euro</SelectItem>
+                          <SelectItem value="GBP">
+                            GBP — British Pound
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
 
-              <FieldGroup>
-                <Field
-                  label="Default Currency"
-                  required
-                  hint="Applied to all financial transactions and reports."
-                  error={errors.defaultCurrency?.message}
-                >
-                  <Select
-                    onValueChange={(val) =>
-                      form.setValue("defaultCurrency", val, {
-                        shouldDirty: true,
-                      })
-                    }
-                    value={form.watch("defaultCurrency")}
-                  >
-                    <SelectTrigger className="h-9 text-sm border-zinc-200 bg-white focus:ring-blue-500">
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD — US Dollar</SelectItem>
-                      <SelectItem value="KES">KES — Kenyan Shilling</SelectItem>
-                      <SelectItem value="EUR">EUR — Euro</SelectItem>
-                      <SelectItem value="GBP">GBP — British Pound</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
+                    <Field
+                      label="Default Country"
+                      required
+                      hint="Used as the fallback region for addresses and compliance."
+                      error={errors.country?.message}
+                    >
+                      <Input
+                        {...form.register("country")}
+                        placeholder="Kenya"
+                        className="h-9 text-sm border-zinc-200 bg-white focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 rounded-lg"
+                      />
+                    </Field>
 
-                <Field
-                  label="Default Country"
-                  required
-                  hint="Used as the fallback region for addresses and compliance."
-                  error={errors.country?.message}
-                >
-                  <Input
-                    {...form.register("country")}
-                    placeholder="Kenya"
-                    className="h-9 text-sm border-zinc-200 bg-white focus-visible:ring-blue-500 focus-visible:border-blue-500"
-                  />
-                </Field>
+                    <Field
+                      label="Timezone"
+                      required
+                      hint="Timestamps and scheduled jobs run on this timezone."
+                      error={errors.defaultTimezone?.message}
+                      fullWidth
+                    >
+                      <Select
+                        onValueChange={(val) =>
+                          form.setValue("defaultTimezone", val, {
+                            shouldDirty: true,
+                          })
+                        }
+                        value={form.watch("defaultTimezone")}
+                      >
+                        <SelectTrigger className="h-9 text-sm border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg">
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UTC">
+                            UTC — Universal Time
+                          </SelectItem>
+                          <SelectItem value="Africa/Nairobi">
+                            Africa/Nairobi — EAT (UTC+3)
+                          </SelectItem>
+                          <SelectItem value="Europe/London">
+                            Europe/London — GMT/BST
+                          </SelectItem>
+                          <SelectItem value="America/New_York">
+                            America/New_York — EST/EDT
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </FieldGroup>
+                </div>
+              </div>
 
-                <Field
-                  label="Timezone"
-                  required
-                  hint="Timestamps and scheduled jobs run on this timezone."
-                  error={errors.defaultTimezone?.message}
-                  fullWidth
-                >
-                  <Select
-                    onValueChange={(val) =>
-                      form.setValue("defaultTimezone", val, {
-                        shouldDirty: true,
-                      })
-                    }
-                    value={form.watch("defaultTimezone")}
-                  >
-                    <SelectTrigger className="h-9 text-sm border-zinc-200 bg-white focus:ring-blue-500">
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="UTC">UTC — Universal Time</SelectItem>
-                      <SelectItem value="Africa/Nairobi">
-                        Africa/Nairobi — EAT (UTC+3)
-                      </SelectItem>
-                      <SelectItem value="Europe/London">
-                        Europe/London — GMT/BST
-                      </SelectItem>
-                      <SelectItem value="America/New_York">
-                        America/New_York — EST/EDT
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </FieldGroup>
-
-              <Separator className="my-8" />
-
-              <div className="rounded-lg border border-zinc-200 overflow-hidden">
-                <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-100">
+              {/* Active config preview */}
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50/60">
                   <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
                     Active Configuration
                   </p>
@@ -512,10 +590,12 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   ].map(({ key, value }) => (
                     <div
                       key={key}
-                      className="flex items-center justify-between px-4 py-2.5"
+                      className="flex items-center justify-between px-6 py-3"
                     >
-                      <span className="text-xs text-zinc-500">{key}</span>
-                      <span className="text-xs font-mono font-medium text-zinc-800 bg-zinc-100 px-2 py-0.5 rounded">
+                      <span className="text-xs text-zinc-500 font-medium">
+                        {key}
+                      </span>
+                      <span className="text-xs font-mono font-semibold text-zinc-800 bg-zinc-100 px-2.5 py-1 rounded-md">
                         {value || "—"}
                       </span>
                     </div>
@@ -527,50 +607,62 @@ export function SettingsForm({ initialData }: { initialData: any }) {
 
           {/* ── Inventory section ── */}
           {activeSection === "inventory" && (
-            <div>
-              <SectionHeader
-                title="Inventory Policies"
-                description="Define global rules that govern how stock is tracked and enforced across all locations."
-                badge="Global"
-              />
+            <div className="space-y-8">
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-900">
+                      Stock Control Policies
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Global rules governing how inventory is tracked and
+                      enforced across all locations
+                    </p>
+                  </div>
+                  <Badge className="text-xs bg-blue-50 text-blue-700 border border-blue-100 font-medium">
+                    Global
+                  </Badge>
+                </div>
 
-              <div className="rounded-xl border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
-                {/* Negative stock policy */}
-                <PolicyRow
-                  title="Allow Negative Stock"
-                  description="When enabled, sales can proceed even when recorded inventory reaches zero or below. Use with caution — this can mask shrinkage or data integrity issues."
-                  risk={form.watch("negativeStock") ? "high" : "low"}
-                >
-                  <Switch
-                    checked={form.watch("negativeStock")}
-                    onCheckedChange={(val) =>
-                      form.setValue("negativeStock", val, { shouldDirty: true })
-                    }
-                    className="data-[state=checked]:bg-blue-600"
-                  />
-                </PolicyRow>
+                <div className="divide-y divide-zinc-100">
+                  {/* Negative stock */}
+                  <PolicyRow
+                    title="Allow Negative Stock"
+                    description="When enabled, sales can proceed even when recorded inventory reaches zero or below. Use with caution — this can mask shrinkage or data integrity issues."
+                    risk={form.watch("negativeStock") ? "high" : "low"}
+                  >
+                    <Switch
+                      checked={form.watch("negativeStock")}
+                      onCheckedChange={(val) =>
+                        form.setValue("negativeStock", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  </PolicyRow>
 
-                {/* Low stock threshold */}
-                <div className="py-5 px-0">
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="flex-1 space-y-0.5">
+                  {/* Low stock threshold */}
+                  <div className="flex items-start justify-between gap-8 py-5 px-5">
+                    <div className="flex-1 space-y-1">
                       <p className="text-sm font-medium text-zinc-900">
                         Low Stock Threshold
                       </p>
-                      <p className="text-xs text-zinc-500 leading-relaxed max-w-md">
+                      <p className="text-xs text-zinc-500 leading-relaxed max-w-lg">
                         Products with stock at or below this quantity are
-                        flagged as "Low Stock" across dashboards and reports.
-                        Applies globally unless overridden per location.
+                        flagged as &ldquo;Low Stock&rdquo; across dashboards and
+                        reports. Applies globally unless overridden per
+                        location.
                       </p>
                     </div>
-                    <div className="flex-shrink-0 w-28">
+                    <div className="flex-shrink-0 w-32">
                       <div className="relative">
                         <Input
                           type="number"
                           {...form.register("lowStockThreshold", {
                             valueAsNumber: true,
                           })}
-                          className="font-mono text-right pr-10 h-9 text-sm border-zinc-200 bg-white focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                          className="font-mono text-right pr-10 h-9 text-sm border-zinc-200 bg-white focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500 rounded-lg"
                           min={0}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-zinc-400 pointer-events-none">
@@ -582,8 +674,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 </div>
               </div>
 
-              {/* Contextual callout */}
-              <div className="mt-6 p-4 rounded-lg border border-amber-100 bg-amber-50 flex gap-3">
+              <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-100 bg-amber-50">
                 <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs font-semibold text-amber-800 mb-0.5">
@@ -598,73 +689,6 @@ export function SettingsForm({ initialData }: { initialData: any }) {
               </div>
             </div>
           )}
-        </main>
-      </div>
-
-      {/* ── Save bar ── */}
-      <div
-        className={cn(
-          "mt-4 flex items-center justify-between gap-4 rounded-xl px-5 py-3 border transition-all duration-200",
-          isDirty
-            ? "bg-zinc-900 border-zinc-700 shadow-lg shadow-zinc-900/10"
-            : "bg-white border-zinc-200",
-        )}
-      >
-        <p
-          className={cn(
-            "text-sm transition-colors",
-            isDirty ? "text-zinc-400" : "text-zinc-400",
-          )}
-        >
-          {isDirty ? (
-            <span className="flex items-center gap-2 text-amber-400">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Unsaved changes
-            </span>
-          ) : (
-            <span className="flex items-center gap-2 text-zinc-400">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              All changes saved
-            </span>
-          )}
-        </p>
-
-        <div className="flex items-center gap-3">
-          {isDirty && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => form.reset()}
-              disabled={isPending}
-              className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 h-8 text-sm"
-            >
-              Discard
-            </Button>
-          )}
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isPending || !isDirty}
-            className={cn(
-              "h-8 text-sm font-medium gap-2 transition-all",
-              isDirty
-                ? "bg-white text-zinc-900 hover:bg-zinc-100"
-                : "bg-zinc-100 text-zinc-400 cursor-default",
-            )}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              <>
-                <Save className="w-3.5 h-3.5" />
-                Save changes
-              </>
-            )}
-          </Button>
         </div>
       </div>
     </form>

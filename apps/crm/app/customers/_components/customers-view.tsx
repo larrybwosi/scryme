@@ -297,19 +297,19 @@ export function CustomersView() {
                       )}
                     >
                       <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
+                        <Link href={`/customers/${customer.id}`} className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {customer.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground">
+                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
                               {customer.name}
                             </div>
                             <div className="text-[11.5px] text-muted-foreground">
                               {customer.email || "No email"}
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-foreground font-medium">
                         {customer.company || "—"}

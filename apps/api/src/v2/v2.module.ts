@@ -17,6 +17,7 @@ import { OAuthModule } from "./oauth/oauth.module";
 import { PublicModule } from "./public/public.module";
 import { UnitsModule } from "./units/units.module";
 import { WorkflowsModule } from "./workflows/workflows.module";
+import { ScrymeModule } from "./scryme/scryme.module";
 
 export const V2_SUB_MODULES = [
   BakeryModule,
@@ -37,6 +38,7 @@ export const V2_SUB_MODULES = [
   PublicModule,
   UnitsModule,
   WorkflowsModule,
+  ScrymeModule,
 ];
 
 @Module({

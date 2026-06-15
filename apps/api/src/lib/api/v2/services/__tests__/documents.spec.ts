@@ -27,11 +27,11 @@ vi.mock("@react-pdf/renderer", async (importOriginal) => {
   };
 });
 
-vi.mock("@repo/documents/v2/InvoiceTemplate", () => ({
+vi.mock("@repo/documents/templates/v2/InvoiceTemplate", () => ({
   InvoiceTemplate: () => null,
 }));
 
-vi.mock("@repo/documents/v2/ReceiptTemplate", () => ({
+vi.mock("@repo/documents/templates/v2/ReceiptTemplate", () => ({
   ReceiptTemplate: () => null,
 }));
 

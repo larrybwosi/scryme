@@ -21,6 +21,7 @@
     "@repo/sdk": "workspace:*",
     "@repo/shared": "workspace:^",
     "@repo/ui": "workspace:*",
+    "@repo/windmill": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "argon2": "^0.44.0",
     "better-auth": "^1.4.19",
@@ -54,6 +55,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
+    "@types/papaparse": "^5.3.15",
     "@types/pg": "^8.20.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
@@ -63,7 +65,6 @@
     "eslint-config-next": "15.2.0",
     "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-only-warn": "1.2.1",
-    "@types/papaparse": "^5.3.15",
     "pg": "^8.21.0"
   }
 }

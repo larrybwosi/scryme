@@ -11,6 +11,7 @@ import {
 } from "../dto/invoice.dto";
 import { DocumentService } from "@/common/documents/document.service";
 import { navariService } from "@repo/suppliers/server";
+import { Mappers } from "@repo/documents/server";
 
 @Injectable()
 export class InvoiceUseCase {
@@ -252,33 +253,7 @@ export class InvoiceUseCase {
 
     if (!transaction) throw new NotFoundException("Transaction not found");
 
-    const receiptData = {
-      receiptNumber: transaction.number,
-      transactionId: transaction.id,
-      date: transaction.createdAt.toLocaleDateString(),
-      customerName: transaction.customer?.name || "Walk-in Customer",
-      customerEmail: transaction.customer?.email || undefined,
-      customerPhone: transaction.customer?.phone || undefined,
-      organizationName: transaction.organization.name,
-      organizationAddress: (transaction.organization as any).address || "",
-      paymentMethod: transaction.payments[0]?.method || "CASH",
-      items: transaction.items.map((item) => ({
-        itemName: item.productName,
-        quantity: item.quantity,
-        rate: Number(item.unitPrice),
-        amount: Number(item.lineTotal),
-      })),
-      subtotal: Number(transaction.subtotal),
-      taxTotal: Number(transaction.taxTotal),
-      discountTotal: Number(transaction.discountTotal),
-      finalTotal: Number(transaction.finalTotal),
-      amountReceived: transaction.payments[0]
-        ? Number(transaction.payments[0].amountReceived)
-        : undefined,
-      change: transaction.payments[0]
-        ? Number(transaction.payments[0].change)
-        : undefined,
-    };
+    const receiptData = Mappers.toReceiptData(transaction);
 
     return this.documentService.generateReceiptPDF(receiptData);
   }
@@ -286,23 +261,32 @@ export class InvoiceUseCase {
   private async generatePDF(invoice: any) {
     const templateData = (invoice.template?.templateData as any) || {};
     const pdfData = {
+      id: invoice.id,
+      number: invoice.id.substring(0, 8).toUpperCase(),
       invoiceNumber: invoice.id.substring(0, 8).toUpperCase(),
       status: invoice.status,
       date: invoice.postingDate.toLocaleDateString(),
       customerName: invoice.customerName || invoice.customer,
-      organizationName: invoice.organization.name,
-      organizationAddress: (invoice.organization as any).address || "",
-      logoUrl: invoice.template?.logoUrl || "",
+      customerAddress: "",
+      branding: {
+        companyName: invoice.organization.name,
+        companyAddress: (invoice.organization as any).address || "",
+        logoUrl: invoice.template?.logoUrl || "",
+      },
       items: invoice.items.map((item) => ({
+        id: item.id,
         itemCode: item.itemCode,
         itemName: item.itemName,
+        description: item.itemName,
         quantity: item.quantity,
         rate: item.rate,
         amount: item.amount,
+        unitPrice: item.rate,
+        totalPrice: item.amount,
       })),
-      netTotal: invoice.netTotal,
-      totalTaxes: invoice.totalTaxes,
-      grandTotal: invoice.grandTotal,
+      subtotal: invoice.netTotal,
+      tax: invoice.totalTaxes,
+      total: invoice.grandTotal,
       amountPaid: invoice.amountPaid,
       balanceDue: invoice.balanceDue,
       ...templateData,

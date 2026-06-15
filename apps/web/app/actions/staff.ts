@@ -19,7 +19,14 @@ export async function getStaffMembers() {
       organizationId: session.organizationId,
       deletedAt: null,
     },
-    include: {
+    // ⚡ Bolt: Use select instead of include to fetch only essential fields for the list view.
+    // This reduces database payload size and serialization overhead.
+    select: {
+      id: true,
+      role: true,
+      membershipStatus: true,
+      createdAt: true,
+      banReason: true,
       user: {
         select: {
           id: true,
@@ -28,7 +35,12 @@ export async function getStaffMembers() {
           image: true,
         },
       },
-      customRoles: true,
+      customRoles: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -166,7 +178,23 @@ export async function getStaffMemberDetail(memberId: string): Promise<{ success:
       id: memberId,
       organizationId: session.organizationId,
     },
-    include: {
+    // ⚡ Bolt: Use select instead of include to fetch only fields required for the detail view.
+    // This prunes unused scalar fields and large relations, reducing payload size.
+    select: {
+      id: true,
+      organizationId: true,
+      role: true,
+      membershipStatus: true,
+      isActive: true,
+      cardId: true,
+      createdAt: true,
+      updatedAt: true,
+      phone: true,
+      email: true,
+      address: true,
+      age: true,
+      gender: true,
+      tags: true,
       user: {
         select: {
           id: true,
@@ -176,20 +204,41 @@ export async function getStaffMemberDetail(memberId: string): Promise<{ success:
           createdAt: true,
         },
       },
-      customRoles: true,
+      customRoles: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       attendanceLogs: {
         take: 10,
         orderBy: { checkInTime: "desc" },
-        include: {
-          checkInLocation: true,
-          checkOutLocation: true,
+        select: {
+          id: true,
+          checkInTime: true,
+          checkOutTime: true,
+          durationMinutes: true,
+          checkInLocation: {
+            select: { id: true, name: true },
+          },
+          checkOutLocation: {
+            select: { id: true, name: true },
+          },
         },
       },
       transactions: {
         take: 10,
         orderBy: { createdAt: "desc" },
-        include: {
-          location: true,
+        select: {
+          id: true,
+          number: true,
+          finalTotal: true,
+          currencyCode: true,
+          status: true,
+          createdAt: true,
+          location: {
+            select: { id: true, name: true },
+          },
         },
       },
     },

@@ -20,6 +20,7 @@ import {
   LogOut,
   ChevronDown,
   Zap,
+  UserPlus,
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 
@@ -39,8 +40,9 @@ const sidebarConfig: SidebarSection[] = [
   {
     title: 'CRM',
     items: [
-      { title: 'Customers', icon: Users, href: '/customers' },
+      { title: 'Leads', icon: UserPlus, href: '/leads' },
       { title: 'Pipeline', icon: TrendingUp, href: '/pipeline' },
+      { title: 'Customers', icon: Users, href: '/customers' },
       { title: 'Contacts', icon: Contact, href: '/contacts' },
       { title: 'Companies', icon: Building2, href: '/companies' },
       {

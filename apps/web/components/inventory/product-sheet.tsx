@@ -531,7 +531,7 @@ export function ProductSheet({
                   {!productId && (
                     <FieldWrapper className="w-1/2 pr-2">
                       <FieldLabel htmlFor="initial-stock">
-                        Initial Stock
+                        Default Variant Stock
                       </FieldLabel>
                       <Input
                         id="initial-stock"
