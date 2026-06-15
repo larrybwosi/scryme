@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
 import { toast } from 'sonner';
+import { DealForm } from './deal-form';
 
 export function KanbanBoardView() {
   const { organizationId } = useOrg();
@@ -70,14 +71,14 @@ export function KanbanBoardView() {
                         New Deal
                     </Button>
                 </SheetTrigger>
-                <SheetContent>
+                <SheetContent className="sm:max-w-[440px] overflow-y-auto">
                     <SheetHeader>
                         <SheetTitle>Create New Deal</SheetTitle>
                     </SheetHeader>
-                    {/* Deal form would go here */}
-                    <div className="py-4">
-                        <p className="text-sm text-muted-foreground">Deal creation form implementation...</p>
-                    </div>
+                    <DealForm onSuccess={() => {
+                        setIsCreateOpen(false);
+                        mutate();
+                    }} />
                 </SheetContent>
              </Sheet>
           </div>

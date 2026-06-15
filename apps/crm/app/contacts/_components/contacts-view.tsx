@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Building2,
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { getCustomers, deleteCustomer } from "../../actions/customers";
 import { StatCard } from "../../../components/ui/stat-card";
@@ -229,21 +230,28 @@ export function ContactsView() {
                   paged.map((contact: any) => (
                     <tr key={contact.id} className={cn("hover:bg-muted/30 transition-colors group", deletingId === contact.id && "opacity-50 pointer-events-none")}>
                       <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
+                        <Link href={`/customers/${contact.id}`} className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {contact.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground">{contact.name}</div>
+                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">{contact.name}</div>
                             <div className="text-[11.5px] text-muted-foreground">{contact.email || "No email"}</div>
                           </div>
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2 text-[13px] text-foreground font-medium">
-                          <Building2 size={14} className="text-muted-foreground" />
-                          {contact.businessAccount?.name || "—"}
-                        </div>
+                        {contact.businessAccount ? (
+                          <Link href={`/companies/${contact.businessAccountId}`} className="flex items-center gap-2 text-[13px] text-foreground font-medium hover:text-primary transition-colors">
+                            <Building2 size={14} className="text-muted-foreground" />
+                            {contact.businessAccount.name}
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                            <Building2 size={14} />
+                            —
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
                         {contact.phone || "—"}
