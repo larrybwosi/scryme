@@ -20,9 +20,9 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { PaymentMethod } from "@repo/db/client";
-import { addPayment } from "../../app/actions/sales";
+import { addPayment, uploadFileAction } from "../../app/actions/sales";
 import { toast } from "sonner";
-import { Upload, X, FileIcon } from "lucide-react";
+import { Upload, X, FileIcon, Loader2 } from "lucide-react";
 
 interface AddPaymentModalProps {
   transaction: any;
@@ -46,24 +46,27 @@ export function AddPaymentModal({
   const [bankName, setBankName] = useState("");
   const [chequeDate, setChequeDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [attachments, setAttachments] = useState<
     { fileName: string; fileUrl: string; mimeType: string; sizeBytes: number }[]
   >([]);
 
-  // Simulate file upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // NOTE: In a real production environment, you would upload the file to a storage provider
-      // like S3, Google Cloud Storage, or Cloudinary and use the returned permanent URL.
-      // For this implementation, we are using a placeholder URL to demonstrate the data flow.
-      const newAttachment = {
-        fileName: file.name,
-        fileUrl: `https://storage.example.com/payments/${Date.now()}-${file.name}`,
-        mimeType: file.type,
-        sizeBytes: file.size,
-      };
-      setAttachments([...attachments, newAttachment]);
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await uploadFileAction(formData);
+      setAttachments([...attachments, result]);
+      toast.success("File uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload file");
+      console.error(error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -193,9 +196,14 @@ export function AddPaymentModal({
                 variant="outline"
                 type="button"
                 className="w-full border-dashed"
+                disabled={isUploading}
                 onClick={() => document.getElementById("file-upload")?.click()}>
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Proof
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                {isUploading ? "Uploading..." : "Upload Proof"}
               </Button>
               <input
                 id="file-upload"

@@ -9,6 +9,18 @@ export default async function NewOrderPage() {
 
   const customers = await db.customer.findMany({
     where: { organizationId: auth?.organizationId },
+    include: { addresses: true },
+    orderBy: { name: "asc" },
+  });
+
+  const businessAccounts = await db.businessAccount.findMany({
+    where: { organizationId: auth?.organizationId },
+    include: { addresses: true },
+    orderBy: { name: "asc" },
+  });
+
+  const deliveryPartners = await db.deliveryPartner.findMany({
+    where: { organizationId: auth?.organizationId },
     orderBy: { name: "asc" },
   });
 
@@ -62,6 +74,8 @@ export default async function NewOrderPage() {
 
       <OrderForm
         customers={customers}
+        businessAccounts={businessAccounts}
+        deliveryPartners={deliveryPartners}
         locations={locations}
         variants={formattedVariants}
         currency={organization?.settings?.defaultCurrency || "USD"}
