@@ -26,15 +26,15 @@ import { updateInvoiceConfig } from "../../actions/invoice-config";
 const formSchema = z.object({
   companyName: z.string().optional(),
   companyAddress: z.string().optional(),
-  companyEmail: z.string().email().optional().or(z.literal("")),
+  companyEmail: z.string().optional(),
   companyPhone: z.string().optional(),
-  companyWebsite: z.string().url().optional().or(z.literal("")),
+  companyWebsite: z.string().optional(),
   primaryColor: z.string().optional(),
   logoUrl: z.string().optional(),
   invoiceNumberPrefix: z.string().optional(),
   invoiceNumberSuffix: z.string().optional(),
-  invoiceNumberStart: z.coerce.number().min(1),
-  invoiceNumberPadding: z.coerce.number().min(0).max(10),
+  invoiceNumberStart: z.number().min(1),
+  invoiceNumberPadding: z.number().min(0).max(10),
   footerText: z.string().optional(),
   defaultTerms: z.string().optional(),
   defaultNotes: z.string().optional(),
@@ -51,6 +51,8 @@ const formSchema = z.object({
   })).optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 interface InvoiceConfigFormProps {
   initialConfig: any;
 }
@@ -58,7 +60,7 @@ interface InvoiceConfigFormProps {
 export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       companyName: initialConfig?.companyName || "",
@@ -70,8 +72,8 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
       logoUrl: initialConfig?.logoUrl || "",
       invoiceNumberPrefix: initialConfig?.invoiceNumberPrefix || "",
       invoiceNumberSuffix: initialConfig?.invoiceNumberSuffix || "",
-      invoiceNumberStart: initialConfig?.invoiceNumberStart || 1,
-      invoiceNumberPadding: initialConfig?.invoiceNumberPadding || 0,
+      invoiceNumberStart: Number(initialConfig?.invoiceNumberStart) || 1,
+      invoiceNumberPadding: Number(initialConfig?.invoiceNumberPadding) || 0,
       footerText: initialConfig?.footerText || "",
       defaultTerms: initialConfig?.defaultTerms || "",
       defaultNotes: initialConfig?.defaultNotes || "",
@@ -91,7 +93,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
     name: "customFields",
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     startTransition(async () => {
       try {
         await updateInvoiceConfig(values);
@@ -106,7 +108,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-10">
         {/* Branding & Identity */}
-        <Card borderType="none" className="shadow-sm border border-muted/60">
+        <Card className="shadow-sm border border-muted/60">
           <CardHeader className="bg-muted/10">
             <div className="flex items-center gap-2">
               <Palette className="w-5 h-5 text-emerald-600" />
@@ -119,7 +121,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
           <CardContent className="pt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                control={form.control}
                 name="companyName"
                 render={({ field }) => (
                   <FormItem>
@@ -132,7 +133,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
                 name="primaryColor"
                 render={({ field }) => (
                   <FormItem>
@@ -149,7 +149,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               />
             </div>
             <FormField
-              control={form.control}
               name="logoUrl"
               render={({ field }) => (
                 <FormItem>
@@ -164,7 +163,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                control={form.control}
                 name="companyEmail"
                 render={({ field }) => (
                   <FormItem>
@@ -177,7 +175,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
                 name="companyPhone"
                 render={({ field }) => (
                   <FormItem>
@@ -191,7 +188,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               />
             </div>
             <FormField
-              control={form.control}
               name="companyAddress"
               render={({ field }) => (
                 <FormItem>
@@ -207,7 +203,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
         </Card>
 
         {/* Numbering Configuration */}
-        <Card borderType="none" className="shadow-sm border border-muted/60">
+        <Card className="shadow-sm border border-muted/60">
           <CardHeader className="bg-muted/10">
             <div className="flex items-center gap-2">
               <Hash className="w-5 h-5 text-emerald-600" />
@@ -220,7 +216,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
           <CardContent className="pt-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                control={form.control}
                 name="invoiceNumberPrefix"
                 render={({ field }) => (
                   <FormItem>
@@ -233,7 +228,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
                 name="invoiceNumberSuffix"
                 render={({ field }) => (
                   <FormItem>
@@ -248,13 +242,16 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                control={form.control}
                 name="invoiceNumberStart"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Starting Number</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                      />
                     </FormControl>
                     <FormDescription>The next invoice will use this number</FormDescription>
                     <FormMessage />
@@ -262,13 +259,16 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
                 name="invoiceNumberPadding"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Number Padding</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                      />
                     </FormControl>
                     <FormDescription>e.g. 5 becomes 00005 if padding is 5</FormDescription>
                     <FormMessage />
@@ -280,7 +280,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
         </Card>
 
         {/* Content & Footer */}
-        <Card borderType="none" className="shadow-sm border border-muted/60">
+        <Card className="shadow-sm border border-muted/60">
           <CardHeader className="bg-muted/10">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-emerald-600" />
@@ -292,7 +292,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
             <FormField
-              control={form.control}
               name="footerText"
               render={({ field }) => (
                 <FormItem>
@@ -307,7 +306,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                control={form.control}
                 name="defaultNotes"
                 render={({ field }) => (
                   <FormItem>
@@ -320,7 +318,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
                 name="defaultTerms"
                 render={({ field }) => (
                   <FormItem>
@@ -337,7 +334,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
         </Card>
 
         {/* Custom Fields */}
-        <Card borderType="none" className="shadow-sm border border-muted/60">
+        <Card className="shadow-sm border border-muted/60">
           <CardHeader className="bg-muted/10">
             <div className="flex items-center gap-2">
               <Plus className="w-5 h-5 text-emerald-600" />
@@ -351,26 +348,24 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
             {fields.map((field, index) => (
               <div key={field.id} className="flex gap-4 items-end">
                 <FormField
-                  control={form.control}
                   name={`customFields.${index}.label`}
-                  render={({ field }) => (
+                  render={({ field: fieldProps }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Label</FormLabel>
                       <FormControl>
-                        <Input placeholder="VAT Number" {...field} />
+                        <Input placeholder="VAT Number" {...fieldProps} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
-                  control={form.control}
                   name={`customFields.${index}.value`}
-                  render={({ field }) => (
+                  render={({ field: fieldProps }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Value</FormLabel>
                       <FormControl>
-                        <Input placeholder="GB123456789" {...field} />
+                        <Input placeholder="GB123456789" {...fieldProps} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -400,7 +395,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
         </Card>
 
         {/* Enterprise Features */}
-        <Card borderType="none" className="shadow-sm border border-muted/60">
+        <Card className="shadow-sm border border-muted/60">
           <CardHeader className="bg-muted/10">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
@@ -412,7 +407,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
             <FormField
-              control={form.control}
               name="showPoweredBy"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
@@ -432,7 +426,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               )}
             />
             <FormField
-              control={form.control}
               name="enableAuditTrail"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
@@ -452,7 +445,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               )}
             />
             <FormField
-              control={form.control}
               name="watermarkText"
               render={({ field }) => (
                 <FormItem>
@@ -470,7 +462,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
 
             <div className="grid grid-cols-2 gap-6">
               <FormField
-                control={form.control}
                 name="showTaxBreakdown"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
@@ -482,7 +473,6 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
                 name="showLineNumbers"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
