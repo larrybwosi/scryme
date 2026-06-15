@@ -68,7 +68,7 @@ export const getAblyRealtime = (): Realtime | null => {
         authCallback: async (tokenParams, callback) => {
           try {
             const tokenRequest = await axios.post(
-              `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/ably`,
+              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/auth/ably`,
               {},
               { withCredentials: true },
             );
