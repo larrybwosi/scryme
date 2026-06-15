@@ -23,6 +23,7 @@ enum TransactionStatus {
   PROCESSING
   READY
   DISPATCHED
+  DELIVERED
   COMPLETED
   CANCELLED
   FAILED
@@ -439,6 +440,8 @@ model Fulfillment {
   deliveredAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  attachments Attachment[]
 
   @@index([transactionId])
   @@index([status])
