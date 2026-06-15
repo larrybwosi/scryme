@@ -1380,6 +1380,7 @@ export async function importProducts(
           data: {
             name: productData.name,
             sku: productData.sku,
+            slug: await generateProductSlug(productData.name + "-" + productData.sku),
             description: productData.description,
             categoryId: categoryId,
             organizationId: context.organizationId,
