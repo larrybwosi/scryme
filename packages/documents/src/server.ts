@@ -255,16 +255,35 @@ export const Mappers = {
       ? { street: transaction.organization.address }
       : (transaction.organization?.address || {});
 
+    const config = transaction.organization?.invoiceConfig || {};
+
     const branding = {
-      companyName: transaction.organization?.name,
-      companyAddress: formatAddress(transaction.organization?.address),
-      companyPhone: transaction.organization?.phone,
-      companyEmail: transaction.organization?.email,
-      logoUrl: transaction.organization?.logo,
-      companyWebsite: transaction.organization?.website || '',
+      companyName: config.companyName || transaction.organization?.name,
+      companyAddress: config.companyAddress || formatAddress(transaction.organization?.address),
+      companyPhone: config.companyPhone || transaction.organization?.phone,
+      companyEmail: config.companyEmail || transaction.organization?.email,
+      logoUrl: config.logoUrl || transaction.organization?.logo,
+      companyWebsite: config.companyWebsite || transaction.organization?.website || '',
       companyTagline: transaction.organization?.description || '',
-      primaryColor: transaction.organization?.primaryColor,
+      primaryColor: config.primaryColor || transaction.organization?.primaryColor,
+      showPoweredBy: config.showPoweredBy ?? true,
+      watermarkText: config.watermarkText,
+      customFields: config.customFields,
     };
+
+    let invoiceNumber = transaction.number;
+    if (config.invoiceNumberPrefix || config.invoiceNumberSuffix || config.invoiceNumberPadding) {
+      // If we have custom numbering config, we use the transaction's sequence number if available,
+      // or try to extract it from the number. For now, we'll assume the transaction.number is what we format
+      // if it's numeric, otherwise we just use it as is.
+      const seq = parseInt(transaction.number.replace(/\D/g, '')) || 0;
+      if (seq > 0) {
+        const prefix = config.invoiceNumberPrefix || '';
+        const suffix = config.invoiceNumberSuffix || '';
+        const padding = config.invoiceNumberPadding || 0;
+        invoiceNumber = `${prefix}${String(seq).padStart(padding, '0')}${suffix}`;
+      }
+    }
 
     const customerAddressObj = transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
 
@@ -272,8 +291,8 @@ export const Mappers = {
 
     return {
       id: transaction.id,
-      number: transaction.number,
-      invoiceNumber: transaction.number,
+      number: invoiceNumber,
+      invoiceNumber: invoiceNumber,
       date: formattedDate,
       invoiceDate: formattedDate,
       dueDate: formattedDueDate,
@@ -305,7 +324,9 @@ export const Mappers = {
         sortCode: 'N/A',
       },
 
-      notes: transaction.notes,
+      notes: transaction.notes || config.defaultNotes,
+      termsAndConditions: config.defaultTerms,
+      footerText: config.footerText,
       verificationHash,
     };
   }

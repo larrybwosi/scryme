@@ -3,6 +3,7 @@ import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
 import { TemplateSelector } from "./template-selector";
+import { InvoiceConfigForm } from "./invoice-config-form";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
   Tabs,
@@ -162,11 +163,12 @@ export default async function DocumentsSettingsPage() {
                 "default"
               }
               organization={processedOrganization}
+              invoiceConfig={invoiceConfig}
             />
           </TabsContent>
 
-          <TabsContent value="configuration" className="max-w-3xl outline-none">
-            {/*<InvoiceConfigForm initialConfig={invoiceConfig} />*/}
+          <TabsContent value="configuration" className="max-w-4xl outline-none">
+            <InvoiceConfigForm initialConfig={invoiceConfig} />
           </TabsContent>
         </Tabs>
       </div>
