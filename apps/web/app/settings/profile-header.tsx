@@ -68,9 +68,8 @@ export function OrganizationProfileHeader({
       <div
         className={cn(
           "relative h-48 w-full rounded-xl overflow-hidden border bg-zinc-100 group transition-all",
-          !banner && "border-dashed border-2"
-        )}
-      >
+          !banner && "border-dashed border-2",
+        )}>
         {banner ? (
           <Image
             src={banner}
@@ -89,8 +88,7 @@ export function OrganizationProfileHeader({
           type="button"
           disabled={disabled || isUploadingBanner}
           onClick={() => bannerInputRef.current?.click()}
-          className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-        >
+          className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
           {isUploadingBanner ? (
             <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
@@ -105,7 +103,9 @@ export function OrganizationProfileHeader({
           ref={bannerInputRef}
           className="hidden"
           accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], "banner")}
+          onChange={e =>
+            e.target.files?.[0] && handleUpload(e.target.files[0], "banner")
+          }
         />
       </div>
 
@@ -130,8 +130,7 @@ export function OrganizationProfileHeader({
               type="button"
               disabled={disabled || isUploadingLogo}
               onClick={() => logoInputRef.current?.click()}
-              className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-            >
+              className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
               {isUploadingLogo ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
@@ -144,7 +143,9 @@ export function OrganizationProfileHeader({
             ref={logoInputRef}
             className="hidden"
             accept="image/*"
-            onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0], "logo")}
+            onChange={e =>
+              e.target.files?.[0] && handleUpload(e.target.files[0], "logo")
+            }
           />
         </div>
       </div>

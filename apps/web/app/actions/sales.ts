@@ -206,7 +206,7 @@ export async function createTransaction(data: {
       paymentStatus: "UNPAID",
       notes: data.notes,
       items: {
-        create: data.items.map((item) => ({
+        create: data.items.map(item => ({
           variantId: item.variantId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -275,7 +275,12 @@ export async function addPayment(
     notes?: string;
     chequeDate?: Date;
     bankName?: string;
-    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number }[];
+    attachments?: {
+      fileName: string;
+      fileUrl: string;
+      mimeType: string;
+      sizeBytes?: number;
+    }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
@@ -298,13 +303,15 @@ export async function addPayment(
       chequeDate: data.chequeDate,
       bankName: data.bankName,
       status: "COMPLETED",
-      attachments: data.attachments ? {
-        create: data.attachments.map(att => ({
-          ...att,
-          organizationId: auth.organizationId!,
-          memberId: auth.memberId!,
-        }))
-      } : undefined,
+      attachments: data.attachments
+        ? {
+            create: data.attachments.map(att => ({
+              ...att,
+              organizationId: auth.organizationId!,
+              memberId: auth.memberId!,
+            })),
+          }
+        : undefined,
     },
   });
 
@@ -402,7 +409,7 @@ export async function addAttachmentToPayment(
     mimeType: string;
     sizeBytes?: number;
     description?: string;
-  }
+  },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
@@ -435,7 +442,7 @@ export async function createFulfillment(data: {
       pickupLocationId: data.pickupLocationId,
       status: "PENDING",
       items: {
-        create: data.items.map((item) => ({
+        create: data.items.map(item => ({
           transactionItemId: item.transactionItemId,
           quantity: item.quantity,
         })),

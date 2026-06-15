@@ -159,22 +159,19 @@ function SummaryRow({
       className={cn(
         "flex justify-between items-center",
         muted && "text-zinc-500",
-      )}
-    >
+      )}>
       <span
         className={cn(
           "text-sm",
           highlight ? "font-semibold text-zinc-900" : "",
-        )}
-      >
+        )}>
         {label}
       </span>
       <span
         className={cn(
           "text-sm tabular-nums",
           highlight ? "text-lg font-bold text-emerald-600" : "",
-        )}
-      >
+        )}>
         {value}
       </span>
     </div>
@@ -251,7 +248,11 @@ export function OrderForm({
         setShowSuccessModal(true);
         toast.success("Order created successfully");
       } else {
-        toast.error((result as any).error || (result as any).message || "Failed to create order");
+        toast.error(
+          (result as any).error ||
+            (result as any).message ||
+            "Failed to create order",
+        );
       }
     } catch (error) {
       console.error(error);
@@ -287,8 +288,7 @@ export function OrderForm({
                   className={cn(
                     "text-xs font-medium",
                     ORDER_TYPE_META[watchType]?.color,
-                  )}
-                >
+                  )}>
                   {ORDER_TYPE_META[watchType]?.label}
                 </Badge>
               )}
@@ -300,8 +300,7 @@ export function OrderForm({
                 variant="outline"
                 size="sm"
                 className="text-zinc-600"
-                onClick={() => router.back()}
-              >
+                onClick={() => router.back()}>
                 Cancel
               </Button>
               <Button
@@ -309,8 +308,7 @@ export function OrderForm({
                 type="submit"
                 size="sm"
                 className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2"
-                disabled={isSubmitting}
-              >
+                disabled={isSubmitting}>
                 <Save className="w-3.5 h-3.5" />
                 {isSubmitting ? "Creating..." : "Create Order"}
               </Button>
@@ -322,8 +320,7 @@ export function OrderForm({
         <form
           id="order-form"
           onSubmit={handleSubmit(onSubmit)}
-          className="w-full px-6 lg:px-10 py-8"
-        >
+          className="w-full px-6 lg:px-10 py-8">
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
             {/* ── LEFT COLUMN ── */}
             <div className="space-y-6">
@@ -349,13 +346,12 @@ export function OrderForm({
                         render={({ field }) => (
                           <Select
                             onValueChange={field.onChange}
-                            value={field.value}
-                          >
+                            value={field.value}>
                             <SelectTrigger className="bg-white">
                               <SelectValue placeholder="Select customer" />
                             </SelectTrigger>
                             <SelectContent>
-                              {customers.map((c) => (
+                              {customers.map(c => (
                                 <SelectItem key={c.id} value={c.id}>
                                   {c.name}
                                 </SelectItem>
@@ -380,13 +376,12 @@ export function OrderForm({
                         render={({ field }) => (
                           <Select
                             onValueChange={field.onChange}
-                            value={field.value}
-                          >
+                            value={field.value}>
                             <SelectTrigger className="bg-white">
                               <SelectValue placeholder="Select location" />
                             </SelectTrigger>
                             <SelectContent>
-                              {locations.map((l) => (
+                              {locations.map(l => (
                                 <SelectItem key={l.id} value={l.id}>
                                   {l.name}
                                 </SelectItem>
@@ -411,8 +406,7 @@ export function OrderForm({
                         render={({ field }) => (
                           <Select
                             value={field.value}
-                            onValueChange={field.onChange}
-                          >
+                            onValueChange={field.onChange}>
                             <SelectTrigger className="bg-white">
                               <SelectValue />
                             </SelectTrigger>
@@ -475,8 +469,7 @@ export function OrderForm({
                               : i === 6
                                 ? "col-span-1"
                                 : "col-span-1",
-                        )}
-                      >
+                        )}>
                         {h}
                       </div>
                     ))}
@@ -494,8 +487,7 @@ export function OrderForm({
                       return (
                         <div
                           key={field.id}
-                          className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-zinc-200 transition-colors group"
-                        >
+                          className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-zinc-200 transition-colors group">
                           {/* Product */}
                           <div className="col-span-12 sm:col-span-4">
                             <Controller
@@ -505,10 +497,10 @@ export function OrderForm({
                                 <ProductVariantSelect
                                   variants={variants}
                                   value={variantField.value}
-                                  onValueChange={(val) => {
+                                  onValueChange={val => {
                                     variantField.onChange(val);
                                     const variant = variants.find(
-                                      (v) => v.id === val,
+                                      v => v.id === val,
                                     );
                                     if (variant) {
                                       setValue(
@@ -601,8 +593,7 @@ export function OrderForm({
                                   size="icon"
                                   className="h-8 w-8 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all"
                                   onClick={() => remove(index)}
-                                  disabled={fields.length === 1}
-                                >
+                                  disabled={fields.length === 1}>
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                               </TooltipTrigger>
@@ -628,8 +619,7 @@ export function OrderForm({
                         taxAmount: 0,
                         discountAmount: 0,
                       })
-                    }
-                  >
+                    }>
                     <Plus className="w-3.5 h-3.5 mr-2" />
                     Add Line Item
                   </Button>
@@ -706,8 +696,7 @@ export function OrderForm({
                     form="order-form"
                     type="submit"
                     className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-2 gap-2 h-11"
-                    disabled={isSubmitting}
-                  >
+                    disabled={isSubmitting}>
                     <Save className="w-4 h-4" />
                     {isSubmitting ? "Creating Order…" : "Create Order"}
                   </Button>
@@ -767,15 +756,13 @@ export function OrderForm({
               onClick={() => {
                 setShowSuccessModal(false);
                 router.push("/sales/transactions");
-              }}
-            >
+              }}>
               Close
             </Button>
             <Button
               type="button"
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-              onClick={handleDownloadInvoice}
-            >
+              onClick={handleDownloadInvoice}>
               <Download className="w-4 h-4" />
               Download Invoice
             </Button>

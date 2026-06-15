@@ -134,14 +134,12 @@ export default async function DocumentsSettingsPage() {
           <TabsList className="bg-muted/40 p-1 mb-6">
             <TabsTrigger
               value="templates"
-              className="flex items-center gap-2 px-6"
-            >
+              className="flex items-center gap-2 px-6">
               <Palette className="w-4 h-4" /> Templates
             </TabsTrigger>
             <TabsTrigger
               value="configuration"
-              className="flex items-center gap-2 px-6"
-            >
+              className="flex items-center gap-2 px-6">
               <Settings2 className="w-4 h-4" /> Configuration
             </TabsTrigger>
           </TabsList>

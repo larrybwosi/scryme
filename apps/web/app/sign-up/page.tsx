@@ -54,7 +54,7 @@ function getPasswordStrength(password: string): {
   color: string;
 } {
   if (!password) return { score: 0, label: "", color: "" };
-  const passed = passwordRules.filter((r) => r.test(password)).length;
+  const passed = passwordRules.filter(r => r.test(password)).length;
   if (passed <= 1) return { score: 1, label: "Weak", color: "bg-red-500" };
   if (passed === 2) return { score: 2, label: "Fair", color: "bg-amber-400" };
   if (passed === 3) return { score: 3, label: "Good", color: "bg-blue-500" };
@@ -116,8 +116,7 @@ const FloatingTag = ({
     className={cn(
       "absolute px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-full shadow-lg hidden lg:block",
       className,
-    )}
-  >
+    )}>
     {name}
   </div>
 );
@@ -138,8 +137,7 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-  >
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
     {disabled ? (
       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
     ) : (
@@ -272,8 +270,7 @@ export const SignupPage = (props: {
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}
-                className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
-              >
+                className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">
                 Log in
               </button>
             </p>
@@ -323,14 +320,12 @@ export const SignupPage = (props: {
           {/* Form */}
           <form
             onSubmit={handleSubmit(handleEmailSignup)}
-            className="space-y-4"
-          >
+            className="space-y-4">
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
               <FieldWrapper
                 label="First name"
-                error={errors.firstName?.message}
-              >
+                error={errors.firstName?.message}>
                 <Input
                   {...register("firstName")}
                   placeholder="Adam"
@@ -386,11 +381,10 @@ export const SignupPage = (props: {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((v) => !v)}
+                  onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   tabIndex={-1}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
+                  aria-label={showPassword ? "Hide password" : "Show password"}>
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
                   ) : (
@@ -403,7 +397,7 @@ export const SignupPage = (props: {
               {watchedPassword?.length > 0 && (
                 <div className="space-y-2 pt-1">
                   <div className="flex gap-1 items-center">
-                    {[1, 2, 3, 4].map((i) => (
+                    {[1, 2, 3, 4].map(i => (
                       <div
                         key={i}
                         className={cn(
@@ -419,20 +413,18 @@ export const SignupPage = (props: {
                           "text-amber-500": strength.score === 2,
                           "text-blue-500": strength.score === 3,
                           "text-emerald-600": strength.score === 4,
-                        })}
-                      >
+                        })}>
                         {strength.label}
                       </span>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                    {passwordRules.map((rule) => {
+                    {passwordRules.map(rule => {
                       const ok = rule.test(watchedPassword ?? "");
                       return (
                         <div
                           key={rule.label}
-                          className="flex items-center gap-1.5"
-                        >
+                          className="flex items-center gap-1.5">
                           {ok ? (
                             <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />
                           ) : (
@@ -442,8 +434,7 @@ export const SignupPage = (props: {
                             className={cn(
                               "text-xs",
                               ok ? "text-emerald-700" : "text-gray-400",
-                            )}
-                          >
+                            )}>
                             {rule.label}
                           </span>
                         </div>
@@ -466,15 +457,13 @@ export const SignupPage = (props: {
               By signing up you agree to Dealio.ai&#39;s{" "}
               <button
                 type="button"
-                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors"
-              >
+                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
                 Terms of Service
               </button>{" "}
               and{" "}
               <button
                 type="button"
-                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors"
-              >
+                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
                 Privacy Policy
               </button>
               .
@@ -484,8 +473,7 @@ export const SignupPage = (props: {
             <Button
               type="submit"
               className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
-              disabled={isLoading}
-            >
+              disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

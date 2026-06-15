@@ -79,8 +79,7 @@ const ForbiddenPage = () => {
           {/* Technical Support Alert */}
           <Alert
             variant="default"
-            className="bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900"
-          >
+            className="bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
             <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <AlertTitle className="text-blue-800 dark:text-blue-300">
               Need access?
@@ -101,8 +100,7 @@ const ForbiddenPage = () => {
               size="icon"
               className="h-8 w-8 shrink-0"
               onClick={handleCopyTrace}
-              title="Copy Trace ID"
-            >
+              title="Copy Trace ID">
               {copied ? (
                 <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
               ) : (
@@ -119,16 +117,14 @@ const ForbiddenPage = () => {
           <Button
             className="w-full gap-2"
             size="default"
-            onClick={() => window.history.back()}
-          >
+            onClick={() => window.history.back()}>
             <ArrowLeft className="w-4 h-4" />
             Return to Previous Page
           </Button>
 
           <Button
             variant="ghost"
-            className="w-full gap-2 text-muted-foreground hover:text-foreground"
-          >
+            className="w-full gap-2 text-muted-foreground hover:text-foreground">
             <LogOut className="w-4 h-4" />
             Switch Account
           </Button>

@@ -1,14 +1,19 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import {
   TrendingUp,
   ShoppingBag,
   Clock,
   CreditCard,
   DollarSign,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
 
 export function StaffOverview({ stats }: { stats: any }) {

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,11 +18,16 @@ import {
   Package,
   CheckCircle2,
   Clock,
-  ClipboardCheck
-} from 'lucide-react';
-import { getTransactionById, createFulfillment, updateFulfillmentStatus, reconcileFulfillment } from '../../app/actions/sales';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
+  ClipboardCheck,
+} from "lucide-react";
+import {
+  getTransactionById,
+  createFulfillment,
+  updateFulfillmentStatus,
+  reconcileFulfillment,
+} from "../../app/actions/sales";
+import { toast } from "sonner";
+import { format } from "date-fns";
 import { cn } from "@repo/ui/lib/utils";
 
 interface ManageDeliveryModalProps {
@@ -31,7 +36,11 @@ interface ManageDeliveryModalProps {
   onClose: () => void;
 }
 
-export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, onClose }: ManageDeliveryModalProps) {
+export function ManageDeliveryModal({
+  transaction: initialTransaction,
+  isOpen,
+  onClose,
+}: ManageDeliveryModalProps) {
   const [transaction, setTransaction] = useState<any>(initialTransaction);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -67,7 +76,7 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
 
       await createFulfillment({
         transactionId: transaction.id,
-        type: 'DELIVERY' as any,
+        type: "DELIVERY" as any,
         items,
         pickupLocationId: transaction.locationId,
       });
@@ -92,7 +101,9 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
 
   const handleReconcile = async (id: string) => {
     try {
-      await reconcileFulfillment(id, { notes: 'Reconciled from management modal' });
+      await reconcileFulfillment(id, {
+        notes: "Reconciled from management modal",
+      });
       toast.success("Delivery reconciled");
       fetchTransaction();
     } catch (error) {
@@ -110,7 +121,9 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
             </div>
             <div>
               <DialogTitle className="text-lg">Manage Deliveries</DialogTitle>
-              <p className="text-xs text-zinc-500 font-mono">{transaction?.number}</p>
+              <p className="text-xs text-zinc-500 font-mono">
+                {transaction?.number}
+              </p>
             </div>
           </div>
         </DialogHeader>
@@ -132,25 +145,39 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
 
                   {transaction?.fulfillments?.length > 0 ? (
                     transaction.fulfillments.map((f: any) => (
-                      <div key={f.id} className="bg-white border border-zinc-200 rounded-xl p-4 space-y-4 shadow-sm">
+                      <div
+                        key={f.id}
+                        className="bg-white border border-zinc-200 rounded-xl p-4 space-y-4 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "p-2 rounded-lg",
-                              f.status === 'DELIVERED' ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
-                            )}>
+                            <div
+                              className={cn(
+                                "p-2 rounded-lg",
+                                f.status === "DELIVERED"
+                                  ? "bg-emerald-50 text-emerald-600"
+                                  : "bg-blue-50 text-blue-600",
+                              )}>
                               <Truck className="w-4 h-4" />
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-zinc-900">{f.type}</p>
-                              <p className="text-[10px] text-zinc-400 font-mono">{f.id.slice(-8).toUpperCase()}</p>
+                              <p className="text-sm font-semibold text-zinc-900">
+                                {f.type}
+                              </p>
+                              <p className="text-[10px] text-zinc-400 font-mono">
+                                {f.id.slice(-8).toUpperCase()}
+                              </p>
                             </div>
                           </div>
-                          <Badge variant="outline" className={cn(
-                            "text-[10px] uppercase",
-                            f.status === 'DELIVERED' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                            f.status === 'SHIPPED' ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-zinc-50"
-                          )}>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] uppercase",
+                              f.status === "DELIVERED"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : f.status === "SHIPPED"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : "bg-zinc-50",
+                            )}>
                             {f.status}
                           </Badge>
                         </div>
@@ -158,7 +185,10 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
                         <div className="grid grid-cols-2 gap-4 text-[11px]">
                           <div className="flex items-center gap-2 text-zinc-500">
                             <Clock className="w-3.5 h-3.5" />
-                            <span>Created {format(new Date(f.createdAt), 'MMM d, HH:mm')}</span>
+                            <span>
+                              Created{" "}
+                              {format(new Date(f.createdAt), "MMM d, HH:mm")}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-zinc-500">
                             <MapPin className="w-3.5 h-3.5" />
@@ -167,24 +197,46 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
                         </div>
 
                         <div className="flex gap-2 pt-2 border-t border-zinc-50">
-                          {f.status === 'PENDING' && (
-                            <Button size="sm" variant="outline" className="h-8 text-[11px] flex-1" onClick={() => handleStatusUpdate(f.id, 'SHIPPED')}>
+                          {f.status === "PENDING" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-[11px] flex-1"
+                              onClick={() =>
+                                handleStatusUpdate(f.id, "SHIPPED")
+                              }>
                               Mark as Shipped
                             </Button>
                           )}
-                          {f.status === 'SHIPPED' && (
-                            <Button size="sm" variant="outline" className="h-8 text-[11px] flex-1" onClick={() => handleStatusUpdate(f.id, 'DELIVERED')}>
+                          {f.status === "SHIPPED" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-[11px] flex-1"
+                              onClick={() =>
+                                handleStatusUpdate(f.id, "DELIVERED")
+                              }>
                               Mark as Delivered
                             </Button>
                           )}
-                          {!f.isReconciled && (f.status === 'DELIVERED' || f.status === 'COMPLETED') && (
-                            <Button size="sm" variant="outline" className="h-8 text-[11px] flex-1 gap-1.5" onClick={() => handleReconcile(f.id)}>
-                              <ClipboardCheck className="w-3.5 h-3.5" /> Reconcile
-                            </Button>
-                          )}
+                          {!f.isReconciled &&
+                            (f.status === "DELIVERED" ||
+                              f.status === "COMPLETED") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-[11px] flex-1 gap-1.5"
+                                onClick={() => handleReconcile(f.id)}>
+                                <ClipboardCheck className="w-3.5 h-3.5" />{" "}
+                                Reconcile
+                              </Button>
+                            )}
                           {f.isReconciled && (
-                            <Badge variant="outline" className="h-8 flex-1 justify-center bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Reconciled
+                            <Badge
+                              variant="outline"
+                              className="h-8 flex-1 justify-center bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5" />{" "}
+                              Reconciled
                             </Badge>
                           )}
                         </div>
@@ -192,20 +244,22 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
                     ))
                   ) : (
                     <div className="bg-white border border-dashed border-zinc-200 rounded-xl p-8 text-center">
-                      <p className="text-zinc-400 text-xs font-medium">No delivery records found for this transaction.</p>
+                      <p className="text-zinc-400 text-xs font-medium">
+                        No delivery records found for this transaction.
+                      </p>
                     </div>
                   )}
                 </div>
 
-                {(!transaction?.fulfillments || transaction.fulfillments.length === 0) && (
-                   <Button
+                {(!transaction?.fulfillments ||
+                  transaction.fulfillments.length === 0) && (
+                  <Button
                     className="w-full gap-2 bg-zinc-900 text-white hover:bg-zinc-800"
                     onClick={handleCreateFulfillment}
-                    disabled={isCreating}
-                   >
+                    disabled={isCreating}>
                     <Plus className="w-4 h-4" />
-                    {isCreating ? 'Creating...' : 'Initialize New Delivery'}
-                   </Button>
+                    {isCreating ? "Creating..." : "Initialize New Delivery"}
+                  </Button>
                 )}
               </>
             )}
@@ -213,7 +267,9 @@ export function ManageDeliveryModal({ transaction: initialTransaction, isOpen, o
         </ScrollArea>
 
         <DialogFooter className="p-6 bg-white border-t border-zinc-200">
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

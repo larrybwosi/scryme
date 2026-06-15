@@ -3,7 +3,14 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
-import { Purchase, Supplier, MemberRole, PurchaseStatus, PaymentStatus, ThreeWayMatchStatus } from "@repo/db/client";
+import {
+  Purchase,
+  Supplier,
+  MemberRole,
+  PurchaseStatus,
+  PaymentStatus,
+  ThreeWayMatchStatus,
+} from "@repo/db/client";
 import { submitForApproval } from "./approvals";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
@@ -13,7 +20,7 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   }
 
   const member = await db.member.findUnique({
-    where: { id: auth.memberId }
+    where: { id: auth.memberId },
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
@@ -27,7 +34,12 @@ export async function getPurchases(params: {
   search?: string;
   status?: string;
 }): Promise<any[]> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   const where: any = {
     organizationId: auth.organizationId,
@@ -63,7 +75,7 @@ export async function getPurchases(params: {
     },
   });
 
-  return purchases.map((p) => ({
+  return purchases.map(p => ({
     id: p.id,
     purchaseNumber: p.purchaseNumber,
     supplierName: p.supplier.name,
@@ -86,18 +98,21 @@ export async function createPurchase(data: {
 }): Promise<any> {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  const totalAmount = data.items.reduce((acc, item) => acc + item.quantity * item.unitCost, 0);
+  const totalAmount = data.items.reduce(
+    (acc, item) => acc + item.quantity * item.unitCost,
+    0,
+  );
 
   // Generate purchase number if not provided
   let purchaseNumber = data.purchaseNumber;
   if (!purchaseNumber) {
     const count = await db.purchase.count({
-      where: { organizationId: auth.organizationId }
+      where: { organizationId: auth.organizationId },
     });
-    purchaseNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+    purchaseNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
   }
 
-  return await db.$transaction(async (tx) => {
+  return await db.$transaction(async tx => {
     const purchase = await tx.purchase.create({
       data: {
         organizationId: auth.organizationId,
@@ -107,7 +122,7 @@ export async function createPurchase(data: {
         totalAmount: totalAmount,
         status: "DRAFT",
         items: {
-          create: data.items.map((item) => ({
+          create: data.items.map(item => ({
             variantId: item.variantId,
             orderedQuantity: item.quantity,
             unitCost: item.unitCost,
@@ -149,34 +164,43 @@ export async function createPurchase(data: {
   });
 }
 
-export async function receivePurchaseItems(purchaseId: string, items: { itemId: string; quantity: number }[]) {
+export async function receivePurchaseItems(
+  purchaseId: string,
+  items: { itemId: string; quantity: number }[],
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  await db.$transaction(async (tx) => {
+  await db.$transaction(async tx => {
     for (const item of items) {
       await tx.purchaseItem.update({
         where: { id: item.itemId },
         data: {
-          receivedQuantity: { increment: item.quantity }
-        }
+          receivedQuantity: { increment: item.quantity },
+        },
       });
     }
 
     // Check if all items received
     const purchase = await tx.purchase.findUnique({
       where: { id: purchaseId },
-      include: { items: true }
+      include: { items: true },
     });
 
     if (purchase) {
-      const allReceived = purchase.items.every(i => i.receivedQuantity >= i.orderedQuantity);
+      const allReceived = purchase.items.every(
+        i => i.receivedQuantity >= i.orderedQuantity,
+      );
       const anyReceived = purchase.items.some(i => i.receivedQuantity > 0);
 
       await tx.purchase.update({
         where: { id: purchaseId },
         data: {
-          status: allReceived ? "RECEIVED" : (anyReceived ? "PARTIALLY_RECEIVED" : "ORDERED")
-        }
+          status: allReceived
+            ? "RECEIVED"
+            : anyReceived
+              ? "PARTIALLY_RECEIVED"
+              : "ORDERED",
+        },
       });
     }
   });
@@ -194,7 +218,7 @@ export async function recordSupplierInvoice(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const purchase = await db.purchase.findUnique({
-    where: { id: data.purchaseId }
+    where: { id: data.purchaseId },
   });
 
   if (!purchase) throw new Error("Purchase order not found");
@@ -211,19 +235,22 @@ export async function recordSupplierInvoice(data: {
       issueDate: data.issueDate,
       dueDate: data.dueDate,
       status: "UNPAID",
-    }
+    },
   });
 
   await db.purchase.update({
     where: { id: data.purchaseId },
-    data: { status: "BILLED" }
+    data: { status: "BILLED" },
   });
 
   revalidatePath("/finance/purchases");
   return invoice;
 }
 
-export async function updatePurchaseStatus(id: string, status: any): Promise<any> {
+export async function updatePurchaseStatus(
+  id: string,
+  status: any,
+): Promise<any> {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const purchase = await db.purchase.update({
@@ -255,7 +282,7 @@ export async function createPurchasePayment(data: {
 
   const purchase = await db.purchase.findUnique({
     where: { id: data.purchaseId },
-    include: { payments: true }
+    include: { payments: true },
   });
 
   if (purchase) {

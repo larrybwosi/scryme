@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -25,7 +25,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { AuditStockModal } from "../../inventory/audit-stock-modal";
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface StockLevel {
   productId: string;
@@ -58,23 +58,30 @@ export function StockingListTable({ data }: StockingListTableProps) {
 
   const handleSort = (column: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    const currentSort = params.get('sortBy');
-    const currentOrder = params.get('sortOrder');
+    const currentSort = params.get("sortBy");
+    const currentOrder = params.get("sortOrder");
 
     if (currentSort === column) {
-      params.set('sortOrder', currentOrder === 'asc' ? 'desc' : 'asc');
+      params.set("sortOrder", currentOrder === "asc" ? "desc" : "asc");
     } else {
-      params.set('sortBy', column);
-      params.set('sortOrder', 'asc');
+      params.set("sortBy", column);
+      params.set("sortOrder", "asc");
     }
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const SortableHeader = ({ title, column, className }: { title: string, column: string, className?: string }) => (
+  const SortableHeader = ({
+    title,
+    column,
+    className,
+  }: {
+    title: string;
+    column: string;
+    className?: string;
+  }) => (
     <TableHead
       className={`cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
-      onClick={() => handleSort(column)}
-    >
+      onClick={() => handleSort(column)}>
       <div className="flex items-center gap-2">
         {title}
         <ArrowUpDown size={12} className="text-gray-400" />
@@ -96,13 +103,16 @@ export function StockingListTable({ data }: StockingListTableProps) {
     });
   }
 
-  const renderRows = (items: StockLevel[]) => (
+  const renderRows = (items: StockLevel[]) =>
     items.map((item, index) => (
-      <TableRow key={`${item.variantId}-${item.locationId || index}`} className="hover:bg-gray-50/50">
+      <TableRow
+        key={`${item.variantId}-${item.locationId || index}`}
+        className="hover:bg-gray-50/50">
         <TableCell>
           <div className="flex flex-col">
             <span className="font-medium text-sm text-[#1D1D1F]">
-              {item.name} {item.variantName !== "Default" && ` - ${item.variantName}`}
+              {item.name}{" "}
+              {item.variantName !== "Default" && ` - ${item.variantName}`}
             </span>
           </div>
         </TableCell>
@@ -115,9 +125,11 @@ export function StockingListTable({ data }: StockingListTableProps) {
           <span className="font-semibold text-sm">{item.currentStock}</span>
         </TableCell>
         <TableCell className="text-center">
-           <Badge variant={item.availableStock > 0 ? "secondary" : "destructive"} className="px-2 py-0 h-5 text-[10px]">
+          <Badge
+            variant={item.availableStock > 0 ? "secondary" : "destructive"}
+            className="px-2 py-0 h-5 text-[10px]">
             {item.availableStock}
-           </Badge>
+          </Badge>
         </TableCell>
         <TableCell className="text-center text-gray-500 text-sm">
           {item.reservedStock}
@@ -140,19 +152,21 @@ export function StockingListTable({ data }: StockingListTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => {
-                setSelectedItem({
-                  ...item,
-                  unitPrice: 0,
-                });
-                setIsAuditModalOpen(true);
-              }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedItem({
+                    ...item,
+                    unitPrice: 0,
+                  });
+                  setIsAuditModalOpen(true);
+                }}>
                 <PackageSearch className="mr-2 h-4 w-4" />
                 <span>Adjust Stock</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {
-                window.location.href = `/stocking/transfers/new?variantId=${item.variantId}`;
-              }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = `/stocking/transfers/new?variantId=${item.variantId}`;
+                }}>
                 <ArrowLeftRight className="mr-2 h-4 w-4" />
                 <span>Transfer</span>
               </DropdownMenuItem>
@@ -160,8 +174,7 @@ export function StockingListTable({ data }: StockingListTableProps) {
           </DropdownMenu>
         </TableCell>
       </TableRow>
-    ))
-  );
+    ));
 
   return (
     <div className="rounded-md border bg-white overflow-hidden">
@@ -184,21 +197,21 @@ export function StockingListTable({ data }: StockingListTableProps) {
                 No stock data found.
               </TableCell>
             </TableRow>
+          ) : groupBy === "none" ? (
+            renderRows(data)
           ) : (
-            groupBy === "none" ? (
-              renderRows(data)
-            ) : (
-              Object.entries(groupedData).map(([group, items]) => (
-                <React.Fragment key={group}>
-                  <TableRow className="bg-gray-100/50">
-                    <TableCell colSpan={7} className="py-2 font-bold text-sm sticky top-0 bg-gray-100/50 z-10">
-                      {group} ({items.length})
-                    </TableCell>
-                  </TableRow>
-                  {renderRows(items)}
-                </React.Fragment>
-              ))
-            )
+            Object.entries(groupedData).map(([group, items]) => (
+              <React.Fragment key={group}>
+                <TableRow className="bg-gray-100/50">
+                  <TableCell
+                    colSpan={7}
+                    className="py-2 font-bold text-sm sticky top-0 bg-gray-100/50 z-10">
+                    {group} ({items.length})
+                  </TableCell>
+                </TableRow>
+                {renderRows(items)}
+              </React.Fragment>
+            ))
           )}
         </TableBody>
       </Table>

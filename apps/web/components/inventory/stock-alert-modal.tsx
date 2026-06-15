@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,11 @@ interface StockAlertModalProps {
   };
 }
 
-export function StockAlertModal({ isOpen, onClose, product }: StockAlertModalProps) {
+export function StockAlertModal({
+  isOpen,
+  onClose,
+  product,
+}: StockAlertModalProps) {
   const [threshold, setThreshold] = useState("5");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,16 +63,22 @@ export function StockAlertModal({ isOpen, onClose, product }: StockAlertModalPro
               <Input
                 type="number"
                 value={threshold}
-                onChange={(e) => setThreshold(e.target.value)}
+                onChange={e => setThreshold(e.target.value)}
                 className="pr-12"
               />
-              <span className="absolute right-3 top-2.5 text-xs text-gray-400">Unit</span>
+              <span className="absolute right-3 top-2.5 text-xs text-gray-400">
+                Unit
+              </span>
             </div>
-            <p className="text-[11px] text-gray-500">You will be notified when the stock level falls below this value.</p>
+            <p className="text-[11px] text-gray-500">
+              You will be notified when the stock level falls below this value.
+            </p>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save Alert"}
           </Button>

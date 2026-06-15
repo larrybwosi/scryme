@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import { Label } from "@repo/ui/components/ui/label";
 import { Input } from "@repo/ui/components/ui/input";
 import { Textarea } from "@repo/ui/components/ui/textarea";
@@ -11,7 +16,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@repo/ui/components/ui/select";
 import { Plus, Trash2, Save, ShoppingCart } from "lucide-react";
 import { ProductVariantSelect } from "@/components/product-variant-select";
@@ -32,7 +37,13 @@ interface SelectedItem {
   quantity: number;
 }
 
-export function StockRequestForm({ locations, variants }: { locations: Location[], variants: any[] }) {
+export function StockRequestForm({
+  locations,
+  variants,
+}: {
+  locations: Location[];
+  variants: any[];
+}) {
   const [toLocationId, setToLocationId] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
   const [justification, setJustification] = useState("");
@@ -55,7 +66,7 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
       variantName: variant.variantName,
       productName: variant.name,
       sku: variant.sku,
-      quantity: currentQuantity
+      quantity: currentQuantity,
     };
 
     setSelectedItems([...selectedItems, newItem]);
@@ -81,8 +92,8 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
         justification,
         items: selectedItems.map(item => ({
           variantId: item.variantId,
-          quantity: item.quantity
-        }))
+          quantity: item.quantity,
+        })),
       });
 
       toast.success("Stock request created successfully.");
@@ -99,28 +110,43 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Request Items</CardTitle>
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">
+              Request Items
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-4 items-end">
               <div className="flex-1">
-                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Search Product</Label>
+                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                  Search Product
+                </Label>
                 <ProductVariantSelect
-                   variants={variants.map(v => ({ id: v.variantId, name: v.variantName, productName: v.name, sku: v.sku }))}
-                   value={currentVariantId}
-                   onValueChange={setCurrentVariantId}
+                  variants={variants.map(v => ({
+                    id: v.variantId,
+                    name: v.variantName,
+                    productName: v.name,
+                    sku: v.sku,
+                  }))}
+                  value={currentVariantId}
+                  onValueChange={setCurrentVariantId}
                 />
               </div>
               <div className="w-24">
-                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Qty</Label>
+                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                  Qty
+                </Label>
                 <Input
                   type="number"
                   min="1"
                   value={currentQuantity}
-                  onChange={(e) => setCurrentQuantity(parseInt(e.target.value))}
+                  onChange={e => setCurrentQuantity(parseInt(e.target.value))}
                 />
               </div>
-              <Button type="button" onClick={handleAddItem} variant="outline" className="gap-2 border-dashed">
+              <Button
+                type="button"
+                onClick={handleAddItem}
+                variant="outline"
+                className="gap-2 border-dashed">
                 <Plus size={16} /> Add
               </Button>
             </div>
@@ -137,7 +163,9 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
                 <tbody>
                   {selectedItems.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-4 py-8 text-center text-gray-400">
+                      <td
+                        colSpan={3}
+                        className="px-4 py-8 text-center text-gray-400">
                         No items added yet.
                       </td>
                     </tr>
@@ -146,16 +174,19 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
                       <tr key={index} className="border-b last:border-0">
                         <td className="px-4 py-2">
                           <div className="font-medium">{item.productName}</div>
-                          <div className="text-xs text-gray-400">{item.variantName} • {item.sku}</div>
+                          <div className="text-xs text-gray-400">
+                            {item.variantName} • {item.sku}
+                          </div>
                         </td>
-                        <td className="px-4 py-2 text-center">{item.quantity}</td>
+                        <td className="px-4 py-2 text-center">
+                          {item.quantity}
+                        </td>
                         <td className="px-4 py-2 text-right">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveItem(index)}
-                            className="text-red-500 hover:text-red-600"
-                          >
+                            className="text-red-500 hover:text-red-600">
                             <Trash2 size={16} />
                           </Button>
                         </td>
@@ -170,13 +201,15 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Justification</CardTitle>
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">
+              Justification
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
               placeholder="Why is this stock needed? (e.g., Upcoming event, low inventory...)"
               value={justification}
-              onChange={(e) => setJustification(e.target.value)}
+              onChange={e => setJustification(e.target.value)}
               className="min-h-[100px]"
             />
           </CardContent>
@@ -186,25 +219,33 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Request Details</CardTitle>
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">
+              Request Details
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Target Location</Label>
+              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                Target Location
+              </Label>
               <Select value={toLocationId} onValueChange={setToLocationId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch..." />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Priority</Label>
+              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                Priority
+              </Label>
               <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority..." />
@@ -222,8 +263,7 @@ export function StockRequestForm({ locations, variants }: { locations: Location[
               <Button
                 className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
+                disabled={isSubmitting}>
                 <Save size={18} />
                 {isSubmitting ? "Submitting..." : "Submit Request"}
               </Button>

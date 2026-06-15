@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import NextImage from "next/image";
 import { format } from "date-fns";
@@ -74,7 +74,9 @@ export function PurchaseTable({ purchases }: { purchases: any[] }) {
           <tbody className="divide-y divide-border">
             {purchases.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-muted-foreground italic">
+                <td
+                  colSpan={7}
+                  className="px-6 py-10 text-center text-muted-foreground italic">
                   No purchase orders found
                 </td>
               </tr>
@@ -82,8 +84,7 @@ export function PurchaseTable({ purchases }: { purchases: any[] }) {
               purchases.map((purchase, index) => (
                 <tr
                   key={purchase.id}
-                  className="hover:bg-muted/30 transition-colors"
-                >
+                  className="hover:bg-muted/30 transition-colors">
                   <td className="px-6 py-4 text-center text-muted-foreground">
                     {index + 1}
                   </td>
@@ -97,9 +98,12 @@ export function PurchaseTable({ purchases }: { purchases: any[] }) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-foreground font-medium">{purchase.product}</span>
+                      <span className="text-foreground font-medium">
+                        {purchase.product}
+                      </span>
                       <span className="text-xs text-muted-foreground">
-                        {purchase.itemCount} items • {format(new Date(purchase.date), "MMM d, yyyy")}
+                        {purchase.itemCount} items •{" "}
+                        {format(new Date(purchase.date), "MMM d, yyyy")}
                       </span>
                     </div>
                   </td>
@@ -110,14 +114,19 @@ export function PurchaseTable({ purchases }: { purchases: any[] }) {
                     }).format(purchase.amount)}
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="outline" className={getStatusColor(purchase.status)}>
+                    <Badge
+                      variant="outline"
+                      className={getStatusColor(purchase.status)}>
                       {purchase.status.replace("_", " ")}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -127,9 +136,11 @@ export function PurchaseTable({ purchases }: { purchases: any[] }) {
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        {purchase.status === "ORDERED" || purchase.status === "PARTIALLY_RECEIVED" ? (
+                        {purchase.status === "ORDERED" ||
+                        purchase.status === "PARTIALLY_RECEIVED" ? (
                           <DropdownMenuItem>
-                            <PackageCheck className="mr-2 h-4 w-4" /> Receive Items
+                            <PackageCheck className="mr-2 h-4 w-4" /> Receive
+                            Items
                           </DropdownMenuItem>
                         ) : null}
                         {purchase.status === "RECEIVED" ? (

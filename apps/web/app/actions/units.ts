@@ -1,12 +1,6 @@
 "use server";
 
-import {
-  db,
-  Decimal,
-  UnitType,
-  IndustryCategory,
-  Prisma,
-} from "@repo/db";
+import { db, Decimal, UnitType, IndustryCategory, Prisma } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 
@@ -49,8 +43,12 @@ export async function createOrganizationUnit(data: {
     data: {
       ...data,
       organizationId: context.organizationId,
-      conversionFactor: data.conversionFactor ? new Decimal(data.conversionFactor) : null,
-      conversionOffset: data.conversionOffset ? new Decimal(data.conversionOffset) : new Decimal(0),
+      conversionFactor: data.conversionFactor
+        ? new Decimal(data.conversionFactor)
+        : null,
+      conversionOffset: data.conversionOffset
+        ? new Decimal(data.conversionOffset)
+        : new Decimal(0),
     },
   });
 
@@ -72,7 +70,7 @@ export async function updateOrganizationUnit(
     baseSystemUnitId?: string;
     conversionFactor?: number;
     conversionOffset?: number;
-  }
+  },
 ) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
@@ -81,8 +79,16 @@ export async function updateOrganizationUnit(
     where: { id, organizationId: context.organizationId },
     data: {
       ...data,
-      conversionFactor: data.conversionFactor !== undefined ? (data.conversionFactor ? new Decimal(data.conversionFactor) : null) : undefined,
-      conversionOffset: data.conversionOffset !== undefined ? new Decimal(data.conversionOffset) : undefined,
+      conversionFactor:
+        data.conversionFactor !== undefined
+          ? data.conversionFactor
+            ? new Decimal(data.conversionFactor)
+            : null
+          : undefined,
+      conversionOffset:
+        data.conversionOffset !== undefined
+          ? new Decimal(data.conversionOffset)
+          : undefined,
     },
   });
 
@@ -105,7 +111,10 @@ export async function deleteOrganizationUnit(id: string) {
   revalidatePath("/inventory/units");
 }
 
-export async function bulkUpdateOrgUnitsStatus(ids: string[], isActive: boolean) {
+export async function bulkUpdateOrgUnitsStatus(
+  ids: string[],
+  isActive: boolean,
+) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -166,7 +175,7 @@ export async function updateOrgUnitConversion(
     isApproximate?: boolean;
     notes?: string;
     isActive?: boolean;
-  }
+  },
 ) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");

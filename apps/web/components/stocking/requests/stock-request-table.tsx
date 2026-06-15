@@ -32,28 +32,36 @@ export function StockRequestTable({ data }: { data: StockRequest[] }) {
     switch (status) {
       case "PENDING":
         return (
-          <Badge variant="outline" className="gap-1 text-amber-600 border-amber-200 bg-amber-50">
+          <Badge
+            variant="outline"
+            className="gap-1 text-amber-600 border-amber-200 bg-amber-50">
             <Clock size={12} />
             Pending
           </Badge>
         );
       case "APPROVED":
         return (
-          <Badge variant="outline" className="gap-1 text-green-600 border-green-200 bg-green-50">
+          <Badge
+            variant="outline"
+            className="gap-1 text-green-600 border-green-200 bg-green-50">
             <CheckCircle size={12} />
             Approved
           </Badge>
         );
       case "PARTIALLY_FULFILLED":
         return (
-          <Badge variant="outline" className="gap-1 text-blue-600 border-blue-200 bg-blue-50">
+          <Badge
+            variant="outline"
+            className="gap-1 text-blue-600 border-blue-200 bg-blue-50">
             <AlertCircle size={12} />
             Partial
           </Badge>
         );
       case "FULFILLED":
         return (
-          <Badge variant="outline" className="gap-1 text-purple-600 border-purple-200 bg-purple-50">
+          <Badge
+            variant="outline"
+            className="gap-1 text-purple-600 border-purple-200 bg-purple-50">
             <CheckCircle size={12} />
             Fulfilled
           </Badge>
@@ -66,13 +74,29 @@ export function StockRequestTable({ data }: { data: StockRequest[] }) {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "URGENT":
-        return <Badge variant="destructive" className="h-5 text-[10px]">URGENT</Badge>;
+        return (
+          <Badge variant="destructive" className="h-5 text-[10px]">
+            URGENT
+          </Badge>
+        );
       case "HIGH":
-        return <Badge className="h-5 text-[10px] bg-orange-500 hover:bg-orange-600">HIGH</Badge>;
+        return (
+          <Badge className="h-5 text-[10px] bg-orange-500 hover:bg-orange-600">
+            HIGH
+          </Badge>
+        );
       case "MEDIUM":
-        return <Badge variant="secondary" className="h-5 text-[10px]">MEDIUM</Badge>;
+        return (
+          <Badge variant="secondary" className="h-5 text-[10px]">
+            MEDIUM
+          </Badge>
+        );
       case "LOW":
-        return <Badge variant="outline" className="h-5 text-[10px]">LOW</Badge>;
+        return (
+          <Badge variant="outline" className="h-5 text-[10px]">
+            LOW
+          </Badge>
+        );
       default:
         return null;
     }
@@ -100,9 +124,11 @@ export function StockRequestTable({ data }: { data: StockRequest[] }) {
             </TableCell>
           </TableRow>
         ) : (
-          data.map((request) => (
+          data.map(request => (
             <TableRow key={request.id}>
-              <TableCell className="font-medium">{request.requestNumber}</TableCell>
+              <TableCell className="font-medium">
+                {request.requestNumber}
+              </TableCell>
               <TableCell className="text-sm text-gray-500">
                 {format(new Date(request.requestDate), "MMM d, yyyy")}
               </TableCell>

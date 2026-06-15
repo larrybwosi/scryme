@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import {
   Select,
   SelectContent,
@@ -39,7 +39,7 @@ export function StockLevelsFilters({ locations }: StockLevelsFiltersProps) {
           placeholder="Search products or SKU..."
           className="pl-9 h-10"
           defaultValue={searchParams.get("search") || ""}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === "Enter") {
               const value = (e.target as HTMLInputElement).value;
               handleFilterChange("search", value);
@@ -49,17 +49,18 @@ export function StockLevelsFilters({ locations }: StockLevelsFiltersProps) {
       </div>
 
       <div className="flex items-center gap-2 w-full md:w-auto">
-        <span className="text-sm font-medium text-gray-500 whitespace-nowrap">Location:</span>
+        <span className="text-sm font-medium text-gray-500 whitespace-nowrap">
+          Location:
+        </span>
         <Select
           defaultValue={searchParams.get("locationId") || "all"}
-          onValueChange={(value) => handleFilterChange("locationId", value)}
-        >
+          onValueChange={value => handleFilterChange("locationId", value)}>
           <SelectTrigger className="w-full md:w-48 h-10">
             <SelectValue placeholder="All Branches" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Branches</SelectItem>
-            {locations.map((loc) => (
+            {locations.map(loc => (
               <SelectItem key={loc.id} value={loc.id}>
                 {loc.name}
               </SelectItem>

@@ -112,7 +112,7 @@ export async function createLocation(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const location = await db.$transaction(async (tx) => {
+  const location = await db.$transaction(async tx => {
     if (data.isDefault) {
       await tx.inventoryLocation.updateMany({
         where: { organizationId: context.organizationId, isDefault: true },
@@ -150,7 +150,7 @@ export async function updateLocation(
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const location = await db.$transaction(async (tx) => {
+  const location = await db.$transaction(async tx => {
     if (data.isDefault) {
       await tx.inventoryLocation.updateMany({
         where: {

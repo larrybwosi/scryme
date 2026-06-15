@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -25,7 +25,12 @@ interface CategorySheetProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function CategorySheet({ children, category, isOpen: controlledOpen, onOpenChange }: CategorySheetProps) {
+export function CategorySheet({
+  children,
+  category,
+  isOpen: controlledOpen,
+  onOpenChange,
+}: CategorySheetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,23 +38,23 @@ export function CategorySheet({ children, category, isOpen: controlledOpen, onOp
   const setOpen = onOpenChange !== undefined ? onOpenChange : setIsOpen;
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    color: '#000000',
+    name: "",
+    description: "",
+    color: "#000000",
   });
 
   useEffect(() => {
     if (category) {
       setFormData({
-        name: category.name || '',
-        description: category.description || '',
-        color: category.color || '#000000',
+        name: category.name || "",
+        description: category.description || "",
+        color: category.color || "#000000",
       });
     } else {
       setFormData({
-        name: '',
-        description: '',
-        color: '#000000',
+        name: "",
+        description: "",
+        color: "#000000",
       });
     }
   }, [category, open]);
@@ -80,9 +85,13 @@ export function CategorySheet({ children, category, isOpen: controlledOpen, onOp
       <SheetContent className="sm:max-w-[450px]">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <SheetHeader>
-            <SheetTitle>{category ? 'Edit Category' : 'Add Category'}</SheetTitle>
+            <SheetTitle>
+              {category ? "Edit Category" : "Add Category"}
+            </SheetTitle>
             <SheetDescription>
-              {category ? 'Update the category details below.' : 'Create a new product category to organize your inventory.'}
+              {category
+                ? "Update the category details below."
+                : "Create a new product category to organize your inventory."}
             </SheetDescription>
           </SheetHeader>
 
@@ -93,7 +102,9 @@ export function CategorySheet({ children, category, isOpen: controlledOpen, onOp
                 id="name"
                 placeholder="e.g., Electronics, Bakery, Drinks"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 required
               />
             </div>
@@ -104,7 +115,9 @@ export function CategorySheet({ children, category, isOpen: controlledOpen, onOp
                 id="description"
                 placeholder="Optional description of the category..."
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={4}
               />
             </div>
@@ -117,12 +130,16 @@ export function CategorySheet({ children, category, isOpen: controlledOpen, onOp
                   type="color"
                   className="w-12 h-10 p-1 cursor-pointer"
                   value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
                 />
                 <Input
                   type="text"
                   value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
                   placeholder="#000000"
                   className="flex-1"
                 />
@@ -135,13 +152,14 @@ export function CategorySheet({ children, category, isOpen: controlledOpen, onOp
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={isSubmitting}
-            >
+              disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {category ? 'Update Category' : 'Create Category'}
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {category ? "Update Category" : "Create Category"}
             </Button>
           </SheetFooter>
         </form>

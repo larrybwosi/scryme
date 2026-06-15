@@ -1,15 +1,15 @@
-import { Wallet } from 'lucide-react';
-import { PageHeader } from '../../components/page-header';
-import { FinanceStats } from '../../components/finance/finance-stats';
-import { getFinanceOverview, getExpenses } from '../actions/finance';
-import { ExpenseTable } from '../../components/finance/expense-table';
-import { db } from '@repo/db';
-import { getServerAuth } from '@repo/auth/server';
+import { Wallet } from "lucide-react";
+import { PageHeader } from "../../components/page-header";
+import { FinanceStats } from "../../components/finance/finance-stats";
+import { getFinanceOverview, getExpenses } from "../actions/finance";
+import { ExpenseTable } from "../../components/finance/expense-table";
+import { db } from "@repo/db";
+import { getServerAuth } from "@repo/auth/server";
 
 export default async function FinancePage() {
   const auth = await getServerAuth();
   const stats = await getFinanceOverview();
-  const recentExpenses = await getExpenses({ status: 'all' });
+  const recentExpenses = await getExpenses({ status: "all" });
 
   const organization = await db.organization.findUnique({
     where: { id: auth?.organizationId },

@@ -79,7 +79,7 @@ function getInitials(name: string): string {
   return name
     .split(" ")
     .slice(0, 2)
-    .map((w) => w[0])
+    .map(w => w[0])
     .join("")
     .toUpperCase();
 }
@@ -106,8 +106,7 @@ function CustomerAvatar({ name }: { name: string }) {
         "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-medium",
         palette.bg,
         palette.text,
-      )}
-    >
+      )}>
       {getInitials(name)}
     </div>
   );
@@ -161,8 +160,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
       className={cn(
         "font-medium",
         config[status] ?? "border-zinc-200 bg-zinc-50 text-zinc-600",
-      )}
-    >
+      )}>
       {status.replace(/_/g, " ")}
     </Badge>
   );
@@ -222,7 +220,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   // ── Filtering ──────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return transactions.filter((t) => {
+    return transactions.filter(t => {
       const matchStatus = activeFilter === "ALL" || t.status === activeFilter;
       const matchSearch =
         !q ||
@@ -236,17 +234,17 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   // ── Select-all indeterminate state ─────────────────────────────────────────
   useEffect(() => {
     if (!selectAllRef.current) return;
-    const visibleIds = filtered.map((t) => t.id);
+    const visibleIds = filtered.map(t => t.id);
     const allChecked =
-      visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
-    const someChecked = visibleIds.some((id) => selectedIds.has(id));
+      visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
+    const someChecked = visibleIds.some(id => selectedIds.has(id));
     selectAllRef.current.checked = allChecked;
     selectAllRef.current.indeterminate = !allChecked && someChecked;
   }, [filtered, selectedIds]);
 
   // ── Selection helpers ──────────────────────────────────────────────────────
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
+    setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
@@ -254,12 +252,12 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   const toggleSelectAll = () => {
-    const visibleIds = filtered.map((t) => t.id);
-    const allSelected = visibleIds.every((id) => selectedIds.has(id));
-    setSelectedIds((prev) => {
+    const visibleIds = filtered.map(t => t.id);
+    const allSelected = visibleIds.every(id => selectedIds.has(id));
+    setSelectedIds(prev => {
       const next = new Set(prev);
-      if (allSelected) visibleIds.forEach((id) => next.delete(id));
-      else visibleIds.forEach((id) => next.add(id));
+      if (allSelected) visibleIds.forEach(id => next.delete(id));
+      else visibleIds.forEach(id => next.add(id));
       return next;
     });
   };
@@ -276,7 +274,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search by order, customer, or location…"
               className="h-8 border-zinc-200 bg-zinc-50 pl-8 text-sm placeholder:text-zinc-400 focus-visible:ring-[#34A853]"
             />
@@ -284,7 +282,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
           {/* Pill filters */}
           <div className="flex flex-wrap gap-1.5">
-            {STATUS_FILTERS.map((f) => (
+            {STATUS_FILTERS.map(f => (
               <button
                 key={f.value}
                 onClick={() => setActiveFilter(f.value)}
@@ -293,8 +291,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   activeFilter === f.value
                     ? "bg-[#34A853] text-white ring-[#34A853]"
                     : "bg-white text-zinc-600 ring-zinc-200 hover:bg-zinc-50",
-                )}
-              >
+                )}>
                 {f.label}
               </button>
             ))}
@@ -357,7 +354,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((trx) => {
+                filtered.map(trx => {
                   const isSelected = selectedIds.has(trx.id);
                   const custName = trx.customer?.name ?? "Walk-in Customer";
                   const canPay =
@@ -369,8 +366,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       className={cn(
                         "transition-colors",
                         isSelected ? "bg-emerald-50/40" : "hover:bg-zinc-50/60",
-                      )}
-                    >
+                      )}>
                       {/* Checkbox */}
                       <td className="px-5 py-4 text-center">
                         <input
@@ -384,8 +380,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                       {/* Order */}
                       <td
                         className="cursor-pointer px-4 py-4"
-                        onClick={() => setViewTransactionId(trx.id)}
-                      >
+                        onClick={() => setViewTransactionId(trx.id)}>
                         <span className="block font-semibold text-zinc-900 hover:underline">
                           {trx.number}
                         </span>
@@ -458,8 +453,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-lg text-zinc-400 hover:text-zinc-700"
-                            >
+                              className="h-8 w-8 rounded-lg text-zinc-400 hover:text-zinc-700">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -468,29 +462,25 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               Actions
                             </DropdownMenuLabel>
                             <DropdownMenuItem
-                              onClick={() => setViewTransactionId(trx.id)}
-                            >
+                              onClick={() => setViewTransactionId(trx.id)}>
                               <Eye className="mr-2 h-4 w-4" /> View details
                             </DropdownMenuItem>
                             {canPay && (
                               <DropdownMenuItem
-                                onClick={() => setPaymentTrx(trx)}
-                              >
+                                onClick={() => setPaymentTrx(trx)}>
                                 <CreditCard className="mr-2 h-4 w-4" /> Add
                                 payment
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
-                              onClick={() => setManageDeliveryTrx(trx)}
-                            >
+                              onClick={() => setManageDeliveryTrx(trx)}>
                               <Truck className="mr-2 h-4 w-4" /> Manage delivery
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
                               <a
                                 href={`/api/sales/documents/${trx.id}?type=invoice`}
-                                download
-                              >
+                                download>
                                 <FileText className="mr-2 h-4 w-4" /> Generate
                                 invoice
                               </a>
@@ -498,8 +488,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             <DropdownMenuItem asChild>
                               <a
                                 href={`/api/sales/documents/${trx.id}?type=receipt`}
-                                download
-                              >
+                                download>
                                 <Download className="mr-2 h-4 w-4" /> Download
                                 receipt
                               </a>
@@ -529,11 +518,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
             <Button
               variant="outline"
               size="icon"
-              className="h-7 w-7 rounded-md border-zinc-200 text-zinc-500"
-            >
+              className="h-7 w-7 rounded-md border-zinc-200 text-zinc-500">
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            {[1, 2, 3].map((p) => (
+            {[1, 2, 3].map(p => (
               <Button
                 key={p}
                 variant={p === 1 ? "default" : "outline"}
@@ -543,16 +531,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                   p === 1
                     ? "bg-[#34A853] hover:bg-[#2d9648]"
                     : "border-zinc-200 text-zinc-500",
-                )}
-              >
+                )}>
                 {p}
               </Button>
             ))}
             <Button
               variant="outline"
               size="icon"
-              className="h-7 w-7 rounded-md border-zinc-200 text-zinc-500"
-            >
+              className="h-7 w-7 rounded-md border-zinc-200 text-zinc-500">
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -571,23 +557,20 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 gap-1.5 border-zinc-700 bg-zinc-800 text-xs text-white hover:bg-zinc-700 hover:text-white"
-              >
+                className="h-7 gap-1.5 border-zinc-700 bg-zinc-800 text-xs text-white hover:bg-zinc-700 hover:text-white">
                 <Truck className="h-3.5 w-3.5" /> Mark dispatched
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 gap-1.5 border-zinc-700 bg-zinc-800 text-xs text-white hover:bg-zinc-700 hover:text-white"
-              >
+                className="h-7 gap-1.5 border-zinc-700 bg-zinc-800 text-xs text-white hover:bg-zinc-700 hover:text-white">
                 Change status
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={clearSelection}
-                className="h-7 w-7 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-              >
+                className="h-7 w-7 text-zinc-400 hover:bg-zinc-800 hover:text-white">
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div>

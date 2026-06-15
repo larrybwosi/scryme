@@ -8,14 +8,15 @@ import {
   getApprovalWorkflows,
   getCostCenters,
   getBudgetAlerts,
-  getWindmillScripts
+  getWindmillScripts,
 } from "@/app/actions/finance-settings";
 import { getExpenseCategories } from "@/app/actions/finance";
 import { getInventoryLocations } from "@/app/actions/inventory";
 
 export const metadata: Metadata = {
   title: "Finance Settings | Enterprise ERP",
-  description: "Configure finance policies, approval workflows, and cost centers.",
+  description:
+    "Configure finance policies, approval workflows, and cost centers.",
 };
 
 export default async function FinanceSettingsPage() {
@@ -31,25 +32,25 @@ export default async function FinanceSettingsPage() {
     costCenters,
     budgetAlerts,
     locations,
-    windmillScripts
+    windmillScripts,
   ] = await Promise.all([
     db.organization.findUnique({
       where: { id: auth.organizationId },
-      include: { settings: true }
+      include: { settings: true },
     }),
     getApprovalWorkflows(),
     getExpenseCategories(),
     getCostCenters(),
     getBudgetAlerts(),
     getInventoryLocations(),
-    getWindmillScripts()
+    getWindmillScripts(),
   ]);
 
   return (
     <div className="w-full space-y-6">
       <PageHeader
         title="Finance Settings"
-        subtitle="Manage your organization&apos;s financial policies and approval workflows"
+        subtitle="Manage your organization's financial policies and approval workflows"
         icon={<Settings className="w-7 h-7" />}
       />
 
@@ -61,7 +62,7 @@ export default async function FinanceSettingsPage() {
           costCenters,
           budgetAlerts,
           locations,
-          windmillScripts
+          windmillScripts,
         }}
       />
     </div>

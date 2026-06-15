@@ -73,8 +73,7 @@ const StatusDot = ({ active }: { active: boolean }) => (
       className={cn(
         "text-xs font-medium",
         active ? "text-emerald-700" : "text-slate-400",
-      )}
-    >
+      )}>
       {active ? "Active" : "Inactive"}
     </span>
   </span>
@@ -111,7 +110,7 @@ export function UnitsPageContent({
   const [isBulkLoading, setIsBulkLoading] = useState(false);
 
   const filterItems = (items: any[]) =>
-    items.filter((item) => {
+    items.filter(item => {
       const matchesSearch =
         item.name?.toLowerCase().includes(search.toLowerCase()) ||
         item.symbol?.toLowerCase().includes(search.toLowerCase()) ||
@@ -128,20 +127,20 @@ export function UnitsPageContent({
   const filteredConversions = filterItems(conversions);
   const filteredSystemUnits = filterItems(systemUnits);
 
-  const activeOrgUnits = orgUnits.filter((u) => u.isActive).length;
-  const activeConversions = conversions.filter((c) => c.isActive).length;
+  const activeOrgUnits = orgUnits.filter(u => u.isActive).length;
+  const activeConversions = conversions.filter(c => c.isActive).length;
 
   const toggleSelectAll = () => {
     setSelectedUnitIds(
       selectedUnitIds.length === filteredOrgUnits.length
         ? []
-        : filteredOrgUnits.map((u) => u.id),
+        : filteredOrgUnits.map(u => u.id),
     );
   };
 
   const toggleSelectUnit = (id: string) => {
-    setSelectedUnitIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    setSelectedUnitIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id],
     );
   };
 
@@ -179,8 +178,7 @@ export function UnitsPageContent({
           <UnitDialog systemUnits={systemUnits}>
             <Button
               size="sm"
-              className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-none rounded-md h-8 px-3 text-xs font-medium"
-            >
+              className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-none rounded-md h-8 px-3 text-xs font-medium">
               <Plus size={13} />
               Add Unit
             </Button>
@@ -221,7 +219,7 @@ export function UnitsPageContent({
               placeholder="Search name or symbol…"
               className="pl-9 h-8 text-sm border-slate-200 bg-white shadow-none rounded-md placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-slate-400"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -231,7 +229,7 @@ export function UnitsPageContent({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              {unitTypeOptions.map((type) => (
+              {unitTypeOptions.map(type => (
                 <SelectItem key={type} value={type} className="capitalize">
                   {type.toLowerCase()}
                 </SelectItem>
@@ -250,8 +248,7 @@ export function UnitsPageContent({
                     variant="outline"
                     size="sm"
                     disabled={isBulkLoading}
-                    className="h-8 px-3 gap-1.5 text-xs border-slate-200 bg-white shadow-none"
-                  >
+                    className="h-8 px-3 gap-1.5 text-xs border-slate-200 bg-white shadow-none">
                     Bulk Actions
                     <ChevronDown size={12} />
                   </Button>
@@ -264,15 +261,13 @@ export function UnitsPageContent({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => handleBulkStatusUpdate(true)}
-                    className="gap-2 text-sm"
-                  >
+                    className="gap-2 text-sm">
                     <CheckCircle2 size={14} className="text-emerald-600" />
                     Activate
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleBulkStatusUpdate(false)}
-                    className="gap-2 text-sm"
-                  >
+                    className="gap-2 text-sm">
                     <XCircle size={14} className="text-slate-400" />
                     Deactivate
                   </DropdownMenuItem>
@@ -287,8 +282,7 @@ export function UnitsPageContent({
           <TabsList className="h-9 bg-white border border-slate-200 rounded-md p-1 gap-1 w-auto inline-flex shadow-none">
             <TabsTrigger
               value="org"
-              className="gap-1.5 px-3 h-7 text-xs font-medium rounded data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none text-slate-500 hover:text-slate-700"
-            >
+              className="gap-1.5 px-3 h-7 text-xs font-medium rounded data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none text-slate-500 hover:text-slate-700">
               <Settings2 size={13} />
               Organization
               <span className="ml-1 tabular-nums text-[10px] opacity-60">
@@ -297,8 +291,7 @@ export function UnitsPageContent({
             </TabsTrigger>
             <TabsTrigger
               value="conversions"
-              className="gap-1.5 px-3 h-7 text-xs font-medium rounded data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none text-slate-500 hover:text-slate-700"
-            >
+              className="gap-1.5 px-3 h-7 text-xs font-medium rounded data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none text-slate-500 hover:text-slate-700">
               <ArrowLeftRight size={13} />
               Conversions
               <span className="ml-1 tabular-nums text-[10px] opacity-60">
@@ -307,8 +300,7 @@ export function UnitsPageContent({
             </TabsTrigger>
             <TabsTrigger
               value="system"
-              className="gap-1.5 px-3 h-7 text-xs font-medium rounded data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none text-slate-500 hover:text-slate-700"
-            >
+              className="gap-1.5 px-3 h-7 text-xs font-medium rounded data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-none text-slate-500 hover:text-slate-700">
               <Database size={13} />
               System
               <span className="ml-1 tabular-nums text-[10px] opacity-60">
@@ -357,13 +349,12 @@ export function UnitsPageContent({
                     <TableRow>
                       <TableCell
                         colSpan={7}
-                        className="h-32 text-center text-sm text-slate-400"
-                      >
+                        className="h-32 text-center text-sm text-slate-400">
                         No units match your filters.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredOrgUnits.map((unit) => (
+                    filteredOrgUnits.map(unit => (
                       <TableRow
                         key={unit.id}
                         className={cn(
@@ -371,8 +362,7 @@ export function UnitsPageContent({
                           selectedUnitIds.includes(unit.id)
                             ? "bg-blue-50/60"
                             : "hover:bg-slate-50/60",
-                        )}
-                      >
+                        )}>
                         <TableCell className="pl-4">
                           <Checkbox
                             checked={selectedUnitIds.includes(unit.id)}
@@ -416,8 +406,7 @@ export function UnitsPageContent({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2.5 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                            >
+                              className="h-7 px-2.5 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100">
                               Edit
                             </Button>
                           </UnitDialog>
@@ -437,8 +426,7 @@ export function UnitsPageContent({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 px-3 gap-1.5 text-xs border-slate-200 bg-white shadow-none"
-                >
+                  className="h-8 px-3 gap-1.5 text-xs border-slate-200 bg-white shadow-none">
                   <Plus size={13} />
                   New Conversion
                 </Button>
@@ -468,17 +456,15 @@ export function UnitsPageContent({
                     <TableRow>
                       <TableCell
                         colSpan={5}
-                        className="h-32 text-center text-sm text-slate-400"
-                      >
+                        className="h-32 text-center text-sm text-slate-400">
                         No conversions match your filters.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredConversions.map((conv) => (
+                    filteredConversions.map(conv => (
                       <TableRow
                         key={conv.id}
-                        className="border-slate-100 hover:bg-slate-50/60 transition-colors"
-                      >
+                        className="border-slate-100 hover:bg-slate-50/60 transition-colors">
                         <TableCell className="pl-4">
                           <span className="text-sm font-medium text-slate-800">
                             {conv.fromUnit.name}
@@ -514,13 +500,11 @@ export function UnitsPageContent({
                           <ConversionDialog
                             conversion={conv}
                             orgUnits={orgUnits}
-                            systemUnits={systemUnits}
-                          >
+                            systemUnits={systemUnits}>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2.5 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                            >
+                              className="h-7 px-2.5 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100">
                               Edit
                             </Button>
                           </ConversionDialog>
@@ -567,17 +551,15 @@ export function UnitsPageContent({
                     <TableRow>
                       <TableCell
                         colSpan={5}
-                        className="h-32 text-center text-sm text-slate-400"
-                      >
+                        className="h-32 text-center text-sm text-slate-400">
                         No system units match your filters.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredSystemUnits.map((unit) => (
+                    filteredSystemUnits.map(unit => (
                       <TableRow
                         key={unit.id}
-                        className="border-slate-100 hover:bg-slate-50/40 transition-colors"
-                      >
+                        className="border-slate-100 hover:bg-slate-50/40 transition-colors">
                         <TableCell className="font-medium text-sm text-slate-800 pl-4">
                           {unit.name}
                         </TableCell>

@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 import { createElement } from "react";
-import { AggregatedStockRequestListTemplate, DocumentGenerator } from "@repo/documents";
+import {
+  AggregatedStockRequestListTemplate,
+  DocumentGenerator,
+} from "@repo/documents";
 import { getAggregatedStockRequests } from "@/app/actions/stock-management";
 import { format } from "date-fns";
 
 export async function GET(req: NextRequest) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   const searchParams = req.nextUrl.searchParams;
@@ -17,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const organization = await db.organization.findUnique({
     where: { id: auth.organizationId },
-    select: { name: true, logo: true }
+    select: { name: true, logo: true },
   });
 
   const items = await getAggregatedStockRequests({ search });
@@ -32,22 +35,25 @@ export async function GET(req: NextRequest) {
       totalRequested: item.totalRequested,
       totalAllocated: item.totalAllocated,
       totalRemaining: item.totalRemaining,
-    }))
+    })),
   };
 
   try {
     const stream = await DocumentGenerator.renderToStream(
-      createElement(AggregatedStockRequestListTemplate as any, { data: documentData } as any) as any
+      createElement(
+        AggregatedStockRequestListTemplate as any,
+        { data: documentData } as any,
+      ) as any,
     );
 
     return new NextResponse(stream as any, {
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="aggregated-stock-requests-${format(new Date(), "yyyy-MM-dd")}.pdf"`,
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="aggregated-stock-requests-${format(new Date(), "yyyy-MM-dd")}.pdf"`,
       },
     });
   } catch (error) {
-    console.error('PDF Generation Error:', error);
-    return new NextResponse('Error generating PDF', { status: 500 });
+    console.error("PDF Generation Error:", error);
+    return new NextResponse("Error generating PDF", { status: 500 });
   }
 }

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db, WindmillExecutionStatus } from "@repo/db";
 // @ts-ignore
-import { WindmillTemplateService, runAutomation, getWindmillClientForOrg } from "@repo/windmill";
+import {
+  WindmillTemplateService,
+  runAutomation,
+  getWindmillClientForOrg,
+} from "@repo/windmill";
 
 async function getAvailableWorkflows(organizationId: string) {
   const [provisionedWorkflows, templates] = await Promise.all([
@@ -15,7 +19,9 @@ async function getAvailableWorkflows(organizationId: string) {
   return templates.map((template: any) => {
     // Normalize template path for matching with provisioned workflows
     const normalizedPath = `f/dealio/${template.path}`;
-    const provisioned = provisionedWorkflows.find((w: any) => w.path === normalizedPath || w.path === template.path);
+    const provisioned = provisionedWorkflows.find(
+      (w: any) => w.path === normalizedPath || w.path === template.path,
+    );
 
     return {
       path: normalizedPath,
@@ -24,16 +30,25 @@ async function getAvailableWorkflows(organizationId: string) {
       isProvisioned: !!provisioned,
       settings: provisioned?.settings || {},
       schema: {
-        type: 'object',
+        type: "object",
         properties: template.parameters.reduce((acc: any, param: any) => {
           acc[param.name] = {
-            type: param.type === 'string' || param.type === 'select' || param.type === 'date' ? 'string' : param.type,
+            type:
+              param.type === "string" ||
+              param.type === "select" ||
+              param.type === "date"
+                ? "string"
+                : param.type,
             title: param.label,
             description: param.description,
             default: param.defaultValue,
-            format: param.type === 'date' ? 'date' : undefined,
+            format: param.type === "date" ? "date" : undefined,
             // Handle 'member' format if it was specified in the template
-            ...(param.description?.toLowerCase().includes('member') || param.name.toLowerCase().includes('member') || param.name.toLowerCase().includes('recipient') ? { format: 'member' } : {})
+            ...(param.description?.toLowerCase().includes("member") ||
+            param.name.toLowerCase().includes("member") ||
+            param.name.toLowerCase().includes("recipient")
+              ? { format: "member" }
+              : {}),
           };
           return acc;
         }, {}),
@@ -42,11 +57,17 @@ async function getAvailableWorkflows(organizationId: string) {
   });
 }
 
-async function provisionWorkflow(organizationId: string, path: string, settings: any) {
+async function provisionWorkflow(
+  organizationId: string,
+  path: string,
+  settings: any,
+) {
   if (!path) throw new Error("Path is required");
 
   const templates = await WindmillTemplateService.getTemplates();
-  const template = templates.find((t: any) => `f/dealio/${t.path}` === path || t.path === path);
+  const template = templates.find(
+    (t: any) => `f/dealio/${t.path}` === path || t.path === path,
+  );
 
   if (!template) throw new Error("Workflow template not found");
 
@@ -55,7 +76,9 @@ async function provisionWorkflow(organizationId: string, path: string, settings:
   });
 
   if (!config) {
-    throw new Error("Windmill not configured for this organization. Please set up Windmill Configuration first.");
+    throw new Error(
+      "Windmill not configured for this organization. Please set up Windmill Configuration first.",
+    );
   }
 
   await db.windmillWorkflow.upsert({
@@ -78,10 +101,18 @@ async function provisionWorkflow(organizationId: string, path: string, settings:
     },
   });
 
-  return { success: true, message: `Workflow ${path} provisioned successfully`, configId: config.id };
+  return {
+    success: true,
+    message: `Workflow ${path} provisioned successfully`,
+    configId: config.id,
+  };
 }
 
-async function triggerWorkflow(organizationId: string, path: string, inputs: any) {
+async function triggerWorkflow(
+  organizationId: string,
+  path: string,
+  inputs: any,
+) {
   if (!path) throw new Error("Path is required");
 
   const workflow = await db.windmillWorkflow.findUnique({
@@ -89,24 +120,24 @@ async function triggerWorkflow(organizationId: string, path: string, inputs: any
       organizationId_path: {
         organizationId,
         path,
-      }
-    }
+      },
+    },
   });
 
   const mergedInputs = {
-    ...(workflow?.settings as any || {}),
-    ...inputs
+    ...((workflow?.settings as any) || {}),
+    ...inputs,
   };
 
   const jobId = await runAutomation({
     organizationId,
     scriptPath: path,
     data: mergedInputs,
-    dealioEventType: 'MANUAL_TRIGGER',
+    dealioEventType: "MANUAL_TRIGGER",
   });
 
   const execution = await db.windmillExecution.findUnique({
-    where: { jobId }
+    where: { jobId },
   });
 
   return { success: true, data: execution };
@@ -118,7 +149,7 @@ async function cancelWorkflow(organizationId: string, jobId: string) {
 
   await db.windmillExecution.update({
     where: { jobId },
-    data: { status: 'CANCELLED' }
+    data: { status: "CANCELLED" },
   });
 
   return { success: true };
@@ -130,14 +161,18 @@ async function getWorkflowLogs(organizationId: string, jobId: string) {
   return { success: true, data: logs };
 }
 
-async function getExecutionHistory(organizationId: string, scriptPath?: string, status?: WindmillExecutionStatus) {
+async function getExecutionHistory(
+  organizationId: string,
+  scriptPath?: string,
+  status?: WindmillExecutionStatus,
+) {
   const history = await db.windmillExecution.findMany({
     where: {
       organizationId,
       ...(scriptPath ? { scriptPath } : {}),
       ...(status ? { status } : {}),
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     take: 50,
   });
   return history;
@@ -145,7 +180,7 @@ async function getExecutionHistory(organizationId: string, scriptPath?: string, 
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ slug?: string[] }> }
+  { params }: { params: Promise<{ slug?: string[] }> },
 ) {
   try {
     const auth = await getServerAuth();
@@ -167,14 +202,24 @@ export async function GET(
 
     if (action === "history") {
       const scriptPath = req.nextUrl.searchParams.get("path") || undefined;
-      const status = req.nextUrl.searchParams.get("status") as WindmillExecutionStatus || undefined;
-      const history = await getExecutionHistory(auth.organizationId, scriptPath, status);
+      const status =
+        (req.nextUrl.searchParams.get("status") as WindmillExecutionStatus) ||
+        undefined;
+      const history = await getExecutionHistory(
+        auth.organizationId,
+        scriptPath,
+        status,
+      );
       return NextResponse.json({ success: true, data: history });
     }
 
     if (action === "logs") {
       const jobId = req.nextUrl.searchParams.get("jobId");
-      if (!jobId) return NextResponse.json({ error: "jobId is required" }, { status: 400 });
+      if (!jobId)
+        return NextResponse.json(
+          { error: "jobId is required" },
+          { status: 400 },
+        );
       const result = await getWorkflowLogs(auth.organizationId, jobId);
       return NextResponse.json(result);
     }
@@ -182,13 +227,16 @@ export async function GET(
     return NextResponse.json({ error: "Not Found" }, { status: 404 });
   } catch (error: any) {
     console.error("Workflow API Error:", error);
-    return NextResponse.json({ success: false, error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ slug?: string[] }> }
+  { params }: { params: Promise<{ slug?: string[] }> },
 ) {
   try {
     const auth = await getServerAuth();
@@ -205,12 +253,20 @@ export async function POST(
     const body = await req.json().catch(() => ({}));
 
     if (action === "provision") {
-      const result = await provisionWorkflow(auth.organizationId, body.path, body.settings);
+      const result = await provisionWorkflow(
+        auth.organizationId,
+        body.path,
+        body.settings,
+      );
       return NextResponse.json(result);
     }
 
     if (action === "trigger") {
-      const result = await triggerWorkflow(auth.organizationId, body.path, body.inputs);
+      const result = await triggerWorkflow(
+        auth.organizationId,
+        body.path,
+        body.inputs,
+      );
       return NextResponse.json(result);
     }
 
@@ -222,6 +278,9 @@ export async function POST(
     return NextResponse.json({ error: "Not Found" }, { status: 404 });
   } catch (error: any) {
     console.error("Workflow API Error:", error);
-    return NextResponse.json({ success: false, error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error.message || "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

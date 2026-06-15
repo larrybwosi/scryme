@@ -120,13 +120,12 @@ export default async function AuditTrailPage({
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className="h-32 text-center text-gray-500"
-                    >
+                      className="h-32 text-center text-gray-500">
                       No movement records found for this selection.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  movements.map((m) => (
+                  movements.map(m => (
                     <TableRow key={m.id}>
                       <TableCell className="whitespace-nowrap">
                         <div className="text-sm font-medium">
@@ -151,8 +150,7 @@ export default async function AuditTrailPage({
                         )}
                       </TableCell>
                       <TableCell
-                        className={`text-right font-bold ${m.quantity.toNumber() > 0 ? "text-green-600" : "text-red-600"}`}
-                      >
+                        className={`text-right font-bold ${m.quantity.toNumber() > 0 ? "text-green-600" : "text-red-600"}`}>
                         {m.quantity.toNumber() > 0
                           ? `+${m.quantity.toNumber()}`
                           : m.quantity.toNumber()}

@@ -32,7 +32,11 @@ import {
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { toast } from "sonner";
-import { createOrgUnitConversion, updateOrgUnitConversion, deleteOrgUnitConversion } from "@/app/actions/units";
+import {
+  createOrgUnitConversion,
+  updateOrgUnitConversion,
+  deleteOrgUnitConversion,
+} from "@/app/actions/units";
 import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -144,22 +148,25 @@ export function ConversionDialog({
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={!!conversion}
-                    >
+                      disabled={!!conversion}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">Custom Units</div>
-                        {orgUnits.map((u) => (
+                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
+                          Custom Units
+                        </div>
+                        {orgUnits.map(u => (
                           <SelectItem key={u.id} value={u.id}>
                             {u.name} ({u.symbol})
                           </SelectItem>
                         ))}
-                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">System Units</div>
-                        {systemUnits.map((u) => (
+                        <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
+                          System Units
+                        </div>
+                        {systemUnits.map(u => (
                           <SelectItem key={u.id} value={u.id}>
                             {u.name} ({u.symbol})
                           </SelectItem>
@@ -180,15 +187,14 @@ export function ConversionDialog({
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      disabled={!!conversion}
-                    >
+                      disabled={!!conversion}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {orgUnits.map((u) => (
+                        {orgUnits.map(u => (
                           <SelectItem key={u.id} value={u.id}>
                             {u.name} ({u.symbol})
                           </SelectItem>
@@ -202,24 +208,39 @@ export function ConversionDialog({
             </div>
 
             <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-               <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900">1 {orgUnits.find(u => u.id === form.watch("fromUnitId"))?.symbol || "Source"} = </span>
-                  <div className="flex items-center gap-2">
-                    <FormField
-                      control={form.control}
-                      name="factor"
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input type="number" step="any" {...field} className="bg-white" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <span className="text-sm font-medium text-blue-900">{orgUnits.find(u => u.id === form.watch("toUnitId"))?.symbol || "Target"}</span>
-                  </div>
-               </div>
-               <p className="text-[10px] text-blue-700 italic">Formula: Target = Source * Factor + Offset</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-900">
+                  1{" "}
+                  {orgUnits.find(u => u.id === form.watch("fromUnitId"))
+                    ?.symbol || "Source"}{" "}
+                  ={" "}
+                </span>
+                <div className="flex items-center gap-2">
+                  <FormField
+                    control={form.control}
+                    name="factor"
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="any"
+                            {...field}
+                            className="bg-white"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <span className="text-sm font-medium text-blue-900">
+                    {orgUnits.find(u => u.id === form.watch("toUnitId"))
+                      ?.symbol || "Target"}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] text-blue-700 italic">
+                Formula: Target = Source * Factor + Offset
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -284,8 +305,7 @@ export function ConversionDialog({
                   type="button"
                   variant="outline"
                   className="text-red-600 hover:bg-red-50 hover:text-red-700 gap-2"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
+                  onClick={() => setIsDeleteDialogOpen(true)}>
                   <Trash2 size={16} />
                   Delete
                 </Button>
@@ -297,24 +317,28 @@ export function ConversionDialog({
           </form>
         </Form>
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete this unit conversion.
+                This action cannot be undone. This will permanently delete this
+                unit conversion.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction
                 className="bg-red-600 hover:bg-red-700"
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   handleDelete();
                 }}
-                disabled={isDeleting}
-              >
+                disabled={isDeleting}>
                 {isDeleting ? "Deleting..." : "Delete"}
               </AlertDialogAction>
             </AlertDialogFooter>

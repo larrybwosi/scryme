@@ -191,8 +191,8 @@ export async function getDashboardData(
 
   // Popular Products (by units sold)
   const productSalesMap = new Map<string, { name: string; sales: number }>();
-  currentTransactions.forEach((t) => {
-    t.items.forEach((item) => {
+  currentTransactions.forEach(t => {
+    t.items.forEach(item => {
       const existing = productSalesMap.get(item.variantId) || {
         name: `${item.productName} ${item.variantName}`,
         sales: 0,
@@ -221,9 +221,9 @@ export async function getDashboardData(
     end: currentEnd < now ? currentEnd : now,
   });
 
-  const chartData: ChartDataPoint[] = intervalDays.map((day) => {
+  const chartData: ChartDataPoint[] = intervalDays.map(day => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter((t) =>
+    const dayTransactions = currentTransactions.filter(t =>
       isSameDay(t.createdAt, day),
     );
 
@@ -234,7 +234,7 @@ export async function getDashboardData(
     else if (timeframe === "year") prevDay = subMonths(day, 12);
     else prevDay = subMonths(day, 1);
 
-    const prevDayTransactions = previousTransactions.filter((t) =>
+    const prevDayTransactions = previousTransactions.filter(t =>
       isSameDay(t.createdAt, prevDay),
     );
 
@@ -251,9 +251,9 @@ export async function getDashboardData(
     };
   });
 
-  const averageSalesChartData: ChartDataPoint[] = intervalDays.map((day) => {
+  const averageSalesChartData: ChartDataPoint[] = intervalDays.map(day => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter((t) =>
+    const dayTransactions = currentTransactions.filter(t =>
       isSameDay(t.createdAt, day),
     );
 
@@ -262,7 +262,7 @@ export async function getDashboardData(
     else if (timeframe === "year") prevDay = subMonths(day, 12);
     else prevDay = subMonths(day, 1);
 
-    const prevDayTransactions = previousTransactions.filter((t) =>
+    const prevDayTransactions = previousTransactions.filter(t =>
       isSameDay(t.createdAt, prevDay),
     );
 
@@ -273,9 +273,9 @@ export async function getDashboardData(
     };
   });
 
-  const avgOrderValueChartData: ChartDataPoint[] = intervalDays.map((day) => {
+  const avgOrderValueChartData: ChartDataPoint[] = intervalDays.map(day => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter((t) =>
+    const dayTransactions = currentTransactions.filter(t =>
       isSameDay(t.createdAt, day),
     );
 
@@ -284,7 +284,7 @@ export async function getDashboardData(
     else if (timeframe === "year") prevDay = subMonths(day, 12);
     else prevDay = subMonths(day, 1);
 
-    const prevDayTransactions = previousTransactions.filter((t) =>
+    const prevDayTransactions = previousTransactions.filter(t =>
       isSameDay(t.createdAt, prevDay),
     );
 
@@ -310,7 +310,7 @@ export async function getDashboardData(
 
   // Real session data or zero if not tracked
   // For now we don't have a sessions table, so we use 0 instead of random mocks
-  const totalSessionsChartData: ChartDataPoint[] = intervalDays.map((day) => ({
+  const totalSessionsChartData: ChartDataPoint[] = intervalDays.map(day => ({
     date: format(day, "MMM dd"),
     current: 0,
     previous: 0,

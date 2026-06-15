@@ -1,13 +1,17 @@
-import React from 'react';
+import React from "react";
 import { PageHeader } from "../../../components/page-header";
 import { getStockLevels } from "../../actions/stock-management";
-import { getInventoryLocations, getCategories, getSuppliers } from "../../actions/inventory";
+import {
+  getInventoryLocations,
+  getCategories,
+  getSuppliers,
+} from "../../actions/inventory";
 import { TrendingUp } from "lucide-react";
 import { StockingListTable } from "../../../components/stocking/list/stocking-list-table";
 import { StockingListFilters } from "../../../components/stocking/list/stocking-list-filters";
 
 export default async function StockingListPage({
-  searchParams
+  searchParams,
 }: {
   searchParams: Promise<{
     locationId?: string;
@@ -17,7 +21,7 @@ export default async function StockingListPage({
     sortBy?: string;
     sortOrder?: "asc" | "desc";
     groupBy?: string;
-  }>
+  }>;
 }) {
   const params = await searchParams;
 
@@ -32,8 +36,8 @@ export default async function StockingListPage({
       supplierId: params.supplierId,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
-      groupBy: params.groupBy
-    })
+      groupBy: params.groupBy,
+    }),
   ]);
 
   return (
