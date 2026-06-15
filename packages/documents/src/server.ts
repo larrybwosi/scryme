@@ -271,14 +271,28 @@ export const Mappers = {
       customFields: config.customFields,
     };
 
+    let invoiceNumber = transaction.number;
+    if (config.invoiceNumberPrefix || config.invoiceNumberSuffix || config.invoiceNumberPadding) {
+      // If we have custom numbering config, we use the transaction's sequence number if available,
+      // or try to extract it from the number. For now, we'll assume the transaction.number is what we format
+      // if it's numeric, otherwise we just use it as is.
+      const seq = parseInt(transaction.number.replace(/\D/g, '')) || 0;
+      if (seq > 0) {
+        const prefix = config.invoiceNumberPrefix || '';
+        const suffix = config.invoiceNumberSuffix || '';
+        const padding = config.invoiceNumberPadding || 0;
+        invoiceNumber = `${prefix}${String(seq).padStart(padding, '0')}${suffix}`;
+      }
+    }
+
     const customerAddressObj = transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
 
     const paymentTerms = 'Payment due upon receipt.';
 
     return {
       id: transaction.id,
-      number: transaction.number,
-      invoiceNumber: transaction.number,
+      number: invoiceNumber,
+      invoiceNumber: invoiceNumber,
       date: formattedDate,
       invoiceDate: formattedDate,
       dueDate: formattedDueDate,

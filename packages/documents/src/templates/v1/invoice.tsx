@@ -259,6 +259,15 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: strin
               <Text style={styles.poweredBy}>Powered by Scryme</Text>
             )}
           </View>
+          {branding?.customFields && branding.customFields.length > 0 && (
+            <View style={{ textAlign: 'right' }}>
+              {branding.customFields.map((field, index) => (
+                <Text key={index} style={styles.footerText}>
+                  {field.label}: {field.value}
+                </Text>
+              ))}
+            </View>
+          )}
           {(qrCode || data.qrCode) && <Image style={styles.footerQRCode} src={qrCode || data.qrCode} />}
         </View>
       </Page>

@@ -417,7 +417,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                   <div className="space-y-0.5">
-                    <FormLabel>Show "Powered by Scryme" branding</FormLabel>
+                    <FormLabel>Show &quot;Powered by Scryme&quot; branding</FormLabel>
                     <FormDescription>
                       Remove Scryme branding from the bottom of your documents.
                     </FormDescription>

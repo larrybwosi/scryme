@@ -9,7 +9,7 @@ export interface BrandingOptions {
   companyTagline?: string;
   showPoweredBy?: boolean;
   watermarkText?: string;
-  customFields?: Record<string, any>;
+  customFields?: Array<{ label: string; value: string }>;
 }
 
 export interface Address {
