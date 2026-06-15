@@ -49,7 +49,18 @@ export class MemberUseCase {
       this.prisma.client.member.count({ where }),
       this.prisma.client.member.findMany({
         where,
-        include: {
+        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // of large or sensitive fields (like pinHash, address, tags, etc.) in lists.
+        select: {
+          id: true,
+          role: true,
+          membershipStatus: true,
+          isActive: true,
+          status: true,
+          cardId: true,
+          phone: true,
+          createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -79,7 +90,18 @@ export class MemberUseCase {
   async getMember(organizationId: string, id: string) {
     const member = await this.prisma.client.member.findFirst({
       where: { id, organizationId, deletedAt: null },
-      include: {
+      // ⚡ Bolt Optimization: Use targeted select for scalar fields and relations
+      // to reduce database payload and serialization overhead.
+      select: {
+        id: true,
+        role: true,
+        membershipStatus: true,
+        isActive: true,
+        status: true,
+        cardId: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,
@@ -89,10 +111,29 @@ export class MemberUseCase {
           },
         },
         departmentMemberships: {
-          include: { department: true }
+          select: {
+            id: true,
+            role: true,
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
         },
-        customRoles: true,
-        roleGroups: true,
+        customRoles: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        roleGroups: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
