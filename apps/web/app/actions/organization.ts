@@ -134,6 +134,42 @@ export async function updateInvoiceTemplate(templateId: string): Promise<any> {
   return settings;
 }
 
+export async function updateDefaultDocumentTemplate(
+  type: "INVOICE" | "RECEIPT" | "WAYBILL",
+  templateId: string,
+): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const fieldMap: Record<string, string> = {
+    INVOICE: "defaultInvoiceTemplate",
+    RECEIPT: "defaultReceiptTemplate",
+    WAYBILL: "defaultWaybillTemplate",
+  };
+
+  const field = fieldMap[type];
+  if (!field) throw new Error("Invalid document type");
+
+  // First, ensure settings exist
+  await db.organizationSettings.upsert({
+    where: { organizationId: auth.organizationId },
+    update: {},
+    create: {
+      organizationId: auth.organizationId,
+    },
+  });
+
+  const settings = await db.organizationSettings.update({
+    where: { organizationId: auth.organizationId },
+    data: {
+      [field]: templateId,
+    },
+  });
+
+  revalidatePath("/settings/documents");
+  return settings;
+}
+
 export async function getOrganizationSettings(): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
