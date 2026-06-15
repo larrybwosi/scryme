@@ -6,26 +6,7 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./server": "./src/server.ts",
-    "./utils": "./src/utils.ts",
-    "./constants": "./src/constants.ts",
-    "./types": "./src/api/v2/types/index.ts",
-    "./errors": "./src/api/v2/errors/index.ts",
-    "./validations/*": "./src/lib/validations/*.ts",
-    "./storage": "./src/storage/index.ts",
-    "./ably": "./src/ably.ts",
-    "./realtime": "./src/realtime/index.ts",
-    "./provisioning": "./src/lib/provisioning/index.ts",
-    "./encryption": "./src/api/v2/utils/encryption.ts",
-    "./crypto": "./src/api/v2/utils/crypto.ts",
-    "./actions/*": "./src/actions/*.ts",
-    "./actions/transaction/*": "./src/actions/transaction/*.ts",
-    "./services/*": "./src/api/v2/services/*.ts",
-    "./products": "./src/api/v2/utils/products.ts",
-    "./tokens": "./src/api/v2/utils/tokens.ts",
-    "./redis": "./src/redis.ts",
-    "./integrations": "./src/integrations.ts",
-    "./services/openloyalty": "./src/services/openloyalty.ts"
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "build": "tsc",
