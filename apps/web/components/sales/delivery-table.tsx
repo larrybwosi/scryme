@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   MoreHorizontal,
   Eye,
@@ -10,9 +10,9 @@ import {
   CheckCircle2,
   Package,
   ClipboardCheck,
-  Truck
-} from 'lucide-react';
-import { format } from 'date-fns';
+  Truck,
+} from "lucide-react";
+import { format } from "date-fns";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +24,11 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { cn } from "@repo/ui/lib/utils";
-import { updateFulfillmentStatus, reconcileFulfillment } from '../../app/actions/sales';
-import { toast } from 'sonner';
+import {
+  updateFulfillmentStatus,
+  reconcileFulfillment,
+} from "../../app/actions/sales";
+import { toast } from "sonner";
 
 export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -33,18 +36,18 @@ export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
   const handleStatusUpdate = async (id: string, status: any) => {
     try {
       await updateFulfillmentStatus(id, status);
-      toast.success('Fulfillment status updated');
+      toast.success("Fulfillment status updated");
     } catch (error) {
-      toast.error('Failed to update status');
+      toast.error("Failed to update status");
     }
   };
 
   const handleReconcile = async (id: string) => {
     try {
-      await reconcileFulfillment(id, { notes: 'Reconciled from dashboard' });
-      toast.success('Fulfillment reconciled');
+      await reconcileFulfillment(id, { notes: "Reconciled from dashboard" });
+      toast.success("Fulfillment reconciled");
     } catch (error) {
-      toast.error('Failed to reconcile');
+      toast.error("Failed to reconcile");
     }
   };
 
@@ -78,15 +81,21 @@ export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200">
-            {fulfillments.map((ful) => (
-              <tr key={ful.id} className="hover:bg-zinc-50/50 transition-colors">
+            {fulfillments.map(ful => (
+              <tr
+                key={ful.id}
+                className="hover:bg-zinc-50/50 transition-colors">
                 <td className="px-6 py-4 font-medium text-zinc-900">
                   {ful.id.slice(-8).toUpperCase()}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
-                    <span className="font-bold text-zinc-900">{ful.transaction.number}</span>
-                    <span className="text-xs text-zinc-500">{ful.transaction.customer?.name}</span>
+                    <span className="font-bold text-zinc-900">
+                      {ful.transaction.number}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {ful.transaction.customer?.name}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -95,29 +104,31 @@ export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
                       <Truck className="w-4 h-4 text-zinc-500" />
                     </div>
                     <span className="text-zinc-600">
-                      {ful.driver?.name || ful.carrier || 'Not Assigned'}
+                      {ful.driver?.name || ful.carrier || "Not Assigned"}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                   <div className="flex items-center gap-1.5 text-zinc-500">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[150px]">
-                        {ful.type}
-                      </span>
-                   </div>
+                  <div className="flex items-center gap-1.5 text-zinc-500">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span className="truncate max-w-[150px]">{ful.type}</span>
+                  </div>
                 </td>
                 <td className="px-6 py-4">
-                   <FulfillmentStatusBadge status={ful.status} />
+                  <FulfillmentStatusBadge status={ful.status} />
                 </td>
                 <td className="px-6 py-4">
-                   {ful.isReconciled ? (
-                     <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Yes
-                     </Badge>
-                   ) : (
-                     <Badge variant="outline" className="text-zinc-400">No</Badge>
-                   )}
+                  {ful.isReconciled ? (
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Yes
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-zinc-400">
+                      No
+                    </Badge>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <DropdownMenu>
@@ -132,15 +143,21 @@ export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
                         <Eye className="mr-2 h-4 w-4" /> View Details
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleStatusUpdate(ful.id, 'SHIPPED')}>
-                         <Package className="mr-2 h-4 w-4" /> Mark as Shipped
+                      <DropdownMenuItem
+                        onClick={() => handleStatusUpdate(ful.id, "SHIPPED")}>
+                        <Package className="mr-2 h-4 w-4" /> Mark as Shipped
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusUpdate(ful.id, 'DELIVERED')}>
-                         <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Delivered
+                      <DropdownMenuItem
+                        onClick={() => handleStatusUpdate(ful.id, "DELIVERED")}>
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as
+                        Delivered
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleReconcile(ful.id)} disabled={ful.isReconciled}>
-                         <ClipboardCheck className="mr-2 h-4 w-4" /> Reconcile Delivery
+                      <DropdownMenuItem
+                        onClick={() => handleReconcile(ful.id)}
+                        disabled={ful.isReconciled}>
+                        <ClipboardCheck className="mr-2 h-4 w-4" /> Reconcile
+                        Delivery
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -165,7 +182,12 @@ function FulfillmentStatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <Badge variant="outline" className={cn("font-medium", styles[status] || "bg-zinc-50 text-zinc-700 border-zinc-200")}>
+    <Badge
+      variant="outline"
+      className={cn(
+        "font-medium",
+        styles[status] || "bg-zinc-50 text-zinc-700 border-zinc-200",
+      )}>
       {status}
     </Badge>
   );

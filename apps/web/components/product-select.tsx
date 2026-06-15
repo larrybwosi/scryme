@@ -43,7 +43,7 @@ export function ProductSelect({
 }: ProductSelectProps) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedProduct = products.find((p) => p.id === value);
+  const selectedProduct = products.find(p => p.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -55,40 +55,44 @@ export function ProductSelect({
           className={cn(
             "w-full justify-between bg-white",
             error && "border-red-500",
-            className
-          )}
-        >
+            className,
+          )}>
           <span className="truncate">
             {selectedProduct ? selectedProduct.name : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0"
+        align="start">
         <Command>
           <CommandInput placeholder="Search product..." />
           <CommandList>
             <CommandEmpty>No product found.</CommandEmpty>
             <CommandGroup>
-              {products.map((product) => (
+              {products.map(product => (
                 <CommandItem
                   key={product.id}
-                  value={product.name + " " + (product.sku || "") + " " + product.id}
+                  value={
+                    product.name + " " + (product.sku || "") + " " + product.id
+                  }
                   onSelect={() => {
                     onValueChange(product.id === value ? "" : product.id);
                     setOpen(false);
-                  }}
-                >
+                  }}>
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === product.id ? "opacity-100" : "opacity-0"
+                      value === product.id ? "opacity-100" : "opacity-0",
                     )}
                   />
                   <div className="flex flex-col">
                     <span className="font-medium">{product.name}</span>
                     {product.sku && (
-                      <span className="text-xs text-muted-foreground">{product.sku}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {product.sku}
+                      </span>
                     )}
                   </div>
                 </CommandItem>

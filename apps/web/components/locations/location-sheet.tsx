@@ -149,8 +149,7 @@ export function LocationSheet({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col h-full overflow-hidden"
-          >
+            className="flex flex-col h-full overflow-hidden">
             <ScrollArea className="flex-1 p-6">
               <div className="space-y-6 pb-8">
                 <div className="grid grid-cols-2 gap-4">
@@ -191,15 +190,14 @@ export function LocationSheet({
                         <FormLabel>Location Type</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                          defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.values(LocationType).map((type) => (
+                            {Object.values(LocationType).map(type => (
                               <SelectItem key={type} value={type}>
                                 {type.replace("_", " ")}
                               </SelectItem>
@@ -218,8 +216,7 @@ export function LocationSheet({
                         <FormLabel>Parent Location</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value || undefined}
-                        >
+                          defaultValue={field.value || undefined}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="None" />
@@ -228,8 +225,8 @@ export function LocationSheet({
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
                             {locations
-                              .filter((l) => l.id !== location?.id)
-                              .map((l) => (
+                              .filter(l => l.id !== location?.id)
+                              .map(l => (
                                 <SelectItem key={l.id} value={l.id}>
                                   {l.name}
                                 </SelectItem>
@@ -250,8 +247,7 @@ export function LocationSheet({
                       <FormLabel>Manager</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value || undefined}
-                      >
+                        defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Assign manager" />
@@ -259,7 +255,7 @@ export function LocationSheet({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">Unassigned</SelectItem>
-                          {members.map((m) => (
+                          {members.map(m => (
                             <SelectItem key={m.id} value={m.id}>
                               {m.user.name}
                             </SelectItem>

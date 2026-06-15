@@ -32,7 +32,11 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { toast } from "sonner";
-import { createOrganizationUnit, updateOrganizationUnit, deleteOrganizationUnit } from "@/app/actions/units";
+import {
+  createOrganizationUnit,
+  updateOrganizationUnit,
+  deleteOrganizationUnit,
+} from "@/app/actions/units";
 import { UnitType, IndustryCategory } from "@repo/db/client";
 import { Trash2 } from "lucide-react";
 import {
@@ -89,8 +93,12 @@ export function UnitDialog({
       description: unit?.description || "",
       isActive: unit?.isActive ?? true,
       baseSystemUnitId: unit?.baseSystemUnitId || null,
-      conversionFactor: unit?.conversionFactor ? Number(unit.conversionFactor) : undefined,
-      conversionOffset: unit?.conversionOffset ? Number(unit.conversionOffset) : 0,
+      conversionFactor: unit?.conversionFactor
+        ? Number(unit.conversionFactor)
+        : undefined,
+      conversionOffset: unit?.conversionOffset
+        ? Number(unit.conversionOffset)
+        : 0,
     },
   });
 
@@ -98,7 +106,8 @@ export function UnitDialog({
     try {
       const submissionData = {
         ...values,
-        baseSystemUnitId: values.baseSystemUnitId === "none" ? null : values.baseSystemUnitId,
+        baseSystemUnitId:
+          values.baseSystemUnitId === "none" ? null : values.baseSystemUnitId,
       };
 
       if (unit) {
@@ -182,15 +191,14 @@ export function UnitDialog({
                     <FormLabel>Unit Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(UnitType).map((type) => (
+                        {Object.values(UnitType).map(type => (
                           <SelectItem key={type} value={type}>
                             {type}
                           </SelectItem>
@@ -209,15 +217,14 @@ export function UnitDialog({
                     <FormLabel>Industry Category</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(IndustryCategory).map((cat) => (
+                        {Object.values(IndustryCategory).map(cat => (
                           <SelectItem key={cat} value={cat}>
                             {cat}
                           </SelectItem>
@@ -233,7 +240,8 @@ export function UnitDialog({
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h3 className="text-sm font-medium">System Mapping (Optional)</h3>
               <p className="text-xs text-gray-500">
-                Link this custom unit to a system base unit for automatic conversions.
+                Link this custom unit to a system base unit for automatic
+                conversions.
               </p>
 
               <div className="grid grid-cols-2 gap-4">
@@ -245,8 +253,7 @@ export function UnitDialog({
                       <FormLabel>Base System Unit</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value || undefined}
-                      >
+                        defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="No mapping" />
@@ -254,7 +261,7 @@ export function UnitDialog({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">No mapping</SelectItem>
-                          {filteredSystemUnits.map((u) => (
+                          {filteredSystemUnits.map(u => (
                             <SelectItem key={u.id} value={u.id}>
                               {u.name} ({u.symbol})
                             </SelectItem>
@@ -273,7 +280,12 @@ export function UnitDialog({
                     <FormItem>
                       <FormLabel>Factor</FormLabel>
                       <FormControl>
-                        <Input type="number" step="any" placeholder="1.0" {...field} />
+                        <Input
+                          type="number"
+                          step="any"
+                          placeholder="1.0"
+                          {...field}
+                        />
                       </FormControl>
                       <FormDescription>
                         Value in base system unit
@@ -330,8 +342,7 @@ export function UnitDialog({
                   type="button"
                   variant="outline"
                   className="text-red-600 hover:bg-red-50 hover:text-red-700 gap-2"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
+                  onClick={() => setIsDeleteDialogOpen(true)}>
                   <Trash2 size={16} />
                   Delete
                 </Button>
@@ -343,24 +354,28 @@ export function UnitDialog({
           </form>
         </Form>
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the custom unit <strong>{unit?.name}</strong>.
+                This action cannot be undone. This will permanently delete the
+                custom unit <strong>{unit?.name}</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction
                 className="bg-red-600 hover:bg-red-700"
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   handleDelete();
                 }}
-                disabled={isDeleting}
-              >
+                disabled={isDeleting}>
                 {isDeleting ? "Deleting..." : "Delete"}
               </AlertDialogAction>
             </AlertDialogFooter>

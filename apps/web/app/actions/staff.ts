@@ -159,7 +159,9 @@ export async function updateMemberRole(memberId: string, role: MemberRole) {
   return { success: true };
 }
 
-export async function getStaffMemberDetail(memberId: string): Promise<{ success: boolean; data?: any; error?: string; stats?: any }> {
+export async function getStaffMemberDetail(
+  memberId: string,
+): Promise<{ success: boolean; data?: any; error?: string; stats?: any }> {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
     return { success: false, error: "Unauthorized" };
@@ -252,7 +254,7 @@ export async function getStaffMemberDetail(memberId: string): Promise<{ success:
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const stats = await db.$transaction(async (tx) => {
+  const stats = await db.$transaction(async tx => {
     const totalSales = await tx.transaction.aggregate({
       where: {
         memberId: memberId,
@@ -414,7 +416,10 @@ export async function generateMemberCardId(memberId: string) {
   }
 }
 
-export async function resetMemberPassword(memberId: string, newPassword?: string) {
+export async function resetMemberPassword(
+  memberId: string,
+  newPassword?: string,
+) {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
     return { success: false, error: "Unauthorized" };
@@ -457,7 +462,10 @@ export async function resetMemberPassword(memberId: string, newPassword?: string
     return { success: true, password };
   } catch (error: any) {
     console.error("Error resetting password:", error);
-    return { success: false, error: error.message || "Failed to reset password" };
+    return {
+      success: false,
+      error: error.message || "Failed to reset password",
+    };
   }
 }
 
@@ -583,7 +591,7 @@ export async function updateMemberCustomRoles(
     where: { id: memberId, organizationId: session.organizationId },
     data: {
       customRoles: {
-        set: roleIds.map((id) => ({ id })),
+        set: roleIds.map(id => ({ id })),
       },
     },
   });

@@ -11,7 +11,13 @@ import {
 } from "@repo/ui/components/ui/table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Package, Truck, ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Package,
+  Truck,
+  ShoppingCart,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { FulfillmentModal } from "./fulfillment-modal";
 
 interface AggregatedItem {
@@ -33,7 +39,9 @@ interface AggregatedItem {
 
 export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [fulfillmentItem, setFulfillmentItem] = useState<AggregatedItem | null>(null);
+  const [fulfillmentItem, setFulfillmentItem] = useState<AggregatedItem | null>(
+    null,
+  );
 
   const toggleRow = (variantId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -67,16 +75,24 @@ export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
               </TableCell>
             </TableRow>
           ) : (
-            data.map((item) => (
+            data.map(item => (
               <React.Fragment key={item.variantId}>
-                <TableRow className="hover:bg-gray-50/50 cursor-pointer" onClick={() => toggleRow(item.variantId)}>
+                <TableRow
+                  className="hover:bg-gray-50/50 cursor-pointer"
+                  onClick={() => toggleRow(item.variantId)}>
                   <TableCell>
-                    {expandedRows.has(item.variantId) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    {expandedRows.has(item.variantId) ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium text-sm">
-                        {item.name} {item.variantName !== "Default" && ` - ${item.variantName}`}
+                        {item.name}{" "}
+                        {item.variantName !== "Default" &&
+                          ` - ${item.variantName}`}
                       </span>
                     </div>
                   </TableCell>
@@ -90,7 +106,11 @@ export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
                     {item.totalAllocated}
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={item.totalRemaining > 0 ? "secondary" : "outline"} className="px-2 h-5">
+                    <Badge
+                      variant={
+                        item.totalRemaining > 0 ? "secondary" : "outline"
+                      }
+                      className="px-2 h-5">
                       {item.totalRemaining}
                     </Badge>
                   </TableCell>
@@ -98,11 +118,10 @@ export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
                     <Button
                       size="sm"
                       className="gap-2 bg-blue-600 hover:bg-blue-700"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         setFulfillmentItem(item);
-                      }}
-                    >
+                      }}>
                       <Package size={14} />
                       Fulfill
                     </Button>
@@ -112,17 +131,29 @@ export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
                   <TableRow className="bg-gray-50/30">
                     <TableCell colSpan={7} className="p-0">
                       <div className="px-12 py-3 border-l-4 border-blue-200">
-                        <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Breakdown by Request</h4>
+                        <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                          Breakdown by Request
+                        </h4>
                         <div className="grid grid-cols-1 gap-2">
-                          {item.requests.map((req) => (
-                            <div key={req.requestId} className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
+                          {item.requests.map(req => (
+                            <div
+                              key={req.requestId}
+                              className="flex items-center justify-between py-1 border-b border-gray-100 last:border-0">
                               <div className="flex items-center gap-4">
-                                <span className="text-sm font-medium text-blue-600">{req.requestNumber}</span>
-                                <span className="text-sm text-gray-600">{req.locationName}</span>
+                                <span className="text-sm font-medium text-blue-600">
+                                  {req.requestNumber}
+                                </span>
+                                <span className="text-sm text-gray-600">
+                                  {req.locationName}
+                                </span>
                               </div>
                               <div className="flex items-center gap-6">
-                                <span className="text-xs text-gray-400">Requested: {req.quantity}</span>
-                                <span className="text-xs font-bold text-amber-600">Remaining: {req.remaining}</span>
+                                <span className="text-xs text-gray-400">
+                                  Requested: {req.quantity}
+                                </span>
+                                <span className="text-xs font-bold text-amber-600">
+                                  Remaining: {req.remaining}
+                                </span>
                               </div>
                             </div>
                           ))}

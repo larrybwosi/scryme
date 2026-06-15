@@ -141,8 +141,8 @@ export function Sidebar() {
   };
 
   const toggleSubmenu = (title: string) => {
-    setOpenMenus((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
+    setOpenMenus(prev =>
+      prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title],
     );
   };
 
@@ -151,15 +151,13 @@ export function Sidebar() {
       className={cn(
         "flex flex-col h-screen border-r bg-white transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[80px]" : "w-[280px]",
-      )}
-    >
+      )}>
       {/* Brand Header */}
       <div
         className={cn(
           "flex items-center h-[80px] px-6",
           isCollapsed ? "flex-col justify-center gap-2" : "justify-between",
-        )}
-      >
+        )}>
         {!isCollapsed ? (
           <>
             <div className="flex items-center gap-2">
@@ -173,8 +171,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Collapse sidebar"
-              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
-            >
+              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors">
               <ChevronLeft size={14} />
             </button>
           </>
@@ -183,8 +180,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Expand sidebar"
-              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
-            >
+              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors">
               <ChevronRight size={14} />
             </button>
             <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
@@ -209,7 +205,7 @@ export function Sidebar() {
                 const isOpen = openMenus.includes(item.title);
                 const isActive =
                   pathname === item.href ||
-                  item.items?.some((sub) => sub.href === pathname);
+                  item.items?.some(sub => sub.href === pathname);
 
                 const itemContent = (
                   <button
@@ -226,8 +222,7 @@ export function Sidebar() {
                         ? "text-[#34A853] bg-[#34A853]/5 font-medium"
                         : "text-gray-500 hover:bg-gray-50",
                       isCollapsed && "justify-center",
-                    )}
-                  >
+                    )}>
                     <div className="flex items-center gap-3">
                       <item.icon
                         size={20}
@@ -275,8 +270,7 @@ export function Sidebar() {
                                 isSubActive
                                   ? "text-[#1D1D1F] font-bold"
                                   : "text-gray-500 hover:text-gray-800",
-                              )}
-                            >
+                              )}>
                               {subItem.title}
                             </Link>
                           );
@@ -299,8 +293,7 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   aria-label="Notifications"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-                >
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
                   <div className="relative">
                     <Bell size={20} />
                     <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
@@ -313,8 +306,7 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   aria-label="Support"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-                >
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
                   <HelpCircle size={20} />
                 </button>
               </TooltipTrigger>
@@ -325,8 +317,7 @@ export function Sidebar() {
                 <button
                   onClick={handleLogout}
                   aria-label="Sign out"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-                >
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
                   <LogOut size={20} />
                 </button>
               </TooltipTrigger>
@@ -373,8 +364,7 @@ export function Sidebar() {
               <button
                 onClick={handleLogout}
                 aria-label="Sign out"
-                className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
-              >
+                className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors">
                 <LogOut size={16} />
               </button>
             </TooltipTrigger>

@@ -1,13 +1,18 @@
-import React from 'react';
+import React from "react";
 import { PageHeader } from "@/components/page-header";
 import {
   getStockDashboardStats,
   getStockMovementsChartData,
   getStockDistributionByLocation,
-  getStockLevels
+  getStockLevels,
 } from "@/app/actions/stock-management";
 import { getInventoryLocations } from "@/app/actions/inventory";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import {
   TrendingUp,
   Package,
@@ -15,7 +20,7 @@ import {
   AlertTriangle,
   LayoutGrid,
   ArrowRight,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
@@ -24,25 +29,26 @@ import { StockLevelsTable } from "@/components/stocking/stock-levels-table";
 import { StockLevelsFilters } from "@/components/stocking/stock-levels-filters";
 
 export default async function StockingDashboard({
-  searchParams
+  searchParams,
 }: {
   searchParams: Promise<{
     locationId?: string;
     search?: string;
-  }>
+  }>;
 }) {
   const params = await searchParams;
 
-  const [stats, movementData, distributionData, locations, stockLevels] = await Promise.all([
-    getStockDashboardStats(),
-    getStockMovementsChartData(),
-    getStockDistributionByLocation(),
-    getInventoryLocations(),
-    getStockLevels({
-      locationId: params.locationId,
-      search: params.search
-    })
-  ]);
+  const [stats, movementData, distributionData, locations, stockLevels] =
+    await Promise.all([
+      getStockDashboardStats(),
+      getStockMovementsChartData(),
+      getStockDistributionByLocation(),
+      getInventoryLocations(),
+      getStockLevels({
+        locationId: params.locationId,
+        search: params.search,
+      }),
+    ]);
 
   if (!stats) return <div>Failed to load stats.</div>;
 
@@ -54,7 +60,7 @@ export default async function StockingDashboard({
       description: "Across all categories",
       color: "text-blue-600",
       bg: "bg-blue-50",
-      link: "/stocking/list"
+      link: "/stocking/list",
     },
     {
       title: "Stock Requests",
@@ -63,7 +69,7 @@ export default async function StockingDashboard({
       description: "Manage branch requests",
       color: "text-purple-600",
       bg: "bg-purple-50",
-      link: "/stocking/requests"
+      link: "/stocking/requests",
     },
     {
       title: "Pending Transfers",
@@ -72,7 +78,7 @@ export default async function StockingDashboard({
       description: "Awaiting action",
       color: "text-amber-600",
       bg: "bg-amber-50",
-      link: "/stocking/transfers"
+      link: "/stocking/transfers",
     },
     {
       title: "Low Stock Alerts",
@@ -81,8 +87,8 @@ export default async function StockingDashboard({
       description: "Requires attention",
       color: "text-red-600",
       bg: "bg-red-50",
-      link: "/stocking/reorder-rules"
-    }
+      link: "/stocking/reorder-rules",
+    },
   ];
 
   return (
@@ -101,9 +107,13 @@ export default async function StockingDashboard({
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      {stat.title}
+                    </p>
                     <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                    <p className="text-xs text-gray-400 mt-1">{stat.description}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {stat.description}
+                    </p>
                   </div>
                   <div className={`p-3 rounded-xl ${stat.bg}`}>
                     <stat.icon className={`w-6 h-6 ${stat.color}`} />
@@ -115,7 +125,10 @@ export default async function StockingDashboard({
         ))}
       </div>
 
-      <StockCharts movementData={movementData} distributionData={distributionData} />
+      <StockCharts
+        movementData={movementData}
+        distributionData={distributionData}
+      />
 
       {/* Stock Levels Section */}
       <Card>
@@ -126,11 +139,15 @@ export default async function StockingDashboard({
               Branch Stock Levels
             </CardTitle>
             <p className="text-xs text-gray-500 mt-0.5">
-              Detailed breakdown of inventory across all locations and in-transit units.
+              Detailed breakdown of inventory across all locations and
+              in-transit units.
             </p>
           </div>
           <Link href="/stocking/list">
-            <Button variant="ghost" size="sm" className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
               View All
               <ArrowRight size={16} />
             </Button>

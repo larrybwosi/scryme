@@ -15,7 +15,12 @@ import {
 import { Label } from "@repo/ui/components/ui/label";
 import { Input } from "@repo/ui/components/ui/input";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 
 interface Product {
   variantId: string;
@@ -42,7 +47,7 @@ export function NewTransferForm({
   const [fromLocationId, setFromLocationId] = useState("");
   const [toLocationId, setToLocationId] = useState("");
 
-  const variants = products.map((p) => ({
+  const variants = products.map(p => ({
     id: p.variantId,
     name: "Default",
     productName: p.name,
@@ -51,14 +56,13 @@ export function NewTransferForm({
 
   return (
     <form
-      action={async (formData) => {
+      action={async formData => {
         formData.set("variantId", variantId);
         formData.set("fromLocationId", fromLocationId);
         formData.set("toLocationId", toLocationId);
         await onSave(formData);
       }}
-      className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-    >
+      className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
@@ -93,8 +97,7 @@ export function NewTransferForm({
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-2 border-dashed"
-                >
+                  className="w-full gap-2 border-dashed">
                   <Plus size={14} /> Add
                 </Button>
               </div>
@@ -141,7 +144,7 @@ export function NewTransferForm({
                   <SelectValue placeholder="Select source..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.map((l) => (
+                  {locations.map(l => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.name}
                     </SelectItem>
@@ -158,7 +161,7 @@ export function NewTransferForm({
                   <SelectValue placeholder="Select destination..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.map((l) => (
+                  {locations.map(l => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.name}
                     </SelectItem>

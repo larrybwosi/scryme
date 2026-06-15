@@ -103,8 +103,7 @@ const UnauthorizedPage = () => {
           <Button
             className="w-full gap-2 font-medium"
             size="lg"
-            onClick={handleLogin}
-          >
+            onClick={handleLogin}>
             <LogIn className="w-4 h-4" />
             Log In to Continue
           </Button>

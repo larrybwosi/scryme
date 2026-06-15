@@ -34,14 +34,17 @@ export default async function NewOrderPage() {
     },
   });
 
-  const formattedVariants = variants.map((v) => ({
+  const formattedVariants = variants.map(v => ({
     id: v.id,
     name: v.name,
     sku: v.sku,
     productName: v.product.name,
     retailPrice: Number(v.retailPrice),
     buyingPrice: Number(v.buyingPrice),
-    stock: v.variantStocks.reduce((acc, s) => acc + Number(s.availableStock), 0),
+    stock: v.variantStocks.reduce(
+      (acc, s) => acc + Number(s.availableStock),
+      0,
+    ),
   }));
 
   const organization = await db.organization.findUnique({

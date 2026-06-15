@@ -19,7 +19,7 @@ export async function createOrganization(data: {
   const auth = await getServerAuth();
   if (!auth) throw new Error("Unauthorized");
 
-  const organization = await db.$transaction(async (tx) => {
+  const organization = await db.$transaction(async tx => {
     const org = await tx.organization.create({
       data: {
         name: data.name,
@@ -87,17 +87,9 @@ export async function updateOrganizationSettings(data: {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  const {
-    name,
-    email,
-    phone,
-    address,
-    logo,
-    banner,
-    ...settingsData
-  } = data;
+  const { name, email, phone, address, logo, banner, ...settingsData } = data;
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     const org = await tx.organization.update({
       where: { id: auth.organizationId },
       data: {

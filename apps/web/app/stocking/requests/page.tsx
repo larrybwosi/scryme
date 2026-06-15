@@ -5,8 +5,16 @@ import { PageHeader } from "@/components/page-header";
 import { ShoppingCart, Plus, Search, FileDown } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
-import { getStockRequestList, getAggregatedStockRequests } from "@/app/actions/stock-management";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import {
+  getStockRequestList,
+  getAggregatedStockRequests,
+} from "@/app/actions/stock-management";
 import Link from "next/link";
 import { StockRequestTable } from "@/components/stocking/requests/stock-request-table";
 import { AggregatedRequestTable } from "@/components/stocking/requests/aggregated-request-table";
@@ -30,7 +38,9 @@ export default function StockRequestsPage() {
           const data = await getStockRequestList({ search: debouncedSearch });
           setRequests(data);
         } else {
-          const data = await getAggregatedStockRequests({ search: debouncedSearch });
+          const data = await getAggregatedStockRequests({
+            search: debouncedSearch,
+          });
           setAggregatedItems(data);
         }
       } catch (error) {
@@ -47,7 +57,10 @@ export default function StockRequestsPage() {
     const params = new URLSearchParams();
     if (debouncedSearch) params.append("search", debouncedSearch);
 
-    window.open(`/api/stocking/documents/${endpoint}?${params.toString()}`, "_blank");
+    window.open(
+      `/api/stocking/documents/${endpoint}?${params.toString()}`,
+      "_blank",
+    );
   };
 
   return (
@@ -80,12 +93,15 @@ export default function StockRequestsPage() {
           </TabsList>
 
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+            />
             <Input
               placeholder="Search..."
               className="pl-10"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
         </div>
@@ -94,7 +110,9 @@ export default function StockRequestsPage() {
           <Card>
             <CardContent className="p-0">
               <StockRequestTable data={requests} />
-              {loading && <div className="p-8 text-center text-gray-500">Loading...</div>}
+              {loading && (
+                <div className="p-8 text-center text-gray-500">Loading...</div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -103,7 +121,9 @@ export default function StockRequestsPage() {
           <Card>
             <CardContent className="p-0">
               <AggregatedRequestTable data={aggregatedItems} />
-              {loading && <div className="p-8 text-center text-gray-500">Loading...</div>}
+              {loading && (
+                <div className="p-8 text-center text-gray-500">Loading...</div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

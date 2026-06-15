@@ -9,11 +9,11 @@ import QRCode from "qrcode";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   const { id } = await params;
@@ -44,7 +44,7 @@ export async function GET(
   });
 
   if (!transaction) {
-    return new NextResponse('Not Found', { status: 404 });
+    return new NextResponse("Not Found", { status: 404 });
   }
 
   try {
@@ -58,7 +58,8 @@ export async function GET(
         ) as any,
       );
     } else {
-      const selectedTemplate = template || transaction.organization?.settings?.defaultInvoiceTemplate;
+      const selectedTemplate =
+        template || transaction.organization?.settings?.defaultInvoiceTemplate;
       const DocumentComponent = getInvoiceTemplate(selectedTemplate);
       const documentData = Mappers.toInvoiceData(transaction);
 
@@ -79,12 +80,12 @@ export async function GET(
 
     return new NextResponse(stream as any, {
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${type}-${transaction.number}.pdf"`,
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${type}-${transaction.number}.pdf"`,
       },
     });
   } catch (error) {
-    console.error('PDF Generation Error:', error);
-    return new NextResponse('Error generating PDF', { status: 500 });
+    console.error("PDF Generation Error:", error);
+    return new NextResponse("Error generating PDF", { status: 500 });
   }
 }

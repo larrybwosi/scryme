@@ -18,7 +18,11 @@ import {
   PopoverTrigger,
 } from "@repo/ui/components/ui/popover";
 import { getStaffMembers } from "../app/actions/staff";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 
 interface Member {
   id: string;
@@ -65,7 +69,9 @@ export function MemberSelector({
     loadMembers();
   }, []);
 
-  const selectedMember = members.find((m) => m.user.email === value || m.id === value);
+  const selectedMember = members.find(
+    m => m.user.email === value || m.id === value,
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,19 +83,22 @@ export function MemberSelector({
           className={cn(
             "w-full justify-between bg-white h-11",
             error && "border-red-500",
-            className
-          )}
-        >
+            className,
+          )}>
           <div className="flex items-center gap-2 truncate">
             {selectedMember ? (
               <>
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={selectedMember.user.image || ""} />
                   <AvatarFallback className="text-[10px]">
-                    {(selectedMember.user.name || selectedMember.user.email).substring(0, 2).toUpperCase()}
+                    {(selectedMember.user.name || selectedMember.user.email)
+                      .substring(0, 2)
+                      .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="truncate">{selectedMember.user.name || selectedMember.user.email}</span>
+                <span className="truncate">
+                  {selectedMember.user.name || selectedMember.user.email}
+                </span>
               </>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
@@ -98,13 +107,17 @@ export function MemberSelector({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0"
+        align="start">
         <Command>
           <CommandInput placeholder="Search member by name or email..." />
           <CommandList>
-            <CommandEmpty>{loading ? "Loading members..." : "No member found."}</CommandEmpty>
+            <CommandEmpty>
+              {loading ? "Loading members..." : "No member found."}
+            </CommandEmpty>
             <CommandGroup>
-              {members.map((member) => (
+              {members.map(member => (
                 <CommandItem
                   key={member.id}
                   value={member.user.name + " " + member.user.email}
@@ -114,22 +127,25 @@ export function MemberSelector({
                     onValueChange(newValue === value ? "" : newValue);
                     setOpen(false);
                   }}
-                  className="flex items-center gap-3 py-3"
-                >
+                  className="flex items-center gap-3 py-3">
                   <Check
                     className={cn(
                       "h-4 w-4",
-                      value === member.user.email ? "opacity-100" : "opacity-0"
+                      value === member.user.email ? "opacity-100" : "opacity-0",
                     )}
                   />
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={member.user.image || ""} />
                     <AvatarFallback>
-                      {(member.user.name || member.user.email).substring(0, 2).toUpperCase()}
+                      {(member.user.name || member.user.email)
+                        .substring(0, 2)
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col overflow-hidden">
-                    <span className="font-medium truncate">{member.user.name || "Unnamed"}</span>
+                    <span className="font-medium truncate">
+                      {member.user.name || "Unnamed"}
+                    </span>
                     <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
                       <Mail className="h-3 w-3" /> {member.user.email}
                     </span>

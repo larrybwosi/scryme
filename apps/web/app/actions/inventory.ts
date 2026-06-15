@@ -145,7 +145,7 @@ export async function createProduct(data: {
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     // 1. Create the Product
     const product = await tx.product.create({
       data: {
@@ -284,7 +284,7 @@ export async function updateProduct(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     const product = await tx.product.update({
       where: { id, organizationId: context.organizationId },
       data: {
@@ -325,7 +325,10 @@ export async function updateProduct(
               : undefined,
         },
       });
-    } else if (data.buyingPrice !== undefined || data.retailPrice !== undefined) {
+    } else if (
+      data.buyingPrice !== undefined ||
+      data.retailPrice !== undefined
+    ) {
       // If variant doesn't exist but pricing was provided, we might be in an inconsistent state
       // but let's try to update the first variant anyway if possible.
       const firstVariant = await tx.productVariant.findFirst({
@@ -335,9 +338,15 @@ export async function updateProduct(
         await tx.productVariant.update({
           where: { id: firstVariant.id },
           data: {
-            buyingPrice: data.buyingPrice !== undefined ? new Decimal(data.buyingPrice) : undefined,
-            retailPrice: data.retailPrice !== undefined ? new Decimal(data.retailPrice) : undefined,
-          }
+            buyingPrice:
+              data.buyingPrice !== undefined
+                ? new Decimal(data.buyingPrice)
+                : undefined,
+            retailPrice:
+              data.retailPrice !== undefined
+                ? new Decimal(data.retailPrice)
+                : undefined,
+          },
         });
       }
     }
@@ -415,14 +424,14 @@ export async function getProduct(id: string): Promise<any> {
             include: {
               systemUnit: true,
               orgUnit: true,
-            }
+            },
           },
           reorderRules: {
             include: {
               location: true,
               preferredSupplier: true,
-            }
-          }
+            },
+          },
         },
       },
       suppliers: {
@@ -434,8 +443,8 @@ export async function getProduct(id: string): Promise<any> {
         include: {
           location: true,
           preferredSupplier: true,
-        }
-      }
+        },
+      },
     },
   });
 }
@@ -475,25 +484,28 @@ export async function getOrganizationUnits(): Promise<OrganizationUnit[]> {
   });
 }
 
-export async function updateVariantUnits(variantId: string, data: {
-  baseUnitId?: string | null;
-  baseOrgUnitId?: string | null;
-  stockingUnitId?: string | null;
-  stockingOrgUnitId?: string | null;
-  sellingUnits: Array<{
-    id?: string;
-    systemUnitId?: string | null;
-    orgUnitId?: string | null;
-    retailPrice?: number;
-    wholesalePrice?: number;
-    conversionMultiplier: number;
-    isActive: boolean;
-  }>;
-}): Promise<any> {
+export async function updateVariantUnits(
+  variantId: string,
+  data: {
+    baseUnitId?: string | null;
+    baseOrgUnitId?: string | null;
+    stockingUnitId?: string | null;
+    stockingOrgUnitId?: string | null;
+    sellingUnits: Array<{
+      id?: string;
+      systemUnitId?: string | null;
+      orgUnitId?: string | null;
+      retailPrice?: number;
+      wholesalePrice?: number;
+      conversionMultiplier: number;
+      isActive: boolean;
+    }>;
+  },
+): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     // 1. Update Variant primary units
     const variant = await tx.productVariant.update({
       where: { id: variantId },
@@ -507,12 +519,14 @@ export async function updateVariantUnits(variantId: string, data: {
 
     // 2. Manage Selling Units
     // Delete units not in the list
-    const incomingIds = data.sellingUnits.map(su => su.id).filter(Boolean) as string[];
+    const incomingIds = data.sellingUnits
+      .map(su => su.id)
+      .filter(Boolean) as string[];
     await tx.variantSellingUnit.deleteMany({
       where: {
         variantId,
-        id: { notIn: incomingIds }
-      }
+        id: { notIn: incomingIds },
+      },
     });
 
     // Handle updates and creations
@@ -524,10 +538,12 @@ export async function updateVariantUnits(variantId: string, data: {
             systemUnitId: su.systemUnitId,
             orgUnitId: su.orgUnitId,
             retailPrice: su.retailPrice ? new Decimal(su.retailPrice) : null,
-            wholesalePrice: su.wholesalePrice ? new Decimal(su.wholesalePrice) : null,
+            wholesalePrice: su.wholesalePrice
+              ? new Decimal(su.wholesalePrice)
+              : null,
             conversionMultiplier: new Decimal(su.conversionMultiplier),
             isActive: su.isActive,
-          }
+          },
         });
       } else {
         await tx.variantSellingUnit.create({
@@ -536,10 +552,12 @@ export async function updateVariantUnits(variantId: string, data: {
             systemUnitId: su.systemUnitId,
             orgUnitId: su.orgUnitId,
             retailPrice: su.retailPrice ? new Decimal(su.retailPrice) : null,
-            wholesalePrice: su.wholesalePrice ? new Decimal(su.wholesalePrice) : null,
+            wholesalePrice: su.wholesalePrice
+              ? new Decimal(su.wholesalePrice)
+              : null,
             conversionMultiplier: new Decimal(su.conversionMultiplier),
             isActive: su.isActive,
-          }
+          },
         });
       }
     }
@@ -549,7 +567,9 @@ export async function updateVariantUnits(variantId: string, data: {
   });
 }
 
-export async function getReorderRules(productId: string): Promise<ReorderRule[]> {
+export async function getReorderRules(
+  productId: string,
+): Promise<ReorderRule[]> {
   const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
@@ -561,7 +581,7 @@ export async function getReorderRules(productId: string): Promise<ReorderRule[]>
     include: {
       location: true,
       preferredSupplier: true,
-    }
+    },
   });
 }
 
@@ -712,15 +732,15 @@ export async function getInventoryProducts(params: {
 
   if (groupByProduct) {
     // Map to products and calculate aggregated values
-    results = products.map((product) => {
-      const allVariantStocks = product.variants.flatMap((v) => v.variantStocks);
+    results = products.map(product => {
+      const allVariantStocks = product.variants.flatMap(v => v.variantStocks);
       const totalStock = allVariantStocks.reduce(
         (acc, s) => acc.plus(s.currentStock),
         new Decimal(0),
       );
 
       const prices = product.variants.map(
-        (v) => Number(v.retailPrice) || Number(v.buyingPrice),
+        v => Number(v.retailPrice) || Number(v.buyingPrice),
       );
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
       const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
@@ -753,8 +773,8 @@ export async function getInventoryProducts(params: {
     });
   } else {
     // Flatten and filter by stock level if needed
-    results = products.flatMap((product) =>
-      product.variants.map((variant) => {
+    results = products.flatMap(product =>
+      product.variants.map(variant => {
         const stocks = variant.variantStocks;
         const currentStock = stocks.reduce(
           (acc, s) => acc.plus(s.currentStock),
@@ -790,7 +810,7 @@ export async function getInventoryProducts(params: {
   }
 
   if (stockLevel && stockLevel !== "all") {
-    results = results.filter((r) => {
+    results = results.filter(r => {
       if (stockLevel === "low") return r.status === "Low";
       if (stockLevel === "out") return r.status === "Out of Stock";
       if (stockLevel === "normal")
@@ -858,7 +878,7 @@ export async function adjustStock(data: {
   if (isNaN(quantity) || quantity === 0) return null;
 
   // Start a transaction
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     // 1. Create Stock Adjustment
     const adjustment = await tx.stockAdjustment.create({
       data: {
@@ -1020,7 +1040,7 @@ export async function createVariant(data: {
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     const variant = await tx.productVariant.create({
       data: {
         productId: data.productId,
@@ -1188,7 +1208,9 @@ export type InventoryProduct = {
   variantName?: string;
 };
 
-export async function bulkDeleteVariants(variantIds: string[]): Promise<Prisma.BatchPayload> {
+export async function bulkDeleteVariants(
+  variantIds: string[],
+): Promise<Prisma.BatchPayload> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -1203,7 +1225,10 @@ export async function bulkDeleteVariants(variantIds: string[]): Promise<Prisma.B
   return result;
 }
 
-export async function updateVariantStatus(variantIds: string[], isActive: boolean): Promise<Prisma.BatchPayload> {
+export async function updateVariantStatus(
+  variantIds: string[],
+  isActive: boolean,
+): Promise<Prisma.BatchPayload> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -1264,7 +1289,7 @@ export type ProductImportData = {
 
 export async function importProducts(
   products: ProductImportData[],
-  strategy: "skip" | "replace"
+  strategy: "skip" | "replace",
 ): Promise<{
   success: number;
   skipped: number;
@@ -1289,13 +1314,17 @@ export async function importProducts(
     where: { organizationId: context.organizationId },
   });
 
-  const categoryMap = new Map(existingCategories.map((c) => [c.name.toLowerCase(), c.id]));
+  const categoryMap = new Map(
+    existingCategories.map(c => [c.name.toLowerCase(), c.id]),
+  );
 
   for (const productData of products) {
     try {
-      await db.$transaction(async (tx) => {
+      await db.$transaction(async tx => {
         // 1. Handle Category
-        let categoryId = categoryMap.get(productData.categoryName.toLowerCase());
+        let categoryId = categoryMap.get(
+          productData.categoryName.toLowerCase(),
+        );
         if (!categoryId) {
           const newCategory = await tx.category.create({
             data: {
@@ -1376,7 +1405,10 @@ export async function importProducts(
         if (productData.initialStock && productData.initialStock > 0) {
           const defaultLocation =
             (await tx.inventoryLocation.findFirst({
-              where: { organizationId: context.organizationId, isDefault: true },
+              where: {
+                organizationId: context.organizationId,
+                isDefault: true,
+              },
             })) ||
             (await tx.inventoryLocation.findFirst({
               where: { organizationId: context.organizationId },
@@ -1436,29 +1468,31 @@ export async function importProducts(
             });
           }
         } else {
-            // Create empty stock record for default location if possible
-            const defaultLocation = await tx.inventoryLocation.findFirst({
-                where: { organizationId: context.organizationId },
+          // Create empty stock record for default location if possible
+          const defaultLocation = await tx.inventoryLocation.findFirst({
+            where: { organizationId: context.organizationId },
+          });
+          if (defaultLocation) {
+            await tx.productVariantStock.create({
+              data: {
+                productId: product.id,
+                variantId: variant.id,
+                locationId: defaultLocation.id,
+                currentStock: new Decimal(0),
+                availableStock: new Decimal(0),
+                organizationId: context.organizationId,
+              },
             });
-            if (defaultLocation) {
-                await tx.productVariantStock.create({
-                    data: {
-                        productId: product.id,
-                        variantId: variant.id,
-                        locationId: defaultLocation.id,
-                        currentStock: new Decimal(0),
-                        availableStock: new Decimal(0),
-                        organizationId: context.organizationId,
-                    },
-                });
-            }
+          }
         }
 
         results.success++;
       });
     } catch (error: any) {
       results.failed++;
-      results.errors.push(`Failed to import ${productData.name}: ${error.message}`);
+      results.errors.push(
+        `Failed to import ${productData.name}: ${error.message}`,
+      );
     }
   }
 

@@ -31,15 +31,15 @@ export function RealtimeTransactionWrapper({
     const unsubscribe = subscribe(
       `org:${organizationId}:transactions`,
       "transaction:created",
-      (newTrx) => {
+      newTrx => {
         console.log("New transaction received:", newTrx);
         toast.info(`New Transaction: ${newTrx.number}`, {
           description: `${newTrx.customerName} - ${newTrx.finalTotal}`,
         });
 
-        setTransactions((prev) => {
+        setTransactions(prev => {
           // Prevent duplicates
-          if (prev.find((t) => t.id === newTrx.id)) return prev;
+          if (prev.find(t => t.id === newTrx.id)) return prev;
 
           // Re-format slightly to match table expectations if needed
           // The table expects things like trx.customer.name, trx._count.items
@@ -72,8 +72,7 @@ export function RealtimeTransactionWrapper({
             isRealtime
               ? "border-emerald-500 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700"
               : "text-zinc-500",
-          )}
-        >
+          )}>
           {isRealtime ? (
             <>
               <Zap className="w-4 h-4 fill-current" />

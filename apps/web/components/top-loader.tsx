@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import NextTopLoader from 'nextjs-toploader';
+import NextTopLoader from "nextjs-toploader";
 
 export const TopLoader = () => {
   return (

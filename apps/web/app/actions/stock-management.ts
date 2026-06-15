@@ -1,6 +1,13 @@
 "use server";
 
-import { db, StockTransferStatus, MovementType, AlertStatus, StockRequestStatus, StockRequestPriority } from "@repo/db";
+import {
+  db,
+  StockTransferStatus,
+  MovementType,
+  AlertStatus,
+  StockRequestStatus,
+  StockRequestPriority,
+} from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 import {
@@ -64,7 +71,7 @@ export async function getStockMovementsChartData(): Promise<any[]> {
   }).reverse();
 
   const data = await Promise.all(
-    last6Months.map(async (month) => {
+    last6Months.map(async month => {
       const movements = await db.stockMovement.groupBy({
         by: ["movementType"],
         where: {
@@ -80,7 +87,7 @@ export async function getStockMovementsChartData(): Promise<any[]> {
       });
 
       const inbound = movements
-        .filter((m) =>
+        .filter(m =>
           [
             "PURCHASE_RECEIPT",
             "ADJUSTMENT_IN",
@@ -91,7 +98,7 @@ export async function getStockMovementsChartData(): Promise<any[]> {
         .reduce((acc, m) => acc + (m._sum.quantity?.toNumber() || 0), 0);
 
       const outbound = movements
-        .filter((m) =>
+        .filter(m =>
           ["SALE", "ADJUSTMENT_OUT", "SUPPLIER_RETURN"].includes(
             m.movementType,
           ),
@@ -125,12 +132,12 @@ export async function getStockDistributionByLocation(): Promise<any[]> {
   });
 
   const locations = await db.inventoryLocation.findMany({
-    where: { id: { in: distribution.map((d) => d.locationId) } },
+    where: { id: { in: distribution.map(d => d.locationId) } },
     select: { id: true, name: true },
   });
 
-  return distribution.map((d) => ({
-    name: locations.find((l) => l.id === d.locationId)?.name || "Unknown",
+  return distribution.map(d => ({
+    name: locations.find(l => l.id === d.locationId)?.name || "Unknown",
     value: d._sum.currentStock?.toNumber() || 0,
   }));
 }
@@ -151,8 +158,14 @@ export async function getStockTransferList(params?: {
   if (params?.search) {
     where.OR = [
       { transferNumber: { contains: params.search, mode: "insensitive" } },
-      { fromLocation: { name: { contains: params.search, mode: "insensitive" } } },
-      { toLocation: { name: { contains: params.search, mode: "insensitive" } } },
+      {
+        fromLocation: {
+          name: { contains: params.search, mode: "insensitive" },
+        },
+      },
+      {
+        toLocation: { name: { contains: params.search, mode: "insensitive" } },
+      },
     ];
   }
 
@@ -179,7 +192,7 @@ export async function createStockTransfer(data: {
 
   const transferNumber = `TRF-${Date.now()}`;
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     const transfer = await tx.stockTransfer.create({
       data: {
         organizationId: context.organizationId,
@@ -191,7 +204,7 @@ export async function createStockTransfer(data: {
         status: "PENDING_APPROVAL",
         items: {
           create: await Promise.all(
-            data.items.map(async (item) => {
+            data.items.map(async item => {
               const variant = await tx.productVariant.findUnique({
                 where: { id: item.variantId },
                 select: { buyingPrice: true },
@@ -256,7 +269,7 @@ export async function updateStockTransferStatus(
 
   if (!transfer) throw new Error("Transfer not found");
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     const updateData: any = { status };
 
     if (status === "APPROVED") {
@@ -485,7 +498,15 @@ export async function getStockLevels(params: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
-  const { locationId, search, categoryId, supplierId, sortBy, sortOrder = "asc", groupBy } = params;
+  const {
+    locationId,
+    search,
+    categoryId,
+    supplierId,
+    sortBy,
+    sortOrder = "asc",
+    groupBy,
+  } = params;
 
   // Build the where clause for products
   const where: any = {
@@ -575,7 +596,7 @@ export async function getStockLevels(params: {
 
   // 4. Create lookup maps for efficiency
   const transferMap = new Map<string, Decimal>();
-  incomingTransfers.forEach((t) => {
+  incomingTransfers.forEach(t => {
     const current = transferMap.get(t.variantId) || new Decimal(0);
     transferMap.set(
       t.variantId,
@@ -584,7 +605,7 @@ export async function getStockLevels(params: {
   });
 
   const purchaseMap = new Map<string, Decimal>();
-  incomingPurchases.forEach((p) => {
+  incomingPurchases.forEach(p => {
     const current = purchaseMap.get(p.variantId) || new Decimal(0);
     const pending = new Decimal(p.orderedQuantity).minus(p.receivedQuantity);
     if (pending.gt(0)) {
@@ -593,13 +614,13 @@ export async function getStockLevels(params: {
   });
 
   // 5. Map results and aggregate data
-  let results = products.flatMap((product) =>
-    product.variants.flatMap((variant) => {
+  let results = products.flatMap(product =>
+    product.variants.flatMap(variant => {
       const stocks = variant.variantStocks;
 
       if (groupBy === "location") {
         // Return a row for each location stock record
-        return stocks.map((stock) => {
+        return stocks.map(stock => {
           const incomingT = transferMap.get(variant.id) || new Decimal(0);
           const incomingP = purchaseMap.get(variant.id) || new Decimal(0);
 
@@ -638,19 +659,21 @@ export async function getStockLevels(params: {
         const incomingT = transferMap.get(variant.id) || new Decimal(0);
         const incomingP = purchaseMap.get(variant.id) || new Decimal(0);
 
-        return [{
-          productId: product.id,
-          variantId: variant.id,
-          name: product.name,
-          variantName: variant.name,
-          sku: variant.sku || product.sku,
-          categoryName: product.category?.name || "Uncategorized",
-          supplierName: product.suppliers[0]?.supplier.name || "N/A",
-          currentStock: current.toNumber(),
-          reservedStock: reserved.toNumber(),
-          availableStock: available.toNumber(),
-          incomingStock: incomingT.add(incomingP).toNumber(),
-        }];
+        return [
+          {
+            productId: product.id,
+            variantId: variant.id,
+            name: product.name,
+            variantName: variant.name,
+            sku: variant.sku || product.sku,
+            categoryName: product.category?.name || "Uncategorized",
+            supplierName: product.suppliers[0]?.supplier.name || "N/A",
+            currentStock: current.toNumber(),
+            reservedStock: reserved.toNumber(),
+            availableStock: available.toNumber(),
+            incomingStock: incomingT.add(incomingP).toNumber(),
+          },
+        ];
       }
     }),
   );
@@ -691,8 +714,14 @@ export async function getStockRequestList(params?: {
   if (params?.search) {
     where.OR = [
       { requestNumber: { contains: params.search, mode: "insensitive" } },
-      { toLocation: { name: { contains: params.search, mode: "insensitive" } } },
-      { requestedBy: { user: { name: { contains: params.search, mode: "insensitive" } } } },
+      {
+        toLocation: { name: { contains: params.search, mode: "insensitive" } },
+      },
+      {
+        requestedBy: {
+          user: { name: { contains: params.search, mode: "insensitive" } },
+        },
+      },
     ];
   }
 
@@ -719,17 +748,19 @@ export async function createStockRequest(data: {
 
   const requestNumber = `REQ-${Date.now()}`;
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     let totalEstimatedCost = new Decimal(0);
 
     const itemsData = await Promise.all(
-      data.items.map(async (item) => {
+      data.items.map(async item => {
         const variant = await tx.productVariant.findUnique({
           where: { id: item.variantId },
           select: { buyingPrice: true },
         });
         const unitCost = variant?.buyingPrice || new Decimal(0);
-        totalEstimatedCost = totalEstimatedCost.add(unitCost.mul(item.quantity));
+        totalEstimatedCost = totalEstimatedCost.add(
+          unitCost.mul(item.quantity),
+        );
 
         return {
           variantId: item.variantId,
@@ -785,12 +816,12 @@ export async function getStockRequestDetails(id: string): Promise<any> {
         include: {
           fromLocation: true,
           toLocation: true,
-        }
+        },
       },
       purchases: {
         include: {
           supplier: true,
-        }
+        },
       },
     },
   });
@@ -811,7 +842,11 @@ export async function getAggregatedStockRequests(params?: {
 
   if (params?.search) {
     itemWhere.OR = [
-      { variant: { product: { name: { contains: params.search, mode: "insensitive" } } } },
+      {
+        variant: {
+          product: { name: { contains: params.search, mode: "insensitive" } },
+        },
+      },
       { variant: { name: { contains: params.search, mode: "insensitive" } } },
       { variant: { sku: { contains: params.search, mode: "insensitive" } } },
     ];
@@ -829,22 +864,28 @@ export async function getAggregatedStockRequests(params?: {
       stockRequest: {
         include: {
           toLocation: true,
-        }
-      }
+        },
+      },
     },
   });
 
   // Aggregate by variantId
   const aggregationMap = new Map<string, any>();
 
-  items.forEach((item) => {
-    const remaining = new Decimal(item.requestedQuantity).minus(item.allocatedQuantity);
+  items.forEach(item => {
+    const remaining = new Decimal(item.requestedQuantity).minus(
+      item.allocatedQuantity,
+    );
     if (remaining.lte(0)) return;
 
     const existing = aggregationMap.get(item.variantId);
     if (existing) {
-      existing.totalRequested = existing.totalRequested.add(item.requestedQuantity);
-      existing.totalAllocated = existing.totalAllocated.add(item.allocatedQuantity);
+      existing.totalRequested = existing.totalRequested.add(
+        item.requestedQuantity,
+      );
+      existing.totalAllocated = existing.totalAllocated.add(
+        item.allocatedQuantity,
+      );
       existing.totalRemaining = existing.totalRemaining.add(remaining);
       existing.requests.push({
         requestId: item.stockRequestId,
@@ -862,13 +903,15 @@ export async function getAggregatedStockRequests(params?: {
         totalRequested: new Decimal(item.requestedQuantity),
         totalAllocated: new Decimal(item.allocatedQuantity),
         totalRemaining: remaining,
-        requests: [{
-          requestId: item.stockRequestId,
-          requestNumber: item.stockRequest.requestNumber,
-          locationName: item.stockRequest.toLocation.name,
-          quantity: item.requestedQuantity,
-          remaining: remaining,
-        }],
+        requests: [
+          {
+            requestId: item.stockRequestId,
+            requestNumber: item.stockRequest.requestNumber,
+            locationName: item.stockRequest.toLocation.name,
+            quantity: item.requestedQuantity,
+            remaining: remaining,
+          },
+        ],
       });
     }
   });
@@ -879,10 +922,10 @@ export async function getAggregatedStockRequests(params?: {
     totalAllocated: item.totalAllocated.toNumber(),
     totalRemaining: item.totalRemaining.toNumber(),
     requests: item.requests.map((r: any) => ({
-        ...r,
-        quantity: r.quantity.toNumber(),
-        remaining: r.remaining.toNumber(),
-    }))
+      ...r,
+      quantity: r.quantity.toNumber(),
+      remaining: r.remaining.toNumber(),
+    })),
   }));
 }
 
@@ -898,7 +941,7 @@ export async function getStockRequestLocations(): Promise<any[]> {
 
 export async function fulfillStockRequestItems(data: {
   variantId: string;
-  fulfillmentType: 'TRANSFER' | 'PURCHASE';
+  fulfillmentType: "TRANSFER" | "PURCHASE";
   fromLocationId?: string; // for TRANSFER
   supplierId?: string; // for PURCHASE
   items: { requestId: string; quantity: number }[];
@@ -908,23 +951,26 @@ export async function fulfillStockRequestItems(data: {
   if (!context?.organizationId || !context.user.id)
     throw new Error("Unauthorized");
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     // 1. Create the fulfillment record (StockTransfer or Purchase)
-    if (data.fulfillmentType === 'TRANSFER') {
-      if (!data.fromLocationId) throw new Error("Source location required for transfer");
+    if (data.fulfillmentType === "TRANSFER") {
+      if (!data.fromLocationId)
+        throw new Error("Source location required for transfer");
 
       // For transfers, we might need multiple transfers if requests have different target locations
       // But to keep it simple, if they select items from different requests, we should group by target location
       const requests = await tx.stockRequest.findMany({
-        where: { id: { in: data.items.map(i => i.requestId) } }
+        where: { id: { in: data.items.map(i => i.requestId) } },
       });
 
-      const targetLocationIds = Array.from(new Set(requests.map(r => r.toLocationId)));
+      const targetLocationIds = Array.from(
+        new Set(requests.map(r => r.toLocationId)),
+      );
 
       for (const toLocationId of targetLocationIds) {
         const itemsForThisLocation = data.items.filter(i => {
-            const req = requests.find(r => r.id === i.requestId);
-            return req?.toLocationId === toLocationId;
+          const req = requests.find(r => r.id === i.requestId);
+          return req?.toLocationId === toLocationId;
         });
 
         if (itemsForThisLocation.length === 0) continue;
@@ -940,17 +986,19 @@ export async function fulfillStockRequestItems(data: {
             requestedById: context.user.id,
             status: "PENDING_APPROVAL",
             items: {
-              create: await Promise.all(itemsForThisLocation.map(async (item) => {
-                const variant = await tx.productVariant.findUnique({
-                  where: { id: data.variantId },
-                  select: { buyingPrice: true },
-                });
-                return {
-                  variantId: data.variantId,
-                  requestedQuantity: new Decimal(item.quantity),
-                  unitCost: variant?.buyingPrice || new Decimal(0),
-                };
-              })),
+              create: await Promise.all(
+                itemsForThisLocation.map(async item => {
+                  const variant = await tx.productVariant.findUnique({
+                    where: { id: data.variantId },
+                    select: { buyingPrice: true },
+                  });
+                  return {
+                    variantId: data.variantId,
+                    requestedQuantity: new Decimal(item.quantity),
+                    unitCost: variant?.buyingPrice || new Decimal(0),
+                  };
+                }),
+              ),
             },
           },
         });
@@ -958,7 +1006,10 @@ export async function fulfillStockRequestItems(data: {
         // Update allocated quantity in StockRequestItem
         for (const item of itemsForThisLocation) {
           await tx.stockRequestItem.updateMany({
-            where: { stockRequestId: item.requestId, variantId: data.variantId },
+            where: {
+              stockRequestId: item.requestId,
+              variantId: data.variantId,
+            },
             data: {
               allocatedQuantity: { increment: item.quantity },
             },
@@ -992,14 +1043,16 @@ export async function fulfillStockRequestItems(data: {
           totalAmount: totalAmount,
           notes: data.notes || "Consolidated procurement from requests",
           items: {
-            create: [{
-              variantId: data.variantId,
-              orderedQuantity: totalQuantity,
-              unitCost: unitCost,
-              totalCost: totalAmount,
-            }]
-          }
-        }
+            create: [
+              {
+                variantId: data.variantId,
+                orderedQuantity: totalQuantity,
+                unitCost: unitCost,
+                totalCost: totalAmount,
+              },
+            ],
+          },
+        },
       });
 
       // Update allocated quantity in StockRequestItem
@@ -1017,22 +1070,26 @@ export async function fulfillStockRequestItems(data: {
     const requestIds = Array.from(new Set(data.items.map(i => i.requestId)));
     for (const rid of requestIds) {
       const items = await tx.stockRequestItem.findMany({
-        where: { stockRequestId: rid }
+        where: { stockRequestId: rid },
       });
 
       const allAllocated = items.every(item =>
-        new Decimal(item.allocatedQuantity).gte(item.requestedQuantity)
+        new Decimal(item.allocatedQuantity).gte(item.requestedQuantity),
       );
 
       const someAllocated = items.some(item =>
-        new Decimal(item.allocatedQuantity).gt(0)
+        new Decimal(item.allocatedQuantity).gt(0),
       );
 
       await tx.stockRequest.update({
         where: { id: rid },
         data: {
-          status: allAllocated ? "APPROVED" : someAllocated ? "PARTIALLY_FULFILLED" : "PENDING"
-        }
+          status: allAllocated
+            ? "APPROVED"
+            : someAllocated
+              ? "PARTIALLY_FULFILLED"
+              : "PENDING",
+        },
       });
     }
 
