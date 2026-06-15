@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   StickyNote,
@@ -11,9 +11,10 @@ import {
   MessageSquare,
   CalendarClock,
   Activity,
+  Users,
 } from 'lucide-react';
 
-export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups' | 'activities';
+export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups' | 'activities' | 'contacts';
 
 interface Tab {
   id: TabId;
@@ -29,31 +30,39 @@ const TABS: Tab[] = [
   { id: 'orders', label: 'Orders & Sales', icon: ShoppingBag },
   { id: 'conversations', label: 'Conversations', icon: MessageSquare },
   { id: 'followups', label: 'Follow-ups', icon: CalendarClock },
+  { id: 'contacts', label: 'Contacts', icon: Users },
 ];
 
 interface DetailTabsProps {
   activeTab: TabId;
   customerId: string;
   counts?: Partial<Record<TabId, number>>;
+  availableTabs?: TabId[];
 }
 
-export function DetailTabs({ activeTab, customerId, counts }: DetailTabsProps) {
+export function DetailTabs({ activeTab, customerId, counts, availableTabs }: DetailTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const handleTabChange = useCallback(
     (tabId: TabId) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('tab', tabId);
-      router.replace(`/customers/${customerId}?${params.toString()}`, { scroll: false });
+      // Use current pathname to stay on the same detail page
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams, customerId]
+    [router, searchParams, pathname]
   );
+
+  const displayedTabs = availableTabs
+    ? TABS.filter(t => availableTabs.includes(t.id))
+    : TABS;
 
   return (
     <div className="border-b border-border bg-card">
       <div className="flex items-center overflow-x-auto px-6 custom-scrollbar" style={{ msOverflowStyle: 'none' }}>
-        {TABS.map((tab) => {
+        {displayedTabs.map((tab) => {
           const isActive = tab.id === activeTab;
           const count = counts?.[tab.id];
           return (

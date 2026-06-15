@@ -1,25 +1,26 @@
 'use server';
 
-import { db, type CrmActivity } from '@repo/db';
+import { db } from '@repo/db';
 import { crmActivitySchema, type CrmActivityFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
 
-export async function createActivity(data: CrmActivityFormValues, organizationId: string, memberId?: string | null): Promise<CrmActivity> {
+export async function createActivity(data: CrmActivityFormValues, organizationId: string, memberId?: string | null) {
   const validatedData = crmActivitySchema.parse(data);
 
   const activity = await db.crmActivity.create({
     data: {
       ...validatedData,
       organizationId,
-      memberId,
+      memberId: memberId || null,
     },
     include: {
-      record: {
-        include: {
-          customer: true,
-          businessAccount: true,
+        record: {
+            include: {
+                customer: true,
+                businessAccount: true,
+                objectDefinition: true,
+            }
         }
-      }
     }
   });
 
@@ -29,19 +30,12 @@ export async function createActivity(data: CrmActivityFormValues, organizationId
   if (activity.record.businessAccount) {
     revalidatePath(`/companies/${activity.record.businessAccount.id}`);
   }
-  return activity;
-}
+  if (activity.record.objectDefinition.name === 'deal') {
+    revalidatePath(`/pipeline/${activity.recordId}`);
+  }
+  if (activity.record.objectDefinition.name === 'lead') {
+    revalidatePath(`/leads/${activity.recordId}`);
+  }
 
-export async function getActivities(recordId: string): Promise<any[]> {
-  return await db.crmActivity.findMany({
-    where: { recordId },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      member: {
-        include: {
-          user: true,
-        },
-      },
-    },
-  });
+  return activity;
 }

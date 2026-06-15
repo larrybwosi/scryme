@@ -1,10 +1,12 @@
 "use client";
 
-import React from 'react';
-import { Activity, Circle, Clock, CheckCircle2, Mail, Phone, StickyNote, UserPlus, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { Activity, Circle, Clock, CheckCircle2, Mail, Phone, StickyNote, UserPlus, TrendingUp, Plus, X, Video, Users } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDate } from "@/lib/utils";
+import { createActivity } from '@/app/actions/activities';
+import { toast } from 'sonner';
 
 interface ActivitiesTabProps {
   customer: any;
@@ -29,7 +31,33 @@ const ACTIVITY_COLORS: Record<string, string> = {
 };
 
 export function ActivitiesTab({ customer }: ActivitiesTabProps) {
+  const [showForm, setShowForm] = useState(false);
+  const [type, setType] = useState('CALL');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const activities = customer.crmRecord?.activities || [];
+
+  const handleAdd = async () => {
+    if (!description.trim() || !customer.crmRecordId) return;
+
+    setLoading(true);
+    try {
+      await createActivity({
+        type,
+        description: description.trim(),
+        recordId: customer.crmRecordId,
+      }, customer.organizationId);
+
+      toast.success('Activity logged');
+      setDescription('');
+      setShowForm(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to log activity');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl">
@@ -40,7 +68,63 @@ export function ActivitiesTab({ customer }: ActivitiesTabProps) {
             History of all interactions and updates
           </p>
         </div>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className={cn(
+            'flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border transition-colors',
+            showForm
+              ? 'bg-muted text-muted-foreground border-border'
+              : 'bg-primary text-white border-primary hover:bg-primary/90'
+          )}
+        >
+          {showForm ? <X size={13} /> : <Plus size={13} />}
+          {showForm ? 'Cancel' : 'Log Activity'}
+        </button>
       </div>
+
+      {showForm && (
+        <div className="mb-8 bg-card border border-primary/30 rounded-xl p-5 shadow-sm">
+           <div className="flex flex-wrap gap-2 mb-4">
+              {[
+                { id: 'CALL', icon: Phone, label: 'Call' },
+                { id: 'EMAIL', icon: Mail, label: 'Email' },
+                { id: 'MEETING', icon: Users, label: 'Meeting' },
+                { id: 'VIDEO', icon: Video, label: 'Video' },
+                { id: 'NOTE', icon: StickyNote, label: 'Note' },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setType(t.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors border",
+                    type === t.id
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "bg-background border-border text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  <t.icon size={13} />
+                  {t.label}
+                </button>
+              ))}
+           </div>
+           <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the interaction…"
+              rows={3}
+              className="w-full bg-background border border-border rounded-lg p-3 text-[13.5px] text-foreground outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary resize-none"
+           />
+           <div className="flex justify-end mt-3">
+              <button
+                onClick={handleAdd}
+                disabled={loading || !description.trim()}
+                className="text-[12.5px] font-semibold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 transition-colors"
+              >
+                {loading ? 'Saving...' : 'Save Activity'}
+              </button>
+           </div>
+        </div>
+      )}
 
       {activities.length === 0 ? (
         <EmptyState

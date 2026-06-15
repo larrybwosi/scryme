@@ -95,6 +95,10 @@ export function CampaignsView({
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  const totalSent = campaigns.reduce((acc: number, c: any) => acc + (c.totalSent || 0), 0);
+  const totalOpened = campaigns.reduce((acc: number, c: any) => acc + (c.totalOpened || 0), 0);
+  const avgOpenRate = totalSent > 0 ? (totalOpened / totalSent) * 100 : 0;
+
   const stats = [
     {
       label: "Active Campaigns",
@@ -104,16 +108,13 @@ export function CampaignsView({
     },
     {
       label: "Total Recipients",
-      value: campaigns.reduce(
-        (acc: number, c: any) => acc + (c.totalSent || 0),
-        0,
-      ),
+      value: totalSent.toLocaleString(),
       icon: Users,
       color: "text-purple-600",
     },
     {
       label: "Avg Open Rate",
-      value: "24.5%",
+      value: `${avgOpenRate.toFixed(1)}%`,
       icon: Mail,
       color: "text-green-600",
     },
