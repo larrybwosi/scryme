@@ -116,6 +116,21 @@ const getStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   },
   footerText: { fontSize: 8, color: colors.secondary },
   footerQRCode: { width: 64, height: 64 },
+  watermark: {
+    position: 'absolute',
+    top: '35%',
+    left: '20%',
+    transform: 'rotate(-45deg)',
+    fontSize: 60,
+    color: 'rgba(200, 200, 200, 0.3)',
+    zIndex: -1,
+  },
+  poweredBy: {
+    fontSize: 7,
+    color: colors.secondary,
+    textAlign: 'center',
+    marginTop: 4,
+  },
 });
 
 // Create Document Component
@@ -139,6 +154,12 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: strin
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {branding?.watermarkText && (
+          <Text style={styles.watermark} fixed>
+            {branding.watermarkText}
+          </Text>
+        )}
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.companyInfo}>
@@ -230,11 +251,23 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: strin
         {/* Footer */}
         <View style={styles.footer} fixed>
           <View>
-            <Text style={styles.footerText}>Thank you for your business.</Text>
+            <Text style={styles.footerText}>{data.footerText || 'Thank you for your business.'}</Text>
             <Text style={styles.footerText}>
               {companyName} | {companyWebsite}
             </Text>
+            {branding?.showPoweredBy !== false && (
+              <Text style={styles.poweredBy}>Powered by Scryme</Text>
+            )}
           </View>
+          {branding?.customFields && branding.customFields.length > 0 && (
+            <View style={{ textAlign: 'right' }}>
+              {branding.customFields.map((field, index) => (
+                <Text key={index} style={styles.footerText}>
+                  {field.label}: {field.value}
+                </Text>
+              ))}
+            </View>
+          )}
           {(qrCode || data.qrCode) && <Image style={styles.footerQRCode} src={qrCode || data.qrCode} />}
         </View>
       </Page>
