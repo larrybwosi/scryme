@@ -4,7 +4,6 @@ import { Maximize2, MoreHorizontal, HelpCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import { Progress } from "@repo/ui/components/ui/progress";
@@ -40,24 +39,42 @@ export function PopularProducts({ products }: PopularProductsProps) {
           <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             Popular Product
           </h3>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" aria-label="Popular products information">
                 <HelpCircle className="h-3 w-3 text-muted-foreground/50" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Top performing products by sales volume.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Top performing products by sales volume.</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Maximize popular products chart">
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Maximize</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="More options for popular products">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>More options</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

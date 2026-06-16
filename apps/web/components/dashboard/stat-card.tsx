@@ -12,7 +12,6 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 
@@ -60,16 +59,16 @@ export function StatCard({
           {title}
         </span>
         {showTooltip && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" aria-label={`${title} information`}>
                 <HelpCircle className="h-3 w-3 text-muted-foreground/50" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{tooltipText}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{tooltipText}</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 
