@@ -41,6 +41,7 @@ const formSchema = z.object({
   showPoweredBy: z.boolean(),
   watermarkText: z.string().optional(),
   enableAuditTrail: z.boolean(),
+  showLogo: z.boolean(),
   showTaxBreakdown: z.boolean(),
   showTerms: z.boolean(),
   showNotes: z.boolean(),
@@ -80,6 +81,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
       showPoweredBy: initialConfig?.showPoweredBy ?? true,
       watermarkText: initialConfig?.watermarkText || "",
       enableAuditTrail: initialConfig?.enableAuditTrail ?? false,
+      showLogo: initialConfig?.showLogo ?? true,
       showTaxBreakdown: initialConfig?.showTaxBreakdown ?? true,
       showTerms: initialConfig?.showTerms ?? true,
       showNotes: initialConfig?.showNotes ?? true,
@@ -148,19 +150,40 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 )}
               />
             </div>
-            <FormField
-              name="logoUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Logo URL Override</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <FormDescription>Custom logo specifically for invoices</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                name="logoUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Logo URL Override</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://..." {...field} />
+                    </FormControl>
+                    <FormDescription>Custom logo specifically for invoices</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="showLogo"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm h-full">
+                    <div className="space-y-0.5">
+                      <FormLabel>Display Logo</FormLabel>
+                      <FormDescription>
+                        Toggle logo visibility on invoices
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 name="companyEmail"

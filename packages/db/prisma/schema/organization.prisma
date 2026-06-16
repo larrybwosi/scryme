@@ -143,6 +143,8 @@ model Organization {
   invoices          Invoice[]
   kraComplianceLogs KRAComplianceLog[]
   invoiceConfig     InvoiceConfig?
+  receiptConfig     ReceiptConfig?
+  waybillConfig     WaybillConfig?
   invoiceTemplates  InvoiceTemplate[]  @relation("OrgInvoiceTemplates")
   templateUsageLogs TemplateUsageLog[] @relation("OrgTemplateUsageLogs")
 

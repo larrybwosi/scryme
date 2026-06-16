@@ -186,6 +186,7 @@ model InvoiceConfig {
   companyWebsite String?
 
   // Layout Toggles
+  showLogo         Boolean @default(true)
   showTaxBreakdown Boolean @default(true)
   showTerms        Boolean @default(true)
   showNotes        Boolean @default(true)

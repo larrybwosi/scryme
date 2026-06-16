@@ -7,6 +7,7 @@ export interface BrandingOptions {
   companyPhone?: string;
   companyWebsite?: string;
   companyTagline?: string;
+  showLogo?: boolean;
   showPoweredBy?: boolean;
   watermarkText?: string;
   customFields?: Array<{ label: string; value: string }>;
