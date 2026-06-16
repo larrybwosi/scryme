@@ -15,6 +15,7 @@
     "./realtime": "./src/realtime/index.ts",
     "./realtime-client": "./src/realtime-client.tsx",
     "./storage": "./src/storage/index.ts",
+    "./storage/service": "./src/storage/storage.service.ts",
     "./api/v2/services/auth": "./src/api/v2/services/auth.service.ts",
     "./api/v2/services/zitadel/jwks": "./src/api/v2/services/zitadel/jwks.service.ts",
     "./api/v2/utils/encryption": "./src/api/v2/utils/encryption.ts",
