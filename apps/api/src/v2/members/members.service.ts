@@ -23,7 +23,17 @@ export class MembersService {
 
     return this.prisma.client.member.findMany({
       where,
-      include: {
+      // OPTIMIZATION (Bolt ⚡): Using select instead of include to reduce payload size and exclude sensitive fields like pinHash
+      select: {
+        id: true,
+        organizationId: true,
+        userId: true,
+        role: true,
+        membershipStatus: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        status: true,
         user: {
           select: {
             id: true,
@@ -40,7 +50,25 @@ export class MembersService {
     const {organizationId} = ctx;
     const member = await this.prisma.client.member.findFirst({
       where: {id, organizationId},
-      include: {
+      // OPTIMIZATION (Bolt ⚡): Using select instead of include to reduce payload size and exclude sensitive fields like pinHash
+      select: {
+        id: true,
+        organizationId: true,
+        userId: true,
+        cardId: true,
+        role: true,
+        membershipStatus: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        phone: true,
+        email: true,
+        address: true,
+        age: true,
+        gender: true,
+        tags: true,
+        isCheckedIn: true,
+        status: true,
         user: {
           select: {
             id: true,
@@ -139,7 +167,13 @@ export class MembersService {
         isActive: true,
         deletedAt: null,
       },
-      include: {
+      // OPTIMIZATION (Bolt ⚡): Explicitly selecting only required fields for auth and response mapping.
+      // pinHash is required here for bcrypt.compare but is not returned to the client.
+      select: {
+        id: true,
+        organizationId: true,
+        pinHash: true,
+        role: true,
         user: {
           select: {
             id: true,
