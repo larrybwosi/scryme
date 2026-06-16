@@ -5,7 +5,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import * as crypto from "crypto";
 import {
   CreateSetupKeyDto,
@@ -34,7 +34,7 @@ export class StandalonePosService {
 
   async activateDevice(dto: ActivateDeviceDto) {
     const setupKey = await this.prisma.client.standaloneSetupKey.findUnique({
-      where: {token: dto.token},
+      where: { token: dto.token },
     });
 
     if (!setupKey) {
@@ -51,7 +51,7 @@ export class StandalonePosService {
 
     // Check if machineId is already registered
     let device = await this.prisma.client.standaloneDevice.findUnique({
-      where: {machineId: dto.machineId},
+      where: { machineId: dto.machineId },
     });
 
     if (device) {
@@ -85,8 +85,8 @@ export class StandalonePosService {
 
     // Mark token as used
     await this.prisma.client.standaloneSetupKey.update({
-      where: {id: setupKey.id},
-      data: {usedAt: new Date()},
+      where: { id: setupKey.id },
+      data: { usedAt: new Date() },
     });
 
     return {
@@ -98,8 +98,8 @@ export class StandalonePosService {
 
   async validateKey(key: string) {
     const deviceKey = await this.prisma.client.standaloneDeviceKey.findUnique({
-      where: {key},
-      include: {device: true},
+      where: { key },
+      include: { device: true },
     });
 
     if (!deviceKey || !deviceKey.isActive) {
@@ -119,7 +119,7 @@ export class StandalonePosService {
 
   async linkOrganization(dto: LinkOrganizationDto) {
     const device = await this.prisma.client.standaloneDevice.findUnique({
-      where: {id: dto.deviceId},
+      where: { id: dto.deviceId },
     });
 
     if (!device) {
@@ -127,7 +127,7 @@ export class StandalonePosService {
     }
 
     const organization = await this.prisma.client.organization.findUnique({
-      where: {id: dto.organizationId},
+      where: { id: dto.organizationId },
     });
 
     if (!organization) {
@@ -135,8 +135,8 @@ export class StandalonePosService {
     }
 
     return this.prisma.client.standaloneDevice.update({
-      where: {id: dto.deviceId},
-      data: {organizationId: dto.organizationId},
+      where: { id: dto.deviceId },
+      data: { organizationId: dto.organizationId },
     });
   }
 }

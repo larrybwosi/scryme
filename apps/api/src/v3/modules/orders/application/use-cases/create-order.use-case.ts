@@ -4,13 +4,14 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {IOrderRepository} from "../../domain/repositories/order-repository.interface";
-import {CreateOrderDto} from "../dto/create-order.dto";
-import {PrismaService} from "@/prisma/prisma.service";
-import {WebhookService} from "../../../webhooks/infrastructure/services/webhook.service";
-import {ApiRealtimeService} from "../../../../../common/services/realtime.service";
-import {emitOrderPlaced} from "@repo/windmill/server";
-import {createOrder, CreateOrderInput} from "@repo/shared/server";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { CreateOrderDto } from "../dto/create-order.dto";
+import { PrismaService } from "@/prisma/prisma.service";
+import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
+import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
+import { emitOrderPlaced } from "@repo/windmill/server";
+import { createOrder } from "@repo/shared/actions/transaction/orders";
+import { type CreateOrderInput } from "@repo/shared/lib/validations/order";
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -63,7 +64,7 @@ export class CreateOrderUseCase {
         quantity: Number(i.quantity),
         lineTotal: Number(i.lineTotal),
       })),
-    }).catch(err =>
+    }).catch((err) =>
       console.error("[v3 Order] Failed to emit Windmill event:", err),
     );
 

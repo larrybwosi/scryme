@@ -16,20 +16,20 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from "@nestjs/swagger";
-import {GetCustomersUseCase} from "../../application/use-cases/get-customers.use-case";
-import {RegisterCustomerUseCase} from "../../application/use-cases/register-customer.use-case";
-import {UpdateCustomerUseCase} from "../../application/use-cases/update-customer.use-case";
-import {RegisterCustomerDto} from "../../application/dto/register-customer.dto";
-import {UpdateCustomerDto} from "../../application/dto/update-customer.dto";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
-import {AuditInterceptor} from "../../../../common/interceptors/audit.interceptor";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
-import {CustomerResponseDto} from "../../application/dto/customer.dto";
-import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
+import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
+import { UpdateCustomerUseCase } from "../../application/use-cases/update-customer.use-case";
+import { RegisterCustomerDto } from "../../application/dto/register-customer.dto";
+import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { CustomerResponseDto } from "../../application/dto/customer.dto";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @ApiTags("V3 Customers")
 @ApiBearerAuth()

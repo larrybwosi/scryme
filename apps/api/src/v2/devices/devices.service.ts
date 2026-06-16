@@ -5,9 +5,10 @@ import {
   UnauthorizedException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {type V2ApiContext, provisionDeviceV2} from "@repo/shared/server";
-import {z} from "zod";
+import { PrismaService } from "@/prisma/prisma.service";
+import { type V2ApiContext } from "@repo/shared/api/v2/types";
+import { provisionDeviceV2 } from "@repo/shared/lib/provisioning/v2";
+import { z } from "zod";
 
 const ProvisionSchema = z.object({
   setupToken: z.string().min(3),
@@ -38,7 +39,7 @@ export class DevicesService {
       });
     }
 
-    const {setupToken, serialNumber, macAddress} = parsed.data;
+    const { setupToken, serialNumber, macAddress } = parsed.data;
 
     try {
       return await provisionDeviceV2(this.prisma.client, setupToken, {

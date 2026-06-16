@@ -1,7 +1,7 @@
-import {Injectable, Logger, BadRequestException} from "@nestjs/common";
-import {PrismaService} from "../../prisma/prisma.service";
-import {ScrymeChatApiClient} from "@repo/scryme";
-import {createHmac} from "crypto";
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ScrymeChatApiClient } from "@repo/scryme";
+import { createHmac } from "crypto";
 
 @Injectable()
 export class ScrymeService {
@@ -12,7 +12,7 @@ export class ScrymeService {
 
   async getConfiguration(organizationId: string) {
     return this.prisma.client.scrymeConfiguration.findUnique({
-      where: {organizationId},
+      where: { organizationId },
     });
   }
 
@@ -30,7 +30,7 @@ export class ScrymeService {
       );
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
-        where: {organizationId},
+        where: { organizationId },
         update: {
           workspaceId: workspace.id,
           workspaceSlug: workspace.slug,
@@ -76,21 +76,21 @@ export class ScrymeService {
     this.logger.log(`Received Scryme webhook: ${payload.event}`);
 
     if (payload.event === "message.action") {
-      const {workspaceSlug, action, message, user} = payload.data;
+      const { workspaceSlug, action, message, user } = payload.data;
 
       // Find the organization associated with this workspace
       const config = await (
         this.prisma.client as any
       ).scrymeConfiguration.findUnique({
-        where: {workspaceSlug},
-        include: {organization: {include: {windmillConfiguration: true}}},
+        where: { workspaceSlug },
+        include: { organization: { include: { windmillConfiguration: true } } },
       });
 
       if (!config || !config.organization.windmillConfiguration) {
         this.logger.warn(
           `No organization or Windmill config found for Scryme workspace: ${workspaceSlug}`,
         );
-        return {status: "ignored"};
+        return { status: "ignored" };
       }
 
       // Trigger Windmill workflow
@@ -119,10 +119,10 @@ export class ScrymeService {
       this.logger.log(
         `Queued Windmill execution for Scryme action: ${action.id} in workspace ${workspaceSlug}`,
       );
-      return {status: "success"};
+      return { status: "success" };
     }
 
-    return {status: "received"};
+    return { status: "received" };
   }
 
   async registerWebhook(baseUrl: string) {

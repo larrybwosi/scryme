@@ -1,9 +1,9 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {ScrymeService} from "../scryme.service";
-import {PrismaService} from "../../../prisma/prisma.service";
-import {createHmac} from "crypto";
-import {BadRequestException} from "@nestjs/common";
-import {describe, it, expect, beforeEach, vi} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { ScrymeService } from "../scryme.service";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { createHmac } from "crypto";
+import { BadRequestException } from "@nestjs/common";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("ScrymeService", () => {
   let service: ScrymeService;
@@ -25,7 +25,7 @@ describe("ScrymeService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ScrymeService,
-        {provide: PrismaService, useValue: mockPrisma},
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
 
@@ -38,9 +38,9 @@ describe("ScrymeService", () => {
       event: "message.action",
       data: {
         workspaceSlug: "org-test",
-        action: {id: "test-action"},
-        message: {id: "msg-1"},
-        user: {id: "user-1"},
+        action: { id: "test-action" },
+        message: { id: "msg-1" },
+        user: { id: "user-1" },
       },
     };
 
@@ -55,7 +55,7 @@ describe("ScrymeService", () => {
       mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
         organizationId: "org-1",
         organization: {
-          windmillConfiguration: {id: "wm-1"},
+          windmillConfiguration: { id: "wm-1" },
         },
       });
 

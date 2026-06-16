@@ -4,8 +4,8 @@ import {
   ExecutionContext,
   NotFoundException,
 } from "@nestjs/common";
-import {GqlExecutionContext} from "@nestjs/graphql";
-import {PrismaService} from "@/prisma/prisma.service";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class MultiTenancyGuard implements CanActivate {
@@ -37,8 +37,8 @@ export class MultiTenancyGuard implements CanActivate {
     }
 
     const organization = await this.prisma.client.organization.findUnique({
-      where: {slug: orgSlug},
-      select: {id: true, slug: true, name: true},
+      where: { slug: orgSlug },
+      select: { id: true, slug: true, name: true },
     });
 
     if (!organization) {

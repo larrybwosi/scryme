@@ -1,7 +1,7 @@
-import {Injectable, Inject} from "@nestjs/common";
-import {IProductRepository} from "../../domain/repositories/product-repository.interface";
-import {Product} from "../../domain/entities/product.entity";
-import {CreateProductDto} from "../dto/product.dto";
+import { Injectable, Inject } from "@nestjs/common";
+import { IProductRepository } from "../../../catalog-core/domain/repositories/product-repository.interface";
+import { Product } from "../../../catalog-core/domain/entities/product.entity";
+import { CreateProductDto } from "../dto/product.dto";
 import * as crypto from "crypto";
 
 @Injectable()
@@ -12,7 +12,7 @@ export class CreateProductUseCase {
   ) {}
 
   async execute(
-    dto: CreateProductDto & {organizationId: string},
+    dto: CreateProductDto & { organizationId: string },
   ): Promise<Product> {
     const product = new Product(
       crypto.randomUUID(),

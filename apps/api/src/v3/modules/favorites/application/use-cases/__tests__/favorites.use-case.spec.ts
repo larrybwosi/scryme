@@ -1,6 +1,6 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {FavoritesUseCase} from "../favorites.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { FavoritesUseCase } from "../favorites.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
 
 describe("FavoritesUseCase", () => {
   let useCase: FavoritesUseCase;
@@ -26,7 +26,7 @@ describe("FavoritesUseCase", () => {
 
   it("should add a favorite", async () => {
     const orgId = "org-1";
-    const dto = {productId: "prod-1", customerId: "cust-1"};
+    const dto = { productId: "prod-1", customerId: "cust-1" };
 
     vi.mocked(prisma.client.product.findFirst).mockResolvedValue({
       id: "prod-1",

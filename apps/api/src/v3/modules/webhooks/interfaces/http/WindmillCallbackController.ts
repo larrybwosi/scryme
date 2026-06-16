@@ -5,8 +5,8 @@ import {
   Logger,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiResponse} from "@nestjs/swagger";
-import {WindmillCallbackUseCase} from "../../application/use-cases/WindmillCallbackUseCase";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { WindmillCallbackUseCase } from "../../application/use-cases/WindmillCallbackUseCase";
 import {
   type ApprovalCallbackPayload,
   type BakeryDisposalCallbackPayload,
@@ -22,8 +22,8 @@ export class WindmillCallbackController {
   constructor(private readonly callbackUseCase: WindmillCallbackUseCase) {}
 
   @Post()
-  @ApiOperation({summary: "Handle status callbacks from Windmill (V3)"})
-  @ApiResponse({status: 200, description: "Callback processed successfully"})
+  @ApiOperation({ summary: "Handle status callbacks from Windmill (V3)" })
+  @ApiResponse({ status: 200, description: "Callback processed successfully" })
   async handleCallback(@Body() payload: WindmillCallbackPayload) {
     try {
       return await this.callbackUseCase.handleGeneralCallback(payload);
@@ -36,7 +36,7 @@ export class WindmillCallbackController {
   }
 
   @Post("approval")
-  @ApiOperation({summary: "Handle approval callbacks from Windmill (V3)"})
+  @ApiOperation({ summary: "Handle approval callbacks from Windmill (V3)" })
   async handleApprovalCallback(@Body() payload: ApprovalCallbackPayload) {
     try {
       return await this.callbackUseCase.handleApprovalCallback(payload);

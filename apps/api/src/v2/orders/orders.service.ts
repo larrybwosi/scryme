@@ -5,11 +5,11 @@ import {
   NotFoundException,
   ConflictException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import type {V2ApiContext} from "@repo/shared/server";
-import {TransactionType, TransactionStatus, PaymentStatus} from "@repo/db";
-import {z} from "zod";
-import {emitOrderPlaced} from "@repo/windmill/server";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/api/v2/types";
+import { TransactionType, TransactionStatus, PaymentStatus } from "@repo/db";
+import { z } from "zod";
+import { emitOrderPlaced } from "@repo/windmill/server";
 
 const CreateOrderSchema = z.object({
   externalOrderId: z.string().min(1),
@@ -35,7 +35,7 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async getOrders(ctx: V2ApiContext, query: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const page = Math.max(1, parseInt(query.page || "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(query.limit || "25", 10)));
     const skip = (page - 1) * limit;
@@ -51,7 +51,7 @@ export class OrdersService {
           where,
           skip,
           take: limit,
-          orderBy: {createdAt: "desc"},
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             number: true,
@@ -61,7 +61,7 @@ export class OrdersService {
             currencyCode: true,
             createdAt: true,
             metadata: true,
-            customer: {select: {id: true, name: true, email: true}},
+            customer: { select: { id: true, name: true, email: true } },
             items: {
               select: {
                 id: true,
@@ -75,10 +75,10 @@ export class OrdersService {
             },
           },
         }),
-        this.prisma.client.transaction.count({where}),
+        this.prisma.client.transaction.count({ where }),
       ]);
 
-      const shaped = transactions.map(t => {
+      const shaped = transactions.map((t) => {
         const meta = (t.metadata ?? {}) as Record<string, unknown>;
         return {
           id: t.id,
@@ -90,7 +90,7 @@ export class OrdersService {
           currency: t.currencyCode,
           customer: t.customer ?? null,
           createdAt: t.createdAt,
-          items: t.items.map(i => ({
+          items: t.items.map((i) => ({
             id: i.id,
             productName: i.productName,
             variantName: i.variantName,
@@ -104,7 +104,12 @@ export class OrdersService {
 
       return {
         orders: shaped,
-        pagination: {page, limit, total, totalPages: Math.ceil(total / limit)},
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new InternalServerErrorException("Failed to fetch orders");
@@ -126,7 +131,7 @@ export class OrdersService {
     const existingTxn = await this.prisma.client.transaction.findFirst({
       where: {
         organizationId: ctx.organizationId,
-        metadata: {path: ["externalOrderId"], equals: data.externalOrderId},
+        metadata: { path: ["externalOrderId"], equals: data.externalOrderId },
       },
       select: {
         id: true,
@@ -156,11 +161,11 @@ export class OrdersService {
     }
 
     // Resolve variants and check stock
-    const variantIds = data.items.map(i => i.variantId);
+    const variantIds = data.items.map((i) => i.variantId);
     const variants = await this.prisma.client.productVariant.findMany({
       where: {
-        id: {in: variantIds},
-        product: {organizationId: ctx.organizationId},
+        id: { in: variantIds },
+        product: { organizationId: ctx.organizationId },
       },
       select: {
         id: true,
@@ -168,16 +173,18 @@ export class OrdersService {
         name: true,
         retailPrice: true,
         buyingPrice: true,
-        product: {select: {name: true}},
+        product: { select: { name: true } },
         variantStocks: {
-          where: {locationId: data.locationId},
-          select: {availableStock: true, locationId: true},
+          where: { locationId: data.locationId },
+          select: { availableStock: true, locationId: true },
         },
       },
     });
 
     if (variants.length !== variantIds.length) {
-      const missing = variantIds.filter(id => !variants.find(v => v.id === id));
+      const missing = variantIds.filter(
+        (id) => !variants.find((v) => v.id === id),
+      );
       throw new NotFoundException({
         message: "One or more variants not found",
         missingVariantIds: missing,
@@ -187,7 +194,7 @@ export class OrdersService {
     // Check stock levels
     const insufficientStock: any[] = [];
     for (const item of data.items) {
-      const variant = variants.find(v => v.id === item.variantId)!;
+      const variant = variants.find((v) => v.id === item.variantId)!;
       const stock = Number(variant.variantStocks[0]?.availableStock ?? 0);
       if (stock < item.quantity) {
         insufficientStock.push({
@@ -214,12 +221,12 @@ export class OrdersService {
 
     // Generate order number
     const count = await this.prisma.client.transaction.count({
-      where: {organizationId: ctx.organizationId},
+      where: { organizationId: ctx.organizationId },
     });
     const orderNumber = `ECO-${String(count + 1).padStart(6, "0")}`;
 
     try {
-      const result = await this.prisma.client.$transaction(async tx => {
+      const result = await this.prisma.client.$transaction(async (tx) => {
         const transaction = await tx.transaction.create({
           data: {
             number: orderNumber,
@@ -245,8 +252,8 @@ export class OrdersService {
               apiKeyId: ctx.apiKeyId,
             },
             items: {
-              create: data.items.map(item => {
-                const variant = variants.find(v => v.id === item.variantId)!;
+              create: data.items.map((item) => {
+                const variant = variants.find((v) => v.id === item.variantId)!;
                 return {
                   variantId: item.variantId,
                   productName: variant.product.name,
@@ -285,15 +292,15 @@ export class OrdersService {
         customerId: data.customerId,
         totalAmount: Number(result.finalTotal),
         currency: result.currencyCode,
-        items: data.items.map(i => {
-          const v = variants.find(varnt => varnt.id === i.variantId)!;
+        items: data.items.map((i) => {
+          const v = variants.find((varnt) => varnt.id === i.variantId)!;
           return {
             productName: `${v.product.name} - ${v.name}`,
             quantity: i.quantity,
             lineTotal: i.unitPrice * i.quantity,
           };
         }),
-      }).catch(err =>
+      }).catch((err) =>
         console.error("[v2 orders POST] Failed to emit Windmill event:", err),
       );
 

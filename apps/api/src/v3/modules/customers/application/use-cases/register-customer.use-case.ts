@@ -5,14 +5,14 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {ICustomerRepository} from "../../domain/repositories/customer-repository.interface";
-import {RegisterCustomerDto} from "../dto/register-customer.dto";
-import {Customer} from "../../domain/entities/customer.entity";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ZitadelService} from "@repo/zitadel/server";
-import {randomUUID} from "crypto";
-import {emitCustomerCreated} from "@repo/windmill/server";
-import {CrmSyncService} from "../../../crm/infrastructure/services/crm-sync.service";
+import { ICustomerRepository } from "../../domain/repositories/customer-repository.interface";
+import { RegisterCustomerDto } from "../dto/register-customer.dto";
+import { Customer } from "../../domain/entities/customer.entity";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ZitadelService } from "@repo/zitadel/server";
+import { randomUUID } from "crypto";
+import { emitCustomerCreated } from "@repo/windmill/server";
+import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 
 @Injectable()
 export class RegisterCustomerUseCase {
@@ -32,7 +32,7 @@ export class RegisterCustomerUseCase {
 
     await this.verifyZitadelUser(dto.zitadelUserId);
 
-    const result = await this.prisma.client.$transaction(async tx => {
+    const result = await this.prisma.client.$transaction(async (tx) => {
       const internalId = await this.getOrCreateInternalMapping(
         tx,
         organizationId,
@@ -49,7 +49,12 @@ export class RegisterCustomerUseCase {
         await this.handleStructuredAddress(tx, customer.id, dto.address);
       }
 
-      return {id: internalId, name: dto.name, email: dto.email, organizationId};
+      return {
+        id: internalId,
+        name: dto.name,
+        email: dto.email,
+        organizationId,
+      };
     });
 
     await this.triggerExternalAutomations(organizationId, result);
@@ -121,13 +126,13 @@ export class RegisterCustomerUseCase {
       phone: dto.phone,
       organizationId,
       isActive: true,
-      pinnedLocation: dto.location ? {address: dto.location} : undefined,
+      pinnedLocation: dto.location ? { address: dto.location } : undefined,
       deliveryNotes: dto.metadata ? JSON.stringify(dto.metadata) : undefined,
     };
 
     return tx.customer.upsert({
-      where: {id: internalId},
-      create: {id: internalId, ...customerData},
+      where: { id: internalId },
+      create: { id: internalId, ...customerData },
       update: customerData,
     });
   }
@@ -160,17 +165,17 @@ export class RegisterCustomerUseCase {
 
     if (existingAddress) {
       await tx.address.update({
-        where: {id: existingAddress.id},
+        where: { id: existingAddress.id },
         data: addressData,
       });
     } else {
-      await tx.address.create({data: {customerId, ...addressData}});
+      await tx.address.create({ data: { customerId, ...addressData } });
     }
   }
 
   private async triggerExternalAutomations(
     organizationId: string,
-    result: {id: string; name: string; email: string},
+    result: { id: string; name: string; email: string },
   ) {
     try {
       await this.crmSyncService.enqueueSyncCustomer(organizationId, result.id);
@@ -179,7 +184,7 @@ export class RegisterCustomerUseCase {
         customerId: result.id,
         name: result.name,
         email: result.email,
-      }).catch(err =>
+      }).catch((err) =>
         this.logger.warn(
           `Failed to trigger Windmill for customer ${result.id}: ${err instanceof Error ? err.message : String(err)}`,
         ),

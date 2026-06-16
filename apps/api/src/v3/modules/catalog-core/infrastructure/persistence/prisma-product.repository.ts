@@ -1,8 +1,8 @@
-import {Injectable} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {IProductRepository} from "../../domain/repositories/product-repository.interface";
-import {Product} from "../../domain/entities/product.entity";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IProductRepository } from "../../domain/repositories/product-repository.interface";
+import { Product } from "../../domain/entities/product.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaProductRepository implements IProductRepository {
@@ -13,7 +13,7 @@ export class PrismaProductRepository implements IProductRepository {
     pagination?: PaginationQueryDto,
   ): Promise<Product[]> {
     const products = await this.prisma.client.product.findMany({
-      where: {organizationId},
+      where: { organizationId },
       take: pagination?.limit,
       skip: pagination?.offset,
       select: {
@@ -27,7 +27,7 @@ export class PrismaProductRepository implements IProductRepository {
       },
     });
     return products.map(
-      p =>
+      (p) =>
         new Product(
           p.id,
           p.name,
@@ -42,7 +42,7 @@ export class PrismaProductRepository implements IProductRepository {
 
   async findById(id: string): Promise<Product | null> {
     const p = await this.prisma.client.product.findUnique({
-      where: {id},
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -67,7 +67,7 @@ export class PrismaProductRepository implements IProductRepository {
 
   async save(product: Product): Promise<Product> {
     const p = await this.prisma.client.product.upsert({
-      where: {id: product.id},
+      where: { id: product.id },
       update: {
         name: product.name,
         description: product.description,
@@ -76,9 +76,9 @@ export class PrismaProductRepository implements IProductRepository {
         id: product.id,
         name: product.name,
         description: product.description,
-        organization: {connect: {id: product.organizationId}},
+        organization: { connect: { id: product.organizationId } },
         sku: product.sku || `PROD-${Date.now()}`,
-        category: {connect: {id: product.categoryId}},
+        category: { connect: { id: product.categoryId } },
       },
     });
     return new Product(

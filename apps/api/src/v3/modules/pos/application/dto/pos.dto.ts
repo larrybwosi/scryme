@@ -1,5 +1,5 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {IsString, IsNotEmpty} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty } from "class-validator";
 
 export class ProvisionDeviceDto {
   @ApiProperty({
@@ -20,21 +20,21 @@ export class PosLoginDto {
   @IsNotEmpty()
   clientId: string;
 
-  @ApiProperty({example: "1234", description: "The staff PIN"})
+  @ApiProperty({ example: "1234", description: "The staff PIN" })
   @IsString()
   @IsNotEmpty()
   pin: string;
 }
 
 export class PosLoginResponseDto {
-  @ApiProperty({example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."})
+  @ApiProperty({ example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." })
   accessToken: string;
 }
 
 export class ProvisionResponseDto {
-  @ApiProperty({example: "client_id_123"})
+  @ApiProperty({ example: "client_id_123" })
   clientId: string;
 
-  @ApiProperty({example: "client_secret_456"})
+  @ApiProperty({ example: "client_secret_456" })
   clientSecret: string;
 }

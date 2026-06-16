@@ -1,6 +1,6 @@
-import {Injectable, BadRequestException, Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {MovementType, SerialNumberStatus} from "@repo/db";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { MovementType, SerialNumberStatus } from "@repo/db";
 
 export interface MovementData {
   organizationId: string;
@@ -60,8 +60,11 @@ export class InventoryMovementService {
         notes,
         serialNumbers: serialNumbers
           ? {
-              connect: serialNumbers.map(sn => ({
-                organizationId_serialNumber: {organizationId, serialNumber: sn},
+              connect: serialNumbers.map((sn) => ({
+                organizationId_serialNumber: {
+                  organizationId,
+                  serialNumber: sn,
+                },
               })),
             }
           : undefined,
@@ -84,7 +87,7 @@ export class InventoryMovementService {
       await tx.serialNumber.updateMany({
         where: {
           organizationId,
-          serialNumber: {in: serialNumbers},
+          serialNumber: { in: serialNumbers },
         },
         data: {
           status: newStatus,
@@ -120,7 +123,7 @@ export class InventoryMovementService {
 
     for (const locationId of locationIds) {
       const stock = await tx.productVariantStock.findUnique({
-        where: {variantId_locationId: {variantId, locationId}},
+        where: { variantId_locationId: { variantId, locationId } },
       });
 
       const batches = await tx.stockBatch.findMany({
@@ -128,7 +131,7 @@ export class InventoryMovementService {
           organizationId,
           variantId,
           locationId,
-          currentQuantity: {gt: 0},
+          currentQuantity: { gt: 0 },
         },
       });
 

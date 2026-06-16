@@ -1,14 +1,12 @@
-import {Injectable, BadRequestException, Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import type {V2ApiContext} from "@repo/shared/server";
-// Proxy to the shared actions in @repo/shared/server
-import {
-  processSale,
-  triggerStkPush,
-  ProcessSaleInputSchema,
-  createOrder,
-  CreateOrderInputSchema,
-} from "@repo/shared/server";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/api/v2/types";
+// Proxy to the shared actions
+import { processSale } from "@repo/shared/actions/transaction/process-sale";
+import { triggerStkPush } from "@repo/shared/actions/organization/mpesa-trigger";
+import { createOrder } from "@repo/shared/actions/transaction/orders";
+import { ProcessSaleInputSchema } from "@repo/shared/lib/validations/sale";
+import { CreateOrderInputSchema } from "@repo/shared/lib/validations/order";
 
 @Injectable()
 export class PosSaleService {
@@ -17,7 +15,7 @@ export class PosSaleService {
   constructor(private prisma: PrismaService) {}
 
   async handleSale(ctx: V2ApiContext, body: any, enableStockTracking: boolean) {
-    const {organizationId, memberId, locationId: ctxLocationId} = ctx;
+    const { organizationId, memberId, locationId: ctxLocationId } = ctx;
     const locationId = ctxLocationId || body.locationId;
 
     if (!locationId) {
@@ -93,7 +91,7 @@ export class PosSaleService {
   }
 
   async handleOrder(ctx: V2ApiContext, body: any) {
-    const {organizationId, memberId, locationId: ctxLocationId} = ctx;
+    const { organizationId, memberId, locationId: ctxLocationId } = ctx;
     const locationId = ctxLocationId || body.locationId;
 
     if (!locationId) {
@@ -101,7 +99,7 @@ export class PosSaleService {
     }
 
     // 1. Validate Input
-    const preCheck = CreateOrderInputSchema.safeParse({...body, locationId});
+    const preCheck = CreateOrderInputSchema.safeParse({ ...body, locationId });
     if (!preCheck.success) {
       this.logger.error(
         `Order Validation Failed: ${JSON.stringify(preCheck.error.flatten())}`,

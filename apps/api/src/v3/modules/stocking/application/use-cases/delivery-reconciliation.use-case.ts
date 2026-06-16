@@ -3,8 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "../../../../../prisma/prisma.service";
-import {DispatchOrderDto, ReconcilePodDto} from "../dto/delivery.dto";
+import { PrismaService } from "../../../../../prisma/prisma.service";
+import { DispatchOrderDto, ReconcilePodDto } from "../dto/delivery.dto";
 import {
   TransactionStatus,
   FulfillmentStatus,
@@ -55,7 +55,7 @@ export class DeliveryReconciliationUseCase {
       },
       include: {
         transaction: {
-          include: {customer: true},
+          include: { customer: true },
         },
         items: true,
       },
@@ -69,9 +69,9 @@ export class DeliveryReconciliationUseCase {
     memberId: string,
     dto: DispatchOrderDto,
   ) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       // Logic for dispatching
-      return {success: true};
+      return { success: true };
     });
   }
 
@@ -80,14 +80,14 @@ export class DeliveryReconciliationUseCase {
     memberId: string,
     dto: ReconcilePodDto,
   ) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const fulfillmentId = dto.fulfillmentId;
       const qtyDelivered = dto.quantityDelivered || 0;
       const qtyReturned = 0; // Legacy mapping from when DTO had qtyReturned
 
       // Fetch fulfillment along with all required deep relations needed for calculations
       const fulfillment = await tx.fulfillment.findUnique({
-        where: {id: fulfillmentId},
+        where: { id: fulfillmentId },
         include: {
           transaction: {
             include: {
@@ -119,7 +119,7 @@ export class DeliveryReconciliationUseCase {
 
       if (qtyDelivered > 0) {
         await tx.transaction.update({
-          where: {id: fulfillment.transactionId},
+          where: { id: fulfillment.transactionId },
           data: {
             status: TransactionStatus.COMPLETED,
             completedAt: new Date(),
@@ -142,8 +142,8 @@ export class DeliveryReconciliationUseCase {
           if (benefitAmount > 0) {
             const newBalance = Number(partner.walletBalance) + benefitAmount;
             await tx.deliveryPartner.update({
-              where: {id: partner.id},
-              data: {walletBalance: newBalance},
+              where: { id: partner.id },
+              data: { walletBalance: newBalance },
             });
 
             await tx.partnerWalletLog.create({
@@ -221,7 +221,7 @@ export class DeliveryReconciliationUseCase {
 
             if (sellingUnitId && baseUnitId && sellingUnitId !== baseUnitId) {
               const conversion = item.variant.product.unitConversions.find(
-                c =>
+                (c) =>
                   c.fromUnitId === sellingUnitId && c.toUnitId === baseUnitId,
               );
               if (conversion) {
@@ -236,13 +236,13 @@ export class DeliveryReconciliationUseCase {
                 variantId: item.variantId,
                 locationId: fulfillment.transaction.locationId,
               },
-              orderBy: {receivedDate: "desc"},
+              orderBy: { receivedDate: "desc" },
             });
 
             if (batch) {
               await tx.stockBatch.update({
-                where: {id: batch.id},
-                data: {currentQuantity: {increment: qtyToRestock}},
+                where: { id: batch.id },
+                data: { currentQuantity: { increment: qtyToRestock } },
               });
             }
 
@@ -254,8 +254,8 @@ export class DeliveryReconciliationUseCase {
                 },
               },
               data: {
-                currentStock: {increment: qtyToRestock},
-                availableStock: {increment: qtyToRestock},
+                currentStock: { increment: qtyToRestock },
+                availableStock: { increment: qtyToRestock },
               },
             });
 
@@ -276,7 +276,7 @@ export class DeliveryReconciliationUseCase {
         }
       }
 
-      return {success: true};
+      return { success: true };
     });
   }
 }

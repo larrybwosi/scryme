@@ -4,9 +4,9 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from "@nestjs/common";
-import {Reflector} from "@nestjs/core";
-import {PERMISSIONS_KEY, SCOPES_KEY} from "../decorators/auth.decorator";
-import {V2ApiContext} from "@repo/shared/server";
+import { Reflector } from "@nestjs/core";
+import { PERMISSIONS_KEY, SCOPES_KEY } from "../decorators/auth.decorator";
+import { V2ApiContext } from "@repo/shared/api/v2/types";
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
@@ -27,10 +27,10 @@ export class AuthorizationGuard implements CanActivate {
       return true;
     }
 
-    const {v2Context} = context.switchToHttp().getRequest<any>();
+    const { v2Context } = context.switchToHttp().getRequest<any>();
 
     if (requiredPermissions) {
-      const hasPermission = requiredPermissions.every(permission =>
+      const hasPermission = requiredPermissions.every((permission) =>
         this.hasPermission(v2Context.permissions, permission),
       );
       if (!hasPermission) {
@@ -39,7 +39,7 @@ export class AuthorizationGuard implements CanActivate {
     }
 
     if (requiredScopes) {
-      const hasScope = requiredScopes.every(scope =>
+      const hasScope = requiredScopes.every((scope) =>
         this.hasScope(v2Context.scopes, scope),
       );
       if (!hasScope) {

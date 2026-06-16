@@ -1,8 +1,8 @@
-import {Injectable} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {IInventoryRepository} from "../../domain/repositories/inventory-repository.interface";
-import {InventoryItem} from "../../domain/entities/inventory-item.entity";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IInventoryRepository } from "../../domain/repositories/inventory-repository.interface";
+import { InventoryItem } from "../../domain/entities/inventory-item.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaInventoryRepository implements IInventoryRepository {
@@ -13,7 +13,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
     pagination?: PaginationQueryDto,
   ): Promise<InventoryItem[]> {
     const items = await this.prisma.client.productVariantStock.findMany({
-      where: {organizationId},
+      where: { organizationId },
       take: pagination?.limit,
       skip: pagination?.offset,
       select: {
@@ -26,7 +26,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       },
     });
     return items.map(
-      i =>
+      (i) =>
         new InventoryItem(
           i.id,
           i.variantId,
@@ -40,7 +40,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
 
   async findByLocation(locationId: string): Promise<InventoryItem[]> {
     const items = await this.prisma.client.productVariantStock.findMany({
-      where: {locationId},
+      where: { locationId },
       select: {
         id: true,
         variantId: true,
@@ -51,7 +51,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       },
     });
     return items.map(
-      i =>
+      (i) =>
         new InventoryItem(
           i.id,
           i.variantId,
@@ -65,10 +65,10 @@ export class PrismaInventoryRepository implements IInventoryRepository {
 
   async updateQuantity(id: string, delta: number): Promise<InventoryItem> {
     const i = await this.prisma.client.productVariantStock.update({
-      where: {id},
+      where: { id },
       data: {
-        availableStock: {increment: delta},
-        currentStock: {increment: delta},
+        availableStock: { increment: delta },
+        currentStock: { increment: delta },
       },
     });
     return new InventoryItem(

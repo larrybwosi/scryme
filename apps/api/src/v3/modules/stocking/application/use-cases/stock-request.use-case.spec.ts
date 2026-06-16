@@ -1,12 +1,12 @@
-import {vi, describe, it, expect, beforeEach} from "vitest";
-import {StockRequestUseCase} from "./stock-request.use-case";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { StockRequestUseCase } from "./stock-request.use-case";
 import {
   StockRequestStatus,
   StockTransferStatus,
   PurchaseStatus,
 } from "@repo/db";
 
-vi.mock("@repo/db", async importOriginal => ({
+vi.mock("@repo/db", async (importOriginal) => ({
   ...((await importOriginal()) as any),
   StockRequestStatus: {
     PENDING: "PENDING",
@@ -55,7 +55,7 @@ describe("StockRequestUseCase", () => {
 
     prisma = {
       client: {
-        $transaction: vi.fn(async callback => await callback(mockTx)),
+        $transaction: vi.fn(async (callback) => await callback(mockTx)),
         stockRequest: mockTx.stockRequest,
       },
     };
@@ -73,7 +73,7 @@ describe("StockRequestUseCase", () => {
     await stockRequestUseCase.approve(mockOrgId, mockMemberId, mockRequestId);
 
     expect(mockTx.stockRequest.update).toHaveBeenCalledWith({
-      where: {id: mockRequestId},
+      where: { id: mockRequestId },
       data: expect.objectContaining({
         status: StockRequestStatus.APPROVED,
         approvedById: mockMemberId,
@@ -88,12 +88,12 @@ describe("StockRequestUseCase", () => {
       organizationId: mockOrgId,
       status: StockRequestStatus.APPROVED,
       toLocationId: "loc-to",
-      items: [{variantId: "v1", unitCostAtRequest: 100}],
+      items: [{ variantId: "v1", unitCostAtRequest: 100 }],
     });
 
     const dto = {
       fromLocationId: "loc-from",
-      items: [{variantId: "v1", requestedQuantity: 5}],
+      items: [{ variantId: "v1", requestedQuantity: 5 }],
     };
 
     await stockRequestUseCase.fulfillFromTransfer(
@@ -115,8 +115,8 @@ describe("StockRequestUseCase", () => {
 
     expect(mockTx.stockRequestItem.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {stockRequestId: mockRequestId, variantId: "v1"},
-        data: {allocatedQuantity: {increment: 5}},
+        where: { stockRequestId: mockRequestId, variantId: "v1" },
+        data: { allocatedQuantity: { increment: 5 } },
       }),
     );
   });
@@ -127,12 +127,12 @@ describe("StockRequestUseCase", () => {
       requestNumber: "REQ-001",
       organizationId: mockOrgId,
       status: StockRequestStatus.APPROVED,
-      items: [{variantId: "v1", unitCostAtRequest: 100}],
+      items: [{ variantId: "v1", unitCostAtRequest: 100 }],
     });
 
     const dto = {
       supplierId: "sup-1",
-      items: [{variantId: "v1", orderedQuantity: 10, unitCost: 90}],
+      items: [{ variantId: "v1", orderedQuantity: 10, unitCost: 90 }],
     };
 
     await stockRequestUseCase.fulfillFromPurchase(
@@ -154,8 +154,8 @@ describe("StockRequestUseCase", () => {
 
     expect(mockTx.stockRequestItem.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {stockRequestId: mockRequestId, variantId: "v1"},
-        data: {allocatedQuantity: {increment: 10}},
+        where: { stockRequestId: mockRequestId, variantId: "v1" },
+        data: { allocatedQuantity: { increment: 10 } },
       }),
     );
   });

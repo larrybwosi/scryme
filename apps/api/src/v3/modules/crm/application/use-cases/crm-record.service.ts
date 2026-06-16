@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreateCrmRecordDto, UpdateCrmRecordDto} from "../dto/crm.dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmRecordDto, UpdateCrmRecordDto } from "../dto/crm.dto";
 import {
   emitCrmRecordCreated,
   emitCrmRecordUpdated,
@@ -29,7 +29,9 @@ export class CrmRecordService {
       recordId: record.id,
       entityType: "CRM_RECORD", // or record.objectId if appropriate
       name: (record.data as any)?.name || record.id,
-    }).catch(err => console.error("[CRM] Failed to emit Windmill event:", err));
+    }).catch((err) =>
+      console.error("[CRM] Failed to emit Windmill event:", err),
+    );
 
     return record;
   }
@@ -40,7 +42,7 @@ export class CrmRecordService {
     dto: UpdateCrmRecordDto,
   ) {
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: {id: recordId, organizationId},
+      where: { id: recordId, organizationId },
     });
 
     if (!record) {
@@ -48,7 +50,7 @@ export class CrmRecordService {
     }
 
     const updatedRecord = await this.prisma.client.crmRecord.update({
-      where: {id: recordId},
+      where: { id: recordId },
       data: {
         data: dto.data !== undefined ? dto.data : undefined,
         ownerId: dto.ownerId !== undefined ? dto.ownerId : undefined,
@@ -61,14 +63,16 @@ export class CrmRecordService {
       entityType: "CRM_RECORD",
       name: (updatedRecord.data as any)?.name || updatedRecord.id,
       changes: dto.data,
-    }).catch(err => console.error("[CRM] Failed to emit Windmill event:", err));
+    }).catch((err) =>
+      console.error("[CRM] Failed to emit Windmill event:", err),
+    );
 
     return updatedRecord;
   }
 
   async getRecord(organizationId: string, recordId: string) {
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: {id: recordId, organizationId},
+      where: { id: recordId, organizationId },
       include: {
         owner: {
           select: {

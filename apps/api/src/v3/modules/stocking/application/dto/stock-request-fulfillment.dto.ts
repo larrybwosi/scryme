@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -8,9 +8,9 @@ import {
   IsOptional,
   IsEnum,
 } from "class-validator";
-import {Type} from "class-transformer";
-import {CreatePurchaseItemDto} from "./purchase.dto";
-import {CreateTransferItemDto} from "./transfer.dto";
+import { Type } from "class-transformer";
+import { CreatePurchaseItemDto } from "./purchase.dto";
+import { CreateTransferItemDto } from "./transfer.dto";
 
 export class FulfillFromTransferDto {
   @ApiProperty()
@@ -18,9 +18,9 @@ export class FulfillFromTransferDto {
   @IsNotEmpty()
   fromLocationId: string;
 
-  @ApiProperty({type: [CreateTransferItemDto]})
+  @ApiProperty({ type: [CreateTransferItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => CreateTransferItemDto)
   items: CreateTransferItemDto[];
 
@@ -36,9 +36,9 @@ export class FulfillFromPurchaseDto {
   @IsNotEmpty()
   supplierId: string;
 
-  @ApiProperty({type: [CreatePurchaseItemDto]})
+  @ApiProperty({ type: [CreatePurchaseItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => CreatePurchaseItemDto)
   items: CreatePurchaseItemDto[];
 

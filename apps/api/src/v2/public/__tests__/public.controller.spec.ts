@@ -1,7 +1,7 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {PublicController} from "../public.controller";
-import {PublicService} from "../public.service";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { PublicController } from "../public.controller";
+import { PublicService } from "../public.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("PublicController", () => {
   let controller: PublicController;

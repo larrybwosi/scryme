@@ -4,24 +4,23 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from "@nestjs/common";
-import {Reflector} from "@nestjs/core";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RedisService} from "../redis/redis.service";
-import {ZitadelCustomerService} from "../zitadel/zitadel-customer.service";
-import {InjectQueue} from "@nestjs/bullmq";
-import {Queue} from "bullmq";
+import { Reflector } from "@nestjs/core";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "../redis/redis.service";
+import { ZitadelCustomerService } from "../zitadel/zitadel-customer.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { V2ApiContext, ROLE_PERMISSIONS } from "@repo/shared/api/v2/types";
 import {
   validateDeviceKey,
   verifyMemberToken,
-  verifyZitadelJwt,
-  ROLE_PERMISSIONS,
-  V2ApiContext,
-} from "@repo/shared/server";
-import {ALLOW_PUBLIC_KEY} from "../common/decorators/auth.decorator";
-import {OpenObserveService} from "../common/services/openobserve.service";
-import {FastifyRequest} from "fastify";
-import {db} from "@repo/db";
-import {env} from "@repo/env";
+} from "@repo/shared/api/v2/services/auth";
+import { verifyZitadelJwt } from "@repo/shared/api/v2/services/zitadel/jwks";
+import { ALLOW_PUBLIC_KEY } from "../common/decorators/auth.decorator";
+import { OpenObserveService } from "../common/services/openobserve.service";
+import { FastifyRequest } from "fastify";
+import { db } from "@repo/db";
+import { env } from "@repo/env";
 
 @Injectable()
 export class V2AuthGuard implements CanActivate {
@@ -79,13 +78,13 @@ export class V2AuthGuard implements CanActivate {
         const payload = await verifyMemberToken(memberToken);
         if (payload) {
           const member = await this.prisma.client.member.findUnique({
-            where: {id: payload.memberId},
+            where: { id: payload.memberId },
             select: {
               id: true,
               role: true,
               isActive: true,
-              user: {select: {name: true}},
-              customRoles: {select: {permissions: true}},
+              user: { select: { name: true } },
+              customRoles: { select: { permissions: true } },
             },
           });
 
@@ -129,8 +128,8 @@ export class V2AuthGuard implements CanActivate {
           if (zitadelPayload && zitadelOrgId) {
             const cfg =
               await this.prisma.client.zitadelConfiguration.findUnique({
-                where: {zitadelOrgId: zitadelOrgId},
-                select: {organizationId: true, isActive: true},
+                where: { zitadelOrgId: zitadelOrgId },
+                select: { organizationId: true, isActive: true },
               });
             if (cfg?.isActive) {
               // Offload sync to queue for high traffic

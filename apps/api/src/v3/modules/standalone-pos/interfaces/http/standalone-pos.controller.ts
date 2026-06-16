@@ -8,14 +8,14 @@ import {
   UnauthorizedException,
   UseGuards,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiResponse, ApiHeader} from "@nestjs/swagger";
-import {StandalonePosService} from "../../infrastructure/services/standalone-pos.service";
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from "@nestjs/swagger";
+import { StandalonePosService } from "../../infrastructure/services/standalone-pos.service";
 import {
   CreateSetupKeyDto,
   ActivateDeviceDto,
   LinkOrganizationDto,
 } from "../../application/dto/standalone-pos.dto";
-import {SystemAdminGuard} from "../../../../common/guards/system-admin.guard";
+import { SystemAdminGuard } from "../../../../common/guards/system-admin.guard";
 
 @ApiTags("V3 Standalone POS")
 @Controller("standalone-pos")
@@ -23,7 +23,9 @@ export class StandalonePosController {
   constructor(private readonly standalonePosService: StandalonePosService) {}
 
   @Post("setup-keys")
-  @ApiOperation({summary: "Create a new setup key for a standalone POS device"})
+  @ApiOperation({
+    summary: "Create a new setup key for a standalone POS device",
+  })
   @UseGuards(SystemAdminGuard)
   async createSetupKey(@Body() dto: CreateSetupKeyDto) {
     return this.standalonePosService.createSetupKey(dto);
@@ -38,7 +40,7 @@ export class StandalonePosController {
   }
 
   @Get("validate")
-  @ApiOperation({summary: "Validate a long-lived standalone device key"})
+  @ApiOperation({ summary: "Validate a long-lived standalone device key" })
   @ApiHeader({
     name: "X-Standalone-Key",
     description: "The long-lived standalone device key",
@@ -51,7 +53,7 @@ export class StandalonePosController {
   }
 
   @Patch("link-org")
-  @ApiOperation({summary: "Link a standalone device to an organization"})
+  @ApiOperation({ summary: "Link a standalone device to an organization" })
   @UseGuards(SystemAdminGuard)
   async linkOrganization(@Body() dto: LinkOrganizationDto) {
     return this.standalonePosService.linkOrganization(dto);

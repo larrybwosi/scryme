@@ -3,19 +3,19 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreatePettyCashFundDto,
   TopUpPettyCashFundDto,
 } from "../dto/finance.dto";
-import {Prisma, PettyCashTransactionType} from "@repo/db";
+import { Prisma, PettyCashTransactionType } from "@repo/db";
 
 @Injectable()
 export class PettyCashUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async createFund(organizationId: string, dto: CreatePettyCashFundDto) {
-    return await this.prisma.client.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       const fund = await tx.pettyCashFund.create({
         data: {
           name: dto.name,
@@ -47,9 +47,9 @@ export class PettyCashUseCase {
     dto: TopUpPettyCashFundDto,
     memberId: string,
   ) {
-    return await this.prisma.client.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       const fund = await tx.pettyCashFund.findFirst({
-        where: {id: fundId, organizationId},
+        where: { id: fundId, organizationId },
       });
 
       if (!fund) {
@@ -57,9 +57,9 @@ export class PettyCashUseCase {
       }
 
       const updatedFund = await tx.pettyCashFund.update({
-        where: {id: fundId},
+        where: { id: fundId },
         data: {
-          amount: {increment: new Prisma.Decimal(dto.amount)},
+          amount: { increment: new Prisma.Decimal(dto.amount) },
         },
       });
 
@@ -79,7 +79,7 @@ export class PettyCashUseCase {
 
   async getFunds(organizationId: string) {
     return await this.prisma.client.pettyCashFund.findMany({
-      where: {organizationId},
+      where: { organizationId },
       include: {
         responsibleMember: {
           include: {
@@ -97,7 +97,7 @@ export class PettyCashUseCase {
 
   async getFundById(organizationId: string, fundId: string) {
     const fund = await this.prisma.client.pettyCashFund.findFirst({
-      where: {id: fundId, organizationId},
+      where: { id: fundId, organizationId },
       include: {
         responsibleMember: {
           include: {
@@ -121,7 +121,7 @@ export class PettyCashUseCase {
 
   async getFundTransactions(organizationId: string, fundId: string) {
     const fund = await this.prisma.client.pettyCashFund.findFirst({
-      where: {id: fundId, organizationId},
+      where: { id: fundId, organizationId },
     });
 
     if (!fund) {
@@ -129,7 +129,7 @@ export class PettyCashUseCase {
     }
 
     return await this.prisma.client.pettyCashTransaction.findMany({
-      where: {fundId},
+      where: { fundId },
       include: {
         member: {
           include: {
@@ -141,7 +141,7 @@ export class PettyCashUseCase {
           },
         },
       },
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
     });
   }
 }

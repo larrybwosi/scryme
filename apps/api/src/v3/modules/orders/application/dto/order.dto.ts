@@ -1,5 +1,5 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {IsString, IsNotEmpty} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty } from "class-validator";
 
 export class UpdateOrderStatusDto {
   @ApiProperty({
@@ -12,15 +12,15 @@ export class UpdateOrderStatusDto {
 }
 
 export class OrderResponseDto {
-  @ApiProperty({example: "ord_123"})
+  @ApiProperty({ example: "ord_123" })
   id: string;
 
-  @ApiProperty({example: "PENDING"})
+  @ApiProperty({ example: "PENDING" })
   status: string;
 
-  @ApiProperty({example: 45.99})
+  @ApiProperty({ example: 45.99 })
   totalAmount: number;
 
-  @ApiProperty({example: "2023-10-27T10:00:00.000Z"})
+  @ApiProperty({ example: "2023-10-27T10:00:00.000Z" })
   createdAt: string;
 }

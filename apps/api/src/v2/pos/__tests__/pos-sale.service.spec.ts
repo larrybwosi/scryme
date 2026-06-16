@@ -1,20 +1,25 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {PosSaleService} from "../pos-sale.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {BadRequestException} from "@nestjs/common";
-import * as sharedActions from "@repo/shared/server";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { PosSaleService } from "../pos-sale.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { BadRequestException } from "@nestjs/common";
+import * as sharedActions from "@repo/shared/actions/transaction/process-sale";
+import * as sharedValidations from "@repo/shared/lib/validations/sale";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@repo/shared/server", () => ({
+vi.mock("@repo/shared/lib/validations/sale", () => ({
+  ProcessSaleInputSchema: { safeParse: vi.fn() },
+}));
+vi.mock("@repo/shared/actions/transaction/process-sale", () => ({
   processSale: vi.fn(),
+}));
+vi.mock("@repo/shared/actions/organization/mpesa-trigger", () => ({
   triggerStkPush: vi.fn(),
+}));
+vi.mock("@repo/shared/actions/transaction/orders", () => ({
   createOrder: vi.fn(),
-  ProcessSaleInputSchema: {
-    safeParse: vi.fn(),
-  },
-  CreateOrderSchema: {
-    safeParse: vi.fn(),
-  },
+}));
+vi.mock("@repo/shared/lib/validations/order", () => ({
+  CreateOrderInputSchema: { safeParse: vi.fn() },
 }));
 
 describe("PosSaleService", () => {
@@ -67,21 +72,21 @@ describe("PosSaleService", () => {
     };
 
     it("should process a cash sale successfully", async () => {
-      vi.mocked(sharedActions.ProcessSaleInputSchema.safeParse).mockReturnValue(
-        {
-          success: true,
-          data: {
-            ...mockBody,
-            locationId: "loc_1",
-            enableStockTracking: true,
-          } as any,
+      vi.mocked(
+        sharedValidations.ProcessSaleInputSchema.safeParse,
+      ).mockReturnValueOnce({
+        success: true,
+        data: {
+          ...mockBody,
+          locationId: "loc_1",
+          enableStockTracking: true,
         } as any,
-      );
+      } as any);
 
       vi.mocked(sharedActions.processSale).mockResolvedValue({
         success: true,
         transactionId: "txn_1",
-        data: {id: "txn_1", payments: []},
+        data: { id: "txn_1", payments: [] },
       } as any);
 
       const result = await service.handleSale(mockCtx, mockBody, true);
@@ -95,14 +100,14 @@ describe("PosSaleService", () => {
     });
 
     it("should throw BadRequestException if validation fails", async () => {
-      vi.mocked(sharedActions.ProcessSaleInputSchema.safeParse).mockReturnValue(
-        {
-          success: false,
-          error: {
-            flatten: () => ({fieldErrors: {cartItems: ["Required"]}}),
-          },
-        } as any,
-      );
+      vi.mocked(
+        sharedValidations.ProcessSaleInputSchema.safeParse,
+      ).mockReturnValueOnce({
+        success: false,
+        error: {
+          flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
+        },
+      } as any);
 
       await expect(service.handleSale(mockCtx, mockBody, true)).rejects.toThrow(
         BadRequestException,

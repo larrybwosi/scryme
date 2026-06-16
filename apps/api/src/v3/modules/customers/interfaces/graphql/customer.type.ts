@@ -1,4 +1,4 @@
-import {ObjectType, Field, ID} from "@nestjs/graphql";
+import { ObjectType, Field, ID } from "@nestjs/graphql";
 
 @ObjectType()
 export class CustomerType {
@@ -8,7 +8,7 @@ export class CustomerType {
   @Field()
   name: string;
 
-  @Field({nullable: true})
+  @Field({ nullable: true })
   email?: string;
 
   @Field()

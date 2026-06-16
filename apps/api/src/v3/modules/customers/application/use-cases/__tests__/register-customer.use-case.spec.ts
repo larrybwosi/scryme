@@ -1,12 +1,12 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {RegisterCustomerUseCase} from "../register-customer.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ZitadelService} from "@repo/zitadel/server";
-import {CrmSyncService} from "../../../../crm/infrastructure/services/crm-sync.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { RegisterCustomerUseCase } from "../register-customer.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ZitadelService } from "@repo/zitadel/server";
+import { CrmSyncService } from "../../../../crm/infrastructure/services/crm-sync.service";
 
 vi.mock("@repo/zitadel/server", () => ({
   ZitadelService: vi.fn().mockImplementation(() => ({
-    getUser: vi.fn().mockResolvedValue({id: "zit-123"}),
+    getUser: vi.fn().mockResolvedValue({ id: "zit-123" }),
   })),
 }));
 
@@ -23,7 +23,7 @@ describe("RegisterCustomerUseCase", () => {
   beforeEach(() => {
     prisma = {
       client: {
-        $transaction: vi.fn(cb => cb(prisma.client)),
+        $transaction: vi.fn((cb) => cb(prisma.client)),
         externalMapping: {
           findFirst: vi.fn(),
           create: vi.fn(),

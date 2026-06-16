@@ -5,8 +5,8 @@ import {
   Inject,
   UnauthorizedException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RedisService} from "@/redis/redis.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "@/redis/redis.service";
 import {
   CreateMemberDto,
   UpdateMemberDto,
@@ -27,7 +27,7 @@ import {
   emitMemberRoleChanged,
   emitEvent,
 } from "@repo/windmill/server";
-import {createMemberToken} from "@repo/shared/server";
+import { createMemberToken } from "@repo/shared/api/v2/services/auth";
 
 @Injectable()
 export class MemberUseCase {
@@ -60,16 +60,16 @@ export class MemberUseCase {
     if (isActive !== undefined) where.isActive = isActive;
     if (departmentId) {
       where.departmentMemberships = {
-        some: {departmentId},
+        some: { departmentId },
       };
     }
 
     if (search) {
       where.OR = [
-        {user: {name: {contains: search, mode: "insensitive"}}},
-        {user: {email: {contains: search, mode: "insensitive"}}},
-        {phone: {contains: search, mode: "insensitive"}},
-        {cardId: {contains: search, mode: "insensitive"}},
+        { user: { name: { contains: search, mode: "insensitive" } } },
+        { user: { email: { contains: search, mode: "insensitive" } } },
+        { phone: { contains: search, mode: "insensitive" } },
+        { cardId: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -80,7 +80,7 @@ export class MemberUseCase {
       : "createdAt";
 
     const [total, members] = await Promise.all([
-      this.prisma.client.member.count({where}),
+      this.prisma.client.member.count({ where }),
       this.prisma.client.member.findMany({
         where,
         // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
@@ -106,12 +106,12 @@ export class MemberUseCase {
         },
         skip,
         take: limit,
-        orderBy: {[finalSortBy]: sortOrder},
+        orderBy: { [finalSortBy]: sortOrder },
       }),
     ]);
 
     return {
-      items: members.map(m => this.mapToResponse(m)),
+      items: members.map((m) => this.mapToResponse(m)),
       meta: {
         total,
         page,
@@ -123,7 +123,7 @@ export class MemberUseCase {
 
   async getMember(organizationId: string, id: string) {
     const member = await this.prisma.client.member.findFirst({
-      where: {id, organizationId, deletedAt: null},
+      where: { id, organizationId, deletedAt: null },
       // ⚡ Bolt Optimization: Use targeted select for scalar fields and relations
       // to reduce database payload and serialization overhead.
       select: {
@@ -227,19 +227,19 @@ export class MemberUseCase {
       ...otherData
     } = dto;
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       let user = await tx.user.findUnique({
-        where: {email},
+        where: { email },
       });
 
       if (!user) {
         user = await tx.user.create({
-          data: {email, name},
+          data: { email, name },
         });
       }
 
       const existingInOrg = await tx.member.findUnique({
-        where: {organizationId_userId: {organizationId, userId: user.id}},
+        where: { organizationId_userId: { organizationId, userId: user.id } },
       });
 
       if (existingInOrg) {
@@ -278,19 +278,19 @@ export class MemberUseCase {
           phone,
           departmentMemberships: departmentIds
             ? {
-                create: departmentIds.map(dId => ({
+                create: departmentIds.map((dId) => ({
                   departmentId: dId,
                 })),
               }
             : undefined,
           customRoles: customRoleIds
             ? {
-                connect: customRoleIds.map(id => ({id})),
+                connect: customRoleIds.map((id) => ({ id })),
               }
             : undefined,
           roleGroups: roleGroupIds
             ? {
-                connect: roleGroupIds.map(id => ({id})),
+                connect: roleGroupIds.map((id) => ({ id })),
               }
             : undefined,
         },
@@ -312,8 +312,8 @@ export class MemberUseCase {
 
       if (!user.activeOrganizationId) {
         await tx.user.update({
-          where: {id: user.id},
-          data: {activeOrganizationId: organizationId},
+          where: { id: user.id },
+          data: { activeOrganizationId: organizationId },
         });
         // Clear session cache
         await this.redis.del(`session-cache:${user.id}`);
@@ -328,7 +328,7 @@ export class MemberUseCase {
           entityType: AuditEntityType.MEMBER,
           entityId: member.id,
           description: `Created member: ${name} (${email}). Status: ${membershipStatus}`,
-          details: {role: finalRole, membershipStatus},
+          details: { role: finalRole, membershipStatus },
         },
       });
 
@@ -338,7 +338,7 @@ export class MemberUseCase {
         name,
         email,
         role: finalRole,
-      }).catch(err => console.error("[Windmill] MemberCreated error:", err));
+      }).catch((err) => console.error("[Windmill] MemberCreated error:", err));
 
       return member;
     });
@@ -350,12 +350,12 @@ export class MemberUseCase {
     dto: UpdateMemberDto,
     actorId: string,
   ) {
-    const {pin, departmentIds, customRoleIds, roleGroupIds, ...updateData} =
+    const { pin, departmentIds, customRoleIds, roleGroupIds, ...updateData } =
       dto;
 
     const currentMember = await this.prisma.client.member.findUnique({
-      where: {id, organizationId},
-      include: {user: true},
+      where: { id, organizationId },
+      include: { user: true },
     });
 
     if (!currentMember) throw new NotFoundException("Member not found");
@@ -365,32 +365,32 @@ export class MemberUseCase {
     }
 
     const member = await this.prisma.client.member.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data: {
         ...(updateData as any),
         departmentMemberships: departmentIds
           ? {
               deleteMany: {},
-              create: departmentIds.map(dId => ({
+              create: departmentIds.map((dId) => ({
                 departmentId: dId,
               })),
             }
           : undefined,
         customRoles: customRoleIds
           ? {
-              set: customRoleIds.map(id => ({id})),
+              set: customRoleIds.map((id) => ({ id })),
             }
           : undefined,
         roleGroups: roleGroupIds
           ? {
-              set: roleGroupIds.map(id => ({id})),
+              set: roleGroupIds.map((id) => ({ id })),
             }
           : undefined,
       },
     });
 
     // Audit Log
-    const auditDetails = {...updateData};
+    const auditDetails = { ...updateData };
     if ((auditDetails as any).pinHash) delete (auditDetails as any).pinHash;
 
     await this.prisma.client.auditLog.create({
@@ -413,7 +413,7 @@ export class MemberUseCase {
         email: currentMember.user.email,
         previousRole: currentMember.role,
         newRole: dto.role,
-      }).catch(err =>
+      }).catch((err) =>
         console.error("[Windmill] MemberRoleChanged error:", err),
       );
     }
@@ -422,7 +422,7 @@ export class MemberUseCase {
       emitEvent(organizationId, "member.deactivated", {
         memberId: member.id,
         name: currentMember.user.name,
-      }).catch(err =>
+      }).catch((err) =>
         console.error("[Windmill] MemberDeactivated error:", err),
       );
     }
@@ -432,9 +432,9 @@ export class MemberUseCase {
 
   async deleteMember(organizationId: string, id: string, actorId: string) {
     const member = await this.prisma.client.member.update({
-      where: {id, organizationId},
-      data: {deletedAt: new Date(), isActive: false},
-      include: {user: true},
+      where: { id, organizationId },
+      data: { deletedAt: new Date(), isActive: false },
+      include: { user: true },
     });
 
     await this.prisma.client.auditLog.create({
@@ -451,13 +451,13 @@ export class MemberUseCase {
     emitEvent(organizationId, "member.deleted", {
       memberId: member.id,
       name: member.user.name,
-    }).catch(err => console.error("[Windmill] MemberDeleted error:", err));
+    }).catch((err) => console.error("[Windmill] MemberDeleted error:", err));
 
     return member;
   }
 
   async getMemberAuditLogs(organizationId: string, id: string, query: any) {
-    const {page = 1, limit = 20} = query;
+    const { page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
     const [total, logs] = await Promise.all([
@@ -474,7 +474,7 @@ export class MemberUseCase {
           entityId: id,
           entityType: AuditEntityType.MEMBER,
         },
-        orderBy: {id: "desc"}, // Switched from createdAt to id as id usually correlates with time and avoids TS error
+        orderBy: { id: "desc" }, // Switched from createdAt to id as id usually correlates with time and avoids TS error
         skip,
         take: limit,
       }),
@@ -498,8 +498,8 @@ export class MemberUseCase {
     actorId: string,
   ) {
     const member = await this.prisma.client.member.update({
-      where: {id, organizationId},
-      data: {status},
+      where: { id, organizationId },
+      data: { status },
     });
 
     await this.prisma.client.auditLog.create({
@@ -556,13 +556,13 @@ export class MemberUseCase {
 
     // Perform check-in logic
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: {memberId: member.id, checkOutTime: null},
+      where: { memberId: member.id, checkOutTime: null },
     });
 
     let attendanceLogId = activeLog?.id;
 
     if (!activeLog) {
-      await this.prisma.client.$transaction(async tx => {
+      await this.prisma.client.$transaction(async (tx) => {
         const log = await tx.attendanceLog.create({
           data: {
             organizationId,
@@ -574,7 +574,7 @@ export class MemberUseCase {
         });
 
         await tx.member.update({
-          where: {id: member.id},
+          where: { id: member.id },
           data: {
             isCheckedIn: true,
             lastCheckInTime: new Date(),

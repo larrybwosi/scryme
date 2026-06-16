@@ -1,11 +1,11 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {vi, describe, it, expect, beforeEach} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Use hoisted to define mock objects needed in vi.mock
-const {mockDb} = vi.hoisted(() => ({
+const { mockDb } = vi.hoisted(() => ({
   mockDb: {
-    product: {findMany: vi.fn(), count: vi.fn()},
-    category: {findMany: vi.fn()},
+    product: { findMany: vi.fn(), count: vi.fn() },
+    category: { findMany: vi.fn() },
   },
   PrismaClient: class {},
   PaymentStatus: {
@@ -19,8 +19,8 @@ const {mockDb} = vi.hoisted(() => ({
   },
 }));
 
-// Mock @repo/shared/server
-vi.mock("@repo/shared/server", () => ({
+// Mock @repo/shared/api/v2/types
+vi.mock("@repo/shared/api/v2/types", () => ({
   V2ApiContext: {},
 }));
 
@@ -29,11 +29,11 @@ vi.mock("@repo/suppliers", () => ({
   SupplierService: vi.fn(),
 }));
 
-import {CatalogService} from "../catalog.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RedisService} from "../../../redis/redis.service";
-import {SupplierService} from "@repo/suppliers/server";
-import {V2ApiContext} from "@repo/shared/server";
+import { CatalogService } from "../catalog.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "../../../redis/redis.service";
+import { SupplierService } from "@repo/suppliers/server";
+import { V2ApiContext } from "@repo/shared/api/v2/types";
 
 describe("CatalogService", () => {
   let service: CatalogService;
@@ -56,7 +56,7 @@ describe("CatalogService", () => {
         },
         {
           provide: PrismaService,
-          useValue: {client: mockDb},
+          useValue: { client: mockDb },
         },
         {
           provide: SupplierService,
@@ -84,13 +84,15 @@ describe("CatalogService", () => {
   describe("getProducts", () => {
     it("should return products from database if cache is empty", async () => {
       const orgId = "org-1";
-      const products = [{id: "1", sku: "S1", name: "Product 1", variants: []}];
+      const products = [
+        { id: "1", sku: "S1", name: "Product 1", variants: [] },
+      ];
       (mockDb.product.findMany as any).mockResolvedValue(products);
       (mockDb.product.count as any).mockResolvedValue(1);
       (redis.get as any).mockResolvedValue(null);
 
       const result = await service.getProducts(
-        {organizationId: orgId} as V2ApiContext,
+        { organizationId: orgId } as V2ApiContext,
         {},
       );
 
@@ -101,12 +103,14 @@ describe("CatalogService", () => {
 
     it("should return products from cache if available", async () => {
       const orgId = "org-1";
-      const products = [{id: "1", sku: "S1", name: "Product 1", variants: []}];
-      const cacheValue = {products, pagination: {}};
+      const products = [
+        { id: "1", sku: "S1", name: "Product 1", variants: [] },
+      ];
+      const cacheValue = { products, pagination: {} };
       (redis.get as any).mockResolvedValue(cacheValue);
 
       const result = await service.getProducts(
-        {organizationId: orgId} as V2ApiContext,
+        { organizationId: orgId } as V2ApiContext,
         {},
       );
 
@@ -125,7 +129,7 @@ describe("CatalogService", () => {
           variants: [
             {
               id: "v1",
-              variantStocks: [{availableStock: 10}],
+              variantStocks: [{ availableStock: 10 }],
             },
           ],
         },
@@ -136,8 +140,8 @@ describe("CatalogService", () => {
       (redis.get as any).mockResolvedValue(null);
 
       const result = await service.getProducts(
-        {organizationId: orgId} as V2ApiContext,
-        {inStock: "true"},
+        { organizationId: orgId } as V2ApiContext,
+        { inStock: "true" },
       );
 
       // Verified behavior: products are filtered by the DB
@@ -154,7 +158,7 @@ describe("CatalogService", () => {
             variants: {
               some: {
                 variantStocks: {
-                  some: {availableStock: {gt: 0}},
+                  some: { availableStock: { gt: 0 } },
                 },
               },
             },

@@ -8,12 +8,12 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiBody} from "@nestjs/swagger";
-import {BakeryService} from "./bakery.service";
-import {AllowPublic} from "../../common/decorators/auth.decorator";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
-import {type V2ApiContext} from "@repo/shared/server";
-import type {FastifyRequest, FastifyReply} from "fastify";
+import { ApiTags, ApiOperation, ApiBody } from "@nestjs/swagger";
+import { BakeryService } from "./bakery.service";
+import { AllowPublic } from "../../common/decorators/auth.decorator";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import { type V2ApiContext } from "@repo/shared/api/v2/types";
+import type { FastifyRequest, FastifyReply } from "fastify";
 
 @ApiTags("Bakery Auth")
 @Controller("bakery/auth")
@@ -22,11 +22,11 @@ export class BakeryAuthController {
 
   @AllowPublic()
   @Post("setup")
-  @ApiOperation({summary: "Setup bakery device authentication"})
+  @ApiOperation({ summary: "Setup bakery device authentication" })
   @ApiBody({
     schema: {
       type: "object",
-      properties: {apiKey: {type: "string"}},
+      properties: { apiKey: { type: "string" } },
       required: ["apiKey"],
     },
   })
@@ -74,7 +74,7 @@ export class BakeryAuthController {
 
   @AllowPublic()
   @Get("status")
-  @ApiOperation({summary: "Check bakery authentication status"})
+  @ApiOperation({ summary: "Check bakery authentication status" })
   async status(@v2Context() ctx: V2ApiContext) {
     const hasDeviceKey =
       !!ctx.organizationId &&
@@ -89,7 +89,7 @@ export class BakeryAuthController {
   }
 
   @Post("logout")
-  @ApiOperation({summary: "Logout from bakery app"})
+  @ApiOperation({ summary: "Logout from bakery app" })
   async logout(@Res() res: any) {
     const cookieOptions = this.bakeryService.getCookieOptions(0);
 
@@ -98,12 +98,12 @@ export class BakeryAuthController {
 
     return res.send({
       success: true,
-      data: {message: "Logged out successfully"},
+      data: { message: "Logged out successfully" },
     });
   }
 
   @Post("sso")
-  @ApiOperation({summary: "SSO login for dashboard users into bakery app"})
+  @ApiOperation({ summary: "SSO login for dashboard users into bakery app" })
   async sso(@v2Context() ctx: V2ApiContext, @Req() req: any, @Res() res: any) {
     // 1. Get current dashboard session auth
     const session = await this.bakeryService.getDashboardSession(req);
@@ -123,7 +123,7 @@ export class BakeryAuthController {
     }
 
     // 2. Process SSO login (attendance, token generation)
-    const {token, member} = await this.bakeryService.processSSO(session, ctx);
+    const { token, member } = await this.bakeryService.processSSO(session, ctx);
 
     const cookieOptions = this.bakeryService.getCookieOptions(60 * 60 * 12); // 12 hours
     res.setCookie("dealio_member_token", token, cookieOptions);

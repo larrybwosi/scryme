@@ -3,56 +3,58 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateDepartmentDto,
   UpdateDepartmentDto,
   DepartmentQueryDto,
   AddDepartmentMemberDto,
 } from "../dto/department.dto";
-import {AuditLogAction, AuditEntityType} from "@repo/db";
+import { AuditLogAction, AuditEntityType } from "@repo/db";
 
 @Injectable()
 export class DepartmentUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDepartments(organizationId: string, query: DepartmentQueryDto) {
-    const {page = 1, limit = 10, search} = query;
+    const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
-    const where: any = {organizationId};
-    if (search) where.name = {contains: search, mode: "insensitive"};
+    const where: any = { organizationId };
+    if (search) where.name = { contains: search, mode: "insensitive" };
 
     const [total, items] = await Promise.all([
-      this.prisma.client.department.count({where}),
+      this.prisma.client.department.count({ where }),
       this.prisma.client.department.findMany({
         where,
         include: {
           head: {
-            include: {user: {select: {name: true}}},
+            include: { user: { select: { name: true } } },
           },
-          _count: {select: {departmentMembers: true}},
+          _count: { select: { departmentMembers: true } },
         },
         skip,
         take: limit,
-        orderBy: {name: "asc"},
+        orderBy: { name: "asc" },
       }),
     ]);
 
     return {
       items,
-      meta: {total, page, limit, totalPages: Math.ceil(total / limit)},
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
   async getDepartment(organizationId: string, id: string) {
     const department = await this.prisma.client.department.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
-        head: {include: {user: {select: {name: true, email: true}}}},
+        head: { include: { user: { select: { name: true, email: true } } } },
         departmentMembers: {
           include: {
-            member: {include: {user: {select: {name: true, email: true}}}},
+            member: {
+              include: { user: { select: { name: true, email: true } } },
+            },
           },
         },
       },
@@ -95,7 +97,7 @@ export class DepartmentUseCase {
     actorId: string,
   ) {
     const department = await this.prisma.client.department.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data: dto,
     });
 
@@ -115,7 +117,7 @@ export class DepartmentUseCase {
 
   async deleteDepartment(organizationId: string, id: string, actorId: string) {
     const department = await this.prisma.client.department.delete({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
 
     await this.prisma.client.auditLog.create({
@@ -141,10 +143,10 @@ export class DepartmentUseCase {
     // Verify department and member belong to org
     const [dept, member] = await Promise.all([
       this.prisma.client.department.findFirst({
-        where: {id: departmentId, organizationId},
+        where: { id: departmentId, organizationId },
       }),
       this.prisma.client.member.findFirst({
-        where: {id: dto.memberId, organizationId},
+        where: { id: dto.memberId, organizationId },
       }),
     ]);
 
@@ -190,6 +192,6 @@ export class DepartmentUseCase {
       },
     });
 
-    return {success: true};
+    return { success: true };
   }
 }

@@ -1,5 +1,5 @@
-import {Injectable, Inject, NotFoundException} from "@nestjs/common";
-import {IStockBatchRepository} from "../../domain/repositories/stock-batch-repository.interface";
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { IStockBatchRepository } from "../../domain/repositories/stock-batch-repository.interface";
 
 @Injectable()
 export class TraceBatchUseCase {

@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 
 export const RecipeIngredientSchema = z.object({
   ingredientVariantId: z.string().min(1),

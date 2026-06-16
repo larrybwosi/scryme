@@ -17,37 +17,37 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import {GetInventoryUseCase} from "../../application/use-cases/get-inventory.use-case";
-import {TraceBatchUseCase} from "../../application/use-cases/trace-batch.use-case";
-import {SplitBatchUseCase} from "../../application/use-cases/split-batch.use-case";
-import {MergeBatchesUseCase} from "../../application/use-cases/merge-batches.use-case";
+import { GetInventoryUseCase } from "../../application/use-cases/get-inventory.use-case";
+import { TraceBatchUseCase } from "../../application/use-cases/trace-batch.use-case";
+import { SplitBatchUseCase } from "../../application/use-cases/split-batch.use-case";
+import { MergeBatchesUseCase } from "../../application/use-cases/merge-batches.use-case";
 import {
   RequestStockAdjustmentUseCase,
   ApproveStockAdjustmentUseCase,
 } from "../../application/use-cases/adjustment-workflow.use-case";
-import {AssemblyUseCase} from "../../application/use-cases/assembly.use-case";
+import { AssemblyUseCase } from "../../application/use-cases/assembly.use-case";
 import {
   GetSupplierLeadTimeUseCase,
   GetWasteAnalysisUseCase,
 } from "../../application/use-cases/inventory-analytics.use-case";
-import {CheckB2BAvailabilityUseCase} from "../../application/use-cases/check-b2b-availability.use-case";
+import { CheckB2BAvailabilityUseCase } from "../../application/use-cases/check-b2b-availability.use-case";
 import {
   UnpackBatchUseCase,
   UnpackBatchDto,
 } from "../../application/use-cases/unpack-batch.use-case";
-import {ScanUnpackBatchUseCase} from "../../application/use-cases/scan-unpack-batch.use-case";
-import {InventoryIntegrityService} from "../../application/services/inventory-integrity.service";
-import {QuickStockInquiryUseCase} from "../../application/use-cases/quick-stock-inquiry.use-case";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
-import {AuditInterceptor} from "@/v3/common/interceptors/audit.interceptor";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
-import {InventoryResponseDto} from "../../application/dto/inventory.dto";
-import {CheckB2BAvailabilityDto} from "../../application/dto/check-b2b-availability.dto";
-import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { ScanUnpackBatchUseCase } from "../../application/use-cases/scan-unpack-batch.use-case";
+import { InventoryIntegrityService } from "../../application/services/inventory-integrity.service";
+import { QuickStockInquiryUseCase } from "../../application/use-cases/quick-stock-inquiry.use-case";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AuditInterceptor } from "@/v3/common/interceptors/audit.interceptor";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { InventoryResponseDto } from "../../application/dto/inventory.dto";
+import { CheckB2BAvailabilityDto } from "../../application/dto/check-b2b-availability.dto";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @ApiTags("V3 Inventory")
 @ApiBearerAuth()
@@ -134,7 +134,7 @@ export class InventoryController {
     summary: "Trace a batch by ID or number",
     operationId: "Inventory_TraceBatch",
   })
-  @ApiParam({name: "identifier", description: "Batch ID or Batch Number"})
+  @ApiParam({ name: "identifier", description: "Batch ID or Batch Number" })
   async traceBatch(@Req() req: any, @Param("identifier") identifier: string) {
     return this.traceBatchUseCase.execute(req.organization.id, identifier);
   }
@@ -148,7 +148,7 @@ export class InventoryController {
   async splitBatch(
     @Req() req: any,
     @Param("id") id: string,
-    @Body() body: {splits: {quantity: number; notes?: string}[]},
+    @Body() body: { splits: { quantity: number; notes?: string }[] },
   ) {
     return this.splitBatchUseCase.execute(
       req.organization.id,
@@ -167,7 +167,7 @@ export class InventoryController {
   async mergeBatches(
     @Req() req: any,
     @Body()
-    body: {batchIds: string[]; targetLocationId: string; notes?: string},
+    body: { batchIds: string[]; targetLocationId: string; notes?: string },
   ) {
     return this.mergeBatchesUseCase.execute(
       req.organization.id,
@@ -272,7 +272,7 @@ export class InventoryController {
     summary: "Bulk check stock availability for B2B customers",
     operationId: "Inventory_CheckB2BAvailability",
   })
-  @ApiResponse({status: 200, description: "Availability report"})
+  @ApiResponse({ status: 200, description: "Availability report" })
   async checkB2BAvailability(
     @Req() req: any,
     @Body() dto: CheckB2BAvailabilityDto,
@@ -307,7 +307,7 @@ export class InventoryController {
     summary: "Scan a batch QR code to receive and unpack it",
     operationId: "Inventory_ScanUnpackBatch",
   })
-  async scanUnpackBatch(@Req() req: any, @Body() body: {batchId: string}) {
+  async scanUnpackBatch(@Req() req: any, @Body() body: { batchId: string }) {
     return this.scanUnpackBatchUseCase.execute(
       req.organization.id,
       req.user.memberId,
@@ -321,10 +321,10 @@ export class InventoryController {
     summary: "Quick stock inquiry using business account default location",
     operationId: "Inventory_QuickStockInquiry",
   })
-  @ApiResponse({status: 200, description: "Availability report"})
+  @ApiResponse({ status: 200, description: "Availability report" })
   async quickInquiry(
     @Req() req: any,
-    @Body() body: {businessAccountId: string; variantIds: string[]},
+    @Body() body: { businessAccountId: string; variantIds: string[] },
   ) {
     return this.quickStockInquiryUseCase.execute(
       req.organization.id,

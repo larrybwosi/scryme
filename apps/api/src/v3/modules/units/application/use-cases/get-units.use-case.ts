@@ -1,6 +1,9 @@
-import {Inject, Injectable} from "@nestjs/common";
-import type {IUnitsRepository} from "../../domain/repositories/units.repository.interface";
-import {SystemUnit, OrganizationUnit} from "../../domain/entities/unit.entity";
+import { Inject, Injectable } from "@nestjs/common";
+import type { IUnitsRepository } from "../../domain/repositories/units.repository.interface";
+import {
+  SystemUnit,
+  OrganizationUnit,
+} from "../../domain/entities/unit.entity";
 
 @Injectable()
 export class GetUnitsUseCase {

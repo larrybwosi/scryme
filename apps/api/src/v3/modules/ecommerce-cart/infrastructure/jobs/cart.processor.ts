@@ -1,7 +1,7 @@
-import {Processor, WorkerHost} from "@nestjs/bullmq";
-import {Job} from "bullmq";
-import {Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Job } from "bullmq";
+import { Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Processor("cart-sync")
 export class CartProcessor extends WorkerHost {
@@ -31,6 +31,6 @@ export class CartProcessor extends WorkerHost {
     );
     // Implement inventory check logic here
     // For example, verify if the product is still in stock and notify the user if not
-    return {success: true};
+    return { success: true };
   }
 }

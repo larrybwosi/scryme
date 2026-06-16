@@ -1,5 +1,5 @@
-import {Injectable, BadRequestException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class QuickStockInquiryUseCase {
@@ -12,8 +12,8 @@ export class QuickStockInquiryUseCase {
   ) {
     // 1. Resolve Business Account's Default Location
     const businessAccount = await this.prisma.client.businessAccount.findFirst({
-      where: {id: businessAccountId, organizationId},
-      select: {defaultLocationId: true},
+      where: { id: businessAccountId, organizationId },
+      select: { defaultLocationId: true },
     });
 
     if (!businessAccount || !businessAccount.defaultLocationId) {
@@ -28,7 +28,7 @@ export class QuickStockInquiryUseCase {
     const stocks = await this.prisma.client.productVariantStock.findMany({
       where: {
         locationId,
-        variantId: {in: variantIds},
+        variantId: { in: variantIds },
         organizationId,
       },
       select: {
@@ -43,8 +43,8 @@ export class QuickStockInquiryUseCase {
       },
     });
 
-    return variantIds.map(variantId => {
-      const stock = stocks.find(s => s.variantId === variantId);
+    return variantIds.map((variantId) => {
+      const stock = stocks.find((s) => s.variantId === variantId);
       return {
         variantId,
         sku: stock?.variant.sku || "N/A",

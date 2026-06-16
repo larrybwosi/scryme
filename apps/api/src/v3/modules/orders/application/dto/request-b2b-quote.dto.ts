@@ -1,4 +1,4 @@
-import {ApiProperty} from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 import {
   IsString,
   IsOptional,
@@ -7,7 +7,7 @@ import {
   IsNumber,
   Min,
 } from "class-validator";
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 export class B2BQuoteItemDto {
   @ApiProperty()
@@ -21,28 +21,28 @@ export class B2BQuoteItemDto {
 }
 
 export class RequestB2BQuoteDto {
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   customerId?: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   businessAccountId?: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   locationId?: string;
 
-  @ApiProperty({type: [B2BQuoteItemDto]})
+  @ApiProperty({ type: [B2BQuoteItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => B2BQuoteItemDto)
   items: B2BQuoteItemDto[];
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   notes?: string;

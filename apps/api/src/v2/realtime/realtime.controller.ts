@@ -5,15 +5,16 @@ import {
   UnauthorizedException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
-import {ably, type V2ApiContext} from "@repo/shared/server";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import { ably } from "@repo/shared/ably";
+import { type V2ApiContext } from "@repo/shared/api/v2/types";
 
 @ApiTags("Realtime")
 @Controller("realtime")
 export class RealtimeController {
   @Post("auth")
-  @ApiOperation({summary: "Ably token authentication for v2 API"})
+  @ApiOperation({ summary: "Ably token authentication for v2 API" })
   async auth(
     @v2Context() ctx: V2ApiContext,
     @Headers("authorization") authHeader: string = "",
@@ -21,7 +22,7 @@ export class RealtimeController {
     @Headers("x-device-id") deviceId: string = "",
   ) {
     try {
-      const {organizationId, memberId, deviceId: ctxDeviceId} = ctx;
+      const { organizationId, memberId, deviceId: ctxDeviceId } = ctx;
 
       if (!organizationId) {
         throw new UnauthorizedException({

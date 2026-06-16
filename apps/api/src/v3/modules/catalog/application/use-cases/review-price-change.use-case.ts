@@ -3,8 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {PriceChangeStatus} from "@repo/db";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PriceChangeStatus } from "@repo/db";
 
 @Injectable()
 export class ReviewPriceChangeUseCase {
@@ -17,7 +17,7 @@ export class ReviewPriceChangeUseCase {
     status: PriceChangeStatus;
     rejectionReason?: string;
   }) {
-    const {organizationId, requestId, memberId, status, rejectionReason} =
+    const { organizationId, requestId, memberId, status, rejectionReason } =
       params;
 
     /**
@@ -27,7 +27,7 @@ export class ReviewPriceChangeUseCase {
      * Estimated impact: -1 SQL join, ~10-15% faster execution for this lookup.
      */
     const request = await this.prisma.client.priceChangeRequest.findUnique({
-      where: {id: requestId, organizationId},
+      where: { id: requestId, organizationId },
     });
 
     if (!request) throw new NotFoundException("Price change request not found");
@@ -35,12 +35,12 @@ export class ReviewPriceChangeUseCase {
       throw new BadRequestException(`Request is already ${request.status}`);
     }
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       if (status === PriceChangeStatus.APPROVED) {
         // Apply the new price
         await tx.priceListItem.update({
-          where: {id: request.priceListItemId},
-          data: {price: request.newPrice},
+          where: { id: request.priceListItemId },
+          data: { price: request.newPrice },
         });
 
         // Record in history
@@ -62,7 +62,7 @@ export class ReviewPriceChangeUseCase {
       }
 
       return tx.priceChangeRequest.update({
-        where: {id: requestId},
+        where: { id: requestId },
         data: {
           status,
           reviewedBy: memberId,

@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@repo/db";
-import { redisProxy as redis } from "@repo/shared/server";
+import { redisProxy as redis } from "@repo/shared/redis";
 
 export class CartService {
   private static getCacheKey(id: string, isSession: boolean) {

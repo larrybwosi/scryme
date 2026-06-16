@@ -1,4 +1,4 @@
-import {Injectable} from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import {
   DocumentGenerator,
   StockRequestTemplate,
@@ -10,8 +10,8 @@ import {
   ReceiptTemplateV2,
   ReceiptPDFDataV2,
 } from "@repo/documents";
-import {generateVerificationHash} from "@repo/documents/server";
-import {Readable} from "stream";
+import { generateVerificationHash } from "@repo/documents/server";
+import { Readable } from "stream";
 
 @Injectable()
 export class DocumentService {
@@ -65,14 +65,16 @@ export class DocumentService {
         organizationName: data.branding?.companyName || "Organization",
       });
     }
-    const element = DocumentGenerator.createElement(InvoiceTemplate, {data});
+    const element = DocumentGenerator.createElement(InvoiceTemplate, { data });
     return (await DocumentGenerator.renderToStream(
       element,
     )) as unknown as Readable;
   }
 
   async generateReceiptPDF(data: ReceiptPDFDataV2): Promise<Readable> {
-    const element = DocumentGenerator.createElement(ReceiptTemplateV2, {data});
+    const element = DocumentGenerator.createElement(ReceiptTemplateV2, {
+      data,
+    });
     return (await DocumentGenerator.renderToStream(
       element,
     )) as unknown as Readable;

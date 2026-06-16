@@ -16,25 +16,25 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from "@nestjs/swagger";
-import {GetProductsUseCase} from "../../application/use-cases/get-products.use-case";
-import {CreateProductUseCase} from "../../application/use-cases/create-product.use-case";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
-import {AuditInterceptor} from "../../../../common/interceptors/audit.interceptor";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
+import { GetProductsUseCase } from "../../application/use-cases/get-products.use-case";
+import { CreateProductUseCase } from "../../application/use-cases/create-product.use-case";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import {
   CreateProductDto,
   ProductResponseDto,
 } from "../../application/dto/product.dto";
-import {UpdateSupplierProductDto} from "../../application/dto/supplier-product.dto";
-import {ReviewPriceChangeDto} from "../../application/dto/price-change.dto";
-import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
-import {PricingManagementService} from "../../application/services/pricing-management.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ReviewPriceChangeUseCase} from "../../application/use-cases/review-price-change.use-case";
+import { UpdateSupplierProductDto } from "../../application/dto/supplier-product.dto";
+import { ReviewPriceChangeDto } from "../../application/dto/price-change.dto";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
+import { PricingManagementService } from "../../application/services/pricing-management.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ReviewPriceChangeUseCase } from "../../application/use-cases/review-price-change.use-case";
 
 @ApiTags("V3 Catalog")
 @ApiBearerAuth()
@@ -105,7 +105,7 @@ export class ProductController {
     summary: "Update supplier product details and trigger price recalculation",
     operationId: "Catalog_UpdateSupplierProduct",
   })
-  @ApiResponse({status: 200, description: "Supplier product updated"})
+  @ApiResponse({ status: 200, description: "Supplier product updated" })
   async updateSupplierProduct(
     @Req() req: any,
     @Param("supplierId") supplierId: string,
@@ -114,19 +114,19 @@ export class ProductController {
   ) {
     const organizationId = req.organization.id;
 
-    const result = await this.prisma.client.$transaction(async tx => {
+    const result = await this.prisma.client.$transaction(async (tx) => {
       // If setting as preferred, unset any existing preferred supplier for this variant
       if (body.isPreferred === true) {
         // Find the variantId first if not provided in request (it's in the DB)
         const current = await tx.productSupplier.findUnique({
-          where: {productId_supplierId: {productId, supplierId}},
-          select: {variantId: true},
+          where: { productId_supplierId: { productId, supplierId } },
+          select: { variantId: true },
         });
 
         if (current?.variantId) {
           await tx.productSupplier.updateMany({
-            where: {variantId: current.variantId, isPreferred: true},
-            data: {isPreferred: false},
+            where: { variantId: current.variantId, isPreferred: true },
+            data: { isPreferred: false },
           });
         }
       }
@@ -173,7 +173,7 @@ export class ProductController {
     @Req() req: any,
     @Query() pagination: PaginationQueryDto,
   ) {
-    const {limit = 20, offset = 0} = pagination;
+    const { limit = 20, offset = 0 } = pagination;
     const organizationId = req.organization.id;
 
     /**
@@ -184,7 +184,7 @@ export class ProductController {
      */
     const [items, total] = await Promise.all([
       this.prisma.client.priceChangeRequest.findMany({
-        where: {organizationId},
+        where: { organizationId },
         select: {
           id: true,
           organizationId: true,
@@ -237,9 +237,11 @@ export class ProductController {
         },
         skip: offset,
         take: limit,
-        orderBy: {requestedAt: "desc"},
+        orderBy: { requestedAt: "desc" },
       }),
-      this.prisma.client.priceChangeRequest.count({where: {organizationId}}),
+      this.prisma.client.priceChangeRequest.count({
+        where: { organizationId },
+      }),
     ]);
 
     return {

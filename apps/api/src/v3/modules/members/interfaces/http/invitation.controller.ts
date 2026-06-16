@@ -17,18 +17,18 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from "@nestjs/swagger";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {InvitationUseCase} from "../../application/use-cases/invitation.use-case";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { InvitationUseCase } from "../../application/use-cases/invitation.use-case";
 import {
   CreateInvitationDto,
   InvitationQueryDto,
   InvitationResponseDto,
   AcceptInvitationDto,
 } from "../../application/dto/invitation.dto";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 
 @ApiTags("V3 Member Invitations")
 @ApiBearerAuth()
@@ -40,7 +40,7 @@ export class InvitationController {
   @Get()
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @Permissions("members:read")
-  @ApiOperation({summary: "List pending invitations"})
+  @ApiOperation({ summary: "List pending invitations" })
   async getInvitations(
     @Request() req: any,
     @Query() query: InvitationQueryDto,
@@ -54,7 +54,7 @@ export class InvitationController {
   @Post()
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @Permissions("members:write")
-  @ApiOperation({summary: "Create and send an invitation"})
+  @ApiOperation({ summary: "Create and send an invitation" })
   async createInvitation(
     @Request() req: any,
     @Body() dto: CreateInvitationDto,
@@ -75,7 +75,7 @@ export class InvitationController {
   @Delete(":id")
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @Permissions("members:write")
-  @ApiOperation({summary: "Revoke an invitation"})
+  @ApiOperation({ summary: "Revoke an invitation" })
   async revokeInvitation(@Request() req: any, @Param("id") id: string) {
     const actorId = req.v3Context.memberId;
     return this.invitationUseCase.revokeInvitation(
@@ -87,7 +87,7 @@ export class InvitationController {
 
   @Post("accept")
   @UseGuards(V3AuthGuard)
-  @ApiOperation({summary: "Accept an invitation"})
+  @ApiOperation({ summary: "Accept an invitation" })
   async acceptInvitation(
     @Request() req: any,
     @Body() dto: AcceptInvitationDto,

@@ -1,5 +1,9 @@
-import {Injectable, ConflictException, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateCrmObjectDto,
   CreateCrmFieldDto,
@@ -14,7 +18,7 @@ export class CrmDefinitionService {
     dto: CreateCrmObjectDto,
   ) {
     const existing = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: {organizationId, name: dto.name},
+      where: { organizationId, name: dto.name },
     });
 
     if (existing) {
@@ -33,8 +37,8 @@ export class CrmDefinitionService {
 
   async getObjectDefinitions(organizationId: string) {
     return this.prisma.client.crmObjectDefinition.findMany({
-      where: {organizationId},
-      include: {fields: {orderBy: {order: "asc"}}},
+      where: { organizationId },
+      include: { fields: { orderBy: { order: "asc" } } },
     });
   }
 
@@ -44,7 +48,7 @@ export class CrmDefinitionService {
     dto: CreateCrmFieldDto,
   ) {
     const object = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: {id: objectId, organizationId},
+      where: { id: objectId, organizationId },
     });
 
     if (!object) {
@@ -61,7 +65,7 @@ export class CrmDefinitionService {
 
   async getFieldsForObject(organizationId: string, objectId: string) {
     const object = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: {id: objectId, organizationId},
+      where: { id: objectId, organizationId },
     });
 
     if (!object) {
@@ -69,8 +73,8 @@ export class CrmDefinitionService {
     }
 
     return this.prisma.client.crmFieldDefinition.findMany({
-      where: {objectId},
-      orderBy: {order: "asc"},
+      where: { objectId },
+      orderBy: { order: "asc" },
     });
   }
 }

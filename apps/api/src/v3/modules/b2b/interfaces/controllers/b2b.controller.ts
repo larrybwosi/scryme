@@ -1,7 +1,7 @@
-import {Controller, Get, Post, Body, Req, UseGuards} from "@nestjs/common";
-import {B2BUseCase} from "../../application/use-cases/b2b.use-case";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
+import { Controller, Get, Post, Body, Req, UseGuards } from "@nestjs/common";
+import { B2BUseCase } from "../../application/use-cases/b2b.use-case";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 
 @Controller(":orgSlug/b2b")
 @UseGuards(V3AuthGuard, MultiTenancyGuard)

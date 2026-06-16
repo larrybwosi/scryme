@@ -3,18 +3,18 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreatePurchaseDto, ReceivePurchaseDto} from "../dto/purchase.dto";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreatePurchaseDto, ReceivePurchaseDto } from "../dto/purchase.dto";
 import {
   PurchaseStatus,
   MovementType,
   QualityCheckStatus,
   SerialNumberStatus,
 } from "@repo/db";
-import {PaginationQueryDto, paginate} from "@/v3/common/utils/pagination";
-import {InventoryMovementService} from "../../../inventory/application/services/inventory-movement.service";
-import {emitPurchaseApprovalRequested} from "@repo/windmill/server";
-import {PricingManagementService} from "../../../catalog/application/services/pricing-management.service";
+import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
+import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
+import { emitPurchaseApprovalRequested } from "@repo/windmill/server";
+import { PricingManagementService } from "../../../catalog/application/services/pricing-management.service";
 
 @Injectable()
 export class PurchaseOrderUseCase {
@@ -31,7 +31,7 @@ export class PurchaseOrderUseCase {
   ) {
     const purchaseNumber = `PO-${Date.now()}`;
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       let subTotal = 0;
       for (const item of dto.items) {
         subTotal += item.orderedQuantity * item.unitCost;
@@ -55,7 +55,7 @@ export class PurchaseOrderUseCase {
           status: PurchaseStatus.ORDERED,
           notes: dto.notes,
           items: {
-            create: dto.items.map(item => ({
+            create: dto.items.map((item) => ({
               variantId: item.variantId,
               orderedQuantity: item.orderedQuantity,
               unitCost: item.unitCost,
@@ -67,7 +67,7 @@ export class PurchaseOrderUseCase {
         },
         include: {
           items: true,
-          member: {include: {user: true}},
+          member: { include: { user: true } },
         },
       });
 
@@ -78,7 +78,7 @@ export class PurchaseOrderUseCase {
         requestedBy: purchase.member.user.name || "Unknown",
         totalAmount: Number(purchase.totalAmount),
         currency: purchase.currency,
-      }).catch(err =>
+      }).catch((err) =>
         console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
       );
 
@@ -92,10 +92,10 @@ export class PurchaseOrderUseCase {
     purchaseId: string,
     dto: ReceivePurchaseDto,
   ) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const purchase = await tx.purchase.findUnique({
-        where: {id: purchaseId, organizationId},
-        include: {items: {include: {variant: true}}},
+        where: { id: purchaseId, organizationId },
+        include: { items: { include: { variant: true } } },
       });
 
       if (!purchase) throw new NotFoundException("Purchase order not found");
@@ -118,7 +118,7 @@ export class PurchaseOrderUseCase {
 
       for (const itemDto of dto.items) {
         const purchaseItem = purchase.items.find(
-          i => i.id === itemDto.purchaseItemId,
+          (i) => i.id === itemDto.purchaseItemId,
         );
         if (!purchaseItem)
           throw new NotFoundException(
@@ -155,7 +155,7 @@ export class PurchaseOrderUseCase {
           // Handle Serial Numbers if provided
           if (batchDto.serialNumbers && batchDto.serialNumbers.length > 0) {
             await tx.serialNumber.createMany({
-              data: batchDto.serialNumbers.map(sn => ({
+              data: batchDto.serialNumbers.map((sn) => ({
                 organizationId,
                 serialNumber: sn,
                 variantId: purchaseItem.variantId,
@@ -184,7 +184,7 @@ export class PurchaseOrderUseCase {
             // If QC failed, quarantine the batch
             if (batchDto.qcResults.status === QualityCheckStatus.FAILED) {
               await tx.stockBatch.update({
-                where: {id: batch.id},
+                where: { id: batch.id },
                 data: {
                   isQuarantined: true,
                   quarantineReason: "Failed QC on receipt",
@@ -193,8 +193,8 @@ export class PurchaseOrderUseCase {
 
               // Update Serial Numbers to Quarantined
               await tx.serialNumber.updateMany({
-                where: {stockBatchId: batch.id},
-                data: {status: SerialNumberStatus.QUARANTINED},
+                where: { stockBatchId: batch.id },
+                data: { status: SerialNumberStatus.QUARANTINED },
               });
             }
           }
@@ -221,8 +221,8 @@ export class PurchaseOrderUseCase {
               },
             },
             update: {
-              currentStock: {increment: batchDto.quantity},
-              availableStock: {increment: batchDto.quantity},
+              currentStock: { increment: batchDto.quantity },
+              availableStock: { increment: batchDto.quantity },
             },
             create: {
               organizationId,
@@ -238,10 +238,10 @@ export class PurchaseOrderUseCase {
         }
 
         await tx.purchaseItem.update({
-          where: {id: purchaseItem.id},
+          where: { id: purchaseItem.id },
           data: {
-            receivedQuantity: {increment: totalReceivedForItem},
-            rejectedQuantity: {increment: itemDto.rejectedQuantity || 0},
+            receivedQuantity: { increment: totalReceivedForItem },
+            rejectedQuantity: { increment: itemDto.rejectedQuantity || 0 },
             qualityCheckStatus:
               (itemDto.rejectedQuantity || 0) > 0
                 ? QualityCheckStatus.FAILED
@@ -251,19 +251,19 @@ export class PurchaseOrderUseCase {
       }
 
       const updatedPurchase = await tx.purchase.findUnique({
-        where: {id: purchaseId},
-        include: {items: true},
+        where: { id: purchaseId },
+        include: { items: true },
       });
 
       const allReceived = updatedPurchase?.items.every(
-        i => i.receivedQuantity >= i.orderedQuantity,
+        (i) => i.receivedQuantity >= i.orderedQuantity,
       );
       const someReceived = updatedPurchase?.items.some(
-        i => i.receivedQuantity > 0,
+        (i) => i.receivedQuantity > 0,
       );
 
       await tx.purchase.update({
-        where: {id: purchaseId},
+        where: { id: purchaseId },
         data: {
           status: allReceived
             ? PurchaseStatus.RECEIVED
@@ -277,7 +277,7 @@ export class PurchaseOrderUseCase {
       // Trigger price recalculation for all items received in this PO
       for (const itemDto of dto.items) {
         const purchaseItem = purchase.items.find(
-          i => i.id === itemDto.purchaseItemId,
+          (i) => i.id === itemDto.purchaseItemId,
         );
         if (purchaseItem) {
           await this.pricingManagementService.handleCostChange(
@@ -299,13 +299,13 @@ export class PurchaseOrderUseCase {
 
   async approve(organizationId: string, memberId: string, purchaseId: string) {
     const purchase = await this.prisma.client.purchase.findUnique({
-      where: {id: purchaseId, organizationId},
+      where: { id: purchaseId, organizationId },
     });
 
     if (!purchase) throw new NotFoundException("Purchase order not found");
 
     return this.prisma.client.purchase.update({
-      where: {id: purchaseId},
+      where: { id: purchaseId },
       data: {
         status: PurchaseStatus.APPROVED,
         updatedAt: new Date(),
@@ -317,9 +317,9 @@ export class PurchaseOrderUseCase {
     return paginate(
       this.prisma.client.purchase,
       pagination,
-      {organizationId},
-      {orderDate: "desc"},
-      {include: {supplier: true, member: true}},
+      { organizationId },
+      { orderDate: "desc" },
+      { include: { supplier: true, member: true } },
     );
   }
 }

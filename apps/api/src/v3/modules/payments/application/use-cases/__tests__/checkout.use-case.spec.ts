@@ -1,11 +1,11 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 vi.mock("@repo/mpesa/server", () => ({
   MpesaService: vi.fn(),
 }));
 
-import {CheckoutUseCase} from "../checkout.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
+import { CheckoutUseCase } from "../checkout.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
 
 vi.mock("@repo/windmill/server", () => ({
   emitOrderPlaced: vi.fn().mockResolvedValue({}),
@@ -55,7 +55,7 @@ describe("CheckoutUseCase (Integration)", () => {
       id: "cart-123",
       organizationId,
       customerId,
-      items: [{productId: "prod-1", variantId: "var-1", quantity: 2}],
+      items: [{ productId: "prod-1", variantId: "var-1", quantity: 2 }],
     };
 
     const mockVariants = [
@@ -66,7 +66,7 @@ describe("CheckoutUseCase (Integration)", () => {
         buyingPrice: 80,
         name: "Variant 1",
         sku: "SKU-1",
-        product: {name: "Product 1"},
+        product: { name: "Product 1" },
       },
     ];
 

@@ -1,9 +1,9 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {vi, describe, it, expect, beforeEach} from "vitest";
-import {QuickStockInquiryUseCase} from "./quick-stock-inquiry.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
-import {BadRequestException} from "@nestjs/common";
-import {Decimal} from "decimal.js";
+import { Test, TestingModule } from "@nestjs/testing";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { QuickStockInquiryUseCase } from "./quick-stock-inquiry.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { BadRequestException } from "@nestjs/common";
+import { Decimal } from "decimal.js";
 
 describe("QuickStockInquiryUseCase", () => {
   let useCase: QuickStockInquiryUseCase;
@@ -24,7 +24,7 @@ describe("QuickStockInquiryUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuickStockInquiryUseCase,
-        {provide: PrismaService, useValue: prisma},
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -44,7 +44,7 @@ describe("QuickStockInquiryUseCase", () => {
       {
         variantId: "v1",
         availableStock: new Decimal(10),
-        variant: {sku: "SKU1", name: "Product 1"},
+        variant: { sku: "SKU1", name: "Product 1" },
       },
     ]);
 
