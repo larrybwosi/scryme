@@ -280,7 +280,7 @@ export function EnhancedDocumentSettings({
                     No templates available
                   </p>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Templates for this document type haven't been added yet.
+                    Templates for this document type haven&apos;t been added yet.
                   </p>
                 </div>
               )}
@@ -435,12 +435,12 @@ export function EnhancedDocumentSettings({
               {activeTemplateId === previewTemplate.id ? (
                 <p className="text-xs text-zinc-500 flex items-center gap-1.5">
                   <CheckCircle2 size={13} className="text-emerald-500" />
-                  This is the current default for{" "}
+                  This is the current default for{&quot; &quot;}
                   {selectedDocType.label.toLowerCase()}.
                 </p>
               ) : (
                 <p className="text-xs text-zinc-500">
-                  This is not the current default for{" "}
+                  This is not the current default for{&quot; &quot;}
                   {selectedDocType.label.toLowerCase()}.
                 </p>
               )}
