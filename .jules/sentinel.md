@@ -34,3 +34,8 @@
 **Vulnerability:** Found a regression where V3 API client secrets were being stored with plain SHA-256, which was inconsistent with the Argon2+AES-GCM pattern used for V2 keys. Also identified a dangerous stub in the OAuth `issueV2Token` middleware that could bypass authentication.
 **Learning:** Hardening security patterns for existing credentials requires a robust fallback strategy. My initial fix broke authentication for "Encrypted Raw Secret" clients (the previous management standard) because Argon2 verification fails when run against non-Argon2 strings.
 **Prevention:** When upgrading security for stored secrets, always implement a multi-layered validation logic that supports: 1. The new standard (Argon2+AES-GCM), 2. The immediate previous standard (Encrypted Raw), and 3. Any known legacy formats (Bcrypt, plain SHA-256). Verify changes with dedicated security test suites that cover all format permutations.
+
+## 2026-06-16 - [Broken Access Control on Public Downloads]
+**Vulnerability:** The V3 `PublicInvoiceController` had download endpoints for invoices and receipts that were publicly accessible via UUID without any token verification, leading to an IDOR (Insecure Direct Object Reference) vulnerability.
+**Learning:** "Public" endpoints for sensitive documents should never be truly anonymous. They require a cryptographically signed "capability" token to ensure that only the intended recipient (who has the unique link) can access the resource.
+**Prevention:** Enforce signed token verification on all public-facing resource access points. Always validate that the ID and resource type embedded in the token match the requested resource to prevent token reuse across different entities.
