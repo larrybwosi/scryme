@@ -435,12 +435,12 @@ export function EnhancedDocumentSettings({
               {activeTemplateId === previewTemplate.id ? (
                 <p className="text-xs text-zinc-500 flex items-center gap-1.5">
                   <CheckCircle2 size={13} className="text-emerald-500" />
-                  This is the current default for{&quot; &quot;}
+                  This is the current default for{" "}
                   {selectedDocType.label.toLowerCase()}.
                 </p>
               ) : (
                 <p className="text-xs text-zinc-500">
-                  This is not the current default for{&quot; &quot;}
+                  This is not the current default for{" "}
                   {selectedDocType.label.toLowerCase()}.
                 </p>
               )}
