@@ -23,7 +23,7 @@ import { z } from "zod";
 
 // --- STATS FUNCTION ---
 export async function getOrderStats(organizationId: string) {
-  const baseWhere: Prisma.TransactionWhereInput = {
+  const baseWhere: any = {
     organizationId,
     type: { not: TransactionType.POS_SALE }, // Filter for all non-POS types
   };
@@ -213,7 +213,7 @@ export async function createOrder(
 
         // 4. --- Process Items (Pricing & Stock) ---
         let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: Prisma.TransactionItemCreateWithoutTransactionInput[] =
+        const transactionItemsCreateData: any[] =
           [];
         const variantStockUpdates = new Map<string, number>();
 
@@ -245,7 +245,7 @@ export async function createOrder(
           transactionSubTotal = transactionSubTotal.add(lineSubtotal);
 
           // B. Stock Allocation using Service
-          const allocationsCreateData: Prisma.InventoryAllocationCreateWithoutTransactionItemInput[] =
+          const allocationsCreateData: any[] =
             [];
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
 
@@ -588,7 +588,7 @@ export async function getPaginatedOrders(
     const skip = (page - 1) * pageSize;
 
     // 2. --- Build Query ---
-    const where: Prisma.TransactionWhereInput = {
+    const where: any = {
       organizationId,
       type: { not: TransactionType.POS_SALE }, // Filter for "orders"
     };
@@ -781,8 +781,8 @@ export async function confirmOrder(
         const stockPoolMap = new Map(stockPools.map((s) => [s.variantId, s]));
 
         const stockUpdates: Prisma.PrismaPromise<any>[] = [];
-        const stockAdjustments: Prisma.StockAdjustmentCreateManyInput[] = [];
-        const allocationCreations: Prisma.InventoryAllocationCreateManyInput[] =
+        const stockAdjustments: any[] = [];
+        const allocationCreations: any[] =
           [];
         for (const [variantId, totalBaseNeeded] of Array.from(
           baseQuantitiesToCommit.entries(),
@@ -831,7 +831,7 @@ export async function confirmOrder(
           } as any);
 
           // C. Soft Allocate Batches (FEFO/LIFO)
-          const batchOrderBy: Prisma.StockBatchOrderByWithRelationInput[] =
+          const batchOrderBy: any[] =
             inventoryPolicy === "LIFO"
               ? [{ receivedDate: "desc" }]
               : [{ expiryDate: "asc" }, { receivedDate: "asc" }];
@@ -1085,7 +1085,7 @@ export async function cancelOrder(
 
           // 5. Updates
           const stockUpdates = [];
-          const stockAdjustments: Prisma.StockAdjustmentCreateManyInput[] = [];
+          const stockAdjustments: any[] = [];
 
           for (const [variantId, quantity] of Array.from(
             variantBaseQuantities.entries(),

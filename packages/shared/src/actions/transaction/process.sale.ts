@@ -210,7 +210,7 @@ export async function processSale(
 
         // --- 2. Line Items & Stock Logic ---
         let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: Prisma.TransactionItemCreateWithoutTransactionInput[] =
+        const transactionItemsCreateData: any[] =
           [];
         const variantStockUpdates = new Map<string, number>();
 
@@ -243,7 +243,7 @@ export async function processSale(
 
           // C. Stock Allocation using Service
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
-          const allocationsCreateData: Prisma.InventoryAllocationCreateWithoutTransactionItemInput[] =
+          const allocationsCreateData: any[] =
             [];
 
           if (enableStockTracking) {
@@ -325,7 +325,7 @@ export async function processSale(
         ));
 
         // --- 5. Payment Logic ---
-        const paymentRecordsCreateData: Prisma.PaymentCreateWithoutTransactionInput[] =
+        const paymentRecordsCreateData: any[] =
           [];
         let totalPaidAmount = new Prisma.Decimal(0);
 

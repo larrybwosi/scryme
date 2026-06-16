@@ -302,29 +302,35 @@ export function EnhancedDocumentSettings({
         open={!!previewTemplate}
         onOpenChange={() => setPreviewTemplate(null)}
       >
-        <DialogContent className="max-w-7xl w-full h-[90vh] flex flex-col p-0 overflow-hidden bg-gray-100">
-          <DialogHeader className="p-4 bg-white border-b shrink-0">
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] flex flex-col p-0 overflow-hidden bg-zinc-100/50 border-zinc-200">
+          <DialogHeader className="p-4 bg-white border-b shrink-0 shadow-sm z-10">
             <div className="flex items-center justify-between pr-8">
-              <div>
-                <DialogTitle className="text-lg font-bold flex items-center gap-2">
-                  <FileText className="text-emerald-600" />
-                  {previewTemplate?.name}
-                </DialogTitle>
-                <p className="text-sm text-gray-500">
-                  Document Preview • {previewTemplate?.version}
-                </p>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-bold text-zinc-900">
+                    {previewTemplate?.name}
+                  </DialogTitle>
+                  <p className="text-xs font-medium text-zinc-500 flex items-center gap-1.5">
+                    Professional Document Manifest • {previewTemplate?.version}
+                  </p>
+                </div>
               </div>
-              <Badge
-                variant="outline"
-                className="bg-emerald-50 text-emerald-700 border-emerald-100"
-              >
-                Sample Data
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Badge
+                  variant="outline"
+                  className="bg-zinc-50 text-zinc-600 border-zinc-200 font-mono text-[10px] tracking-wider uppercase"
+                >
+                  Simulation Mode
+                </Badge>
+              </div>
             </div>
           </DialogHeader>
 
-          <div className="flex-1 p-4 overflow-hidden relative">
-            <div className="w-full h-full bg-white rounded-lg shadow-xl overflow-hidden border">
+          <div className="flex-1 p-6 md:p-8 lg:p-12 overflow-hidden bg-zinc-100/30">
+            <div className="w-full h-full bg-white rounded-xl shadow-2xl shadow-zinc-200/50 overflow-hidden border border-zinc-200 transition-all">
               {previewTemplate && (
                 <PDFViewer
                   width="100%"
