@@ -43,7 +43,7 @@ export function StatCard({
           <div className="flex items-center gap-1 mt-2">
             <span
               className={cn(
-                'text-[11.5px] font-semibold',
+                'text-[11.5px] font-semibold flex items-center gap-0.5',
                 trend.positive ? 'text-status-success' : 'text-destructive'
               )}
             >
