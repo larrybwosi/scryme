@@ -104,6 +104,7 @@ export class BakeryService {
 
   /**
    * List all ingredients (raw materials) for the bakery.
+   * Includes both RAW_MATERIAL products and products produced by recipes.
    */
   async getIngredients(ctx: V2ApiContext) {
     const { organizationId } = ctx;
@@ -111,8 +112,11 @@ export class BakeryService {
       where: {
         product: {
           organizationId,
-          type: "RAW_MATERIAL" as any,
         },
+        OR: [
+          { product: { type: "RAW_MATERIAL" as any } },
+          { producedByRecipe: { isNot: null } },
+        ],
       },
       select: {
         id: true,
@@ -385,19 +389,48 @@ export class BakeryService {
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const { ingredients, ...rest } = data;
+
     return this.prisma.client.recipe.create({
       data: {
-        ...data,
+        ...rest,
         organizationId,
+        ingredients: ingredients
+          ? {
+              create: ingredients.map((ing: any) => ({
+                ingredientVariantId: ing.ingredientVariantId,
+                quantity: ing.quantity,
+                systemUnitId: ing.systemUnitId,
+                orgUnitId: ing.orgUnitId,
+                preparationNotes: ing.preparationNotes,
+              })),
+            }
+          : undefined,
       },
     });
   }
 
   async updateRecipe(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    const { ingredients, ...rest } = data;
+
     return this.prisma.client.recipe.update({
       where: { id, organizationId },
-      data,
+      data: {
+        ...rest,
+        ingredients: ingredients
+          ? {
+              deleteMany: {},
+              create: ingredients.map((ing: any) => ({
+                ingredientVariantId: ing.ingredientVariantId,
+                quantity: ing.quantity,
+                systemUnitId: ing.systemUnitId,
+                orgUnitId: ing.orgUnitId,
+                preparationNotes: ing.preparationNotes,
+              })),
+            }
+          : undefined,
+      },
     });
   }
 

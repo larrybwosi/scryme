@@ -126,11 +126,17 @@ export class MembersService {
     });
   }
 
-  async login(ctx: V2ApiContext, cardId: string, pin: string) {
-    const { organizationId, locationId } = ctx;
+  async login(
+    ctx: V2ApiContext,
+    cardId: string,
+    pin: string,
+    bodyLocationId?: string,
+  ) {
+    const { organizationId } = ctx;
+    const locationId = bodyLocationId || ctx.locationId;
 
     if (!locationId) {
-      throw new BadRequestException("Device is not associated with a location");
+      throw new BadRequestException("Location is required for login");
     }
 
     const member = await this.prisma.client.member.findFirst({

@@ -1,14 +1,19 @@
 import { z } from "zod";
 
-export const RecipeIngredientSchema = z.object({
-  ingredientVariantId: z.string().min(1),
-  quantity: z.number().positive(),
-  systemUnitId: z.string().optional().nullable(),
-  orgUnitId: z.string().optional().nullable(),
-  preparationNotes: z.string().optional().nullable(),
-});
+export const RecipeIngredientSchema = z
+  .object({
+    ingredientVariantId: z.string().min(1),
+    quantity: z.number().positive(),
+    systemUnitId: z.string().optional().nullable(),
+    orgUnitId: z.string().optional().nullable(),
+    preparationNotes: z.string().optional().nullable(),
+  })
+  .refine((data) => data.systemUnitId || data.orgUnitId, {
+    message:
+      "At least one unit (system or organization) must be selected for the ingredient",
+  });
 
-export const CreateRecipeSchema = z.object({
+const RecipeSchemaObject = z.object({
   name: z.string().min(1),
   categoryId: z.string().min(1),
   producesVariantId: z.string().min(1),
@@ -29,9 +34,17 @@ export const CreateRecipeSchema = z.object({
   ingredients: z.array(RecipeIngredientSchema).optional(),
 });
 
-export const UpdateRecipeSchema = CreateRecipeSchema.partial();
+export const CreateRecipeSchema = RecipeSchemaObject.refine(
+  (data) => data.systemUnitId || data.orgUnitId,
+  {
+    message:
+      "At least one yield unit (system or organization) must be selected for the recipe",
+  },
+);
 
-export const CreateBatchSchema = z.object({
+export const UpdateRecipeSchema = RecipeSchemaObject.partial();
+
+const BatchSchemaObject = z.object({
   recipeId: z.string().min(1),
   plannedQuantity: z.number().positive(),
   systemUnitId: z.string().optional().nullable(),
@@ -46,7 +59,15 @@ export const CreateBatchSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-export const UpdateBatchSchema = CreateBatchSchema.partial().extend({
+export const CreateBatchSchema = BatchSchemaObject.refine(
+  (data) => data.systemUnitId || data.orgUnitId,
+  {
+    message:
+      "At least one unit (system or organization) must be selected for the batch quantity",
+  },
+);
+
+export const UpdateBatchSchema = BatchSchemaObject.partial().extend({
   status: z
     .enum(["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"])
     .optional(),
@@ -68,7 +89,7 @@ export const CompleteBatchSchema = z.object({
     .optional(),
 });
 
-export const CreateTemplateSchema = z.object({
+const TemplateSchemaObject = z.object({
   name: z.string().min(1),
   recipeId: z.string().min(1),
   quantity: z.number().positive(),
@@ -82,7 +103,15 @@ export const CreateTemplateSchema = z.object({
   shelfLifeDays: z.number().int().optional().nullable(),
 });
 
-export const UpdateTemplateSchema = CreateTemplateSchema.partial();
+export const CreateTemplateSchema = TemplateSchemaObject.refine(
+  (data) => data.systemUnitId || data.orgUnitId,
+  {
+    message:
+      "At least one unit (system or organization) must be selected for the template quantity",
+  },
+);
+
+export const UpdateTemplateSchema = TemplateSchemaObject.partial();
 
 export const CreateBakeryCategorySchema = z.object({
   name: z.string().min(1),
