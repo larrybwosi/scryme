@@ -1,11 +1,11 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {OrganizationIntegration} from "@repo/db";
+import { Injectable, Logger } from "@nestjs/common";
+import { OrganizationIntegration } from "@repo/db";
 import {
   CommunicationMessage,
   CommunicationProvider,
 } from "../../domain/communication-provider.interface";
 import axios from "axios";
-import {env} from "@repo/env";
+import { env } from "@repo/env";
 
 @Injectable()
 export class SlackProvider implements CommunicationProvider {
@@ -24,7 +24,7 @@ export class SlackProvider implements CommunicationProvider {
 
   async handleCallback(
     code: string,
-  ): Promise<{credentials: any; settings?: any}> {
+  ): Promise<{ credentials: any; settings?: any }> {
     const response = await axios.post(
       "https://slack.com/api/oauth.v2.access",
       null,
@@ -57,8 +57,8 @@ export class SlackProvider implements CommunicationProvider {
 
   async sendMessage(
     integration: OrganizationIntegration,
-    message: {text: string; threadId?: string; channelId?: string},
-  ): Promise<{externalId: string; threadId?: string}> {
+    message: { text: string; threadId?: string; channelId?: string },
+  ): Promise<{ externalId: string; threadId?: string }> {
     const credentials = integration.credentials as any;
     const accessToken = credentials.accessToken;
 
@@ -70,7 +70,7 @@ export class SlackProvider implements CommunicationProvider {
         thread_ts: message.threadId,
       },
       {
-        headers: {Authorization: `Bearer ${accessToken}`},
+        headers: { Authorization: `Bearer ${accessToken}` },
       },
     );
 
@@ -127,8 +127,8 @@ export class SlackProvider implements CommunicationProvider {
 
     try {
       const response = await axios.get("https://slack.com/api/users.info", {
-        params: {user: slackUserId},
-        headers: {Authorization: `Bearer ${accessToken}`},
+        params: { user: slackUserId },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (response.data.ok) {

@@ -14,13 +14,13 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {CrmRecordService} from "../../application/use-cases/crm-record.service";
-import {CrmNoteService} from "../../application/use-cases/crm-note.service";
-import {CrmDefinitionService} from "../../application/use-cases/crm-definition.service";
-import {CrmActivityService} from "../../application/use-cases/crm-activity.service";
-import {CrmRelationshipService} from "../../application/use-cases/crm-relationship.service";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { CrmRecordService } from "../../application/use-cases/crm-record.service";
+import { CrmNoteService } from "../../application/use-cases/crm-note.service";
+import { CrmDefinitionService } from "../../application/use-cases/crm-definition.service";
+import { CrmActivityService } from "../../application/use-cases/crm-activity.service";
+import { CrmRelationshipService } from "../../application/use-cases/crm-relationship.service";
 import {
   CreateCrmRecordDto,
   UpdateCrmRecordDto,
@@ -32,7 +32,7 @@ import {
   CreateCrmObjectDto,
   CreateCrmFieldDto,
 } from "../../application/dto/crm-definitions.dto";
-import {CreateCrmActivityDto} from "../../application/dto/crm-activity.dto";
+import { CreateCrmActivityDto } from "../../application/dto/crm-activity.dto";
 import {
   CreateCrmRelationshipDto,
   CreateCrmAssociationDto,
@@ -52,22 +52,22 @@ export class CrmController {
   ) {}
 
   @Post("records")
-  @ApiOperation({summary: "Create a new CRM record"})
-  @ApiResponse({status: 201, type: CrmRecordResponseDto})
+  @ApiOperation({ summary: "Create a new CRM record" })
+  @ApiResponse({ status: 201, type: CrmRecordResponseDto })
   async createRecord(@Request() req: any, @Body() dto: CreateCrmRecordDto) {
     return this.recordService.createRecord(req.organization.id, "default", dto);
   }
 
   @Get("records/:id")
-  @ApiOperation({summary: "Get a CRM record by ID"})
-  @ApiResponse({status: 200, type: CrmRecordResponseDto})
+  @ApiOperation({ summary: "Get a CRM record by ID" })
+  @ApiResponse({ status: 200, type: CrmRecordResponseDto })
   async getRecord(@Request() req: any, @Param("id") id: string) {
     return this.recordService.getRecord(req.organization.id, id);
   }
 
   @Patch("records/:id")
-  @ApiOperation({summary: "Update a CRM record"})
-  @ApiResponse({status: 200, type: CrmRecordResponseDto})
+  @ApiOperation({ summary: "Update a CRM record" })
+  @ApiResponse({ status: 200, type: CrmRecordResponseDto })
   async updateRecord(
     @Request() req: any,
     @Param("id") id: string,
@@ -77,8 +77,8 @@ export class CrmController {
   }
 
   @Post("notes")
-  @ApiOperation({summary: "Create a new CRM note"})
-  @ApiResponse({status: 201, type: CrmNoteResponseDto})
+  @ApiOperation({ summary: "Create a new CRM note" })
+  @ApiResponse({ status: 201, type: CrmNoteResponseDto })
   async createNote(@Request() req: any, @Body() dto: CreateCrmNoteDto) {
     return this.noteService.createNote(
       req.organization.id,
@@ -88,14 +88,14 @@ export class CrmController {
   }
 
   @Get("records/:id/notes")
-  @ApiOperation({summary: "Get all notes for a CRM record"})
-  @ApiResponse({status: 200, type: [CrmNoteResponseDto]})
+  @ApiOperation({ summary: "Get all notes for a CRM record" })
+  @ApiResponse({ status: 200, type: [CrmNoteResponseDto] })
   async getRecordNotes(@Request() req: any, @Param("id") id: string) {
     return this.noteService.getNotesForRecord(req.organization.id, id);
   }
 
   @Post("activities")
-  @ApiOperation({summary: "Create a new CRM activity"})
+  @ApiOperation({ summary: "Create a new CRM activity" })
   async createActivity(@Request() req: any, @Body() dto: CreateCrmActivityDto) {
     return this.activityService.createActivity(
       req.organization.id,
@@ -115,7 +115,7 @@ export class CrmController {
   // --- Definitions ---
 
   @Post("objects")
-  @ApiOperation({summary: "Create a new CRM object definition"})
+  @ApiOperation({ summary: "Create a new CRM object definition" })
   async createObject(@Request() req: any, @Body() dto: CreateCrmObjectDto) {
     return this.definitionService.createObjectDefinition(
       req.organization.id,
@@ -124,13 +124,13 @@ export class CrmController {
   }
 
   @Get("objects")
-  @ApiOperation({summary: "List all CRM object definitions"})
+  @ApiOperation({ summary: "List all CRM object definitions" })
   async listObjects(@Request() req: any) {
     return this.definitionService.getObjectDefinitions(req.organization.id);
   }
 
   @Post("objects/:objectId/fields")
-  @ApiOperation({summary: "Create a new CRM field definition"})
+  @ApiOperation({ summary: "Create a new CRM field definition" })
   async createField(
     @Request() req: any,
     @Param("objectId") objectId: string,
@@ -144,7 +144,7 @@ export class CrmController {
   }
 
   @Get("objects/:objectId/fields")
-  @ApiOperation({summary: "List all fields for a CRM object"})
+  @ApiOperation({ summary: "List all fields for a CRM object" })
   async listFields(@Request() req: any, @Param("objectId") objectId: string) {
     return this.definitionService.getFieldsForObject(
       req.organization.id,
@@ -155,7 +155,7 @@ export class CrmController {
   // --- Relationships ---
 
   @Post("relationships")
-  @ApiOperation({summary: "Define a new CRM relationship"})
+  @ApiOperation({ summary: "Define a new CRM relationship" })
   async createRelationship(
     @Request() req: any,
     @Body() dto: CreateCrmRelationshipDto,
@@ -167,13 +167,13 @@ export class CrmController {
   }
 
   @Get("relationships")
-  @ApiOperation({summary: "List all defined CRM relationships"})
+  @ApiOperation({ summary: "List all defined CRM relationships" })
   async listRelationships(@Request() req: any) {
     return this.relationshipService.getRelationships(req.organization.id);
   }
 
   @Post("associations")
-  @ApiOperation({summary: "Associate two CRM records"})
+  @ApiOperation({ summary: "Associate two CRM records" })
   async createAssociation(
     @Request() req: any,
     @Body() dto: CreateCrmAssociationDto,
@@ -182,7 +182,7 @@ export class CrmController {
   }
 
   @Get("records/:id/associations")
-  @ApiOperation({summary: "Get all associations for a CRM record"})
+  @ApiOperation({ summary: "Get all associations for a CRM record" })
   async listRecordAssociations(@Request() req: any, @Param("id") id: string) {
     return this.relationshipService.getAssociationsForRecord(
       req.organization.id,

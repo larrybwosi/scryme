@@ -1,6 +1,12 @@
-import {Controller, Post, Req, Res, BadRequestException} from "@nestjs/common";
-import {storageService} from "@repo/shared/server";
-import {v7 as uuidv7} from "uuid";
+import {
+  Controller,
+  Post,
+  Req,
+  Res,
+  BadRequestException,
+} from "@nestjs/common";
+import { storageService } from "@repo/shared/storage";
+import { v7 as uuidv7 } from "uuid";
 
 @Controller("upload")
 export class UploadController {
@@ -21,6 +27,6 @@ export class UploadController {
     const buffer = await data.toBuffer();
     const result = await storageService.upload(buffer, fileName, data.mimetype);
 
-    return res.send({url: result.url || fileName});
+    return res.send({ url: result.url || fileName });
   }
 }

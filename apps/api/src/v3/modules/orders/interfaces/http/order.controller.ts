@@ -15,25 +15,25 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from "@nestjs/swagger";
-import {GetOrdersUseCase} from "../../application/use-cases/get-orders.use-case";
-import {CreateOrderUseCase} from "../../application/use-cases/create-order.use-case";
-import {UpdateOrderStatusUseCase} from "../../application/use-cases/update-order-status.use-case";
-import {RequestB2BQuoteUseCase} from "../../application/use-cases/request-b2b-quote.use-case";
-import {ConvertQuoteToOrderUseCase} from "../../application/use-cases/convert-quote-to-order.use-case";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
-import {AuditInterceptor} from "../../../../common/interceptors/audit.interceptor";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
+import { GetOrdersUseCase } from "../../application/use-cases/get-orders.use-case";
+import { CreateOrderUseCase } from "../../application/use-cases/create-order.use-case";
+import { UpdateOrderStatusUseCase } from "../../application/use-cases/update-order-status.use-case";
+import { RequestB2BQuoteUseCase } from "../../application/use-cases/request-b2b-quote.use-case";
+import { ConvertQuoteToOrderUseCase } from "../../application/use-cases/convert-quote-to-order.use-case";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import {
   UpdateOrderStatusDto,
   OrderResponseDto,
 } from "../../application/dto/order.dto";
-import {CreateOrderDto} from "../../application/dto/create-order.dto";
-import {RequestB2BQuoteDto} from "../../application/dto/request-b2b-quote.dto";
-import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
+import { CreateOrderDto } from "../../application/dto/create-order.dto";
+import { RequestB2BQuoteDto } from "../../application/dto/request-b2b-quote.dto";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 
 @ApiTags("V3 Orders")
 @ApiBearerAuth()
@@ -130,7 +130,7 @@ export class OrderController {
     summary: "Request a B2B product quote and check availability",
     operationId: "Orders_RequestB2BQuote",
   })
-  @ApiResponse({status: 201, description: "Quote created successfully"})
+  @ApiResponse({ status: 201, description: "Quote created successfully" })
   @ApiResponse({
     status: 400,
     type: ApiErrorResponseDto,
@@ -146,7 +146,7 @@ export class OrderController {
     summary: "Convert a quote into a sales order",
     operationId: "Orders_ConvertQuoteToOrder",
   })
-  @ApiResponse({status: 200, description: "Quote converted to order"})
+  @ApiResponse({ status: 200, description: "Quote converted to order" })
   @ApiResponse({
     status: 404,
     type: ApiErrorResponseDto,

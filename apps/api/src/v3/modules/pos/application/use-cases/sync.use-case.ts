@@ -1,11 +1,11 @@
-import {Injectable, BadRequestException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { type V3ApiContext } from "@repo/shared/api/v2/types";
 import {
-  V3ApiContext,
   getPosProducts,
   getPosProductsDelta,
-} from "@repo/shared/server";
-import {PosCustomerService} from "@/v2/pos/pos-customer.service";
+} from "@repo/shared/api/v2/utils/products";
+import { PosCustomerService } from "@/v2/pos/pos-customer.service";
 
 @Injectable()
 export class SyncUseCase {
@@ -15,7 +15,7 @@ export class SyncUseCase {
   ) {}
 
   async execute(ctx: V3ApiContext, query: any) {
-    const {lastSync, locationId: queryLocationId} = query;
+    const { lastSync, locationId: queryLocationId } = query;
     const locationId = ctx.locationId || queryLocationId;
 
     if (!locationId) throw new BadRequestException("Location ID is required.");
@@ -37,8 +37,8 @@ export class SyncUseCase {
       productsPromise,
       this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync),
       this.prisma.client.category.findMany({
-        where: {organizationId: ctx.organizationId},
-        select: {id: true, name: true, description: true},
+        where: { organizationId: ctx.organizationId },
+        select: { id: true, name: true, description: true },
       }),
     ]);
 

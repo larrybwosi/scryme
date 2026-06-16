@@ -4,8 +4,8 @@ import {
   ExecutionContext,
   CallHandler,
 } from "@nestjs/common";
-import {Observable} from "rxjs";
-import {map} from "rxjs/operators";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export interface Response<T> {
   success: boolean;
@@ -24,7 +24,7 @@ export class StandardResponseInterceptor<T> implements NestInterceptor<
     next: CallHandler,
   ): Observable<Response<T>> {
     return next.handle().pipe(
-      map(data => {
+      map((data) => {
         if (data && typeof data === "object" && "success" in data) {
           return data;
         }

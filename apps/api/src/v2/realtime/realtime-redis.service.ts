@@ -1,6 +1,6 @@
-import {Injectable} from "@nestjs/common";
-import {RedisService} from "../../redis/redis.service";
-import {PresenceMember} from "@repo/shared";
+import { Injectable } from "@nestjs/common";
+import { RedisService } from "../../redis/redis.service";
+import { PresenceMember } from "@repo/shared/realtime";
 
 @Injectable()
 export class RealtimeRedisService {
@@ -19,7 +19,7 @@ export class RealtimeRedisService {
   // History with atomic LPUSH/LTRIM
   async saveMessage(channel: string, event: string, data: any) {
     const key = `${this.HISTORY_PREFIX}${channel}`;
-    const message = JSON.stringify({event, data, timestamp: Date.now()});
+    const message = JSON.stringify({ event, data, timestamp: Date.now() });
 
     await this.redis.lpush(key, message);
     await this.redis.ltrim(key, 0, this.MAX_HISTORY_ITEMS - 1);
@@ -33,7 +33,7 @@ export class RealtimeRedisService {
   async getHistory(channel: string): Promise<any[]> {
     const key = `${this.HISTORY_PREFIX}${channel}`;
     const rawHistory = await this.redis.lrange(key, 0, -1);
-    return rawHistory.map(raw => JSON.parse(raw)).reverse();
+    return rawHistory.map((raw) => JSON.parse(raw)).reverse();
   }
 
   async getLastState(channel: string, event: string): Promise<any | null> {
@@ -64,6 +64,6 @@ export class RealtimeRedisService {
     const members = await this.redis.hgetall<PresenceMember>(key);
 
     const twoMinsAgo = Date.now() - 120 * 1000;
-    return Object.values(members).filter(m => m.timestamp > twoMinsAgo);
+    return Object.values(members).filter((m) => m.timestamp > twoMinsAgo);
   }
 }

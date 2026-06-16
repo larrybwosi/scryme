@@ -1,7 +1,7 @@
-import {describe, it, expect, vi, beforeEach} from "vitest";
-import {TraceBatchUseCase} from "./trace-batch.use-case";
-import {IStockBatchRepository} from "../../domain/repositories/stock-batch-repository.interface";
-import {NotFoundException} from "@nestjs/common";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { TraceBatchUseCase } from "./trace-batch.use-case";
+import { IStockBatchRepository } from "../../domain/repositories/stock-batch-repository.interface";
+import { NotFoundException } from "@nestjs/common";
 
 describe("TraceBatchUseCase", () => {
   let useCase: TraceBatchUseCase;
@@ -17,9 +17,12 @@ describe("TraceBatchUseCase", () => {
   });
 
   it("should return traceability for a valid batch ID", async () => {
-    const mockBatch = {id: "batch-1", organizationId: "org-1"};
+    const mockBatch = { id: "batch-1", organizationId: "org-1" };
     repository.findById.mockResolvedValue(mockBatch);
-    repository.getTraceability.mockResolvedValue({...mockBatch, movements: []});
+    repository.getTraceability.mockResolvedValue({
+      ...mockBatch,
+      movements: [],
+    });
 
     const result = await useCase.execute("org-1", "batch-1");
 
@@ -36,7 +39,10 @@ describe("TraceBatchUseCase", () => {
     };
     repository.findById.mockResolvedValue(null);
     repository.findByBatchNumber.mockResolvedValue(mockBatch);
-    repository.getTraceability.mockResolvedValue({...mockBatch, movements: []});
+    repository.getTraceability.mockResolvedValue({
+      ...mockBatch,
+      movements: [],
+    });
 
     const result = await useCase.execute("org-1", "BCH-001");
 

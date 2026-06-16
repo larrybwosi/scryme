@@ -1,5 +1,5 @@
-import {Injectable} from "@nestjs/common";
-import {V3AuthService} from "../../infrastructure/services/v3-auth.service";
+import { Injectable } from "@nestjs/common";
+import { V3AuthService } from "../../infrastructure/services/v3-auth.service";
 
 @Injectable()
 export class ExchangeTokenUseCase {

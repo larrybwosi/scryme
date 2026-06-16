@@ -13,25 +13,25 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from "@nestjs/swagger";
-import {V3AuthService} from "../../../auth/infrastructure/services/v3-auth.service";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {v3Context} from "@/v3/common/decorators/v3-context.decorator";
-import {type V3ApiContext} from "@repo/shared/server";
-import {ProcessSaleDto} from "../../application/dto/sale.dto";
-import {ProcessSaleUseCase} from "../../application/use-cases/process-sale.use-case";
-import {SyncUseCase} from "../../application/use-cases/sync.use-case";
-import {GetTransactionsUseCase} from "../../application/use-cases/get-transactions.use-case";
-import {RegisterPettyCashUseCase} from "../../application/use-cases/register-petty-cash.use-case";
-import {RegisterPettyCashDto} from "../../application/dto/petty-cash.dto";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
+import { V3AuthService } from "../../../auth/infrastructure/services/v3-auth.service";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
+import { type V3ApiContext } from "@repo/shared/api/v2/types";
+import { ProcessSaleDto } from "../../application/dto/sale.dto";
+import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
+import { SyncUseCase } from "../../application/use-cases/sync.use-case";
+import { GetTransactionsUseCase } from "../../application/use-cases/get-transactions.use-case";
+import { RegisterPettyCashUseCase } from "../../application/use-cases/register-petty-cash.use-case";
+import { RegisterPettyCashDto } from "../../application/dto/petty-cash.dto";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import {
   ProvisionDeviceDto,
   PosLoginDto,
   PosLoginResponseDto,
   ProvisionResponseDto,
 } from "../../application/dto/pos.dto";
-import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 
 @ApiTags("V3 POS")
 @Controller(":orgSlug/pos")
@@ -84,7 +84,7 @@ export class PosController {
       body.clientId,
       body.pin,
     );
-    return {accessToken};
+    return { accessToken };
   }
 
   @Get("me")
@@ -94,7 +94,7 @@ export class PosController {
     summary: "Get current POS device and staff context",
     operationId: "POS_GetMe",
   })
-  @ApiResponse({status: 200, description: "Current context"})
+  @ApiResponse({ status: 200, description: "Current context" })
   async getMe(@v3Context() ctx: V3ApiContext) {
     return ctx;
   }
@@ -106,7 +106,7 @@ export class PosController {
     summary: "Process a new POS sale",
     operationId: "POS_ProcessSale",
   })
-  @ApiResponse({status: 201, description: "Sale processed"})
+  @ApiResponse({ status: 201, description: "Sale processed" })
   @ApiResponse({
     status: 400,
     type: ApiErrorResponseDto,
@@ -126,7 +126,7 @@ export class PosController {
     summary: "Full or delta POS sync",
     operationId: "POS_Sync",
   })
-  @ApiResponse({status: 200, description: "Sync data"})
+  @ApiResponse({ status: 200, description: "Sync data" })
   async sync(@v3Context() ctx: V3ApiContext, @Query() query: any) {
     return this.syncUseCase.execute(ctx, query);
   }
@@ -138,7 +138,7 @@ export class PosController {
     summary: "List POS transactions",
     operationId: "POS_GetTransactions",
   })
-  @ApiResponse({status: 200, description: "Transactions"})
+  @ApiResponse({ status: 200, description: "Transactions" })
   async getTransactions(@v3Context() ctx: V3ApiContext, @Query() query: any) {
     return this.getTransactionsUseCase.execute(ctx, query);
   }
@@ -150,7 +150,7 @@ export class PosController {
     summary: "Register a new petty cash expense",
     operationId: "POS_RegisterPettyCash",
   })
-  @ApiResponse({status: 201, description: "Petty cash expense registered"})
+  @ApiResponse({ status: 201, description: "Petty cash expense registered" })
   async registerPettyCash(
     @v3Context() ctx: V3ApiContext,
     @Body() body: RegisterPettyCashDto,
@@ -165,7 +165,7 @@ export class PosController {
     summary: "List available petty cash funds",
     operationId: "POS_GetPettyCashFunds",
   })
-  @ApiResponse({status: 200, description: "Petty cash funds"})
+  @ApiResponse({ status: 200, description: "Petty cash funds" })
   async getPettyCashFunds(@v3Context() ctx: V3ApiContext) {
     return this.registerPettyCashUseCase.getFunds(ctx);
   }

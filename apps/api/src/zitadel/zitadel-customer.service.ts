@@ -1,8 +1,8 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RecordService, SchemaService} from "@repo/crm/server";
-import {CrmActivityService} from "./crm-activity.service";
-import {RedisService} from "../redis/redis.service";
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RecordService, SchemaService } from "@repo/crm/server";
+import { CrmActivityService } from "./crm-activity.service";
+import { RedisService } from "../redis/redis.service";
 
 @Injectable()
 export class ZitadelCustomerService {
@@ -74,7 +74,7 @@ export class ZitadelCustomerService {
         jwtPayload.name?.split(" ").slice(1).join(" ") ||
         "User";
 
-      const record = await this.prisma.client.$transaction(async tx => {
+      const record = await this.prisma.client.$transaction(async (tx) => {
         const txRecordService = new RecordService(
           tx as any,
           this.activityLogger,

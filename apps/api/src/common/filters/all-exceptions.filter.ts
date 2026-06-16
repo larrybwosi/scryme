@@ -5,10 +5,10 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
-import {FastifyReply} from "fastify";
-import {ApiError} from "@repo/shared/server";
-import {env} from "@repo/env";
-import {OpenObserveService} from "../services/openobserve.service";
+import { FastifyReply } from "fastify";
+import { ApiError } from "@repo/shared/api/v2/errors";
+import { env } from "@repo/env";
+import { OpenObserveService } from "../services/openobserve.service";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

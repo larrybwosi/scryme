@@ -1,7 +1,7 @@
-import {ApiProperty} from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class ApiErrorResponseDto {
-  @ApiProperty({example: false})
+  @ApiProperty({ example: false })
   success: boolean;
 
   @ApiProperty({
@@ -17,20 +17,20 @@ export class ApiErrorResponseDto {
     details?: any;
   };
 
-  @ApiProperty({example: "2023-10-27T10:00:00.000Z"})
+  @ApiProperty({ example: "2023-10-27T10:00:00.000Z" })
   timestamp: string;
 }
 
 export class ApiResponseDto<T> {
-  @ApiProperty({example: true})
+  @ApiProperty({ example: true })
   success: boolean;
 
   @ApiProperty()
   data: T;
 
-  @ApiProperty({example: "2023-10-27T10:00:00.000Z"})
+  @ApiProperty({ example: "2023-10-27T10:00:00.000Z" })
   timestamp: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   meta?: any;
 }

@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -10,7 +10,7 @@ import {
   IsDateString,
   IsBoolean,
 } from "class-validator";
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 // fallow-ignore-next-line unused-exports
 export class DispatchAddressDto {
@@ -73,7 +73,7 @@ export class DispatchOrderDto {
   @IsOptional()
   deliveryPartnerId?: string;
 
-  @ApiPropertyOptional({type: DispatchAddressDto})
+  @ApiPropertyOptional({ type: DispatchAddressDto })
   @IsOptional()
   @ValidateNested()
   @Type(() => DispatchAddressDto)
@@ -94,10 +94,10 @@ export class DispatchOrderDto {
   @IsOptional()
   notes?: string;
 
-  @ApiPropertyOptional({type: [ManualBatchSelectionDto]})
+  @ApiPropertyOptional({ type: [ManualBatchSelectionDto] })
   @IsArray()
   @IsOptional()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => ManualBatchSelectionDto)
   manualBatches?: ManualBatchSelectionDto[];
 }
@@ -114,7 +114,7 @@ export class ReconcilePodDto {
   @IsNotEmpty()
   fulfillmentId: string;
 
-  @ApiProperty({enum: ReconciliationOutcome})
+  @ApiProperty({ enum: ReconciliationOutcome })
   @IsEnum(ReconciliationOutcome)
   outcome: ReconciliationOutcome;
 

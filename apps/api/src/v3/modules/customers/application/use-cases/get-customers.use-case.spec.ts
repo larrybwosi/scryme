@@ -1,8 +1,8 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {Test, TestingModule} from "@nestjs/testing";
-import {ICustomerRepository} from "../../domain/repositories/customer-repository.interface";
-import {GetCustomersUseCase} from "./get-customers.use-case";
-import {Customer} from "../../domain/entities/customer.entity";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { ICustomerRepository } from "../../domain/repositories/customer-repository.interface";
+import { GetCustomersUseCase } from "./get-customers.use-case";
+import { Customer } from "../../domain/entities/customer.entity";
 
 describe("GetCustomersUseCase", () => {
   let useCase: GetCustomersUseCase;
@@ -40,7 +40,7 @@ describe("GetCustomersUseCase", () => {
       paginatedResponse,
     );
 
-    const result = await useCase.execute(orgId, {limit: 20, offset: 0});
+    const result = await useCase.execute(orgId, { limit: 20, offset: 0 });
 
     expect(result).toEqual(paginatedResponse);
     expect(customerRepository.findByOrganization).toHaveBeenCalledWith(orgId, {

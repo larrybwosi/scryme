@@ -1,7 +1,7 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {Test, TestingModule} from "@nestjs/testing";
-import {GetTransactionsUseCase} from "./get-transactions.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { GetTransactionsUseCase } from "./get-transactions.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
 
 describe("GetTransactionsUseCase", () => {
   let useCase: GetTransactionsUseCase;
@@ -19,7 +19,7 @@ describe("GetTransactionsUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetTransactionsUseCase,
-        {provide: PrismaService, useValue: prisma},
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -33,7 +33,7 @@ describe("GetTransactionsUseCase", () => {
       locationId: "loc-1",
       permissions: ["*"],
     };
-    const query = {page: "1", limit: "10"};
+    const query = { page: "1", limit: "10" };
 
     prisma.client.transaction.count.mockResolvedValue(1);
     prisma.client.transaction.findMany.mockResolvedValue([

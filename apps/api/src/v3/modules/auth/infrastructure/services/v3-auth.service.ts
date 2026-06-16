@@ -1,94 +1,25 @@
-import {Injectable, UnauthorizedException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {env} from "@repo/env";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 import * as bcrypt from "bcryptjs";
-import * as jwt from "jsonwebtoken";
-import * as crypto from "crypto";
-import {decrypt, timingSafeMatch, provisionDeviceV3} from "@repo/shared/server";
+import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 
 @Injectable()
 export class V3AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authCore: V3AuthCoreService,
+  ) {}
 
   async provisionDevice(token: string) {
-    try {
-      return await provisionDeviceV3(this.prisma, token);
-    } catch (err) {
-      throw new UnauthorizedException(
-        err instanceof Error ? err.message : "Provisioning failed",
-      );
-    }
+    return this.authCore.provisionDevice(token);
   }
 
   async validateClient(clientId: string, clientSecret: string) {
-    const client = await this.prisma.client.v3ApiClient.findUnique({
-      where: {clientId},
-      include: {organization: true},
-    });
-
-    if (!client || !client.isActive)
-      throw new UnauthorizedException("Invalid client");
-
-    try {
-      const decryptedSecret = decrypt(client.clientSecret);
-      const isSecretValid = timingSafeMatch(clientSecret, decryptedSecret);
-      if (!isSecretValid)
-        throw new UnauthorizedException("Invalid client secret");
-    } catch (error) {
-      // Fallback to bcrypt if decryption fails (for transition period if any)
-      const isSecretValid = await bcrypt.compare(
-        clientSecret,
-        client.clientSecret,
-      );
-      if (!isSecretValid)
-        throw new UnauthorizedException("Invalid client secret");
-    }
-
-    return client;
-  }
-
-  private getJwtSecret(): string {
-    return env.JWT_SECRET;
+    return this.authCore.validateClient(clientId, clientSecret);
   }
 
   async generateToken(client: any, member?: any) {
-    const payload = this.prepareTokenPayload(client);
-
-    if (member) {
-      await this.enrichPayloadWithMember(payload, client.id, member.id);
-    }
-
-    return jwt.sign(payload, this.getJwtSecret(), {
-      expiresIn: member ? "12h" : "1h",
-      algorithm: "HS256",
-    });
-  }
-
-  private prepareTokenPayload(client: any) {
-    return {
-      sub: client.id,
-      clientId: client.clientId,
-      organizationId: client.organizationId,
-      orgSlug: client.organization.slug,
-      scopes: client.scopes,
-      type: "v3_client",
-    } as any;
-  }
-
-  private async enrichPayloadWithMember(
-    payload: any,
-    clientId: string,
-    memberId: string,
-  ) {
-    payload.memberId = memberId;
-    payload.type = "v3_hybrid";
-    const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: {apiKeyId: clientId},
-    });
-    if (registry) {
-      payload.locationId = registry.locationId;
-      payload.deviceId = registry.id;
-    }
+    return this.authCore.generateToken(client, member);
   }
 
   async loginMember(clientId: string, pin: string) {
@@ -100,8 +31,8 @@ export class V3AuthService {
 
   private async validateLoginClient(clientId: string) {
     const client = await this.prisma.client.v3ApiClient.findUnique({
-      where: {clientId},
-      include: {organization: true},
+      where: { clientId },
+      include: { organization: true },
     });
     if (!client) throw new UnauthorizedException("Invalid client");
     return client;
@@ -112,7 +43,7 @@ export class V3AuthService {
       where: {
         organizationId,
         isActive: true,
-        pinHash: {not: null},
+        pinHash: { not: null },
       },
     });
 
@@ -127,12 +58,12 @@ export class V3AuthService {
 
   private async handleMemberCheckIn(client: any, member: any) {
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: {apiKeyId: client.id},
+      where: { apiKeyId: client.id },
     });
     if (!registry) return;
 
     const existingLog = await this.prisma.client.attendanceLog.findFirst({
-      where: {memberId: member.id, checkOutTime: null},
+      where: { memberId: member.id, checkOutTime: null },
     });
 
     if (!existingLog) {
@@ -158,7 +89,7 @@ export class V3AuthService {
       },
     });
     await this.prisma.client.member.update({
-      where: {id: memberId},
+      where: { id: memberId },
       data: {
         isCheckedIn: true,
         lastCheckInTime: new Date(),
@@ -168,12 +99,6 @@ export class V3AuthService {
   }
 
   async verifyToken(token: string) {
-    try {
-      return jwt.verify(token, this.getJwtSecret(), {
-        algorithms: ["HS256"],
-      }) as any;
-    } catch (error) {
-      throw new UnauthorizedException("Invalid token");
-    }
+    return this.authCore.verifyToken(token);
   }
 }

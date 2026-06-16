@@ -1,7 +1,7 @@
-import {Injectable} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {IOrderRepository} from "../../domain/repositories/order-repository.interface";
-import {Order} from "../../domain/entities/order.entity";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { Order } from "../../domain/entities/order.entity";
 import {
   PaginationQueryDto,
   PaginatedResponse,
@@ -19,8 +19,8 @@ export class PrismaOrderRepository implements IOrderRepository {
     const result = await paginate(
       this.prisma.client.transaction,
       paginationQuery,
-      {organizationId},
-      {createdAt: "desc"},
+      { organizationId },
+      { createdAt: "desc" },
       {
         select: {
           id: true,
@@ -59,7 +59,7 @@ export class PrismaOrderRepository implements IOrderRepository {
 
   async findById(id: string): Promise<Order | null> {
     const o = await this.prisma.client.transaction.findUnique({
-      where: {id},
+      where: { id },
       select: {
         id: true,
         number: true,
@@ -95,10 +95,10 @@ export class PrismaOrderRepository implements IOrderRepository {
         type: orderData.type || "ONLINE_ORDER",
         channel: orderData.channel || "ECOMMERCE_STORE",
         status: orderData.status || "PENDING_CONFIRMATION",
-        organization: {connect: {id: orderData.organizationId}},
-        location: {connect: {id: orderData.locationId}},
+        organization: { connect: { id: orderData.organizationId } },
+        location: { connect: { id: orderData.locationId } },
         customer: orderData.customerId
-          ? {connect: {id: orderData.customerId}}
+          ? { connect: { id: orderData.customerId } }
           : undefined,
         subtotal: orderData.subtotal,
         finalTotal: orderData.finalTotal,
@@ -143,7 +143,7 @@ export class PrismaOrderRepository implements IOrderRepository {
 
   async save(order: Order): Promise<Order> {
     const o = await this.prisma.client.transaction.upsert({
-      where: {id: order.id},
+      where: { id: order.id },
       update: {
         status: order.status as any,
         finalTotal: order.totalAmount,
@@ -152,15 +152,15 @@ export class PrismaOrderRepository implements IOrderRepository {
         id: order.id,
         number: order.number || `ORD-${Date.now()}`,
         type: "POS_SALE",
-        location: {connect: {id: order.locationId}},
+        location: { connect: { id: order.locationId } },
         customer: order.customerId
-          ? {connect: {id: order.customerId}}
+          ? { connect: { id: order.customerId } }
           : undefined,
         status: order.status as any,
         finalTotal: order.totalAmount,
         subtotal: order.totalAmount,
         baseCurrencyTotal: order.totalAmount,
-        organization: {connect: {id: order.organizationId}},
+        organization: { connect: { id: order.organizationId } },
       },
       include: {
         items: true,

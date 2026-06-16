@@ -1,7 +1,7 @@
-import {vi, describe, it, expect, beforeEach} from "vitest";
-import {PurchaseOrderUseCase} from "./purchase-order.use-case";
-import {StockTransferUseCase} from "./stock-transfer.use-case";
-import {StockRequestUseCase} from "./stock-request.use-case";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { PurchaseOrderUseCase } from "./purchase-order.use-case";
+import { StockTransferUseCase } from "./stock-transfer.use-case";
+import { StockRequestUseCase } from "./stock-request.use-case";
 import {
   PurchaseStatus,
   StockTransferStatus,
@@ -88,7 +88,7 @@ describe("Stocking Edge Cases", () => {
 
     prisma = {
       client: {
-        $transaction: vi.fn(async callback => await callback(mockTx)),
+        $transaction: vi.fn(async (callback) => await callback(mockTx)),
         stockRequest: mockTx.stockRequest,
         stockTransfer: mockTx.stockTransfer,
         purchase: mockTx.purchase,
@@ -120,13 +120,13 @@ describe("Stocking Edge Cases", () => {
           id: "item-1",
           variantId: "v1",
           requestedQuantity: 10,
-          variant: {sku: "SKU-V1"},
+          variant: { sku: "SKU-V1" },
         },
       ],
     });
 
     mockTx.stockBatch.findMany.mockResolvedValue([
-      {id: "batch-1", currentQuantity: 10},
+      { id: "batch-1", currentQuantity: 10 },
     ]);
 
     mockTx.stockTransfer.update.mockResolvedValue({
@@ -136,7 +136,7 @@ describe("Stocking Edge Cases", () => {
     });
 
     const shipDto = {
-      items: [{transferItemId: "item-1", shippedQuantity: 4}], // Shipping only 4 out of 10
+      items: [{ transferItemId: "item-1", shippedQuantity: 4 }], // Shipping only 4 out of 10
     };
 
     await stockTransferUseCase.ship(
@@ -149,15 +149,15 @@ describe("Stocking Edge Cases", () => {
     expect(mockTx.productVariantStock.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          currentStock: {decrement: 4},
-          reservedStock: {decrement: 10},
+          currentStock: { decrement: 4 },
+          reservedStock: { decrement: 10 },
         }),
       }),
     );
 
     expect(mockTx.stockBatch.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: {currentQuantity: {decrement: 4}},
+        data: { currentQuantity: { decrement: 4 } },
       }),
     );
   });
@@ -175,17 +175,17 @@ describe("Stocking Edge Cases", () => {
           id: "item-1",
           variantId: "v1",
           requestedQuantity: 10,
-          variant: {sku: "SKU-V1"},
+          variant: { sku: "SKU-V1" },
         },
       ],
     });
 
     mockTx.stockBatch.findMany.mockResolvedValue([
-      {id: "batch-1", currentQuantity: 2}, // Only 2 available in batch
+      { id: "batch-1", currentQuantity: 2 }, // Only 2 available in batch
     ]);
 
     const shipDto = {
-      items: [{transferItemId: "item-1", shippedQuantity: 5}],
+      items: [{ transferItemId: "item-1", shippedQuantity: 5 }],
     };
 
     await expect(
@@ -204,7 +204,7 @@ describe("Stocking Edge Cases", () => {
           id: "poi-1",
           variantId: "v1",
           unitCost: 100,
-          variant: {productId: "p1"},
+          variant: { productId: "p1" },
         },
       ],
     });
@@ -229,8 +229,8 @@ describe("Stocking Edge Cases", () => {
       ],
     };
 
-    mockTx.stockBatch.create.mockResolvedValue({id: "b-1", variantId: "v1"});
-    mockTx.purchase.update.mockResolvedValue({id: purchaseId, items: []});
+    mockTx.stockBatch.create.mockResolvedValue({ id: "b-1", variantId: "v1" });
+    mockTx.purchase.update.mockResolvedValue({ id: purchaseId, items: [] });
 
     await purchaseOrderUseCase.receive(
       mockOrgId,
@@ -241,7 +241,7 @@ describe("Stocking Edge Cases", () => {
 
     expect(mockTx.stockBatch.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {id: "b-1"},
+        where: { id: "b-1" },
         data: {
           isQuarantined: true,
           quarantineReason: "Failed QC on receipt",
@@ -264,16 +264,16 @@ describe("Stocking Edge Cases", () => {
           variantId: "v1",
           requestedQuantity: 10,
           unitCost: 100,
-          variant: {productId: "p1"},
+          variant: { productId: "p1" },
         },
       ],
     });
 
     const receiveDto = {
-      items: [{transferItemId: "item-1", receivedQuantity: 8}], // Received 8 out of 10
+      items: [{ transferItemId: "item-1", receivedQuantity: 8 }], // Received 8 out of 10
     };
 
-    mockTx.stockBatch.create.mockResolvedValue({id: "new-batch-v1"});
+    mockTx.stockBatch.create.mockResolvedValue({ id: "new-batch-v1" });
     mockTx.stockTransfer.update.mockResolvedValue({
       id: transferId,
       transferNumber: "TR-REC-1",
@@ -290,11 +290,11 @@ describe("Stocking Edge Cases", () => {
     expect(mockTx.productVariantStock.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          variantId_locationId: {variantId: "v1", locationId: mockLocationB},
+          variantId_locationId: { variantId: "v1", locationId: mockLocationB },
         },
         update: {
-          currentStock: {increment: 8},
-          availableStock: {increment: 8},
+          currentStock: { increment: 8 },
+          availableStock: { increment: 8 },
         },
       }),
     );
@@ -308,15 +308,15 @@ describe("Stocking Edge Cases", () => {
       status: StockRequestStatus.APPROVED,
       toLocationId: mockLocationB,
       requestNumber: "SR-1",
-      items: [{variantId: "v1", unitCostAtRequest: 100}],
+      items: [{ variantId: "v1", unitCostAtRequest: 100 }],
     });
 
     const fulfillDto = {
       fromLocationId: mockLocationA,
-      items: [{variantId: "v1", requestedQuantity: 5}],
+      items: [{ variantId: "v1", requestedQuantity: 5 }],
     };
 
-    mockTx.stockTransfer.create.mockResolvedValue({id: "tr-from-req"});
+    mockTx.stockTransfer.create.mockResolvedValue({ id: "tr-from-req" });
 
     await stockRequestUseCase.fulfillFromTransfer(
       mockOrgId,
@@ -337,8 +337,8 @@ describe("Stocking Edge Cases", () => {
 
     expect(mockTx.stockRequestItem.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {stockRequestId: requestId, variantId: "v1"},
-        data: {allocatedQuantity: {increment: 5}},
+        where: { stockRequestId: requestId, variantId: "v1" },
+        data: { allocatedQuantity: { increment: 5 } },
       }),
     );
   });

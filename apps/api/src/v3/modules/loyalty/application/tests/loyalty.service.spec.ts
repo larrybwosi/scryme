@@ -1,10 +1,10 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {LoyaltyService} from "../loyalty.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {vi, describe, it, expect, beforeEach} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { LoyaltyService } from "../loyalty.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Use vi.hoisted for variables needed in vi.mock
-const {mockPrisma} = vi.hoisted(() => ({
+const { mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
     transaction: {
       findUnique: vi.fn(),
@@ -27,12 +27,12 @@ const {mockPrisma} = vi.hoisted(() => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-    $transaction: vi.fn(cb => cb(mockPrisma)),
+    $transaction: vi.fn((cb) => cb(mockPrisma)),
   },
 }));
 
 // Mock @repo/db before imports that use it
-vi.mock("@repo/db", async importOriginal => {
+vi.mock("@repo/db", async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,
@@ -47,7 +47,7 @@ describe("LoyaltyService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LoyaltyService,
-        {provide: PrismaService, useValue: {client: mockPrisma}},
+        { provide: PrismaService, useValue: { client: mockPrisma } },
       ],
     }).compile();
 
@@ -61,8 +61,8 @@ describe("LoyaltyService", () => {
   describe("calculatePointsForTransaction", () => {
     it("should return 0 if no loyalty program exists", async () => {
       (mockPrisma.transaction.findUnique as any).mockResolvedValue({
-        organization: {loyaltyPrograms: []},
-        customer: {id: "cust1"},
+        organization: { loyaltyPrograms: [] },
+        customer: { id: "cust1" },
       });
 
       const points = await service.calculatePointsForTransaction("txn1");
@@ -72,9 +72,9 @@ describe("LoyaltyService", () => {
     it("should calculate points based on currency spend", async () => {
       (mockPrisma.transaction.findUnique as any).mockResolvedValue({
         id: "txn1",
-        finalTotal: {toNumber: () => 100},
+        finalTotal: { toNumber: () => 100 },
         items: [],
-        customer: {id: "cust1", loyaltyPoints: 0},
+        customer: { id: "cust1", loyaltyPoints: 0 },
         organization: {
           loyaltyPrograms: [
             {
@@ -82,7 +82,7 @@ describe("LoyaltyService", () => {
               rules: [
                 {
                   ruleType: "POINTS_PER_CURRENCY",
-                  currencyAmount: {toNumber: () => 1},
+                  currencyAmount: { toNumber: () => 1 },
                   pointsValue: 1,
                   isActive: true,
                 },

@@ -3,11 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CheckoutDto, CheckoutResponseDto} from "../dto/checkout.dto";
-import {MpesaService} from "@repo/mpesa/server";
-import {emitOrderPlaced} from "@repo/windmill/server";
-import {Decimal} from "decimal.js";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CheckoutDto, CheckoutResponseDto } from "../dto/checkout.dto";
+import { MpesaService } from "@repo/mpesa/server";
+import { emitOrderPlaced } from "@repo/windmill/server";
+import { Decimal } from "decimal.js";
 
 @Injectable()
 export class CheckoutUseCase {
@@ -22,25 +22,25 @@ export class CheckoutUseCase {
   ): Promise<CheckoutResponseDto> {
     // 1. Get Cart
     const cart = await this.prisma.client.cart.findUnique({
-      where: {id: dto.cartId},
-      include: {items: true},
+      where: { id: dto.cartId },
+      include: { items: true },
     });
 
     if (!cart) throw new NotFoundException("Cart not found");
     if (cart.items.length === 0) throw new BadRequestException("Cart is empty");
 
     const variantIds = cart.items
-      .map(i => i.variantId)
-      .filter(id => id !== "base");
+      .map((i) => i.variantId)
+      .filter((id) => id !== "base");
     const variants = await this.prisma.client.productVariant.findMany({
-      where: {id: {in: variantIds}},
-      include: {product: true},
+      where: { id: { in: variantIds } },
+      include: { product: true },
     });
-    const variantMap = new Map(variants.map(v => [v.id, v]));
+    const variantMap = new Map(variants.map((v) => [v.id, v]));
 
     // Calculate totals since Cart model doesn't have them
     let subtotal = new Decimal(0);
-    const orderItemsData = cart.items.map(item => {
+    const orderItemsData = cart.items.map((item) => {
       const variant = variantMap.get(item.variantId);
       const unitPrice = variant?.retailPrice
         ? new Decimal(variant.retailPrice.toString())
@@ -71,7 +71,7 @@ export class CheckoutUseCase {
     let locationId = dto.locationId;
     if (!locationId) {
       const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: {organizationId, isDefault: true},
+        where: { organizationId, isDefault: true },
       });
       if (!location)
         throw new BadRequestException(
@@ -82,15 +82,15 @@ export class CheckoutUseCase {
 
     const transaction = await this.prisma.client.transaction.create({
       data: {
-        organization: {connect: {id: organizationId}},
+        organization: { connect: { id: organizationId } },
         number: orderNumber,
         type: "ONLINE_ORDER",
         channel: "ECOMMERCE_STORE",
         status: "PENDING_CONFIRMATION",
         customer: cart.customerId
-          ? {connect: {id: cart.customerId}}
+          ? { connect: { id: cart.customerId } }
           : undefined,
-        location: {connect: {id: locationId}},
+        location: { connect: { id: locationId } },
         subtotal: subtotal,
         discountTotal: 0,
         taxTotal: 0,
@@ -125,8 +125,8 @@ export class CheckoutUseCase {
 
     // 5. Mark Cart as CHECKED_OUT
     await this.prisma.client.cart.update({
-      where: {id: cart.id},
-      data: {status: "CHECKED_OUT"},
+      where: { id: cart.id },
+      data: { status: "CHECKED_OUT" },
     });
 
     // 6. Emit Event

@@ -36,7 +36,7 @@ export class OAuthService {
       });
     }
 
-    const {issueV2Token} = await import("@/lib/api/v2/middleware");
+    const { issueV2Token } = await import("@/lib/api/v2/middleware");
     try {
       const tokenResponse = await issueV2Token(client_id, client_secret);
 

@@ -7,11 +7,11 @@ import {
   MessageBody,
   ConnectedSocket,
 } from "@nestjs/websockets";
-import {Server, Socket} from "socket.io";
-import {V3AuthService} from "../../modules/auth/infrastructure/services/v3-auth.service";
-import {UseGuards} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RealtimeRedisService} from "../../../v2/realtime/realtime-redis.service";
+import { Server, Socket } from "socket.io";
+import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-auth.service";
+import { UseGuards } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RealtimeRedisService } from "../../../v2/realtime/realtime-redis.service";
 
 @WebSocketGateway({
   namespace: "v3",
@@ -64,32 +64,32 @@ export class V3RealtimeGateway
       await this.redis.leavePresence(channel, clientId);
 
       const members = await this.redis.getPresence(channel);
-      this.server.to(channel).emit("presence:update", {channel, members});
+      this.server.to(channel).emit("presence:update", { channel, members });
     }
   }
 
   @SubscribeMessage("join")
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {channel: string; options?: {rewind?: number}},
+    @MessageBody() data: { channel: string; options?: { rewind?: number } },
   ) {
     const context = (client as any).v3Context;
-    if (!context) return {event: "error", message: "Unauthorized"};
+    if (!context) return { event: "error", message: "Unauthorized" };
 
     // Basic ownership check for common V3 patterns
     if (data.channel.startsWith("order:")) {
       const orderId = data.channel.split(":")[1];
       const order = await this.prisma.client.transaction.findUnique({
-        where: {id: orderId},
-        select: {organizationId: true},
+        where: { id: orderId },
+        select: { organizationId: true },
       });
       if (!order || order.organizationId !== context.organizationId) {
-        return {event: "error", message: "Unauthorized"};
+        return { event: "error", message: "Unauthorized" };
       }
     } else if (data.channel.startsWith("inventory:")) {
       const orgId = data.channel.split(":")[1];
       if (orgId !== context.organizationId) {
-        return {event: "error", message: "Unauthorized"};
+        return { event: "error", message: "Unauthorized" };
       }
     }
 
@@ -104,31 +104,31 @@ export class V3RealtimeGateway
       }
     }
 
-    return {event: "joined", data: data.channel};
+    return { event: "joined", data: data.channel };
   }
 
   @SubscribeMessage("presence:enter")
   async handlePresenceEnter(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {channel: string; metadata?: any},
+    @MessageBody() data: { channel: string; metadata?: any },
   ) {
     const context = (client as any).v3Context;
-    if (!context) return {event: "error", message: "Unauthorized"};
+    if (!context) return { event: "error", message: "Unauthorized" };
 
     // Same security check as join
     if (data.channel.startsWith("order:")) {
       const orderId = data.channel.split(":")[1];
       const order = await this.prisma.client.transaction.findUnique({
-        where: {id: orderId},
-        select: {organizationId: true},
+        where: { id: orderId },
+        select: { organizationId: true },
       });
       if (!order || order.organizationId !== context.organizationId) {
-        return {event: "error", message: "Unauthorized"};
+        return { event: "error", message: "Unauthorized" };
       }
     } else if (data.channel.startsWith("inventory:")) {
       const orgId = data.channel.split(":")[1];
       if (orgId !== context.organizationId) {
-        return {event: "error", message: "Unauthorized"};
+        return { event: "error", message: "Unauthorized" };
       }
     }
 
@@ -138,15 +138,15 @@ export class V3RealtimeGateway
     const members = await this.redis.getPresence(data.channel);
     this.server
       .to(data.channel)
-      .emit("presence:update", {channel: data.channel, members});
+      .emit("presence:update", { channel: data.channel, members });
 
-    return {event: "presence:entered", members};
+    return { event: "presence:entered", members };
   }
 
   @SubscribeMessage("presence:get")
   async handlePresenceGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {channel: string},
+    @MessageBody() data: { channel: string },
   ) {
     const members = await this.redis.getPresence(data.channel);
     return members;
@@ -155,7 +155,7 @@ export class V3RealtimeGateway
   @SubscribeMessage("history:get")
   async handleHistoryGet(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {channel: string; limit?: number},
+    @MessageBody() data: { channel: string; limit?: number },
   ) {
     const history = await this.redis.getHistory(data.channel);
     const limit = data.limit || 100;
@@ -165,23 +165,23 @@ export class V3RealtimeGateway
   @SubscribeMessage("subscribe:order")
   async handleSubscribeOrder(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {orderId: string},
+    @MessageBody() data: { orderId: string },
   ) {
     const context = (client as any).v3Context;
 
     // Verify ownership
     const order = await this.prisma.client.transaction.findUnique({
-      where: {id: data.orderId},
-      select: {organizationId: true},
+      where: { id: data.orderId },
+      select: { organizationId: true },
     });
 
     if (!order || order.organizationId !== context.organizationId) {
-      return {event: "error", message: "Unauthorized or not found"};
+      return { event: "error", message: "Unauthorized or not found" };
     }
 
     const room = `order:${data.orderId}`;
     client.join(room);
-    return {event: "subscribed", room};
+    return { event: "subscribed", room };
   }
 
   @SubscribeMessage("subscribe:inventory")
@@ -189,13 +189,13 @@ export class V3RealtimeGateway
     const context = (client as any).v3Context;
     const room = `inventory:${context.organizationId}`;
     client.join(room);
-    return {event: "subscribed", room};
+    return { event: "subscribed", room };
   }
 
   @SubscribeMessage("publish")
   async handlePublish(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {channel: string; event: string; data: any},
+    @MessageBody() data: { channel: string; event: string; data: any },
   ) {
     await this.redis.saveMessage(data.channel, data.event, data.data);
     this.server.to(data.channel).emit(data.event, data.data);

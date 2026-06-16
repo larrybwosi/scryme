@@ -3,10 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {UnpackBatchUseCase, UnpackBatchDto} from "./unpack-batch.use-case";
-import {StockTransferStatus, MovementType} from "@repo/db";
-import {Decimal} from "decimal.js";
+import { PrismaService } from "@/prisma/prisma.service";
+import { UnpackBatchUseCase, UnpackBatchDto } from "./unpack-batch.use-case";
+import { StockTransferStatus, MovementType } from "@repo/db";
+import { Decimal } from "decimal.js";
 
 @Injectable()
 export class ScanUnpackBatchUseCase {
@@ -16,10 +16,10 @@ export class ScanUnpackBatchUseCase {
   ) {}
 
   async execute(organizationId: string, memberId: string, batchId: string) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       // 1. Find the batch and its related transfer item
       const batch = await tx.stockBatch.findUnique({
-        where: {id: batchId, organizationId},
+        where: { id: batchId, organizationId },
         include: {
           variant: {
             include: {
@@ -63,7 +63,7 @@ export class ScanUnpackBatchUseCase {
       const quantityToReceive = new Decimal(batch.currentQuantity.toString());
 
       await tx.stockTransferItem.update({
-        where: {id: transferItem.id},
+        where: { id: transferItem.id },
         data: {
           receivedQuantity: {
             increment: quantityToReceive,
@@ -76,7 +76,7 @@ export class ScanUnpackBatchUseCase {
 
       // 4. Identify unpack parameters
       const supplierInfo = batch.variant.suppliers.find(
-        s => s.supplierId === batch.supplierId,
+        (s) => s.supplierId === batch.supplierId,
       );
 
       const unitsPerPackage =
@@ -110,9 +110,9 @@ export class ScanUnpackBatchUseCase {
 
       // Decrement the bulk batch
       await tx.stockBatch.update({
-        where: {id: batch.id},
+        where: { id: batch.id },
         data: {
-          currentQuantity: {decrement: unpackDto.quantityToUnpack},
+          currentQuantity: { decrement: unpackDto.quantityToUnpack },
         },
       });
 
@@ -179,8 +179,8 @@ export class ScanUnpackBatchUseCase {
           },
         },
         update: {
-          currentStock: {increment: netBaseUnitsToReceive},
-          availableStock: {increment: netBaseUnitsToReceive},
+          currentStock: { increment: netBaseUnitsToReceive },
+          availableStock: { increment: netBaseUnitsToReceive },
         },
         create: {
           organizationId,

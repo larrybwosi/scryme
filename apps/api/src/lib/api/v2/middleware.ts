@@ -4,5 +4,5 @@ export async function issueV2Token(
   clientId: string,
   clientSecret: string,
 ): Promise<any> {
-  return {token: "stub"};
+  return { token: "stub" };
 }

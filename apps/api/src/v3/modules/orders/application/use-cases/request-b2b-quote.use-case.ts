@@ -4,12 +4,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {IOrderRepository} from "../../domain/repositories/order-repository.interface";
-import {RequestB2BQuoteDto} from "../dto/request-b2b-quote.dto";
-import {PricingResolverService} from "../../../catalog/application/services/pricing-resolver.service";
-import {WebhookService} from "../../../webhooks/infrastructure/services/webhook.service";
-import {ApiRealtimeService} from "../../../../../common/services/realtime.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { RequestB2BQuoteDto } from "../dto/request-b2b-quote.dto";
+import { PricingResolverService } from "../../../catalog/application/services/pricing-resolver.service";
+import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
+import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
 
 @Injectable()
 export class RequestB2BQuoteUseCase {
@@ -29,7 +29,7 @@ export class RequestB2BQuoteUseCase {
     if (locationId) {
       // Validate location belongs to organization
       const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: {id: locationId, organizationId},
+        where: { id: locationId, organizationId },
       });
       if (!location)
         throw new BadRequestException(
@@ -38,8 +38,8 @@ export class RequestB2BQuoteUseCase {
     } else {
       if (dto.customerId) {
         const customer = await this.prisma.client.customer.findUnique({
-          where: {id: dto.customerId, organizationId},
-          select: {defaultLocationId: true},
+          where: { id: dto.customerId, organizationId },
+          select: { defaultLocationId: true },
         });
         locationId = customer?.defaultLocationId || undefined;
       }
@@ -47,8 +47,8 @@ export class RequestB2BQuoteUseCase {
       if (!locationId && dto.businessAccountId) {
         const businessAccount =
           await this.prisma.client.businessAccount.findUnique({
-            where: {id: dto.businessAccountId, organizationId},
-            select: {defaultLocationId: true},
+            where: { id: dto.businessAccountId, organizationId },
+            select: { defaultLocationId: true },
           });
         locationId = businessAccount?.defaultLocationId || undefined;
       }
@@ -56,8 +56,8 @@ export class RequestB2BQuoteUseCase {
       if (!locationId) {
         const defaultLocation =
           await this.prisma.client.inventoryLocation.findFirst({
-            where: {organizationId, isDefault: true},
-            select: {id: true},
+            where: { organizationId, isDefault: true },
+            select: { id: true },
           });
         locationId = defaultLocation?.id;
       }
@@ -82,13 +82,13 @@ export class RequestB2BQuoteUseCase {
     const variantIds = Array.from(aggregatedItems.keys());
     const variants = await this.prisma.client.productVariant.findMany({
       where: {
-        id: {in: variantIds},
-        product: {organizationId},
+        id: { in: variantIds },
+        product: { organizationId },
       },
       include: {
         product: true,
         variantStocks: {
-          where: {locationId},
+          where: { locationId },
         },
       },
     });
@@ -112,7 +112,7 @@ export class RequestB2BQuoteUseCase {
       }
 
       // 3. Resolve Pricing
-      const {unitPrice} = await this.pricingResolver.resolveVariantPrice({
+      const { unitPrice } = await this.pricingResolver.resolveVariantPrice({
         variantId: variantId,
         organizationId,
         customerId: dto.customerId,

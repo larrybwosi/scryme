@@ -8,16 +8,16 @@ import {
   UseGuards,
   BadRequestException,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiSecurity} from "@nestjs/swagger";
-import {PrismaService} from "@/prisma/prisma.service";
-import {v2Context} from "@/common/decorators/v2-context.decorator";
-import type {V2ApiContext} from "@repo/shared/server";
-import {Permissions} from "@/common/decorators/auth.decorator";
+import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
+import { PrismaService } from "@/prisma/prisma.service";
+import { v2Context } from "@/common/decorators/v2-context.decorator";
+import type { V2ApiContext } from "@repo/shared/api/v2/types";
+import { Permissions } from "@/common/decorators/auth.decorator";
 import {
   createDeviceSetupTokenCore as createDeviceSetupToken,
   getDeviceSetupTokensCore as listSetupTokens,
   revokeSetupTokenCore as revokeSetupToken,
-} from "@repo/shared/server";
+} from "@repo/shared/lib/provisioning/common";
 
 @ApiTags("Admin - Setup Tokens")
 @ApiSecurity("x-api-key")
@@ -28,7 +28,7 @@ export class SetupTokensController {
 
   @Post()
   @Permissions("admin:devices:write")
-  @ApiOperation({summary: "Create a new device setup token"})
+  @ApiOperation({ summary: "Create a new device setup token" })
   async create(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     const result = await createDeviceSetupToken(this.prisma, {
       organizationId: ctx.organizationId,
@@ -51,7 +51,7 @@ export class SetupTokensController {
 
   @Get()
   @Permissions("admin:devices:read")
-  @ApiOperation({summary: "List device setup tokens"})
+  @ApiOperation({ summary: "List device setup tokens" })
   async list(
     @v2Context() ctx: V2ApiContext,
     @Query("includeUsed") includeUsed: string,
@@ -69,7 +69,7 @@ export class SetupTokensController {
 
   @Delete()
   @Permissions("admin:devices:write")
-  @ApiOperation({summary: "Revoke a device setup token"})
+  @ApiOperation({ summary: "Revoke a device setup token" })
   async revoke(
     @v2Context() ctx: V2ApiContext,
     @Query("tokenId") tokenId: string,

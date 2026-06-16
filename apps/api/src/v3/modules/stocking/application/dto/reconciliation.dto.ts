@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -7,7 +7,7 @@ import {
   IsNumber,
   IsOptional,
 } from "class-validator";
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 export class ReconciliationItemDto {
   @ApiProperty()
@@ -36,9 +36,9 @@ export class SubmitReconciliationDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({type: [ReconciliationItemDto]})
+  @ApiProperty({ type: [ReconciliationItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => ReconciliationItemDto)
   items: ReconciliationItemDto[];
 }

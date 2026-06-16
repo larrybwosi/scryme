@@ -1,6 +1,6 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {CartUseCase} from "../cart.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { CartUseCase } from "../cart.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
 
 describe("CartUseCase", () => {
   let useCase: CartUseCase;
@@ -37,7 +37,11 @@ describe("CartUseCase", () => {
       quantity: 2,
       sessionId: "sess-1",
     };
-    const mockCart = {id: "cart-1", organizationId: orgId, sessionId: "sess-1"};
+    const mockCart = {
+      id: "cart-1",
+      organizationId: orgId,
+      sessionId: "sess-1",
+    };
 
     vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.cartItem.upsert).mockResolvedValue({

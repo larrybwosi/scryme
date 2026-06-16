@@ -1,6 +1,6 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
-import {IsString, IsOptional, IsArray, IsBoolean} from "class-validator";
-import {PaginationQueryDto} from "@/v3/common/dto/pagination.dto";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsString, IsOptional, IsArray, IsBoolean } from "class-validator";
+import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
 
 // --- Custom Role ---
 
@@ -26,9 +26,9 @@ export class CreateCustomRoleDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({type: [String]})
+  @ApiProperty({ type: [String] })
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   permissions: string[];
 }
 
@@ -43,10 +43,10 @@ export class UpdateCustomRoleDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({type: [String]})
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   permissions?: string[];
 
   @ApiPropertyOptional()
@@ -65,7 +65,7 @@ export class CustomRoleResponseDto {
   @ApiPropertyOptional()
   description?: string;
 
-  @ApiProperty({type: [String]})
+  @ApiProperty({ type: [String] })
   permissions: string[];
 
   @ApiProperty()
@@ -90,9 +90,9 @@ export class CreatePermissionSetDto {
   @IsString()
   description?: string;
 
-  @ApiProperty({type: [String]})
+  @ApiProperty({ type: [String] })
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   permissions: string[];
 }
 
@@ -106,7 +106,7 @@ export class PermissionSetResponseDto {
   @ApiPropertyOptional()
   description?: string;
 
-  @ApiProperty({type: [String]})
+  @ApiProperty({ type: [String] })
   permissions: string[];
 
   @ApiProperty()
@@ -125,10 +125,10 @@ export class CreateRoleGroupDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({type: [String]})
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   permissionSetIds?: string[];
 }
 

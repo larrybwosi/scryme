@@ -4,9 +4,9 @@ import {
   ForbiddenException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreateExpenseDto} from "../dto/finance.dto";
-import {Prisma, ExpenseStatus, PettyCashTransactionType} from "@repo/db";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateExpenseDto } from "../dto/finance.dto";
+import { Prisma, ExpenseStatus, PettyCashTransactionType } from "@repo/db";
 
 @Injectable()
 export class ExpenseUseCase {
@@ -28,7 +28,7 @@ export class ExpenseUseCase {
     );
     const expenseNumber = await this.generateExpenseNumber(organizationId);
 
-    return await this.prisma.client.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       const expense = await this.persistExpense(
         tx,
         organizationId,
@@ -54,7 +54,7 @@ export class ExpenseUseCase {
 
   private async getOrganization(organizationId: string) {
     const org = await this.prisma.client.organization.findUnique({
-      where: {id: organizationId},
+      where: { id: organizationId },
       select: {
         expenseApprovalThreshold: true,
         expenseReceiptThreshold: true,
@@ -106,7 +106,7 @@ export class ExpenseUseCase {
 
   private async generateExpenseNumber(organizationId: string) {
     const count = await this.prisma.client.expense.count({
-      where: {organizationId},
+      where: { organizationId },
     });
     return `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
   }
@@ -141,12 +141,12 @@ export class ExpenseUseCase {
         organizationId,
         categoryId,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
-        ...(locationId && {locationId}),
-        ...(supplierId && {supplierId}),
-        ...(purchaseId && {purchaseId}),
-        ...(pettyCashFundId && {pettyCashFundId}),
-        ...(utilityAccountId && {utilityAccountId}),
-        ...(budgetId && {budgetId}),
+        ...(locationId && { locationId }),
+        ...(supplierId && { supplierId }),
+        ...(purchaseId && { purchaseId }),
+        ...(pettyCashFundId && { pettyCashFundId }),
+        ...(utilityAccountId && { utilityAccountId }),
+        ...(budgetId && { budgetId }),
         ...(status === ExpenseStatus.APPROVED
           ? {
               approverId: memberId,
@@ -176,8 +176,8 @@ export class ExpenseUseCase {
     }
     if (dto.budgetId) {
       await tx.budget.update({
-        where: {id: dto.budgetId},
-        data: {spentAmount: {increment: amount}},
+        where: { id: dto.budgetId },
+        data: { spentAmount: { increment: amount } },
       });
     }
   }
@@ -191,15 +191,15 @@ export class ExpenseUseCase {
     description: string,
   ) {
     const fund = await tx.pettyCashFund.findFirst({
-      where: {id: fundId, organizationId},
+      where: { id: fundId, organizationId },
     });
     if (!fund) throw new NotFoundException("Petty cash fund not found");
     if (fund.amount.lessThan(amount))
       throw new BadRequestException("Insufficient funds in petty cash");
 
     await tx.pettyCashFund.update({
-      where: {id: fundId},
-      data: {amount: {decrement: amount}},
+      where: { id: fundId },
+      data: { amount: { decrement: amount } },
     });
 
     await tx.pettyCashTransaction.create({
@@ -223,7 +223,7 @@ export class ExpenseUseCase {
       endDate?: string;
     },
   ) {
-    const {startDate, endDate, ...restFilters} = filters;
+    const { startDate, endDate, ...restFilters } = filters;
     const where: Prisma.ExpenseWhereInput = {
       organizationId,
       ...restFilters,
@@ -232,8 +232,8 @@ export class ExpenseUseCase {
 
     if (startDate || endDate) {
       where.expenseDate = {
-        ...(startDate && {gte: new Date(startDate)}),
-        ...(endDate && {lte: new Date(endDate)}),
+        ...(startDate && { gte: new Date(startDate) }),
+        ...(endDate && { lte: new Date(endDate) }),
       };
     }
 
@@ -241,18 +241,18 @@ export class ExpenseUseCase {
       where,
       include: {
         category: true,
-        member: {include: {user: {select: {name: true, email: true}}}},
+        member: { include: { user: { select: { name: true, email: true } } } },
         pettyCashFund: true,
         utilityAccount: true,
         location: true,
       },
-      orderBy: {expenseDate: "desc"},
+      orderBy: { expenseDate: "desc" },
     });
   }
 
   async getExpenseCategories(organizationId: string) {
     return await this.prisma.client.expenseCategory.findMany({
-      where: {organizationId, isActive: true},
+      where: { organizationId, isActive: true },
     });
   }
 
@@ -261,9 +261,9 @@ export class ExpenseUseCase {
     memberId: string,
     expenseId: string,
   ) {
-    return await this.prisma.client.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       const expense = await tx.expense.findFirst({
-        where: {id: expenseId, organizationId},
+        where: { id: expenseId, organizationId },
       });
 
       if (!expense) throw new NotFoundException("Expense not found");
@@ -277,7 +277,7 @@ export class ExpenseUseCase {
       }
 
       const updatedExpense = await tx.expense.update({
-        where: {id: expenseId},
+        where: { id: expenseId },
         data: {
           status: ExpenseStatus.APPROVED,
           approverId: memberId,

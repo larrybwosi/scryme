@@ -1,9 +1,9 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {V3ApiContext} from "@repo/shared/server";
-import {RegisterPettyCashDto} from "../dto/petty-cash.dto";
-import {ExpenseUseCase} from "../../../finance/application/use-cases/expense.use-case";
-import {PettyCashUseCase} from "../../../finance/application/use-cases/petty-cash.use-case";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { V3ApiContext } from "@repo/shared/api/v2/types";
+import { RegisterPettyCashDto } from "../dto/petty-cash.dto";
+import { ExpenseUseCase } from "../../../finance/application/use-cases/expense.use-case";
+import { PettyCashUseCase } from "../../../finance/application/use-cases/petty-cash.use-case";
 
 @Injectable()
 export class RegisterPettyCashUseCase {
@@ -14,13 +14,13 @@ export class RegisterPettyCashUseCase {
   ) {}
 
   async execute(ctx: V3ApiContext, dto: RegisterPettyCashDto) {
-    const {organizationId, memberId, locationId} = ctx;
+    const { organizationId, memberId, locationId } = ctx;
 
     // 1. Ensure "Petty Cash" category exists
     let category = await this.prisma.client.expenseCategory.findFirst({
       where: {
         organizationId,
-        name: {equals: "Petty Cash", mode: "insensitive"},
+        name: { equals: "Petty Cash", mode: "insensitive" },
       },
     });
 

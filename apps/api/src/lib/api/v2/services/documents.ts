@@ -1,6 +1,6 @@
-import {prisma as db} from "@repo/db";
-import {Mappers} from "@repo/documents/server";
-import {renderToStream} from "@react-pdf/renderer";
+import { prisma as db } from "@repo/db";
+import { Mappers } from "@repo/documents/server";
+import { renderToStream } from "@react-pdf/renderer";
 import React from "react";
 import QRCode from "qrcode";
 
@@ -50,7 +50,7 @@ export async function getDocumentStream(
   let filename: string;
   let qrCode: string = "";
 
-  const {getInvoiceTemplate, ReceiptTemplateV2} =
+  const { getInvoiceTemplate, ReceiptTemplateV2 } =
     await import("@repo/documents");
 
   switch (type) {

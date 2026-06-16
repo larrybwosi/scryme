@@ -1,5 +1,5 @@
-import {Product} from "../entities/product.entity";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Product } from "../entities/product.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 export interface IProductRepository {
   findByOrganization(

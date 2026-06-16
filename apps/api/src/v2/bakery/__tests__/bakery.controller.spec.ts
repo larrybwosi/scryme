@@ -1,8 +1,8 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {BakeryController} from "../bakery.controller";
-import {BakeryService} from "../bakery.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {V2ApiContext} from "@repo/shared/server";
+import { Test, TestingModule } from "@nestjs/testing";
+import { BakeryController } from "../bakery.controller";
+import { BakeryService } from "../bakery.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { V2ApiContext } from "@repo/shared/api/v2/types";
 
 describe("BakeryController", () => {
   let controller: BakeryController;
@@ -74,8 +74,8 @@ describe("BakeryController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BakeryController],
       providers: [
-        {provide: BakeryService, useValue: mockBakeryService},
-        {provide: PrismaService, useValue: {}},
+        { provide: BakeryService, useValue: mockBakeryService },
+        { provide: PrismaService, useValue: {} },
       ],
     }).compile();
 
@@ -96,7 +96,7 @@ describe("BakeryController", () => {
 
   describe("createRecipe", () => {
     it("should call service.createRecipe", async () => {
-      const data = {name: "New Recipe"};
+      const data = { name: "New Recipe" };
       await controller.createRecipe(mockCtx, data);
       expect(service.createRecipe).toHaveBeenCalledWith(mockCtx, data);
     });
@@ -104,7 +104,7 @@ describe("BakeryController", () => {
 
   describe("dispatchDelivery", () => {
     it("should call service.dispatchDelivery", async () => {
-      const data = {transactionId: "tx-1", partnerId: "p-1"};
+      const data = { transactionId: "tx-1", partnerId: "p-1" };
       await controller.dispatchDelivery(mockCtx, data);
       expect(service.dispatchDelivery).toHaveBeenCalledWith(mockCtx, data);
     });

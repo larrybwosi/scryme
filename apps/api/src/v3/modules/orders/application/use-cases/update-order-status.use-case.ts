@@ -4,11 +4,11 @@ import {
   NotFoundException,
   forwardRef,
 } from "@nestjs/common";
-import {IOrderRepository} from "../../domain/repositories/order-repository.interface";
-import {ApiRealtimeService} from "../../../../../common/services/realtime.service";
-import {WebhookService} from "../../../webhooks/infrastructure/services/webhook.service";
-import {LoyaltyService} from "../../../loyalty/application/loyalty.service";
-import {InvoiceUseCase} from "../../../finance/application/use-cases/invoice.use-case";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
+import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
+import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
+import { InvoiceUseCase } from "../../../finance/application/use-cases/invoice.use-case";
 
 @Injectable()
 export class UpdateOrderStatusUseCase {

@@ -1,12 +1,12 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {StandalonePosService} from "./standalone-pos.service";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Test, TestingModule } from "@nestjs/testing";
+import { StandalonePosService } from "./standalone-pos.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   UnauthorizedException,
   ForbiddenException,
   ConflictException,
 } from "@nestjs/common";
-import {describe, it, expect, beforeEach, vi} from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("StandalonePosService", () => {
   let service: StandalonePosService;
@@ -53,7 +53,7 @@ describe("StandalonePosService", () => {
 
   describe("createSetupKey", () => {
     it("should create a setup key", async () => {
-      const dto = {name: "Test Device", deviceId: "POS-1"};
+      const dto = { name: "Test Device", deviceId: "POS-1" };
       mockPrisma.client.standaloneSetupKey.create.mockResolvedValue({
         id: "1",
         ...dto,
@@ -70,7 +70,7 @@ describe("StandalonePosService", () => {
     it("should throw UnauthorizedException for invalid token", async () => {
       mockPrisma.client.standaloneSetupKey.findUnique.mockResolvedValue(null);
       await expect(
-        service.activateDevice({token: "invalid", machineId: "m1"}),
+        service.activateDevice({ token: "invalid", machineId: "m1" }),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -79,7 +79,7 @@ describe("StandalonePosService", () => {
         usedAt: new Date(),
       });
       await expect(
-        service.activateDevice({token: "token", machineId: "m1"}),
+        service.activateDevice({ token: "token", machineId: "m1" }),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -91,7 +91,7 @@ describe("StandalonePosService", () => {
         usedAt: null,
       });
       await expect(
-        service.activateDevice({token: "token", machineId: "m1"}),
+        service.activateDevice({ token: "token", machineId: "m1" }),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -107,7 +107,7 @@ describe("StandalonePosService", () => {
       });
 
       await expect(
-        service.activateDevice({token: "token", machineId: "m1"}),
+        service.activateDevice({ token: "token", machineId: "m1" }),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -126,7 +126,7 @@ describe("StandalonePosService", () => {
       mockPrisma.client.standaloneDeviceKey.findUnique.mockResolvedValue({
         isActive: true,
         expiresAt: futureDate,
-        device: {name: "Device"},
+        device: { name: "Device" },
       });
 
       const result = await service.validateKey("valid-key");

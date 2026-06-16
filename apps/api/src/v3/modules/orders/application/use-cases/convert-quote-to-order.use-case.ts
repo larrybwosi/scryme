@@ -3,9 +3,9 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {WebhookService} from "../../../webhooks/infrastructure/services/webhook.service";
-import {ApiRealtimeService} from "../../../../../common/services/realtime.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
+import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
 
 @Injectable()
 export class ConvertQuoteToOrderUseCase {
@@ -18,8 +18,8 @@ export class ConvertQuoteToOrderUseCase {
   async execute(organizationId: string, quoteId: string) {
     // 1. Find the quote
     const quote = await this.prisma.client.transaction.findUnique({
-      where: {id: quoteId, organizationId},
-      include: {items: true},
+      where: { id: quoteId, organizationId },
+      include: { items: true },
     });
 
     if (!quote) {
@@ -38,7 +38,7 @@ export class ConvertQuoteToOrderUseCase {
 
     // 2. Update Transaction to Order
     const updatedTransaction = await this.prisma.client.transaction.update({
-      where: {id: quoteId},
+      where: { id: quoteId },
       data: {
         type: "SALES_ORDER",
         status: "PENDING_CONFIRMATION",

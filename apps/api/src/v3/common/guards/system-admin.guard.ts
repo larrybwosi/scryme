@@ -5,8 +5,8 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {AuthService} from "@/auth/auth.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { AuthService } from "@/auth/auth.service";
 
 @Injectable()
 export class SystemAdminGuard implements CanActivate {
@@ -27,8 +27,8 @@ export class SystemAdminGuard implements CanActivate {
     }
 
     const user = await this.prisma.client.user.findUnique({
-      where: {id: session.user.id},
-      select: {role: true},
+      where: { id: session.user.id },
+      select: { role: true },
     });
 
     if (!user || user.role !== "SUPER_ADMIN") {

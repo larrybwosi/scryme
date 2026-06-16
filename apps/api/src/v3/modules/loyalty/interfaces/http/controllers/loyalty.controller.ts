@@ -7,9 +7,9 @@ import {
   UseGuards,
   Request,
 } from "@nestjs/common";
-import {RequirePermission} from "@/common/decorators/auth.decorator";
-import {V2AuthGuard} from "@/auth/v2-auth.guard";
-import {LoyaltyService} from "../../../application/loyalty.service";
+import { RequirePermission } from "@/common/decorators/auth.decorator";
+import { V2AuthGuard } from "@/auth/v2-auth.guard";
+import { LoyaltyService } from "../../../application/loyalty.service";
 
 @Controller("loyalty")
 @UseGuards(V2AuthGuard)
@@ -20,7 +20,7 @@ export class LoyaltyController {
   @RequirePermission("CUSTOMERS_MANAGE")
   async redeemReward(
     @Request() req: any,
-    @Body() body: {customerId: string; rewardId: string},
+    @Body() body: { customerId: string; rewardId: string },
   ) {
     const organizationId = req.user.organizationId;
     return this.loyaltyService.redeemPointsForVoucher(
@@ -44,7 +44,7 @@ export class LoyaltyController {
   @RequirePermission("POS_SALE")
   async validateVoucher(
     @Request() req: any,
-    @Body() body: {code: string; customerId: string},
+    @Body() body: { code: string; customerId: string },
   ) {
     const organizationId = req.user.organizationId;
     return this.loyaltyService.validateVoucher(

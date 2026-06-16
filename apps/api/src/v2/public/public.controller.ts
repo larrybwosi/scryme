@@ -1,7 +1,7 @@
-import {Controller, Get, Param, Query, Res} from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {PublicService} from "./public.service";
-import {AllowPublic} from "../../common/decorators/auth.decorator";
+import { Controller, Get, Param, Query, Res } from "@nestjs/common";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { PublicService } from "./public.service";
+import { AllowPublic } from "../../common/decorators/auth.decorator";
 
 @ApiTags("Public")
 @Controller("public")
@@ -10,7 +10,9 @@ export class PublicController {
 
   @AllowPublic()
   @Get("documents/:type/:id")
-  @ApiOperation({summary: "Access a public document (Invoice, Waybill, etc.)"})
+  @ApiOperation({
+    summary: "Access a public document (Invoice, Waybill, etc.)",
+  })
   async getDocument(
     @Param("type") type: string,
     @Param("id") id: string,

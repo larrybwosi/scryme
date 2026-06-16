@@ -1,6 +1,6 @@
 import { MpesaService } from '../service';
 import { db } from '@repo/db';
-import { realtimeService } from '@repo/shared/server';
+import { realtimeService } from '@repo/shared/realtime';
 import { MpesaClient } from '../client';
 
 jest.mock('@repo/db', () => ({
@@ -35,8 +35,11 @@ jest.mock('@repo/db', () => ({
   },
 }));
 
-jest.mock('@repo/shared', () => ({
+jest.mock('@repo/shared/api/v2/utils/encryption', () => ({
   decrypt: jest.fn((val) => Promise.resolve(val)),
+}));
+
+jest.mock('@repo/shared/realtime', () => ({
   realtimeService: {
     publish: jest.fn(),
   },

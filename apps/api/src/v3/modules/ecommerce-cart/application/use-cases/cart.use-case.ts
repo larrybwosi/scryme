@@ -1,8 +1,8 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {AddToCartDto, RemoveFromCartDto} from "../dto/cart.dto";
-import {InjectQueue} from "@nestjs/bullmq";
-import {Queue} from "bullmq";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { AddToCartDto, RemoveFromCartDto } from "../dto/cart.dto";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 
 @Injectable()
 export class CartUseCase {
@@ -16,20 +16,20 @@ export class CartUseCase {
     customerId?: string,
     sessionId?: string,
   ) {
-    const where: any = {organizationId};
+    const where: any = { organizationId };
     if (customerId) where.customerId = customerId;
     else if (sessionId) where.sessionId = sessionId;
     else throw new Error("Either customerId or sessionId must be provided");
 
     const cart = await this.prisma.client.cart.findFirst({
       where,
-      include: {items: true},
+      include: { items: true },
     });
 
     if (!cart) {
       return this.prisma.client.cart.create({
-        data: {organizationId, customerId, sessionId, status: "ACTIVE"},
-        include: {items: true},
+        data: { organizationId, customerId, sessionId, status: "ACTIVE" },
+        include: { items: true },
       });
     }
 
@@ -52,7 +52,7 @@ export class CartUseCase {
         },
       },
       update: {
-        quantity: {increment: dto.quantity},
+        quantity: { increment: dto.quantity },
       },
       create: {
         cartId: cart.id,

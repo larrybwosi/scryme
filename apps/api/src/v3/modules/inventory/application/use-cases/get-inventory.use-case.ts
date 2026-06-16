@@ -1,6 +1,6 @@
-import {Injectable, Inject} from "@nestjs/common";
-import {IInventoryRepository} from "../../domain/repositories/inventory-repository.interface";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Injectable, Inject } from "@nestjs/common";
+import { IInventoryRepository } from "../../domain/repositories/inventory-repository.interface";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class GetInventoryUseCase {

@@ -1,4 +1,4 @@
-import {ApiProperty} from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -7,15 +7,15 @@ import {
   ValidateNested,
   IsOptional,
 } from "class-validator";
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 export class SaleItemDto {
-  @ApiProperty({example: "var_123"})
+  @ApiProperty({ example: "var_123" })
   @IsString()
   @IsNotEmpty()
   variantId: string;
 
-  @ApiProperty({example: 2})
+  @ApiProperty({ example: 2 })
   @IsNumber()
   quantity: number;
 
@@ -28,45 +28,45 @@ export class SaleItemDto {
 }
 
 export class SalePaymentDto {
-  @ApiProperty({example: "CASH"})
+  @ApiProperty({ example: "CASH" })
   @IsString()
   @IsNotEmpty()
   method: string;
 
-  @ApiProperty({example: 31.98})
+  @ApiProperty({ example: 31.98 })
   @IsNumber()
   amount: number;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   reference?: string;
 }
 
 export class ProcessSaleDto {
-  @ApiProperty({type: [SaleItemDto]})
+  @ApiProperty({ type: [SaleItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => SaleItemDto)
   items: SaleItemDto[];
 
-  @ApiProperty({type: [SalePaymentDto]})
+  @ApiProperty({ type: [SalePaymentDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => SalePaymentDto)
   payments: SalePaymentDto[];
 
-  @ApiProperty({example: 0, required: false})
+  @ApiProperty({ example: 0, required: false })
   @IsNumber()
   @IsOptional()
   discountAmount?: number;
 
-  @ApiProperty({example: "+1234567890", required: false})
+  @ApiProperty({ example: "+1234567890", required: false })
   @IsString()
   @IsOptional()
   customerPhone?: string;
 
-  @ApiProperty({example: "Quick sale", required: false})
+  @ApiProperty({ example: "Quick sale", required: false })
   @IsString()
   @IsOptional()
   notes?: string;

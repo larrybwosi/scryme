@@ -1,24 +1,24 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {IsString, IsOptional, IsArray} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsOptional, IsArray } from "class-validator";
 
 export class CheckB2BAvailabilityDto {
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   locationId?: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   customerId?: string;
 
-  @ApiProperty({required: false})
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   businessAccountId?: string;
 
-  @ApiProperty({type: [String]})
+  @ApiProperty({ type: [String] })
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   variantIds: string[];
 }

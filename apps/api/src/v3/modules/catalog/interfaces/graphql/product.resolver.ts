@@ -1,12 +1,12 @@
-import {Resolver, Query, Mutation, Args, Context} from "@nestjs/graphql";
-import {UseGuards, UseInterceptors} from "@nestjs/common";
-import {GetProductsUseCase} from "../../application/use-cases/get-products.use-case";
-import {CreateProductUseCase} from "../../application/use-cases/create-product.use-case";
-import {ProductType, CreateProductInput} from "./product.type";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
-import {AuditInterceptor} from "@/v3/common/interceptors/audit.interceptor";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
+import { Resolver, Query, Mutation, Args, Context } from "@nestjs/graphql";
+import { UseGuards, UseInterceptors } from "@nestjs/common";
+import { GetProductsUseCase } from "../../application/use-cases/get-products.use-case";
+import { CreateProductUseCase } from "../../application/use-cases/create-product.use-case";
+import { ProductType, CreateProductInput } from "./product.type";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AuditInterceptor } from "@/v3/common/interceptors/audit.interceptor";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 
 @Resolver(() => ProductType)
 @UseGuards(MultiTenancyGuard, PermissionsGuard)

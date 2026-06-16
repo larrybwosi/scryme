@@ -1,13 +1,13 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {IsNotEmpty, IsString, IsOptional} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsString, IsOptional } from "class-validator";
 
 export class FavoriteDto {
-  @ApiProperty({example: "prod_123"})
+  @ApiProperty({ example: "prod_123" })
   @IsString()
   @IsNotEmpty()
   productId: string;
 
-  @ApiProperty({example: "cust_123", required: false})
+  @ApiProperty({ example: "cust_123", required: false })
   @IsString()
   @IsOptional()
   customerId?: string;

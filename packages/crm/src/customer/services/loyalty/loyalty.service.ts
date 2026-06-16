@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma, Prisma } from "@repo/db";
 import { Decimal } from "decimal.js";
-import { OpenLoyaltyClient } from "@repo/shared/server";
+import { OpenLoyaltyClient } from "@repo/shared/services/openloyalty";
 
 export type LoyaltyActionType =
   | "EARNED"

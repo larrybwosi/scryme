@@ -3,8 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {PaginationQueryDto, paginate} from "@/v3/common/utils/pagination";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
 import {
   StockRequestStatus,
   StockTransferStatus,
@@ -23,13 +23,13 @@ export class StockRequestUseCase {
     return paginate(
       this.prisma.client.stockRequest,
       pagination,
-      {organizationId},
-      {requestDate: "desc"},
+      { organizationId },
+      { requestDate: "desc" },
       {
         include: {
           fromLocation: true,
           toLocation: true,
-          requestedBy: {include: {user: true}},
+          requestedBy: { include: { user: true } },
         },
       },
     );
@@ -37,12 +37,12 @@ export class StockRequestUseCase {
 
   async findOne(organizationId: string, requestId: string) {
     const request = await this.prisma.client.stockRequest.findUnique({
-      where: {id: requestId, organizationId},
+      where: { id: requestId, organizationId },
       include: {
         fromLocation: true,
         toLocation: true,
-        requestedBy: {include: {user: true}},
-        approvedBy: {include: {user: true}},
+        requestedBy: { include: { user: true } },
+        approvedBy: { include: { user: true } },
         organization: true,
         items: {
           include: {
@@ -63,9 +63,9 @@ export class StockRequestUseCase {
   }
 
   async approve(organizationId: string, memberId: string, requestId: string) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const request = await tx.stockRequest.findUnique({
-        where: {id: requestId, organizationId},
+        where: { id: requestId, organizationId },
       });
 
       if (!request) throw new NotFoundException("Stock request not found");
@@ -74,7 +74,7 @@ export class StockRequestUseCase {
       }
 
       return tx.stockRequest.update({
-        where: {id: requestId},
+        where: { id: requestId },
         data: {
           status: StockRequestStatus.APPROVED,
           approvedById: memberId,
@@ -90,10 +90,10 @@ export class StockRequestUseCase {
     requestId: string,
     dto: FulfillFromTransferDto,
   ) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const request = await tx.stockRequest.findUnique({
-        where: {id: requestId, organizationId},
-        include: {items: true},
+        where: { id: requestId, organizationId },
+        include: { items: true },
       });
 
       if (!request) throw new NotFoundException("Stock request not found");
@@ -121,9 +121,9 @@ export class StockRequestUseCase {
             dto.notes || `Fulfillment for Request ${request.requestNumber}`,
           requestedById: memberId,
           items: {
-            create: dto.items.map(item => {
+            create: dto.items.map((item) => {
               const reqItem = request.items.find(
-                ri => ri.variantId === item.variantId,
+                (ri) => ri.variantId === item.variantId,
               );
               if (!reqItem)
                 throw new BadRequestException(
@@ -143,9 +143,9 @@ export class StockRequestUseCase {
       // Update allocated quantities
       for (const item of dto.items) {
         await tx.stockRequestItem.updateMany({
-          where: {stockRequestId: requestId, variantId: item.variantId},
+          where: { stockRequestId: requestId, variantId: item.variantId },
           data: {
-            allocatedQuantity: {increment: item.requestedQuantity},
+            allocatedQuantity: { increment: item.requestedQuantity },
           },
         });
       }
@@ -160,10 +160,10 @@ export class StockRequestUseCase {
     requestId: string,
     dto: FulfillFromPurchaseDto,
   ) {
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       const request = await tx.stockRequest.findUnique({
-        where: {id: requestId, organizationId},
-        include: {items: true},
+        where: { id: requestId, organizationId },
+        include: { items: true },
       });
 
       if (!request) throw new NotFoundException("Stock request not found");
@@ -199,7 +199,7 @@ export class StockRequestUseCase {
             dto.notes || `Fulfillment for Request ${request.requestNumber}`,
           memberId: memberId,
           items: {
-            create: dto.items.map(item => ({
+            create: dto.items.map((item) => ({
               variantId: item.variantId,
               orderedQuantity: item.orderedQuantity,
               unitCost: item.unitCost,
@@ -212,9 +212,9 @@ export class StockRequestUseCase {
       // Update allocated quantities
       for (const item of dto.items) {
         await tx.stockRequestItem.updateMany({
-          where: {stockRequestId: requestId, variantId: item.variantId},
+          where: { stockRequestId: requestId, variantId: item.variantId },
           data: {
-            allocatedQuantity: {increment: item.orderedQuantity},
+            allocatedQuantity: { increment: item.orderedQuantity },
           },
         });
       }

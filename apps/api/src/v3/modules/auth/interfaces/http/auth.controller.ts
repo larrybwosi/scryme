@@ -1,12 +1,12 @@
-import {Controller, Post, Body, UseInterceptors} from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiResponse} from "@nestjs/swagger";
-import {AllowPublic} from "../../../../../common/decorators/auth.decorator";
-import {ExchangeTokenUseCase} from "../../application/use-cases/exchange-token.use-case";
+import { Controller, Post, Body, UseInterceptors } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
+import { ExchangeTokenUseCase } from "../../application/use-cases/exchange-token.use-case";
 import {
   TokenRequestDto,
   TokenResponseDto,
 } from "../../application/dto/token.dto";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import {
   ApiErrorResponseDto,
   ApiResponseDto,

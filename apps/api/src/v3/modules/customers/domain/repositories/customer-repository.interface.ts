@@ -1,5 +1,5 @@
-import {Customer} from "../entities/customer.entity";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Customer } from "../entities/customer.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 export interface ICustomerRepository {
   findByOrganization(

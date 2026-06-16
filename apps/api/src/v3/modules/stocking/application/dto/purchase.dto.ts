@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -9,7 +9,7 @@ import {
   IsDateString,
   IsEnum,
 } from "class-validator";
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 export class CreatePurchaseItemDto {
   @ApiProperty()
@@ -67,9 +67,9 @@ export class CreatePurchaseDto {
   @IsOptional()
   notes?: string;
 
-  @ApiProperty({type: [CreatePurchaseItemDto]})
+  @ApiProperty({ type: [CreatePurchaseItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => CreatePurchaseItemDto)
   items: CreatePurchaseItemDto[];
 }
@@ -109,9 +109,9 @@ export class BatchReceiptDto {
   @IsOptional()
   landedCost?: number;
 
-  @ApiPropertyOptional({type: [String]})
+  @ApiPropertyOptional({ type: [String] })
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   @IsOptional()
   serialNumbers?: string[];
 
@@ -141,9 +141,9 @@ export class ReceivePurchaseItemDto {
   @IsNotEmpty()
   purchaseItemId: string;
 
-  @ApiProperty({type: [BatchReceiptDto]})
+  @ApiProperty({ type: [BatchReceiptDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => BatchReceiptDto)
   batches: BatchReceiptDto[];
 
@@ -159,9 +159,9 @@ export class ReceivePurchaseDto {
   @IsNotEmpty()
   locationId: string;
 
-  @ApiProperty({type: [ReceivePurchaseItemDto]})
+  @ApiProperty({ type: [ReceivePurchaseItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => ReceivePurchaseItemDto)
   items: ReceivePurchaseItemDto[];
 

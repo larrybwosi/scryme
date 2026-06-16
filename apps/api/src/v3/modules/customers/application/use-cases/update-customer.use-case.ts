@@ -1,7 +1,7 @@
-import {Injectable, Logger, NotFoundException} from "@nestjs/common";
-import {UpdateCustomerDto} from "../dto/update-customer.dto";
-import {Customer} from "../../domain/entities/customer.entity";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { UpdateCustomerDto } from "../dto/update-customer.dto";
+import { Customer } from "../../domain/entities/customer.entity";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class UpdateCustomerUseCase {
@@ -19,7 +19,7 @@ export class UpdateCustomerUseCase {
     );
 
     const customer = await this.prisma.client.customer.findFirst({
-      where: {id: customerId, organizationId},
+      where: { id: customerId, organizationId },
     });
 
     if (!customer) {
@@ -27,12 +27,12 @@ export class UpdateCustomerUseCase {
     }
 
     const updatedCustomer = await this.prisma.client.customer.update({
-      where: {id: customerId},
+      where: { id: customerId },
       data: {
         name: dto.name,
         email: dto.email,
         phone: dto.phone,
-        pinnedLocation: dto.location ? {address: dto.location} : undefined,
+        pinnedLocation: dto.location ? { address: dto.location } : undefined,
         deliveryNotes: dto.metadata ? JSON.stringify(dto.metadata) : undefined,
       },
     });

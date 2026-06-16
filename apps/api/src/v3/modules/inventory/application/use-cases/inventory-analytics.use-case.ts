@@ -1,6 +1,6 @@
-import {Injectable} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {SupplierService} from "@repo/suppliers/server";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { SupplierService } from "@repo/suppliers/server";
 
 @Injectable()
 export class GetSupplierLeadTimeUseCase {
@@ -12,7 +12,7 @@ export class GetSupplierLeadTimeUseCase {
       await this.prisma.client.supplierPerformance.findMany({
         where: {
           organizationId,
-          ...(supplierId && {supplierId}),
+          ...(supplierId && { supplierId }),
         },
         include: {
           supplier: {
@@ -38,7 +38,7 @@ export class GetWasteAnalysisUseCase {
 
   async execute(
     organizationId: string,
-    options: {startDate?: Date; endDate?: Date},
+    options: { startDate?: Date; endDate?: Date },
   ) {
     const movements = await this.prisma.client.stockMovement.findMany({
       where: {
@@ -55,7 +55,7 @@ export class GetWasteAnalysisUseCase {
         },
       },
       include: {
-        adjustment: {select: {reason: true}},
+        adjustment: { select: { reason: true } },
         variant: {
           include: {
             product: true,
@@ -68,7 +68,7 @@ export class GetWasteAnalysisUseCase {
     const analysis = movements.reduce((acc, m) => {
       const reason = m.adjustment.reason || "OTHER";
       if (!acc[reason])
-        acc[reason] = {count: 0, totalQuantity: 0, totalValue: 0};
+        acc[reason] = { count: 0, totalQuantity: 0, totalValue: 0 };
 
       acc[reason].count++;
       acc[reason].totalQuantity += Number(m.quantity);

@@ -1,7 +1,7 @@
-import {vi, describe, it, expect, beforeEach} from "vitest";
-import {UnpackBatchUseCase} from "./unpack-batch.use-case";
-import {MovementType, StockAdjustmentReason} from "@repo/db";
-import {Decimal} from "decimal.js";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { UnpackBatchUseCase } from "./unpack-batch.use-case";
+import { MovementType, StockAdjustmentReason } from "@repo/db";
+import { Decimal } from "decimal.js";
 
 describe("UnpackBatchUseCase Edge Cases", () => {
   let unpackBatchUseCase: UnpackBatchUseCase;
@@ -37,7 +37,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
         update: vi.fn(),
       },
       productVariant: {
-        findUnique: vi.fn().mockResolvedValue({productId: "p1"}),
+        findUnique: vi.fn().mockResolvedValue({ productId: "p1" }),
       },
     };
 
@@ -64,7 +64,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
       currentQuantity: new Decimal(10),
       purchasePrice: new Decimal(2400),
       batchNumber: "BULK-001",
-      variant: {product: {name: "Test Product"}},
+      variant: { product: { name: "Test Product" } },
     });
 
     const dto = {
@@ -74,7 +74,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
       damagedQuantity: 4, // 4 pieces damaged
     };
 
-    mockTx.stockBatch.create.mockImplementation(({data}: any) => ({
+    mockTx.stockBatch.create.mockImplementation(({ data }: any) => ({
       id: "new-batch",
       ...data,
     }));
@@ -92,8 +92,8 @@ describe("UnpackBatchUseCase Edge Cases", () => {
     // Verify bulk batch decrement
     expect(mockTx.stockBatch.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {id: bulkBatchId},
-        data: {currentQuantity: {decrement: 2}},
+        where: { id: bulkBatchId },
+        data: { currentQuantity: { decrement: 2 } },
       }),
     );
 
@@ -101,8 +101,8 @@ describe("UnpackBatchUseCase Edge Cases", () => {
     expect(mockTx.productVariantStock.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
-          currentStock: {decrement: expect.any(Decimal)},
-          availableStock: {decrement: expect.any(Decimal)},
+          currentStock: { decrement: expect.any(Decimal) },
+          availableStock: { decrement: expect.any(Decimal) },
         },
       }),
     );

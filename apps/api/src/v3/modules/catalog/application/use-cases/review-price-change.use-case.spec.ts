@@ -1,9 +1,9 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {Test, TestingModule} from "@nestjs/testing";
-import {ReviewPriceChangeUseCase} from "./review-price-change.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
-import {PriceChangeStatus} from "@repo/db";
-import {NotFoundException, BadRequestException} from "@nestjs/common";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { ReviewPriceChangeUseCase } from "./review-price-change.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PriceChangeStatus } from "@repo/db";
+import { NotFoundException, BadRequestException } from "@nestjs/common";
 
 describe("ReviewPriceChangeUseCase", () => {
   let useCase: ReviewPriceChangeUseCase;
@@ -29,7 +29,7 @@ describe("ReviewPriceChangeUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReviewPriceChangeUseCase,
-        {provide: PrismaService, useValue: prisma},
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -66,15 +66,15 @@ describe("ReviewPriceChangeUseCase", () => {
     });
 
     expect(prisma.client.priceChangeRequest.findUnique).toHaveBeenCalledWith({
-      where: {id: requestId, organizationId},
+      where: { id: requestId, organizationId },
     });
     expect(prisma.client.priceListItem.update).toHaveBeenCalledWith({
-      where: {id: request.priceListItemId},
-      data: {price: request.newPrice},
+      where: { id: request.priceListItemId },
+      data: { price: request.newPrice },
     });
     expect(prisma.client.priceHistory.create).toHaveBeenCalled();
     expect(prisma.client.priceChangeRequest.update).toHaveBeenCalledWith({
-      where: {id: requestId},
+      where: { id: requestId },
       data: expect.objectContaining({
         status: PriceChangeStatus.APPROVED,
         reviewedBy: memberId,
@@ -111,7 +111,7 @@ describe("ReviewPriceChangeUseCase", () => {
     expect(prisma.client.priceListItem.update).not.toHaveBeenCalled();
     expect(prisma.client.priceHistory.create).not.toHaveBeenCalled();
     expect(prisma.client.priceChangeRequest.update).toHaveBeenCalledWith({
-      where: {id: requestId},
+      where: { id: requestId },
       data: expect.objectContaining({
         status: PriceChangeStatus.REJECTED,
         rejectionReason: "Too expensive",

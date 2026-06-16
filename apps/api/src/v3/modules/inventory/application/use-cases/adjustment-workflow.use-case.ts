@@ -4,10 +4,10 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ApprovalRequestType, ApprovalStatus} from "@repo/db";
-import {InventoryMovementService} from "../services/inventory-movement.service";
-import {emitStockAdjustment} from "@repo/windmill/server";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ApprovalRequestType, ApprovalStatus } from "@repo/db";
+import { InventoryMovementService } from "../services/inventory-movement.service";
+import { emitStockAdjustment } from "@repo/windmill/server";
 
 @Injectable()
 export class RequestStockAdjustmentUseCase {
@@ -39,7 +39,7 @@ export class RequestStockAdjustmentUseCase {
           status: "PENDING",
         },
         include: {
-          variant: {include: {product: true}},
+          variant: { include: { product: true } },
           location: true,
         },
       });
@@ -91,7 +91,7 @@ export class ApproveStockAdjustmentUseCase {
   ) {
     return this.prisma.client.$transaction(async tx => {
       const adjustment = await tx.stockAdjustment.findUnique({
-        where: {id: adjustmentId, organizationId},
+        where: { id: adjustmentId, organizationId },
       });
 
       if (!adjustment)
@@ -101,7 +101,7 @@ export class ApproveStockAdjustmentUseCase {
 
       // 1. Update adjustment status
       const updatedAdjustment = await tx.stockAdjustment.update({
-        where: {id: adjustmentId},
+        where: { id: adjustmentId },
         data: {
           status: "APPROVED",
           approvedById: approvalMemberId,
@@ -131,7 +131,7 @@ export class ApproveStockAdjustmentUseCase {
         create: {
           organizationId,
           productId: (await tx.productVariant.findUnique({
-            where: {id: adjustment.variantId},
+            where: { id: adjustment.variantId },
           }))!.productId,
           variantId: adjustment.variantId,
           locationId: adjustment.locationId,
@@ -139,17 +139,17 @@ export class ApproveStockAdjustmentUseCase {
           availableStock: quantityChange,
         },
         update: {
-          currentStock: {increment: quantityChange},
-          availableStock: {increment: quantityChange},
+          currentStock: { increment: quantityChange },
+          availableStock: { increment: quantityChange },
         },
       });
 
       // 3. Update batch if specified
       if (adjustment.stockBatchId) {
         await tx.stockBatch.update({
-          where: {id: adjustment.stockBatchId},
+          where: { id: adjustment.stockBatchId },
           data: {
-            currentQuantity: {increment: quantityChange},
+            currentQuantity: { increment: quantityChange },
           },
         });
       }

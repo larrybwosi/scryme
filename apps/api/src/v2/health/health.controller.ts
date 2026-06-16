@@ -6,11 +6,11 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
-import {env} from "@repo/env";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
+import { env } from "@repo/env";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import * as crypto from "node:crypto";
-import {PrismaService} from "@/prisma/prisma.service";
-import {AllowPublic} from "../../common/decorators/auth.decorator";
+import { PrismaService } from "@/prisma/prisma.service";
+import { AllowPublic } from "../../common/decorators/auth.decorator";
 
 let startTime = Date.now();
 let requestCount = 0;
@@ -24,11 +24,11 @@ export class HealthController {
 
   @AllowPublic()
   @Get()
-  @ApiOperation({summary: "Basic health check"})
+  @ApiOperation({ summary: "Basic health check" })
   async getHealth() {
     try {
       await this.prisma.client.$queryRaw`SELECT 1`;
-      return {status: "healthy", timestamp: new Date().toISOString()};
+      return { status: "healthy", timestamp: new Date().toISOString() };
     } catch (error) {
       throw new ServiceUnavailableException({
         status: "unhealthy",
@@ -40,14 +40,14 @@ export class HealthController {
 
   @AllowPublic()
   @Get("ping")
-  @ApiOperation({summary: "Simple ping"})
+  @ApiOperation({ summary: "Simple ping" })
   async ping() {
-    return {message: "pong", timestamp: new Date().toISOString()};
+    return { message: "pong", timestamp: new Date().toISOString() };
   }
 
   @AllowPublic()
   @Get("enhanced")
-  @ApiOperation({summary: "Comprehensive system health check"})
+  @ApiOperation({ summary: "Comprehensive system health check" })
   async getEnhanced() {
     const checkStartTime = performance.now();
     requestCount++;
@@ -57,9 +57,9 @@ export class HealthController {
       const systemCheck = this.checkSystem();
 
       const checks = [dbCheck, systemCheck];
-      const overallStatus = checks.some(c => c.status === "unhealthy")
+      const overallStatus = checks.some((c) => c.status === "unhealthy")
         ? "unhealthy"
-        : checks.some(c => c.status === "degraded")
+        : checks.some((c) => c.status === "degraded")
           ? "degraded"
           : "healthy";
 
@@ -106,7 +106,7 @@ export class HealthController {
 
   @AllowPublic()
   @Delete("metrics")
-  @ApiOperation({summary: "Reset in-process metrics"})
+  @ApiOperation({ summary: "Reset in-process metrics" })
   async resetMetrics(@Headers("x-admin-secret") secret: string) {
     const internalSecret = env.INTERNAL_ADMIN_SECRET;
 
@@ -131,7 +131,7 @@ export class HealthController {
     requestCount = 0;
     errorCount = 0;
     totalResponseTime = 0;
-    return {message: "Metrics reset"};
+    return { message: "Metrics reset" };
   }
 
   private async checkDatabase() {
@@ -170,7 +170,7 @@ export class HealthController {
       status,
       message:
         status === "healthy" ? "System resources normal" : "High memory usage",
-      details: {memory: {percentage: Math.round(memoryUsagePercent)}},
+      details: { memory: { percentage: Math.round(memoryUsagePercent) } },
     };
   }
 }
