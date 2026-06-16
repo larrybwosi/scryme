@@ -38,3 +38,13 @@
 **Prevention:**
 - Enable `ThrottlerGuard` globally to provide a baseline defense for all endpoints.
 - Avoid $O(N)$ cryptographic loops in authentication logic. Store salts or use search-optimized hashing strategies if direct lookups are needed, or ensure strict rate limits are applied specifically to these endpoints.
+
+## 2026-06-16 - [Mitigated SSRF and DoS in ImageService]
+**Vulnerability:** The `ImageService` was vulnerable to Server-Side Request Forgery (SSRF) and Denial of Service (DoS) attacks. It permitted arbitrary URL fetching when using the Sanity provider and lacked timeouts or response size limits on `axios` requests.
+
+**Learning:** Memory context suggested these protections existed, but they were missing in the source, indicating a regression or incomplete implementation. External fetches must always be constrained by strict validation (regex) and resource limits.
+
+**Prevention:**
+- Use strict regex validation for all external identifiers used to construct URLs.
+- Always enforce `timeout` and `maxContentLength` on `axios` (or similar) calls to external services.
+- Remove unsafe fallbacks that return raw user input as URLs.

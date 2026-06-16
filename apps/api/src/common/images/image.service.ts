@@ -1,7 +1,9 @@
-import {Injectable, Logger} from "@nestjs/common";
+import {Injectable, Logger, BadRequestException} from "@nestjs/common";
 import {storageService} from "@repo/shared/server";
 import sharp from "sharp";
 import axios from "axios";
+
+const SANITY_ASSET_ID_REGEX = /^image-[a-fA-F0-9]+-\d+x\d+-[a-z0-9]+$/i;
 
 @Injectable()
 export class ImageService {
@@ -22,26 +24,26 @@ export class ImageService {
       let contentType: string;
 
       if (providerType === "sanity") {
-        // For Sanity, we can either proxy their CDN or fetch the original.
-        // Sanity original URLs usually look like: https://cdn.sanity.io/images/PROJECT_ID/DATASET/ASSET_ID.EXTENSION
-        // But since we have the ID, we might need more info to construct the URL if we don't have it.
-        // However, if the ID is already a full URL or we can get the URL from the provider...
-        // For simplicity, let's assume we fetch the original from the provider.
-        // Actually, Sanity's `upload` returns an ID like `image-ASSET_ID-WIDTHxHEIGHT-EXTENSION`.
+        if (!SANITY_ASSET_ID_REGEX.test(id)) {
+          throw new BadRequestException("Invalid Sanity asset ID format");
+        }
 
-        // If we want to mimic Sanity's on-the-fly optimization for RustFS, we should focus on RustFS.
-        // For Sanity, the user should probably just use Sanity's CDN directly.
-        // But if they go through our API:
         const originalUrl = await this.getOriginalUrl(id);
         const response = await axios.get(originalUrl, {
           responseType: "arraybuffer",
+          timeout: 5000,
+          maxContentLength: 10 * 1024 * 1024, // 10MB limit
         });
         imageBuffer = Buffer.from(response.data);
         contentType = response.headers["content-type"] as string;
       } else {
         // RustFS / S3
         const url = await storageService.getSignedUrl(id, 60);
-        const response = await axios.get(url, {responseType: "arraybuffer"});
+        const response = await axios.get(url, {
+          responseType: "arraybuffer",
+          timeout: 5000,
+          maxContentLength: 10 * 1024 * 1024, // 10MB limit
+        });
         imageBuffer = Buffer.from(response.data);
         contentType = response.headers["content-type"] as string;
       }
@@ -84,21 +86,22 @@ export class ImageService {
   private async getOriginalUrl(id: string): Promise<string> {
     const providerType = process.env.STORAGE_PROVIDER || "sanity";
     if (providerType === "sanity") {
-      // Construction logic for Sanity CDN URL if ID is provided
       // Typical Sanity asset ID: image-02983740298374-1200x800-jpg
       const parts = id.split("-");
-      if (parts.length >= 4) {
-        const assetId = parts[1];
-        const dimensions = parts[2];
-        const extension = parts[3];
-        const projectId =
-          process.env.SANITY_PROJECT_ID ||
-          process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-        const dataset =
-          process.env.SANITY_DATASET || process.env.NEXT_PUBLIC_SANITY_DATASET;
-        return `https://cdn.sanity.io/images/${projectId}/${dataset}/${assetId}-${dimensions}.${extension}`;
+      const assetId = parts[1];
+      const dimensions = parts[2];
+      const extension = parts[3];
+      const projectId =
+        process.env.SANITY_PROJECT_ID ||
+        process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+      const dataset =
+        process.env.SANITY_DATASET || process.env.NEXT_PUBLIC_SANITY_DATASET;
+
+      if (!projectId || !dataset) {
+        throw new Error("Sanity configuration missing");
       }
-      return id; // Assume it's a URL if it doesn't match the pattern
+
+      return `https://cdn.sanity.io/images/${projectId}/${dataset}/${assetId}-${dimensions}.${extension}`;
     } else {
       return await storageService.getSignedUrl(id, 60);
     }
