@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class ApiErrorResponseDto {
   @ApiProperty({ example: false })
@@ -6,9 +6,9 @@ export class ApiErrorResponseDto {
 
   @ApiProperty({
     example: {
-      message: 'Invalid request parameters',
-      code: 'BAD_REQUEST',
-      details: ['email must be an email'],
+      message: "Invalid request parameters",
+      code: "BAD_REQUEST",
+      details: ["email must be an email"],
     },
   })
   error: {
@@ -17,7 +17,7 @@ export class ApiErrorResponseDto {
     details?: any;
   };
 
-  @ApiProperty({ example: '2023-10-27T10:00:00.000Z' })
+  @ApiProperty({ example: "2023-10-27T10:00:00.000Z" })
   timestamp: string;
 }
 
@@ -28,7 +28,7 @@ export class ApiResponseDto<T> {
   @ApiProperty()
   data: T;
 
-  @ApiProperty({ example: '2023-10-27T10:00:00.000Z' })
+  @ApiProperty({ example: "2023-10-27T10:00:00.000Z" })
   timestamp: string;
 
   @ApiProperty({ required: false })

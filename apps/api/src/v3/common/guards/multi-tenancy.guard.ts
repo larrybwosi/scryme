@@ -1,13 +1,18 @@
-import { Injectable, CanActivate, ExecutionContext, NotFoundException } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
-import { PrismaService } from '@/prisma/prisma.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  NotFoundException,
+} from "@nestjs/common";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class MultiTenancyGuard implements CanActivate {
   constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isGql = context.getType() === ('graphql' as any);
+    const isGql = context.getType() === ("graphql" as any);
     let orgSlug: string;
     let request: any;
 
@@ -24,7 +29,7 @@ export class MultiTenancyGuard implements CanActivate {
 
     if (!orgSlug) {
       // If we still don't have orgSlug, maybe it's in the headers?
-      orgSlug = request.headers['x-org-slug'] as string;
+      orgSlug = request.headers["x-org-slug"] as string;
     }
 
     if (!orgSlug) {
@@ -37,7 +42,9 @@ export class MultiTenancyGuard implements CanActivate {
     });
 
     if (!organization) {
-      throw new NotFoundException(`Organization with slug "${orgSlug}" not found`);
+      throw new NotFoundException(
+        `Organization with slug "${orgSlug}" not found`,
+      );
     }
 
     request.organization = organization;

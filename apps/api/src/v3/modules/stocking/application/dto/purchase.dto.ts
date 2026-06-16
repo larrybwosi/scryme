@@ -1,6 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, IsDateString, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsEnum,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class CreatePurchaseItemDto {
   @ApiProperty()
@@ -46,7 +55,7 @@ export class CreatePurchaseDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  currency?: string = 'KES';
+  currency?: string = "KES";
 
   @ApiPropertyOptional()
   @IsNumber()
@@ -111,7 +120,7 @@ export class BatchReceiptDto {
   qcResults?: {
     templateId: string;
     data: any;
-    status: 'PASSED' | 'FAILED';
+    status: "PASSED" | "FAILED";
     notes?: string;
   };
 

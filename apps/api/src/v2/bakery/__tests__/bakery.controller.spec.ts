@@ -1,10 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BakeryController } from '../bakery.controller';
-import { BakeryService } from '../bakery.service';
-import { PrismaService } from '@/prisma/prisma.service';
-import { V2ApiContext } from '@repo/shared/api/v2/types';
+import { Test, TestingModule } from "@nestjs/testing";
+import { BakeryController } from "../bakery.controller";
+import { BakeryService } from "../bakery.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { V2ApiContext } from "@repo/shared/api/v2/types";
 
-describe('BakeryController', () => {
+describe("BakeryController", () => {
   let controller: BakeryController;
   let service: BakeryService;
 
@@ -58,15 +58,15 @@ describe('BakeryController', () => {
   };
 
   const mockCtx: V2ApiContext = {
-    organizationId: 'org-1',
-    memberId: 'mem-1',
-    locationId: 'loc-1',
+    organizationId: "org-1",
+    memberId: "mem-1",
+    locationId: "loc-1",
     permissions: [],
-    authType: 'device',
+    authType: "device",
     scopes: [],
-    correlationId: 'test-id',
-    ipAddress: '127.0.0.1',
-    userAgent: 'test-agent',
+    correlationId: "test-id",
+    ipAddress: "127.0.0.1",
+    userAgent: "test-agent",
     requestStartTime: Date.now(),
   };
 
@@ -83,28 +83,28 @@ describe('BakeryController', () => {
     service = module.get<BakeryService>(BakeryService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(controller).toBeDefined();
   });
 
-  describe('getOverview', () => {
-    it('should call service.getBakeryOverview', async () => {
+  describe("getOverview", () => {
+    it("should call service.getBakeryOverview", async () => {
       await controller.getOverview(mockCtx);
       expect(service.getBakeryOverview).toHaveBeenCalledWith(mockCtx);
     });
   });
 
-  describe('createRecipe', () => {
-    it('should call service.createRecipe', async () => {
-      const data = { name: 'New Recipe' };
+  describe("createRecipe", () => {
+    it("should call service.createRecipe", async () => {
+      const data = { name: "New Recipe" };
       await controller.createRecipe(mockCtx, data);
       expect(service.createRecipe).toHaveBeenCalledWith(mockCtx, data);
     });
   });
 
-  describe('dispatchDelivery', () => {
-    it('should call service.dispatchDelivery', async () => {
-      const data = { transactionId: 'tx-1', partnerId: 'p-1' };
+  describe("dispatchDelivery", () => {
+    it("should call service.dispatchDelivery", async () => {
+      const data = { transactionId: "tx-1", partnerId: "p-1" };
       await controller.dispatchDelivery(mockCtx, data);
       expect(service.dispatchDelivery).toHaveBeenCalledWith(mockCtx, data);
     });

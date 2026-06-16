@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { ICustomerRepository } from '../../domain/repositories/customer-repository.interface';
-import { Customer } from '../../domain/entities/customer.entity';
-import { PaginationQueryDto } from '@/v3/common/utils/pagination';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ICustomerRepository } from "../../domain/repositories/customer-repository.interface";
+import { Customer } from "../../domain/entities/customer.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaCustomerRepository implements ICustomerRepository {
@@ -10,15 +10,29 @@ export class PrismaCustomerRepository implements ICustomerRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByOrganization(organizationId: string, pagination?: PaginationQueryDto): Promise<Customer[]> {
+  async findByOrganization(
+    organizationId: string,
+    pagination?: PaginationQueryDto,
+  ): Promise<Customer[]> {
     const customers = await this.prisma.client.customer.findMany({
       where: { organizationId },
       take: pagination?.limit || 10,
       skip: pagination?.offset || 0,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
-    return customers.map(c => new Customer(c.id, c.name, c.email, c.phone, c.organizationId, c.createdAt, c.updatedAt));
+    return customers.map(
+      (c) =>
+        new Customer(
+          c.id,
+          c.name,
+          c.email,
+          c.phone,
+          c.organizationId,
+          c.createdAt,
+          c.updatedAt,
+        ),
+    );
   }
 
   async findById(id: string): Promise<Customer | null> {
@@ -28,7 +42,15 @@ export class PrismaCustomerRepository implements ICustomerRepository {
 
     if (!c) return null;
 
-    return new Customer(c.id, c.name, c.email, c.phone, c.organizationId, c.createdAt, c.updatedAt);
+    return new Customer(
+      c.id,
+      c.name,
+      c.email,
+      c.phone,
+      c.organizationId,
+      c.createdAt,
+      c.updatedAt,
+    );
   }
 
   async save(customer: Customer): Promise<Customer> {
@@ -48,6 +70,14 @@ export class PrismaCustomerRepository implements ICustomerRepository {
       },
     });
 
-    return new Customer(c.id, c.name, c.email, c.phone, c.organizationId, c.createdAt, c.updatedAt);
+    return new Customer(
+      c.id,
+      c.name,
+      c.email,
+      c.phone,
+      c.organizationId,
+      c.createdAt,
+      c.updatedAt,
+    );
   }
 }

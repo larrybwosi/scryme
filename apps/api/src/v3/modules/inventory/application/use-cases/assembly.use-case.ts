@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class AssemblyUseCase {
@@ -13,7 +17,7 @@ export class AssemblyUseCase {
       variantId: string;
       quantity: number;
       items: { variantId: string; quantity: number; stockBatchId?: string }[];
-    }
+    },
   ) {
     const assemblyNumber = `ASY-${Date.now()}`;
 
@@ -25,9 +29,9 @@ export class AssemblyUseCase {
         name: data.name,
         variantId: data.variantId,
         quantity: data.quantity,
-        status: 'PLANNED',
+        status: "PLANNED",
         items: {
-          create: data.items.map(item => ({
+          create: data.items.map((item) => ({
             variantId: item.variantId,
             quantity: item.quantity,
             stockBatchId: item.stockBatchId,
@@ -40,16 +44,23 @@ export class AssemblyUseCase {
     });
   }
 
-  async complete(organizationId: string, memberId: string, assemblyId: string, locationId: string) {
-    return this.prisma.client.$transaction(async tx => {
+  async complete(
+    organizationId: string,
+    memberId: string,
+    assemblyId: string,
+    locationId: string,
+  ) {
+    return this.prisma.client.$transaction(async (tx) => {
       const assembly = await tx.assembly.findUnique({
         where: { id: assemblyId, organizationId },
         include: { items: true },
       });
 
-      if (!assembly) throw new NotFoundException('Assembly not found');
-      if (assembly.status !== 'PLANNED' && assembly.status !== 'IN_PROGRESS') {
-        throw new BadRequestException('Assembly is already completed or cancelled');
+      if (!assembly) throw new NotFoundException("Assembly not found");
+      if (assembly.status !== "PLANNED" && assembly.status !== "IN_PROGRESS") {
+        throw new BadRequestException(
+          "Assembly is already completed or cancelled",
+        );
       }
 
       // 1. Deduct components
@@ -85,10 +96,10 @@ export class AssemblyUseCase {
             quantity: item.quantity,
             fromLocationId: locationId,
             toLocationId: null,
-            movementType: 'PRODUCTION_OUT',
+            movementType: "PRODUCTION_OUT",
             memberId,
             referenceId: assemblyId,
-            referenceType: 'Assembly',
+            referenceType: "Assembly",
             notes: `Used in assembly ${assembly.assemblyNumber}`,
           },
         });
@@ -119,7 +130,9 @@ export class AssemblyUseCase {
         },
         create: {
           organizationId,
-          productId: (await tx.productVariant.findUnique({ where: { id: assembly.variantId } }))!.productId,
+          productId: (await tx.productVariant.findUnique({
+            where: { id: assembly.variantId },
+          }))!.productId,
           variantId: assembly.variantId,
           locationId,
           currentStock: assembly.quantity,
@@ -140,10 +153,10 @@ export class AssemblyUseCase {
           quantity: assembly.quantity,
           fromLocationId: null,
           toLocationId: locationId,
-          movementType: 'PRODUCTION_IN',
+          movementType: "PRODUCTION_IN",
           memberId,
           referenceId: assemblyId,
-          referenceType: 'Assembly',
+          referenceType: "Assembly",
           notes: `Produced from assembly ${assembly.assemblyNumber}`,
         },
       });
@@ -152,7 +165,7 @@ export class AssemblyUseCase {
       return tx.assembly.update({
         where: { id: assemblyId },
         data: {
-          status: 'COMPLETED',
+          status: "COMPLETED",
           completedAt: new Date(),
         },
       });

@@ -1,14 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { IProductRepository } from '../../domain/repositories/product-repository.interface';
-import { Product } from '../../domain/entities/product.entity';
-import { PaginationQueryDto } from '@/v3/common/utils/pagination';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IProductRepository } from "../../domain/repositories/product-repository.interface";
+import { Product } from "../../domain/entities/product.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaProductRepository implements IProductRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByOrganization(organizationId: string, pagination?: PaginationQueryDto): Promise<Product[]> {
+  async findByOrganization(
+    organizationId: string,
+    pagination?: PaginationQueryDto,
+  ): Promise<Product[]> {
     const products = await this.prisma.client.product.findMany({
       where: { organizationId },
       take: pagination?.limit,
@@ -24,7 +27,16 @@ export class PrismaProductRepository implements IProductRepository {
       },
     });
     return products.map(
-      p => new Product(p.id, p.name, p.description, p.organizationId, p.categoryId, p.createdAt, p.updatedAt)
+      (p) =>
+        new Product(
+          p.id,
+          p.name,
+          p.description,
+          p.organizationId,
+          p.categoryId,
+          p.createdAt,
+          p.updatedAt,
+        ),
     );
   }
 
@@ -42,7 +54,15 @@ export class PrismaProductRepository implements IProductRepository {
       },
     });
     if (!p) return null;
-    return new Product(p.id, p.name, p.description, p.organizationId, p.categoryId, p.createdAt, p.updatedAt);
+    return new Product(
+      p.id,
+      p.name,
+      p.description,
+      p.organizationId,
+      p.categoryId,
+      p.createdAt,
+      p.updatedAt,
+    );
   }
 
   async save(product: Product): Promise<Product> {
@@ -61,6 +81,14 @@ export class PrismaProductRepository implements IProductRepository {
         category: { connect: { id: product.categoryId } },
       },
     });
-    return new Product(p.id, p.name, p.description, p.organizationId, p.categoryId, p.createdAt, p.updatedAt);
+    return new Product(
+      p.id,
+      p.name,
+      p.description,
+      p.organizationId,
+      p.categoryId,
+      p.createdAt,
+      p.updatedAt,
+    );
   }
 }

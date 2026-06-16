@@ -1,8 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { IOrderRepository } from '../../domain/repositories/order-repository.interface';
-import { Order } from '../../domain/entities/order.entity';
-import { PaginationQueryDto, PaginatedResponse, paginate } from '@/v3/common/utils/pagination';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { Order } from "../../domain/entities/order.entity";
+import {
+  PaginationQueryDto,
+  PaginatedResponse,
+  paginate,
+} from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaOrderRepository implements IOrderRepository {
@@ -10,13 +14,13 @@ export class PrismaOrderRepository implements IOrderRepository {
 
   async findByOrganization(
     organizationId: string,
-    paginationQuery: PaginationQueryDto
+    paginationQuery: PaginationQueryDto,
   ): Promise<PaginatedResponse<Order>> {
     const result = await paginate(
       this.prisma.client.transaction,
       paginationQuery,
       { organizationId },
-      { createdAt: 'desc' },
+      { createdAt: "desc" },
       {
         select: {
           id: true,
@@ -30,7 +34,7 @@ export class PrismaOrderRepository implements IOrderRepository {
           updatedAt: true,
           items: true,
         },
-      }
+      },
     );
 
     return {
@@ -47,8 +51,8 @@ export class PrismaOrderRepository implements IOrderRepository {
             o.locationId,
             o.createdAt,
             o.updatedAt,
-            o.items
-          )
+            o.items,
+          ),
       ),
     };
   }
@@ -80,7 +84,7 @@ export class PrismaOrderRepository implements IOrderRepository {
       o.locationId,
       o.createdAt,
       o.updatedAt,
-      o.items
+      o.items,
     );
   }
 
@@ -88,12 +92,14 @@ export class PrismaOrderRepository implements IOrderRepository {
     const o = await this.prisma.client.transaction.create({
       data: {
         number: orderData.number,
-        type: orderData.type || 'ONLINE_ORDER',
-        channel: orderData.channel || 'ECOMMERCE_STORE',
-        status: orderData.status || 'PENDING_CONFIRMATION',
+        type: orderData.type || "ONLINE_ORDER",
+        channel: orderData.channel || "ECOMMERCE_STORE",
+        status: orderData.status || "PENDING_CONFIRMATION",
         organization: { connect: { id: orderData.organizationId } },
         location: { connect: { id: orderData.locationId } },
-        customer: orderData.customerId ? { connect: { id: orderData.customerId } } : undefined,
+        customer: orderData.customerId
+          ? { connect: { id: orderData.customerId } }
+          : undefined,
         subtotal: orderData.subtotal,
         finalTotal: orderData.finalTotal,
         baseCurrencyTotal: orderData.finalTotal,
@@ -131,7 +137,7 @@ export class PrismaOrderRepository implements IOrderRepository {
       o.locationId,
       o.createdAt,
       o.updatedAt,
-      (o as any).items || []
+      (o as any).items || [],
     );
   }
 
@@ -145,9 +151,11 @@ export class PrismaOrderRepository implements IOrderRepository {
       create: {
         id: order.id,
         number: order.number || `ORD-${Date.now()}`,
-        type: 'POS_SALE',
+        type: "POS_SALE",
         location: { connect: { id: order.locationId } },
-        customer: order.customerId ? { connect: { id: order.customerId } } : undefined,
+        customer: order.customerId
+          ? { connect: { id: order.customerId } }
+          : undefined,
         status: order.status as any,
         finalTotal: order.totalAmount,
         subtotal: order.totalAmount,
@@ -168,7 +176,7 @@ export class PrismaOrderRepository implements IOrderRepository {
       o.locationId,
       o.createdAt,
       o.updatedAt,
-      (o as any).items || []
+      (o as any).items || [],
     );
   }
 }

@@ -1,7 +1,7 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ScrymeChatApiClient } from '@repo/scryme';
-import { createHmac } from 'crypto';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ScrymeChatApiClient } from "@repo/scryme";
+import { createHmac } from "crypto";
 
 @Injectable()
 export class ScrymeService {
@@ -19,10 +19,15 @@ export class ScrymeService {
   async provisionWorkspace(organizationId: string, name: string, slug: string) {
     const workspaceSlug = `org-${slug}`.toLowerCase();
 
-    this.logger.log(`Provisioning Scryme workspace for org ${organizationId}: ${workspaceSlug}`);
+    this.logger.log(
+      `Provisioning Scryme workspace for org ${organizationId}: ${workspaceSlug}`,
+    );
 
     try {
-      const workspace = await this.scrymeClient.createWorkspace(name, workspaceSlug);
+      const workspace = await this.scrymeClient.createWorkspace(
+        name,
+        workspaceSlug,
+      );
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
         where: { organizationId },
@@ -41,7 +46,10 @@ export class ScrymeService {
 
       return config;
     } catch (error: any) {
-      this.logger.error(`Failed to provision Scryme workspace: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to provision Scryme workspace: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }
@@ -50,37 +58,45 @@ export class ScrymeService {
     // Verify Signature
     const secret = process.env.SCRYME_WEBHOOK_SECRET;
     if (secret && signature) {
-      const expectedSignature = createHmac('sha256', secret)
+      const expectedSignature = createHmac("sha256", secret)
         .update(JSON.stringify(payload))
-        .digest('hex');
+        .digest("hex");
 
       if (signature !== expectedSignature) {
-        this.logger.warn('Invalid Scryme webhook signature');
-        throw new BadRequestException('Invalid signature');
+        this.logger.warn("Invalid Scryme webhook signature");
+        throw new BadRequestException("Invalid signature");
       }
     } else if (secret && !signature) {
-      this.logger.warn('Missing Scryme webhook signature while secret is configured');
-      throw new BadRequestException('Missing signature');
+      this.logger.warn(
+        "Missing Scryme webhook signature while secret is configured",
+      );
+      throw new BadRequestException("Missing signature");
     }
 
     this.logger.log(`Received Scryme webhook: ${payload.event}`);
 
-    if (payload.event === 'message.action') {
+    if (payload.event === "message.action") {
       const { workspaceSlug, action, message, user } = payload.data;
 
       // Find the organization associated with this workspace
-      const config = await (this.prisma.client as any).scrymeConfiguration.findUnique({
+      const config = await (
+        this.prisma.client as any
+      ).scrymeConfiguration.findUnique({
         where: { workspaceSlug },
-        include: { organization: { include: { windmillConfiguration: true } } }
+        include: { organization: { include: { windmillConfiguration: true } } },
       });
 
       if (!config || !config.organization.windmillConfiguration) {
-        this.logger.warn(`No organization or Windmill config found for Scryme workspace: ${workspaceSlug}`);
-        return { status: 'ignored' };
+        this.logger.warn(
+          `No organization or Windmill config found for Scryme workspace: ${workspaceSlug}`,
+        );
+        return { status: "ignored" };
       }
 
       // Trigger Windmill workflow
-      const scriptPath = process.env.SCRYME_ACTION_WORKFLOW_PATH || 'f/dealio/scryme_action_handler';
+      const scriptPath =
+        process.env.SCRYME_ACTION_WORKFLOW_PATH ||
+        "f/dealio/scryme_action_handler";
 
       await (this.prisma.client as any).windmillExecution.create({
         data: {
@@ -88,27 +104,29 @@ export class ScrymeService {
           configId: config.organization.windmillConfiguration.id,
           jobId: `scryme_${Date.now()}_${Math.random().toString(36).substring(7)}`,
           scriptPath,
-          dealioEventType: 'SCRYME_ACTION',
+          dealioEventType: "SCRYME_ACTION",
           correlationId: message.id,
-          status: 'PENDING',
+          status: "PENDING",
           result: {
             action,
             message,
             user,
-            workspaceSlug
-          }
-        }
+            workspaceSlug,
+          },
+        },
       });
 
-      this.logger.log(`Queued Windmill execution for Scryme action: ${action.id} in workspace ${workspaceSlug}`);
-      return { status: 'success' };
+      this.logger.log(
+        `Queued Windmill execution for Scryme action: ${action.id} in workspace ${workspaceSlug}`,
+      );
+      return { status: "success" };
     }
 
-    return { status: 'received' };
+    return { status: "received" };
   }
 
   async registerWebhook(baseUrl: string) {
-    const webhookUrl = `${baseUrl.replace(/\/$/, '')}/v2/scryme/webhook`;
+    const webhookUrl = `${baseUrl.replace(/\/$/, "")}/v2/scryme/webhook`;
     this.logger.log(`Registering Scryme global webhook: ${webhookUrl}`);
     try {
       await this.scrymeClient.registerGlobalWebhook(webhookUrl);

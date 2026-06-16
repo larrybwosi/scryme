@@ -449,11 +449,11 @@ export class PosService {
     const notificationChannel = `organization:${organizationId}:notifications`;
     const organizationChannel = `organization:${organizationId}:*`;
 
-    const provider = process.env.REALTIME_PROVIDER || 'ably';
+    const provider = process.env.REALTIME_PROVIDER || "ably";
 
     let tokenRequest: any;
 
-    if (provider === 'ably') {
+    if (provider === "ably") {
       tokenRequest = await ably.auth.requestToken({
         clientId: memberId,
         capability: JSON.stringify({
@@ -466,19 +466,28 @@ export class PosService {
           "store:*": ["subscribe", "publish", "history", "presence"],
           [paymentChannel]: ["subscribe"],
           [notificationChannel]: ["subscribe"],
-          [organizationChannel]: ["subscribe", "publish", "history", "presence"],
+          [organizationChannel]: [
+            "subscribe",
+            "publish",
+            "history",
+            "presence",
+          ],
         }),
         ttl: 3600 * 1000,
         timestamp: Date.now(),
       });
     } else {
       tokenRequest = {
-        token: 'socketio-placeholder-token',
+        token: "socketio-placeholder-token",
         clientId: memberId,
       };
     }
 
-    return { tokenRequest, provider, metadata: { organizationId, paymentChannel } };
+    return {
+      tokenRequest,
+      provider,
+      metadata: { organizationId, paymentChannel },
+    };
   }
 
   async getInventory(ctx: V2ApiContext, query: any) {

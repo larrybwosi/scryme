@@ -1,7 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
-import { StockRequestPriority } from '@repo/db';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { StockRequestPriority } from "@repo/db";
 
 export class CreateTransferItemDto {
   @ApiProperty()

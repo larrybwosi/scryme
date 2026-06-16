@@ -13,7 +13,7 @@ import { paginate } from "../../v3/common/utils/pagination";
 export class InventoryService {
   constructor(
     private prisma: PrismaService,
-    private realtime: ApiRealtimeService
+    private realtime: ApiRealtimeService,
   ) {}
 
   async getInventory(ctx: V2ApiContext, query: any) {
@@ -329,7 +329,7 @@ export class InventoryService {
 
     if (locationCount <= 1) {
       throw new BadRequestException(
-        "Cannot delete the last location in the system. At least one location is required."
+        "Cannot delete the last location in the system. At least one location is required.",
       );
     }
 

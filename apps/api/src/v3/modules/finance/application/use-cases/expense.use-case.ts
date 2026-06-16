@@ -1,25 +1,51 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateExpenseDto } from '../dto/finance.dto';
-import { Prisma, ExpenseStatus, PettyCashTransactionType } from '@repo/db';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateExpenseDto } from "../dto/finance.dto";
+import { Prisma, ExpenseStatus, PettyCashTransactionType } from "@repo/db";
 
 @Injectable()
 export class ExpenseUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createExpense(organizationId: string, memberId: string, dto: CreateExpenseDto) {
+  async createExpense(
+    organizationId: string,
+    memberId: string,
+    dto: CreateExpenseDto,
+  ) {
     const org = await this.getOrganization(organizationId);
     const amountDecimal = new Prisma.Decimal(dto.amount);
 
     this.validateReceipt(org, amountDecimal, dto.receiptUrl);
-    const status = this.determineStatus(org, amountDecimal, dto.pettyCashFundId);
+    const status = this.determineStatus(
+      org,
+      amountDecimal,
+      dto.pettyCashFundId,
+    );
     const expenseNumber = await this.generateExpenseNumber(organizationId);
 
-    return await this.prisma.client.$transaction(async tx => {
-      const expense = await this.persistExpense(tx, organizationId, memberId, dto, status, expenseNumber);
+    return await this.prisma.client.$transaction(async (tx) => {
+      const expense = await this.persistExpense(
+        tx,
+        organizationId,
+        memberId,
+        dto,
+        status,
+        expenseNumber,
+      );
 
       if (status === ExpenseStatus.APPROVED) {
-        await this.handlePostApprovalActions(tx, organizationId, memberId, dto, amountDecimal);
+        await this.handlePostApprovalActions(
+          tx,
+          organizationId,
+          memberId,
+          dto,
+          amountDecimal,
+        );
       }
 
       return expense;
@@ -35,31 +61,54 @@ export class ExpenseUseCase {
         pettyCashAutoApproveThreshold: true,
       },
     });
-    if (!org) throw new NotFoundException('Organization not found');
+    if (!org) throw new NotFoundException("Organization not found");
     return org;
   }
 
-  private validateReceipt(org: any, amount: Prisma.Decimal, receiptUrl?: string) {
-    if (org.expenseReceiptThreshold && amount.gte(org.expenseReceiptThreshold) && !receiptUrl) {
-      throw new BadRequestException(`Receipt is required for expenses above ${org.expenseReceiptThreshold}`);
+  private validateReceipt(
+    org: any,
+    amount: Prisma.Decimal,
+    receiptUrl?: string,
+  ) {
+    if (
+      org.expenseReceiptThreshold &&
+      amount.gte(org.expenseReceiptThreshold) &&
+      !receiptUrl
+    ) {
+      throw new BadRequestException(
+        `Receipt is required for expenses above ${org.expenseReceiptThreshold}`,
+      );
     }
   }
 
-  private determineStatus(org: any, amount: Prisma.Decimal, pettyCashFundId?: string): ExpenseStatus {
+  private determineStatus(
+    org: any,
+    amount: Prisma.Decimal,
+    pettyCashFundId?: string,
+  ): ExpenseStatus {
     if (pettyCashFundId && org.pettyCashAutoApproveThreshold) {
-      if (amount.lte(new Prisma.Decimal(org.pettyCashAutoApproveThreshold.toString()))) {
+      if (
+        amount.lte(
+          new Prisma.Decimal(org.pettyCashAutoApproveThreshold.toString()),
+        )
+      ) {
         return ExpenseStatus.APPROVED;
       }
     }
-    if (org.expenseApprovalThreshold && amount.gte(org.expenseApprovalThreshold)) {
+    if (
+      org.expenseApprovalThreshold &&
+      amount.gte(org.expenseApprovalThreshold)
+    ) {
       return ExpenseStatus.PENDING;
     }
     return ExpenseStatus.APPROVED;
   }
 
   private async generateExpenseNumber(organizationId: string) {
-    const count = await this.prisma.client.expense.count({ where: { organizationId } });
-    return `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+    const count = await this.prisma.client.expense.count({
+      where: { organizationId },
+    });
+    return `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
   }
 
   private async persistExpense(
@@ -68,7 +117,7 @@ export class ExpenseUseCase {
     memberId: string,
     dto: CreateExpenseDto,
     status: ExpenseStatus,
-    expenseNumber: string
+    expenseNumber: string,
   ) {
     const {
       amount,
@@ -113,10 +162,17 @@ export class ExpenseUseCase {
     organizationId: string,
     memberId: string,
     dto: CreateExpenseDto,
-    amount: Prisma.Decimal
+    amount: Prisma.Decimal,
   ) {
     if (dto.pettyCashFundId) {
-      await this.decrementPettyCash(tx, organizationId, memberId, dto.pettyCashFundId, amount, dto.description);
+      await this.decrementPettyCash(
+        tx,
+        organizationId,
+        memberId,
+        dto.pettyCashFundId,
+        amount,
+        dto.description,
+      );
     }
     if (dto.budgetId) {
       await tx.budget.update({
@@ -132,11 +188,14 @@ export class ExpenseUseCase {
     memberId: string,
     fundId: string,
     amount: Prisma.Decimal,
-    description: string
+    description: string,
   ) {
-    const fund = await tx.pettyCashFund.findFirst({ where: { id: fundId, organizationId } });
-    if (!fund) throw new NotFoundException('Petty cash fund not found');
-    if (fund.amount.lessThan(amount)) throw new BadRequestException('Insufficient funds in petty cash');
+    const fund = await tx.pettyCashFund.findFirst({
+      where: { id: fundId, organizationId },
+    });
+    if (!fund) throw new NotFoundException("Petty cash fund not found");
+    if (fund.amount.lessThan(amount))
+      throw new BadRequestException("Insufficient funds in petty cash");
 
     await tx.pettyCashFund.update({
       where: { id: fundId },
@@ -187,7 +246,7 @@ export class ExpenseUseCase {
         utilityAccount: true,
         location: true,
       },
-      orderBy: { expenseDate: 'desc' },
+      orderBy: { expenseDate: "desc" },
     });
   }
 
@@ -197,15 +256,24 @@ export class ExpenseUseCase {
     });
   }
 
-  async approveExpense(organizationId: string, memberId: string, expenseId: string) {
-    return await this.prisma.client.$transaction(async tx => {
+  async approveExpense(
+    organizationId: string,
+    memberId: string,
+    expenseId: string,
+  ) {
+    return await this.prisma.client.$transaction(async (tx) => {
       const expense = await tx.expense.findFirst({
         where: { id: expenseId, organizationId },
       });
 
-      if (!expense) throw new NotFoundException('Expense not found');
-      if (expense.status !== ExpenseStatus.PENDING && expense.status !== ExpenseStatus.PENDING_APPROVAL) {
-        throw new BadRequestException('Expense is not in a state that can be approved');
+      if (!expense) throw new NotFoundException("Expense not found");
+      if (
+        expense.status !== ExpenseStatus.PENDING &&
+        expense.status !== ExpenseStatus.PENDING_APPROVAL
+      ) {
+        throw new BadRequestException(
+          "Expense is not in a state that can be approved",
+        );
       }
 
       const updatedExpense = await tx.expense.update({
@@ -226,7 +294,7 @@ export class ExpenseUseCase {
           pettyCashFundId: expense.pettyCashFundId,
           budgetId: expense.budgetId,
         } as any,
-        expense.amount
+        expense.amount,
       );
 
       return updatedExpense;

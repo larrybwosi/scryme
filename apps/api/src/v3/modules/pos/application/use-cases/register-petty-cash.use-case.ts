@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { V3ApiContext } from '@repo/shared/api/v2/types';
-import { RegisterPettyCashDto } from '../dto/petty-cash.dto';
-import { ExpenseUseCase } from '../../../finance/application/use-cases/expense.use-case';
-import { PettyCashUseCase } from '../../../finance/application/use-cases/petty-cash.use-case';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { V3ApiContext } from "@repo/shared/api/v2/types";
+import { RegisterPettyCashDto } from "../dto/petty-cash.dto";
+import { ExpenseUseCase } from "../../../finance/application/use-cases/expense.use-case";
+import { PettyCashUseCase } from "../../../finance/application/use-cases/petty-cash.use-case";
 
 @Injectable()
 export class RegisterPettyCashUseCase {
@@ -20,14 +20,14 @@ export class RegisterPettyCashUseCase {
     let category = await this.prisma.client.expenseCategory.findFirst({
       where: {
         organizationId,
-        name: { equals: 'Petty Cash', mode: 'insensitive' },
+        name: { equals: "Petty Cash", mode: "insensitive" },
       },
     });
 
     if (!category) {
       category = await this.prisma.client.expenseCategory.create({
         data: {
-          name: 'Petty Cash',
+          name: "Petty Cash",
           organizationId,
           isActive: true,
         },
@@ -62,7 +62,9 @@ export class RegisterPettyCashUseCase {
     }
 
     if (!fundId) {
-      throw new NotFoundException('No active petty cash fund found for this organization.');
+      throw new NotFoundException(
+        "No active petty cash fund found for this organization.",
+      );
     }
 
     // 3. Register the expense

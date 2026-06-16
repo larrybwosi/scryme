@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { Test, TestingModule } from "@nestjs/testing";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Use hoisted to define mock objects needed in vi.mock
 const { mockDb } = vi.hoisted(() => ({
@@ -9,33 +9,33 @@ const { mockDb } = vi.hoisted(() => ({
   },
   PrismaClient: class {},
   PaymentStatus: {
-    PENDING: 'PENDING',
-    PAID: 'PAID',
-    FAILED: 'FAILED',
-    CANCELLED: 'CANCELLED',
-    REFUNDED: 'REFUNDED',
-    UNPAID: 'UNPAID',
-    PARTIAL: 'PARTIAL',
+    PENDING: "PENDING",
+    PAID: "PAID",
+    FAILED: "FAILED",
+    CANCELLED: "CANCELLED",
+    REFUNDED: "REFUNDED",
+    UNPAID: "UNPAID",
+    PARTIAL: "PARTIAL",
   },
 }));
 
 // Mock @repo/shared/api/v2/types
-vi.mock('@repo/shared/api/v2/types', () => ({
+vi.mock("@repo/shared/api/v2/types", () => ({
   V2ApiContext: {},
 }));
 
 // Mock @repo/suppliers
-vi.mock('@repo/suppliers', () => ({
+vi.mock("@repo/suppliers", () => ({
   SupplierService: vi.fn(),
 }));
 
-import { CatalogService } from '../catalog.service';
-import { PrismaService } from '@/prisma/prisma.service';
-import { RedisService } from '../../../redis/redis.service';
-import { SupplierService } from '@repo/suppliers/server';
-import { V2ApiContext } from '@repo/shared/api/v2/types';
+import { CatalogService } from "../catalog.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "../../../redis/redis.service";
+import { SupplierService } from "@repo/suppliers/server";
+import { V2ApiContext } from "@repo/shared/api/v2/types";
 
-describe('CatalogService', () => {
+describe("CatalogService", () => {
   let service: CatalogService;
   let prisma: PrismaService;
   let redis: RedisService;
@@ -77,48 +77,58 @@ describe('CatalogService', () => {
     redis = module.get<RedisService>(RedisService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getProducts', () => {
-    it('should return products from database if cache is empty', async () => {
-      const orgId = 'org-1';
-      const products = [{ id: '1', sku: 'S1', name: 'Product 1', variants: [] }];
+  describe("getProducts", () => {
+    it("should return products from database if cache is empty", async () => {
+      const orgId = "org-1";
+      const products = [
+        { id: "1", sku: "S1", name: "Product 1", variants: [] },
+      ];
       (mockDb.product.findMany as any).mockResolvedValue(products);
       (mockDb.product.count as any).mockResolvedValue(1);
       (redis.get as any).mockResolvedValue(null);
 
-      const result = await service.getProducts({ organizationId: orgId } as V2ApiContext, {});
+      const result = await service.getProducts(
+        { organizationId: orgId } as V2ApiContext,
+        {},
+      );
 
       expect(result.products).toBeDefined();
       expect(mockDb.product.findMany).toHaveBeenCalled();
       expect(redis.setex).toHaveBeenCalled();
     });
 
-    it('should return products from cache if available', async () => {
-      const orgId = 'org-1';
-      const products = [{ id: '1', sku: 'S1', name: 'Product 1', variants: [] }];
+    it("should return products from cache if available", async () => {
+      const orgId = "org-1";
+      const products = [
+        { id: "1", sku: "S1", name: "Product 1", variants: [] },
+      ];
       const cacheValue = { products, pagination: {} };
       (redis.get as any).mockResolvedValue(cacheValue);
 
-      const result = await service.getProducts({ organizationId: orgId } as V2ApiContext, {});
+      const result = await service.getProducts(
+        { organizationId: orgId } as V2ApiContext,
+        {},
+      );
 
       expect(result).toEqual(cacheValue);
       expect(mockDb.product.findMany).not.toHaveBeenCalled();
     });
 
-    it('should correctly paginate when inStock=true', async () => {
-      const orgId = 'org-1';
+    it("should correctly paginate when inStock=true", async () => {
+      const orgId = "org-1";
       // Mock only the in-stock product being returned by the DB
       const products = [
         {
-          id: '1',
-          sku: 'S1',
-          name: 'In Stock',
+          id: "1",
+          sku: "S1",
+          name: "In Stock",
           variants: [
             {
-              id: 'v1',
+              id: "v1",
               variantStocks: [{ availableStock: 10 }],
             },
           ],
@@ -131,12 +141,12 @@ describe('CatalogService', () => {
 
       const result = await service.getProducts(
         { organizationId: orgId } as V2ApiContext,
-        { inStock: 'true' },
+        { inStock: "true" },
       );
 
       // Verified behavior: products are filtered by the DB
       expect(result.products).toHaveLength(1);
-      expect(result.products[0].internalId).toBe('1');
+      expect(result.products[0].internalId).toBe("1");
 
       // Verified fix: pagination.total is 1, matching the returned products
       expect(result.pagination.total).toBe(1);

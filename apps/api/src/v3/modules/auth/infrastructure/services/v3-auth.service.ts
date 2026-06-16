@@ -1,13 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import * as bcrypt from 'bcryptjs';
-import { V3AuthCoreService } from '../../../auth-core/infrastructure/services/v3-auth-core.service';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import * as bcrypt from "bcryptjs";
+import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 
 @Injectable()
 export class V3AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly authCore: V3AuthCoreService
+    private readonly authCore: V3AuthCoreService,
   ) {}
 
   async provisionDevice(token: string) {
@@ -34,7 +34,7 @@ export class V3AuthService {
       where: { clientId },
       include: { organization: true },
     });
-    if (!client) throw new UnauthorizedException('Invalid client');
+    if (!client) throw new UnauthorizedException("Invalid client");
     return client;
   }
 
@@ -53,7 +53,7 @@ export class V3AuthService {
       }
     }
 
-    throw new UnauthorizedException('Invalid credentials');
+    throw new UnauthorizedException("Invalid credentials");
   }
 
   private async handleMemberCheckIn(client: any, member: any) {
@@ -67,11 +67,19 @@ export class V3AuthService {
     });
 
     if (!existingLog) {
-      await this.recordCheckIn(client.organizationId, member.id, registry.locationId);
+      await this.recordCheckIn(
+        client.organizationId,
+        member.id,
+        registry.locationId,
+      );
     }
   }
 
-  private async recordCheckIn(organizationId: string, memberId: string, locationId: string) {
+  private async recordCheckIn(
+    organizationId: string,
+    memberId: string,
+    locationId: string,
+  ) {
     await this.prisma.client.attendanceLog.create({
       data: {
         memberId,
@@ -82,7 +90,11 @@ export class V3AuthService {
     });
     await this.prisma.client.member.update({
       where: { id: memberId },
-      data: { isCheckedIn: true, lastCheckInTime: new Date(), currentCheckInLocationId: locationId },
+      data: {
+        isCheckedIn: true,
+        lastCheckInTime: new Date(),
+        currentCheckInLocationId: locationId,
+      },
     });
   }
 

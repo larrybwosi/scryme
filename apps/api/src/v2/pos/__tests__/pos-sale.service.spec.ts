@@ -72,16 +72,16 @@ describe("PosSaleService", () => {
     };
 
     it("should process a cash sale successfully", async () => {
-      vi.mocked(sharedValidations.ProcessSaleInputSchema.safeParse).mockReturnValueOnce(
-        {
-          success: true,
-          data: {
-            ...mockBody,
-            locationId: "loc_1",
-            enableStockTracking: true,
-          } as any,
+      vi.mocked(
+        sharedValidations.ProcessSaleInputSchema.safeParse,
+      ).mockReturnValueOnce({
+        success: true,
+        data: {
+          ...mockBody,
+          locationId: "loc_1",
+          enableStockTracking: true,
         } as any,
-      );
+      } as any);
 
       vi.mocked(sharedActions.processSale).mockResolvedValue({
         success: true,
@@ -100,14 +100,14 @@ describe("PosSaleService", () => {
     });
 
     it("should throw BadRequestException if validation fails", async () => {
-      vi.mocked(sharedValidations.ProcessSaleInputSchema.safeParse).mockReturnValueOnce(
-        {
-          success: false,
-          error: {
-            flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
-          },
-        } as any,
-      );
+      vi.mocked(
+        sharedValidations.ProcessSaleInputSchema.safeParse,
+      ).mockReturnValueOnce({
+        success: false,
+        error: {
+          flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
+        },
+      } as any);
 
       await expect(service.handleSale(mockCtx, mockBody, true)).rejects.toThrow(
         BadRequestException,

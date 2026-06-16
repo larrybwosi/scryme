@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { RegisterPettyCashUseCase } from './register-petty-cash.use-case';
-import { PrismaService } from '@/prisma/prisma.service';
-import { ExpenseUseCase } from '../../../finance/application/use-cases/expense.use-case';
-import { PettyCashUseCase } from '../../../finance/application/use-cases/petty-cash.use-case';
-import { NotFoundException } from '@nestjs/common';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PaymentMethod } from '@repo/db';
+import { Test, TestingModule } from "@nestjs/testing";
+import { RegisterPettyCashUseCase } from "./register-petty-cash.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ExpenseUseCase } from "../../../finance/application/use-cases/expense.use-case";
+import { PettyCashUseCase } from "../../../finance/application/use-cases/petty-cash.use-case";
+import { NotFoundException } from "@nestjs/common";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { PaymentMethod } from "@repo/db";
 
-describe('RegisterPettyCashUseCase', () => {
+describe("RegisterPettyCashUseCase", () => {
   let useCase: RegisterPettyCashUseCase;
   let prisma: any;
   let expenseUseCase: any;
@@ -22,7 +22,7 @@ describe('RegisterPettyCashUseCase', () => {
     };
 
     expenseUseCase = {
-      createExpense: vi.fn().mockResolvedValue({ id: 'exp_1' }),
+      createExpense: vi.fn().mockResolvedValue({ id: "exp_1" }),
     };
 
     pettyCashUseCase = {
@@ -41,62 +41,84 @@ describe('RegisterPettyCashUseCase', () => {
     useCase = module.get<RegisterPettyCashUseCase>(RegisterPettyCashUseCase);
   });
 
-  it('should register petty cash with existing category and fund', async () => {
-    const ctx = { organizationId: 'org_1', memberId: 'mem_1', locationId: 'loc_1' } as any;
+  it("should register petty cash with existing category and fund", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    } as any;
     const dto = {
-      description: 'Test expense',
+      description: "Test expense",
       amount: 100,
       paymentMethod: PaymentMethod.CASH,
     };
 
-    prisma.client.expenseCategory.findFirst.mockResolvedValue({ id: 'cat_1', name: 'Petty Cash' });
-    prisma.client.pettyCashFund.findFirst.mockResolvedValue({ id: 'fund_1' });
+    prisma.client.expenseCategory.findFirst.mockResolvedValue({
+      id: "cat_1",
+      name: "Petty Cash",
+    });
+    prisma.client.pettyCashFund.findFirst.mockResolvedValue({ id: "fund_1" });
 
     const result = await useCase.execute(ctx, dto);
 
     expect(prisma.client.expenseCategory.findFirst).toHaveBeenCalled();
     expect(prisma.client.pettyCashFund.findFirst).toHaveBeenCalled();
-    expect(expenseUseCase.createExpense).toHaveBeenCalledWith('org_1', 'mem_1', expect.objectContaining({
-      description: 'Test expense',
-      amount: 100,
-      categoryId: 'cat_1',
-      pettyCashFundId: 'fund_1',
-    }));
-    expect(result).toEqual({ id: 'exp_1' });
+    expect(expenseUseCase.createExpense).toHaveBeenCalledWith(
+      "org_1",
+      "mem_1",
+      expect.objectContaining({
+        description: "Test expense",
+        amount: 100,
+        categoryId: "cat_1",
+        pettyCashFundId: "fund_1",
+      }),
+    );
+    expect(result).toEqual({ id: "exp_1" });
   });
 
-  it('should create category if it does not exist', async () => {
-    const ctx = { organizationId: 'org_1', memberId: 'mem_1', locationId: 'loc_1' } as any;
+  it("should create category if it does not exist", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    } as any;
     const dto = {
-      description: 'Test expense',
+      description: "Test expense",
       amount: 100,
       paymentMethod: PaymentMethod.CASH,
     };
 
     prisma.client.expenseCategory.findFirst.mockResolvedValue(null);
-    prisma.client.expenseCategory.create.mockResolvedValue({ id: 'cat_new', name: 'Petty Cash' });
-    prisma.client.pettyCashFund.findFirst.mockResolvedValue({ id: 'fund_1' });
+    prisma.client.expenseCategory.create.mockResolvedValue({
+      id: "cat_new",
+      name: "Petty Cash",
+    });
+    prisma.client.pettyCashFund.findFirst.mockResolvedValue({ id: "fund_1" });
 
     await useCase.execute(ctx, dto);
 
     expect(prisma.client.expenseCategory.create).toHaveBeenCalledWith({
       data: {
-        name: 'Petty Cash',
-        organizationId: 'org_1',
+        name: "Petty Cash",
+        organizationId: "org_1",
         isActive: true,
       },
     });
   });
 
-  it('should throw error if no fund is found', async () => {
-    const ctx = { organizationId: 'org_1', memberId: 'mem_1', locationId: 'loc_1' } as any;
+  it("should throw error if no fund is found", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    } as any;
     const dto = {
-      description: 'Test expense',
+      description: "Test expense",
       amount: 100,
       paymentMethod: PaymentMethod.CASH,
     };
 
-    prisma.client.expenseCategory.findFirst.mockResolvedValue({ id: 'cat_1' });
+    prisma.client.expenseCategory.findFirst.mockResolvedValue({ id: "cat_1" });
     prisma.client.pettyCashFund.findFirst.mockResolvedValue(null);
 
     await expect(useCase.execute(ctx, dto)).rejects.toThrow(NotFoundException);

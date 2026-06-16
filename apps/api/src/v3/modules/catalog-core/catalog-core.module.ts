@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { PrismaModule } from '../../../prisma/prisma.module';
-import { IProductRepository } from './domain/repositories/product-repository.interface';
-import { PrismaProductRepository } from './infrastructure/persistence/prisma-product.repository';
+import { Module } from "@nestjs/common";
+import { PrismaModule } from "../../../prisma/prisma.module";
+import { IProductRepository } from "./domain/repositories/product-repository.interface";
+import { PrismaProductRepository } from "./infrastructure/persistence/prisma-product.repository";
 
 @Module({
   imports: [PrismaModule],

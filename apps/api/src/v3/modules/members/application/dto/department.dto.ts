@@ -1,7 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DepartmentMemberRole } from '@repo/db';
-import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { PaginationQueryDto } from '@/v3/common/dto/pagination.dto';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { DepartmentMemberRole } from "@repo/db";
+import { IsString, IsOptional, IsEnum, IsBoolean } from "class-validator";
+import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
 
 export class DepartmentQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional()
@@ -75,7 +75,10 @@ export class AddDepartmentMemberDto {
   @IsString()
   memberId: string;
 
-  @ApiPropertyOptional({ enum: DepartmentMemberRole, default: DepartmentMemberRole.MEMBER })
+  @ApiPropertyOptional({
+    enum: DepartmentMemberRole,
+    default: DepartmentMemberRole.MEMBER,
+  })
   @IsOptional()
   @IsEnum(DepartmentMemberRole)
   role?: DepartmentMemberRole = DepartmentMemberRole.MEMBER;

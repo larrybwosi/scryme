@@ -1,28 +1,30 @@
-import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { PrismaService } from '@/prisma/prisma.service';
-import * as crypto from 'crypto';
+import { Injectable } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { PrismaService } from "@/prisma/prisma.service";
+import * as crypto from "crypto";
 
 @Injectable()
 export class WebhookService {
   constructor(
-    @InjectQueue('webhooks') private readonly webhookQueue: Queue,
-    private readonly prisma: PrismaService
+    @InjectQueue("webhooks") private readonly webhookQueue: Queue,
+    private readonly prisma: PrismaService,
   ) {}
 
   async dispatch(event: string, organizationId: string, payload: any) {
-    const subscriptions = await this.prisma.client.webhookSubscription.findMany({
-      where: {
-        organizationId,
-        isActive: true,
-        events: { has: event },
+    const subscriptions = await this.prisma.client.webhookSubscription.findMany(
+      {
+        where: {
+          organizationId,
+          isActive: true,
+          events: { has: event },
+        },
       },
-    });
+    );
 
     for (const sub of subscriptions) {
       await this.webhookQueue.add(
-        'deliver',
+        "deliver",
         {
           subscriptionId: sub.id,
           event,
@@ -33,10 +35,10 @@ export class WebhookService {
         {
           attempts: 5,
           backoff: {
-            type: 'exponential',
+            type: "exponential",
             delay: 1000,
           },
-        }
+        },
       );
     }
   }
@@ -47,7 +49,7 @@ export class WebhookService {
         subscriptionId,
         event,
         payload,
-        status: 'PENDING',
+        status: "PENDING",
       },
     });
   }
@@ -60,6 +62,9 @@ export class WebhookService {
   }
 
   generateSignature(payload: any, secret: string): string {
-    return crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+    return crypto
+      .createHmac("sha256", secret)
+      .update(JSON.stringify(payload))
+      .digest("hex");
   }
 }

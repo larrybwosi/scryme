@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { type V2ApiContext } from '@repo/shared/api/v2/types';
-import { createMemberToken } from '@repo/shared/api/v2/services/auth';
-import { MemberRole, Status } from '@repo/db';
-import * as bcrypt from 'bcryptjs';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { type V2ApiContext } from "@repo/shared/api/v2/types";
+import { createMemberToken } from "@repo/shared/api/v2/services/auth";
+import { MemberRole, Status } from "@repo/db";
+import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class MembersService {
@@ -15,7 +20,7 @@ export class MembersService {
 
     const where: any = { organizationId };
     if (role) where.role = role;
-    if (isActive !== undefined) where.isActive = isActive === 'true';
+    if (isActive !== undefined) where.isActive = isActive === "true";
 
     return this.prisma.client.member.findMany({
       where,
@@ -48,7 +53,7 @@ export class MembersService {
       },
     });
 
-    if (!member) throw new NotFoundException('Member not found');
+    if (!member) throw new NotFoundException("Member not found");
     return member;
   }
 
@@ -125,7 +130,7 @@ export class MembersService {
     const { organizationId, locationId } = ctx;
 
     if (!locationId) {
-      throw new BadRequestException('Device is not associated with a location');
+      throw new BadRequestException("Device is not associated with a location");
     }
 
     const member = await this.prisma.client.member.findFirst({
@@ -148,12 +153,12 @@ export class MembersService {
     });
 
     if (!member || !member.pinHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const isPinValid = await bcrypt.compare(pin, member.pinHash);
     if (!isPinValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     // Perform check-in logic
@@ -171,7 +176,7 @@ export class MembersService {
             memberId: member.id,
             checkInTime: new Date(),
             checkInLocationId: locationId,
-            notes: 'Checked in via terminal login',
+            notes: "Checked in via terminal login",
           },
         });
 
@@ -189,7 +194,11 @@ export class MembersService {
       });
     }
 
-    const token = await createMemberToken(member.id, organizationId, attendanceLogId!);
+    const token = await createMemberToken(
+      member.id,
+      organizationId,
+      attendanceLogId!,
+    );
 
     // Return non-sensitive member info formatted for POS/Bakery
     return {

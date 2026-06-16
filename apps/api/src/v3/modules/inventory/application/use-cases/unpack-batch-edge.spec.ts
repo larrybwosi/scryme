@@ -1,16 +1,16 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { UnpackBatchUseCase } from './unpack-batch.use-case';
-import { MovementType, StockAdjustmentReason } from '@repo/db';
-import { Decimal } from 'decimal.js';
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { UnpackBatchUseCase } from "./unpack-batch.use-case";
+import { MovementType, StockAdjustmentReason } from "@repo/db";
+import { Decimal } from "decimal.js";
 
-describe('UnpackBatchUseCase Edge Cases', () => {
+describe("UnpackBatchUseCase Edge Cases", () => {
   let unpackBatchUseCase: UnpackBatchUseCase;
   let prisma: any;
   let inventoryMovementService: any;
   let mockTx: any;
 
-  const mockOrgId = 'org-1';
-  const mockMemberId = 'member-1';
+  const mockOrgId = "org-1";
+  const mockMemberId = "member-1";
 
   beforeEach(() => {
     inventoryMovementService = {
@@ -37,8 +37,8 @@ describe('UnpackBatchUseCase Edge Cases', () => {
         update: vi.fn(),
       },
       productVariant: {
-          findUnique: vi.fn().mockResolvedValue({ productId: 'p1' })
-      }
+        findUnique: vi.fn().mockResolvedValue({ productId: "p1" }),
+      },
     };
 
     prisma = {
@@ -48,20 +48,23 @@ describe('UnpackBatchUseCase Edge Cases', () => {
       },
     };
 
-    unpackBatchUseCase = new UnpackBatchUseCase(prisma, inventoryMovementService);
+    unpackBatchUseCase = new UnpackBatchUseCase(
+      prisma,
+      inventoryMovementService,
+    );
   });
 
-  it('should unpack batch and handle damages', async () => {
-    const bulkBatchId = 'bulk-1';
+  it("should unpack batch and handle damages", async () => {
+    const bulkBatchId = "bulk-1";
     mockTx.stockBatch.findUnique.mockResolvedValue({
       id: bulkBatchId,
       organizationId: mockOrgId,
-      variantId: 'v1',
-      locationId: 'loc-1',
+      variantId: "v1",
+      locationId: "loc-1",
       currentQuantity: new Decimal(10),
       purchasePrice: new Decimal(2400),
-      batchNumber: 'BULK-001',
-      variant: { product: { name: 'Test Product' } }
+      batchNumber: "BULK-001",
+      variant: { product: { name: "Test Product" } },
     });
 
     const dto = {
@@ -71,42 +74,54 @@ describe('UnpackBatchUseCase Edge Cases', () => {
       damagedQuantity: 4, // 4 pieces damaged
     };
 
-    mockTx.stockBatch.create.mockImplementation(({ data }: any) => ({ id: 'new-batch', ...data }));
+    mockTx.stockBatch.create.mockImplementation(({ data }: any) => ({
+      id: "new-batch",
+      ...data,
+    }));
 
-    const result = await unpackBatchUseCase.execute(mockOrgId, mockMemberId, dto);
+    const result = await unpackBatchUseCase.execute(
+      mockOrgId,
+      mockMemberId,
+      dto,
+    );
 
     expect(result.success).toBe(true);
     expect(result.receivedQuantity).toBe(44); // (2 * 24) - 4
     expect(result.damagedQuantity).toBe(4);
 
     // Verify bulk batch decrement
-    expect(mockTx.stockBatch.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: bulkBatchId },
-      data: { currentQuantity: { decrement: 2 } }
-    }));
+    expect(mockTx.stockBatch.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: bulkBatchId },
+        data: { currentQuantity: { decrement: 2 } },
+      }),
+    );
 
     // Verify aggregate stock update for damages
-    expect(mockTx.productVariantStock.update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(mockTx.productVariantStock.update).toHaveBeenCalledWith(
+      expect.objectContaining({
         data: {
-            currentStock: { decrement: expect.any(Decimal) },
-            availableStock: { decrement: expect.any(Decimal) }
-        }
-    }));
+          currentStock: { decrement: expect.any(Decimal) },
+          availableStock: { decrement: expect.any(Decimal) },
+        },
+      }),
+    );
   });
 
-  it('should fail if insufficient quantity in bulk batch', async () => {
+  it("should fail if insufficient quantity in bulk batch", async () => {
     mockTx.stockBatch.findUnique.mockResolvedValue({
-      id: 'bulk-1',
+      id: "bulk-1",
       currentQuantity: new Decimal(1),
     });
 
     const dto = {
-      batchId: 'bulk-1',
+      batchId: "bulk-1",
       quantityToUnpack: 2,
       unitsPerPackage: 24,
     };
 
-    await expect(unpackBatchUseCase.execute(mockOrgId, mockMemberId, dto))
-      .rejects.toThrow('Insufficient quantity in bulk batch.');
+    await expect(
+      unpackBatchUseCase.execute(mockOrgId, mockMemberId, dto),
+    ).rejects.toThrow("Insufficient quantity in bulk batch.");
   });
 });

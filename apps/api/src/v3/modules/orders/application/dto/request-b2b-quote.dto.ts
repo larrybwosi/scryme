@@ -1,6 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class B2BQuoteItemDto {
   @ApiProperty()
