@@ -38,3 +38,13 @@
 **Prevention:**
 - Enable `ThrottlerGuard` globally to provide a baseline defense for all endpoints.
 - Avoid $O(N)$ cryptographic loops in authentication logic. Store salts or use search-optimized hashing strategies if direct lookups are needed, or ensure strict rate limits are applied specifically to these endpoints.
+
+## 2026-06-15 - [Hardened Image Optimization Pipeline]
+**Vulnerability:** The `ImageService` was vulnerable to SSRF and DoS. It fetched images from arbitrary URLs provided in the `id` parameter when in Sanity mode and lacked timeouts or size limits on external requests, allowing for network probing and memory exhaustion.
+
+**Learning:** Image optimization services that fetch external assets are prime targets for SSRF. Trusting "IDs" without strict format validation can lead to unintended proxying of internal resources.
+
+**Prevention:**
+- Strictly validate external asset identifiers using regex (e.g., Sanity's `image-[hash]-[dimensions]-[extension]` format).
+- Always enforce `timeout` and `maxContentLength` on outbound HTTP requests for asset fetching to prevent DoS.
+- Reject raw URLs in parameters that expect specific asset IDs.
