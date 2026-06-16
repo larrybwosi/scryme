@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   ChevronLeft,
   ChevronRight,
+  LayoutDashboard,
   Users,
   TrendingUp,
   Building2,
@@ -40,6 +41,7 @@ const sidebarConfig: SidebarSection[] = [
   {
     title: 'CRM',
     items: [
+      { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
       { title: 'Leads', icon: UserPlus, href: '/leads' },
       { title: 'Pipeline', icon: TrendingUp, href: '/pipeline' },
       { title: 'Customers', icon: Users, href: '/customers' },

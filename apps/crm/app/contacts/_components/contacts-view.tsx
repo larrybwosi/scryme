@@ -17,6 +17,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { getCustomers, deleteCustomer } from "../../actions/customers";
 import { StatCard } from "../../../components/ui/stat-card";
 import { useOrg } from "../../../components/org-context";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
+import { StatusBadge } from "../../../components/ui/status-badge";
 import {
   Sheet,
   SheetContent,
@@ -40,6 +42,7 @@ const PAGE_SIZE = 10;
 export function ContactsView() {
   const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
@@ -69,9 +72,14 @@ export function ContactsView() {
         (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
         (c.businessAccount?.name && c.businessAccount.name.toLowerCase().includes(search.toLowerCase()));
 
-      return matchesSearch;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "customer" && c.customerType === "B2B") ||
+        (statusFilter === "lead" && c.customerType === "B2C"); // Using customerType as a proxy for status if no explicit status
+
+      return matchesSearch && matchesStatus;
     });
-  }, [search, contacts]);
+  }, [search, statusFilter, contacts]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(page, totalPages);
@@ -139,60 +147,60 @@ export function ContactsView() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-background/50">
       <div className="px-8 pt-7 pb-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-[22px] font-bold text-foreground">Contacts</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Contacts</h1>
             <p className="text-[13px] text-muted-foreground mt-0.5">
-              Manage people associated with your business accounts.
+              Manage and organize your business contacts and relationships.
             </p>
           </div>
-          <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <SheetTrigger asChild>
-              <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-primary/90 transition-colors">
-                <Plus size={15} />
-                Add Contact
-              </button>
-            </SheetTrigger>
-            <SheetContent className="sm:max-w-[440px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Add New Contact</SheetTitle>
-              </SheetHeader>
-              <ContactForm onSuccess={handleSuccess} />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-3">
+            <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <SheetTrigger asChild>
+                <Button size="sm" className="h-9 gap-2">
+                    <Plus size={15} />
+                    Add Contact
+                </Button>
+                </SheetTrigger>
+                <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+                <SheetHeader>
+                    <SheetTitle>Add New Contact</SheetTitle>
+                </SheetHeader>
+                <ContactForm onSuccess={handleSuccess} />
+                </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mt-6">
-          <StatCard
-            title="Total Contacts"
-            value={contacts.length}
-            sub="Linked to companies"
-            icon={Contact}
-            iconColor="text-primary"
-            iconBg="bg-primary/10"
-          />
+        <div className="flex items-center justify-between mb-6">
+            <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-auto">
+                <TabsList className="bg-muted/50 p-1">
+                    <TabsTrigger value="all" className="text-xs px-4 h-7">All Contacts</TabsTrigger>
+                    <TabsTrigger value="customer" className="text-xs px-4 h-7">Customers</TabsTrigger>
+                    <TabsTrigger value="lead" className="text-xs px-4 h-7">Leads</TabsTrigger>
+                </TabsList>
+            </Tabs>
+
+            <div className="relative w-64">
+                <Search
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                    type="text"
+                    placeholder="Search contacts..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
+            </div>
         </div>
       </div>
 
       <div className="flex-1 px-8 pb-8">
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-            <div className="relative flex-1 max-w-sm">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                type="text"
-                placeholder="Search by name, email or company..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              />
-            </div>
-          </div>
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
 
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -200,6 +208,9 @@ export function ContactsView() {
                 <tr className="bg-muted/50 border-b border-border">
                   <th className="text-left px-5 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Contact
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Status
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Company
@@ -239,6 +250,9 @@ export function ContactsView() {
                             <div className="text-[11.5px] text-muted-foreground">{contact.email || "No email"}</div>
                           </div>
                         </Link>
+                      </td>
+                      <td className="px-4 py-3.5">
+                         <StatusBadge status={contact.customerType === 'B2B' ? 'customer' : 'lead'} />
                       </td>
                       <td className="px-4 py-3.5">
                         {contact.businessAccount ? (
