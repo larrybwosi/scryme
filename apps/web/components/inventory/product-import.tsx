@@ -37,8 +37,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Download,
 } from "lucide-react";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import {
   importProducts,
@@ -56,7 +58,7 @@ const REQUIRED_FIELDS = [
 ];
 
 const OPTIONAL_FIELDS = [
-  { key: "initialStock", label: "Default Variant Stock" },
+  { key: "initialStock", label: "Initial Stock" },
   { key: "description", label: "Description" },
   { key: "barcode", label: "Barcode" },
 ];
@@ -93,7 +95,7 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
     setResults(null);
   };
 
-  const onFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
@@ -102,44 +104,124 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!selectedFile.name.endsWith(".csv")) {
-      toast.error("Please upload a CSV file");
+    const isCsv = selectedFile.name.endsWith(".csv");
+    const isExcel =
+      selectedFile.name.endsWith(".xlsx") || selectedFile.name.endsWith(".xls");
+
+    if (!isCsv && !isExcel) {
+      toast.error("Please upload a CSV or Excel file");
       return;
     }
 
     setFile(selectedFile);
-    Papa.parse(selectedFile, {
-      header: true,
-      skipEmptyLines: true,
-      complete: results => {
-        if (results.data.length === 0) {
-          toast.error("The CSV file is empty");
-          return;
+
+    if (isCsv) {
+      Papa.parse(selectedFile, {
+        header: true,
+        skipEmptyLines: true,
+        complete: results => {
+          handleDataParsed(results.data);
+        },
+        error: error => {
+          toast.error(`Error parsing CSV: ${error.message}`);
+        },
+      });
+    } else {
+      try {
+        const data = await parseExcel(selectedFile);
+        handleDataParsed(data);
+      } catch (error: any) {
+        toast.error(`Error parsing Excel: ${error.message}`);
+      }
+    }
+  };
+
+  const parseExcel = (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const bstr = e.target?.result;
+          const wb = XLSX.read(bstr, { type: "binary" });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws);
+          resolve(data);
+        } catch (err) {
+          reject(err);
         }
-        const data = results.data as any[];
-        setCsvData(data);
-        setHeaders(Object.keys(data[0]));
-
-        // Auto-mapping attempt
-        const initialMappings: Record<string, string> = {};
-        const csvHeaders = Object.keys(data[0]);
-
-        ALL_FIELDS.forEach(field => {
-          const match = csvHeaders.find(
-            h =>
-              h.toLowerCase() === field.label.toLowerCase() ||
-              h.toLowerCase() === field.key.toLowerCase(),
-          );
-          if (match) initialMappings[field.key] = match;
-        });
-
-        setMappings(initialMappings);
-        setStep("MAPPING");
-      },
-      error: error => {
-        toast.error(`Error parsing CSV: ${error.message}`);
-      },
+      };
+      reader.onerror = err => reject(err);
+      reader.readAsBinaryString(file);
     });
+  };
+
+  const handleDataParsed = (data: any[]) => {
+    if (data.length === 0) {
+      toast.error("The file is empty");
+      return;
+    }
+    setCsvData(data);
+    setHeaders(Object.keys(data[0]));
+
+    // Auto-mapping attempt
+    const initialMappings: Record<string, string> = {};
+    const csvHeaders = Object.keys(data[0]);
+
+    ALL_FIELDS.forEach(field => {
+      const match = csvHeaders.find(
+        h =>
+          h.toLowerCase() === field.label.toLowerCase() ||
+          h.toLowerCase() === field.key.toLowerCase(),
+      );
+      if (match) initialMappings[field.key] = match;
+    });
+
+    setMappings(initialMappings);
+    setStep("MAPPING");
+  };
+
+  const downloadTemplate = (format: "csv" | "xlsx") => {
+    const data = [
+      {
+        "Product Name": "Example Product",
+        SKU: "EXP-001",
+        Category: "Electronics",
+        "Buying Price": 100,
+        "Retail Price": 150,
+        "Initial Stock": 10,
+        Description: "A great product",
+        Barcode: "123456789",
+      },
+      {
+        "Product Name": "Sample Item",
+        SKU: "SMP-002",
+        Category: "Groceries",
+        "Buying Price": 5,
+        "Retail Price": 8,
+        "Initial Stock": 50,
+        Description: "Fresh and healthy",
+        Barcode: "987654321",
+      },
+    ];
+
+    if (format === "csv") {
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "product_template.csv");
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+      XLSX.writeFile(workbook, "product_template.xlsx");
+    }
   };
 
   const handleImport = async () => {
@@ -149,17 +231,22 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
         name: String(row[mappings.name] || ""),
         sku: String(row[mappings.sku] || ""),
         categoryName: String(row[mappings.categoryName] || "Uncategorized"),
-        buyingPrice: parseFloat(row[mappings.buyingPrice]) || 0,
-        retailPrice: parseFloat(row[mappings.retailPrice]) || 0,
-        initialStock: mappings.initialStock
-          ? parseInt(row[mappings.initialStock]) || 0
-          : 0,
-        description: mappings.description
-          ? String(row[mappings.description] || "")
-          : undefined,
-        barcode: mappings.barcode
-          ? String(row[mappings.barcode] || "")
-          : undefined,
+        buyingPrice:
+          parseFloat(String(row[mappings.buyingPrice] || "0")) || 0,
+        retailPrice:
+          parseFloat(String(row[mappings.retailPrice] || "0")) || 0,
+        initialStock:
+          mappings.initialStock && mappings.initialStock !== "none"
+            ? parseInt(String(row[mappings.initialStock] || "0")) || 0
+            : 0,
+        description:
+          mappings.description && mappings.description !== "none"
+            ? String(row[mappings.description] || "")
+            : undefined,
+        barcode:
+          mappings.barcode && mappings.barcode !== "none"
+            ? String(row[mappings.barcode] || "")
+            : undefined,
       }));
 
       const res = await importProducts(productsToImport, strategy);
@@ -192,20 +279,53 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
         </DialogHeader>
 
         {step === "UPLOAD" && (
-          <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg bg-gray-50/50 border-gray-200">
-            <Upload className="w-12 h-12 mb-4 text-gray-400" />
-            <h3 className="mb-2 text-lg font-medium">Upload your CSV file</h3>
-            <p className="mb-6 text-sm text-gray-500">Maximum file size 10MB</p>
-            <Button onClick={() => fileInputRef.current?.click()}>
-              Select File
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept=".csv"
-              onChange={onFileUpload}
-            />
+          <div className="space-y-6">
+            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg bg-gray-50/50 border-gray-200">
+              <Upload className="w-12 h-12 mb-4 text-gray-400" />
+              <h3 className="mb-2 text-lg font-medium">
+                Upload your CSV or Excel file
+              </h3>
+              <p className="mb-6 text-sm text-gray-500">
+                Maximum file size 10MB (.csv, .xlsx, .xls)
+              </p>
+              <Button onClick={() => fileInputRef.current?.click()}>
+                Select File
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".csv,.xlsx,.xls"
+                onChange={onFileUpload}
+              />
+            </div>
+
+            <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-lg">
+              <h4 className="flex items-center gap-2 mb-4 font-semibold text-blue-900">
+                <Download className="w-4 h-4" />
+                Need a template?
+              </h4>
+              <p className="mb-6 text-sm text-blue-800">
+                Download our template with sample data to ensure your file is
+                formatted correctly for import.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadTemplate("csv")}
+                  className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50">
+                  Download CSV Template
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadTemplate("xlsx")}
+                  className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50">
+                  Download Excel Template
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
