@@ -381,15 +381,15 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           {/* Customer block */}
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Billed to</Text>
-            <Text style={s.metaValue}>{data.customer.name}</Text>
-            {data.customer.email && (
+            <Text style={s.metaValue}>{data.customer?.name || 'Walk-in Customer'}</Text>
+            {data.customer?.email && (
               <Text style={s.metaSub}>{data.customer.email}</Text>
             )}
-            {data.customer.phone && (
+            {data.customer?.phone && (
               <Text style={s.metaSub}>{data.customer.phone}</Text>
             )}
             <View style={s.paidBadge}>
-              <Text style={s.paidBadgeText}>✓ Paid</Text>
+              <Text style={s.paidBadgeText}>✓ {data.status || 'Paid'}</Text>
             </View>
           </View>
 
@@ -399,7 +399,29 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
             <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
               <MetaField label="Date" value={String(data.date)} />
               <MetaField label="Payment method" value={data.paymentMethod || "N/A"} />
-              <MetaField label="Transaction ID" value={data.id} />
+            </View>
+            <View style={{ alignItems: 'flex-end', marginTop: 10 }}>
+              {data.locationName && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Location: </Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.locationName}</Text>
+                </View>
+              )}
+              {data.createdBy && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Cashier: </Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.createdBy}</Text>
+                </View>
+              )}
+              {data.tags && data.tags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                  {data.tags.map((tag, i) => (
+                    <View key={i} style={{ backgroundColor: T.surface, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 7, color: T.inkMid, fontFamily: T.fontBold }}>{tag.toUpperCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -423,10 +445,10 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           </Text>
         </View>
 
-        {data.items.map((item, i) => (
+        {(data.items || []).map((item, i) => (
           <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-            <Text style={s.cellDesc}>{item.itemName || item.description}</Text>
-            <Text style={s.cellQty}>{item.quantity}</Text>
+            <Text style={s.cellDesc}>{item.itemName || item.description || 'Item'}</Text>
+            <Text style={s.cellQty}>{item.quantity || 0}</Text>
             <Text style={s.cellRate}>{fmt(item.rate || item.unitPrice || 0, currency)}</Text>
             <Text style={s.cellAmt}>{fmt(item.amount || item.totalPrice || 0, currency)}</Text>
           </View>

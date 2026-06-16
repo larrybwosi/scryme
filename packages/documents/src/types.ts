@@ -51,6 +51,10 @@ export interface BaseDocumentData {
   notes?: string;
   currency?: string;
   currencySymbol?: string;
+  tags?: string[];
+  locationName?: string;
+  createdBy?: string;
+  status?: string;
 }
 
 export interface PackingListData extends BaseDocumentData {

@@ -140,7 +140,7 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: strin
   const styles = getStyles(colors);
 
   const formatCurrency = (amount: number | undefined) => {
-    if (typeof amount !== 'number') return `${data.currencySymbol || ''}0.00`;
+    if (typeof amount !== 'number' || isNaN(amount)) return `${data.currencySymbol || ''}0.00`;
     return `${data.currencySymbol || ''}${amount.toFixed(2)}`;
   };
 
@@ -184,11 +184,39 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: strin
             <Text style={styles.sectionTitle}>Bill To</Text>
             <Text style={styles.addressDetails}>
               {data.customerName}
-              {'\n'}
-              {data.customerAddress}
-              {'\n'}
-              {data.customerEmail}
+              {data.customerEmail ? `\n${data.customerEmail}` : ''}
+              {data.customerPhone ? `\n${data.customerPhone}` : ''}
+              {data.customerAddress ? `\n${data.customerAddress}` : ''}
             </Text>
+          </View>
+          <View style={[styles.addressBlock, { alignItems: 'flex-end' }]}>
+             {data.locationName && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={styles.sectionTitle}>Location: </Text>
+                  <Text style={styles.addressDetails}>{data.locationName}</Text>
+                </View>
+              )}
+              {data.createdBy && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={styles.sectionTitle}>Prepared By: </Text>
+                  <Text style={styles.addressDetails}>{data.createdBy}</Text>
+                </View>
+              )}
+              {data.status && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={styles.sectionTitle}>Status: </Text>
+                  <Text style={[styles.addressDetails, { color: data.status === 'PAID' ? '#059669' : '#dc2626', fontWeight: 'bold' }]}>{data.status}</Text>
+                </View>
+              )}
+              {data.tags && data.tags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                  {data.tags.map((tag, i) => (
+                    <View key={i} style={{ backgroundColor: colors.lightGray, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 7, color: colors.primary, fontWeight: 'bold' }}>{tag.toUpperCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
           </View>
         </View>
 
@@ -200,12 +228,12 @@ export const InvoicePDF = ({ data, qrCode }: { data: InvoiceData; qrCode?: strin
             <Text style={[styles.tableHeaderCol, styles.colPrice]}>Unit Price</Text>
             <Text style={[styles.tableHeaderCol, styles.colAmount]}>Amount</Text>
           </View>
-          {data.items.map((item, index) => (
+          {(data.items || []).map((item, index) => (
             <View key={index} style={styles.tableRow}>
-              <Text style={[styles.tableCol, styles.colQty]}>{item.quantity}</Text>
-              <Text style={[styles.tableCol, styles.colDesc]}>{item.description || item.itemName}</Text>
-              <Text style={[styles.tableCol, styles.colPrice]}>{formatCurrency(item.unitPrice || item.rate)}</Text>
-              <Text style={[styles.tableCol, styles.colAmount]}>{formatCurrency(item.totalPrice || item.amount)}</Text>
+              <Text style={[styles.tableCol, styles.colQty]}>{item.quantity || 0}</Text>
+              <Text style={[styles.tableCol, styles.colDesc]}>{item.description || item.itemName || 'Item'}</Text>
+              <Text style={[styles.tableCol, styles.colPrice]}>{formatCurrency(item.unitPrice || item.rate || 0)}</Text>
+              <Text style={[styles.tableCol, styles.colAmount]}>{formatCurrency(item.totalPrice || item.amount || 0)}</Text>
             </View>
           ))}
         </View>
