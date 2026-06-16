@@ -52,35 +52,31 @@ export function ReconciliationDialog({ open, onOpenChange, fulfillmentId }: Reco
     onOpenChange(false);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB');
-        return;
-      }
 
-      // Validate file type
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        toast.error('Only JPG, PNG, and WebP images are allowed');
-        return;
-      }
+  const [filePath, setFilePath] = useState<string | null>(null);
 
-      setReconcileForm(p => ({ ...p, proofImage: file }));
+  const handleFileUpload = async () => {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+    });
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (selected && typeof selected === 'string') {
+      setFilePath(selected);
+      const { readFile } = await import('@tauri-apps/plugin-fs');
+      const contents = await readFile(selected);
+      const blob = new Blob([contents]);
+      setImagePreview(URL.createObjectURL(blob));
+      // We set a dummy file object to satisfy any existing checks, but we mainly use filePath
+      setReconcileForm(p => ({ ...p, proofImage: new File([], "proof.png") }));
     }
   };
 
   const removeImage = () => {
     setReconcileForm(p => ({ ...p, proofImage: null }));
     setImagePreview(null);
+    setFilePath(null);
   };
 
   const submitReconciliation = () => {
@@ -95,20 +91,12 @@ export function ReconciliationDialog({ open, onOpenChange, fulfillmentId }: Reco
       return;
     }
 
-    const formData = new FormData();
-    formData.append('outcome', reconcileForm.outcome);
-
-    if (reconcileForm.outcome === 'DELIVERED' && reconcileForm.receivedBy.trim()) {
-      formData.append('receivedBy', reconcileForm.receivedBy);
-    }
-    if (reconcileForm.outcome === 'FAILED' && reconcileForm.failureReason.trim()) {
-      formData.append('failureReason', reconcileForm.failureReason);
-    }
-    if (reconcileForm.proofImage) {
-      formData.append('proofImage', reconcileForm.proofImage);
-    }
-
-    reconcileMutation.mutate(formData);
+    reconcileMutation.mutate({
+      outcome: reconcileForm.outcome,
+      receivedBy: reconcileForm.receivedBy || undefined,
+      failureReason: reconcileForm.failureReason || undefined,
+      filePath: filePath || undefined,
+    });
   };
 
   const isSubmitDisabled =
@@ -216,15 +204,8 @@ export function ReconciliationDialog({ open, onOpenChange, fulfillmentId }: Reco
 
             {!imagePreview ? (
               <div className="relative">
-                <input
-                  id="proofImage"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <label
-                  htmlFor="proofImage"
+                <div
+                  onClick={handleFileUpload}
                   className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -234,7 +215,7 @@ export function ReconciliationDialog({ open, onOpenChange, fulfillmentId }: Reco
                       <p className="text-xs">JPG, PNG or WebP (max 10MB)</p>
                     </div>
                   </div>
-                </label>
+                </div>
               </div>
             ) : (
               <div className="relative rounded-lg border overflow-hidden">
