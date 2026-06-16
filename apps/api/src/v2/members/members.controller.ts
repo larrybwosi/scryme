@@ -81,8 +81,13 @@ export class MembersController {
   @ApiOperation({ summary: "Login member via terminal" })
   async login(
     @v2Context() ctx: V2ApiContext,
-    @Body() body: { cardId: string; pin: string },
+    @Body() body: { cardId: string; pin: string; locationId?: string },
   ) {
-    return this.membersService.login(ctx, body.cardId, body.pin);
+    return this.membersService.login(
+      ctx,
+      body.cardId,
+      body.pin,
+      body.locationId,
+    );
   }
 }
