@@ -1,2 +1,2 @@
-import {Prisma} from "@repo/db";
-export {Prisma};
+import { Prisma } from "@repo/db";
+export { Prisma };

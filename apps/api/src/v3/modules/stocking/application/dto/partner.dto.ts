@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
   IsNotEmpty,
@@ -8,7 +8,7 @@ import {
   IsEmail,
   IsBoolean,
 } from "class-validator";
-import {BenefitType, ReconciliationPolicy} from "@repo/db";
+import { BenefitType, ReconciliationPolicy } from "@repo/db";
 
 export class CreatePartnerDto {
   @ApiProperty()
@@ -31,7 +31,7 @@ export class CreatePartnerDto {
   @IsOptional()
   address?: string;
 
-  @ApiPropertyOptional({enum: BenefitType})
+  @ApiPropertyOptional({ enum: BenefitType })
   @IsEnum(BenefitType)
   @IsOptional()
   benefitType?: BenefitType;
@@ -46,7 +46,7 @@ export class CreatePartnerDto {
   @IsOptional()
   fixedFee?: number;
 
-  @ApiPropertyOptional({enum: ReconciliationPolicy})
+  @ApiPropertyOptional({ enum: ReconciliationPolicy })
   @IsEnum(ReconciliationPolicy)
   @IsOptional()
   reconciliationPolicy?: ReconciliationPolicy;

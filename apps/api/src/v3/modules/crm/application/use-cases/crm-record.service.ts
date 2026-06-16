@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreateCrmRecordDto, UpdateCrmRecordDto} from "../dto/crm.dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmRecordDto, UpdateCrmRecordDto } from "../dto/crm.dto";
 import {
   emitCrmRecordCreated,
   emitCrmRecordUpdated,
@@ -40,7 +40,7 @@ export class CrmRecordService {
     dto: UpdateCrmRecordDto,
   ) {
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: {id: recordId, organizationId},
+      where: { id: recordId, organizationId },
     });
 
     if (!record) {
@@ -48,7 +48,7 @@ export class CrmRecordService {
     }
 
     const updatedRecord = await this.prisma.client.crmRecord.update({
-      where: {id: recordId},
+      where: { id: recordId },
       data: {
         data: dto.data !== undefined ? dto.data : undefined,
         ownerId: dto.ownerId !== undefined ? dto.ownerId : undefined,
@@ -68,7 +68,7 @@ export class CrmRecordService {
 
   async getRecord(organizationId: string, recordId: string) {
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: {id: recordId, organizationId},
+      where: { id: recordId, organizationId },
       include: {
         owner: {
           select: {

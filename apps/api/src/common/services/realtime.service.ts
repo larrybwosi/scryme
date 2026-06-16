@@ -1,8 +1,8 @@
-import {Injectable} from "@nestjs/common";
-import {RealtimeGateway} from "../../v2/realtime/realtime.gateway";
-import {V3RealtimeGateway} from "../../v3/common/realtime/v3-realtime.gateway";
-import {RealtimeRedisService} from "../../v2/realtime/realtime-redis.service";
-import {ably, createDelta} from "@repo/shared/server";
+import { Injectable } from "@nestjs/common";
+import { RealtimeGateway } from "../../v2/realtime/realtime.gateway";
+import { V3RealtimeGateway } from "../../v3/common/realtime/v3-realtime.gateway";
+import { RealtimeRedisService } from "../../v2/realtime/realtime-redis.service";
+import { ably, createDelta } from "@repo/shared/server";
 
 @Injectable()
 export class ApiRealtimeService {
@@ -16,7 +16,7 @@ export class ApiRealtimeService {
     channel: string,
     event: string,
     data: any,
-    options?: {delta?: boolean},
+    options?: { delta?: boolean },
   ) {
     const provider = process.env.REALTIME_PROVIDER || "ably";
 

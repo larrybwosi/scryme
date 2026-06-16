@@ -11,11 +11,11 @@ import {
   Request,
   UseInterceptors,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiBearerAuth} from "@nestjs/swagger";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {RoleManagementUseCase} from "../../application/use-cases/role-management.use-case";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { RoleManagementUseCase } from "../../application/use-cases/role-management.use-case";
 import {
   CreateCustomRoleDto,
   UpdateCustomRoleDto,
@@ -23,8 +23,8 @@ import {
   CreatePermissionSetDto,
   CreateRoleGroupDto,
 } from "../../application/dto/role-management.dto";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 
 @ApiTags("V3 Role Management")
 @ApiBearerAuth()
@@ -38,7 +38,7 @@ export class RoleManagementController {
 
   @Get("custom")
   @Permissions("roles:read")
-  @ApiOperation({summary: "List custom roles"})
+  @ApiOperation({ summary: "List custom roles" })
   async getCustomRoles(
     @Request() req: any,
     @Query() query: CustomRoleQueryDto,
@@ -48,7 +48,7 @@ export class RoleManagementController {
 
   @Post("custom")
   @Permissions("roles:write")
-  @ApiOperation({summary: "Create a custom role"})
+  @ApiOperation({ summary: "Create a custom role" })
   async createCustomRole(
     @Request() req: any,
     @Body() dto: CreateCustomRoleDto,
@@ -63,7 +63,7 @@ export class RoleManagementController {
 
   @Patch("custom/:id")
   @Permissions("roles:write")
-  @ApiOperation({summary: "Update a custom role"})
+  @ApiOperation({ summary: "Update a custom role" })
   async updateCustomRole(
     @Request() req: any,
     @Param("id") id: string,
@@ -80,7 +80,7 @@ export class RoleManagementController {
 
   @Delete("custom/:id")
   @Permissions("roles:delete")
-  @ApiOperation({summary: "Delete a custom role"})
+  @ApiOperation({ summary: "Delete a custom role" })
   async deleteCustomRole(@Request() req: any, @Param("id") id: string) {
     const actorId = req.v3Context.memberId;
     return this.roleUseCase.deleteCustomRole(
@@ -94,14 +94,14 @@ export class RoleManagementController {
 
   @Get("permission-sets")
   @Permissions("roles:read")
-  @ApiOperation({summary: "List permission sets"})
+  @ApiOperation({ summary: "List permission sets" })
   async getPermissionSets(@Request() req: any) {
     return this.roleUseCase.getPermissionSets(req.v3Context.organizationId);
   }
 
   @Post("permission-sets")
   @Permissions("roles:write")
-  @ApiOperation({summary: "Create a permission set"})
+  @ApiOperation({ summary: "Create a permission set" })
   async createPermissionSet(
     @Request() req: any,
     @Body() dto: CreatePermissionSetDto,
@@ -118,14 +118,14 @@ export class RoleManagementController {
 
   @Get("groups")
   @Permissions("roles:read")
-  @ApiOperation({summary: "List role groups"})
+  @ApiOperation({ summary: "List role groups" })
   async getRoleGroups(@Request() req: any) {
     return this.roleUseCase.getRoleGroups(req.v3Context.organizationId);
   }
 
   @Post("groups")
   @Permissions("roles:write")
-  @ApiOperation({summary: "Create a role group"})
+  @ApiOperation({ summary: "Create a role group" })
   async createRoleGroup(@Request() req: any, @Body() dto: CreateRoleGroupDto) {
     const actorId = req.v3Context.memberId;
     return this.roleUseCase.createRoleGroup(
@@ -139,7 +139,7 @@ export class RoleManagementController {
 
   @Post("member/:memberId/assign")
   @Permissions("members:write")
-  @ApiOperation({summary: "Assign custom roles to a member"})
+  @ApiOperation({ summary: "Assign custom roles to a member" })
   async assignRoles(
     @Request() req: any,
     @Param("memberId") memberId: string,
@@ -156,7 +156,7 @@ export class RoleManagementController {
 
   @Post("member/:memberId/remove")
   @Permissions("members:write")
-  @ApiOperation({summary: "Remove custom roles from a member"})
+  @ApiOperation({ summary: "Remove custom roles from a member" })
   async removeRoles(
     @Request() req: any,
     @Param("memberId") memberId: string,

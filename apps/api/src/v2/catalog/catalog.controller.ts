@@ -8,11 +8,11 @@ import {
   Patch,
   Delete,
 } from "@nestjs/common";
-import {ApiTags} from "@nestjs/swagger";
-import {CatalogService} from "./catalog.service";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
-import {RequirePermission} from "../../common/decorators/auth.decorator";
-import type {V2ApiContext} from "@repo/shared/server";
+import { ApiTags } from "@nestjs/swagger";
+import { CatalogService } from "./catalog.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import { RequirePermission } from "../../common/decorators/auth.decorator";
+import type { V2ApiContext } from "@repo/shared/server";
 
 @ApiTags("Catalog")
 @Controller("catalog")

@@ -4,9 +4,9 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {type V2ApiContext, createMemberToken} from "@repo/shared/server";
-import {MemberRole, Status} from "@repo/db";
+import { PrismaService } from "@/prisma/prisma.service";
+import { type V2ApiContext, createMemberToken } from "@repo/shared/server";
+import { MemberRole, Status } from "@repo/db";
 import * as bcrypt from "bcryptjs";
 
 @Injectable()
@@ -14,10 +14,10 @@ export class MembersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMembers(ctx: V2ApiContext, query: any) {
-    const {organizationId} = ctx;
-    const {role, isActive} = query;
+    const { organizationId } = ctx;
+    const { role, isActive } = query;
 
-    const where: any = {organizationId};
+    const where: any = { organizationId };
     if (role) where.role = role;
     if (isActive !== undefined) where.isActive = isActive === "true";
 
@@ -47,9 +47,9 @@ export class MembersService {
   }
 
   async getMember(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const member = await this.prisma.client.member.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       // OPTIMIZATION (Bolt ⚡): Using select instead of include to reduce payload size and exclude sensitive fields like pinHash
       select: {
         id: true,
@@ -85,17 +85,17 @@ export class MembersService {
   }
 
   async createMember(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
-    const {email, name, role, pin, cardId, ...otherData} = data;
+    const { organizationId } = ctx;
+    const { email, name, role, pin, cardId, ...otherData } = data;
 
     // Check if user exists or create one
     let user = await this.prisma.client.user.findUnique({
-      where: {email},
+      where: { email },
     });
 
     if (!user) {
       user = await this.prisma.client.user.create({
-        data: {email, name},
+        data: { email, name },
       });
     }
 
@@ -114,47 +114,47 @@ export class MembersService {
   }
 
   async updateMember(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
-    const {pin, ...updateData} = data;
+    const { organizationId } = ctx;
+    const { pin, ...updateData } = data;
 
     if (pin) {
       updateData.pinHash = await bcrypt.hash(pin, 10);
     }
 
     return this.prisma.client.member.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data: updateData,
     });
   }
 
   async deleteMember(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     // Soft delete
     return this.prisma.client.member.update({
-      where: {id, organizationId},
-      data: {deletedAt: new Date(), isActive: false},
+      where: { id, organizationId },
+      data: { deletedAt: new Date(), isActive: false },
     });
   }
 
   async unbanMember(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.member.update({
-      where: {id, organizationId},
-      data: {isActive: true},
+      where: { id, organizationId },
+      data: { isActive: true },
     });
   }
 
   async changeMemberPin(ctx: V2ApiContext, id: string, pin: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const pinHash = await bcrypt.hash(pin, 10);
     return this.prisma.client.member.update({
-      where: {id, organizationId},
-      data: {pinHash},
+      where: { id, organizationId },
+      data: { pinHash },
     });
   }
 
   async login(ctx: V2ApiContext, cardId: string, pin: string) {
-    const {organizationId, locationId} = ctx;
+    const { organizationId, locationId } = ctx;
 
     if (!locationId) {
       throw new BadRequestException("Device is not associated with a location");
@@ -196,7 +196,7 @@ export class MembersService {
 
     // Perform check-in logic
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: {memberId: member.id, checkOutTime: null},
+      where: { memberId: member.id, checkOutTime: null },
     });
 
     let attendanceLogId = activeLog?.id;
@@ -214,7 +214,7 @@ export class MembersService {
         });
 
         await tx.member.update({
-          where: {id: member.id},
+          where: { id: member.id },
           data: {
             isCheckedIn: true,
             lastCheckInTime: new Date(),

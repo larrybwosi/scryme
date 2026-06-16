@@ -5,11 +5,11 @@ import {
   NotFoundException,
   ConflictException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import type {V2ApiContext} from "@repo/shared/server";
-import {TransactionType, TransactionStatus, PaymentStatus} from "@repo/db";
-import {z} from "zod";
-import {emitOrderPlaced} from "@repo/windmill/server";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/server";
+import { TransactionType, TransactionStatus, PaymentStatus } from "@repo/db";
+import { z } from "zod";
+import { emitOrderPlaced } from "@repo/windmill/server";
 
 const CreateOrderSchema = z.object({
   externalOrderId: z.string().min(1),
@@ -35,7 +35,7 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async getOrders(ctx: V2ApiContext, query: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const page = Math.max(1, parseInt(query.page || "1", 10));
     const limit = Math.min(100, Math.max(1, parseInt(query.limit || "25", 10)));
     const skip = (page - 1) * limit;
@@ -51,7 +51,7 @@ export class OrdersService {
           where,
           skip,
           take: limit,
-          orderBy: {createdAt: "desc"},
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             number: true,
@@ -61,7 +61,7 @@ export class OrdersService {
             currencyCode: true,
             createdAt: true,
             metadata: true,
-            customer: {select: {id: true, name: true, email: true}},
+            customer: { select: { id: true, name: true, email: true } },
             items: {
               select: {
                 id: true,
@@ -75,7 +75,7 @@ export class OrdersService {
             },
           },
         }),
-        this.prisma.client.transaction.count({where}),
+        this.prisma.client.transaction.count({ where }),
       ]);
 
       const shaped = transactions.map(t => {
@@ -104,7 +104,12 @@ export class OrdersService {
 
       return {
         orders: shaped,
-        pagination: {page, limit, total, totalPages: Math.ceil(total / limit)},
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       };
     } catch (error) {
       throw new InternalServerErrorException("Failed to fetch orders");
@@ -126,7 +131,7 @@ export class OrdersService {
     const existingTxn = await this.prisma.client.transaction.findFirst({
       where: {
         organizationId: ctx.organizationId,
-        metadata: {path: ["externalOrderId"], equals: data.externalOrderId},
+        metadata: { path: ["externalOrderId"], equals: data.externalOrderId },
       },
       select: {
         id: true,
@@ -159,8 +164,8 @@ export class OrdersService {
     const variantIds = data.items.map(i => i.variantId);
     const variants = await this.prisma.client.productVariant.findMany({
       where: {
-        id: {in: variantIds},
-        product: {organizationId: ctx.organizationId},
+        id: { in: variantIds },
+        product: { organizationId: ctx.organizationId },
       },
       select: {
         id: true,
@@ -168,10 +173,10 @@ export class OrdersService {
         name: true,
         retailPrice: true,
         buyingPrice: true,
-        product: {select: {name: true}},
+        product: { select: { name: true } },
         variantStocks: {
-          where: {locationId: data.locationId},
-          select: {availableStock: true, locationId: true},
+          where: { locationId: data.locationId },
+          select: { availableStock: true, locationId: true },
         },
       },
     });
@@ -214,7 +219,7 @@ export class OrdersService {
 
     // Generate order number
     const count = await this.prisma.client.transaction.count({
-      where: {organizationId: ctx.organizationId},
+      where: { organizationId: ctx.organizationId },
     });
     const orderNumber = `ECO-${String(count + 1).padStart(6, "0")}`;
 

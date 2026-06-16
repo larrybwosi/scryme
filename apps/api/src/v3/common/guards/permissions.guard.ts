@@ -4,10 +4,10 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from "@nestjs/common";
-import {Reflector} from "@nestjs/core";
-import {GqlExecutionContext} from "@nestjs/graphql";
-import {RedisService} from "../../../redis/redis.service";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Reflector } from "@nestjs/core";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { RedisService } from "../../../redis/redis.service";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

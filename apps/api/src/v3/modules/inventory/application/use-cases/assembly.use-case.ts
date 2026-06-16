@@ -3,7 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class AssemblyUseCase {
@@ -16,7 +16,7 @@ export class AssemblyUseCase {
       name: string;
       variantId: string;
       quantity: number;
-      items: {variantId: string; quantity: number; stockBatchId?: string}[];
+      items: { variantId: string; quantity: number; stockBatchId?: string }[];
     },
   ) {
     const assemblyNumber = `ASY-${Date.now()}`;
@@ -52,8 +52,8 @@ export class AssemblyUseCase {
   ) {
     return this.prisma.client.$transaction(async tx => {
       const assembly = await tx.assembly.findUnique({
-        where: {id: assemblyId, organizationId},
-        include: {items: true},
+        where: { id: assemblyId, organizationId },
+        include: { items: true },
       });
 
       if (!assembly) throw new NotFoundException("Assembly not found");
@@ -68,8 +68,8 @@ export class AssemblyUseCase {
         // If specific batch was selected, deduct from it
         if (item.stockBatchId) {
           await tx.stockBatch.update({
-            where: {id: item.stockBatchId},
-            data: {currentQuantity: {decrement: item.quantity}},
+            where: { id: item.stockBatchId },
+            data: { currentQuantity: { decrement: item.quantity } },
           });
         }
 
@@ -82,8 +82,8 @@ export class AssemblyUseCase {
             },
           },
           data: {
-            currentStock: {decrement: item.quantity},
-            availableStock: {decrement: item.quantity},
+            currentStock: { decrement: item.quantity },
+            availableStock: { decrement: item.quantity },
           },
         });
 
@@ -131,7 +131,7 @@ export class AssemblyUseCase {
         create: {
           organizationId,
           productId: (await tx.productVariant.findUnique({
-            where: {id: assembly.variantId},
+            where: { id: assembly.variantId },
           }))!.productId,
           variantId: assembly.variantId,
           locationId,
@@ -139,8 +139,8 @@ export class AssemblyUseCase {
           availableStock: assembly.quantity,
         },
         update: {
-          currentStock: {increment: assembly.quantity},
-          availableStock: {increment: assembly.quantity},
+          currentStock: { increment: assembly.quantity },
+          availableStock: { increment: assembly.quantity },
         },
       });
 
@@ -163,7 +163,7 @@ export class AssemblyUseCase {
 
       // 3. Update assembly status
       return tx.assembly.update({
-        where: {id: assemblyId},
+        where: { id: assemblyId },
         data: {
           status: "COMPLETED",
           completedAt: new Date(),

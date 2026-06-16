@@ -7,7 +7,7 @@ import {
   ValidateNested,
   IsBoolean,
 } from "class-validator";
-import {Type} from "class-transformer";
+import { Type } from "class-transformer";
 
 export class InvoiceItemDto {
   @IsString() itemCode: string;
@@ -24,7 +24,7 @@ export class CreateInvoiceDto {
   @IsDate() @IsOptional() @Type(() => Date) dueDate?: Date;
   @IsString() @IsOptional() templateId?: string;
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => InvoiceItemDto)
   items: InvoiceItemDto[];
   @IsString() @IsOptional() kraPin?: string;

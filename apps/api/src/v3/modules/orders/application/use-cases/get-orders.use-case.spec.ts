@@ -1,9 +1,9 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {GetOrdersUseCase} from "./get-orders.use-case";
-import {Order} from "../../domain/entities/order.entity";
-import {IOrderRepository} from "../../domain/repositories/order-repository.interface";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
-import {describe, it, expect, beforeEach, vi} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { GetOrdersUseCase } from "./get-orders.use-case";
+import { Order } from "../../domain/entities/order.entity";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("GetOrdersUseCase", () => {
   let useCase: GetOrdersUseCase;
@@ -20,7 +20,7 @@ describe("GetOrdersUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetOrdersUseCase,
-        {provide: IOrderRepository, useValue: repository},
+        { provide: IOrderRepository, useValue: repository },
       ],
     }).compile();
 
@@ -51,7 +51,7 @@ describe("GetOrdersUseCase", () => {
     };
     repository.findByOrganization.mockResolvedValue(paginatedResponse);
 
-    const query: PaginationQueryDto = {limit: 10, offset: 0};
+    const query: PaginationQueryDto = { limit: 10, offset: 0 };
     const result = await useCase.execute(orgId, query);
 
     expect(result).toEqual(paginatedResponse);

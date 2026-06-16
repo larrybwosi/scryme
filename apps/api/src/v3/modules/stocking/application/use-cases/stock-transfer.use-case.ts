@@ -3,20 +3,20 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateTransferDto,
   ShipTransferDto,
   ReceiveTransferDto,
 } from "../dto/transfer.dto";
-import {PaginationQueryDto, paginate} from "@/v3/common/utils/pagination";
-import {InventoryMovementService} from "../../../inventory/application/services/inventory-movement.service";
+import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
+import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
 import {
   emitStockTransferCreated,
   emitStockTransferShipped,
   emitStockTransferReceived,
 } from "@repo/windmill/server";
-import {MovementType, StockTransferStatus} from "@repo/db";
+import { MovementType, StockTransferStatus } from "@repo/db";
 
 @Injectable()
 export class StockTransferUseCase {
@@ -54,7 +54,7 @@ export class StockTransferUseCase {
         include: {
           fromLocation: true,
           toLocation: true,
-          items: {include: {variant: {include: {product: true}}}},
+          items: { include: { variant: { include: { product: true } } } },
         },
       });
 
@@ -80,8 +80,8 @@ export class StockTransferUseCase {
   async approve(organizationId: string, memberId: string, transferId: string) {
     return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
-        where: {id: transferId, organizationId},
-        include: {items: true},
+        where: { id: transferId, organizationId },
+        include: { items: true },
       });
 
       if (!transfer) throw new NotFoundException("Transfer not found");
@@ -118,14 +118,14 @@ export class StockTransferUseCase {
             },
           },
           data: {
-            reservedStock: {increment: item.requestedQuantity},
-            availableStock: {decrement: item.requestedQuantity},
+            reservedStock: { increment: item.requestedQuantity },
+            availableStock: { decrement: item.requestedQuantity },
           },
         });
       }
 
       return tx.stockTransfer.update({
-        where: {id: transferId},
+        where: { id: transferId },
         data: {
           status: StockTransferStatus.APPROVED,
           approvedById: memberId,
@@ -142,8 +142,8 @@ export class StockTransferUseCase {
   ) {
     return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
-        where: {id: transferId, organizationId},
-        include: {items: {include: {variant: true}}},
+        where: { id: transferId, organizationId },
+        include: { items: { include: { variant: true } } },
       });
 
       if (!transfer) throw new NotFoundException("Transfer not found");
@@ -168,8 +168,8 @@ export class StockTransferUseCase {
             },
           },
           data: {
-            currentStock: {decrement: itemDto.shippedQuantity},
-            reservedStock: {decrement: item.requestedQuantity},
+            currentStock: { decrement: itemDto.shippedQuantity },
+            reservedStock: { decrement: item.requestedQuantity },
           },
         });
 
@@ -178,10 +178,10 @@ export class StockTransferUseCase {
           where: {
             variantId: item.variantId,
             locationId: transfer.fromLocationId,
-            currentQuantity: {gt: 0},
+            currentQuantity: { gt: 0 },
             id: itemDto.stockBatchId || undefined,
           },
-          orderBy: {receivedDate: "asc"},
+          orderBy: { receivedDate: "asc" },
         });
 
         for (const batch of batches) {
@@ -192,8 +192,8 @@ export class StockTransferUseCase {
           );
 
           await tx.stockBatch.update({
-            where: {id: batch.id},
-            data: {currentQuantity: {decrement: deduction}},
+            where: { id: batch.id },
+            data: { currentQuantity: { decrement: deduction } },
           });
 
           await this.inventoryMovementService.recordMovement(tx, {
@@ -219,7 +219,7 @@ export class StockTransferUseCase {
         }
 
         await tx.stockTransferItem.update({
-          where: {id: item.id},
+          where: { id: item.id },
           data: {
             shippedQuantity: itemDto.shippedQuantity,
             stockBatchId: itemDto.stockBatchId,
@@ -228,7 +228,7 @@ export class StockTransferUseCase {
       }
 
       const updatedTransfer = await tx.stockTransfer.update({
-        where: {id: transferId},
+        where: { id: transferId },
         data: {
           status: StockTransferStatus.SHIPPED,
           shippedById: memberId,
@@ -261,8 +261,8 @@ export class StockTransferUseCase {
   ) {
     return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
-        where: {id: transferId, organizationId},
-        include: {items: {include: {variant: true}}},
+        where: { id: transferId, organizationId },
+        include: { items: { include: { variant: true } } },
       });
 
       if (!transfer) throw new NotFoundException("Transfer not found");
@@ -288,8 +288,8 @@ export class StockTransferUseCase {
             },
           },
           update: {
-            currentStock: {increment: itemDto.receivedQuantity},
-            availableStock: {increment: itemDto.receivedQuantity},
+            currentStock: { increment: itemDto.receivedQuantity },
+            availableStock: { increment: itemDto.receivedQuantity },
           },
           create: {
             organizationId,
@@ -328,20 +328,20 @@ export class StockTransferUseCase {
         });
 
         await tx.stockTransferItem.update({
-          where: {id: item.id},
-          data: {receivedQuantity: itemDto.receivedQuantity},
+          where: { id: item.id },
+          data: { receivedQuantity: itemDto.receivedQuantity },
         });
       }
 
       const completedTransfer = await tx.stockTransfer.update({
-        where: {id: transferId},
+        where: { id: transferId },
         data: {
           status: StockTransferStatus.COMPLETED,
           receivedById: memberId,
           receivedDate: new Date(),
           completedDate: new Date(),
         },
-        include: {receivedBy: {include: {user: true}}},
+        include: { receivedBy: { include: { user: true } } },
       });
 
       // Emit Windmill Event
@@ -362,22 +362,22 @@ export class StockTransferUseCase {
     return paginate(
       this.prisma.client.stockTransfer,
       pagination,
-      {organizationId},
-      {requestedDate: "desc"},
-      {include: {fromLocation: true, toLocation: true, requestedBy: true}},
+      { organizationId },
+      { requestedDate: "desc" },
+      { include: { fromLocation: true, toLocation: true, requestedBy: true } },
     );
   }
 
   async findOne(organizationId: string, transferId: string) {
     const transfer = await this.prisma.client.stockTransfer.findUnique({
-      where: {id: transferId, organizationId},
+      where: { id: transferId, organizationId },
       include: {
         fromLocation: true,
         toLocation: true,
-        requestedBy: {include: {user: true}},
-        approvedBy: {include: {user: true}},
-        shippedBy: {include: {user: true}},
-        receivedBy: {include: {user: true}},
+        requestedBy: { include: { user: true } },
+        approvedBy: { include: { user: true } },
+        shippedBy: { include: { user: true } },
+        receivedBy: { include: { user: true } },
         organization: true,
         items: {
           include: {

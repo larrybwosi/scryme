@@ -5,17 +5,17 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {AuthService} from "../../auth/auth.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { AuthService } from "../../auth/auth.service";
 import {
   validateDeviceKey,
   createMemberToken,
   type V2ApiContext,
 } from "@repo/shared/server";
-import {FastifyRequest} from "fastify";
-import {CookieSerializeOptions} from "@fastify/cookie";
+import { FastifyRequest } from "fastify";
+import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
-import {env} from "@repo/env";
+import { env } from "@repo/env";
 
 @Injectable()
 export class BakeryService {
@@ -27,14 +27,14 @@ export class BakeryService {
   ) {}
 
   async getCategory(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakeryCategory.findUnique({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
   }
 
   async getIngredientRecords(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.stockMovement.findMany({
       where: {
         organizationId,
@@ -46,23 +46,23 @@ export class BakeryService {
       },
       include: {
         variant: {
-          include: {product: true},
+          include: { product: true },
         },
         fromLocation: true,
         toLocation: true,
-        member: {include: {user: true}},
+        member: { include: { user: true } },
       },
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
       take: 100,
     });
   }
   async getBakeryOverview(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const [batches, recipes, bakers] = await Promise.all([
       this.prisma.client.batch.findMany({
-        where: {organizationId},
+        where: { organizationId },
         take: 5,
-        orderBy: {scheduledStartAt: "desc"},
+        orderBy: { scheduledStartAt: "desc" },
         // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
         select: {
           id: true,
@@ -70,17 +70,17 @@ export class BakeryService {
           status: true,
           scheduledStartAt: true,
           productionDate: true,
-          recipe: {select: {id: true, name: true}},
+          recipe: { select: { id: true, name: true } },
           leadBaker: {
             select: {
-              member: {select: {user: {select: {name: true}}}},
+              member: { select: { user: { select: { name: true } } } },
             },
           },
         },
       }),
-      this.prisma.client.recipe.count({where: {organizationId}}),
+      this.prisma.client.recipe.count({ where: { organizationId } }),
       this.prisma.client.bakeryBaker.count({
-        where: {bakerySettings: {organizationId}},
+        where: { bakerySettings: { organizationId } },
       }),
     ]);
 
@@ -106,7 +106,7 @@ export class BakeryService {
    * List all ingredients (raw materials) for the bakery.
    */
   async getIngredients(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.productVariant.findMany({
       where: {
         product: {
@@ -152,9 +152,9 @@ export class BakeryService {
    * ⚡ Bolt: Optimized query using 'select' to exclude heavy text fields
    */
   async getRecipes(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.recipe.findMany({
-      where: {organizationId},
+      where: { organizationId },
       select: {
         id: true,
         name: true,
@@ -212,9 +212,9 @@ export class BakeryService {
   }
 
   async getRecipe(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const recipe = await this.prisma.client.recipe.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
         category: true,
         systemUnit: true,
@@ -222,7 +222,7 @@ export class BakeryService {
         ingredients: {
           include: {
             ingredientVariant: {
-              include: {product: true},
+              include: { product: true },
             },
             systemUnit: true,
             orgUnit: true,
@@ -235,9 +235,9 @@ export class BakeryService {
   }
 
   async duplicateRecipe(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const recipe = await this.prisma.client.recipe.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
         ingredients: true,
         // steps: true,
@@ -247,7 +247,7 @@ export class BakeryService {
 
     if (!recipe) throw new NotFoundException("Recipe not found");
 
-    const {id: _, createdAt: __, updatedAt: ___, ...recipeData} = recipe;
+    const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe;
 
     return this.prisma.client.recipe.create({
       data: {
@@ -255,7 +255,7 @@ export class BakeryService {
         name: `${recipeData.name} (Copy)`,
         ingredients: {
           create: recipe.ingredients.map(
-            ({id: _, recipeId: __, ...ing}) => ing,
+            ({ id: _, recipeId: __, ...ing }) => ing,
           ),
         },
         // steps: {
@@ -284,7 +284,7 @@ export class BakeryService {
   async generateBatchNumber(organizationId: string, tx?: any) {
     const prisma = tx || this.prisma.client;
     const settings = await prisma.bakerySettings.findUnique({
-      where: {organizationId},
+      where: { organizationId },
     });
 
     const prefix = settings?.batchPrefix || "BAT";
@@ -302,7 +302,7 @@ export class BakeryService {
         (now.getMonth() + 1).toString().padStart(2, "0");
     }
 
-    const count = await prisma.batch.count({where: {organizationId}});
+    const count = await prisma.batch.count({ where: { organizationId } });
     const sequence = (count + 1).toString().padStart(sequenceLength, "0");
 
     const parts = [prefix, dateStr, sequence].filter(Boolean);
@@ -310,9 +310,9 @@ export class BakeryService {
   }
 
   async duplicateBatch(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const batch = await this.prisma.client.batch.findUnique({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
 
     if (!batch) throw new NotFoundException("Batch not found");
@@ -340,14 +340,14 @@ export class BakeryService {
   }
 
   async duplicateTemplate(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const template = await this.prisma.client.template.findUnique({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
 
     if (!template) throw new NotFoundException("Template not found");
 
-    const {id: _, createdAt: __, updatedAt: ___, ...templateData} = template;
+    const { id: _, createdAt: __, updatedAt: ___, ...templateData } = template;
 
     return this.prisma.client.template.create({
       data: {
@@ -358,9 +358,9 @@ export class BakeryService {
   }
 
   async createBatchFromTemplate(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const template = await this.prisma.client.template.findUnique({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
 
     if (!template) throw new NotFoundException("Template not found");
@@ -370,10 +370,10 @@ export class BakeryService {
 
     return this.prisma.client.batch.create({
       data: {
-        organization: {connect: {id: organizationId}},
-        recipe: {connect: {id: template.recipeId}},
+        organization: { connect: { id: organizationId } },
+        recipe: { connect: { id: template.recipeId } },
         leadBaker: template.leadBakerId
-          ? {connect: {id: template.leadBakerId}}
+          ? { connect: { id: template.leadBakerId } }
           : undefined,
         plannedQuantity: (template as any).defaultQuantity || template.quantity,
         batchNumber,
@@ -384,7 +384,7 @@ export class BakeryService {
     });
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.recipe.create({
       data: {
         ...data,
@@ -394,25 +394,25 @@ export class BakeryService {
   }
 
   async updateRecipe(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.recipe.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data,
     });
   }
 
   async deleteRecipe(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.recipe.delete({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
   }
 
   // Batches
   async getBatches(ctx: V2ApiContext, query: any) {
-    const {organizationId} = ctx;
-    const {status, recipeId} = query;
-    const where: any = {organizationId};
+    const { organizationId } = ctx;
+    const { status, recipeId } = query;
+    const where: any = { organizationId };
     if (status) where.status = status;
     if (recipeId) where.recipeId = recipeId;
 
@@ -458,23 +458,23 @@ export class BakeryService {
               select: {
                 id: true,
                 user: {
-                  select: {id: true, name: true, email: true, image: true},
+                  select: { id: true, name: true, email: true, image: true },
                 },
               },
             },
           },
         },
-        systemUnit: {select: {id: true, name: true, symbol: true}},
-        orgUnit: {select: {id: true, name: true, symbol: true}},
+        systemUnit: { select: { id: true, name: true, symbol: true } },
+        orgUnit: { select: { id: true, name: true, symbol: true } },
       },
-      orderBy: {scheduledStartAt: "desc"},
+      orderBy: { scheduledStartAt: "desc" },
     });
   }
 
   async getBatch(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const batch = await this.prisma.client.batch.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
         recipe: {
           include: {
@@ -484,8 +484,8 @@ export class BakeryService {
                   include: {
                     product: true,
                     stockBatches: {
-                      where: {currentQuantity: {gt: 0}},
-                      orderBy: {expiryDate: "asc"},
+                      where: { currentQuantity: { gt: 0 } },
+                      orderBy: { expiryDate: "asc" },
                     },
                   },
                 },
@@ -494,8 +494,8 @@ export class BakeryService {
             },
           },
         },
-        leadBaker: {include: {member: {include: {user: true}}}},
-        assistantBakers: {include: {member: {include: {user: true}}}},
+        leadBaker: { include: { member: { include: { user: true } } } },
+        assistantBakers: { include: { member: { include: { user: true } } } },
       },
     });
     if (!batch) throw new NotFoundException("Batch not found");
@@ -503,12 +503,12 @@ export class BakeryService {
   }
 
   async createBatch(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
 
     // Always generate the batch number, ignoring any manual input from the client
     const batchNumber = await this.generateBatchNumber(organizationId);
 
-    const {date, time, batchNumber: _, ...rest} = data;
+    const { date, time, batchNumber: _, ...rest } = data;
 
     // Process scheduledStartAt if date and time are provided
     let scheduledStartAt = data.scheduledStartAt;
@@ -530,24 +530,24 @@ export class BakeryService {
   }
 
   async updateBatch(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.batch.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data,
     });
   }
 
   async deleteBatch(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.batch.delete({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
   }
 
   async startBatch(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.batch.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data: {
         status: "IN_PROGRESS" as any,
         startedAt: new Date(),
@@ -556,12 +556,13 @@ export class BakeryService {
   }
 
   async completeBatch(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
-    const {actualQuantity, wasteQuantity, ingredientConsumptions, notes} = data;
+    const { organizationId } = ctx;
+    const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
+      data;
 
     const batch = await this.prisma.client.batch.findUnique({
-      where: {id},
-      include: {recipe: {include: {producesVariant: true}}},
+      where: { id },
+      include: { recipe: { include: { producesVariant: true } } },
     });
 
     if (!batch) throw new NotFoundException("Batch not found");
@@ -573,7 +574,7 @@ export class BakeryService {
     return await this.prisma.client.$transaction(async tx => {
       // 1. Update batch status
       const updatedBatch = await tx.batch.update({
-        where: {id, organizationId},
+        where: { id, organizationId },
         data: {
           actualQuantity: grossQuantity,
           status: "COMPLETED" as any,
@@ -589,7 +590,7 @@ export class BakeryService {
       if (ingredientConsumptions && ingredientConsumptions.length > 0) {
         for (const consumption of ingredientConsumptions) {
           const stockBatch = await tx.stockBatch.findUnique({
-            where: {id: consumption.stockBatchId},
+            where: { id: consumption.stockBatchId },
           });
 
           if (!stockBatch)
@@ -614,9 +615,9 @@ export class BakeryService {
           });
 
           await tx.stockBatch.update({
-            where: {id: consumption.stockBatchId},
+            where: { id: consumption.stockBatchId },
             data: {
-              currentQuantity: {decrement: consumption.quantity},
+              currentQuantity: { decrement: consumption.quantity },
             },
           });
 
@@ -641,8 +642,8 @@ export class BakeryService {
               },
             },
             data: {
-              currentStock: {decrement: consumption.quantity},
-              availableStock: {decrement: consumption.quantity},
+              currentStock: { decrement: consumption.quantity },
+              availableStock: { decrement: consumption.quantity },
             },
           });
         }
@@ -675,8 +676,8 @@ export class BakeryService {
               },
             },
             update: {
-              currentStock: {increment: netQuantity},
-              availableStock: {increment: netQuantity},
+              currentStock: { increment: netQuantity },
+              availableStock: { increment: netQuantity },
             },
             create: {
               productId: (batch.recipe.producesVariant as any).productId,
@@ -708,19 +709,19 @@ export class BakeryService {
   }
 
   async getBatchTraceability(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const batch = await this.prisma.client.batch.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
         recipe: true,
         ingredientConsumptions: {
           include: {
             stockBatch: {
               include: {
-                variant: {include: {product: true}},
+                variant: { include: { product: true } },
                 supplier: true,
                 productionBatch: {
-                  include: {recipe: true},
+                  include: { recipe: true },
                 },
               },
             },
@@ -735,9 +736,9 @@ export class BakeryService {
   }
 
   async cancelBatch(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.batch.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data: {
         status: "CANCELLED" as any,
         cancelledAt: new Date(),
@@ -747,18 +748,18 @@ export class BakeryService {
 
   // Templates
   async getTemplates(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.template.findMany({
-      where: {organizationId},
+      where: { organizationId },
       include: {
         recipe: true,
-        leadBaker: {include: {member: {include: {user: true}}}},
+        leadBaker: { include: { member: { include: { user: true } } } },
       },
     });
   }
 
   async createTemplate(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.template.create({
       data: {
         ...data,
@@ -768,33 +769,33 @@ export class BakeryService {
   }
 
   async updateTemplate(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.template.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data,
     });
   }
 
   async deleteTemplate(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.template.delete({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
   }
 
   // Categories
   async getCategories(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakeryCategory.findMany({
-      where: {organizationId},
+      where: { organizationId },
       include: {
-        _count: {select: {recipes: true}},
+        _count: { select: { recipes: true } },
       },
     });
   }
 
   async createCategory(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakeryCategory.create({
       data: {
         ...data,
@@ -804,35 +805,35 @@ export class BakeryService {
   }
 
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakeryCategory.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data,
     });
   }
 
   async deleteCategory(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakeryCategory.delete({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
   }
 
   // Settings & Bakers
   async getSettings(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     let settings = await this.prisma.client.bakerySettings.findUnique({
-      where: {organizationId},
+      where: { organizationId },
       include: {
-        defaultBaker: {include: {member: {include: {user: true}}}},
+        defaultBaker: { include: { member: { include: { user: true } } } },
       },
     });
 
     if (!settings) {
       settings = await this.prisma.client.bakerySettings.create({
-        data: {organizationId},
+        data: { organizationId },
         include: {
-          defaultBaker: {include: {member: {include: {user: true}}}},
+          defaultBaker: { include: { member: { include: { user: true } } } },
         },
       });
     }
@@ -841,19 +842,19 @@ export class BakeryService {
   }
 
   async updateSettings(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakerySettings.update({
-      where: {organizationId},
+      where: { organizationId },
       data,
     });
   }
 
   async getBakers(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.bakeryBaker.findMany({
-      where: {bakerySettings: {organizationId}},
+      where: { bakerySettings: { organizationId } },
       include: {
-        member: {include: {user: true}},
+        member: { include: { user: true } },
       },
     });
   }
@@ -869,27 +870,27 @@ export class BakeryService {
   }
 
   async updateBaker(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const baker = await this.prisma.client.bakeryBaker.findFirst({
-      where: {id, bakerySettings: {organizationId}},
+      where: { id, bakerySettings: { organizationId } },
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
     return this.prisma.client.bakeryBaker.update({
-      where: {id},
+      where: { id },
       data,
     });
   }
 
   async removeBaker(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const baker = await this.prisma.client.bakeryBaker.findFirst({
-      where: {id, bakerySettings: {organizationId}},
+      where: { id, bakerySettings: { organizationId } },
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
     return this.prisma.client.bakeryBaker.delete({
-      where: {id},
+      where: { id },
     });
   }
 
@@ -918,7 +919,7 @@ export class BakeryService {
       headers: req.headers as HeadersInit,
     });
 
-    return this.authService.auth.api.getSession({headers: request.headers});
+    return this.authService.auth.api.getSession({ headers: request.headers });
   }
 
   async processSSO(session: any, ctx: V2ApiContext) {
@@ -937,7 +938,7 @@ export class BakeryService {
         currentAttendanceLogId: true,
         organizationId: true,
         user: {
-          select: {id: true, name: true, email: true, image: true},
+          select: { id: true, name: true, email: true, image: true },
         },
       },
     });
@@ -954,8 +955,8 @@ export class BakeryService {
       let targetLocationId = ctx.locationId;
       if (!targetLocationId) {
         const location = await this.prisma.client.inventoryLocation.findFirst({
-          where: {organizationId: organizationId, isActive: true},
-          select: {id: true},
+          where: { organizationId: organizationId, isActive: true },
+          select: { id: true },
         });
         targetLocationId = location?.id;
       }
@@ -972,11 +973,11 @@ export class BakeryService {
           checkInLocationId: targetLocationId,
           notes: "Checked in via Bakery SSO",
         },
-        select: {id: true},
+        select: { id: true },
       });
 
       await this.prisma.client.member.update({
-        where: {id: member.id},
+        where: { id: member.id },
         data: {
           isCheckedIn: true,
           currentCheckInLocationId: targetLocationId,
@@ -997,51 +998,51 @@ export class BakeryService {
       `Member ${member.id} authenticated via SSO for org ${organizationId}`,
     );
 
-    return {token, member};
+    return { token, member };
   }
 
   async getPartners(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.deliveryPartner.findMany({
-      where: {organizationId},
+      where: { organizationId },
     });
   }
 
   async createPartner(ctx: V2ApiContext, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.deliveryPartner.create({
-      data: {...data, organizationId},
+      data: { ...data, organizationId },
     });
   }
 
   async getPartner(ctx: V2ApiContext, id: string) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.deliveryPartner.findFirst({
-      where: {id, organizationId},
-      include: {walletLogs: {take: 20, orderBy: {createdAt: "desc"}}},
+      where: { id, organizationId },
+      include: { walletLogs: { take: 20, orderBy: { createdAt: "desc" } } },
     });
   }
 
   async updatePartner(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.deliveryPartner.update({
-      where: {id, organizationId},
+      where: { id, organizationId },
       data,
     });
   }
 
   async adjustPartnerWallet(ctx: V2ApiContext, id: string, data: any) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     const partner = await this.prisma.client.deliveryPartner.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
     });
     if (!partner) throw new NotFoundException("Partner not found");
 
     const newBalance = Number(partner.walletBalance) + Number(data.amount);
     return this.prisma.client.$transaction([
       this.prisma.client.deliveryPartner.update({
-        where: {id},
-        data: {walletBalance: newBalance},
+        where: { id },
+        data: { walletBalance: newBalance },
       }),
       this.prisma.client.partnerWalletLog.create({
         data: {
@@ -1056,12 +1057,12 @@ export class BakeryService {
   }
 
   async dispatchDelivery(ctx: V2ApiContext, data: any) {
-    const {organizationId, memberId} = ctx;
-    const {transactionId, partnerId, driverId, notes} = data;
+    const { organizationId, memberId } = ctx;
+    const { transactionId, partnerId, driverId, notes } = data;
 
     return this.prisma.client.$transaction(async tx => {
       const transaction = await tx.transaction.findFirst({
-        where: {id: transactionId, organizationId},
+        where: { id: transactionId, organizationId },
       });
 
       if (!transaction) throw new NotFoundException("Transaction not found");
@@ -1078,7 +1079,7 @@ export class BakeryService {
       });
 
       await tx.transaction.update({
-        where: {id: transactionId},
+        where: { id: transactionId },
         data: {
           deliveryPartnerId: partnerId,
         },
@@ -1089,21 +1090,21 @@ export class BakeryService {
   }
 
   async reconcileDelivery(ctx: V2ApiContext, data: any) {
-    const {organizationId, memberId} = ctx;
-    const {fulfillmentId, status, notes} = data;
+    const { organizationId, memberId } = ctx;
+    const { fulfillmentId, status, notes } = data;
 
     return this.prisma.client.$transaction(async tx => {
       const fulfillment = await tx.fulfillment.findFirst({
         where: {
           id: fulfillmentId,
-          transaction: {organizationId},
+          transaction: { organizationId },
         },
       });
 
       if (!fulfillment) throw new NotFoundException("Fulfillment not found");
 
       const updatedFulfillment = await tx.fulfillment.update({
-        where: {id: fulfillmentId},
+        where: { id: fulfillmentId },
         data: {
           status: (status === "DELIVERED" ? "DELIVERED" : "CANCELLED") as any,
           deliveredAt: status === "DELIVERED" ? new Date() : null,
@@ -1116,23 +1117,23 @@ export class BakeryService {
   }
 
   async getActiveDeliveries(ctx: V2ApiContext) {
-    const {organizationId} = ctx;
+    const { organizationId } = ctx;
     return this.prisma.client.fulfillment.findMany({
       where: {
-        transaction: {organizationId},
-        status: {in: ["PENDING", "IN_TRANSIT"]},
+        transaction: { organizationId },
+        status: { in: ["PENDING", "IN_TRANSIT"] },
         type: "DELIVERY",
       },
       include: {
-        transaction: {include: {customer: true, deliveryPartner: true}},
+        transaction: { include: { customer: true, deliveryPartner: true } },
         driver: true,
       },
     });
   }
 
   async receiveIngredients(ctx: V2ApiContext, data: any) {
-    const {organizationId, memberId, locationId} = ctx;
-    const {lines, receiptReference, receiptDate, notes} = data;
+    const { organizationId, memberId, locationId } = ctx;
+    const { lines, receiptReference, receiptDate, notes } = data;
 
     if (!locationId)
       throw new BadRequestException("Location ID required in context");
@@ -1140,8 +1141,8 @@ export class BakeryService {
     return this.prisma.client.$transaction(async tx => {
       const receipt = await tx.stockReceipt.create({
         data: {
-          organization: {connect: {id: organizationId}},
-          member: {connect: {id: memberId!}},
+          organization: { connect: { id: organizationId } },
+          member: { connect: { id: memberId! } },
           receivedDate: receiptDate ? new Date(receiptDate) : new Date(),
           notes: `GRN: ${receiptReference}. ${notes || ""}`,
         } as any,
@@ -1150,8 +1151,8 @@ export class BakeryService {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const variant = await tx.productVariant.findUnique({
-          where: {id: line.ingredientId},
-          select: {productId: true},
+          where: { id: line.ingredientId },
+          select: { productId: true },
         });
 
         if (!variant) {
@@ -1184,8 +1185,8 @@ export class BakeryService {
             },
           },
           update: {
-            currentStock: {increment: line.quantity},
-            availableStock: {increment: line.quantity},
+            currentStock: { increment: line.quantity },
+            availableStock: { increment: line.quantity },
           },
           create: {
             organizationId,
@@ -1231,7 +1232,7 @@ export class BakeryService {
     }
 
     try {
-      const {data: release} = await axios.get(
+      const { data: release } = await axios.get(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
         {
           headers,

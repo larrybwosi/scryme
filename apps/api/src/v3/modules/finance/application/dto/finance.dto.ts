@@ -8,9 +8,9 @@ import {
   IsDateString,
   IsBoolean,
 } from "class-validator";
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
-import {UtilityType, PaymentMethod} from "@repo/db";
-export {PaymentMethod};
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { UtilityType, PaymentMethod } from "@repo/db";
+export { PaymentMethod };
 
 export class CreatePettyCashFundDto {
   @ApiProperty()
@@ -67,7 +67,7 @@ export class CreateUtilityAccountDto {
   @IsString()
   meterNumber?: string;
 
-  @ApiProperty({enum: UtilityType})
+  @ApiProperty({ enum: UtilityType })
   @IsEnum(UtilityType)
   type: UtilityType;
 }
@@ -93,7 +93,7 @@ export class CreateExpenseDto {
   @IsString()
   categoryId: string;
 
-  @ApiProperty({enum: PaymentMethod})
+  @ApiProperty({ enum: PaymentMethod })
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 
@@ -140,7 +140,7 @@ export class CreateExpenseDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsArray()
-  @IsString({each: true})
+  @IsString({ each: true })
   tags?: string[];
 
   @ApiPropertyOptional()

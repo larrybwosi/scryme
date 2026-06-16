@@ -1,9 +1,9 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {PosSaleService} from "../pos-sale.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {BadRequestException} from "@nestjs/common";
+import { Test, TestingModule } from "@nestjs/testing";
+import { PosSaleService } from "../pos-sale.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { BadRequestException } from "@nestjs/common";
 import * as sharedActions from "@repo/shared/server";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@repo/shared/server", () => ({
   processSale: vi.fn(),
@@ -81,7 +81,7 @@ describe("PosSaleService", () => {
       vi.mocked(sharedActions.processSale).mockResolvedValue({
         success: true,
         transactionId: "txn_1",
-        data: {id: "txn_1", payments: []},
+        data: { id: "txn_1", payments: [] },
       } as any);
 
       const result = await service.handleSale(mockCtx, mockBody, true);
@@ -99,7 +99,7 @@ describe("PosSaleService", () => {
         {
           success: false,
           error: {
-            flatten: () => ({fieldErrors: {cartItems: ["Required"]}}),
+            flatten: () => ({ fieldErrors: { cartItems: ["Required"] } }),
           },
         } as any,
       );

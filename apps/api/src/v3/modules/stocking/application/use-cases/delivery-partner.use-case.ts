@@ -3,13 +3,13 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "../../../../../prisma/prisma.service";
+import { PrismaService } from "../../../../../prisma/prisma.service";
 import {
   CreatePartnerDto,
   UpdatePartnerDto,
   PartnerWalletActionDto,
 } from "../dto/partner.dto";
-import {WalletTxType} from "@repo/db";
+import { WalletTxType } from "@repo/db";
 
 @Injectable()
 export class DeliveryPartnerUseCase {
@@ -28,10 +28,10 @@ export class DeliveryPartnerUseCase {
   // fallow-ignore-next-line unused-class-members
   async getPartners(organizationId: string) {
     return this.prisma.client.deliveryPartner.findMany({
-      where: {organizationId},
+      where: { organizationId },
       include: {
         _count: {
-          select: {drivers: true, transactions: true},
+          select: { drivers: true, transactions: true },
         },
       },
     });
@@ -39,12 +39,12 @@ export class DeliveryPartnerUseCase {
 
   async getPartner(organizationId: string, id: string) {
     const partner = await this.prisma.client.deliveryPartner.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
         drivers: true,
         walletLogs: {
           take: 50,
-          orderBy: {createdAt: "desc"},
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -61,7 +61,7 @@ export class DeliveryPartnerUseCase {
   ) {
     const partner = await this.getPartner(organizationId, id);
     return this.prisma.client.deliveryPartner.update({
-      where: {id: partner.id},
+      where: { id: partner.id },
       data: dto,
     });
   }
@@ -75,7 +75,7 @@ export class DeliveryPartnerUseCase {
   ) {
     return this.prisma.client.$transaction(async tx => {
       const partner = await tx.deliveryPartner.findFirst({
-        where: {id: partnerId, organizationId},
+        where: { id: partnerId, organizationId },
       });
 
       if (!partner) throw new NotFoundException("Delivery partner not found");
@@ -86,8 +86,8 @@ export class DeliveryPartnerUseCase {
       }
 
       await tx.deliveryPartner.update({
-        where: {id: partnerId},
-        data: {walletBalance: newBalance},
+        where: { id: partnerId },
+        data: { walletBalance: newBalance },
       });
 
       return tx.partnerWalletLog.create({

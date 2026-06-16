@@ -4,8 +4,8 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from "@nestjs/common";
-import {V3AuthService} from "../../modules/auth/infrastructure/services/v3-auth.service";
-import {PrismaService} from "@/prisma/prisma.service";
+import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-auth.service";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class V3AuthGuard implements CanActivate {
@@ -32,7 +32,7 @@ export class V3AuthGuard implements CanActivate {
     }
 
     const organization = await this.prisma.client.organization.findUnique({
-      where: {id: payload.organizationId},
+      where: { id: payload.organizationId },
     });
 
     if (!organization) {

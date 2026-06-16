@@ -6,9 +6,9 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiResponse} from "@nestjs/swagger";
-import {PrismaService} from "@/prisma/prisma.service";
-import type {WindmillCallbackPayload} from "@repo/windmill/server";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { WindmillCallbackPayload } from "@repo/windmill/server";
 
 @ApiTags("V3 Windmill Webhooks")
 @Controller("windmill")
@@ -18,8 +18,8 @@ export class WindmillCallbackController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Post("callbacks")
-  @ApiOperation({summary: "Handle status callbacks from Windmill"})
-  @ApiResponse({status: 200, description: "Callback processed successfully"})
+  @ApiOperation({ summary: "Handle status callbacks from Windmill" })
+  @ApiResponse({ status: 200, description: "Callback processed successfully" })
   async handleCallback(@Body() payload: WindmillCallbackPayload) {
     this.logger.log(
       `Received Windmill callback for job ${payload.jobId} (Org: ${payload.organizationId})`,
@@ -27,7 +27,7 @@ export class WindmillCallbackController {
 
     try {
       const execution = await this.prisma.client.windmillExecution.findUnique({
-        where: {jobId: payload.jobId},
+        where: { jobId: payload.jobId },
       });
 
       if (!execution) {
@@ -37,7 +37,7 @@ export class WindmillCallbackController {
       }
 
       await this.prisma.client.windmillExecution.update({
-        where: {jobId: payload.jobId},
+        where: { jobId: payload.jobId },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,
@@ -46,7 +46,7 @@ export class WindmillCallbackController {
         },
       });
 
-      return {success: true};
+      return { success: true };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       this.logger.error(

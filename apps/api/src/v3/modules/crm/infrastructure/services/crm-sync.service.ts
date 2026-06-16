@@ -1,6 +1,6 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {InjectQueue} from "@nestjs/bullmq";
-import {Queue} from "bullmq";
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 
 export type CrmSyncJobType = "SYNC_CUSTOMER" | "SYNC_BUSINESS_ACCOUNT";
 

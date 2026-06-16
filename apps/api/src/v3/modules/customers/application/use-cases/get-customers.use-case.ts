@@ -1,6 +1,6 @@
-import {Injectable, Inject} from "@nestjs/common";
-import {ICustomerRepository} from "../../domain/repositories/customer-repository.interface";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Injectable, Inject } from "@nestjs/common";
+import { ICustomerRepository } from "../../domain/repositories/customer-repository.interface";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class GetCustomersUseCase {

@@ -1,8 +1,8 @@
-import {describe, it, expect, vi, beforeEach} from "vitest";
-import {UnpackBatchUseCase, UnpackBatchDto} from "./unpack-batch.use-case";
-import {NotFoundException, BadRequestException} from "@nestjs/common";
-import {MovementType, StockAdjustmentReason} from "@repo/db";
-import {Decimal} from "decimal.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { UnpackBatchUseCase, UnpackBatchDto } from "./unpack-batch.use-case";
+import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { MovementType, StockAdjustmentReason } from "@repo/db";
+import { Decimal } from "decimal.js";
 
 // Mock PrismaService to avoid @repo/db issues during testing
 vi.mock("src/prisma/prisma.service", () => {
@@ -83,7 +83,7 @@ describe("UnpackBatchUseCase", () => {
 
   it("should unpack a batch successfully", async () => {
     mockTx.stockBatch.findUnique.mockResolvedValue(mockBulkBatch);
-    mockTx.stockBatch.create.mockResolvedValue({id: "base-batch-1"});
+    mockTx.stockBatch.create.mockResolvedValue({ id: "base-batch-1" });
 
     const dto: UnpackBatchDto = {
       batchId: "batch-1",
@@ -96,8 +96,8 @@ describe("UnpackBatchUseCase", () => {
 
     expect(result.success).toBe(true);
     expect(mockTx.stockBatch.update).toHaveBeenCalledWith({
-      where: {id: "batch-1"},
-      data: {currentQuantity: {decrement: 2}},
+      where: { id: "batch-1" },
+      data: { currentQuantity: { decrement: 2 } },
     });
     expect(mockTx.stockBatch.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -138,10 +138,10 @@ describe("UnpackBatchUseCase", () => {
     mockTx.stockBatch.findUnique.mockResolvedValue(mockBulkBatch);
     mockTx.stockBatch.create.mockImplementation(async params => {
       if (params.data.batchNumber.startsWith("DAMAGED"))
-        return {id: "damaged-batch"};
-      return {id: "base-batch-1"};
+        return { id: "damaged-batch" };
+      return { id: "base-batch-1" };
     });
-    mockTx.stockAdjustment.create.mockResolvedValue({id: "adj-1"});
+    mockTx.stockAdjustment.create.mockResolvedValue({ id: "adj-1" });
 
     const dto: UnpackBatchDto = {
       batchId: "batch-1",
@@ -186,8 +186,8 @@ describe("UnpackBatchUseCase", () => {
     expect(mockTx.productVariantStock.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
-          currentStock: {decrement: expect.any(Object)},
-          availableStock: {decrement: expect.any(Object)},
+          currentStock: { decrement: expect.any(Object) },
+          availableStock: { decrement: expect.any(Object) },
         },
       }),
     );

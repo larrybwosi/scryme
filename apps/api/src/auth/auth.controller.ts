@@ -1,6 +1,6 @@
-import {Controller, All, Req, Res} from "@nestjs/common";
-import {FastifyRequest, FastifyReply} from "fastify";
-import {AuthService} from "./auth.service";
+import { Controller, All, Req, Res } from "@nestjs/common";
+import { FastifyRequest, FastifyReply } from "fastify";
+import { AuthService } from "./auth.service";
 
 @Controller("auth")
 export class AuthController {

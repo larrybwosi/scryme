@@ -1,8 +1,8 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {Test, TestingModule} from "@nestjs/testing";
-import {IProductRepository} from "../../domain/repositories/product-repository.interface";
-import {GetProductsUseCase} from "./get-products.use-case";
-import {Product} from "../../domain/entities/product.entity";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { IProductRepository } from "../../domain/repositories/product-repository.interface";
+import { GetProductsUseCase } from "./get-products.use-case";
+import { Product } from "../../domain/entities/product.entity";
 
 describe("GetProductsUseCase", () => {
   let useCase: GetProductsUseCase;
@@ -15,7 +15,7 @@ describe("GetProductsUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetProductsUseCase,
-        {provide: IProductRepository, useValue: repository},
+        { provide: IProductRepository, useValue: repository },
       ],
     }).compile();
 
@@ -37,7 +37,7 @@ describe("GetProductsUseCase", () => {
     ];
     repository.findByOrganization.mockResolvedValue(products);
 
-    const result = await useCase.execute(orgId, {limit: 10, offset: 0});
+    const result = await useCase.execute(orgId, { limit: 10, offset: 0 });
     expect(result).toEqual(products);
     expect(repository.findByOrganization).toHaveBeenCalledWith(orgId, {
       limit: 10,

@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreateUtilityAccountDto} from "../dto/finance.dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateUtilityAccountDto } from "../dto/finance.dto";
 
 @Injectable()
 export class UtilityAccountUseCase {
@@ -17,17 +17,17 @@ export class UtilityAccountUseCase {
 
   async getAccounts(organizationId: string) {
     return await this.prisma.client.utilityAccount.findMany({
-      where: {organizationId},
+      where: { organizationId },
     });
   }
 
   async getAccount(organizationId: string, id: string) {
     const account = await this.prisma.client.utilityAccount.findFirst({
-      where: {id, organizationId},
+      where: { id, organizationId },
       include: {
         expenses: {
           take: 10,
-          orderBy: {expenseDate: "desc"},
+          orderBy: { expenseDate: "desc" },
         },
       },
     });

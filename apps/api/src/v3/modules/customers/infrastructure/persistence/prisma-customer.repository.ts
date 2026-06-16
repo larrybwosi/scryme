@@ -1,8 +1,8 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ICustomerRepository} from "../../domain/repositories/customer-repository.interface";
-import {Customer} from "../../domain/entities/customer.entity";
-import {PaginationQueryDto} from "@/v3/common/utils/pagination";
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ICustomerRepository } from "../../domain/repositories/customer-repository.interface";
+import { Customer } from "../../domain/entities/customer.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaCustomerRepository implements ICustomerRepository {
@@ -15,10 +15,10 @@ export class PrismaCustomerRepository implements ICustomerRepository {
     pagination?: PaginationQueryDto,
   ): Promise<Customer[]> {
     const customers = await this.prisma.client.customer.findMany({
-      where: {organizationId},
+      where: { organizationId },
       take: pagination?.limit || 10,
       skip: pagination?.offset || 0,
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
     });
 
     return customers.map(
@@ -37,7 +37,7 @@ export class PrismaCustomerRepository implements ICustomerRepository {
 
   async findById(id: string): Promise<Customer | null> {
     const c = await this.prisma.client.customer.findUnique({
-      where: {id},
+      where: { id },
     });
 
     if (!c) return null;
@@ -55,7 +55,7 @@ export class PrismaCustomerRepository implements ICustomerRepository {
 
   async save(customer: Customer): Promise<Customer> {
     const c = await this.prisma.client.customer.upsert({
-      where: {id: customer.id},
+      where: { id: customer.id },
       update: {
         name: customer.name,
         email: customer.email,

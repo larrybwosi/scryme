@@ -13,9 +13,9 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {BusinessAccountService} from "@/v3/modules/customers/application/use-cases/business-account.service";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { BusinessAccountService } from "@/v3/modules/customers/application/use-cases/business-account.service";
 
 @ApiTags("V3 Business Accounts")
 @ApiBearerAuth()
@@ -27,7 +27,7 @@ export class BusinessAccountController {
   ) {}
 
   @Post()
-  @ApiOperation({summary: "Create a new B2B business account"})
+  @ApiOperation({ summary: "Create a new B2B business account" })
   async create(@Request() req: any, @Body() body: any) {
     return this.businessAccountService.createBusinessAccount(
       req.organization.id,
@@ -36,7 +36,7 @@ export class BusinessAccountController {
   }
 
   @Get(":id")
-  @ApiOperation({summary: "Get a business account with CRM timeline"})
+  @ApiOperation({ summary: "Get a business account with CRM timeline" })
   async getOne(@Request() req: any, @Param("id") id: string) {
     return this.businessAccountService.getBusinessAccount(
       req.organization.id,

@@ -11,19 +11,19 @@ import {
   Request,
   UseInterceptors,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation, ApiBearerAuth} from "@nestjs/swagger";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {DepartmentUseCase} from "../../application/use-cases/department.use-case";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { DepartmentUseCase } from "../../application/use-cases/department.use-case";
 import {
   CreateDepartmentDto,
   UpdateDepartmentDto,
   DepartmentQueryDto,
   AddDepartmentMemberDto,
 } from "../../application/dto/department.dto";
-import {Permissions} from "@/v3/common/decorators/permissions.decorator";
-import {PermissionsGuard} from "@/v3/common/guards/permissions.guard";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 
 @ApiTags("V3 Departments")
 @ApiBearerAuth()
@@ -35,7 +35,7 @@ export class DepartmentController {
 
   @Get()
   @Permissions("departments:read")
-  @ApiOperation({summary: "List departments"})
+  @ApiOperation({ summary: "List departments" })
   async getDepartments(
     @Request() req: any,
     @Query() query: DepartmentQueryDto,
@@ -48,7 +48,7 @@ export class DepartmentController {
 
   @Get(":id")
   @Permissions("departments:read")
-  @ApiOperation({summary: "Get department details"})
+  @ApiOperation({ summary: "Get department details" })
   async getDepartment(@Request() req: any, @Param("id") id: string) {
     return this.departmentUseCase.getDepartment(
       req.v3Context.organizationId,
@@ -58,7 +58,7 @@ export class DepartmentController {
 
   @Post()
   @Permissions("departments:write")
-  @ApiOperation({summary: "Create a department"})
+  @ApiOperation({ summary: "Create a department" })
   async createDepartment(
     @Request() req: any,
     @Body() dto: CreateDepartmentDto,
@@ -73,7 +73,7 @@ export class DepartmentController {
 
   @Patch(":id")
   @Permissions("departments:write")
-  @ApiOperation({summary: "Update a department"})
+  @ApiOperation({ summary: "Update a department" })
   async updateDepartment(
     @Request() req: any,
     @Param("id") id: string,
@@ -90,7 +90,7 @@ export class DepartmentController {
 
   @Delete(":id")
   @Permissions("departments:delete")
-  @ApiOperation({summary: "Delete a department"})
+  @ApiOperation({ summary: "Delete a department" })
   async deleteDepartment(@Request() req: any, @Param("id") id: string) {
     const actorId = req.v3Context.memberId;
     return this.departmentUseCase.deleteDepartment(
@@ -102,7 +102,7 @@ export class DepartmentController {
 
   @Post(":id/members")
   @Permissions("departments:write")
-  @ApiOperation({summary: "Add a member to a department"})
+  @ApiOperation({ summary: "Add a member to a department" })
   async addMember(
     @Request() req: any,
     @Param("id") id: string,
@@ -119,7 +119,7 @@ export class DepartmentController {
 
   @Delete(":id/members/:memberId")
   @Permissions("departments:write")
-  @ApiOperation({summary: "Remove a member from a department"})
+  @ApiOperation({ summary: "Remove a member from a department" })
   async removeMember(
     @Request() req: any,
     @Param("id") id: string,

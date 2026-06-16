@@ -1,5 +1,5 @@
-import {Injectable, Logger, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   ApprovalCallbackPayload,
   BakeryDisposalCallbackPayload,
@@ -26,16 +26,16 @@ export class WindmillCallbackUseCase {
     );
 
     const execution = await this.prisma.client.windmillExecution.findUnique({
-      where: {jobId: payload.jobId},
+      where: { jobId: payload.jobId },
     });
 
     if (!execution) {
       this.logger.warn(`Execution for jobId ${payload.jobId} not found`);
-      return {success: false, message: "Execution not found"};
+      return { success: false, message: "Execution not found" };
     }
 
     await this.prisma.client.windmillExecution.update({
-      where: {jobId: payload.jobId},
+      where: { jobId: payload.jobId },
       data: {
         status: payload.status as any,
         result: payload.result ?? undefined,
@@ -44,7 +44,7 @@ export class WindmillCallbackUseCase {
       },
     });
 
-    return {success: true};
+    return { success: true };
   }
 
   async handleOutcomeCallback(payload: GenericOutcomePayload) {
@@ -64,11 +64,11 @@ export class WindmillCallbackUseCase {
       updateData.relatedEntityId = payload.relatedEntityId;
 
     await this.prisma.client.windmillExecution.updateMany({
-      where: {jobId: payload.jobId},
+      where: { jobId: payload.jobId },
       data: updateData,
     });
 
-    return {success: true};
+    return { success: true };
   }
 
   async handleApprovalCallback(payload: ApprovalCallbackPayload) {
@@ -79,7 +79,7 @@ export class WindmillCallbackUseCase {
     return this.prisma.client.$transaction(async tx => {
       // 1. Update the windmillExecution record (Consolidation)
       await tx.windmillExecution.updateMany({
-        where: {jobId: payload.jobId},
+        where: { jobId: payload.jobId },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,
@@ -99,8 +99,13 @@ export class WindmillCallbackUseCase {
           PENDING_REVIEW: PurchaseStatus.ORDERED,
         };
         await tx.purchase.update({
-          where: {id: payload.entityId, organizationId: payload.organizationId},
-          data: {status: statusMap[payload.decision] || PurchaseStatus.ORDERED},
+          where: {
+            id: payload.entityId,
+            organizationId: payload.organizationId,
+          },
+          data: {
+            status: statusMap[payload.decision] || PurchaseStatus.ORDERED,
+          },
         });
       } else if (payload.entityType === "Expense") {
         const statusMap: Record<string, ExpenseStatus> = {
@@ -109,7 +114,10 @@ export class WindmillCallbackUseCase {
           PENDING_REVIEW: ExpenseStatus.PENDING_APPROVAL,
         };
         await tx.expense.update({
-          where: {id: payload.entityId, organizationId: payload.organizationId},
+          where: {
+            id: payload.entityId,
+            organizationId: payload.organizationId,
+          },
           data: {
             status:
               statusMap[payload.decision] || ExpenseStatus.PENDING_APPROVAL,
@@ -122,14 +130,17 @@ export class WindmillCallbackUseCase {
           PENDING_REVIEW: AdjustmentStatus.PENDING,
         };
         await tx.stockAdjustment.update({
-          where: {id: payload.entityId, organizationId: payload.organizationId},
+          where: {
+            id: payload.entityId,
+            organizationId: payload.organizationId,
+          },
           data: {
             status: statusMap[payload.decision] || AdjustmentStatus.PENDING,
           },
         });
       }
 
-      return {success: true};
+      return { success: true };
     });
   }
 
@@ -141,7 +152,7 @@ export class WindmillCallbackUseCase {
     return this.prisma.client.$transaction(async tx => {
       // 1. Update Execution
       await tx.windmillExecution.updateMany({
-        where: {jobId: payload.jobId},
+        where: { jobId: payload.jobId },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,
@@ -156,7 +167,10 @@ export class WindmillCallbackUseCase {
       // 2. Business Logic
       if (payload.action === "DISPOSE") {
         await tx.batch.update({
-          where: {id: payload.batchId, organizationId: payload.organizationId},
+          where: {
+            id: payload.batchId,
+            organizationId: payload.organizationId,
+          },
           data: {
             expirationStatus: ExpirationStatus.DISPOSED,
             disposedAt: new Date(),
@@ -168,7 +182,10 @@ export class WindmillCallbackUseCase {
         });
       } else if (payload.action === "REPURPOSE") {
         await tx.batch.update({
-          where: {id: payload.batchId, organizationId: payload.organizationId},
+          where: {
+            id: payload.batchId,
+            organizationId: payload.organizationId,
+          },
           data: {
             notes: payload.notes
               ? `Repurposed: ${payload.notes}`
@@ -177,7 +194,7 @@ export class WindmillCallbackUseCase {
         });
       }
 
-      return {success: true};
+      return { success: true };
     });
   }
 }

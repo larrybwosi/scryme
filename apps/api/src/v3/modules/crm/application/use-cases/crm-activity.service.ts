@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreateCrmActivityDto} from "../dto/crm-activity.dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmActivityDto } from "../dto/crm-activity.dto";
 
 @Injectable()
 export class CrmActivityService {
@@ -12,7 +12,7 @@ export class CrmActivityService {
     dto: CreateCrmActivityDto,
   ) {
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: {id: dto.recordId, organizationId},
+      where: { id: dto.recordId, organizationId },
     });
 
     if (!record) {
@@ -34,18 +34,18 @@ export class CrmActivityService {
   async getTimeline(organizationId: string, recordId: string) {
     const [notes, activities] = await Promise.all([
       this.prisma.client.crmNote.findMany({
-        where: {recordId, organizationId},
+        where: { recordId, organizationId },
         include: {
           createdBy: {
-            select: {id: true, user: {select: {name: true, image: true}}},
+            select: { id: true, user: { select: { name: true, image: true } } },
           },
         },
       }),
       this.prisma.client.crmActivity.findMany({
-        where: {recordId, organizationId},
+        where: { recordId, organizationId },
         include: {
           member: {
-            select: {id: true, user: {select: {name: true, image: true}}},
+            select: { id: true, user: { select: { name: true, image: true } } },
           },
         },
       }),

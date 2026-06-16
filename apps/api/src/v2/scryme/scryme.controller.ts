@@ -7,9 +7,9 @@ import {
   Headers,
   NotFoundException,
 } from "@nestjs/common";
-import {ScrymeService} from "./scryme.service";
-import {AllowPublic} from "../../common/decorators/auth.decorator";
-import {PrismaService} from "../../prisma/prisma.service";
+import { ScrymeService } from "./scryme.service";
+import { AllowPublic } from "../../common/decorators/auth.decorator";
+import { PrismaService } from "../../prisma/prisma.service";
 
 @Controller("v2/scryme")
 export class ScrymeController {
@@ -33,7 +33,7 @@ export class ScrymeController {
 
     // Fetch actual organization details
     const org = await this.prisma.client.organization.findUnique({
-      where: {id: ctx.organizationId},
+      where: { id: ctx.organizationId },
     });
 
     if (!org) {

@@ -1,10 +1,14 @@
-import {Injectable, UnauthorizedException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {env} from "@repo/env";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { env } from "@repo/env";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import * as crypto from "crypto";
-import {decrypt, timingSafeMatch, provisionDeviceV3} from "@repo/shared/server";
+import {
+  decrypt,
+  timingSafeMatch,
+  provisionDeviceV3,
+} from "@repo/shared/server";
 
 @Injectable()
 export class V3AuthService {
@@ -22,8 +26,8 @@ export class V3AuthService {
 
   async validateClient(clientId: string, clientSecret: string) {
     const client = await this.prisma.client.v3ApiClient.findUnique({
-      where: {clientId},
-      include: {organization: true},
+      where: { clientId },
+      include: { organization: true },
     });
 
     if (!client || !client.isActive)
@@ -83,7 +87,7 @@ export class V3AuthService {
     payload.memberId = memberId;
     payload.type = "v3_hybrid";
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: {apiKeyId: clientId},
+      where: { apiKeyId: clientId },
     });
     if (registry) {
       payload.locationId = registry.locationId;
@@ -100,8 +104,8 @@ export class V3AuthService {
 
   private async validateLoginClient(clientId: string) {
     const client = await this.prisma.client.v3ApiClient.findUnique({
-      where: {clientId},
-      include: {organization: true},
+      where: { clientId },
+      include: { organization: true },
     });
     if (!client) throw new UnauthorizedException("Invalid client");
     return client;
@@ -112,7 +116,7 @@ export class V3AuthService {
       where: {
         organizationId,
         isActive: true,
-        pinHash: {not: null},
+        pinHash: { not: null },
       },
     });
 
@@ -127,12 +131,12 @@ export class V3AuthService {
 
   private async handleMemberCheckIn(client: any, member: any) {
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: {apiKeyId: client.id},
+      where: { apiKeyId: client.id },
     });
     if (!registry) return;
 
     const existingLog = await this.prisma.client.attendanceLog.findFirst({
-      where: {memberId: member.id, checkOutTime: null},
+      where: { memberId: member.id, checkOutTime: null },
     });
 
     if (!existingLog) {
@@ -158,7 +162,7 @@ export class V3AuthService {
       },
     });
     await this.prisma.client.member.update({
-      where: {id: memberId},
+      where: { id: memberId },
       data: {
         isCheckedIn: true,
         lastCheckInTime: new Date(),

@@ -3,9 +3,9 @@ import {
   InternalServerErrorException,
   BadGatewayException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import type {V2ApiContext} from "@repo/shared/server";
-import {CustomerService as SharedCustomerService} from "@repo/shared/server";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/server";
+import { CustomerService as SharedCustomerService } from "@repo/shared/server";
 
 @Injectable()
 export class CustomersService {
@@ -32,7 +32,7 @@ export class CustomersService {
         );
       }
 
-      const {customers, totalCount, totalPages} = result.data!;
+      const { customers, totalCount, totalPages } = result.data!;
 
       return {
         customers: customers.map((p: any) => ({
@@ -48,7 +48,7 @@ export class CustomersService {
           balance: p.balance ?? 0,
           stats: p.stats ?? [],
         })),
-        pagination: {page, limit, total: totalCount, totalPages},
+        pagination: { page, limit, total: totalCount, totalPages },
       };
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;

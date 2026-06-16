@@ -1,4 +1,4 @@
-import {ApiProperty} from "@nestjs/swagger";
+import { ApiProperty } from "@nestjs/swagger";
 import {
   IsNotEmpty,
   IsOptional,
@@ -9,21 +9,21 @@ import {
   IsEnum,
   IsObject,
 } from "class-validator";
-import {Type} from "class-transformer";
-import {AddressDto} from "../../../customers/application/dto/register-customer.dto";
+import { Type } from "class-transformer";
+import { AddressDto } from "../../../customers/application/dto/register-customer.dto";
 
 export class OrderItemDto {
-  @ApiProperty({example: "variant_123"})
+  @ApiProperty({ example: "variant_123" })
   @IsString()
   @IsNotEmpty()
   variantId: string;
 
-  @ApiProperty({example: 2})
+  @ApiProperty({ example: 2 })
   @IsNumber()
   @IsNotEmpty()
   quantity: number;
 
-  @ApiProperty({example: 15.5, required: false})
+  @ApiProperty({ example: 15.5, required: false })
   @IsNumber()
   @IsOptional()
   unitPrice?: number;
@@ -45,18 +45,18 @@ export class CreateOrderDto {
   @IsOptional()
   customerId?: string;
 
-  @ApiProperty({example: "loc_123", description: "Inventory location ID"})
+  @ApiProperty({ example: "loc_123", description: "Inventory location ID" })
   @IsString()
   @IsNotEmpty()
   locationId: string;
 
-  @ApiProperty({type: [OrderItemDto]})
+  @ApiProperty({ type: [OrderItemDto] })
   @IsArray()
-  @ValidateNested({each: true})
+  @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
 
-  @ApiProperty({type: AddressDto, required: false})
+  @ApiProperty({ type: AddressDto, required: false })
   @IsOptional()
   @IsObject()
   @ValidateNested()
@@ -71,7 +71,7 @@ export class CreateOrderDto {
   @IsOptional()
   channel?: V3TransactionChannel;
 
-  @ApiProperty({example: "Leave at the front door", required: false})
+  @ApiProperty({ example: "Leave at the front door", required: false })
   @IsString()
   @IsOptional()
   notes?: string;

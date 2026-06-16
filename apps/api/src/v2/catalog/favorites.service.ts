@@ -3,19 +3,19 @@ import {
   BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import type {V2ApiContext} from "@repo/shared/server";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/server";
 
 @Injectable()
 export class FavoritesService {
   constructor(private prisma: PrismaService) {}
 
   async getFavorites(ctx: V2ApiContext) {
-    const {organizationId, customerId} = ctx;
+    const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
     return this.prisma.client.favorite.findMany({
-      where: {organizationId, customerId},
+      where: { organizationId, customerId },
       include: {
         product: {
           include: {
@@ -29,12 +29,12 @@ export class FavoritesService {
           },
         },
       },
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
     });
   }
 
   async addFavorite(ctx: V2ApiContext, productId: string) {
-    const {organizationId, customerId} = ctx;
+    const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
     return this.prisma.client.favorite.upsert({
@@ -54,7 +54,7 @@ export class FavoritesService {
   }
 
   async removeFavorite(ctx: V2ApiContext, productId: string) {
-    const {customerId} = ctx;
+    const { customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
     try {
@@ -73,7 +73,7 @@ export class FavoritesService {
   }
 
   async isFavorite(ctx: V2ApiContext, productId: string) {
-    const {customerId} = ctx;
+    const { customerId } = ctx;
     if (!customerId) return false;
 
     const favorite = await this.prisma.client.favorite.findUnique({

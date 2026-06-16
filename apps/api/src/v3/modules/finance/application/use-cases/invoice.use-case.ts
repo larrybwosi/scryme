@@ -3,15 +3,15 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateInvoiceDto,
   UpdateInvoiceDto,
   InvoiceItemDto,
 } from "../dto/invoice.dto";
-import {DocumentService} from "@/common/documents/document.service";
-import {navariService} from "@repo/suppliers/server";
-import {Mappers} from "@repo/documents/server";
+import { DocumentService } from "@/common/documents/document.service";
+import { navariService } from "@repo/suppliers/server";
+import { Mappers } from "@repo/documents/server";
 
 @Injectable()
 export class InvoiceUseCase {
@@ -21,8 +21,8 @@ export class InvoiceUseCase {
   ) {}
 
   async createInvoice(organizationId: string, dto: CreateInvoiceDto) {
-    const {items, customer, ...invoiceData} = dto;
-    const {netTotal, totalTaxes, grandTotal} = this.calculateTotals(items);
+    const { items, customer, ...invoiceData } = dto;
+    const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items);
 
     return await this.prisma.client.invoice.create({
       data: {
@@ -33,9 +33,9 @@ export class InvoiceUseCase {
         totalTaxes,
         grandTotal,
         balanceDue: grandTotal,
-        items: {create: items},
+        items: { create: items },
       },
-      include: {items: true},
+      include: { items: true },
     });
   }
 
@@ -43,13 +43,13 @@ export class InvoiceUseCase {
     const netTotal = items.reduce((acc, item) => acc + item.amount, 0);
     const totalTaxes = items.reduce((acc, item) => acc + item.amount * 0.16, 0);
     const grandTotal = netTotal + totalTaxes;
-    return {netTotal, totalTaxes, grandTotal};
+    return { netTotal, totalTaxes, grandTotal };
   }
 
   async createInvoiceFromOrder(organizationId: string, orderId: string) {
     const order = await this.prisma.client.transaction.findFirst({
-      where: {id: orderId, organizationId},
-      include: {items: true, businessAccount: true},
+      where: { id: orderId, organizationId },
+      include: { items: true, businessAccount: true },
     });
 
     if (!order) throw new NotFoundException("Order not found");
@@ -93,15 +93,15 @@ export class InvoiceUseCase {
 
   async getInvoices(organizationId: string) {
     return await this.prisma.client.invoice.findMany({
-      where: {organizationId},
-      include: {items: true, template: true},
-      orderBy: {createdAt: "desc"},
+      where: { organizationId },
+      include: { items: true, template: true },
+      orderBy: { createdAt: "desc" },
     });
   }
 
   async getInvoiceById(organizationId: string, invoiceId: string) {
     const invoice = await this.prisma.client.invoice.findFirst({
-      where: {id: invoiceId, organizationId},
+      where: { id: invoiceId, organizationId },
       include: {
         items: true,
         template: true,
@@ -128,7 +128,7 @@ export class InvoiceUseCase {
 
       if (invoice.amountPaid !== totalPaid || invoice.status !== status) {
         return await this.prisma.client.invoice.update({
-          where: {id: invoiceId},
+          where: { id: invoiceId },
           data: {
             amountPaid: totalPaid,
             balanceDue: balanceDue,
@@ -152,15 +152,15 @@ export class InvoiceUseCase {
     invoiceId: string,
     dto: UpdateInvoiceDto,
   ) {
-    const {items, ...invoiceData} = dto;
+    const { items, ...invoiceData } = dto;
     const invoice = await this.getInvoiceById(organizationId, invoiceId);
     if (invoice.status === "PAID")
       throw new BadRequestException("Cannot update a paid invoice");
 
-    const {netTotal, totalTaxes, grandTotal} = this.calculateTotals(items);
+    const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items);
 
     return await this.prisma.client.invoice.update({
-      where: {id: invoiceId},
+      where: { id: invoiceId },
       // @ts-expect-error some error.
       data: {
         ...invoiceData,
@@ -172,7 +172,7 @@ export class InvoiceUseCase {
           create: items,
         },
       },
-      include: {items: true},
+      include: { items: true },
     });
   }
 
@@ -181,7 +181,7 @@ export class InvoiceUseCase {
     if (invoice.status === "PAID")
       throw new BadRequestException("Cannot delete a paid invoice");
     return await this.prisma.client.invoice.delete({
-      where: {id: invoiceId},
+      where: { id: invoiceId },
     });
   }
 
@@ -190,15 +190,15 @@ export class InvoiceUseCase {
     await this.handleKRACompliance(organizationId, invoice);
 
     return await this.prisma.client.invoice.update({
-      where: {id: invoiceId},
-      data: {status: "UNPAID"},
+      where: { id: invoiceId },
+      data: { status: "UNPAID" },
     });
   }
 
   private async handleKRACompliance(organizationId: string, invoice: any) {
     const org = await this.prisma.client.organization.findUnique({
-      where: {id: organizationId},
-      include: {settings: true},
+      where: { id: organizationId },
+      include: { settings: true },
     });
 
     if (
@@ -222,8 +222,8 @@ export class InvoiceUseCase {
           })),
         });
         await this.prisma.client.invoice.update({
-          where: {id: invoice.id},
-          data: {kraCompliant: true},
+          where: { id: invoice.id },
+          data: { kraCompliant: true },
         });
       } catch (error) {
         console.error("Navari ETR Generation failed:", error.message);
@@ -233,8 +233,8 @@ export class InvoiceUseCase {
 
   async getDownloadStreamDirect(invoiceId: string) {
     const invoice = await this.prisma.client.invoice.findUnique({
-      where: {id: invoiceId},
-      include: {items: true, organization: true, template: true},
+      where: { id: invoiceId },
+      include: { items: true, organization: true, template: true },
     });
     if (!invoice) throw new NotFoundException("Invoice not found");
     return this.generatePDF(invoice);
@@ -242,7 +242,7 @@ export class InvoiceUseCase {
 
   async getReceiptDownloadStream(transactionId: string) {
     const transaction = await this.prisma.client.transaction.findUnique({
-      where: {id: transactionId},
+      where: { id: transactionId },
       include: {
         items: true,
         customer: true,
@@ -296,7 +296,7 @@ export class InvoiceUseCase {
 
   async getTemplates(organizationId: string) {
     return await this.prisma.client.invoiceTemplate.findMany({
-      where: {organizationId, isActive: true},
+      where: { organizationId, isActive: true },
     });
   }
 
@@ -312,12 +312,12 @@ export class InvoiceUseCase {
 
   async getInvoiceConfig(organizationId: string) {
     let config = await this.prisma.client.invoiceConfig.findUnique({
-      where: {organizationId},
+      where: { organizationId },
     });
 
     if (!config) {
       config = await this.prisma.client.invoiceConfig.create({
-        data: {organizationId},
+        data: { organizationId },
       });
     }
 
@@ -326,7 +326,7 @@ export class InvoiceUseCase {
 
   async updateInvoiceConfig(organizationId: string, data: any) {
     return await this.prisma.client.invoiceConfig.upsert({
-      where: {organizationId},
+      where: { organizationId },
       update: data,
       create: {
         ...data,

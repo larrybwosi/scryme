@@ -4,8 +4,8 @@ import {
   BadRequestException,
   ConflictException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {FavoriteDto} from "../dto/favorite.dto";
+import { PrismaService } from "@/prisma/prisma.service";
+import { FavoriteDto } from "../dto/favorite.dto";
 
 @Injectable()
 export class FavoritesUseCase {
@@ -14,8 +14,8 @@ export class FavoritesUseCase {
   async getFavorites(organizationId: string, customerId: string) {
     if (!customerId) throw new BadRequestException("customerId is required");
     return this.prisma.client.favorite.findMany({
-      where: {organizationId, customerId},
-      include: {product: true},
+      where: { organizationId, customerId },
+      include: { product: true },
     });
   }
 
@@ -24,7 +24,7 @@ export class FavoritesUseCase {
 
     // Verify product exists and belongs to organization
     const product = await this.prisma.client.product.findFirst({
-      where: {id: dto.productId, organizationId},
+      where: { id: dto.productId, organizationId },
     });
 
     if (!product) throw new NotFoundException("Product not found");

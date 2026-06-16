@@ -1,7 +1,7 @@
-import {getDocumentStream} from "../documents";
-import {prisma} from "@repo/db";
+import { getDocumentStream } from "../documents";
+import { prisma } from "@repo/db";
 import * as renderer from "@react-pdf/renderer";
-import {describe, expect, it, vi} from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@repo/db", () => {
   const mockFindFirst = vi.fn();
@@ -41,8 +41,8 @@ describe("Documents Service", () => {
       id: "txn_1",
       number: "INV-001",
       createdAt: new Date(),
-      organization: {settings: {}},
-      customer: {addresses: []},
+      organization: { settings: {} },
+      customer: { addresses: [] },
       items: [],
       payments: [],
       location: {},

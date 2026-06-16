@@ -1,8 +1,8 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RecordService, SchemaService} from "@repo/crm/server";
-import {CrmActivityService} from "./crm-activity.service";
-import {RedisService} from "../redis/redis.service";
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RecordService, SchemaService } from "@repo/crm/server";
+import { CrmActivityService } from "./crm-activity.service";
+import { RedisService } from "../redis/redis.service";
 
 @Injectable()
 export class ZitadelCustomerService {

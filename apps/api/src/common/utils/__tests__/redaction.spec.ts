@@ -1,4 +1,4 @@
-import {redactSensitiveData} from "../redaction";
+import { redactSensitiveData } from "../redaction";
 
 describe("redactSensitiveData", () => {
   it("should redact sensitive keys at the top level", () => {
@@ -35,8 +35,8 @@ describe("redactSensitiveData", () => {
 
   it("should redact sensitive keys in arrays", () => {
     const data = [
-      {id: 1, secret: "s1"},
-      {id: 2, password: "p2"},
+      { id: 1, secret: "s1" },
+      { id: 2, password: "p2" },
     ];
     const redacted = redactSensitiveData(data);
     expect(redacted[0].secret).toBe("[REDACTED]");

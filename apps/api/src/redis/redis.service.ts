@@ -1,7 +1,7 @@
-import {Injectable, OnModuleInit} from "@nestjs/common";
-import {Redis} from "ioredis";
-import {Redis as UpstashRedis} from "@upstash/redis";
-import {env} from "@repo/env";
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Redis } from "ioredis";
+import { Redis as UpstashRedis } from "@upstash/redis";
+import { env } from "@repo/env";
 
 export interface IRedisClient {
   get: <T>(key: string) => Promise<T | null>;
@@ -45,7 +45,7 @@ export class RedisService implements OnModuleInit {
         setex: async <T>(key: string, ttl: number, value: T) => {
           const stringValue =
             typeof value === "string" ? value : JSON.stringify(value);
-          await upstash.set(key, stringValue, {ex: ttl});
+          await upstash.set(key, stringValue, { ex: ttl });
         },
         del: (...keys: string[]) => upstash.del(...keys),
         keys: (pattern: string) => upstash.keys(pattern),
@@ -59,7 +59,7 @@ export class RedisService implements OnModuleInit {
         lrange: (key: string, start: number, stop: number) =>
           upstash.lrange(key, start, stop),
         hset: (key: string, field: string, value: string) =>
-          upstash.hset(key, {[field]: value}),
+          upstash.hset(key, { [field]: value }),
         hdel: (key: string, ...fields: string[]) =>
           upstash.hdel(key, ...fields),
         hgetall: (key: string) =>

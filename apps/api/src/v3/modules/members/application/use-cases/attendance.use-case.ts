@@ -3,13 +3,13 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CheckInDto,
   CheckOutDto,
   AttendanceQueryDto,
 } from "../dto/attendance.dto";
-import {AuditLogAction, AuditEntityType} from "@repo/db";
+import { AuditLogAction, AuditEntityType } from "@repo/db";
 
 @Injectable()
 export class AttendanceUseCase {
@@ -26,7 +26,7 @@ export class AttendanceUseCase {
     } = query;
     const skip = (page - 1) * limit;
 
-    const where: any = {organizationId};
+    const where: any = { organizationId };
     if (memberId) where.memberId = memberId;
     if (locationId) where.checkInLocationId = locationId;
     if (startDate || endDate) {
@@ -36,29 +36,29 @@ export class AttendanceUseCase {
     }
 
     const [total, items] = await Promise.all([
-      this.prisma.client.attendanceLog.count({where}),
+      this.prisma.client.attendanceLog.count({ where }),
       this.prisma.client.attendanceLog.findMany({
         where,
         include: {
-          member: {include: {user: {select: {name: true}}}},
-          checkInLocation: {select: {name: true}},
-          checkOutLocation: {select: {name: true}},
+          member: { include: { user: { select: { name: true } } } },
+          checkInLocation: { select: { name: true } },
+          checkOutLocation: { select: { name: true } },
         },
         skip,
         take: limit,
-        orderBy: {checkInTime: "desc"},
+        orderBy: { checkInTime: "desc" },
       }),
     ]);
 
     return {
       items,
-      meta: {total, page, limit, totalPages: Math.ceil(total / limit)},
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
   async checkIn(organizationId: string, memberId: string, dto: CheckInDto) {
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: {memberId, checkOutTime: null},
+      where: { memberId, checkOutTime: null },
     });
 
     if (activeLog) {
@@ -77,7 +77,7 @@ export class AttendanceUseCase {
       });
 
       await tx.member.update({
-        where: {id: memberId},
+        where: { id: memberId },
         data: {
           isCheckedIn: true,
           lastCheckInTime: new Date(),
@@ -93,7 +93,7 @@ export class AttendanceUseCase {
 
   async checkOut(organizationId: string, memberId: string, dto: CheckOutDto) {
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: {memberId, checkOutTime: null},
+      where: { memberId, checkOutTime: null },
     });
 
     if (!activeLog) {
@@ -107,7 +107,7 @@ export class AttendanceUseCase {
 
     return this.prisma.client.$transaction(async tx => {
       const log = await tx.attendanceLog.update({
-        where: {id: activeLog.id},
+        where: { id: activeLog.id },
         data: {
           checkOutTime,
           checkOutLocationId: dto.locationId || activeLog.checkInLocationId,
@@ -117,7 +117,7 @@ export class AttendanceUseCase {
       });
 
       await tx.member.update({
-        where: {id: memberId},
+        where: { id: memberId },
         data: {
           isCheckedIn: false,
           currentCheckInLocationId: null,
@@ -132,7 +132,7 @@ export class AttendanceUseCase {
 
   async getMemberStatus(organizationId: string, memberId: string) {
     const member = await this.prisma.client.member.findUnique({
-      where: {id: memberId, organizationId},
+      where: { id: memberId, organizationId },
       select: {
         id: true,
         status: true,

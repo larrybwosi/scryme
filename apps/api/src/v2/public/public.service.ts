@@ -5,7 +5,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {verifyDocumentToken} from "@repo/shared/server";
+import { verifyDocumentToken } from "@repo/shared/server";
 
 @Injectable()
 export class PublicService {
@@ -27,7 +27,7 @@ export class PublicService {
     }
 
     try {
-      const {getDocumentStream} =
+      const { getDocumentStream } =
         await import("@/lib/api/v2/services/documents");
 
       const result = await getDocumentStream(

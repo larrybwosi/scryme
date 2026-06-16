@@ -1,8 +1,8 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {InventoryService} from "../inventory.service";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ApiRealtimeService} from "../../../common/services/realtime.service";
-import {describe, it, expect, beforeEach, vi} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { InventoryService } from "../inventory.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ApiRealtimeService } from "../../../common/services/realtime.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("InventoryService", () => {
   let service: InventoryService;
@@ -38,8 +38,8 @@ describe("InventoryService", () => {
 
   describe("getInventory", () => {
     it("should return paginated inventory data", async () => {
-      const ctx = {organizationId: "org-1"} as any;
-      const query = {page: 1, limit: 10};
+      const ctx = { organizationId: "org-1" } as any;
+      const query = { page: 1, limit: 10 };
 
       const mockStocks = [
         {
@@ -49,9 +49,9 @@ describe("InventoryService", () => {
           variant: {
             id: "v1",
             sku: "SKU1",
-            product: {id: "p1", name: "Product 1"},
+            product: { id: "p1", name: "Product 1" },
           },
-          location: {id: "l1", name: "Location 1"},
+          location: { id: "l1", name: "Location 1" },
         },
       ];
 

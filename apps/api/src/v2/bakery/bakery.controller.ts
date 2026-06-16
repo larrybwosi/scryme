@@ -11,15 +11,15 @@ import {
   Res,
   UsePipes,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {BakeryService} from "./bakery.service";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { BakeryService } from "./bakery.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
 import {
   RequirePermission,
   AllowPublic,
 } from "../../common/decorators/auth.decorator";
-import type {V2ApiContext} from "@repo/shared/server";
-import {ZodValidationPipe} from "../../common/pipes/zod-validation.pipe";
+import type { V2ApiContext } from "@repo/shared/server";
+import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import {
   CreateRecipeSchema,
   UpdateRecipeSchema,
@@ -405,7 +405,7 @@ export class BakeryController {
 
   @AllowPublic()
   @Get("update/:target/:current_version")
-  @ApiOperation({summary: "Get latest update for Bakery app"})
+  @ApiOperation({ summary: "Get latest update for Bakery app" })
   async getUpdate(
     @Param("target") target: string,
     @Param("current_version") currentVersion: string,

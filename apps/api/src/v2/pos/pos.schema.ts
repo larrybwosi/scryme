@@ -1,5 +1,5 @@
-import {z} from "zod";
-import {StockRequestPriority} from "@repo/db";
+import { z } from "zod";
+import { StockRequestPriority } from "@repo/db";
 
 export const CheckInSchema = z.object({
   cardId: z.string().min(1, "Card ID is required"),

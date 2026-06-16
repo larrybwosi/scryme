@@ -9,14 +9,14 @@ import {
   Delete,
   StreamableFile,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {InventoryService} from "./inventory.service";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
-import {RequirePermission} from "../../common/decorators/auth.decorator";
-import type {V2ApiContext} from "@repo/shared/server";
-import {DocumentService} from "../../common/documents/document.service";
-import {PurchaseOrderUseCase} from "../../v3/modules/stocking/application/use-cases/purchase-order.use-case";
-import {StockTransferUseCase} from "../../v3/modules/stocking/application/use-cases/stock-transfer.use-case";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { InventoryService } from "./inventory.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import { RequirePermission } from "../../common/decorators/auth.decorator";
+import type { V2ApiContext } from "@repo/shared/server";
+import { DocumentService } from "../../common/documents/document.service";
+import { PurchaseOrderUseCase } from "../../v3/modules/stocking/application/use-cases/purchase-order.use-case";
+import { StockTransferUseCase } from "../../v3/modules/stocking/application/use-cases/stock-transfer.use-case";
 
 @ApiTags("Inventory")
 @Controller("inventory")
@@ -149,21 +149,21 @@ export class InventoryController {
 
   @Get("requests")
   @RequirePermission("product:view:stock_levels")
-  @ApiOperation({summary: "Get stock requests"})
+  @ApiOperation({ summary: "Get stock requests" })
   async getStockRequests(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.inventoryService.getStockRequests(ctx, query);
   }
 
   @Get("transfers")
   @RequirePermission("product:view:stock_levels")
-  @ApiOperation({summary: "Get stock transfers"})
+  @ApiOperation({ summary: "Get stock transfers" })
   async getStockTransfers(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.inventoryService.getStockTransfers(ctx, query);
   }
 
   @Get("requests/:id/download")
   @RequirePermission("product:view:stock_levels")
-  @ApiOperation({summary: "Download stock request PDF"})
+  @ApiOperation({ summary: "Download stock request PDF" })
   async downloadStockRequest(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -197,7 +197,7 @@ export class InventoryController {
 
   @Post("transfers/:id/approve")
   @RequirePermission("product:manage:stock")
-  @ApiOperation({summary: "Approve a stock transfer"})
+  @ApiOperation({ summary: "Approve a stock transfer" })
   async approveStockTransfer(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -211,7 +211,7 @@ export class InventoryController {
 
   @Post("transfers/:id/ship")
   @RequirePermission("product:manage:stock")
-  @ApiOperation({summary: "Ship a stock transfer"})
+  @ApiOperation({ summary: "Ship a stock transfer" })
   async shipStockTransfer(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -227,7 +227,7 @@ export class InventoryController {
 
   @Post("transfers/:id/receive")
   @RequirePermission("product:manage:stock")
-  @ApiOperation({summary: "Receive a stock transfer"})
+  @ApiOperation({ summary: "Receive a stock transfer" })
   async receiveStockTransfer(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -243,7 +243,7 @@ export class InventoryController {
 
   @Post("purchases/:id/approve")
   @RequirePermission("product:manage:stock")
-  @ApiOperation({summary: "Approve a purchase order"})
+  @ApiOperation({ summary: "Approve a purchase order" })
   async approvePurchaseOrder(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -257,7 +257,7 @@ export class InventoryController {
 
   @Post("purchases/:id/receive")
   @RequirePermission("product:manage:stock")
-  @ApiOperation({summary: "Receive a purchase order"})
+  @ApiOperation({ summary: "Receive a purchase order" })
   async receivePurchaseOrder(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -273,7 +273,7 @@ export class InventoryController {
 
   @Get("transfers/:id/download")
   @RequirePermission("product:view:stock_levels")
-  @ApiOperation({summary: "Download stock transfer PDF"})
+  @ApiOperation({ summary: "Download stock transfer PDF" })
   async downloadStockTransfer(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,

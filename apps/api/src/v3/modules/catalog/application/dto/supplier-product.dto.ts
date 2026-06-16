@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsNumber,
   IsOptional,
@@ -8,12 +8,12 @@ import {
 } from "class-validator";
 
 export class UpdateSupplierProductDto {
-  @ApiPropertyOptional({description: "New cost price"})
+  @ApiPropertyOptional({ description: "New cost price" })
   @IsNumber()
   @IsOptional()
   costPrice?: number;
 
-  @ApiPropertyOptional({description: "Supplier-specific SKU"})
+  @ApiPropertyOptional({ description: "Supplier-specific SKU" })
   @IsString()
   @IsOptional()
   supplierSku?: string;

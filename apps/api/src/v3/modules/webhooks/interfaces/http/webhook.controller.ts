@@ -16,15 +16,15 @@ import {
   ApiResponse,
 } from "@nestjs/swagger";
 import * as crypto from "crypto";
-import {V3AuthGuard} from "@/v3/common/guards/v3-auth.guard";
-import {PrismaService} from "@/prisma/prisma.service";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateWebhookDto,
   WebhookResponseDto,
 } from "../../application/dto/webhook.dto";
-import {StandardResponseInterceptor} from "@/v3/common/interceptors/standard-response.interceptor";
-import {ApiErrorResponseDto} from "@/v3/common/dto/response.dto";
-import {MultiTenancyGuard} from "@/v3/common/guards/multi-tenancy.guard";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()
@@ -50,7 +50,7 @@ export class WebhookController {
     description: "Invalid input",
   })
   async create(@Req() req: any, @Body() body: CreateWebhookDto) {
-    const {organizationId, clientId} = req.v3Context;
+    const { organizationId, clientId } = req.v3Context;
     // Generate a secure random secret using crypto instead of Math.random()
     const secret = "whsec_" + crypto.randomBytes(24).toString("hex");
 
@@ -76,7 +76,7 @@ export class WebhookController {
   })
   async list(@Req() req: any) {
     return this.prisma.client.webhookSubscription.findMany({
-      where: {organizationId: req.v3Context.organizationId},
+      where: { organizationId: req.v3Context.organizationId },
     });
   }
 
@@ -85,17 +85,17 @@ export class WebhookController {
     summary: "Delete a webhook",
     operationId: "Webhooks_Delete",
   })
-  @ApiResponse({status: 200, description: "Webhook deleted"})
+  @ApiResponse({ status: 200, description: "Webhook deleted" })
   async delete(
     @Req() req: any,
     @Param("id") id: string,
-  ): Promise<{count: number}> {
+  ): Promise<{ count: number }> {
     const result = await this.prisma.client.webhookSubscription.deleteMany({
       where: {
         id,
         organizationId: req.v3Context.organizationId,
       },
     });
-    return {count: result.count};
+    return { count: result.count };
   }
 }

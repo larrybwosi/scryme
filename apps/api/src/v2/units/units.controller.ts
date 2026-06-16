@@ -8,14 +8,14 @@ import {
   Param,
   Query,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {UnitsService} from "./units.service";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { UnitsService } from "./units.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
 import {
   RequirePermission,
   AllowPublic,
 } from "../../common/decorators/auth.decorator";
-import type {V2ApiContext} from "@repo/shared/server";
+import type { V2ApiContext } from "@repo/shared/server";
 
 @ApiTags("Units")
 @Controller("units")
@@ -70,7 +70,7 @@ export class UnitsController {
 
   @Get("sync")
   @RequirePermission("product:read:all")
-  @ApiOperation({summary: "Delta sync units and conversions"})
+  @ApiOperation({ summary: "Delta sync units and conversions" })
   async syncUnits(
     @v2Context() ctx: V2ApiContext,
     @Query("lastSync") lastSync?: string,

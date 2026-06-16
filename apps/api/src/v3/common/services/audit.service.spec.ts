@@ -1,5 +1,5 @@
-import {describe, it, expect, vi} from "vitest";
-import {AuditService, AuditLog} from "./audit.service";
+import { describe, it, expect, vi } from "vitest";
+import { AuditService, AuditLog } from "./audit.service";
 
 describe("AuditService", () => {
   it("should log audit entries", async () => {

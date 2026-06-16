@@ -8,15 +8,15 @@ import {
   Res,
   UsePipes,
 } from "@nestjs/common";
-import {env} from "@repo/env";
-import {ApiTags, ApiOperation, ApiSecurity} from "@nestjs/swagger";
-import {PosService} from "./pos.service";
-import {PosSaleService} from "./pos-sale.service";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
-import {type V2ApiContext} from "@repo/shared/server";
-import {Permissions} from "../../common/decorators/auth.decorator";
-import {FastifyReply} from "fastify";
-import {ZodValidationPipe} from "../../common/pipes/zod-validation.pipe";
+import { env } from "@repo/env";
+import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
+import { PosService } from "./pos.service";
+import { PosSaleService } from "./pos-sale.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import { type V2ApiContext } from "@repo/shared/server";
+import { Permissions } from "../../common/decorators/auth.decorator";
+import { FastifyReply } from "fastify";
+import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
 import {
   CheckInSchema,
   CheckOutSchema,
@@ -39,7 +39,7 @@ export class PosController {
   ) {}
 
   @Post("check-in")
-  @ApiOperation({summary: "Member check-in"})
+  @ApiOperation({ summary: "Member check-in" })
   @UsePipes(new ZodValidationPipe(CheckInSchema))
   async checkIn(
     @v2Context() ctx: V2ApiContext,
@@ -61,42 +61,42 @@ export class PosController {
   }
 
   @Post("check-out")
-  @ApiOperation({summary: "Member check-out"})
+  @ApiOperation({ summary: "Member check-out" })
   @UsePipes(new ZodValidationPipe(CheckOutSchema))
   async checkOut(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.checkOut(ctx, body);
   }
 
   @Get("locations")
-  @ApiOperation({summary: "List active locations"})
+  @ApiOperation({ summary: "List active locations" })
   async listLocations(@v2Context() ctx: V2ApiContext) {
     return this.posService.listLocations(ctx);
   }
 
   @Get("products")
   @Permissions("pos:product:read")
-  @ApiOperation({summary: "Get POS products"})
+  @ApiOperation({ summary: "Get POS products" })
   async getProducts(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.getProducts(ctx, query);
   }
 
   @Get("sale")
   @Permissions("pos:sale:read")
-  @ApiOperation({summary: "List sales history"})
+  @ApiOperation({ summary: "List sales history" })
   async getSalesHistory(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.getTransactions(ctx, query);
   }
 
   @Get("transactions")
   @Permissions("pos:sale:read")
-  @ApiOperation({summary: "List transactions (alias)"})
+  @ApiOperation({ summary: "List transactions (alias)" })
   async getTransactions(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.getTransactions(ctx, query);
   }
 
   @Post("sale")
   @Permissions("pos:sale:create")
-  @ApiOperation({summary: "Process a new sale"})
+  @ApiOperation({ summary: "Process a new sale" })
   async processSale(
     @v2Context() ctx: V2ApiContext,
     @Body() body: any,
@@ -111,20 +111,20 @@ export class PosController {
 
   @Post("sale/payments")
   @Permissions("pos:sale:update")
-  @ApiOperation({summary: "Record payment for a sale"})
+  @ApiOperation({ summary: "Record payment for a sale" })
   @UsePipes(new ZodValidationPipe(RecordPaymentSchema))
   async recordPayment(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.recordPayment(ctx, body);
   }
 
   @Get("incoming")
-  @ApiOperation({summary: "List incoming shipments"})
+  @ApiOperation({ summary: "List incoming shipments" })
   async getIncoming(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.getIncoming(ctx, query);
   }
 
   @Post("transaction/scan")
-  @ApiOperation({summary: "Scan transaction QR"})
+  @ApiOperation({ summary: "Scan transaction QR" })
   async scanTransaction(
     @v2Context() ctx: V2ApiContext,
     @Body("code") code: string,
@@ -133,21 +133,21 @@ export class PosController {
   }
 
   @Post("ably-auth")
-  @ApiOperation({summary: "Ably realtime auth"})
+  @ApiOperation({ summary: "Ably realtime auth" })
   async ablyAuth(@v2Context() ctx: V2ApiContext) {
     return this.posService.ablyAuth(ctx);
   }
 
   @Get("inventory")
   @Permissions("pos:product:read")
-  @ApiOperation({summary: "Get POS inventory"})
+  @ApiOperation({ summary: "Get POS inventory" })
   async getInventory(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.getInventory(ctx, query);
   }
 
   @Post("inventory")
   @Permissions("pos:product:update")
-  @ApiOperation({summary: "Adjust stock levels"})
+  @ApiOperation({ summary: "Adjust stock levels" })
   @UsePipes(new ZodValidationPipe(AdjustStockSchema))
   async adjustStock(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.adjustStock(ctx, body);
@@ -155,13 +155,13 @@ export class PosController {
 
   @Get("sync")
   @Permissions("pos:sync")
-  @ApiOperation({summary: "Full or delta POS sync"})
+  @ApiOperation({ summary: "Full or delta POS sync" })
   async sync(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.sync(ctx, query);
   }
 
   @Get("customers")
-  @ApiOperation({summary: "POS customer delta sync"})
+  @ApiOperation({ summary: "POS customer delta sync" })
   async getCustomersDelta(
     @v2Context() ctx: V2ApiContext,
     @Query("lastSync") lastSync: string,
@@ -170,14 +170,14 @@ export class PosController {
   }
 
   @Post("customers")
-  @ApiOperation({summary: "Create POS customer"})
+  @ApiOperation({ summary: "Create POS customer" })
   @UsePipes(new ZodValidationPipe(CreateCustomerSchema))
   async createCustomer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createCustomer(ctx, body);
   }
 
   @Post("deliveries/dispatch")
-  @ApiOperation({summary: "Dispatch delivery"})
+  @ApiOperation({ summary: "Dispatch delivery" })
   async dispatchDelivery(
     @v2Context() ctx: V2ApiContext,
     @Query("transactionId") transactionId: string,
@@ -187,27 +187,27 @@ export class PosController {
   }
 
   @Post("deliveries/reconcile-pod")
-  @ApiOperation({summary: "Reconcile delivery (POD)"})
+  @ApiOperation({ summary: "Reconcile delivery (POD)" })
   async reconcileDelivery(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     const proofImage = body.proofImage?.value;
     return this.posService.reconcileDelivery(ctx, body, proofImage);
   }
 
   @Get("stock-requests")
-  @ApiOperation({summary: "List stock requests"})
+  @ApiOperation({ summary: "List stock requests" })
   async listStockRequests(@v2Context() ctx: V2ApiContext) {
     return this.posService.listStockRequests(ctx);
   }
 
   @Post("stock-requests")
-  @ApiOperation({summary: "Create stock request"})
+  @ApiOperation({ summary: "Create stock request" })
   @UsePipes(new ZodValidationPipe(CreateStockRequestSchema))
   async createStockRequest(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockRequest(ctx, body);
   }
 
   @Post("stock-requests/:id/cancel")
-  @ApiOperation({summary: "Cancel stock request"})
+  @ApiOperation({ summary: "Cancel stock request" })
   async cancelStockRequest(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -216,13 +216,13 @@ export class PosController {
   }
 
   @Get("pricing")
-  @ApiOperation({summary: "Get POS pricing data"})
+  @ApiOperation({ summary: "Get POS pricing data" })
   async getPricing(@v2Context() ctx: V2ApiContext) {
     return this.posService.getPricing(ctx);
   }
 
   @Get("pricing/sync")
-  @ApiOperation({summary: "Sync POS pricing data"})
+  @ApiOperation({ summary: "Sync POS pricing data" })
   async syncPricing(
     @v2Context() ctx: V2ApiContext,
     @Query("lastSync") lastSync: string,
@@ -231,26 +231,26 @@ export class PosController {
   }
 
   @Post("shifts/sync")
-  @ApiOperation({summary: "Sync POS shifts"})
+  @ApiOperation({ summary: "Sync POS shifts" })
   @UsePipes(new ZodValidationPipe(ShiftSyncSchema))
   async syncShifts(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.syncShifts(ctx, body);
   }
 
   @Get("waybill/:id")
-  @ApiOperation({summary: "Get transaction waybill"})
+  @ApiOperation({ summary: "Get transaction waybill" })
   async getWaybill(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.posService.getWaybill(ctx, id);
   }
 
   @Get("inventory/requests")
-  @ApiOperation({summary: "List inventory requests"})
+  @ApiOperation({ summary: "List inventory requests" })
   async listInventoryRequests(@v2Context() ctx: V2ApiContext) {
     return this.posService.listStockRequests(ctx);
   }
 
   @Post("inventory/requests")
-  @ApiOperation({summary: "Create inventory request"})
+  @ApiOperation({ summary: "Create inventory request" })
   @UsePipes(new ZodValidationPipe(CreateStockRequestSchema))
   async createInventoryRequest(
     @v2Context() ctx: V2ApiContext,
@@ -260,14 +260,14 @@ export class PosController {
   }
 
   @Post("inventory/process")
-  @ApiOperation({summary: "Process inventory adjustments"})
+  @ApiOperation({ summary: "Process inventory adjustments" })
   @UsePipes(new ZodValidationPipe(AdjustStockSchema))
   async processInventory(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.adjustStock(ctx, body);
   }
 
   @Post("purchases/:id/receive")
-  @ApiOperation({summary: "Receive purchase order"})
+  @ApiOperation({ summary: "Receive purchase order" })
   async receivePurchase(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -277,7 +277,7 @@ export class PosController {
   }
 
   @Post("inventory/transfers/:id/receive")
-  @ApiOperation({summary: "Receive stock transfer"})
+  @ApiOperation({ summary: "Receive stock transfer" })
   async receiveTransfer(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -287,19 +287,19 @@ export class PosController {
   }
 
   @Post("orders")
-  @ApiOperation({summary: "Create order"})
+  @ApiOperation({ summary: "Create order" })
   async createOrder(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posSaleService.handleOrder(ctx, body);
   }
 
   @Get("drivers")
-  @ApiOperation({summary: "List drivers"})
+  @ApiOperation({ summary: "List drivers" })
   async getDrivers(@v2Context() ctx: V2ApiContext) {
     return this.posService.getDrivers(ctx);
   }
 
   @Post("inventory/transfers")
-  @ApiOperation({summary: "Create stock transfer"})
+  @ApiOperation({ summary: "Create stock transfer" })
   @UsePipes(new ZodValidationPipe(CreateStockTransferSchema))
   async createStockTransfer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockTransfer(ctx, body);

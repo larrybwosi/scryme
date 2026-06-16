@@ -1,7 +1,7 @@
-import {Processor, WorkerHost} from "@nestjs/bullmq";
-import {Job} from "bullmq";
-import {Logger} from "@nestjs/common";
-import {ZitadelCustomerService} from "./zitadel-customer.service";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Job } from "bullmq";
+import { Logger } from "@nestjs/common";
+import { ZitadelCustomerService } from "./zitadel-customer.service";
 
 @Processor("zitadel-sync")
 export class ZitadelProcessor extends WorkerHost {
@@ -12,7 +12,7 @@ export class ZitadelProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    const {organizationId, zitadelUserId, jwtPayload} = job.data;
+    const { organizationId, zitadelUserId, jwtPayload } = job.data;
     this.logger.log(
       `Processing Zitadel sync for user ${zitadelUserId} in org ${organizationId}`,
     );

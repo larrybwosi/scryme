@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CreateCrmNoteDto} from "../dto/crm.dto";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmNoteDto } from "../dto/crm.dto";
 
 @Injectable()
 export class CrmNoteService {
@@ -13,7 +13,7 @@ export class CrmNoteService {
   ) {
     // Verify record exists and belongs to org
     const record = await this.prisma.client.crmRecord.findFirst({
-      where: {id: dto.recordId, organizationId},
+      where: { id: dto.recordId, organizationId },
     });
 
     if (!record) {
@@ -35,8 +35,8 @@ export class CrmNoteService {
 
   async getNotesForRecord(organizationId: string, recordId: string) {
     return this.prisma.client.crmNote.findMany({
-      where: {recordId, organizationId},
-      orderBy: {timelineDate: "desc"},
+      where: { recordId, organizationId },
+      orderBy: { timelineDate: "desc" },
       include: {
         createdBy: {
           select: {

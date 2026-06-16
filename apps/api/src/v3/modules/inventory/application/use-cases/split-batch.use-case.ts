@@ -4,8 +4,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {IStockBatchRepository} from "../../domain/repositories/stock-batch-repository.interface";
-import {PrismaService} from "@/prisma/prisma.service";
+import { IStockBatchRepository } from "../../domain/repositories/stock-batch-repository.interface";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class SplitBatchUseCase {
@@ -19,7 +19,7 @@ export class SplitBatchUseCase {
     organizationId: string,
     batchId: string,
     memberId: string,
-    splits: {quantity: number; notes?: string}[],
+    splits: { quantity: number; notes?: string }[],
   ) {
     const parentBatch = await this.stockBatchRepository.findById(batchId);
 
@@ -38,9 +38,9 @@ export class SplitBatchUseCase {
     return this.prisma.client.$transaction(async tx => {
       // 1. Deduct from parent
       await tx.stockBatch.update({
-        where: {id: batchId},
+        where: { id: batchId },
         data: {
-          currentQuantity: {decrement: totalSplitQuantity},
+          currentQuantity: { decrement: totalSplitQuantity },
         },
       });
 

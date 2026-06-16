@@ -1,5 +1,5 @@
-import {Injectable} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class B2BUseCase {
@@ -36,7 +36,7 @@ export class B2BUseCase {
         businessAccountId: businessAccountId || undefined,
         type: "POS_SALE" as any, // Using existing TransactionType
       },
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -50,7 +50,7 @@ export class B2BUseCase {
       include: {
         items: true,
       },
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -65,7 +65,7 @@ export class B2BUseCase {
     );
 
     const location = await this.prisma.client.inventoryLocation.findFirst({
-      where: {organizationId, isActive: true},
+      where: { organizationId, isActive: true },
     });
 
     if (!location) {
@@ -90,8 +90,8 @@ export class B2BUseCase {
             data.items.map(async (item: any) => {
               const variant =
                 await this.prisma.client.productVariant.findUnique({
-                  where: {id: item.variantId},
-                  include: {product: true},
+                  where: { id: item.variantId },
+                  include: { product: true },
                 });
 
               if (!variant)

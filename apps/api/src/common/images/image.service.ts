@@ -1,5 +1,5 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {storageService} from "@repo/shared/server";
+import { Injectable, Logger } from "@nestjs/common";
+import { storageService } from "@repo/shared/server";
 import sharp from "sharp";
 import axios from "axios";
 
@@ -56,14 +56,14 @@ export class ImageService {
       const quality = options.quality || 75;
 
       if (format === "webp") {
-        transformer = transformer.webp({quality});
+        transformer = transformer.webp({ quality });
       } else if (format === "jpeg" || (format as string) === "jpg") {
-        transformer = transformer.jpeg({quality});
+        transformer = transformer.jpeg({ quality });
       } else if (format === "png") {
-        transformer = transformer.png({quality});
+        transformer = transformer.png({ quality });
       }
 
-      const {data, info} = await transformer.toBuffer({
+      const { data, info } = await transformer.toBuffer({
         resolveWithObject: true,
       });
 

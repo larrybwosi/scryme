@@ -1,6 +1,6 @@
-import {Injectable} from "@nestjs/common";
-import {RedisService} from "../../redis/redis.service";
-import {PresenceMember} from "@repo/shared";
+import { Injectable } from "@nestjs/common";
+import { RedisService } from "../../redis/redis.service";
+import { PresenceMember } from "@repo/shared";
 
 @Injectable()
 export class RealtimeRedisService {
@@ -19,7 +19,7 @@ export class RealtimeRedisService {
   // History with atomic LPUSH/LTRIM
   async saveMessage(channel: string, event: string, data: any) {
     const key = `${this.HISTORY_PREFIX}${channel}`;
-    const message = JSON.stringify({event, data, timestamp: Date.now()});
+    const message = JSON.stringify({ event, data, timestamp: Date.now() });
 
     await this.redis.lpush(key, message);
     await this.redis.ltrim(key, 0, this.MAX_HISTORY_ITEMS - 1);

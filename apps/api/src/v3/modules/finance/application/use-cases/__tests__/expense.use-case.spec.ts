@@ -1,10 +1,10 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {ExpenseUseCase} from "../expense.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
-import {ExpenseStatus, PettyCashTransactionType} from "@repo/db";
-import {NotFoundException, BadRequestException} from "@nestjs/common";
-import {CreateExpenseDto, PaymentMethod} from "../../dto/finance.dto";
-import {vi, describe, it, expect, beforeEach} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { ExpenseUseCase } from "../expense.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ExpenseStatus, PettyCashTransactionType } from "@repo/db";
+import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { CreateExpenseDto, PaymentMethod } from "../../dto/finance.dto";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 describe("ExpenseUseCase", () => {
   let useCase: ExpenseUseCase;
@@ -43,7 +43,7 @@ describe("ExpenseUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExpenseUseCase,
-        {provide: PrismaService, useValue: mockPrismaService},
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
@@ -106,7 +106,7 @@ describe("ExpenseUseCase", () => {
     });
 
     it("should handle petty cash decrement when approved", async () => {
-      const pettyDto = {...dto, pettyCashFundId: "fund-1"};
+      const pettyDto = { ...dto, pettyCashFundId: "fund-1" };
       mockPrismaClient.organization.findUnique.mockResolvedValue({
         expenseApprovalThreshold: 500,
         expenseReceiptThreshold: 1000,
@@ -119,7 +119,7 @@ describe("ExpenseUseCase", () => {
       });
       mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue({
         id: "fund-1",
-        amount: {lessThan: () => false}, // Mocking Decimal.lessThan
+        amount: { lessThan: () => false }, // Mocking Decimal.lessThan
       });
 
       await useCase.createExpense(orgId, memberId, pettyDto);
@@ -156,7 +156,7 @@ describe("ExpenseUseCase", () => {
       });
       mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue({
         id: "fund-1",
-        amount: {lessThan: () => false},
+        amount: { lessThan: () => false },
       });
 
       const result = await useCase.approveExpense(orgId, memberId, expenseId);
@@ -164,8 +164,8 @@ describe("ExpenseUseCase", () => {
       expect(result.status).toBe(ExpenseStatus.APPROVED);
       expect(mockPrismaClient.expense.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {id: expenseId},
-          data: expect.objectContaining({status: ExpenseStatus.APPROVED}),
+          where: { id: expenseId },
+          data: expect.objectContaining({ status: ExpenseStatus.APPROVED }),
         }),
       );
       expect(mockPrismaClient.pettyCashFund.update).toHaveBeenCalled();

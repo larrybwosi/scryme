@@ -1,4 +1,4 @@
-import {StockBatchEntity} from "../entities/stock-batch.entity";
+import { StockBatchEntity } from "../entities/stock-batch.entity";
 
 export interface IStockBatchRepository {
   findById(id: string): Promise<StockBatchEntity | null>;

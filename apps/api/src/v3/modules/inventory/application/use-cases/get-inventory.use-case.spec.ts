@@ -1,8 +1,8 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {Test, TestingModule} from "@nestjs/testing";
-import {IInventoryRepository} from "../../domain/repositories/inventory-repository.interface";
-import {GetInventoryUseCase} from "./get-inventory.use-case";
-import {InventoryItem} from "../../domain/entities/inventory-item.entity";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { IInventoryRepository } from "../../domain/repositories/inventory-repository.interface";
+import { GetInventoryUseCase } from "./get-inventory.use-case";
+import { InventoryItem } from "../../domain/entities/inventory-item.entity";
 
 describe("GetInventoryUseCase", () => {
   let useCase: GetInventoryUseCase;
@@ -32,7 +32,7 @@ describe("GetInventoryUseCase", () => {
       paginatedResponse,
     );
 
-    const result = await useCase.execute(orgId, {limit: 20, offset: 0});
+    const result = await useCase.execute(orgId, { limit: 20, offset: 0 });
 
     expect(result).toEqual(paginatedResponse);
     expect(inventoryRepository.findByOrganization).toHaveBeenCalledWith(orgId, {

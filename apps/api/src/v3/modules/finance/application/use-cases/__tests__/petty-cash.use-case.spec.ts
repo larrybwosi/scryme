@@ -1,9 +1,9 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {PettyCashUseCase} from "../petty-cash.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
-import {PettyCashTransactionType, Prisma} from "@repo/db";
-import {NotFoundException} from "@nestjs/common";
-import {vi, describe, it, expect, beforeEach} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { PettyCashUseCase } from "../petty-cash.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PettyCashTransactionType, Prisma } from "@repo/db";
+import { NotFoundException } from "@nestjs/common";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 describe("PettyCashUseCase", () => {
   let useCase: PettyCashUseCase;
@@ -33,7 +33,7 @@ describe("PettyCashUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PettyCashUseCase,
-        {provide: PrismaService, useValue: mockPrismaService},
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
@@ -75,7 +75,7 @@ describe("PettyCashUseCase", () => {
     it("should increment fund amount and create a transaction", async () => {
       const orgId = "org-1";
       const fundId = "fund-1";
-      const dto = {amount: 1000, description: "Weekly topup"};
+      const dto = { amount: 1000, description: "Weekly topup" };
       const memberId = "member-1";
 
       mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue({
@@ -92,8 +92,8 @@ describe("PettyCashUseCase", () => {
       expect(result.amount).toBe(6000);
       expect(mockPrismaClient.pettyCashFund.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {id: fundId},
-          data: {amount: {increment: expect.any(Object)}},
+          where: { id: fundId },
+          data: { amount: { increment: expect.any(Object) } },
         }),
       );
     });
@@ -102,7 +102,7 @@ describe("PettyCashUseCase", () => {
       mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue(null);
 
       await expect(
-        useCase.topUpFund("org-1", "invalid", {amount: 100}, "member-1"),
+        useCase.topUpFund("org-1", "invalid", { amount: 100 }, "member-1"),
       ).rejects.toThrow(NotFoundException);
     });
   });

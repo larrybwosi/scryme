@@ -4,8 +4,8 @@ import {
   ExecutionContext,
   CallHandler,
 } from "@nestjs/common";
-import {Observable} from "rxjs";
-import {map} from "rxjs/operators";
+import { Observable } from "rxjs";
+import { map } from "rxjs/operators";
 
 export interface Response<T> {
   success: boolean;

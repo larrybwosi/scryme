@@ -1,5 +1,9 @@
-import {Injectable, NotFoundException, ConflictException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateCrmRelationshipDto,
   CreateCrmAssociationDto,
@@ -15,7 +19,7 @@ export class CrmRelationshipService {
   ) {
     const existing =
       await this.prisma.client.crmRelationshipDefinition.findFirst({
-        where: {organizationId, name: dto.name},
+        where: { organizationId, name: dto.name },
       });
 
     if (existing) {
@@ -34,7 +38,7 @@ export class CrmRelationshipService {
 
   async getRelationships(organizationId: string) {
     return this.prisma.client.crmRelationshipDefinition.findMany({
-      where: {organizationId},
+      where: { organizationId },
     });
   }
 
@@ -44,7 +48,7 @@ export class CrmRelationshipService {
   ) {
     // Verify relationship exists and belongs to org
     const rel = await this.prisma.client.crmRelationshipDefinition.findFirst({
-      where: {id: dto.relationshipId, organizationId},
+      where: { id: dto.relationshipId, organizationId },
     });
 
     if (!rel) {
@@ -54,10 +58,10 @@ export class CrmRelationshipService {
     // Verify records belong to org (simplified check)
     const [source, target] = await Promise.all([
       this.prisma.client.crmRecord.findFirst({
-        where: {id: dto.sourceRecordId, organizationId},
+        where: { id: dto.sourceRecordId, organizationId },
       }),
       this.prisma.client.crmRecord.findFirst({
-        where: {id: dto.targetRecordId, organizationId},
+        where: { id: dto.targetRecordId, organizationId },
       }),
     ]);
 
@@ -77,8 +81,8 @@ export class CrmRelationshipService {
   async getAssociationsForRecord(organizationId: string, recordId: string) {
     return this.prisma.client.crmAssociation.findMany({
       where: {
-        OR: [{sourceRecordId: recordId}, {targetRecordId: recordId}],
-        relationship: {organizationId},
+        OR: [{ sourceRecordId: recordId }, { targetRecordId: recordId }],
+        relationship: { organizationId },
       },
       include: {
         relationship: true,

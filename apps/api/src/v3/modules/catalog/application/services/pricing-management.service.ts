@@ -1,5 +1,5 @@
-import {Injectable, Logger} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   PriceSyncMode,
   SupplierSelection,
@@ -50,7 +50,7 @@ export class PricingManagementService {
 
     // 1. Get Organization Settings
     const settings = await client.organizationSettings.findUnique({
-      where: {organizationId},
+      where: { organizationId },
     });
 
     if (!settings || settings.priceSyncMode === PriceSyncMode.MANUAL) {
@@ -79,16 +79,16 @@ export class PricingManagementService {
 
     // 3. Get existing variant to capture OLD cost before updating
     const variant = await client.productVariant.findUnique({
-      where: {id: variantId},
-      select: {buyingPrice: true},
+      where: { id: variantId },
+      select: { buyingPrice: true },
     });
 
     const oldCost = variant ? Number(variant.buyingPrice) : activeCost;
 
     // 4. Update the ProductVariant.buyingPrice to stay in sync
     await client.productVariant.update({
-      where: {id: variantId},
-      data: {buyingPrice: activeCost},
+      where: { id: variantId },
+      data: { buyingPrice: activeCost },
     });
 
     // 5. Find all PriceListItems for this variant that belong to auto-sync PriceLists
@@ -130,26 +130,26 @@ export class PricingManagementService {
     switch (strategy) {
       case SupplierSelection.PREFERRED: {
         const preferred = await client.productSupplier.findFirst({
-          where: {variantId, isPreferred: true},
-          select: {costPrice: true},
+          where: { variantId, isPreferred: true },
+          select: { costPrice: true },
         });
         return preferred ? Number(preferred.costPrice) : null;
       }
 
       case SupplierSelection.LOWEST_COST: {
         const lowest = await client.productSupplier.findFirst({
-          where: {variantId},
-          orderBy: {costPrice: "asc"},
-          select: {costPrice: true},
+          where: { variantId },
+          orderBy: { costPrice: "asc" },
+          select: { costPrice: true },
         });
         return lowest ? Number(lowest.costPrice) : null;
       }
 
       case SupplierSelection.LATEST_DELIVERY: {
         const latest = await client.stockBatch.findFirst({
-          where: {variantId, organizationId},
-          orderBy: {receivedDate: "desc"},
-          select: {purchasePrice: true},
+          where: { variantId, organizationId },
+          orderBy: { receivedDate: "desc" },
+          select: { purchasePrice: true },
         });
         return latest ? Number(latest.purchasePrice) : null;
       }
@@ -170,7 +170,7 @@ export class PricingManagementService {
     },
     client: PrismaTransaction,
   ) {
-    const {item, oldCost, newCost, settings, source, sourceId} = params;
+    const { item, oldCost, newCost, settings, source, sourceId } = params;
     const oldPrice = Number(item.price);
 
     let proposedPrice: number;
@@ -225,8 +225,8 @@ export class PricingManagementService {
     } else {
       // Apply update directly
       await client.priceListItem.update({
-        where: {id: item.id},
-        data: {price: proposedPrice},
+        where: { id: item.id },
+        data: { price: proposedPrice },
       });
 
       await client.priceHistory.create({
@@ -239,7 +239,7 @@ export class PricingManagementService {
           changeReason: `Auto-sync from ${source}`,
           changeType: "COST_RECALC",
           changedBy: "SYSTEM",
-          metadata: {oldCost, newCost, sourceId},
+          metadata: { oldCost, newCost, sourceId },
         },
       });
     }
@@ -289,7 +289,7 @@ export class PricingManagementService {
 
     if (existing) {
       await client.priceChangeRequest.update({
-        where: {id: existing.id},
+        where: { id: existing.id },
         data: {
           newPrice,
           newCost,

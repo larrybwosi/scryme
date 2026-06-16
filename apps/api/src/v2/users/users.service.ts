@@ -3,9 +3,9 @@ import {
   ForbiddenException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RedisService} from "../../redis/redis.service";
-import type {V2ApiContext} from "@repo/shared/server";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "../../redis/redis.service";
+import type { V2ApiContext } from "@repo/shared/server";
 
 const CACHE_TTL = 600;
 
@@ -50,19 +50,19 @@ export class UsersService {
     const userId = this.resolveUserId(ctx, id);
     if (!userId) throw new ForbiddenException();
 
-    return {id: userId, ...body};
+    return { id: userId, ...body };
   }
 
   async sync(ctx: V2ApiContext, id: string) {
-    return {success: true};
+    return { success: true };
   }
 
   async getCart(ctx: V2ApiContext, id: string) {
-    return {items: []};
+    return { items: [] };
   }
 
   async addToCart(ctx: V2ApiContext, id: string, body: any) {
-    return {success: true};
+    return { success: true };
   }
 
   async removeFromCart(
@@ -71,7 +71,7 @@ export class UsersService {
     productId: string,
     removeEntirely: boolean,
   ) {
-    return {success: true};
+    return { success: true };
   }
 
   async getTransactions(ctx: V2ApiContext, id: string, query: any) {
@@ -87,22 +87,22 @@ export class UsersService {
   }
 
   async createMember(ctx: V2ApiContext, data: any) {
-    return {id: "stub"};
+    return { id: "stub" };
   }
 
   async updateMember(ctx: V2ApiContext, id: string, data: any) {
-    return {id};
+    return { id };
   }
 
   async deleteMember(ctx: V2ApiContext, id: string) {
-    return {success: true};
+    return { success: true };
   }
 
   async unbanMember(ctx: V2ApiContext, id: string) {
-    return {success: true};
+    return { success: true };
   }
 
   async changeMemberPin(ctx: V2ApiContext, id: string, data: any) {
-    return {success: true};
+    return { success: true };
   }
 }

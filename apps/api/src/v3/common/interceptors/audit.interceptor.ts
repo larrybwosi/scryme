@@ -4,10 +4,10 @@ import {
   ExecutionContext,
   CallHandler,
 } from "@nestjs/common";
-import {Observable} from "rxjs";
-import {tap, catchError} from "rxjs/operators";
-import {AuditService} from "../services/audit.service";
-import {GqlExecutionContext} from "@nestjs/graphql";
+import { Observable } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+import { AuditService } from "../services/audit.service";
+import { GqlExecutionContext } from "@nestjs/graphql";
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -31,7 +31,7 @@ export class AuditInterceptor implements NestInterceptor {
       url = request.url;
     }
 
-    const {user, organization} = request;
+    const { user, organization } = request;
     const now = Date.now();
 
     return next.handle().pipe(
@@ -55,7 +55,7 @@ export class AuditInterceptor implements NestInterceptor {
           userId: user?.id,
           organizationId: organization?.id,
           duration,
-          metadata: {error: error.message},
+          metadata: { error: error.message },
         });
         throw error;
       }),

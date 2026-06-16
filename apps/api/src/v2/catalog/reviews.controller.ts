@@ -8,14 +8,14 @@ import {
   Body,
   Query,
 } from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {ReviewsService} from "./reviews.service";
-import {v2Context} from "../../common/decorators/v2-context.decorator";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { ReviewsService } from "./reviews.service";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
 import {
   RequirePermission,
   AllowPublic,
 } from "../../common/decorators/auth.decorator";
-import type {V2ApiContext} from "@repo/shared/server";
+import type { V2ApiContext } from "@repo/shared/server";
 
 @ApiTags("Product Reviews")
 @Controller("catalog")
@@ -24,7 +24,7 @@ export class ReviewsController {
 
   @Get("products/:productId/reviews")
   @AllowPublic()
-  @ApiOperation({summary: "Get all reviews for a product"})
+  @ApiOperation({ summary: "Get all reviews for a product" })
   async getProductReviews(
     @v2Context() ctx: V2ApiContext,
     @Param("productId") productId: string,
@@ -35,7 +35,7 @@ export class ReviewsController {
 
   @Post("products/:productId/reviews")
   @RequirePermission("customer:write:own")
-  @ApiOperation({summary: "Create a new review for a product"})
+  @ApiOperation({ summary: "Create a new review for a product" })
   async createReview(
     @v2Context() ctx: V2ApiContext,
     @Param("productId") productId: string,
@@ -46,7 +46,7 @@ export class ReviewsController {
 
   @Patch("reviews/:reviewId")
   @RequirePermission("customer:write:own")
-  @ApiOperation({summary: "Update an existing review"})
+  @ApiOperation({ summary: "Update an existing review" })
   async updateReview(
     @v2Context() ctx: V2ApiContext,
     @Param("reviewId") reviewId: string,
@@ -57,7 +57,7 @@ export class ReviewsController {
 
   @Delete("reviews/:reviewId")
   @RequirePermission("customer:write:own")
-  @ApiOperation({summary: "Delete a review"})
+  @ApiOperation({ summary: "Delete a review" })
   async deleteReview(
     @v2Context() ctx: V2ApiContext,
     @Param("reviewId") reviewId: string,

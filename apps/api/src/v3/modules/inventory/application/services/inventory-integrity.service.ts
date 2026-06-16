@@ -1,5 +1,5 @@
-import {Injectable} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @Injectable()
 export class InventoryIntegrityService {
@@ -12,8 +12,8 @@ export class InventoryIntegrityService {
 
     while (true) {
       const variants = await this.prisma.client.productVariant.findMany({
-        where: {product: {organizationId}},
-        select: {id: true},
+        where: { product: { organizationId } },
+        select: { id: true },
         take: batchSize,
         skip: skip,
       });
@@ -43,7 +43,7 @@ export class InventoryIntegrityService {
 
     // 1. Check Stock Summary vs Batches
     const stocks = await this.prisma.client.productVariantStock.findMany({
-      where: {variantId},
+      where: { variantId },
     });
 
     for (const stock of stocks) {
@@ -51,7 +51,7 @@ export class InventoryIntegrityService {
         where: {
           variantId,
           locationId: stock.locationId,
-          currentQuantity: {gt: 0},
+          currentQuantity: { gt: 0 },
         },
       });
 
@@ -82,7 +82,7 @@ export class InventoryIntegrityService {
     locationId: string,
   ) {
     const batches = await this.prisma.client.stockBatch.findMany({
-      where: {variantId, locationId, currentQuantity: {gt: 0}},
+      where: { variantId, locationId, currentQuantity: { gt: 0 } },
     });
 
     const totalBatchQty = batches.reduce(
@@ -91,13 +91,13 @@ export class InventoryIntegrityService {
     );
 
     await this.prisma.client.productVariantStock.update({
-      where: {variantId_locationId: {variantId, locationId}},
+      where: { variantId_locationId: { variantId, locationId } },
       data: {
         currentStock: totalBatchQty,
         availableStock: totalBatchQty,
       },
     });
 
-    return {success: true, newStock: totalBatchQty};
+    return { success: true, newStock: totalBatchQty };
   }
 }

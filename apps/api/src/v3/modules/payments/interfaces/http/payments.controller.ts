@@ -1,11 +1,11 @@
-import {Controller, Post, Body, Param, Req, UseGuards} from "@nestjs/common";
-import {ApiTags, ApiOperation} from "@nestjs/swagger";
-import {MpesaService} from "@repo/mpesa/server";
-import type {FastifyRequest} from "fastify";
-import {AllowPublic} from "../../../../../common/decorators/auth.decorator";
-import {V3AuthGuard} from "../../../../common/guards/v3-auth.guard";
-import {MultiTenancyGuard} from "../../../../common/guards/multi-tenancy.guard";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Controller, Post, Body, Param, Req, UseGuards } from "@nestjs/common";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { MpesaService } from "@repo/mpesa/server";
+import type { FastifyRequest } from "fastify";
+import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
+import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("Payments")
 @Controller(":orgSlug/payments")
@@ -18,7 +18,7 @@ export class PaymentsController {
 
   @AllowPublic()
   @Post("webhooks/mpesa/stkpush/:paymentId")
-  @ApiOperation({summary: "M-Pesa STK Push Callback"})
+  @ApiOperation({ summary: "M-Pesa STK Push Callback" })
   async handleStkCallback(
     @Req() req: FastifyRequest,
     @Param("orgSlug") orgSlug: string,
@@ -27,7 +27,7 @@ export class PaymentsController {
   ) {
     this.mpesaService.validateWebhookIp(req.ip || "");
     const org = await this.prisma.client.organization.findUnique({
-      where: {slug: orgSlug},
+      where: { slug: orgSlug },
     });
     if (!org) throw new Error("Organization not found");
 

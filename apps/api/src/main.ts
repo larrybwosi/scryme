@@ -1,17 +1,20 @@
-import {env} from "@repo/env";
-import {NestFactory} from "@nestjs/core";
-import {FastifyAdapter, NestFastifyApplication} from "@nestjs/platform-fastify";
-import {ValidationPipe} from "@nestjs/common";
-import {SwaggerModule, DocumentBuilder} from "@nestjs/swagger";
+import { env } from "@repo/env";
+import { NestFactory } from "@nestjs/core";
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from "@nestjs/platform-fastify";
+import { ValidationPipe } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
-import {AppModule} from "./app.module";
-import {validateEncryptionKey} from "@repo/shared/server";
-import {V2Module, V2_SUB_MODULES} from "./v2/v2.module";
-import {V3Module, V3_SUB_MODULES} from "./v3/v3.module";
-import {AllExceptionsFilter} from "./common/filters/all-exceptions.filter";
-import {StandardResponseInterceptor} from "./common/interceptors/standard-response.interceptor";
-import {redactSensitiveData} from "./common/utils/redaction";
+import { AppModule } from "./app.module";
+import { validateEncryptionKey } from "@repo/shared/server";
+import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
+import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
+import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
+import { StandardResponseInterceptor } from "./common/interceptors/standard-response.interceptor";
+import { redactSensitiveData } from "./common/utils/redaction";
 
 async function bootstrap() {
   // Verify encryption key at startup
@@ -28,7 +31,7 @@ async function bootstrap() {
     .getInstance()
     .addHook("onRequest", (request, reply, done) => {
       const startTime = Date.now();
-      const {method, url, headers, body, query} = request;
+      const { method, url, headers, body, query } = request;
 
       // Log incoming request
       console.log({
@@ -91,9 +94,9 @@ async function bootstrap() {
     .setTitle("Scryme V2 API")
     .setDescription("The Scryme V2 API documentation")
     .setVersion("2.0")
-    .addApiKey({type: "apiKey", name: "x-api-key", in: "header"}, "x-api-key")
+    .addApiKey({ type: "apiKey", name: "x-api-key", in: "header" }, "x-api-key")
     .addApiKey(
-      {type: "apiKey", name: "x-member-token", in: "header"},
+      { type: "apiKey", name: "x-member-token", in: "header" },
       "x-member-token",
     )
     .addBearerAuth()

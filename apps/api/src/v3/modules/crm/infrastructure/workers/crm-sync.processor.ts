@@ -1,8 +1,8 @@
-import {Processor, WorkerHost} from "@nestjs/bullmq";
-import {Logger} from "@nestjs/common";
-import {Job} from "bullmq";
-import {PrismaService} from "@/prisma/prisma.service";
-import {CrmSyncJobData} from "../services/crm-sync.service";
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Logger } from "@nestjs/common";
+import { Job } from "bullmq";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CrmSyncJobData } from "../services/crm-sync.service";
 
 @Processor("crm-sync")
 export class CrmSyncProcessor extends WorkerHost {
@@ -13,7 +13,7 @@ export class CrmSyncProcessor extends WorkerHost {
   }
 
   async process(job: Job<CrmSyncJobData>): Promise<any> {
-    const {type, organizationId, internalId} = job.data;
+    const { type, organizationId, internalId } = job.data;
     this.logger.log(
       `Processing CRM sync job: ${type} for org: ${organizationId}, id: ${internalId}`,
     );
@@ -33,13 +33,13 @@ export class CrmSyncProcessor extends WorkerHost {
 
   private async syncCustomer(organizationId: string, customerId: string) {
     const customer = await this.prisma.client.customer.findUnique({
-      where: {id: customerId},
+      where: { id: customerId },
     });
 
     if (!customer) return;
 
     let objectDef = await this.prisma.client.crmObjectDefinition.findUnique({
-      where: {organizationId_name: {organizationId, name: "customer"}},
+      where: { organizationId_name: { organizationId, name: "customer" } },
     });
 
     if (!objectDef) {
@@ -62,8 +62,8 @@ export class CrmSyncProcessor extends WorkerHost {
 
     if (customer.crmRecordId) {
       await this.prisma.client.crmRecord.update({
-        where: {id: customer.crmRecordId},
-        data: {data},
+        where: { id: customer.crmRecordId },
+        data: { data },
       });
     } else {
       const record = await this.prisma.client.crmRecord.create({
@@ -74,8 +74,8 @@ export class CrmSyncProcessor extends WorkerHost {
         },
       });
       await this.prisma.client.customer.update({
-        where: {id: customerId},
-        data: {crmRecordId: record.id},
+        where: { id: customerId },
+        data: { crmRecordId: record.id },
       });
     }
   }
@@ -85,13 +85,15 @@ export class CrmSyncProcessor extends WorkerHost {
     businessAccountId: string,
   ) {
     const account = await this.prisma.client.businessAccount.findUnique({
-      where: {id: businessAccountId},
+      where: { id: businessAccountId },
     });
 
     if (!account) return;
 
     let objectDef = await this.prisma.client.crmObjectDefinition.findUnique({
-      where: {organizationId_name: {organizationId, name: "business_account"}},
+      where: {
+        organizationId_name: { organizationId, name: "business_account" },
+      },
     });
 
     if (!objectDef) {
@@ -113,8 +115,8 @@ export class CrmSyncProcessor extends WorkerHost {
 
     if (account.crmRecordId) {
       await this.prisma.client.crmRecord.update({
-        where: {id: account.crmRecordId},
-        data: {data},
+        where: { id: account.crmRecordId },
+        data: { data },
       });
     } else {
       const record = await this.prisma.client.crmRecord.create({
@@ -125,8 +127,8 @@ export class CrmSyncProcessor extends WorkerHost {
         },
       });
       await this.prisma.client.businessAccount.update({
-        where: {id: businessAccountId},
-        data: {crmRecordId: record.id},
+        where: { id: businessAccountId },
+        data: { crmRecordId: record.id },
       });
     }
   }

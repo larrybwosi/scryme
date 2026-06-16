@@ -1,8 +1,8 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {Test, TestingModule} from "@nestjs/testing";
-import {IProductRepository} from "../../domain/repositories/product-repository.interface";
-import {CreateProductUseCase} from "./create-product.use-case";
-import {Product} from "../../domain/entities/product.entity";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { IProductRepository } from "../../domain/repositories/product-repository.interface";
+import { CreateProductUseCase } from "./create-product.use-case";
+import { Product } from "../../domain/entities/product.entity";
 
 describe("CreateProductUseCase", () => {
   let useCase: CreateProductUseCase;
@@ -15,7 +15,7 @@ describe("CreateProductUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateProductUseCase,
-        {provide: IProductRepository, useValue: productRepository},
+        { provide: IProductRepository, useValue: productRepository },
       ],
     }).compile();
 

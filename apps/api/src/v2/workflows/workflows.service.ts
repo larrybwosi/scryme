@@ -1,6 +1,6 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "../../prisma/prisma.service";
-import type {V2ApiContext} from "@repo/shared/server";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/server";
 
 @Injectable()
 export class WorkflowsService {
@@ -37,7 +37,11 @@ export class WorkflowsService {
       schema: {
         type: "object",
         properties: {
-          threshold: {type: "number", title: "Default Threshold", default: 10},
+          threshold: {
+            type: "number",
+            title: "Default Threshold",
+            default: 10,
+          },
           notificationEmail: {
             type: "string",
             title: "Alert Email",
@@ -76,7 +80,7 @@ export class WorkflowsService {
     const config = await (
       this.prisma.client as any
     ).windmillConfiguration.findUnique({
-      where: {organizationId: ctx.organizationId},
+      where: { organizationId: ctx.organizationId },
     });
 
     // Simulated: if config exists and has an API key, we consider it "active" for the org
@@ -92,7 +96,7 @@ export class WorkflowsService {
     let config = await (
       this.prisma.client as any
     ).windmillConfiguration.findUnique({
-      where: {organizationId: ctx.organizationId},
+      where: { organizationId: ctx.organizationId },
     });
 
     if (!config) {
@@ -120,7 +124,7 @@ export class WorkflowsService {
     const config = await (
       this.prisma.client as any
     ).windmillConfiguration.findUnique({
-      where: {organizationId: ctx.organizationId},
+      where: { organizationId: ctx.organizationId },
     });
 
     if (!config) {
@@ -147,7 +151,7 @@ export class WorkflowsService {
     // Simulate background processing
     setTimeout(async () => {
       await (this.prisma.client as any).windmillExecution.update({
-        where: {id: execution.id},
+        where: { id: execution.id },
         data: {
           status: "COMPLETED",
           result: {
@@ -167,9 +171,9 @@ export class WorkflowsService {
     return (this.prisma.client as any).windmillExecution.findMany({
       where: {
         organizationId: ctx.organizationId,
-        ...(scriptPath ? {scriptPath} : {}),
+        ...(scriptPath ? { scriptPath } : {}),
       },
-      orderBy: {createdAt: "desc"},
+      orderBy: { createdAt: "desc" },
       take: 50,
     });
   }

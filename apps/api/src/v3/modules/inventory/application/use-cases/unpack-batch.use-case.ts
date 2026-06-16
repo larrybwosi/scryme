@@ -3,10 +3,10 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {InventoryMovementService} from "../services/inventory-movement.service";
-import {MovementType, StockAdjustmentReason} from "@repo/db";
-import {Decimal} from "decimal.js";
+import { PrismaService } from "@/prisma/prisma.service";
+import { InventoryMovementService } from "../services/inventory-movement.service";
+import { MovementType, StockAdjustmentReason } from "@repo/db";
+import { Decimal } from "decimal.js";
 
 export interface UnpackBatchDto {
   batchId: string;
@@ -29,9 +29,9 @@ export class UnpackBatchUseCase {
     return this.prisma.client.$transaction(async tx => {
       // 1. Find the bulk batch
       const bulkBatch = await tx.stockBatch.findUnique({
-        where: {id: dto.batchId, organizationId},
+        where: { id: dto.batchId, organizationId },
         include: {
-          variant: {include: {product: true}},
+          variant: { include: { product: true } },
           purchaseItem: true,
         },
       });
@@ -62,9 +62,9 @@ export class UnpackBatchUseCase {
 
       // 2. Decrement the bulk batch
       await tx.stockBatch.update({
-        where: {id: bulkBatch.id},
+        where: { id: bulkBatch.id },
         data: {
-          currentQuantity: {decrement: dto.quantityToUnpack},
+          currentQuantity: { decrement: dto.quantityToUnpack },
         },
       });
 
@@ -167,7 +167,7 @@ export class UnpackBatchUseCase {
           bulkBatch.purchaseItem?.purchaseId
         ) {
           const returnCount = await tx.purchaseReturn.count({
-            where: {organizationId},
+            where: { organizationId },
           });
           const returnNumber = `RET-UNPACK-${(returnCount + 1).toString().padStart(4, "0")}`;
 
@@ -221,8 +221,8 @@ export class UnpackBatchUseCase {
             },
           },
           data: {
-            currentStock: {decrement: damagedQty},
-            availableStock: {decrement: damagedQty},
+            currentStock: { decrement: damagedQty },
+            availableStock: { decrement: damagedQty },
           },
         });
       }

@@ -1,4 +1,4 @@
-import {vi, describe, it, expect, beforeEach} from "vitest";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
 vi.mock("@repo/windmill/server", () => ({
   emitPurchaseApprovalRequested: vi.fn().mockResolvedValue({}),
@@ -75,9 +75,9 @@ vi.mock("@repo/db", async importOriginal => ({
   },
 }));
 
-import {PurchaseOrderUseCase} from "./purchase-order.use-case";
-import {StockTransferUseCase} from "./stock-transfer.use-case";
-import {PurchaseStatus, StockTransferStatus, MovementType} from "@repo/db";
+import { PurchaseOrderUseCase } from "./purchase-order.use-case";
+import { StockTransferUseCase } from "./stock-transfer.use-case";
+import { PurchaseStatus, StockTransferStatus, MovementType } from "@repo/db";
 
 describe("Stocking Flow Verification", () => {
   let purchaseOrderUseCase: PurchaseOrderUseCase;
@@ -179,12 +179,12 @@ describe("Stocking Flow Verification", () => {
     const createPoDto = {
       supplierId: mockSupplierId,
       items: [
-        {variantId: "v1", orderedQuantity: 10, unitCost: 100},
-        {variantId: "v2", orderedQuantity: 5, unitCost: 200},
+        { variantId: "v1", orderedQuantity: 10, unitCost: 100 },
+        { variantId: "v2", orderedQuantity: 5, unitCost: 200 },
       ],
     };
 
-    mockTx.purchase.create.mockImplementation(({data}: any) => ({
+    mockTx.purchase.create.mockImplementation(({ data }: any) => ({
       id: "po-1",
       ...data,
       purchaseNumber: "PO-1",
@@ -194,7 +194,7 @@ describe("Stocking Flow Verification", () => {
         id: `poi-${index}`,
         ...item,
       })),
-      member: {user: {name: "Test User"}},
+      member: { user: { name: "Test User" } },
     }));
 
     const po = await purchaseOrderUseCase.create(
@@ -214,7 +214,11 @@ describe("Stocking Flow Verification", () => {
             {
               quantity: 10,
               batchNumber: "batch-v1",
-              qcResults: {templateId: "t1", data: {}, status: "PASSED" as any},
+              qcResults: {
+                templateId: "t1",
+                data: {},
+                status: "PASSED" as any,
+              },
             },
           ],
         },
@@ -224,7 +228,11 @@ describe("Stocking Flow Verification", () => {
             {
               quantity: 5,
               batchNumber: "batch-v2",
-              qcResults: {templateId: "t1", data: {}, status: "FAILED" as any},
+              qcResults: {
+                templateId: "t1",
+                data: {},
+                status: "FAILED" as any,
+              },
             },
           ],
         },
@@ -242,24 +250,24 @@ describe("Stocking Flow Verification", () => {
           id: "poi-0",
           variantId: "v1",
           unitCost: 100,
-          variant: {productId: "p1"},
+          variant: { productId: "p1" },
         },
         {
           id: "poi-1",
           variantId: "v2",
           unitCost: 200,
-          variant: {productId: "p2"},
+          variant: { productId: "p2" },
         },
       ],
     };
 
     mockTx.purchase.findUnique.mockResolvedValue(mockPoWithItems);
-    mockTx.stockReceipt.create.mockResolvedValue({id: "rec-1"});
-    mockTx.stockBatch.create.mockImplementation(({data}: any) => ({
+    mockTx.stockReceipt.create.mockResolvedValue({ id: "rec-1" });
+    mockTx.stockBatch.create.mockImplementation(({ data }: any) => ({
       id: `batch-${data.variantId}`,
       ...data,
     }));
-    mockTx.purchase.update.mockResolvedValue({id: "po-1"});
+    mockTx.purchase.update.mockResolvedValue({ id: "po-1" });
 
     await purchaseOrderUseCase.receive(
       mockOrgId,
@@ -274,22 +282,22 @@ describe("Stocking Flow Verification", () => {
     const createTransferDto = {
       fromLocationId: mockLocationA,
       toLocationId: mockLocationB,
-      items: [{variantId: "v1", requestedQuantity: 5}],
+      items: [{ variantId: "v1", requestedQuantity: 5 }],
     };
 
-    mockTx.stockTransfer.create.mockImplementation(({data}: any) => ({
+    mockTx.stockTransfer.create.mockImplementation(({ data }: any) => ({
       id: "tr-1",
       transferNumber: "TR-1",
       fromLocationId: mockLocationA,
       toLocationId: mockLocationB,
-      fromLocation: {name: "Loc A"},
-      toLocation: {name: "Loc B"},
+      fromLocation: { name: "Loc A" },
+      toLocation: { name: "Loc B" },
       status: StockTransferStatus.PENDING_APPROVAL,
       ...data,
       items: data.items.create.map((item: any, index: number) => ({
         id: `tri-${index}`,
         ...item,
-        variant: {product: {name: "Prod"}, name: "Var"},
+        variant: { product: { name: "Prod" }, name: "Var" },
       })),
     }));
 
@@ -304,24 +312,24 @@ describe("Stocking Flow Verification", () => {
       id: "tr-1",
       ...createTransferDto,
       status: StockTransferStatus.PENDING_APPROVAL,
-      items: [{id: "tri-1", variantId: "v1", requestedQuantity: 5}],
+      items: [{ id: "tri-1", variantId: "v1", requestedQuantity: 5 }],
     });
     mockTx.productVariantStock.findUnique.mockResolvedValue({
       availableStock: 10,
     });
-    mockTx.stockTransfer.update.mockImplementation(({data}: any) => ({
+    mockTx.stockTransfer.update.mockImplementation(({ data }: any) => ({
       id: "tr-1",
       transferNumber: "TR-1",
       shippedDate: new Date(),
       receivedDate: new Date(),
-      receivedBy: {user: {name: "Test"}},
+      receivedBy: { user: { name: "Test" } },
       ...data,
     }));
 
     await stockTransferUseCase.approve(mockOrgId, mockMemberId, "tr-1");
 
     const shipDto = {
-      items: [{transferItemId: "tri-1", shippedQuantity: 5}],
+      items: [{ transferItemId: "tri-1", shippedQuantity: 5 }],
     };
     mockTx.stockTransfer.findUnique.mockResolvedValue({
       id: "tr-1",
@@ -333,18 +341,18 @@ describe("Stocking Flow Verification", () => {
           id: "tri-1",
           variantId: "v1",
           requestedQuantity: 5,
-          variant: {sku: "SKU-V1"},
+          variant: { sku: "SKU-V1" },
         },
       ],
     });
     mockTx.stockBatch.findMany.mockResolvedValue([
-      {id: "batch-v1", currentQuantity: 10},
+      { id: "batch-v1", currentQuantity: 10 },
     ]);
 
     await stockTransferUseCase.ship(mockOrgId, mockMemberId, "tr-1", shipDto);
 
     const receiveTransferDto = {
-      items: [{transferItemId: "tri-1", receivedQuantity: 5}],
+      items: [{ transferItemId: "tri-1", receivedQuantity: 5 }],
     };
     mockTx.stockTransfer.findUnique.mockResolvedValue({
       id: "tr-1",
@@ -357,7 +365,7 @@ describe("Stocking Flow Verification", () => {
           variantId: "v1",
           requestedQuantity: 5,
           unitCost: 100,
-          variant: {productId: "p1"},
+          variant: { productId: "p1" },
         },
       ],
     });

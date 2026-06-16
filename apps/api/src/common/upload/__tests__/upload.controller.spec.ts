@@ -1,11 +1,11 @@
-import {describe, it, expect, vi, beforeEach} from "vitest";
-import {UploadController} from "../upload.controller";
-import {BadRequestException} from "@nestjs/common";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { UploadController } from "../upload.controller";
+import { BadRequestException } from "@nestjs/common";
 
 // Mock storageService
 vi.mock("@repo/shared/server", () => ({
   storageService: {
-    upload: vi.fn().mockResolvedValue({url: "http://example.com/test.png"}),
+    upload: vi.fn().mockResolvedValue({ url: "http://example.com/test.png" }),
   },
   AllowPublic: () => () => {},
 }));

@@ -1,6 +1,6 @@
-import {describe, it, expect, beforeEach, vi} from "vitest";
-import {UpdateCustomerUseCase} from "../update-customer.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { UpdateCustomerUseCase } from "../update-customer.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
 
 describe("UpdateCustomerUseCase", () => {
   let useCase: UpdateCustomerUseCase;
@@ -23,7 +23,7 @@ describe("UpdateCustomerUseCase", () => {
   it("should update a customer successfully", async () => {
     const orgId = "org-123";
     const custId = "cust-123";
-    const dto = {name: "John Updated"};
+    const dto = { name: "John Updated" };
 
     vi.mocked(prisma.client.customer.findFirst).mockResolvedValue({
       id: custId,
@@ -42,8 +42,8 @@ describe("UpdateCustomerUseCase", () => {
 
     expect(result.name).toBe("John Updated");
     expect(prisma.client.customer.update).toHaveBeenCalledWith({
-      where: {id: custId},
-      data: expect.objectContaining({name: "John Updated"}),
+      where: { id: custId },
+      data: expect.objectContaining({ name: "John Updated" }),
     });
   });
 });

@@ -1,6 +1,6 @@
-import {Controller, Get, Param, Query, Res, HttpStatus} from "@nestjs/common";
-import {ImageService} from "./image.service";
-import {AllowPublic} from "../decorators/auth.decorator";
+import { Controller, Get, Param, Query, Res, HttpStatus } from "@nestjs/common";
+import { ImageService } from "./image.service";
+import { AllowPublic } from "../decorators/auth.decorator";
 
 @Controller("images")
 export class ImageController {
@@ -22,7 +22,7 @@ export class ImageController {
     const format = fm;
 
     try {
-      const {data, contentType} = await this.imageService.optimizeImage(id, {
+      const { data, contentType } = await this.imageService.optimizeImage(id, {
         width,
         height,
         quality,

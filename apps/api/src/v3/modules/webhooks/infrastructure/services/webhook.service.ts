@@ -1,7 +1,7 @@
-import {Injectable} from "@nestjs/common";
-import {InjectQueue} from "@nestjs/bullmq";
-import {Queue} from "bullmq";
-import {PrismaService} from "@/prisma/prisma.service";
+import { Injectable } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { PrismaService } from "@/prisma/prisma.service";
 import * as crypto from "crypto";
 
 @Injectable()
@@ -17,7 +17,7 @@ export class WebhookService {
         where: {
           organizationId,
           isActive: true,
-          events: {has: event},
+          events: { has: event },
         },
       },
     );
@@ -56,7 +56,7 @@ export class WebhookService {
 
   async updateLog(logId: string, data: any) {
     return this.prisma.client.webhookLog.update({
-      where: {id: logId},
+      where: { id: logId },
       data,
     });
   }

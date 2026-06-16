@@ -1,10 +1,10 @@
-import {Test, TestingModule} from "@nestjs/testing";
-import {MemberUseCase} from "../member.use-case";
-import {PrismaService} from "@/prisma/prisma.service";
-import {RedisService} from "@/redis/redis.service";
-import {MemberRole, MembershipStatus} from "@repo/db";
-import {BadRequestException} from "@nestjs/common";
-import {describe, it, expect, beforeEach, vi} from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { MemberUseCase } from "../member.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "@/redis/redis.service";
+import { MemberRole, MembershipStatus } from "@repo/db";
+import { BadRequestException } from "@nestjs/common";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("MemberUseCase", () => {
   let useCase: MemberUseCase;
@@ -45,8 +45,8 @@ describe("MemberUseCase", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MemberUseCase,
-        {provide: PrismaService, useValue: mockPrisma},
-        {provide: RedisService, useValue: mockRedis},
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
@@ -69,14 +69,14 @@ describe("MemberUseCase", () => {
           status: "OFFLINE",
           createdAt: new Date(),
           updatedAt: new Date(),
-          user: {id: "u1", name: "Test User", email: "test@example.com"},
+          user: { id: "u1", name: "Test User", email: "test@example.com" },
         },
       ];
 
       mockPrisma.client.member.count.mockResolvedValue(1);
       mockPrisma.client.member.findMany.mockResolvedValue(mockMembers);
 
-      const result = await useCase.getMembers("org1", {page: 1, limit: 10});
+      const result = await useCase.getMembers("org1", { page: 1, limit: 10 });
 
       expect(result.items).toHaveLength(1);
       expect(result.meta.total).toBe(1);
@@ -123,7 +123,7 @@ describe("MemberUseCase", () => {
         id: "u3",
         email: dto.email,
       });
-      mockPrisma.client.member.findUnique.mockResolvedValue({id: "m3"});
+      mockPrisma.client.member.findUnique.mockResolvedValue({ id: "m3" });
 
       await expect(useCase.createMember("org1", dto)).rejects.toThrow(
         BadRequestException,

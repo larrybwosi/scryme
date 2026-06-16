@@ -1,7 +1,7 @@
-import {Injectable, Logger, NotFoundException} from "@nestjs/common";
-import {PrismaService} from "@/prisma/prisma.service";
-import {SlackProvider} from "../../infrastructure/providers/slack.provider";
-import {CommunicationProvider} from "../../domain/communication-provider.interface";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { SlackProvider } from "../../infrastructure/providers/slack.provider";
+import { CommunicationProvider } from "../../domain/communication-provider.interface";
 
 @Injectable()
 export class CommunicationIntegrationService {
@@ -25,17 +25,17 @@ export class CommunicationIntegrationService {
     const provider = this.getProvider(providerSlug);
     const messages = await provider.parseWebhookEvent(payload);
 
-    if (!messages) return {ok: true};
+    if (!messages) return { ok: true };
 
     for (const msg of messages) {
       // 1. Identify Organization
       const integration =
         await this.prisma.client.organizationIntegration.findFirst({
           where: {
-            integrationDefinition: {slug: providerSlug},
-            credentials: {path: ["teamId"], equals: msg.metadata?.team},
+            integrationDefinition: { slug: providerSlug },
+            credentials: { path: ["teamId"], equals: msg.metadata?.team },
           },
-          include: {organization: true},
+          include: { organization: true },
         });
 
       if (!integration) {
@@ -60,7 +60,7 @@ export class CommunicationIntegrationService {
         const record = await this.prisma.client.crmRecord.findFirst({
           where: {
             organizationId: integration.organizationId,
-            data: {path: ["email"], equals: email},
+            data: { path: ["email"], equals: email },
           },
         });
 
@@ -80,7 +80,7 @@ export class CommunicationIntegrationService {
               data: {
                 organizationId: integration.organizationId,
                 objectId: personDef.id,
-                data: {email: email, name: email.split("@")[0]},
+                data: { email: email, name: email.split("@")[0] },
               },
             });
             recordId = newRecord.id;
@@ -109,7 +109,7 @@ export class CommunicationIntegrationService {
       }
     }
 
-    return {ok: true};
+    return { ok: true };
   }
 
   async replyToActivity(
@@ -118,8 +118,8 @@ export class CommunicationIntegrationService {
     text: string,
   ) {
     const activity = await this.prisma.client.crmActivity.findUnique({
-      where: {id: activityId},
-      include: {record: true},
+      where: { id: activityId },
+      include: { record: true },
     });
 
     if (!activity || activity.organizationId !== organizationId) {
@@ -137,7 +137,7 @@ export class CommunicationIntegrationService {
       await this.prisma.client.organizationIntegration.findFirst({
         where: {
           organizationId,
-          integrationDefinition: {slug: providerSlug},
+          integrationDefinition: { slug: providerSlug },
           isActive: true,
         },
       });
