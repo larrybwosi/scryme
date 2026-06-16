@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { RealtimeGateway } from '../../v2/realtime/realtime.gateway';
 import { V3RealtimeGateway } from '../../v3/common/realtime/v3-realtime.gateway';
 import { RealtimeRedisService } from '../../v2/realtime/realtime-redis.service';
-import { ably, createDelta } from '@repo/shared/server';
+import { ably } from '@repo/shared/ably';
+import { createDelta } from '@repo/shared/realtime';
 
 @Injectable()
 export class ApiRealtimeService {

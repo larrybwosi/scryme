@@ -5,7 +5,8 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { WebhookService } from '../../../webhooks/infrastructure/services/webhook.service';
 import { ApiRealtimeService } from '../../../../../common/services/realtime.service';
 import { emitOrderPlaced } from '@repo/windmill/server';
-import { createOrder, CreateOrderInput } from '@repo/shared/server';
+import { createOrder } from '@repo/shared/actions/transaction/orders';
+import { type CreateOrderInput } from '@repo/shared/lib/validations/order';
 
 @Injectable()
 export class CreateOrderUseCase {

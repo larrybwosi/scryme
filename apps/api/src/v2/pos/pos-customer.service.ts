@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
-import { PosCustomerService as SharedPosCustomerService } from '@repo/shared/server';
+import type { V2ApiContext } from '@repo/shared/api/v2/types';
+import { PosCustomerService as SharedPosCustomerService } from '@repo/shared/services/customer';
 
 @Injectable()
 export class PosCustomerService {

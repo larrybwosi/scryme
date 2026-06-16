@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Param, Body } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
-import type { V2ApiContext } from '@repo/shared/server';
+import type { V2ApiContext } from '@repo/shared/api/v2/types';
 
 @ApiTags('Users')
 @Controller('users')

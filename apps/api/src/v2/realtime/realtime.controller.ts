@@ -1,7 +1,8 @@
 import { Controller, Post, Headers, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
-import { ably, type V2ApiContext } from '@repo/shared/server';
+import { ably } from "@repo/shared/ably";
+import { type V2ApiContext } from '@repo/shared/api/v2/types';
 
 @ApiTags('Realtime')
 @Controller('realtime')

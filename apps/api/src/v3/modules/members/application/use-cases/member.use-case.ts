@@ -5,7 +5,7 @@ import { CreateMemberDto, UpdateMemberDto, MemberQueryDto } from '../dto/member.
 import { MemberRole, MembershipStatus, ApprovalRequestType, ApprovalStatus, AuditLogAction, AuditEntityType, Status } from '@repo/db';
 import * as bcrypt from 'bcryptjs';
 import { emitMemberCreated, emitMemberRoleChanged, emitEvent } from '@repo/windmill/server';
-import { createMemberToken } from '@repo/shared/server';
+import { createMemberToken } from '@repo/shared/api/v2/services/auth';
 
 @Injectable()
 export class MemberUseCase {

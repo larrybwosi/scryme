@@ -1,11 +1,11 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { V3AuthService } from '../../modules/auth/infrastructure/services/v3-auth.service';
+import { V3AuthCoreService } from '../../modules/auth-core/infrastructure/services/v3-auth-core.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class V3AuthGuard implements CanActivate {
   constructor(
-    private readonly v3AuthService: V3AuthService,
+    private readonly v3AuthService: V3AuthCoreService,
     private readonly prisma: PrismaService
   ) {}
 

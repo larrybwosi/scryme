@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
-import { verifyDocumentToken } from '@repo/shared/server';
+import { verifyDocumentToken } from '@repo/shared/api/v2/utils/tokens';
 
 @Injectable()
 export class PublicService {

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { type V2ApiContext, createMemberToken } from '@repo/shared/server';
+import { type V2ApiContext } from '@repo/shared/api/v2/types';
+import { createMemberToken } from '@repo/shared/api/v2/services/auth';
 import { MemberRole, Status } from '@repo/db';
 import * as bcrypt from 'bcryptjs';
 

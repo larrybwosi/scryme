@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { FavoritesService } from './favorites.service';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
 import { RequirePermission } from '../../common/decorators/auth.decorator';
-import type { V2ApiContext } from '@repo/shared/server';
+import type { V2ApiContext } from '@repo/shared/api/v2/types';
 
 @ApiTags('Favorites')
 @Controller('catalog/favorites')

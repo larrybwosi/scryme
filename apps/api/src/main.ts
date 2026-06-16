@@ -9,7 +9,7 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
-import { validateEncryptionKey } from "@repo/shared/server";
+import { validateEncryptionKey } from "@repo/shared/api/v2/utils/encryption";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
 import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";

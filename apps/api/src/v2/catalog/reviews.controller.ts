@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
 import { RequirePermission, AllowPublic } from '../../common/decorators/auth.decorator';
-import type { V2ApiContext } from '@repo/shared/server';
+import type { V2ApiContext } from '@repo/shared/api/v2/types';
 
 @ApiTags('Product Reviews')
 @Controller('catalog')

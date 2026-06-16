@@ -28,7 +28,7 @@ import { IStockBatchRepository } from './domain/repositories/stock-batch-reposit
 import { PrismaStockBatchRepository } from './infrastructure/persistence/prisma-stock-batch.repository';
 import { PrismaModule } from '../../../prisma/prisma.module';
 import { RedisModule } from '../../../redis/redis.module';
-import { CatalogModule } from '../catalog/catalog.module';
+
 
 @Global()
 @Module({

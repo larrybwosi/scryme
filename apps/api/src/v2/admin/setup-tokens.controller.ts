@@ -2,13 +2,13 @@ import { Controller, Get, Post, Delete, Body, Query, UseGuards, BadRequestExcept
 import { ApiTags, ApiOperation, ApiSecurity } from '@nestjs/swagger';
 import { PrismaService } from '@/prisma/prisma.service';
 import { v2Context } from '@/common/decorators/v2-context.decorator';
-import type { V2ApiContext } from '@repo/shared/server';
+import type { V2ApiContext } from '@repo/shared/api/v2/types';
 import { Permissions } from '@/common/decorators/auth.decorator';
 import {
   createDeviceSetupTokenCore as createDeviceSetupToken,
   getDeviceSetupTokensCore as listSetupTokens,
   revokeSetupTokenCore as revokeSetupToken,
-} from '@repo/shared/server';
+} from '@repo/shared/lib/provisioning/common';
 
 @ApiTags('Admin - Setup Tokens')
 @ApiSecurity('x-api-key')

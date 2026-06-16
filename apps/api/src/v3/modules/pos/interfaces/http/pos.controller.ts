@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { V3AuthService } from '../../../auth/infrastructure/services/v3-auth.service';
 import { V3AuthGuard } from '@/v3/common/guards/v3-auth.guard';
 import { v3Context } from '@/v3/common/decorators/v3-context.decorator';
-import { type V3ApiContext } from '@repo/shared/server';
+import { type V3ApiContext } from '@repo/shared/api/v2/types';
 import { ProcessSaleDto } from '../../application/dto/sale.dto';
 import { ProcessSaleUseCase } from '../../application/use-cases/process-sale.use-case';
 import { SyncUseCase } from '../../application/use-cases/sync.use-case';

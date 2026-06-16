@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { storageService } from '@repo/shared/server';
+import { storageService } from '@repo/shared/storage';
 import sharp from 'sharp';
 import axios from 'axios';
 

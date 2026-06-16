@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
+import type { V2ApiContext } from '@repo/shared/api/v2/types';
 
 @Injectable()
 export class WorkflowsService {

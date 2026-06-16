@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY, SCOPES_KEY } from '../decorators/auth.decorator';
-import { V2ApiContext } from '@repo/shared/server';
+import { V2ApiContext } from '@repo/shared/api/v2/types';
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {

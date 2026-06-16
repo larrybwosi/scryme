@@ -1,5 +1,5 @@
 import { Controller, Post, Req, Res, BadRequestException } from '@nestjs/common';
-import { storageService } from '@repo/shared/server';
+import { storageService } from '@repo/shared/storage';
 import { v7 as uuidv7 } from 'uuid';
 
 @Controller('upload')

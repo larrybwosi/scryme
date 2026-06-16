@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { IProductRepository } from '../../domain/repositories/product-repository.interface';
+import { IProductRepository } from '../../../catalog-core/domain/repositories/product-repository.interface';
 import { CreateProductUseCase } from './create-product.use-case';
-import { Product } from '../../domain/entities/product.entity';
+import { Product } from '../../../catalog-core/domain/entities/product.entity';
 
 describe('CreateProductUseCase', () => {
   let useCase: CreateProductUseCase;

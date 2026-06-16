@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "../../common/services/realtime.service";
-import type { V2ApiContext } from "@repo/shared/server";
+import type { V2ApiContext } from "@repo/shared/api/v2/types";
 import { paginate } from "../../v3/common/utils/pagination";
 
 @Injectable()

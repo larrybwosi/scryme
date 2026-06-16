@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IProductRepository } from '../../domain/repositories/product-repository.interface';
+import { IProductRepository } from '../../../catalog-core/domain/repositories/product-repository.interface';
 import { PaginationQueryDto } from '@/v3/common/utils/pagination';
 
 @Injectable()

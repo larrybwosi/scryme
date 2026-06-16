@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../redis/redis.service";
-import type { V2ApiContext } from "@repo/shared/server";
+import type { V2ApiContext } from "@repo/shared/api/v2/types";
 import { SupplierService } from "@repo/suppliers/server";
 import { ProductType } from "@repo/db";
 

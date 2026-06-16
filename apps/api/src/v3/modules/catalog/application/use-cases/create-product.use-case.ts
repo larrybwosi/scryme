@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IProductRepository } from '../../domain/repositories/product-repository.interface';
-import { Product } from '../../domain/entities/product.entity';
+import { IProductRepository } from '../../../catalog-core/domain/repositories/product-repository.interface';
+import { Product } from '../../../catalog-core/domain/entities/product.entity';
 import { CreateProductDto } from '../dto/product.dto';
 import * as crypto from 'crypto';
 
