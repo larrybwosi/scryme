@@ -1,5 +1,9 @@
-export type SupplierType = 'manufacturer' | 'distributor' | 'wholesaler' | 'service_provider';
-export type RiskLevel = 'low' | 'medium' | 'high';
+export type SupplierType =
+  | "manufacturer"
+  | "distributor"
+  | "wholesaler"
+  | "service_provider";
+export type RiskLevel = "low" | "medium" | "high";
 
 export interface Supplier {
   id: string;

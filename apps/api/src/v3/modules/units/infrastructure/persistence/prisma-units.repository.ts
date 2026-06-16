@@ -22,7 +22,7 @@ export class PrismaUnitsRepository implements IUnitsRepository {
     });
 
     return units.map(
-      (u) =>
+      u =>
         new SystemUnit(
           u.id,
           u.name,
@@ -60,7 +60,7 @@ export class PrismaUnitsRepository implements IUnitsRepository {
     });
 
     return units.map(
-      (u) =>
+      u =>
         new OrganizationUnit(
           u.id,
           u.organizationId,

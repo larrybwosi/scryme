@@ -17,14 +17,12 @@ export default async function LandingPage() {
       <div className="flex gap-4">
         <a
           href="/login"
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold hover:bg-primary/90"
-        >
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold hover:bg-primary/90">
           Login
         </a>
         <a
           href="/sign-up"
-          className="px-6 py-3 border rounded-full font-bold hover:bg-muted"
-        >
+          className="px-6 py-3 border rounded-full font-bold hover:bg-muted">
           Sign Up
         </a>
       </div>

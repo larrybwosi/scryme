@@ -144,7 +144,7 @@ export async function createExpense(data: {
   });
   const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
-  return await db.$transaction(async (tx) => {
+  return await db.$transaction(async tx => {
     const org = await tx.organization.findUnique({
       where: { id: auth.organizationId },
       select: { expenseApprovalThreshold: true },
@@ -311,7 +311,7 @@ export async function processRecurringExpenses() {
   });
 
   for (const recurring of dueRecurring) {
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async tx => {
       // Create the actual expense
       const count = await tx.expense.count({
         where: { organizationId: recurring.organizationId },

@@ -65,7 +65,7 @@ export class AttendanceUseCase {
       throw new BadRequestException("Member is already checked in");
     }
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const log = await tx.attendanceLog.create({
         data: {
           organizationId,
@@ -105,7 +105,7 @@ export class AttendanceUseCase {
       (checkOutTime.getTime() - activeLog.checkInTime.getTime()) / 60000,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const log = await tx.attendanceLog.update({
         where: { id: activeLog.id },
         data: {

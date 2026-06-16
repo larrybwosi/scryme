@@ -28,7 +28,7 @@ export function redactSensitiveData(
   }
 
   if (Array.isArray(data)) {
-    return data.map((item) => redactSensitiveData(item, sensitiveKeys));
+    return data.map(item => redactSensitiveData(item, sensitiveKeys));
   }
 
   if (typeof data === "object") {

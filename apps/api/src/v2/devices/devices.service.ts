@@ -51,7 +51,7 @@ export class DevicesService {
       const message =
         err instanceof Error ? err.message : "Provisioning failed";
 
-      if (AUTH_ERRORS.some((e) => message.includes(e))) {
+      if (AUTH_ERRORS.some(e => message.includes(e))) {
         throw new UnauthorizedException(message);
       }
 

@@ -180,7 +180,7 @@ export class PosService {
 
     const memberId = ctx.memberId;
 
-    await this.prisma.client.$transaction(async (tx) => {
+    await this.prisma.client.$transaction(async tx => {
       const member = await tx.member.findUnique({ where: { id: memberId } });
       if (!member || !member.isCheckedIn || !member.currentAttendanceLogId) {
         throw new BadRequestException("Member is not checked in.");
@@ -363,7 +363,7 @@ export class PosService {
     ]);
 
     const shipments = [
-      ...openPurchases.map((po) => ({
+      ...openPurchases.map(po => ({
         id: po.id,
         type: "PURCHASE_ORDER",
         referenceNumber: po.purchaseNumber,
@@ -371,7 +371,7 @@ export class PosService {
         date: po.orderDate,
         status: po.status,
         itemCount: po.items.length,
-        items: po.items.map((i) => ({
+        items: po.items.map(i => ({
           ...i,
           variant: {
             id: i.variant.id,
@@ -381,7 +381,7 @@ export class PosService {
         })),
         receiveApiUrl: `/api/purchases/${po.id}/receive`,
       })),
-      ...incomingTransfers.map((trf) => ({
+      ...incomingTransfers.map(trf => ({
         id: trf.id,
         type: "STOCK_TRANSFER",
         referenceNumber: trf.transferNumber,
@@ -389,7 +389,7 @@ export class PosService {
         date: trf.requestedDate,
         status: trf.status,
         itemCount: trf.items.length,
-        items: trf.items.map((i) => ({
+        items: trf.items.map(i => ({
           ...i,
           variant: {
             id: i.variant.id,
@@ -428,7 +428,7 @@ export class PosService {
       paymentStatus: transaction.paymentStatus,
       customerName: transaction.customer?.name || "Guest",
       itemCount: transaction.items.length,
-      items: transaction.items.map((i) => ({
+      items: transaction.items.map(i => ({
         name: i.productName,
         sku: i.sku,
         quantity: i.quantity,
@@ -604,7 +604,7 @@ export class PosService {
       }),
     ]);
 
-    const formattedTransactions = transactions.map((t) => {
+    const formattedTransactions = transactions.map(t => {
       const paidAmount = (t as any).payments
         .reduce((sum: Decimal, p: any) => sum.plus(p.amount), new Decimal(0))
         .toNumber();
@@ -792,7 +792,7 @@ export class PosService {
 
     let totalEstimatedCost = new Decimal(0);
     const itemsToCreate = validated.items.map((item: any) => {
-      const variant = variants.find((v) => v.id === item.variantId);
+      const variant = variants.find(v => v.id === item.variantId);
       if (!variant)
         throw new BadRequestException(`Variant ${item.variantId} not found`);
       const itemCost = new Decimal(
@@ -1010,8 +1010,8 @@ export class PosService {
       },
     });
 
-    const items = priceLists.flatMap((pl) =>
-      pl.items.map((item) => ({
+    const items = priceLists.flatMap(pl =>
+      pl.items.map(item => ({
         id: item.id,
         priceListId: item.priceListId,
         variantId: item.variantId,
@@ -1022,7 +1022,7 @@ export class PosService {
       })),
     );
 
-    const lists = priceLists.map((pl) => ({
+    const lists = priceLists.map(pl => ({
       id: pl.id,
       code: pl.code,
       priority: pl.priority,
@@ -1034,7 +1034,7 @@ export class PosService {
     }));
 
     const customerAllocations: Record<string, string[]> = {};
-    priceLists.forEach((pl) => {
+    priceLists.forEach(pl => {
       (pl as any).customers.forEach((cust: any) => {
         if (!customerAllocations[cust.id]) {
           customerAllocations[cust.id] = [];
@@ -1132,7 +1132,7 @@ export class PosService {
       },
     });
 
-    return drivers.map((d) => ({
+    return drivers.map(d => ({
       id: d.id,
       member: {
         name: d.user?.name || "Unknown Driver",

@@ -232,7 +232,10 @@ export function TemplateSelector({
                       {isSelected && (
                         <div
                           className="flex items-center justify-center w-[18px] h-[18px]"
-                          style={{ background: "#1E3A5F", borderRadius: "50%" }}
+                          style={{
+                            background: "#1E3A5F",
+                            borderRadius: "50%",
+                          }}
                         >
                           <Check
                             className="h-2.5 w-2.5 text-white"

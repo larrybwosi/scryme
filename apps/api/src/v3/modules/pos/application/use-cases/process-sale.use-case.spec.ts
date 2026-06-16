@@ -19,7 +19,7 @@ describe("ProcessSaleUseCase", () => {
   beforeEach(async () => {
     prisma = {
       client: {
-        $transaction: vi.fn((cb) => cb(prisma.client)),
+        $transaction: vi.fn(cb => cb(prisma.client)),
         productVariant: { findMany: vi.fn() },
         customer: { findFirst: vi.fn(), create: vi.fn() },
         transaction: { create: vi.fn() },

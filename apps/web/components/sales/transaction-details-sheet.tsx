@@ -37,11 +37,12 @@ import {
 import {
   getTransactionById,
   updateTransactionStatus,
+  uploadFileAction,
+  addAttachmentToPayment,
 } from "../../app/actions/sales";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
 import { AddPaymentModal } from "./add-payment-modal";
-import { addAttachmentToPayment } from "../../app/actions/sales";
 
 interface TransactionDetailsSheetProps {
   transactionId: string | null;
@@ -88,23 +89,29 @@ export function TransactionDetailsSheet({
     }
   };
 
-  const handleAddAttachment = async (paymentId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddAttachment = async (
+    paymentId: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      // NOTE: In a real production environment, you would upload the file to a storage provider
-      // like S3, Google Cloud Storage, or Cloudinary and use the returned permanent URL.
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadResult = await uploadFileAction(formData);
+
       await addAttachmentToPayment(paymentId, {
-        fileName: file.name,
-        fileUrl: `https://storage.example.com/payments/${Date.now()}-${file.name}`,
-        mimeType: file.type,
-        sizeBytes: file.size,
+        fileName: uploadResult.fileName,
+        fileUrl: uploadResult.fileUrl,
+        mimeType: uploadResult.mimeType,
+        sizeBytes: uploadResult.sizeBytes,
       });
       toast.success("Attachment added to payment");
       fetchTransaction();
     } catch (error) {
       toast.error("Failed to add attachment");
+      console.error(error);
     }
   };
 
@@ -142,8 +149,7 @@ export function TransactionDetailsSheet({
                 </SheetTitle>
                 <Badge
                   variant="secondary"
-                  className="font-mono text-[10px] tracking-wider uppercase bg-zinc-100 text-zinc-700 hover:bg-zinc-100 rounded border border-zinc-200/60 px-1.5 py-0"
-                >
+                  className="font-mono text-[10px] tracking-wider uppercase bg-zinc-100 text-zinc-700 hover:bg-zinc-100 rounded border border-zinc-200/60 px-1.5 py-0">
                   {transaction.type}
                 </Badge>
               </div>
@@ -162,12 +168,10 @@ export function TransactionDetailsSheet({
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
-                asChild
-              >
+                asChild>
                 <a
                   href={`/api/sales/documents/${transaction.id}?type=invoice`}
-                  download
-                >
+                  download>
                   <Download className="w-3.5 h-3.5 text-zinc-500" />
                   Invoice
                 </a>
@@ -176,12 +180,10 @@ export function TransactionDetailsSheet({
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
-                asChild
-              >
+                asChild>
                 <a
                   href={`/api/sales/documents/${transaction.id}?type=receipt`}
-                  download
-                >
+                  download>
                   <Receipt className="w-3.5 h-3.5 text-zinc-500" />
                   Receipt
                 </a>
@@ -231,20 +233,17 @@ export function TransactionDetailsSheet({
               <TabsList className="w-full grid grid-cols-3 bg-zinc-200/60 p-1 border border-zinc-200/40 rounded-lg">
                 <TabsTrigger
                   value="items"
-                  className="text-xs font-medium data-[state=active]:shadow-sm"
-                >
+                  className="text-xs font-medium data-[state=active]:shadow-sm">
                   Line Items ({transaction.items?.length || 0})
                 </TabsTrigger>
                 <TabsTrigger
                   value="payments"
-                  className="text-xs font-medium data-[state=active]:shadow-sm"
-                >
+                  className="text-xs font-medium data-[state=active]:shadow-sm">
                   Ledger & Payments
                 </TabsTrigger>
                 <TabsTrigger
                   value="details"
-                  className="text-xs font-medium data-[state=active]:shadow-sm"
-                >
+                  className="text-xs font-medium data-[state=active]:shadow-sm">
                   Entity Details
                 </TabsTrigger>
               </TabsList>
@@ -274,8 +273,7 @@ export function TransactionDetailsSheet({
                         {transaction.items?.map((item: any) => (
                           <tr
                             key={item.id}
-                            className="hover:bg-zinc-50/40 transition-colors"
-                          >
+                            className="hover:bg-zinc-50/40 transition-colors">
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-0.5">
                                 <span className="font-semibold text-zinc-900">
@@ -332,15 +330,13 @@ export function TransactionDetailsSheet({
               {/* Payments Panel */}
               <TabsContent
                 value="payments"
-                className="mt-4 space-y-4 outline-none"
-              >
+                className="mt-4 space-y-4 outline-none">
                 <div className="space-y-3">
                   {transaction.payments?.length > 0 ? (
                     transaction.payments.map((payment: any) => (
                       <div
                         key={payment.id}
-                        className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm shadow-zinc-100/50 space-y-3"
-                      >
+                        className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm shadow-zinc-100/50 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3.5">
                             <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-600 shadow-sm">
@@ -361,8 +357,7 @@ export function TransactionDetailsSheet({
                           </div>
                           <Badge
                             variant="outline"
-                            className="bg-emerald-50/60 text-emerald-700 border-emerald-200 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5"
-                          >
+                            className="bg-emerald-50/60 text-emerald-700 border-emerald-200 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5">
                             {payment.status}
                           </Badge>
                         </div>
@@ -373,21 +368,36 @@ export function TransactionDetailsSheet({
                             {payment.method === "CHEQUE" && (
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Bank Name</span>
-                                  <span className="text-zinc-700 font-semibold">{payment.bankName || 'N/A'}</span>
+                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">
+                                    Bank Name
+                                  </span>
+                                  <span className="text-zinc-700 font-semibold">
+                                    {payment.bankName || "N/A"}
+                                  </span>
                                 </div>
                                 <div>
-                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Cheque Date</span>
+                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">
+                                    Cheque Date
+                                  </span>
                                   <span className="text-zinc-700 font-semibold">
-                                    {payment.chequeDate ? format(new Date(payment.chequeDate), 'MMM d, yyyy') : 'N/A'}
+                                    {payment.chequeDate
+                                      ? format(
+                                          new Date(payment.chequeDate),
+                                          "MMM d, yyyy",
+                                        )
+                                      : "N/A"}
                                   </span>
                                 </div>
                               </div>
                             )}
                             {payment.notes && (
                               <div>
-                                <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">Payment Notes</span>
-                                <p className="text-zinc-600 italic leading-relaxed">{payment.notes}</p>
+                                <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">
+                                  Payment Notes
+                                </span>
+                                <p className="text-zinc-600 italic leading-relaxed">
+                                  {payment.notes}
+                                </p>
                               </div>
                             )}
                           </div>
@@ -395,42 +405,50 @@ export function TransactionDetailsSheet({
 
                         {/* Attachments Section */}
                         <div className="space-y-2">
-                           <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Attachments</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-1.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 gap-1"
-                                onClick={() => document.getElementById(`payment-att-${payment.id}`)?.click()}
-                              >
-                                <Plus className="w-3 h-3" /> Add Proof
-                              </Button>
-                              <input
-                                id={`payment-att-${payment.id}`}
-                                type="file"
-                                className="hidden"
-                                onChange={(e) => handleAddAttachment(payment.id, e)}
-                              />
-                           </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              Attachments
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 gap-1"
+                              onClick={() =>
+                                document
+                                  .getElementById(`payment-att-${payment.id}`)
+                                  ?.click()
+                              }>
+                              <Plus className="w-3 h-3" /> Add Proof
+                            </Button>
+                            <input
+                              id={`payment-att-${payment.id}`}
+                              type="file"
+                              className="hidden"
+                              onChange={e => handleAddAttachment(payment.id, e)}
+                            />
+                          </div>
 
-                           {payment.attachments?.length > 0 ? (
-                             <div className="flex flex-wrap gap-2">
-                               {payment.attachments.map((att: any) => (
-                                 <a
-                                   key={att.id}
-                                   href={att.fileUrl}
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
-                                 >
-                                   <Paperclip className="w-3 h-3 text-zinc-400" />
-                                   <span className="max-w-[100px] truncate">{att.fileName}</span>
-                                 </a>
-                               ))}
-                             </div>
-                           ) : (
-                             <p className="text-[10px] text-zinc-400 italic">No attachments found</p>
-                           )}
+                          {payment.attachments?.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {payment.attachments.map((att: any) => (
+                                <a
+                                  key={att.id}
+                                  href={att.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">
+                                  <Paperclip className="w-3 h-3 text-zinc-400" />
+                                  <span className="max-w-[100px] truncate">
+                                    {att.fileName}
+                                  </span>
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-zinc-400 italic">
+                              No attachments found
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))
@@ -442,24 +460,23 @@ export function TransactionDetailsSheet({
                     </div>
                   )}
 
-                  {transaction.type !== "POS_SALE" && transaction.paymentStatus !== "PAID" && (
-                    <Button
-                      className="w-full gap-2 h-10 text-xs font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm mt-1"
-                      variant="outline"
-                      onClick={() => setIsPaymentModalOpen(true)}
-                    >
-                      <CreditCard className="w-3.5 h-3.5 text-zinc-500" />
-                      Register Payment Transaction
-                    </Button>
-                  )}
+                  {transaction.type !== "POS_SALE" &&
+                    transaction.paymentStatus !== "PAID" && (
+                      <Button
+                        className="w-full gap-2 h-10 text-xs font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm mt-1"
+                        variant="outline"
+                        onClick={() => setIsPaymentModalOpen(true)}>
+                        <CreditCard className="w-3.5 h-3.5 text-zinc-500" />
+                        Register Payment Transaction
+                      </Button>
+                    )}
                 </div>
               </TabsContent>
 
               {/* Customer & Location Panel */}
               <TabsContent
                 value="details"
-                className="mt-4 space-y-4 outline-none"
-              >
+                className="mt-4 space-y-4 outline-none">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3 shadow-sm shadow-zinc-100/50">
                     <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
@@ -511,8 +528,7 @@ export function TransactionDetailsSheet({
                       {transaction.fulfillments.map((f: any) => (
                         <div
                           key={f.id}
-                          className="flex items-start gap-3 text-xs"
-                        >
+                          className="flex items-start gap-3 text-xs">
                           <div className="mt-0.5 p-1.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-600">
                             <Truck className="w-3.5 h-3.5" />
                           </div>
@@ -523,8 +539,7 @@ export function TransactionDetailsSheet({
                               </span>
                               <Badge
                                 variant="outline"
-                                className="text-[9px] uppercase tracking-wider bg-zinc-50 px-1.5 font-semibold text-zinc-600 rounded"
-                              >
+                                className="text-[9px] uppercase tracking-wider bg-zinc-50 px-1.5 font-semibold text-zinc-600 rounded">
                                 {f.status}
                               </Badge>
                             </div>
@@ -570,32 +585,28 @@ export function TransactionDetailsSheet({
             variant="outline"
             className="flex-1 h-10 text-xs font-semibold text-red-600 border-zinc-200 hover:bg-red-50/50 hover:border-red-200 hover:text-red-700 transition-colors"
             onClick={() => handleStatusUpdate("CANCELLED")}
-            disabled={["COMPLETED", "CANCELLED"].includes(transaction.status)}
-          >
+            disabled={["COMPLETED", "CANCELLED"].includes(transaction.status)}>
             Cancel Order
           </Button>
 
           {transaction.status === "PENDING_CONFIRMATION" && (
             <Button
               className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
-              onClick={() => handleStatusUpdate("CONFIRMED")}
-            >
+              onClick={() => handleStatusUpdate("CONFIRMED")}>
               Approve Statement
             </Button>
           )}
           {transaction.status === "CONFIRMED" && (
             <Button
               className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
-              onClick={() => handleStatusUpdate("PROCESSING")}
-            >
+              onClick={() => handleStatusUpdate("PROCESSING")}>
               Release to Processing
             </Button>
           )}
           {transaction.status === "PROCESSING" && (
             <Button
               className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
-              onClick={() => handleStatusUpdate("COMPLETED")}
-            >
+              onClick={() => handleStatusUpdate("COMPLETED")}>
               Mark Dispatch Completed
             </Button>
           )}
@@ -624,7 +635,7 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
     { key: "COMPLETED", label: "Delivered" },
   ];
 
-  const statusOrder = stages.map((s) => s.key);
+  const statusOrder = stages.map(s => s.key);
   const currentIndex = statusOrder.indexOf(currentStatus);
 
   return (
@@ -649,8 +660,7 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
         return (
           <div
             key={stage.key}
-            className="relative z-10 flex flex-col items-center gap-2"
-          >
+            className="relative z-10 flex flex-col items-center gap-2">
             <div
               className={cn(
                 "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 border-2",
@@ -659,8 +669,7 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
                   : isCurrent
                     ? "bg-white border-zinc-900 ring-4 ring-zinc-100 shadow-sm"
                     : "bg-white border-zinc-200 text-zinc-300",
-              )}
-            >
+              )}>
               {isCompleted && (
                 <CheckCircle2 className="w-2.5 h-2.5 text-white stroke-[3px]" />
               )}
@@ -678,8 +687,7 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
                     : isCurrent
                       ? "text-zinc-900 font-bold"
                       : "text-zinc-400",
-                )}
-              >
+                )}>
                 {stage.label}
               </span>
             </div>
@@ -706,8 +714,7 @@ function StatusBadge({ status }: { status: string }) {
       className={cn(
         "font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded",
         styles[status] || "bg-zinc-50 text-zinc-600 border-zinc-200",
-      )}
-    >
+      )}>
       {status.replace(/_/g, " ")}
     </Badge>
   );
@@ -726,8 +733,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
       className={cn(
         "font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded",
         styles[status] || "bg-zinc-50 text-zinc-600 border-zinc-200",
-      )}
-    >
+      )}>
       {status.replace(/_/g, " ")}
     </Badge>
   );

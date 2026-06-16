@@ -32,7 +32,7 @@ export class CatalogService {
     const inStock = query.inStock === "true";
     const featured = query.isFeatured === "true";
     const requestedFields = query.fields
-      ? (query.fields as string).split(",").map((f) => f.trim())
+      ? (query.fields as string).split(",").map(f => f.trim())
       : null;
 
     const skip = (page - 1) * limit;
@@ -117,13 +117,13 @@ export class CatalogService {
         this.prisma.client.product.count({ where }),
       ]);
 
-      let shaped = products.map((p) => {
+      let shaped = products.map(p => {
         return {
           ...p,
           id: p.sku,
           internalId: p.id,
           images: p.imageUrls || null,
-          variants: p.variants.map((v) => {
+          variants: p.variants.map(v => {
             const { variantStocks, ...variantBase } = v;
             const totalStock =
               variantStocks?.reduce(
@@ -140,7 +140,7 @@ export class CatalogService {
               retailPrice: v.retailPrice,
               buyingPrice: v.buyingPrice,
               totalStock,
-              stockByLocation: variantStocks?.map((s) => ({
+              stockByLocation: variantStocks?.map(s => ({
                 locationId: s.locationId,
                 stock: s.availableStock,
               })),
@@ -150,9 +150,9 @@ export class CatalogService {
       });
 
       if (requestedFields && requestedFields.length > 0) {
-        shaped = shaped.map((p) => {
+        shaped = shaped.map(p => {
           const filteredProduct: any = {};
-          requestedFields.forEach((field) => {
+          requestedFields.forEach(field => {
             if (field in p) filteredProduct[field] = (p as any)[field];
           });
           return filteredProduct;

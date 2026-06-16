@@ -37,7 +37,7 @@ describe("MemberUseCase", () => {
       approvalRequest: {
         create: vi.fn(),
       },
-      $transaction: vi.fn((cb) => cb(mockPrisma.client)),
+      $transaction: vi.fn(cb => cb(mockPrisma.client)),
     },
   };
 

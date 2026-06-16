@@ -254,11 +254,10 @@ export default function CreateOrgPage() {
               </div>
 
               <div className="space-y-3">
-                {invitations.map((inv) => (
+                {invitations.map(inv => (
                   <div
                     key={inv.id}
-                    className="group relative p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-emerald-200 hover:shadow-md transition-all duration-200"
-                  >
+                    className="group relative p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-emerald-200 hover:shadow-md transition-all duration-200">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-emerald-600 font-bold shadow-sm group-hover:border-emerald-100 relative overflow-hidden">
                         {inv.organization.logo ? (
@@ -284,8 +283,7 @@ export default function CreateOrgPage() {
                         size="sm"
                         variant="ghost"
                         className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
-                        onClick={() => handleAcceptInvite(inv)}
-                      >
+                        onClick={() => handleAcceptInvite(inv)}>
                         Join <ChevronRight className="ml-1 h-4 w-4" />
                       </Button>
                     </div>
@@ -307,8 +305,7 @@ export default function CreateOrgPage() {
               <Button
                 variant="outline"
                 className="w-full h-12 rounded-xl border-gray-200 hover:border-emerald-600 hover:text-emerald-600 transition-all group"
-                onClick={() => setShowForm(true)}
-              >
+                onClick={() => setShowForm(true)}>
                 Create my own organization
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -319,8 +316,7 @@ export default function CreateOrgPage() {
                 "space-y-8",
                 !loadingInvitations &&
                   "animate-in fade-in slide-in-from-bottom-4 duration-500",
-              )}
-            >
+              )}>
               {loadingInvitations ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
@@ -419,15 +415,14 @@ export default function CreateOrgPage() {
                           Industry
                         </label>
                         <Select
-                          onValueChange={(val) =>
+                          onValueChange={val =>
                             setValue("industry", val, { shouldValidate: true })
-                          }
-                        >
+                          }>
                           <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:ring-emerald-500/20 focus:border-emerald-500">
                             <SelectValue placeholder="Select..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {industries.map((ind) => (
+                            {industries.map(ind => (
                               <SelectItem key={ind} value={ind}>
                                 {ind}
                               </SelectItem>
@@ -442,15 +437,14 @@ export default function CreateOrgPage() {
                           Team Size
                         </label>
                         <Select
-                          onValueChange={(val) =>
+                          onValueChange={val =>
                             setValue("size", val, { shouldValidate: true })
-                          }
-                        >
+                          }>
                           <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:ring-emerald-500/20 focus:border-emerald-500">
                             <SelectValue placeholder="Select..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {companySizes.map((sz) => (
+                            {companySizes.map(sz => (
                               <SelectItem key={sz} value={sz}>
                                 {sz}
                               </SelectItem>
@@ -466,8 +460,7 @@ export default function CreateOrgPage() {
                         disabled={
                           isLoading || !isValid || slugStatus === "taken"
                         }
-                        className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:shadow-none"
-                      >
+                        className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:shadow-none">
                         {isLoading ? (
                           <>
                             <Loader2 className="h-5 w-5 animate-spin" />

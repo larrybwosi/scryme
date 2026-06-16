@@ -43,7 +43,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
 
     prisma = {
       client: {
-        $transaction: vi.fn(async (callback) => await callback(mockTx)),
+        $transaction: vi.fn(async callback => await callback(mockTx)),
         stockBatch: mockTx.stockBatch,
       },
     };

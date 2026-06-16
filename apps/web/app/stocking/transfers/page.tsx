@@ -4,13 +4,7 @@ import React, { useState, useEffect } from "react";
 import { PageHeader } from "../../../components/page-header";
 import { getStockTransferList } from "../../actions/stock-management";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  Plus,
-  ArrowLeftRight,
-  Search,
-  Eye,
-  FileDown,
-} from "lucide-react";
+import { Plus, ArrowLeftRight, Search, Eye, FileDown } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -49,7 +43,10 @@ export default function TransfersPage() {
   const downloadPdf = () => {
     const params = new URLSearchParams();
     if (debouncedSearch) params.append("search", debouncedSearch);
-    window.open(`/api/stocking/documents/transfers?${params.toString()}`, "_blank");
+    window.open(
+      `/api/stocking/documents/transfers?${params.toString()}`,
+      "_blank",
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -58,8 +55,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-blue-50 text-blue-700 border-blue-200"
-          >
+            className="bg-blue-50 text-blue-700 border-blue-200">
             Pending Approval
           </Badge>
         );
@@ -67,8 +63,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-indigo-50 text-indigo-700 border-indigo-200"
-          >
+            className="bg-indigo-50 text-indigo-700 border-indigo-200">
             Approved
           </Badge>
         );
@@ -76,8 +71,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-amber-50 text-amber-700 border-amber-200"
-          >
+            className="bg-amber-50 text-amber-700 border-amber-200">
             Shipped
           </Badge>
         );
@@ -85,8 +79,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-orange-50 text-orange-700 border-orange-200"
-          >
+            className="bg-orange-50 text-orange-700 border-orange-200">
             In Transit
           </Badge>
         );
@@ -94,8 +87,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-green-50 text-green-700 border-green-200"
-          >
+            className="bg-green-50 text-green-700 border-green-200">
             Completed
           </Badge>
         );
@@ -142,7 +134,7 @@ export default function TransfersPage() {
               placeholder="Search transfers..."
               className="pl-10 bg-white"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
         </div>
@@ -162,7 +154,9 @@ export default function TransfersPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-gray-500">
+                <TableCell
+                  colSpan={7}
+                  className="h-32 text-center text-gray-500">
                   Loading...
                 </TableCell>
               </TableRow>
@@ -170,13 +164,12 @@ export default function TransfersPage() {
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="h-32 text-center text-gray-500"
-                >
+                  className="h-32 text-center text-gray-500">
                   No stock transfers found.
                 </TableCell>
               </TableRow>
             ) : (
-              transfers.map((transfer) => (
+              transfers.map(transfer => (
                 <TableRow key={transfer.id}>
                   <TableCell className="font-medium">
                     {transfer.transferNumber}

@@ -199,7 +199,7 @@ export class InventoryService {
       userId,
     } = data;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Find or create the stock record
       const stockRecord = await tx.productVariantStock.findFirst({
         where: {

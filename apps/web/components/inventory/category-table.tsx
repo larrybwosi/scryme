@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -16,7 +16,14 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, Tag, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Tag,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { deleteCategory } from "../../app/actions/inventory";
 import { toast } from "sonner";
 import { CategoryDialog } from "./category-dialog";
@@ -81,7 +88,7 @@ export function CategoryTable({ data }: CategoryTableProps) {
               </TableCell>
             </TableRow>
           ) : (
-            data.map((category) => (
+            data.map(category => (
               <React.Fragment key={category.id}>
                 <TableRow>
                   <TableCell>
@@ -92,8 +99,7 @@ export function CategoryTable({ data }: CategoryTableProps) {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 p-0"
-                            onClick={() => toggleExpand(category.id)}
-                          >
+                            onClick={() => toggleExpand(category.id)}>
                             {expandedIds.has(category.id) ? (
                               <ChevronDown className="h-4 w-4" />
                             ) : (
@@ -104,11 +110,12 @@ export function CategoryTable({ data }: CategoryTableProps) {
                       </div>
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0"
-                        style={{ backgroundColor: category.color || "#000" }}
-                      >
+                        style={{ backgroundColor: category.color || "#000" }}>
                         <Tag size={14} />
                       </div>
-                      <span className="font-medium text-sm">{category.name}</span>
+                      <span className="font-medium text-sm">
+                        {category.name}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500 max-w-[300px] truncate">
@@ -128,14 +135,14 @@ export function CategoryTable({ data }: CategoryTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditingCategory(category)}>
+                        <DropdownMenuItem
+                          onClick={() => setEditingCategory(category)}>
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Edit Category</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
-                          onClick={() => setDeletingId(category.id)}
-                        >
+                          onClick={() => setDeletingId(category.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           <span>Delete Category</span>
                         </DropdownMenuItem>
@@ -150,8 +157,7 @@ export function CategoryTable({ data }: CategoryTableProps) {
                         <div className="flex items-center gap-3 pl-12">
                           <div
                             className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0"
-                            style={{ backgroundColor: sub.color || "#666" }}
-                          >
+                            style={{ backgroundColor: sub.color || "#666" }}>
                             <Tag size={10} />
                           </div>
                           <span className="text-sm">{sub.name}</span>
@@ -174,14 +180,14 @@ export function CategoryTable({ data }: CategoryTableProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditingCategory(sub)}>
+                            <DropdownMenuItem
+                              onClick={() => setEditingCategory(sub)}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit Category</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-red-600 focus:text-red-600"
-                              onClick={() => setDeletingId(sub.id)}
-                            >
+                              onClick={() => setDeletingId(sub.id)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               <span>Delete Category</span>
                             </DropdownMenuItem>
@@ -199,23 +205,25 @@ export function CategoryTable({ data }: CategoryTableProps) {
       <CategoryDialog
         category={editingCategory}
         isOpen={!!editingCategory}
-        onOpenChange={(open) => !open && setEditingCategory(null)}
+        onOpenChange={open => !open && setEditingCategory(null)}
       />
 
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={open => !open && setDeletingId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category.
+              This action cannot be undone. This will permanently delete the
+              category.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
-              onClick={() => deletingId && handleDelete(deletingId)}
-            >
+              onClick={() => deletingId && handleDelete(deletingId)}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

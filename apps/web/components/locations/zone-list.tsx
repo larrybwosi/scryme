@@ -1,19 +1,13 @@
 "use client";
 
 import React from "react";
-import {
-  Plus,
-  Layers,
-  Edit,
-  Trash2,
-  MoreVertical
-} from "lucide-react";
+import { Plus, Layers, Edit, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { ZoneDialog } from "./zone-dialog";
 import { deleteZone } from "../../app/actions/locations";
@@ -26,7 +20,11 @@ interface ZoneListProps {
 
 export function ZoneList({ locationId, zones }: ZoneListProps) {
   async function onDelete(id: string) {
-    if (confirm("Are you sure you want to delete this zone? This will fail if it contains units.")) {
+    if (
+      confirm(
+        "Are you sure you want to delete this zone? This will fail if it contains units.",
+      )
+    ) {
       try {
         await deleteZone(id);
         toast.success("Zone deleted successfully");
@@ -58,21 +56,27 @@ export function ZoneList({ locationId, zones }: ZoneListProps) {
           </div>
         ) : (
           zones.map((zone: any) => (
-            <div key={zone.id} className="p-4 rounded-xl border bg-white flex items-center justify-between">
+            <div
+              key={zone.id}
+              className="p-4 rounded-xl border bg-white flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
                   <Layers size={20} />
                 </div>
                 <div>
                   <div className="font-semibold">{zone.name}</div>
-                  <div className="text-xs text-muted-foreground line-clamp-1">{zone.description || "No description"}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-1">
+                    {zone.description || "No description"}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <div className="text-xs font-medium">{zone._count.storageUnits} Units</div>
+                  <div className="text-xs font-medium">
+                    {zone._count.storageUnits} Units
+                  </div>
                   <div className="text-[10px] text-muted-foreground">
-                    Capacity: {zone.capacity || '∞'} {zone.capacityUnit}
+                    Capacity: {zone.capacity || "∞"} {zone.capacityUnit}
                   </div>
                 </div>
                 <DropdownMenu>
@@ -83,14 +87,13 @@ export function ZoneList({ locationId, zones }: ZoneListProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <ZoneDialog locationId={locationId} zone={zone}>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <DropdownMenuItem onSelect={e => e.preventDefault()}>
                         <Edit className="mr-2 h-4 w-4" /> Edit Zone
                       </DropdownMenuItem>
                     </ZoneDialog>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
-                      onClick={() => onDelete(zone.id)}
-                    >
+                      onClick={() => onDelete(zone.id)}>
                       <Trash2 className="mr-2 h-4 w-4" /> Delete Zone
                     </DropdownMenuItem>
                   </DropdownMenuContent>

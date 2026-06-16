@@ -342,11 +342,13 @@ const buildStyles = (primaryColor = "#0C6E56") =>
   });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmtCurrency = (n: number) =>
-  n.toLocaleString("en-US", {
+const fmtCurrency = (n: number | undefined) => {
+  const val = n ?? 0;
+  return val.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
@@ -358,6 +360,178 @@ export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
   return (
     <Document>
       <Page size="A4" style={s.page}>
+        {/* ── Header band ── */}
+        <View style={s.headerBand}>
+          <View>
+            {data.branding?.logoUrl && (
+              <Image src={data.branding.logoUrl} style={s.logo} />
+            )}
+            <Text style={s.companyName}>{companyName}</Text>
+            {data.branding?.companyAddress && (
+              <Text style={s.companyMeta}>{data.branding.companyAddress}</Text>
+            )}
+            {data.branding?.companyEmail && (
+              <Text style={s.companyMeta}>{data.branding.companyEmail}</Text>
+            )}
+          </View>
+          <View style={s.docTitleRight}>
+            <Text style={s.docEyebrow}>Payment Receipt</Text>
+            <Text style={s.docNumber}>#{data.receiptNumber}</Text>
+            {data.orderNumber && (
+              <Text style={s.docMeta}>Order #{data.orderNumber}</Text>
+            )}
+            <Text style={s.docMeta}>{dateStr}</Text>
+          </View>
+        </View>
+
+        {/* ── Accent rule ── */}
+        <View style={s.accentRule} />
+
+        {/* ── Meta row ── */}
+        <View style={s.metaRow}>
+          {/* Customer */}
+          <View style={s.metaBlock}>
+            <Text style={s.metaLabel}>Billed to</Text>
+            <Text style={s.metaName}>{data.customer?.name || 'Walk-in Customer'}</Text>
+            {data.customer?.email && (
+              <Text style={s.metaSub}>{data.customer.email}</Text>
+            )}
+            {data.customer?.phone && (
+              <Text style={s.metaSub}>{data.customer.phone}</Text>
+            )}
+            <View style={s.paidBadge}>
+              <Text style={s.paidBadgeText}>✓ {data.status || 'Paid'}</Text>
+            </View>
+          </View>
+
+          {/* Transaction details */}
+          <View style={[s.metaBlock, { alignItems: "flex-end" }]}>
+            <Text style={s.metaLabel}>Transaction details</Text>
+            <View style={s.detailGrid}>
+              <View style={s.detailCell}>
+                <Text style={s.metaLabel}>Date</Text>
+                <Text style={s.detailValue}>{dateStr}</Text>
+              </View>
+              {data.paymentMethod && (
+                <View style={s.detailCell}>
+                  <Text style={s.metaLabel}>Payment method</Text>
+                  <Text style={s.detailValue}>{data.paymentMethod}</Text>
+                </View>
+              )}
+              <View style={s.detailCell}>
+                <Text style={s.metaLabel}>Receipt no.</Text>
+                <Text style={s.detailValue}>{data.receiptNumber}</Text>
+              </View>
+            </View>
+            <View style={{ alignItems: 'flex-end', marginTop: 10 }}>
+              {data.locationName && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Location: </Text>
+                  <Text style={[s.detailValue, { fontSize: 8 }]}>{data.locationName}</Text>
+                </View>
+              )}
+              {data.createdBy && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Cashier: </Text>
+                  <Text style={[s.detailValue, { fontSize: 8 }]}>{data.createdBy}</Text>
+                </View>
+              )}
+              {data.tags && data.tags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                  {data.tags.map((tag, i) => (
+                    <View key={i} style={{ backgroundColor: C.surface, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 7, color: C.inkMid, fontFamily: "Helvetica-Bold" }}>{tag.toUpperCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* ── Divider ── */}
+        <View style={s.divider} />
+
+        {/* ── Items table ── */}
+        <Text style={s.sectionLabel}>Transaction summary</Text>
+
+        <View style={s.tableHeaderRow}>
+          <Text style={[s.tableHeaderCell, s.colDesc]}>Description</Text>
+          <Text style={[s.tableHeaderCell, s.colQty, { textAlign: "center" }]}>
+            Qty
+          </Text>
+          <Text style={[s.tableHeaderCell, s.colPrice, { textAlign: "right" }]}>
+            Unit price
+          </Text>
+          <Text style={[s.tableHeaderCell, s.colTotal, { textAlign: "right" }]}>
+            Amount
+          </Text>
+        </View>
+
+        {(data.items || []).map((item, i) => (
+          <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+            <Text style={[s.tableCell, s.colDesc]}>{item.description || item.itemName || 'Item'}</Text>
+            <Text style={[s.tableCellMuted, s.colQty]}>{item.quantity || 0}</Text>
+            <Text style={[s.tableCellMuted, s.colPrice]}>
+              {fmtCurrency(item.unitPrice ?? item.rate ?? 0)}
+            </Text>
+            <Text style={[s.tableCellBold, s.colTotal]}>
+              {fmtCurrency(
+                item.totalPrice ?? item.amount ?? (item.quantity || 0) * (item.unitPrice || item.rate || 0),
+              )}
+            </Text>
+          </View>
+        ))}
+
+        {/* ── Totals ── */}
+        <View style={s.totalsSection}>
+          <View style={s.totalsBox}>
+            <View style={s.totalsRow}>
+              <Text style={s.totalsLabel}>Subtotal</Text>
+              <Text style={s.totalsValue}>{fmtCurrency(data.subtotal)}</Text>
+            </View>
+            <View style={s.totalsRow}>
+              <Text style={s.totalsLabel}>Tax</Text>
+              <Text style={s.totalsValue}>{fmtCurrency(data.tax)}</Text>
+            </View>
+            <View style={s.grandBar}>
+              <Text style={s.grandLabel}>Total paid</Text>
+              <Text style={s.grandValue}>{fmtCurrency(data.total)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Footer ── */}
+        <View style={s.footer}>
+          <View>
+            <Text style={s.thankYou}>Thank you for your payment.</Text>
+            <Text style={s.footerSub}>
+              This is an official receipt issued by {companyName}.{"\n"}
+              Please retain this document for your records.
+            </Text>
+          </View>
+          <View>
+            <Text style={s.footerMeta}>
+              <Text style={s.footerMetaBold}>{companyName}</Text>
+              {data.branding?.companyWebsite
+                ? `\n${data.branding.companyWebsite}`
+                : ""}
+              {"\n"}Receipt #{data.receiptNumber}
+            </Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export const ReceiptPDF = ({ data }: { data: ReceiptData }) => {
+  const primaryColor = data.branding?.primaryColor ?? "#0C6E56";
+  const s = buildStyles(primaryColor);
+  const dateStr = format(new Date(data.date), "MMM dd, yyyy");
+  const companyName = data.branding?.companyName ?? "Our Company";
+
+  return <Page size="A4" style={s.page}>
         {/* ── Header band ── */}
         <View style={s.headerBand}>
           <View>
@@ -495,7 +669,5 @@ export const ReceiptDocument = ({ data }: { data: ReceiptData }) => {
             </Text>
           </View>
         </View>
-      </Page>
-    </Document>
-  );
+      </Page>;
 };

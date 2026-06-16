@@ -7,7 +7,7 @@ import {
   MemberRole,
   ApprovalActionType,
   ConditionType,
-  ApprovalMode
+  ApprovalMode,
 } from "@repo/db/client";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
@@ -40,7 +40,7 @@ export async function updateFinanceSettings(data: {
 
   const { mileageRate, ...orgData } = data;
 
-  await db.$transaction(async (tx) => {
+  await db.$transaction(async tx => {
     if (Object.keys(orgData).length > 0) {
       await tx.organization.update({
         where: { id: auth.organizationId },
@@ -115,13 +115,13 @@ export async function createApprovalWorkflow(data: {
       description: data.description,
       triggerEvent: data.triggerEvent,
       steps: {
-        create: data.steps.map((step) => ({
+        create: data.steps.map(step => ({
           name: step.name,
           description: step.description,
           stepNumber: step.stepNumber,
           allConditionsMustMatch: step.allConditionsMustMatch,
           conditions: {
-            create: step.conditions.map((condition) => ({
+            create: step.conditions.map(condition => ({
               type: condition.type,
               minAmount: condition.minAmount,
               maxAmount: condition.maxAmount,
@@ -130,7 +130,7 @@ export async function createApprovalWorkflow(data: {
             })),
           },
           actions: {
-            create: step.actions.map((action) => ({
+            create: step.actions.map(action => ({
               type: action.type,
               approverRole: action.approverRole,
               specificMemberId: action.specificMemberId,
@@ -152,7 +152,7 @@ export async function updateApprovalWorkflow(id: string, data: any) {
 
   // For simplicity in this implementation, we delete and recreate steps
   // In a production environment, you might want to perform more granular updates
-  await db.$transaction(async (tx) => {
+  await db.$transaction(async tx => {
     await tx.approvalWorkflowStep.deleteMany({
       where: { approvalWorkflowId: id },
     });
@@ -210,7 +210,12 @@ export async function deleteApprovalWorkflow(id: string) {
 }
 
 export async function getCostCenters() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
 
   return await db.costCenter.findMany({
     where: { organizationId: auth.organizationId },

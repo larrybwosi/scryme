@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { createCategory, updateCategory, getCategories } from "../../app/actions/inventory";
+import {
+  createCategory,
+  updateCategory,
+  getCategories,
+} from "../../app/actions/inventory";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -32,19 +36,26 @@ interface CategoryDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function CategoryDialog({ children, category, isOpen: controlledOpen, onOpenChange }: CategoryDialogProps) {
+export function CategoryDialog({
+  children,
+  category,
+  isOpen: controlledOpen,
+  onOpenChange,
+}: CategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [parentCategories, setParentCategories] = useState<{ id: string; name: string }[]>([]);
+  const [parentCategories, setParentCategories] = useState<
+    { id: string; name: string }[]
+  >([]);
 
   const open = controlledOpen !== undefined ? controlledOpen : isOpen;
   const setOpen = onOpenChange !== undefined ? onOpenChange : setIsOpen;
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    color: '#000000',
-    parentId: '',
+    name: "",
+    description: "",
+    color: "#000000",
+    parentId: "",
   });
 
   useEffect(() => {
@@ -61,17 +72,17 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
   useEffect(() => {
     if (category) {
       setFormData({
-        name: category.name || '',
-        description: category.description || '',
-        color: category.color || '#000000',
-        parentId: category.parentId || 'none',
+        name: category.name || "",
+        description: category.description || "",
+        color: category.color || "#000000",
+        parentId: category.parentId || "none",
       });
     } else {
       setFormData({
-        name: '',
-        description: '',
-        color: '#000000',
-        parentId: 'none',
+        name: "",
+        description: "",
+        color: "#000000",
+        parentId: "none",
       });
     }
   }, [category, open]);
@@ -83,7 +94,7 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
     try {
       const data = {
         ...formData,
-        parentId: formData.parentId === 'none' ? undefined : formData.parentId,
+        parentId: formData.parentId === "none" ? undefined : formData.parentId,
       };
 
       if (category) {
@@ -107,9 +118,13 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
       <DialogContent className="sm:max-w-[450px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{category ? 'Edit Category' : 'Add Category'}</DialogTitle>
+            <DialogTitle>
+              {category ? "Edit Category" : "Add Category"}
+            </DialogTitle>
             <DialogDescription>
-              {category ? 'Update the category details below.' : 'Create a new product category to organize your inventory.'}
+              {category
+                ? "Update the category details below."
+                : "Create a new product category to organize your inventory."}
             </DialogDescription>
           </DialogHeader>
 
@@ -120,7 +135,9 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
                 id="name"
                 placeholder="e.g., Electronics, Bakery, Drinks"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 required
               />
             </div>
@@ -129,14 +146,15 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
               <Label htmlFor="parentId">Parent Category (Optional)</Label>
               <Select
                 value={formData.parentId}
-                onValueChange={(value) => setFormData({ ...formData, parentId: value })}
-              >
+                onValueChange={value =>
+                  setFormData({ ...formData, parentId: value })
+                }>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a parent category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No Parent (Top Level)</SelectItem>
-                  {parentCategories.map((pc) => (
+                  {parentCategories.map(pc => (
                     <SelectItem key={pc.id} value={pc.id}>
                       {pc.name}
                     </SelectItem>
@@ -151,7 +169,9 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
                 id="description"
                 placeholder="Optional description of the category..."
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={3}
               />
             </div>
@@ -164,12 +184,16 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
                   type="color"
                   className="w-12 h-10 p-1 cursor-pointer"
                   value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
                 />
                 <Input
                   type="text"
                   value={formData.color}
-                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
                   placeholder="#000000"
                   className="flex-1"
                 />
@@ -182,13 +206,14 @@ export function CategoryDialog({ children, category, isOpen: controlledOpen, onO
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={isSubmitting}
-            >
+              disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {category ? 'Update Category' : 'Create Category'}
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {category ? "Update Category" : "Create Category"}
             </Button>
           </DialogFooter>
         </form>

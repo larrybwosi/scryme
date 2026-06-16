@@ -10,7 +10,7 @@ import {
   User,
   Activity,
   ArrowUpRight,
-  Settings
+  Settings,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -21,7 +21,11 @@ import { toast } from "sonner";
 import { upsertBudgetAlert } from "@/app/actions/finance-settings";
 import { cn } from "@repo/ui/lib/utils";
 
-export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) {
+export function BudgetAlertManager({
+  initialAlerts,
+}: {
+  initialAlerts: any[];
+}) {
   const [alerts, setAlerts] = useState(initialAlerts);
   const [isAdding, setIsAdding] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -30,7 +34,7 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
     budgetId: "",
     threshold: 80,
     recipients: [] as string[],
-    isActive: true
+    isActive: true,
   });
 
   const handleAdd = async () => {
@@ -45,7 +49,12 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
         setAlerts([...alerts, result]);
         toast.success("Alert created");
         setIsAdding(false);
-        setFormData({ budgetId: "", threshold: 80, recipients: [], isActive: true });
+        setFormData({
+          budgetId: "",
+          threshold: 80,
+          recipients: [],
+          isActive: true,
+        });
       } catch (error) {
         toast.error("Failed to create alert");
       }
@@ -57,9 +66,14 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
       <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
         <div>
           <h3 className="text-base font-bold text-zinc-900">Budget Alerts</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Automated notifications for budget utilization</p>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Automated notifications for budget utilization
+          </p>
         </div>
-        <Button onClick={() => setIsAdding(true)} size="sm" className="bg-[#34A853] hover:bg-[#2d9147]">
+        <Button
+          onClick={() => setIsAdding(true)}
+          size="sm"
+          className="bg-[#34A853] hover:bg-[#2d9147]">
           <Plus className="w-4 h-4 mr-2" /> New Alert
         </Button>
       </div>
@@ -76,7 +90,12 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
                     <Input
                       type="number"
                       value={formData.threshold}
-                      onChange={(e) => setFormData({ ...formData, threshold: Number(e.target.value) })}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          threshold: Number(e.target.value),
+                        })
+                      }
                       className="pl-9"
                       placeholder="e.g., 80"
                     />
@@ -86,13 +105,20 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
                   <Label>Budget ID</Label>
                   <Input
                     value={formData.budgetId}
-                    onChange={(e) => setFormData({ ...formData, budgetId: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, budgetId: e.target.value })
+                    }
                     placeholder="Enter Budget ID..."
                   />
                 </div>
               </div>
               <div className="flex items-center justify-end gap-3">
-                <Button variant="ghost" size="sm" onClick={() => setIsAdding(false)}>Cancel</Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsAdding(false)}>
+                  Cancel
+                </Button>
                 <Button size="sm" onClick={handleAdd} disabled={isPending}>
                   {isPending ? "Creating..." : "Create Alert"}
                 </Button>
@@ -105,24 +131,29 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
               <div className="p-4 rounded-full bg-zinc-100 text-zinc-400 mb-4">
                 <Bell className="w-8 h-8" />
               </div>
-              <h4 className="text-sm font-bold text-zinc-900">No active alerts</h4>
+              <h4 className="text-sm font-bold text-zinc-900">
+                No active alerts
+              </h4>
               <p className="text-xs text-zinc-500 max-w-xs mt-1">
-                Stay informed when your departments or projects approach their budget limits.
+                Stay informed when your departments or projects approach their
+                budget limits.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {alerts.map((alert) => (
+              {alerts.map(alert => (
                 <div
                   key={alert.id}
-                  className="p-5 rounded-2xl border border-zinc-200 bg-white hover:shadow-md transition-all flex flex-col"
-                >
+                  className="p-5 rounded-2xl border border-zinc-200 bg-white hover:shadow-md transition-all flex flex-col">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-2.5 rounded-xl",
-                        alert.threshold >= 90 ? "bg-red-50 text-red-500" : "bg-amber-50 text-amber-500"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-2.5 rounded-xl",
+                          alert.threshold >= 90
+                            ? "bg-red-50 text-red-500"
+                            : "bg-amber-50 text-amber-500",
+                        )}>
                         <AlertTriangle className="w-5 h-5" />
                       </div>
                       <div>
@@ -130,18 +161,26 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
                           {alert.budget?.name || "General Budget"}
                         </h4>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-bold text-[#34A853]">{alert.threshold}% Threshold</span>
+                          <span className="text-[10px] font-bold text-[#34A853]">
+                            {alert.threshold}% Threshold
+                          </span>
                           <span className="text-[10px] text-zinc-300">•</span>
-                          <span className="text-[10px] text-zinc-400">Real-time tracking</span>
+                          <span className="text-[10px] text-zinc-400">
+                            Real-time tracking
+                          </span>
                         </div>
                       </div>
                     </div>
                     <Switch
                       checked={alert.isActive}
-                      onCheckedChange={async (val) => {
+                      onCheckedChange={async val => {
                         await upsertBudgetAlert({ ...alert, isActive: val });
-                        setAlerts(alerts.map(a => a.id === alert.id ? { ...a, isActive: val } : a));
-                        toast.success(`Alert ${val ? 'enabled' : 'disabled'}`);
+                        setAlerts(
+                          alerts.map(a =>
+                            a.id === alert.id ? { ...a, isActive: val } : a,
+                          ),
+                        );
+                        toast.success(`Alert ${val ? "enabled" : "disabled"}`);
                       }}
                     />
                   </div>
@@ -153,11 +192,17 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {alert.recipients?.map((email: string, i: number) => (
-                        <Badge key={i} variant="secondary" className="text-[9px] font-medium bg-zinc-100 text-zinc-600">
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="text-[9px] font-medium bg-zinc-100 text-zinc-600">
                           {email}
                         </Badge>
                       )) || (
-                        <span className="text-[10px] text-zinc-400 italic">No recipients defined. Admins will be notified by default.</span>
+                        <span className="text-[10px] text-zinc-400 italic">
+                          No recipients defined. Admins will be notified by
+                          default.
+                        </span>
                       )}
                     </div>
                   </div>
@@ -165,9 +210,17 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
                   <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <User className="w-3 h-3 text-zinc-300" />
-                      <span className="text-[10px] text-zinc-400">Last triggered: {alert.lastNotifiedAt ? new Date(alert.lastNotifiedAt).toLocaleDateString() : 'Never'}</span>
+                      <span className="text-[10px] text-zinc-400">
+                        Last triggered:{" "}
+                        {alert.lastNotifiedAt
+                          ? new Date(alert.lastNotifiedAt).toLocaleDateString()
+                          : "Never"}
+                      </span>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold uppercase hover:text-[#34A853]">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[10px] font-bold uppercase hover:text-[#34A853]">
                       Settings
                     </Button>
                   </div>
@@ -179,9 +232,13 @@ export function BudgetAlertManager({ initialAlerts }: { initialAlerts: any[] }) 
           <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Settings className="w-4 h-4 text-zinc-400" />
-              <p className="text-xs font-medium text-zinc-600">Default Notification Channel</p>
+              <p className="text-xs font-medium text-zinc-600">
+                Default Notification Channel
+              </p>
             </div>
-            <Badge className="bg-white text-zinc-900 border-zinc-200">Email & Dashboard</Badge>
+            <Badge className="bg-white text-zinc-900 border-zinc-200">
+              Email & Dashboard
+            </Badge>
           </div>
         </div>
       </div>

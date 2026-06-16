@@ -4,7 +4,9 @@ import { db, DeviceRegistry, ApiKey, InventoryLocation } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 
-export async function getDevices(): Promise<(DeviceRegistry & { location: InventoryLocation; apiKey: ApiKey })[]> {
+export async function getDevices(): Promise<
+  (DeviceRegistry & { location: InventoryLocation; apiKey: ApiKey })[]
+> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
@@ -20,7 +22,10 @@ export async function getDevices(): Promise<(DeviceRegistry & { location: Invent
   return devices;
 }
 
-export async function updateDevicePermissions(apiKeyId: string, permissions: string[]) {
+export async function updateDevicePermissions(
+  apiKeyId: string,
+  permissions: string[],
+) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
@@ -28,7 +33,7 @@ export async function updateDevicePermissions(apiKeyId: string, permissions: str
   const apiKey = await db.apiKey.findUnique({
     where: {
       id: apiKeyId,
-      organizationId: auth.organizationId
+      organizationId: auth.organizationId,
     },
   });
 
@@ -49,7 +54,7 @@ export async function revokeDevice(deviceId: string) {
   const device = await db.deviceRegistry.findUnique({
     where: {
       id: deviceId,
-      organizationId: auth.organizationId
+      organizationId: auth.organizationId,
     },
     include: { apiKey: true },
   });
@@ -77,7 +82,7 @@ export async function deleteDevice(deviceId: string) {
   const device = await db.deviceRegistry.findUnique({
     where: {
       id: deviceId,
-      organizationId: auth.organizationId
+      organizationId: auth.organizationId,
     },
   });
 

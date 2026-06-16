@@ -34,7 +34,7 @@ const resetPasswordSchema = z
       ),
     confirmPassword: z.string(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
@@ -65,8 +65,7 @@ const FloatingTag = ({
     className={cn(
       "absolute px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-full shadow-lg hidden lg:block",
       className,
-    )}
-  >
+    )}>
     {name}
   </div>
 );
@@ -197,8 +196,7 @@ const PasswordResetPageContent = () => {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <button
               onClick={() => router.push("/login")}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors"
-            >
+              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back to login
             </button>
 
@@ -218,8 +216,7 @@ const PasswordResetPageContent = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <FieldWrapper
                 label="New password"
-                error={errors.password?.message}
-              >
+                error={errors.password?.message}>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
@@ -234,10 +231,9 @@ const PasswordResetPageContent = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword((v) => !v)}
+                    onClick={() => setShowPassword(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    tabIndex={-1}
-                  >
+                    tabIndex={-1}>
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
@@ -249,8 +245,7 @@ const PasswordResetPageContent = () => {
 
               <FieldWrapper
                 label="Confirm password"
-                error={errors.confirmPassword?.message}
-              >
+                error={errors.confirmPassword?.message}>
                 <Input
                   type="password"
                   {...register("confirmPassword")}
@@ -267,8 +262,7 @@ const PasswordResetPageContent = () => {
               <Button
                 type="submit"
                 className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2"
-                disabled={isLoading || status === "success"}
-              >
+                disabled={isLoading || status === "success"}>
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -378,8 +372,7 @@ const PasswordResetPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-white">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
         </div>
-      }
-    >
+      }>
       <PasswordResetPageContent />
     </Suspense>
   );

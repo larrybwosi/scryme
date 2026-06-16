@@ -14,7 +14,7 @@ export class ResponseInterceptor implements NestInterceptor {
     if (isGql) return next.handle();
 
     return next.handle().pipe(
-      map((data) => ({
+      map(data => ({
         success: true,
         timestamp: new Date().toISOString(),
         data,

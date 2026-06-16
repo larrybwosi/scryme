@@ -381,15 +381,15 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           {/* Customer block */}
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Billed to</Text>
-            <Text style={s.metaValue}>{data.customer.name}</Text>
-            {data.customer.email && (
+            <Text style={s.metaValue}>{data.customer?.name || 'Walk-in Customer'}</Text>
+            {data.customer?.email && (
               <Text style={s.metaSub}>{data.customer.email}</Text>
             )}
-            {data.customer.phone && (
+            {data.customer?.phone && (
               <Text style={s.metaSub}>{data.customer.phone}</Text>
             )}
             <View style={s.paidBadge}>
-              <Text style={s.paidBadgeText}>✓ Paid</Text>
+              <Text style={s.paidBadgeText}>✓ {data.status || 'Paid'}</Text>
             </View>
           </View>
 
@@ -399,7 +399,29 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
             <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
               <MetaField label="Date" value={String(data.date)} />
               <MetaField label="Payment method" value={data.paymentMethod || "N/A"} />
-              <MetaField label="Transaction ID" value={data.id} />
+            </View>
+            <View style={{ alignItems: 'flex-end', marginTop: 10 }}>
+              {data.locationName && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Location: </Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.locationName}</Text>
+                </View>
+              )}
+              {data.createdBy && (
+                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                  <Text style={s.metaLabel}>Cashier: </Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.createdBy}</Text>
+                </View>
+              )}
+              {data.tags && data.tags.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                  {data.tags.map((tag, i) => (
+                    <View key={i} style={{ backgroundColor: T.surface, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 7, color: T.inkMid, fontFamily: T.fontBold }}>{tag.toUpperCase()}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -423,10 +445,10 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           </Text>
         </View>
 
-        {data.items.map((item, i) => (
+        {(data.items || []).map((item, i) => (
           <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-            <Text style={s.cellDesc}>{item.itemName || item.description}</Text>
-            <Text style={s.cellQty}>{item.quantity}</Text>
+            <Text style={s.cellDesc}>{item.itemName || item.description || 'Item'}</Text>
+            <Text style={s.cellQty}>{item.quantity || 0}</Text>
             <Text style={s.cellRate}>{fmt(item.rate || item.unitPrice || 0, currency)}</Text>
             <Text style={s.cellAmt}>{fmt(item.amount || item.totalPrice || 0, currency)}</Text>
           </View>
@@ -500,5 +522,170 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
         </View>
       </Page>
     </Document>
+  );
+};
+
+export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
+  const currency = data.currencySymbol ?? data.currency ?? "";
+  const branding = data.branding;
+  const logoUrl = branding?.logoUrl;
+  const orgName = branding?.companyName || "Our Company";
+  const orgAddress = branding?.companyAddress;
+
+  return (
+    <Page size="A4" style={s.page}>
+      {/* ── Header Band ── */}
+      <View style={s.headerBand}>
+        <View>
+          {logoUrl && (
+            <Image
+              src={logoUrl}
+              style={{
+                height: 28,
+                marginBottom: 8,
+                objectFit: "contain",
+                objectPositionX: 0,
+              }}
+            />
+          )}
+          <Text style={s.orgName}>{orgName}</Text>
+          {orgAddress && <Text style={s.orgAddress}>{orgAddress}</Text>}
+        </View>
+        <View>
+          <Text style={s.docTitle}>Payment Receipt</Text>
+          <Text style={s.receiptNum}>#{data.receiptNumber}</Text>
+        </View>
+      </View>
+
+      {/* ── Teal accent rule ── */}
+      <View style={s.accentRule} />
+
+      {/* ── Meta Row ── */}
+      <View style={s.metaRow}>
+        {/* Customer block */}
+        <View style={s.metaBlock}>
+          <Text style={s.metaLabel}>Billed to</Text>
+          <Text style={s.metaValue}>{data.customer.name}</Text>
+          {data.customer.email && (
+            <Text style={s.metaSub}>{data.customer.email}</Text>
+          )}
+          {data.customer.phone && (
+            <Text style={s.metaSub}>{data.customer.phone}</Text>
+          )}
+          <View style={s.paidBadge}>
+            <Text style={s.paidBadgeText}>✓ Paid</Text>
+          </View>
+        </View>
+
+        {/* Transaction detail block */}
+        <View style={[s.metaBlock, { alignItems: "flex-end" }]}>
+          <Text style={s.metaLabel}>Transaction details</Text>
+          <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
+            <MetaField label="Date" value={String(data.date)} />
+            <MetaField
+              label="Payment method"
+              value={data.paymentMethod || "N/A"}
+            />
+            <MetaField label="Transaction ID" value={data.id} />
+          </View>
+        </View>
+      </View>
+
+      {/* ── Divider ── */}
+      <View style={s.divider} />
+
+      {/* ── Items Table ── */}
+      <Text style={s.sectionLabel}>Transaction summary</Text>
+
+      <View style={s.tableHeader}>
+        <Text style={[s.tableHeaderText, { flex: 5 }]}>Description</Text>
+        <Text style={[s.tableHeaderText, { flex: 1, textAlign: "center" }]}>
+          Qty
+        </Text>
+        <Text style={[s.tableHeaderText, { flex: 2, textAlign: "right" }]}>
+          Unit price
+        </Text>
+        <Text style={[s.tableHeaderText, { flex: 2, textAlign: "right" }]}>
+          Amount
+        </Text>
+      </View>
+
+      {data.items.map((item, i) => (
+        <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+          <Text style={s.cellDesc}>{item.itemName || item.description}</Text>
+          <Text style={s.cellQty}>{item.quantity}</Text>
+          <Text style={s.cellRate}>
+            {fmt(item.rate || item.unitPrice || 0, currency)}
+          </Text>
+          <Text style={s.cellAmt}>
+            {fmt(item.amount || item.totalPrice || 0, currency)}
+          </Text>
+        </View>
+      ))}
+
+      {/* ── Totals ── */}
+      <View style={s.totalsPanel}>
+        <View style={s.totalsInner}>
+          <View style={s.totalsRow}>
+            <Text style={s.totalsLabel}>Subtotal</Text>
+            <Text style={s.totalsValue}>{fmt(data.subtotal, currency)}</Text>
+          </View>
+
+          {(data.discountTotal || 0) > 0 && (
+            <View style={s.totalsRow}>
+              <Text style={s.totalsLabel}>Discount</Text>
+              <Text style={s.discountValue}>
+                − {fmt(data.discountTotal || 0, currency)}
+              </Text>
+            </View>
+          )}
+
+          <View style={s.totalsRow}>
+            <Text style={s.totalsLabel}>Tax</Text>
+            <Text style={s.totalsValue}>{fmt(data.tax, currency)}</Text>
+          </View>
+
+          <View style={s.grandTotalBar}>
+            <Text style={s.grandTotalLabel}>Amount paid</Text>
+            <Text style={s.grandTotalValue}>{fmt(data.total, currency)}</Text>
+          </View>
+
+          {data.amountReceived !== undefined && (
+            <View style={s.cashSection}>
+              <View style={s.cashRow}>
+                <Text style={s.totalsLabel}>Cash received</Text>
+                <Text style={s.totalsValue}>
+                  {fmt(data.amountReceived, currency)}
+                </Text>
+              </View>
+              <View style={s.cashRow}>
+                <Text style={s.totalsLabel}>Change returned</Text>
+                <Text style={s.totalsValue}>
+                  {fmt(data.change ?? 0, currency)}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* ── Footer ── */}
+      <View style={s.footer}>
+        <View style={s.footerLeft}>
+          <Text style={s.thankYou}>Thank you for your business.</Text>
+          <Text style={s.footerSub}>
+            This is an official payment receipt issued by {orgName}.{"\n"}
+            Please retain this document for your records.
+          </Text>
+        </View>
+        <View style={s.footerRight}>
+          <Text style={s.footerMeta}>
+            <Text style={s.footerBoldMeta}>{orgName}</Text>
+            {"\n"}Receipt #{data.receiptNumber}
+            {"\n"}Issued {String(data.date)}
+          </Text>
+        </View>
+      </View>
+    </Page>
   );
 };

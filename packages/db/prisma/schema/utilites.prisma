@@ -27,6 +27,9 @@ model Attachment {
   stockBatchId  String?
   stockBatch    StockBatch?  @relation(fields: [stockBatchId], references: [id])
 
+  fulfillmentId String?
+  fulfillment   Fulfillment? @relation(fields: [fulfillmentId], references: [id])
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

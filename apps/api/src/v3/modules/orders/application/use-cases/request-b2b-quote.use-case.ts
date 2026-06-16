@@ -102,7 +102,7 @@ export class RequestB2BQuoteUseCase {
     const itemsData = [];
 
     for (const [variantId, totalQuantity] of aggregatedItems) {
-      const variant = variants.find((v) => v.id === variantId)!;
+      const variant = variants.find(v => v.id === variantId)!;
       const stock = variant.variantStocks[0];
 
       if (!stock || stock.availableStock.toNumber() < totalQuantity) {
@@ -159,7 +159,7 @@ export class RequestB2BQuoteUseCase {
         notes: dto.notes,
         channel: "THIRD_PARTY_API",
         items: {
-          create: itemsData.map((item) => ({
+          create: itemsData.map(item => ({
             variantId: item.variantId,
             quantity: item.quantity,
             productName: item.productName,

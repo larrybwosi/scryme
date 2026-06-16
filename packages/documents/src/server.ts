@@ -1,5 +1,5 @@
 import { InvoiceData } from './templates/v1/invoice-templates';
-import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData } from './types';
+import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData, DeliveryNoteData } from './types';
 import * as crypto from 'crypto';
 
 /**
@@ -102,38 +102,44 @@ export const Mappers = {
    * Maps a Transaction entity to ReceiptData.
    */
   toReceiptData(transaction: any): ReceiptData {
+    if (!transaction) throw new Error('Transaction is required for Receipt mapping');
+
     return {
       id: transaction.id,
       number: transaction.number,
       receiptNumber: transaction.number,
       orderNumber: transaction.number,
-      date: transaction.createdAt,
+      date: transaction.createdAt || new Date(),
+      tags: transaction.tags || [],
+      locationName: transaction.location?.name,
+      createdBy: transaction.member?.user?.name,
+      status: transaction.status,
       customer: {
         name: transaction.customer?.name || 'Walk-in Customer',
         email: transaction.customer?.email,
         phone: transaction.customer?.phone,
         address: formatAddress(transaction.customer?.addresses?.[0]),
       },
-      items: transaction.items.map((item: any) => ({
+      items: (transaction.items || []).map((item: any) => ({
         id: item.id,
-        description: `${item.productName} ${item.variantName || ''}`,
-        quantity: item.quantity, qty: item.quantity,
-        unitPrice: Number(item.unitPrice), price: Number(item.unitPrice),
-        totalPrice: Number(item.lineTotal || item.subtotal), total: Number(item.lineTotal || item.subtotal),
+        description: `${item.productName || 'Item'} ${item.variantName || ''}`,
+        quantity: Number(item.quantity || 0), qty: Number(item.quantity || 0),
+        unitPrice: Number(item.unitPrice || 0), price: Number(item.unitPrice || 0),
+        totalPrice: Number(item.lineTotal || item.subtotal || 0), total: Number(item.lineTotal || item.subtotal || 0),
         sku: item.sku,
-        itemName: item.productName,
-        rate: Number(item.unitPrice),
-        amount: Number(item.lineTotal || item.subtotal),
+        itemName: item.productName || 'Item',
+        rate: Number(item.unitPrice || 0),
+        amount: Number(item.lineTotal || item.subtotal || 0),
       })),
-      subtotal: Number(transaction.subtotal),
-      tax: Number(transaction.taxTotal),
-      total: Number(transaction.finalTotal),
+      subtotal: Number(transaction.subtotal || 0),
+      tax: Number(transaction.taxTotal || 0),
+      total: Number(transaction.finalTotal || 0),
       discountTotal: Number(transaction.discountTotal || 0),
       paymentMethod: transaction.payments?.[0]?.method || 'CASH',
       amountReceived: transaction.payments?.[0]?.amountReceived ? Number(transaction.payments[0].amountReceived) : undefined,
       change: transaction.payments?.[0]?.change ? Number(transaction.payments[0].change) : undefined,
       branding: {
-        companyName: transaction.organization?.name,
+        companyName: transaction.organization?.name || 'Organization',
         companyAddress: formatAddress(transaction.organization?.address),
         logoUrl: transaction.organization?.logo,
         primaryColor: transaction.organization?.primaryColor,
@@ -208,21 +214,23 @@ export const Mappers = {
    * Maps a Transaction entity to InvoiceData.
    */
   toInvoiceData(transaction: any, options: { currencySymbolMap?: Record<string, string>, logoPath?: string } = {}): InvoiceData {
+    if (!transaction) throw new Error('Transaction is required for Invoice mapping');
+
     const defaultCurrency = transaction.organization?.settings?.defaultCurrency || 'USD';
     const currencySymbol = options.currencySymbolMap?.[defaultCurrency] || defaultCurrency;
 
-    const netTotal = Number(transaction.subtotal);
-    const totalTaxes = Number(transaction.taxTotal);
-    const grandTotal = Number(transaction.finalTotal);
+    const netTotal = Number(transaction.subtotal || 0);
+    const totalTaxes = Number(transaction.taxTotal || 0);
+    const grandTotal = Number(transaction.finalTotal || 0);
     const discountTotal = Number(transaction.discountTotal || 0);
-    const amountPaid = transaction.payments?.reduce((acc: number, p: any) => acc + Number(p.amount), 0) || 0;
+    const amountPaid = transaction.payments?.reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0) || 0;
     const balanceDue = Math.max(0, grandTotal - amountPaid);
 
-    const items = transaction.items.map((item: any) => {
-      const quantity = Number(item.quantity);
-      const rate = Number(item.unitPrice);
-      const amount = Number(item.subtotal || item.lineTotal);
-      const description = `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`;
+    const items = (transaction.items || []).map((item: any) => {
+      const quantity = Number(item.quantity || 0);
+      const rate = Number(item.unitPrice || 0);
+      const amount = Number(item.subtotal || item.lineTotal || 0);
+      const description = `${item.productName || 'Item'}${item.variantName ? ` - ${item.variantName}` : ''}`;
 
       return {
         id: item.id,
@@ -232,7 +240,7 @@ export const Mappers = {
         totalPrice: amount,
         sku: item.sku || item.id,
         itemCode: item.sku || item.id,
-        itemName: item.productName,
+        itemName: item.productName || 'Item',
         rate,
         amount,
         details: '',
@@ -251,14 +259,10 @@ export const Mappers = {
       organizationName: transaction.organization?.name || 'Organization',
     });
 
-    const orgAddressObj = typeof transaction.organization?.address === 'string'
-      ? { street: transaction.organization.address }
-      : (transaction.organization?.address || {});
-
     const config = transaction.organization?.invoiceConfig || {};
 
     const branding = {
-      companyName: config.companyName || transaction.organization?.name,
+      companyName: config.companyName || transaction.organization?.name || 'Organization',
       companyAddress: config.companyAddress || formatAddress(transaction.organization?.address),
       companyPhone: config.companyPhone || transaction.organization?.phone,
       companyEmail: config.companyEmail || transaction.organization?.email,
@@ -273,9 +277,6 @@ export const Mappers = {
 
     let invoiceNumber = transaction.number;
     if (config.invoiceNumberPrefix || config.invoiceNumberSuffix || config.invoiceNumberPadding) {
-      // If we have custom numbering config, we use the transaction's sequence number if available,
-      // or try to extract it from the number. For now, we'll assume the transaction.number is what we format
-      // if it's numeric, otherwise we just use it as is.
       const seq = parseInt(transaction.number.replace(/\D/g, '')) || 0;
       if (seq > 0) {
         const prefix = config.invoiceNumberPrefix || '';
@@ -297,6 +298,9 @@ export const Mappers = {
       invoiceDate: formattedDate,
       dueDate: formattedDueDate,
       status: transaction.status || 'PAID',
+      tags: transaction.tags || [],
+      locationName: transaction.location?.name,
+      createdBy: transaction.member?.user?.name,
 
       currencySymbol,
       currency: defaultCurrency,
@@ -329,5 +333,50 @@ export const Mappers = {
       footerText: config.footerText,
       verificationHash,
     };
+  },
+
+  /**
+   * Maps a Transaction entity to DeliveryNoteData.
+   */
+  toDeliveryNoteData(transaction: any, fulfillment?: any): DeliveryNoteData {
+    const senderAddress = formatAddress(transaction.location?.address) || formatAddress(transaction.organization?.address) || 'Main Office';
+
+    const shippingAddressObj = fulfillment?.shippingAddress || transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
+    const recipientAddress = formatAddress(shippingAddressObj);
+    const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
+    const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
+
+    return {
+      id: fulfillment?.id || transaction.id,
+      number: `DN-${transaction.number}`,
+      orderNumber: transaction.number,
+      date: fulfillment?.createdAt || transaction.createdAt || new Date(),
+      branding: {
+        logoUrl: transaction.organization?.logo,
+        companyName: transaction.organization?.name || 'Sender',
+        companyAddress: senderAddress,
+        companyPhone: transaction.location?.phone || transaction.organization?.phone,
+        companyEmail: transaction.organization?.email,
+        primaryColor: transaction.organization?.primaryColor,
+      },
+      customer: {
+        name: transaction.customer?.name || 'Walk-in Customer',
+        email: transaction.customer?.email,
+        phone: transaction.customer?.phone,
+      },
+      shippingAddress: recipientAddress,
+      items: transaction.items.map((item: any) => ({
+        id: item.id,
+        description: `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`,
+        quantity: item.quantity,
+        sku: item.sku,
+      })),
+      notes: fulfillment?.deliveryNotes || transaction.notes,
+    };
   }
 };
+
+export { WaybillDocument } from './templates/v1/Waybill';
+export { DeliveryNoteDocument } from './templates/v1/DeliveryNote';
+export { InvoicePDF as SimpleInvoicePDF } from './templates/v1/InvoicePDF';
+export { DocumentGenerator } from './index';

@@ -3,13 +3,16 @@ import { PageHeader } from "@/components/page-header";
 import { ShoppingCart, ArrowLeft } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import Link from "next/link";
-import { getStockRequestLocations, getStockLevels } from "@/app/actions/stock-management";
+import {
+  getStockRequestLocations,
+  getStockLevels,
+} from "@/app/actions/stock-management";
 import { StockRequestForm } from "@/components/stocking/requests/stock-request-form";
 
 export default async function NewStockRequestPage() {
   const [locations, stock] = await Promise.all([
     getStockRequestLocations(),
-    getStockLevels({})
+    getStockLevels({}),
   ]);
 
   return (

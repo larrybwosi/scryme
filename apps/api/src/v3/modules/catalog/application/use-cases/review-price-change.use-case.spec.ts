@@ -22,7 +22,7 @@ describe("ReviewPriceChangeUseCase", () => {
         priceHistory: {
           create: vi.fn(),
         },
-        $transaction: vi.fn((cb) => cb(prisma.client)),
+        $transaction: vi.fn(cb => cb(prisma.client)),
       },
     };
 

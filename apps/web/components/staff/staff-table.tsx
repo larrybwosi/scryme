@@ -9,7 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { MemberActions } from "./member-actions";
 import { format } from "date-fns";
@@ -47,39 +51,53 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+              <TableCell
+                colSpan={6}
+                className="text-center py-10 text-gray-500">
                 No staff members found.
               </TableCell>
             </TableRow>
           ) : (
-            data.map((member) => (
-              <TableRow key={member.id} className="group hover:bg-gray-50/50 transition-colors">
+            data.map(member => (
+              <TableRow
+                key={member.id}
+                className="group hover:bg-gray-50/50 transition-colors">
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
                       <AvatarImage src={member.user.image || ""} />
                       <AvatarFallback className="bg-gray-100 text-gray-500 font-medium">
-                        {member.user.name?.charAt(0) || member.user.email.charAt(0).toUpperCase()}
+                        {member.user.name?.charAt(0) ||
+                          member.user.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <Link href={`/staff/${member.id}`} className="flex flex-col hover:opacity-70 transition-opacity">
+                    <Link
+                      href={`/staff/${member.id}`}
+                      className="flex flex-col hover:opacity-70 transition-opacity">
                       <span className="font-semibold text-sm text-[#1D1D1F]">
                         {member.user.name || "Unnamed User"}
                       </span>
-                      <span className="text-xs text-gray-500">{member.user.email}</span>
+                      <span className="text-xs text-gray-500">
+                        {member.user.email}
+                      </span>
                     </Link>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="font-medium bg-gray-50 capitalize">
+                  <Badge
+                    variant="outline"
+                    className="font-medium bg-gray-50 capitalize">
                     {member.role.toLowerCase()}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {member.customRoles.length > 0 ? (
-                      member.customRoles.map((role) => (
-                        <Badge key={role.id} variant="secondary" className="text-[10px] h-5">
+                      member.customRoles.map(role => (
+                        <Badge
+                          key={role.id}
+                          variant="secondary"
+                          className="text-[10px] h-5">
                           {role.name}
                         </Badge>
                       ))
@@ -95,14 +113,15 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
                         member.membershipStatus === "ACTIVE"
                           ? "bg-green-100 text-green-700 hover:bg-green-100"
                           : member.membershipStatus === "SUSPENDED"
-                          ? "bg-red-100 text-red-700 hover:bg-red-100"
-                          : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-                      }
-                    >
+                            ? "bg-red-100 text-red-700 hover:bg-red-100"
+                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                      }>
                       {member.membershipStatus}
                     </Badge>
                     {member.banReason && (
-                      <span className="text-[10px] text-red-500 font-medium max-w-[150px] truncate" title={member.banReason}>
+                      <span
+                        className="text-[10px] text-red-500 font-medium max-w-[150px] truncate"
+                        title={member.banReason}>
                         Reason: {member.banReason}
                       </span>
                     )}

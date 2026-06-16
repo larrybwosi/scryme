@@ -20,8 +20,12 @@ export default async function StaffPage() {
             <Users size={20} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1D1D1F]">Staff Management</h1>
-            <p className="text-sm text-gray-500">Manage your organization&apos;s members and their access levels.</p>
+            <h1 className="text-2xl font-bold text-[#1D1D1F]">
+              Staff Management
+            </h1>
+            <p className="text-sm text-gray-500">
+              Manage your organization&apos;s members and their access levels.
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -41,41 +45,63 @@ export default async function StaffPage() {
       <div className="flex flex-col gap-4">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
-                <p className="text-sm font-medium text-gray-500">Total Members</p>
-                <div className="flex items-center justify-between mt-1">
-                    <h3 className="text-2xl font-bold">{members.length}</h3>
-                    <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100">Active</Badge>
-                </div>
+          <div className="bg-white p-4 rounded-xl border shadow-sm">
+            <p className="text-sm font-medium text-gray-500">Total Members</p>
+            <div className="flex items-center justify-between mt-1">
+              <h3 className="text-2xl font-bold">{members.length}</h3>
+              <Badge
+                variant="secondary"
+                className="bg-blue-50 text-blue-600 border-blue-100">
+                Active
+              </Badge>
             </div>
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
-                <p className="text-sm font-medium text-gray-500">Admins</p>
-                <div className="flex items-center justify-between mt-1">
-                    <h3 className="text-2xl font-bold">{members.filter(m => m.role === 'ADMIN').length}</h3>
-                    <Badge variant="secondary" className="bg-purple-50 text-purple-600 border-purple-100">Privileged</Badge>
-                </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl border shadow-sm">
+            <p className="text-sm font-medium text-gray-500">Admins</p>
+            <div className="flex items-center justify-between mt-1">
+              <h3 className="text-2xl font-bold">
+                {members.filter(m => m.role === "ADMIN").length}
+              </h3>
+              <Badge
+                variant="secondary"
+                className="bg-purple-50 text-purple-600 border-purple-100">
+                Privileged
+              </Badge>
             </div>
-            <div className="bg-white p-4 rounded-xl border shadow-sm">
-                <p className="text-sm font-medium text-gray-500">Suspended</p>
-                <div className="flex items-center justify-between mt-1">
-                    <h3 className="text-2xl font-bold text-red-600">{members.filter(m => m.membershipStatus === 'SUSPENDED').length}</h3>
-                    <Badge variant="secondary" className="bg-red-50 text-red-600 border-red-100">Action Required</Badge>
-                </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl border shadow-sm">
+            <p className="text-sm font-medium text-gray-500">Suspended</p>
+            <div className="flex items-center justify-between mt-1">
+              <h3 className="text-2xl font-bold text-red-600">
+                {members.filter(m => m.membershipStatus === "SUSPENDED").length}
+              </h3>
+              <Badge
+                variant="secondary"
+                className="bg-red-50 text-red-600 border-red-100">
+                Action Required
+              </Badge>
             </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-4 py-2">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+            />
             <Input
-                placeholder="Search staff by name or email..."
-                className="pl-10 bg-white border-gray-200"
+              placeholder="Search staff by name or email..."
+              className="pl-10 bg-white border-gray-200"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2 border-gray-200">
-                <Filter size={14} />
-                <span>Filters</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-gray-200">
+              <Filter size={14} />
+              <span>Filters</span>
             </Button>
           </div>
         </div>

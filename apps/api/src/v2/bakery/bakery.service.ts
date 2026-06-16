@@ -571,7 +571,7 @@ export class BakeryService {
     const waste = Number(wasteQuantity || 0);
     const netQuantity = Math.max(0, grossQuantity - waste);
 
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       // 1. Update batch status
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
@@ -1060,7 +1060,7 @@ export class BakeryService {
     const { organizationId, memberId } = ctx;
     const { transactionId, partnerId, driverId, notes } = data;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const transaction = await tx.transaction.findFirst({
         where: { id: transactionId, organizationId },
       });
@@ -1093,7 +1093,7 @@ export class BakeryService {
     const { organizationId, memberId } = ctx;
     const { fulfillmentId, status, notes } = data;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const fulfillment = await tx.fulfillment.findFirst({
         where: {
           id: fulfillmentId,
@@ -1138,7 +1138,7 @@ export class BakeryService {
     if (!locationId)
       throw new BadRequestException("Location ID required in context");
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const receipt = await tx.stockReceipt.create({
         data: {
           organization: { connect: { id: organizationId } },
@@ -1234,7 +1234,9 @@ export class BakeryService {
     try {
       const { data: release } = await axios.get(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
-        { headers },
+        {
+          headers,
+        },
       );
 
       // Tauri updater expects 204 if already on the latest version

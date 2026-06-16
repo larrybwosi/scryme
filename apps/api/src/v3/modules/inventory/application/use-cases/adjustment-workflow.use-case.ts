@@ -25,7 +25,7 @@ export class RequestStockAdjustmentUseCase {
       stockBatchId?: string;
     },
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const adjustment = await tx.stockAdjustment.create({
         data: {
           organizationId,
@@ -65,7 +65,7 @@ export class RequestStockAdjustmentUseCase {
         quantity: Number(adjustment.quantity),
         reason: String(adjustment.reason),
         notes: adjustment.notes || undefined,
-      }).catch((err) =>
+      }).catch(err =>
         console.error(
           "[v3 StockAdjustment] Failed to emit Windmill event:",
           err,
@@ -89,7 +89,7 @@ export class ApproveStockAdjustmentUseCase {
     approvalMemberId: string,
     adjustmentId: string,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const adjustment = await tx.stockAdjustment.findUnique({
         where: { id: adjustmentId, organizationId },
       });

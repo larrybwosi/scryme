@@ -79,7 +79,7 @@ export class InvoiceUseCase {
         balanceDue: balanceDue,
         status: status,
         items: {
-          create: order.items.map((item) => ({
+          create: order.items.map(item => ({
             itemCode: item.sku || "N/A",
             itemName: `${item.productName} ${item.variantName}`,
             quantity: item.quantity,
@@ -214,7 +214,7 @@ export class InvoiceUseCase {
           totalTaxes: invoice.totalTaxes,
           grandTotal: invoice.grandTotal,
           etrMode: invoice.etrMode,
-          items: invoice.items.map((i) => ({
+          items: invoice.items.map(i => ({
             description: i.itemName,
             quantity: i.quantity,
             price: i.rate,
@@ -273,7 +273,7 @@ export class InvoiceUseCase {
         companyAddress: (invoice.organization as any).address || "",
         logoUrl: invoice.template?.logoUrl || "",
       },
-      items: invoice.items.map((item) => ({
+      items: invoice.items.map(item => ({
         id: item.id,
         itemCode: item.itemCode,
         itemName: item.itemName,

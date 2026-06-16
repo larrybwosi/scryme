@@ -80,7 +80,7 @@ export function MemberActions({ member }: MemberActionsProps) {
   );
   const [customRoles, setCustomRoles] = useState<any[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>(
-    member.customRoles.map((r) => r.id),
+    member.customRoles.map(r => r.id),
   );
 
   const handleBlock = async () => {
@@ -116,7 +116,7 @@ export function MemberActions({ member }: MemberActionsProps) {
       setSessions(result.data);
       // Try to get current session token from cookie
       const cookies = document.cookie.split(";");
-      const sessionCookie = cookies.find((c) =>
+      const sessionCookie = cookies.find(c =>
         c.trim().startsWith("better-auth.session_token="),
       );
       if (sessionCookie) {
@@ -189,16 +189,14 @@ export function MemberActions({ member }: MemberActionsProps) {
             <DropdownMenuItem
               className="text-green-600 focus:text-green-600"
               onClick={handleUnblock}
-              disabled={loading}
-            >
+              disabled={loading}>
               <ShieldCheck size={14} className="mr-2" />
               Unblock Member
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
               className="text-red-600 focus:text-red-600"
-              onClick={() => setIsBlockDialogOpen(true)}
-            >
+              onClick={() => setIsBlockDialogOpen(true)}>
               <Ban size={14} className="mr-2" />
               Block Member
             </DropdownMenuItem>
@@ -223,21 +221,19 @@ export function MemberActions({ member }: MemberActionsProps) {
               id="reason"
               placeholder="e.g. Unauthorized action detected"
               value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
+              onChange={e => setBlockReason(e.target.value)}
             />
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setIsBlockDialogOpen(false)}
-            >
+              onClick={() => setIsBlockDialogOpen(false)}>
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleBlock}
-              disabled={loading}
-            >
+              disabled={loading}>
               {loading ? "Blocking..." : "Block Member"}
             </Button>
           </DialogFooter>
@@ -260,11 +256,10 @@ export function MemberActions({ member }: MemberActionsProps) {
                 No active sessions found.
               </p>
             ) : (
-              sessions.map((session) => (
+              sessions.map(session => (
                 <div
                   key={session.id}
-                  className="flex items-center justify-between p-4 border rounded-xl bg-gray-50/50"
-                >
+                  className="flex items-center justify-between p-4 border rounded-xl bg-gray-50/50">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white border flex items-center justify-center text-gray-500">
                       <Monitor size={20} />
@@ -288,8 +283,7 @@ export function MemberActions({ member }: MemberActionsProps) {
                     variant="ghost"
                     size="icon"
                     className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => handleRevokeSession(session.token)}
-                  >
+                    onClick={() => handleRevokeSession(session.token)}>
                     <Trash2 size={16} />
                   </Button>
                 </div>
@@ -322,25 +316,24 @@ export function MemberActions({ member }: MemberActionsProps) {
               </div>
             ) : (
               <div className="space-y-2">
-                {customRoles.map((role) => (
+                {customRoles.map(role => (
                   <div
                     key={role.id}
                     className="flex items-center space-x-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
                     onClick={() => {
-                      setSelectedRoles((prev) =>
+                      setSelectedRoles(prev =>
                         prev.includes(role.id)
-                          ? prev.filter((id) => id !== role.id)
+                          ? prev.filter(id => id !== role.id)
                           : [...prev, role.id],
                       );
-                    }}
-                  >
+                    }}>
                     <Checkbox
                       checked={selectedRoles.includes(role.id)}
-                      onCheckedChange={(checked) => {
-                        setSelectedRoles((prev) =>
+                      onCheckedChange={checked => {
+                        setSelectedRoles(prev =>
                           checked
                             ? [...prev, role.id]
-                            : prev.filter((id) => id !== role.id),
+                            : prev.filter(id => id !== role.id),
                         );
                       }}
                     />
@@ -363,8 +356,7 @@ export function MemberActions({ member }: MemberActionsProps) {
             <Button
               className="w-full"
               onClick={handleUpdateRoles}
-              disabled={loading || customRoles.length === 0}
-            >
+              disabled={loading || customRoles.length === 0}>
               {loading ? "Updating..." : "Save Custom Roles"}
             </Button>
           </div>
