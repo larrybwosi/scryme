@@ -63,7 +63,7 @@ export function DashboardView() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-[13px] text-muted-foreground mt-0.5">
-              Welcome back! Here's what's happening with your business today.
+              Welcome back! Here&apos;s what&apos;s happening with your business today.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ export function DashboardView() {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      tickFormatter={(value) => `$${value}`}
+                      tickFormatter={(value: number) => `$${value}`}
                     />
                     <Tooltip
                       contentStyle={{
