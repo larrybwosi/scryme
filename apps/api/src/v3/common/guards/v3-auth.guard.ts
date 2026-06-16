@@ -6,12 +6,15 @@ import {
 } from "@nestjs/common";
 import { V3AuthCoreService } from "../../modules/auth-core/infrastructure/services/v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
+import { ModuleRef } from "@nestjs/core";
 
 @Injectable()
 export class V3AuthGuard implements CanActivate {
+  private v3AuthService: V3AuthCoreService;
+
   constructor(
-    private readonly v3AuthService: V3AuthCoreService,
     private readonly prisma: PrismaService,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -25,6 +28,13 @@ export class V3AuthGuard implements CanActivate {
     }
 
     const token = authHeader.split(" ")[1];
+
+    if (!this.v3AuthService) {
+      this.v3AuthService = this.moduleRef.get(V3AuthCoreService, {
+        strict: false,
+      });
+    }
+
     const payload = await this.v3AuthService.verifyToken(token);
 
     if (payload.type !== "v3_client" && payload.type !== "v3_hybrid") {

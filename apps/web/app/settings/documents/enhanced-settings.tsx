@@ -280,7 +280,7 @@ export function EnhancedDocumentSettings({
                     No templates available
                   </p>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Templates for this document type haven't been added yet.
+                    Templates for this document type haven&apos;t been added yet.
                   </p>
                 </div>
               )}
