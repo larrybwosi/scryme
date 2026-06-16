@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: { cardId: string; pin: string; locationId?: string }) => {
     setIsLoading(true);
     try {
-      const response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin);
+      const response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
 
       if (response.token) {
         sdk.setMemberToken(response.token);
