@@ -3,7 +3,8 @@ import { PrismaService } from '../../../../../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
-import { decrypt, timingSafeMatch } from '@repo/shared/server';
+import * as argon2 from 'argon2';
+import { decrypt, encrypt, timingSafeMatch } from '@repo/shared/server';
 
 @Injectable()
 export class V3AuthService {
@@ -28,14 +29,18 @@ export class V3AuthService {
 
     const clientId = `pos_${crypto.randomBytes(8).toString('hex')}`;
     const rawSecret = crypto.randomBytes(32).toString('hex');
-    // Using SHA-256 for V3 secrets as per packages/shared/src/actions/api-management/index.ts
-    const hashedSecret = crypto.createHash('sha256').update(rawSecret).digest('hex');
+
+    // Hash the secret with Argon2
+    const hashedSecret = await argon2.hash(rawSecret);
+
+    // Encrypt the hash for storage
+    const encryptedHash = encrypt(hashedSecret);
 
     const client = await this.prisma.client.v3ApiClient.create({
       data: {
         name: setupToken.deviceName,
         clientId,
-        clientSecret: hashedSecret,
+        clientSecret: encryptedHash,
         organizationId: setupToken.organizationId,
         scopes: setupToken.permissions,
       },
@@ -85,14 +90,35 @@ export class V3AuthService {
     if (!client || !client.isActive) throw new UnauthorizedException('Invalid client');
 
     try {
-      const decryptedSecret = decrypt(client.clientSecret);
-      const isSecretValid = timingSafeMatch(clientSecret, decryptedSecret);
-      if (!isSecretValid) throw new UnauthorizedException('Invalid client secret');
+      const decryptedValue = decrypt(client.clientSecret);
+
+      // Try Argon2 first (new standard)
+      try {
+        if (await argon2.verify(decryptedValue, clientSecret)) {
+          return client;
+        }
+      } catch (e) {}
+
+      // Fallback 1: Encrypted raw secret (previous management standard)
+      if (timingSafeMatch(clientSecret, decryptedValue)) {
+        return client;
+      }
     } catch (error) {
-      // Fallback to bcrypt if decryption fails (for transition period if any)
-      const isSecretValid = await bcrypt.compare(clientSecret, client.clientSecret);
-      if (!isSecretValid) throw new UnauthorizedException('Invalid client secret');
+      // Fallback 2: Plain SHA-256 (broken transition period)
+      const sha256Hash = crypto.createHash('sha256').update(clientSecret).digest('hex');
+      if (timingSafeMatch(sha256Hash, client.clientSecret)) {
+        return client;
+      }
+
+      // Fallback 3: Bcrypt (manual legacy entries)
+      try {
+        if (await bcrypt.compare(clientSecret, client.clientSecret)) {
+          return client;
+        }
+      } catch (e) {}
     }
+
+    throw new UnauthorizedException('Invalid client secret');
 
     return client;
   }
