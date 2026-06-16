@@ -25,7 +25,6 @@ import { Button } from "@repo/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 
@@ -63,16 +62,18 @@ export function AverageOrderValueChart({
             <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               Average Order Value
             </h3>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Average order value information">
                   <HelpCircle className="h-3 w-3 text-muted-foreground/50" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Average value of each order.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Average value of each order.</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold">{value}</span>
@@ -89,12 +90,30 @@ export function AverageOrderValueChart({
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Maximize average order value chart">
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Maximize</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="More options for average order value">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>More options</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
