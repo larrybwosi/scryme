@@ -31,6 +31,7 @@
     "./lib/validations/sale": "./src/lib/validations/sale.ts",
     "./lib/services/navari": "./src/lib/services/navari.service.ts",
     "./lib/services/unit-calculation": "./src/lib/services/unit-calculation.service.ts",
+    "./lib/services/document": "./src/lib/services/document.service.ts",
     "./lib/services/conversion": "./src/lib/services/conversion.service.ts",
     "./lib/provisioning/common": "./src/lib/provisioning/common.ts",
     "./lib/provisioning/v2": "./src/lib/provisioning/v2.ts",
