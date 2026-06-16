@@ -12,6 +12,7 @@ export async function updateInvoiceConfig(data: {
   companyEmail?: string;
   companyPhone?: string;
   companyWebsite?: string;
+  showLogo?: boolean;
   showTaxBreakdown?: boolean;
   showTerms?: boolean;
   showNotes?: boolean;

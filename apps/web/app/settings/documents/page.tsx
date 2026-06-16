@@ -50,12 +50,16 @@ export default async function DocumentsSettingsPage() {
   }
 
   // Use select to get only the fields we need
-  const [organization, invoiceConfig] = await Promise.all([
+  const [organization, invoiceConfig, receiptConfig, waybillConfig] = await Promise.all([
     db.organization.findUnique({
       where: { id: auth.organizationId },
       select: {
         id: true,
         name: true,
+        logo: true,
+        address: true,
+        phone: true,
+        email: true,
         settings: {
           select: {
             id: true,
@@ -99,6 +103,12 @@ export default async function DocumentsSettingsPage() {
     db.invoiceConfig.findUnique({
       where: { organizationId: auth.organizationId },
     }),
+    db.receiptConfig.findUnique({
+      where: { organizationId: auth.organizationId },
+    }),
+    db.waybillConfig.findUnique({
+      where: { organizationId: auth.organizationId },
+    }),
   ]);
 
   if (!organization) {
@@ -129,6 +139,8 @@ export default async function DocumentsSettingsPage() {
           <EnhancedDocumentSettings
             organization={processedOrganization}
             invoiceConfig={invoiceConfig}
+            receiptConfig={receiptConfig}
+            waybillConfig={waybillConfig}
           />
         </div>
       </div>

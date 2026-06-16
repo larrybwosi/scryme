@@ -29,10 +29,13 @@ import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Sheet, SheetContent } from "@repo/ui/components/ui/sheet";
 import { InvoiceConfigForm } from "./invoice-config-form";
+import { DocumentConfigForm } from "./document-config-form";
 
 interface EnhancedDocumentSettingsProps {
   organization: any;
   invoiceConfig?: any;
+  receiptConfig?: any;
+  waybillConfig?: any;
 }
 
 const DOC_TYPES = [
@@ -65,6 +68,8 @@ const DOC_TYPES = [
 export function EnhancedDocumentSettings({
   organization,
   invoiceConfig,
+  receiptConfig,
+  waybillConfig,
 }: EnhancedDocumentSettingsProps) {
   const [selectedType, setSelectedType] = useState<DocumentType>("INVOICE");
   const [activePanel, setActivePanel] = useState<"templates" | "config">(
@@ -96,12 +101,17 @@ export function EnhancedDocumentSettings({
   };
 
   const getMockDataForType = (type: DocumentType) => {
+    let config: any;
+    if (type === "INVOICE") config = invoiceConfig;
+    else if (type === "RECEIPT") config = receiptConfig;
+    else config = waybillConfig;
+
     const baseDetails = {
-      name: invoiceConfig?.companyName || organization?.name,
-      address: invoiceConfig?.companyAddress || organization?.address,
-      phone: invoiceConfig?.companyPhone || organization?.phone,
-      email: invoiceConfig?.companyEmail || organization?.email,
-      logo: invoiceConfig?.logoUrl || organization?.logo,
+      name: (type === "INVOICE" && config?.companyName) || organization?.name,
+      address: (type === "INVOICE" && config?.companyAddress) || organization?.address,
+      phone: (type === "INVOICE" && config?.companyPhone) || organization?.phone,
+      email: (type === "INVOICE" && config?.companyEmail) || organization?.email,
+      logo: (config?.showLogo ?? true) ? (config?.logoUrl || organization?.logo) : null,
     };
 
     let mockData: any;
@@ -114,6 +124,7 @@ export function EnhancedDocumentSettings({
         invoiceConfig?.primaryColor || mockData.branding.primaryColor;
       mockData.branding.showPoweredBy = invoiceConfig?.showPoweredBy ?? true;
       mockData.branding.watermarkText = invoiceConfig?.watermarkText;
+      mockData.branding.showLogo = config?.showLogo ?? true;
     }
     mockData.footerText = invoiceConfig?.footerText;
     return mockData;
@@ -370,7 +381,21 @@ export function EnhancedDocumentSettings({
 
           {activePanel === "config" && (
             <div className="max-w-3xl">
-              <InvoiceConfigForm initialConfig={invoiceConfig} />
+              {selectedType === "INVOICE" && (
+                <InvoiceConfigForm initialConfig={invoiceConfig} />
+              )}
+              {selectedType === "RECEIPT" && (
+                <DocumentConfigForm
+                  type="RECEIPT"
+                  initialConfig={receiptConfig}
+                />
+              )}
+              {selectedType === "WAYBILL" && (
+                <DocumentConfigForm
+                  type="WAYBILL"
+                  initialConfig={waybillConfig}
+                />
+              )}
             </div>
           )}
         </div>

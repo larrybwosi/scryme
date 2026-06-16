@@ -65,6 +65,10 @@ export const Mappers = {
     const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
     const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
 
+    const config = transaction.organization?.waybillConfig || {};
+    const showLogo = config.showLogo ?? true;
+    const logoUrl = showLogo ? (config.logoUrl || transaction.organization?.logo) : null;
+
     return {
       id: fulfillment?.id || transaction.id,
       number: transaction.number,
@@ -72,7 +76,8 @@ export const Mappers = {
       date: fulfillment?.createdAt || transaction.createdAt || new Date(),
       qrCodeUrl,
       branding: {
-        logoUrl: transaction.organization?.logo,
+        logoUrl,
+        showLogo,
         companyName: transaction.organization?.name || 'Sender',
         companyAddress: senderAddress,
         companyPhone: transaction.location?.phone || transaction.organization?.phone,
@@ -141,7 +146,10 @@ export const Mappers = {
       branding: {
         companyName: transaction.organization?.name || 'Organization',
         companyAddress: formatAddress(transaction.organization?.address),
-        logoUrl: transaction.organization?.logo,
+        logoUrl: (transaction.organization?.receiptConfig?.showLogo ?? true)
+          ? (transaction.organization?.receiptConfig?.logoUrl || transaction.organization?.logo)
+          : null,
+        showLogo: transaction.organization?.receiptConfig?.showLogo ?? true,
         primaryColor: transaction.organization?.primaryColor,
       },
     };
@@ -260,13 +268,16 @@ export const Mappers = {
     });
 
     const config = transaction.organization?.invoiceConfig || {};
+    const showLogo = config.showLogo ?? true;
+    const logoUrl = showLogo ? (config.logoUrl || transaction.organization?.logo) : null;
 
     const branding = {
       companyName: config.companyName || transaction.organization?.name || 'Organization',
       companyAddress: config.companyAddress || formatAddress(transaction.organization?.address),
       companyPhone: config.companyPhone || transaction.organization?.phone,
       companyEmail: config.companyEmail || transaction.organization?.email,
-      logoUrl: config.logoUrl || transaction.organization?.logo,
+      logoUrl,
+      showLogo,
       companyWebsite: config.companyWebsite || transaction.organization?.website || '',
       companyTagline: transaction.organization?.description || '',
       primaryColor: config.primaryColor || transaction.organization?.primaryColor,
@@ -352,7 +363,10 @@ export const Mappers = {
       orderNumber: transaction.number,
       date: fulfillment?.createdAt || transaction.createdAt || new Date(),
       branding: {
-        logoUrl: transaction.organization?.logo,
+        logoUrl: (transaction.organization?.waybillConfig?.showLogo ?? true)
+          ? (transaction.organization?.waybillConfig?.logoUrl || transaction.organization?.logo)
+          : null,
+        showLogo: transaction.organization?.waybillConfig?.showLogo ?? true,
         companyName: transaction.organization?.name || 'Sender',
         companyAddress: senderAddress,
         companyPhone: transaction.location?.phone || transaction.organization?.phone,
