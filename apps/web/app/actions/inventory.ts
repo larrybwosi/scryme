@@ -1321,26 +1321,40 @@ export async function importProducts(
   for (const productData of products) {
     try {
       await db.$transaction(async tx => {
-        // 1. Handle Category
-        let categoryId = categoryMap.get(
-          productData.categoryName.toLowerCase(),
-        );
+        // 1. Handle SKU Autogeneration
+        let sku = productData.sku;
+        if (!sku || sku.trim() === "") {
+          const prefix = (productData.name || "PRD")
+            .substring(0, 3)
+            .toUpperCase()
+            .padEnd(3, "X");
+          const random = Math.floor(10000 + Math.random() * 90000);
+          sku = `${prefix}-${random}`;
+        }
+
+        // 2. Handle Category
+        const categoryName =
+          !productData.categoryName || productData.categoryName.trim() === ""
+            ? "Uncategorized"
+            : productData.categoryName;
+
+        let categoryId = categoryMap.get(categoryName.toLowerCase());
         if (!categoryId) {
           const newCategory = await tx.category.create({
             data: {
-              name: productData.categoryName,
+              name: categoryName,
               organizationId: context.organizationId,
-              code: `${context.organizationId}-${productData.categoryName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+              code: `${context.organizationId}-${categoryName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
             },
           });
           categoryId = newCategory.id;
-          categoryMap.set(productData.categoryName.toLowerCase(), categoryId);
+          categoryMap.set(categoryName.toLowerCase(), categoryId);
         }
 
-        // 2. Check for existing product/variant by SKU
+        // 3. Check for existing product/variant by SKU
         const existingVariant = await tx.productVariant.findFirst({
           where: {
-            sku: productData.sku,
+            sku: sku,
             product: { organizationId: context.organizationId },
           },
           include: { product: true },
@@ -1375,12 +1389,12 @@ export async function importProducts(
           }
         }
 
-        // 3. Create New Product
+        // 4. Create New Product
         const product = await tx.product.create({
           data: {
             name: productData.name,
-            sku: productData.sku,
-            slug: await generateProductSlug(productData.name + "-" + productData.sku),
+            sku: sku,
+            slug: await generateProductSlug(productData.name + "-" + sku),
             description: productData.description,
             categoryId: categoryId,
             organizationId: context.organizationId,
@@ -1389,12 +1403,12 @@ export async function importProducts(
           },
         });
 
-        // 4. Create Default Variant
+        // 5. Create Default Variant
         const variant = await tx.productVariant.create({
           data: {
             productId: product.id,
             name: "Default",
-            sku: productData.sku,
+            sku: sku,
             barcode: productData.barcode,
             buyingPrice: new Decimal(productData.buyingPrice),
             retailPrice: new Decimal(productData.retailPrice),
