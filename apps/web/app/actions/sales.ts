@@ -454,7 +454,7 @@ export async function createFulfillment(data: {
   revalidatePath("/sales/deliveries");
 
   // Background generation of proof documents
-  const { documentService } = await import('@repo/shared/server');
+   const { documentService } = await import('@repo/shared/lib/services/document');
   documentService.generateAndAttachProofDocuments({
       transactionId: fulfillment.transactionId,
       fulfillmentId: fulfillment.id,
@@ -695,7 +695,7 @@ export async function uploadFileAction(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
-  const { storageService } = await import("@repo/shared/server");
+   const { storageService } = await import("@repo/shared/storage/service");
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await storageService.upload(
     buffer,

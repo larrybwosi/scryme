@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { storageService } from "@repo/shared/storage";
+import { storageService } from "@repo/shared/storage/service";
 import sharp from "sharp";
 import axios from "axios";
 
@@ -35,13 +35,21 @@ export class ImageService {
         const originalUrl = await this.getOriginalUrl(id);
         const response = await axios.get(originalUrl, {
           responseType: "arraybuffer",
+          timeout: 5000,
+          maxContentLength: 10 * 1024 * 1024, // 10MB limit
         });
+        if (!response.data) throw new Error("No data received from upstream");
         imageBuffer = Buffer.from(response.data);
         contentType = response.headers["content-type"] as string;
       } else {
         // RustFS / S3
         const url = await storageService.getSignedUrl(id, 60);
-        const response = await axios.get(url, { responseType: "arraybuffer" });
+        const response = await axios.get(url, {
+          responseType: "arraybuffer",
+          timeout: 5000,
+          maxContentLength: 10 * 1024 * 1024,
+        });
+        if (!response.data) throw new Error("No data received from upstream");
         imageBuffer = Buffer.from(response.data);
         contentType = response.headers["content-type"] as string;
       }
@@ -87,10 +95,16 @@ export class ImageService {
       // Construction logic for Sanity CDN URL if ID is provided
       // Typical Sanity asset ID: image-02983740298374-1200x800-jpg
       const parts = id.split("-");
-      if (parts.length >= 4) {
+      if (parts.length >= 4 && parts[0] === "image") {
         const assetId = parts[1];
         const dimensions = parts[2];
         const extension = parts[3];
+
+        // Basic validation for assetId to prevent SSRF/Path traversal
+        if (!/^[a-zA-Z0-9]+$/.test(assetId) || !/^\d+x\d+$/.test(dimensions)) {
+          throw new Error("Invalid Sanity asset ID format");
+        }
+
         const projectId =
           process.env.SANITY_PROJECT_ID ||
           process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
