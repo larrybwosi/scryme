@@ -78,6 +78,11 @@ const variantStyles: Record<string, string> = {
   // Order type
   POS: 'bg-orange-50 text-orange-700 border-orange-200',
   Online: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  // CRM Status
+  customer: 'bg-status-success/10 text-status-success border-status-success/20',
+  lead: 'bg-blue-50 text-blue-700 border-blue-200',
+  qualified: 'bg-status-info/10 text-status-info border-status-info/20',
+  new: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
 interface StatusBadgeProps {
@@ -87,7 +92,10 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, size = 'md', dot = false }: StatusBadgeProps) {
-  const styles = variantStyles[status] ?? 'bg-muted text-muted-foreground border-border';
+  const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : status;
+  const styles = variantStyles[status] ?? variantStyles[normalizedStatus] ?? 'bg-muted text-muted-foreground border-border';
+
+  const label = typeof status === 'string' ? status.charAt(0).toUpperCase() + status.slice(1) : status;
 
   return (
     <span
@@ -106,7 +114,7 @@ export function StatusBadge({ status, size = 'md', dot = false }: StatusBadgePro
           )}
         />
       )}
-      {status}
+      {label}
     </span>
   );
 }
