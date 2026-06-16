@@ -61,7 +61,10 @@ const sidebarConfig: SidebarSection[] = [
         title: "Manage Staff",
         icon: Users,
         href: "/staff",
-        items: [],
+        items: [
+          { title: "Staff Members", href: "/staff" },
+          { title: "Drivers", href: "/staff/drivers" },
+        ],
       },
       { title: "Locations", icon: MapPin, href: "/locations" },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
