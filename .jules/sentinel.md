@@ -48,3 +48,13 @@
 - Strictly validate external asset identifiers using regex (e.g., Sanity's `image-[hash]-[dimensions]-[extension]` format).
 - Always enforce `timeout` and `maxContentLength` on outbound HTTP requests for asset fetching to prevent DoS.
 - Reject raw URLs in parameters that expect specific asset IDs.
+
+## 2026-06-17 - [Strict Validation and Outbound DoS Protections]
+**Vulnerability:** 1) `ImageService` arbitrary URL fallback was still accessible if loose ID validation failed, leading to SSRF. 2) GitHub update checks in `BakeryService` and Slack API calls in `SlackProvider` lacked timeouts and size limits, exposing the server to DoS via resource exhaustion.
+
+**Learning:** "Trust but verify" isn't enough for ID parameters that influence outbound requests; use strict, exclusive validation (allow-listing). Furthermore, *all* outbound HTTP requests must be bounded by timeouts and size limits to prevent the server from becoming a victim of upstream "Slowloris" or large payload attacks.
+
+**Prevention:**
+- Never fallback to raw parameter values when constructing outbound request URLs.
+- Standardize on a set of defensive `axios` request configuration (timeouts, maxContentLength) for all internal services.
+- Ensure test suites for security-critical services (like `ImageService`) explicitly import test globals (like `describe`, `it`) for compatibility with modern Vitest environments.

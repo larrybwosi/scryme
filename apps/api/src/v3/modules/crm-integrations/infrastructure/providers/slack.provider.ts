@@ -35,6 +35,7 @@ export class SlackProvider implements CommunicationProvider {
           code,
           redirect_uri: this.redirectUri,
         },
+        timeout: 10000,
       },
     );
 
@@ -71,6 +72,7 @@ export class SlackProvider implements CommunicationProvider {
       },
       {
         headers: { Authorization: `Bearer ${accessToken}` },
+        timeout: 10000,
       },
     );
 
@@ -129,6 +131,7 @@ export class SlackProvider implements CommunicationProvider {
       const response = await axios.get("https://slack.com/api/users.info", {
         params: { user: slackUserId },
         headers: { Authorization: `Bearer ${accessToken}` },
+        timeout: 10000,
       });
 
       if (response.data.ok) {

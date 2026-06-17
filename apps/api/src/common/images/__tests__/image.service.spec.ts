@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ImageService } from "../image.service";
 import axios from "axios";
 import { storageService } from "@repo/shared/storage/service";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("axios");
 vi.mock("@repo/shared/storage/service", () => ({

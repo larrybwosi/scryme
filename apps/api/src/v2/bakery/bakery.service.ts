@@ -1269,6 +1269,8 @@ export class BakeryService {
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
         {
           headers,
+          timeout: 10000,
+          maxContentLength: 5 * 1024 * 1024, // 5MB limit for release metadata
         },
       );
 
@@ -1320,6 +1322,8 @@ export class BakeryService {
             const sigResponse = await axios.get(sigAsset.browser_download_url, {
               headers,
               responseType: "text",
+              timeout: 5000,
+              maxContentLength: 1024 * 1024, // 1MB limit for signature
             });
             signature = sigResponse.data.trim();
             break;
