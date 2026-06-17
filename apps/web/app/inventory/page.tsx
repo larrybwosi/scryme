@@ -9,7 +9,7 @@ import { InventoryTable } from "../../components/inventory/inventory-table";
 import { InventoryFilters } from "../../components/inventory/inventory-filters";
 import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Filter, RotateCw, LayoutGrid, Download } from "lucide-react";
+import { Plus, Filter, RotateCw, LayoutGrid, Download, Tag } from "lucide-react";
 import { ProductSheet } from "../../components/inventory/product-sheet";
 import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";
@@ -52,6 +52,12 @@ export default async function InventoryPage({
           <h1 className="text-2xl font-bold text-[#1D1D1F]">Inventory</h1>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/inventory/pricelists">
+            <Button variant="outline" className="gap-2">
+              <Tag size={16} />
+              <span>Price Lists</span>
+            </Button>
+          </Link>
           <Link href="/inventory/categories">
             <Button variant="outline" className="gap-2">
               <LayoutGrid size={16} />

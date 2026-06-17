@@ -92,6 +92,7 @@ model PriceList {
   // Relations
   items            PriceListItem[]
   rules            PricingRule[]
+  customerTags     String[]        // Dynamic assignment based on customer tags
   customers        Customer[]        // Customers explicitly assigned to this list
   businessAccounts BusinessAccount[] // B2B Accounts assigned to this list
 
