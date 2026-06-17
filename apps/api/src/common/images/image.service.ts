@@ -94,25 +94,22 @@ export class ImageService {
     if (providerType === "sanity") {
       // Construction logic for Sanity CDN URL if ID is provided
       // Typical Sanity asset ID: image-02983740298374-1200x800-jpg
-      const parts = id.split("-");
-      if (parts.length >= 4 && parts[0] === "image") {
-        const assetId = parts[1];
-        const dimensions = parts[2];
-        const extension = parts[3];
-
-        // Basic validation for assetId to prevent SSRF/Path traversal
-        if (!/^[a-zA-Z0-9]+$/.test(assetId) || !/^\d+x\d+$/.test(dimensions)) {
-          throw new Error("Invalid Sanity asset ID format");
-        }
-
-        const projectId =
-          process.env.SANITY_PROJECT_ID ||
-          process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-        const dataset =
-          process.env.SANITY_DATASET || process.env.NEXT_PUBLIC_SANITY_DATASET;
-        return `https://cdn.sanity.io/images/${projectId}/${dataset}/${assetId}-${dimensions}.${extension}`;
+      const SANITY_ASSET_ID_REGEX = /^image-[a-fA-F0-9]+-\d+x\d+-[a-z0-9]+$/i;
+      if (!SANITY_ASSET_ID_REGEX.test(id)) {
+        throw new Error("Invalid Sanity asset ID format");
       }
-      return id; // Assume it's a URL if it doesn't match the pattern
+
+      const parts = id.split("-");
+      const assetId = parts[1];
+      const dimensions = parts[2];
+      const extension = parts[3];
+
+      const projectId =
+        process.env.SANITY_PROJECT_ID ||
+        process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+      const dataset =
+        process.env.SANITY_DATASET || process.env.NEXT_PUBLIC_SANITY_DATASET;
+      return `https://cdn.sanity.io/images/${projectId}/${dataset}/${assetId}-${dimensions}.${extension}`;
     } else {
       return await storageService.getSignedUrl(id, 60);
     }
