@@ -45,6 +45,12 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useUnits } from '@/lib/units/hooks';
+import {
+  calculateLineQuantity,
+  calculateLineUnitCost,
+  calculateLineTotal,
+  calculateGrandTotal
+} from '@/lib/units/calculations';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -306,12 +312,7 @@ function BulkReceiveDialog({
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const watchLines = useWatch({ control, name: 'lines' });
 
-  const grandTotal = watchLines?.reduce((s, l) => {
-    if (l.useContainer) {
-      return s + (l.numContainers || 0) * (l.pricePerContainer || 0);
-    }
-    return s + (l.quantity || 0) * (l.unitCost || 0);
-  }, 0) || 0;
+  const grandTotal = calculateGrandTotal(watchLines || []);
 
   const handleAddLine = () =>
     append({
@@ -336,16 +337,11 @@ function BulkReceiveDialog({
       // Normalize lines before sending
       const normalizedPayload = {
         ...payload,
-        lines: payload.lines.map(line => {
-          if (line.useContainer) {
-            return {
-              ...line,
-              quantity: (line.numContainers || 0) * (line.unitsPerContainer || 0),
-              unitCost: (line.unitsPerContainer || 0) > 0 ? (line.pricePerContainer || 0) / (line.unitsPerContainer || 0) : 0,
-            };
-          }
-          return line;
-        })
+        lines: payload.lines.map(line => ({
+          ...line,
+          quantity: calculateLineQuantity(line),
+          unitCost: calculateLineUnitCost(line),
+        }))
       };
       const response = await axios.post('/api/bakery/ingredients/receive', normalizedPayload);
       return response.data;
