@@ -368,7 +368,23 @@ export class StockTransferUseCase {
       pagination,
       { organizationId },
       { requestedDate: "desc" },
-      { include: { fromLocation: true, toLocation: true, requestedBy: true } },
+      {
+        select: {
+          id: true,
+          transferNumber: true,
+          requestedDate: true,
+          status: true,
+          priority: true,
+          fromLocation: { select: { id: true, name: true } },
+          toLocation: { select: { id: true, name: true } },
+          requestedBy: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
     );
   }
 

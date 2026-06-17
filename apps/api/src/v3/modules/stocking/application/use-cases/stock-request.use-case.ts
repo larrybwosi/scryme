@@ -26,10 +26,22 @@ export class StockRequestUseCase {
       { organizationId },
       { requestDate: "desc" },
       {
-        include: {
-          fromLocation: true,
-          toLocation: true,
-          requestedBy: { include: { user: true } },
+        select: {
+          id: true,
+          requestNumber: true,
+          requestDate: true,
+          status: true,
+          priority: true,
+          totalEstimatedCost: true,
+          toLocation: { select: { id: true, name: true } },
+          fromLocation: { select: { id: true, name: true } },
+          requestedBy: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true } },
+            },
+          },
+          _count: { select: { items: true } },
         },
       },
     );

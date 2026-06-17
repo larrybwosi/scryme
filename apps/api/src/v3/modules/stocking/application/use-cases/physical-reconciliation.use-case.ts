@@ -243,7 +243,23 @@ export class PhysicalReconciliationUseCase {
       pagination,
       { organizationId },
       { reconciliationDate: "desc" },
-      { include: { location: true, initiatedByMember: true } },
+      {
+        select: {
+          id: true,
+          reconciliationDate: true,
+          status: true,
+          expectedValue: true,
+          actualValue: true,
+          varianceValue: true,
+          location: { select: { id: true, name: true } },
+          initiatedByMember: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
     );
   }
 }
