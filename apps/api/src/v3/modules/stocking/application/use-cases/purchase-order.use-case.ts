@@ -319,7 +319,23 @@ export class PurchaseOrderUseCase {
       pagination,
       { organizationId },
       { orderDate: "desc" },
-      { include: { supplier: true, member: true } },
+      {
+        select: {
+          id: true,
+          purchaseNumber: true,
+          orderDate: true,
+          status: true,
+          totalAmount: true,
+          currency: true,
+          supplier: { select: { id: true, name: true } },
+          member: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
     );
   }
 }
