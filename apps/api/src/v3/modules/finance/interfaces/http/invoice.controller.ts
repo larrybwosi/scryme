@@ -10,6 +10,9 @@ import {
   Req,
   Res,
   StreamableFile,
+  Query,
+  UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { V3AuthGuard } from '../../../../common/guards/v3-auth.guard';
@@ -18,6 +21,8 @@ import { InvoiceUseCase } from '../../application/use-cases/invoice.use-case';
 import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceConfigDto } from '../../application/dto/invoice.dto';
 import { PermissionsGuard } from '../../../../common/guards/permissions.guard';
 import { Permissions } from '../../../../common/decorators/permissions.decorator';
+import { AllowPublic } from '../../../../../common/decorators/auth.decorator';
+import { verifyDocumentToken } from '@repo/shared/server';
 import * as Fastify from 'fastify';
 
 @ApiTags('Finance / Invoices')
@@ -113,24 +118,46 @@ export class InvoiceController {
 export class PublicInvoiceController {
   constructor(private readonly invoiceUseCase: InvoiceUseCase) {}
 
+  @AllowPublic()
   @Get(':id/download')
   @ApiOperation({ summary: 'Download invoice PDF' })
   async downloadInvoice(
     @Param('id') id: string,
+    @Query('token') token: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
+    if (!token) {
+      throw new UnauthorizedException('Token required');
+    }
+
+    const payload = verifyDocumentToken(token);
+    if (!payload || payload.type !== 'invoice' || payload.id !== id) {
+      throw new ForbiddenException('Invalid or expired link');
+    }
+
     const stream = await this.invoiceUseCase.getDownloadStreamDirect(id);
     res.header('Content-Type', 'application/pdf');
     res.header('Content-Disposition', `attachment; filename=invoice-${id}.pdf`);
     return new StreamableFile(stream);
   }
 
+  @AllowPublic()
   @Get('receipts/:transactionId/download')
   @ApiOperation({ summary: 'Download receipt PDF' })
   async downloadReceipt(
     @Param('transactionId') transactionId: string,
+    @Query('token') token: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
+    if (!token) {
+      throw new UnauthorizedException('Token required');
+    }
+
+    const payload = verifyDocumentToken(token);
+    if (!payload || payload.type !== 'receipt' || payload.id !== transactionId) {
+      throw new ForbiddenException('Invalid or expired link');
+    }
+
     const stream = await this.invoiceUseCase.getReceiptDownloadStream(transactionId);
     res.header('Content-Type', 'application/pdf');
     res.header('Content-Disposition', `attachment; filename=receipt-${transactionId}.pdf`);
