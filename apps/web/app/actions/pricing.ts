@@ -65,17 +65,72 @@ export async function createPriceList(data: {
   customerTags?: string[];
 }) {
   const context = await getServerAuth();
-  if (!context?.organizationId) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
 
   const priceList = await db.priceList.create({
     data: {
       ...data,
       organizationId: context.organizationId,
-      approvalStatus: PriceApprovalStatus.APPROVED, // Automatically approved for now as per requirements "Just creating new"
+      approvalStatus: PriceApprovalStatus.DRAFT,
+      submittedBy: context.memberId,
     },
   });
 
   revalidatePath("/inventory/pricelists");
+  return priceList;
+}
+
+export async function submitPriceListForApproval(id: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+
+  const priceList = await db.priceList.update({
+    where: { id, organizationId: context.organizationId },
+    data: {
+      approvalStatus: PriceApprovalStatus.PENDING_APPROVAL,
+      submittedAt: new Date(),
+      submittedBy: context.memberId,
+    },
+  });
+
+  revalidatePath("/inventory/pricelists");
+  revalidatePath(`/inventory/pricelists/${id}`);
+  return priceList;
+}
+
+export async function approvePriceList(id: string, notes?: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+
+  const priceList = await db.priceList.update({
+    where: { id, organizationId: context.organizationId },
+    data: {
+      approvalStatus: PriceApprovalStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: context.memberId,
+      approvalNotes: notes,
+    },
+  });
+
+  revalidatePath("/inventory/pricelists");
+  revalidatePath(`/inventory/pricelists/${id}`);
+  return priceList;
+}
+
+export async function rejectPriceList(id: string, notes: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+
+  const priceList = await db.priceList.update({
+    where: { id, organizationId: context.organizationId },
+    data: {
+      approvalStatus: PriceApprovalStatus.REJECTED,
+      approvalNotes: notes,
+    },
+  });
+
+  revalidatePath("/inventory/pricelists");
+  revalidatePath(`/inventory/pricelists/${id}`);
   return priceList;
 }
 
@@ -116,27 +171,39 @@ export async function addPriceListItems(priceListId: string, items: Array<{
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const result = await db.$transaction(
-    items.map(item => db.priceListItem.upsert({
-      where: {
-        priceListId_variantId_sellingUnitId_minQuantity: {
+    items.map(item => {
+      const where = item.sellingUnitId
+        ? {
+            priceListId_variantId_sellingUnitId_minQuantity: {
+              priceListId,
+              variantId: item.variantId,
+              sellingUnitId: item.sellingUnitId,
+              minQuantity: item.minQuantity ?? 1,
+            }
+          }
+        : {
+            priceListId_variantId_minQuantity: {
+              priceListId,
+              variantId: item.variantId,
+              minQuantity: item.minQuantity ?? 1,
+            }
+          };
+
+      return db.priceListItem.upsert({
+        where,
+        create: {
+          ...item,
           priceListId,
-          variantId: item.variantId,
-          sellingUnitId: item.sellingUnitId!,
-          minQuantity: item.minQuantity ?? 1,
+          price: new Decimal(item.price),
+          percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
+        },
+        update: {
+          ...item,
+          price: new Decimal(item.price),
+          percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
         }
-      },
-      create: {
-        ...item,
-        priceListId,
-        price: new Decimal(item.price),
-        percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
-      },
-      update: {
-        ...item,
-        price: new Decimal(item.price),
-        percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
-      }
-    }))
+      });
+    })
   );
 
   revalidatePath(`/inventory/pricelists/${priceListId}`);
@@ -167,7 +234,7 @@ export async function getUniqueCustomerTags() {
   });
 
   const tags = new Set<string>();
-  customers.forEach(c => c.tags.forEach(t => {
+  customers.forEach((c: any) => c.tags.forEach((t: any) => {
     if (t) tags.add(t);
   }));
 

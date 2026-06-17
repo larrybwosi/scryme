@@ -22,7 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { DiscountType } from "@repo/db";
+import { DiscountType } from "@repo/db/client";
 import { Badge } from "@repo/ui/components/ui/badge";
 
 interface PricingRuleTableProps {

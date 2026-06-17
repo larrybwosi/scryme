@@ -21,7 +21,7 @@ import {
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { addPriceListItems } from "../../app/actions/pricing";
 import { toast } from "sonner";
-import { PricingMethod } from "@repo/db";
+import { PricingMethod } from "@repo/db/client";
 import { Search, Package } from "lucide-react";
 
 interface AddItemDialogProps {

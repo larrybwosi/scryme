@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { removePriceListItem, addPriceListItems } from "../../app/actions/pricing";
 import { toast } from "sonner";
-import { PricingMethod } from "@repo/db";
+import { PricingMethod } from "@repo/db/client";
 import { Badge } from "@repo/ui/components/ui/badge";
 
 interface PriceListItemTableProps {
