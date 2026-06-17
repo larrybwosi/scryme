@@ -169,4 +169,20 @@ export class PosController {
   async getPettyCashFunds(@v3Context() ctx: V3ApiContext) {
     return this.registerPettyCashUseCase.getFunds(ctx);
   }
+
+  @Get("petty-cash/transactions")
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "List recent petty cash transactions",
+    operationId: "POS_GetPettyCashTransactions",
+  })
+  @ApiResponse({ status: 200, description: "Petty cash transactions" })
+  async getPettyCashTransactions(
+    @v3Context() ctx: V3ApiContext,
+    @Query("limit") limit?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    return this.registerPettyCashUseCase.getRecentTransactions(ctx, parsedLimit);
+  }
 }

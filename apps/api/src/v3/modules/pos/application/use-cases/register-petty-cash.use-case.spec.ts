@@ -17,7 +17,8 @@ describe("RegisterPettyCashUseCase", () => {
     prisma = {
       client: {
         expenseCategory: { findFirst: vi.fn(), create: vi.fn() },
-        pettyCashFund: { findFirst: vi.fn() },
+        pettyCashFund: { findFirst: vi.fn(), findMany: vi.fn() },
+        pettyCashTransaction: { findMany: vi.fn() },
       },
     };
 
@@ -122,5 +123,52 @@ describe("RegisterPettyCashUseCase", () => {
     prisma.client.pettyCashFund.findFirst.mockResolvedValue(null);
 
     await expect(useCase.execute(ctx, dto)).rejects.toThrow(NotFoundException);
+  });
+
+  it("should fetch recent transactions", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      locationId: "loc_1",
+    } as any;
+
+    const mockTransactions = [{ id: "tx_1", amount: 100 }];
+    prisma.client.pettyCashTransaction.findMany.mockResolvedValue(mockTransactions);
+
+    const result = await useCase.getRecentTransactions(ctx, 5);
+
+    expect(prisma.client.pettyCashTransaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          fund: {
+            organizationId: "org_1",
+            locationId: "loc_1",
+          },
+        },
+        take: 5,
+      }),
+    );
+    expect(result).toEqual(mockTransactions);
+  });
+
+  it("should prioritize location-specific funds in getFunds", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      locationId: "loc_1",
+    } as any;
+
+    const locFunds = [{ id: "fund_loc", locationId: "loc_1" }];
+    prisma.client.pettyCashFund.findMany.mockResolvedValue(locFunds);
+
+    const result = await useCase.getFunds(ctx);
+
+    expect(prisma.client.pettyCashFund.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_1",
+        locationId: "loc_1",
+        isActive: true,
+      },
+    });
+    expect(result).toEqual(locFunds);
+    expect(pettyCashUseCase.getFunds).not.toHaveBeenCalled();
   });
 });
