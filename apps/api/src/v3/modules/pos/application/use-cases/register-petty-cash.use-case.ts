@@ -81,6 +81,52 @@ export class RegisterPettyCashUseCase {
   }
 
   async getFunds(ctx: V3ApiContext) {
-    return this.pettyCashUseCase.getFunds(ctx.organizationId);
+    const { organizationId, locationId } = ctx;
+
+    if (locationId) {
+      const funds = await this.prisma.client.pettyCashFund.findMany({
+        where: {
+          organizationId,
+          locationId,
+          isActive: true,
+        },
+      });
+      if (funds.length > 0) return funds;
+    }
+
+    return this.pettyCashUseCase.getFunds(organizationId);
+  }
+
+  async getRecentTransactions(ctx: V3ApiContext, limit = 10) {
+    const { organizationId, locationId } = ctx;
+
+    const where: any = {
+      fund: {
+        organizationId,
+      },
+    };
+
+    if (locationId) {
+      where.fund.locationId = locationId;
+    }
+
+    return this.prisma.client.pettyCashTransaction.findMany({
+      where,
+      include: {
+        member: {
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: limit,
+    });
   }
 }

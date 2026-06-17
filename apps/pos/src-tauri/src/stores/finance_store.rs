@@ -103,6 +103,49 @@ pub async fn register_petty_cash_command(
     }
 }
 
+#[tauri::command]
+pub async fn upload_file_command(
+    auth_state: State<'_, AuthState>,
+    file_path: String,
+) -> Result<serde_json::Value, String> {
+    let request = auth_state
+        .build_request(reqwest::Method::POST, crate::api_config::routes::UPLOAD)
+        .map_err(|e| e.to_string())?;
+
+    // Read file content
+    let file_bytes = tokio::fs::read(&file_path)
+        .await
+        .map_err(|e| format!("Failed to read file at {}: {}", file_path, e))?;
+
+    let file_name = std::path::Path::new(&file_path)
+        .file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+
+    let part = reqwest::multipart::Part::bytes(file_bytes)
+        .file_name(file_name)
+        .mime_str("application/octet-stream") // API should handle it
+        .map_err(|e| e.to_string())?;
+
+    let form = reqwest::multipart::Form::new().part("file", part);
+
+    let res = request
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_text = res.text().await.unwrap_or_default();
+        return Err(format!("Upload failed: {} - {}", status, err_text));
+    }
+
+    let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    Ok(data)
+}
+
 async fn push_petty_cash(
     auth_state: &AuthState,
     org_slug: &str,

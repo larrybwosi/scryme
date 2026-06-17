@@ -465,6 +465,7 @@ pub fn run() {
             sales_store::initiate_mpesa_payment_command,
             sales_store::invalidate_sale_command,
             finance_store::register_petty_cash_command,
+            finance_store::upload_file_command,
             sales_store::set_sync_interval_command,
             auth_store::set_negative_stock_command,
             #[cfg(not(feature = "standalone"))]
