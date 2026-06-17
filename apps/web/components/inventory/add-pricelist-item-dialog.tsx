@@ -41,7 +41,12 @@ export function AddPriceListItemDialog({
   const [search, setSearch] = useState("");
   const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());
 
-  const [pricingConfig, setPricingConfig] = useState({
+  const [pricingConfig, setPricingConfig] = useState<{
+    method: PricingMethod;
+    percentageValue: number;
+    minQuantity: number;
+    basePrice: number;
+  }>({
     method: PricingMethod.FIXED,
     percentageValue: 0,
     minQuantity: 1,
