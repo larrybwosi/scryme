@@ -20,8 +20,10 @@ import { Switch } from "@repo/ui/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, Save, Hash, Palette, ShieldCheck, FileText, Plus, Trash2 } from "lucide-react";
+import { Loader2, Save, Hash, Palette, ShieldCheck, FileText, Plus, Trash2, Upload, X } from "lucide-react";
 import { updateInvoiceConfig } from "../../actions/invoice-config";
+import { uploadFileAction } from "../../actions/sales";
+import Image from "next/image";
 
 const formSchema = z.object({
   companyName: z.string().optional(),
@@ -58,8 +60,12 @@ interface InvoiceConfigFormProps {
   initialConfig: any;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -105,6 +111,31 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
       }
     });
   }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size exceeds 10MB limit");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await uploadFileAction(formData);
+      form.setValue("logoUrl", result.fileUrl, { shouldDirty: true });
+      toast.success("Logo uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload logo");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <Form {...form}>
@@ -155,11 +186,51 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 name="logoUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Logo URL Override</FormLabel>
+                    <FormLabel>Logo Override</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://..." {...field} />
+                      <div className="space-y-4">
+                        {field.value ? (
+                          <div className="relative w-32 h-32 border rounded-lg overflow-hidden group">
+                            <Image
+                              src={field.value}
+                              alt="Invoice Logo"
+                              fill
+                              className="object-contain p-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => field.onChange("")}
+                              className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                          >
+                            {isUploading ? (
+                              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                            ) : (
+                              <>
+                                <Upload className="w-6 h-6 text-muted-foreground" />
+                                <span className="text-[10px] text-muted-foreground font-medium">Upload Logo</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          disabled={isUploading}
+                        />
+                      </div>
                     </FormControl>
-                    <FormDescription>Custom logo specifically for invoices</FormDescription>
+                    <FormDescription>Custom logo specifically for invoices (Max 10MB)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

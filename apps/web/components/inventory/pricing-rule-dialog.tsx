@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@repo/ui/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@repo/ui/components/ui/sheet";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
@@ -96,11 +96,14 @@ export function PricingRuleDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create Pricing Rule</DialogTitle>
-        </DialogHeader>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-[500px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Create Pricing Rule</SheetTitle>
+          <SheetDescription>
+            Add a conditional discount or price override to this price list.
+          </SheetDescription>
+        </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="rule-name">Rule Name</Label>
@@ -223,7 +226,7 @@ export function PricingRuleDialog({
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-3 pt-6">
             <Button
               type="button"
               variant="outline"
@@ -233,9 +236,9 @@ export function PricingRuleDialog({
             <Button type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create Rule"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
