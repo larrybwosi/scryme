@@ -66,6 +66,7 @@
     "recharts": "^3.8.1",
     "tailwindcss": "^4.2.1",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.8"
   }
 }
