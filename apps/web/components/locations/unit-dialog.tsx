@@ -48,6 +48,8 @@ interface UnitDialogProps extends React.ComponentPropsWithoutRef<typeof DialogTr
   locationId: string;
   zones?: any[];
   unit?: any;
+  variant?: any;
+  size?: any;
 }
 
 export function UnitDialog({
@@ -55,12 +57,16 @@ export function UnitDialog({
   locationId,
   zones = [],
   unit,
+  variant,
+  size,
   ...props
 }: UnitDialogProps) {
   // If we receive button-like props (variant, size), it means we are being used directly as a trigger
   // In that case, we should render a Button
-  const trigger = (props as any).variant ? (
-    <Button {...(props as any)}>{children}</Button>
+  const trigger = variant ? (
+    <Button variant={variant} size={size} {...(props as any)}>
+      {children}
+    </Button>
   ) : (
     children
   );
