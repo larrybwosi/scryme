@@ -14,6 +14,7 @@ export class ImageService {
       height?: number;
       quality?: number;
       format?: string;
+      organizationId?: string;
     },
   ) {
     try {
@@ -43,7 +44,11 @@ export class ImageService {
         contentType = response.headers["content-type"] as string;
       } else {
         // RustFS / S3
-        const url = await storageService.getSignedUrl(id, 60);
+        const url = await storageService.getSignedUrl(
+          id,
+          60,
+          options.organizationId,
+        );
         const response = await axios.get(url, {
           responseType: "arraybuffer",
           timeout: 5000,
@@ -89,7 +94,10 @@ export class ImageService {
     }
   }
 
-  private async getOriginalUrl(id: string): Promise<string> {
+  private async getOriginalUrl(
+    id: string,
+    organizationId?: string,
+  ): Promise<string> {
     const providerType = process.env.STORAGE_PROVIDER || "sanity";
     if (providerType === "sanity") {
       // Construction logic for Sanity CDN URL if ID is provided
@@ -111,7 +119,7 @@ export class ImageService {
         process.env.SANITY_DATASET || process.env.NEXT_PUBLIC_SANITY_DATASET;
       return `https://cdn.sanity.io/images/${projectId}/${dataset}/${assetId}-${dimensions}.${extension}`;
     } else {
-      return await storageService.getSignedUrl(id, 60);
+      return await storageService.getSignedUrl(id, 60, organizationId);
     }
   }
 }

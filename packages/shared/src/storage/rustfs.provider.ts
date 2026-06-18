@@ -6,6 +6,8 @@ import {
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   GetObjectCommand,
+  HeadBucketCommand,
+  CreateBucketCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { StorageProvider, StorageUploadResult } from "./types";
@@ -34,18 +36,37 @@ export class RustfsStorageProvider implements StorageProvider {
     });
   }
 
-  private getBucketName() {
+  private getBucketName(organizationId?: string) {
+    if (organizationId) {
+      return `dealio-org-${organizationId.toLowerCase()}`;
+    }
     return env.RUSTFS_BUCKET || "dealio-uploads";
+  }
+
+  private async ensureBucketExists(client: S3Client, bucketName: string) {
+    try {
+      await client.send(new HeadBucketCommand({ Bucket: bucketName }));
+    } catch (error: any) {
+      if (error.name === "NotFound" || error.$metadata?.httpStatusCode === 404) {
+        await client.send(new CreateBucketCommand({ Bucket: bucketName }));
+      } else {
+        throw error;
+      }
+    }
   }
 
   async upload(
     file: Buffer,
     filename: string,
     contentType: string,
-    options?: { uploadAsFile?: boolean; encrypt?: boolean },
+    options?: { uploadAsFile?: boolean; encrypt?: boolean; organizationId?: string },
   ): Promise<StorageUploadResult> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(options?.organizationId);
+
+    if (options?.organizationId) {
+      await this.ensureBucketExists(client, bucketName);
+    }
 
     const command = new PutObjectCommand({
       Bucket: bucketName,
@@ -66,9 +87,9 @@ export class RustfsStorageProvider implements StorageProvider {
     };
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, organizationId?: string): Promise<void> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(organizationId);
 
     const command = new DeleteObjectCommand({
       Bucket: bucketName,
@@ -78,9 +99,13 @@ export class RustfsStorageProvider implements StorageProvider {
     await client.send(command);
   }
 
-  async getSignedUrl(id: string, expiresIn = 3600): Promise<string> {
+  async getSignedUrl(
+    id: string,
+    expiresIn = 3600,
+    organizationId?: string,
+  ): Promise<string> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(organizationId);
 
     const command = new GetObjectCommand({
       Bucket: bucketName,
@@ -93,9 +118,14 @@ export class RustfsStorageProvider implements StorageProvider {
   async startMultipartUpload(
     filename: string,
     contentType: string,
+    organizationId?: string,
   ): Promise<string> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(organizationId);
+
+    if (organizationId) {
+      await this.ensureBucketExists(client, bucketName);
+    }
 
     const command = new CreateMultipartUploadCommand({
       Bucket: bucketName,
@@ -112,9 +142,10 @@ export class RustfsStorageProvider implements StorageProvider {
     uploadId: string,
     partNumber: number,
     body: Buffer,
+    organizationId?: string,
   ): Promise<string> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(organizationId);
 
     const command = new UploadPartCommand({
       Bucket: bucketName,
@@ -132,9 +163,10 @@ export class RustfsStorageProvider implements StorageProvider {
     filename: string,
     uploadId: string,
     parts: { ETag: string; PartNumber: number }[],
+    organizationId?: string,
   ): Promise<StorageUploadResult> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(organizationId);
 
     const command = new CompleteMultipartUploadCommand({
       Bucket: bucketName,
