@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@repo/ui/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@repo/ui/components/ui/sheet";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
@@ -106,11 +106,14 @@ export function AddPriceListItemDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Add Items to Price List</DialogTitle>
-        </DialogHeader>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-[700px] flex flex-col">
+        <SheetHeader>
+          <SheetTitle>Add Items to Price List</SheetTitle>
+          <SheetDescription>
+            Select products and variants to add to this price list with specific pricing logic.
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="flex gap-4 flex-1 overflow-hidden py-4">
           <div className="flex-[1.5] flex flex-col gap-3 overflow-hidden border-r pr-4">
@@ -204,7 +207,7 @@ export function AddPriceListItemDialog({
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

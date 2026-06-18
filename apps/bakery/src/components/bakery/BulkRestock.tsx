@@ -10,6 +10,12 @@ import { SupplierSelect } from '@/components/common/supplier-select';
 import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
 import { useListIngredients } from '@/hooks/bakery';
 import { useUnits } from '@/lib/units/hooks';
+import {
+  calculateLineQuantity,
+  calculateLineUnitCost,
+  calculateLineTotal,
+  calculateGrandTotal
+} from '@/lib/units/calculations';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
@@ -74,10 +80,14 @@ export function BulkRestock({ open, onOpenChange }: BulkRestockProps) {
     });
   };
 
-  const calculateTotalQuantity = (entry: RestockEntry) => {
-    if (!entry.unitId) return entry.quantity;
-    return entry.quantity * entry.unitsPerContainer;
-  };
+  const entryToCalcLine = (entry: RestockEntry) => ({
+    useContainer: !!entry.unitId,
+    numContainers: entry.quantity,
+    unitsPerContainer: entry.unitsPerContainer,
+    pricePerContainer: entry.unitPrice,
+    quantity: entry.quantity,
+    unitCost: entry.unitPrice
+  });
 
   const handleBulkRestock = async () => {
     if (!supplierId) {
@@ -93,9 +103,9 @@ export function BulkRestock({ open, onOpenChange }: BulkRestockProps) {
 
     try {
       for (const entry of validEntries) {
-        const finalQuantity = calculateTotalQuantity(entry);
-        const factor = entry.unitsPerContainer || 1;
-        const finalUnitPrice = entry.unitPrice / factor;
+        const line = entryToCalcLine(entry);
+        const finalQuantity = calculateLineQuantity(line);
+        const finalUnitPrice = calculateLineUnitCost(line);
 
         await restockInventory({
           productId: entry.productId,
@@ -219,8 +229,8 @@ export function BulkRestock({ open, onOpenChange }: BulkRestockProps) {
                       </TableCell>
                       <TableCell className="text-sm font-medium">
                         <div className="flex flex-col">
-                          <span>{calculateTotalQuantity(entry).toLocaleString()} {entry.baseUnitSymbol}</span>
-                          <span className="text-[10px] text-slate-500">Total: ${(entry.quantity * entry.unitPrice).toFixed(2)}</span>
+                          <span>{calculateLineQuantity(entryToCalcLine(entry)).toLocaleString()} {entry.baseUnitSymbol}</span>
+                          <span className="text-[10px] text-slate-500">Total: ${calculateLineTotal(entryToCalcLine(entry)).toFixed(2)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -246,7 +256,7 @@ export function BulkRestock({ open, onOpenChange }: BulkRestockProps) {
                <div className="text-sm">
                   <span className="text-slate-500">Total Shipment Value:</span>
                   <span className="ml-2 font-bold text-lg">
-                    ${entries.reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0).toFixed(2)}
+                    ${calculateGrandTotal(entries.map(entryToCalcLine)).toFixed(2)}
                   </span>
                </div>
             </div>
