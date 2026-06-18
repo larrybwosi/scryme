@@ -49,6 +49,7 @@ export async function getPriceList(id: string) {
         }
       },
       rules: true,
+      customers: true,
     }
   });
 }
@@ -288,4 +289,53 @@ export async function createPricingRule(data: {
 
   revalidatePath(`/inventory/pricelists/${data.priceListId}`);
   return rule;
+}
+
+export async function getCustomers() {
+  const context = await getServerAuth();
+  if (!context?.organizationId) return [];
+
+  return db.customer.findMany({
+    where: {
+      organizationId: context.organizationId,
+      isActive: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}
+
+export async function assignCustomersToPriceList(priceListId: string, customerIds: string[]) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.priceList.update({
+    where: { id: priceListId, organizationId: context.organizationId },
+    data: {
+      customers: {
+        connect: customerIds.map(id => ({ id }))
+      }
+    }
+  });
+
+  revalidatePath(`/inventory/pricelists/${priceListId}`);
+  return result;
+}
+
+export async function removeCustomerFromPriceList(priceListId: string, customerId: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.priceList.update({
+    where: { id: priceListId, organizationId: context.organizationId },
+    data: {
+      customers: {
+        disconnect: { id: customerId }
+      }
+    }
+  });
+
+  revalidatePath(`/inventory/pricelists/${priceListId}`);
+  return result;
 }
