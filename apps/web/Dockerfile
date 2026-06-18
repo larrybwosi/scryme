@@ -19,8 +19,13 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 # ---------------------------------------------------------
 FROM base AS pruner
 WORKDIR /app
+# Install turbo globally
 RUN pnpm add -g turbo
+# Copy only necessary files (ensure .dockerignore is in root!)
 COPY . .
+# Remove potentially conflicting build artifacts from the host
+RUN rm -rf .turbo && rm -rf node_modules
+# Run prune
 RUN turbo prune web --docker
 
 # ---------------------------------------------------------
@@ -36,7 +41,7 @@ COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 # Install all dependencies securely
 RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
 
-# Copy full source code and turbo configuration
+# Copy full source code
 COPY --from=pruner /app/out/full/ .
 
 # Build-time environment variables
@@ -45,10 +50,10 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ARG BETTER_AUTH_SECRET
 ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 
-# Generate Prisma Client (if needed by Web)
+# Generate Prisma Client
 RUN npx turbo run generate
 
-# Build the Web app and its internal workspace dependencies
+# Build the Web app
 RUN npx turbo build --filter=web...
 
 # ---------------------------------------------------------
@@ -64,7 +69,7 @@ ENV PORT=3000
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs nextjs
 
-# Copy built outputs preserving workspace paths
+# Copy built outputs
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
