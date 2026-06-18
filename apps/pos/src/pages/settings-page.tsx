@@ -173,6 +173,7 @@ export default function SettingsPage() {
   const [shareShiftBetweenUsers, setShareShiftBetweenUsers] = useState(settings?.shareShiftBetweenUsers ?? true);
   const [enableAutoShiftPrompt, setEnableAutoShiftPrompt] = useState(settings?.enableAutoShiftPrompt ?? false);
   const [enforceShiftForCashPayments, setEnforceShiftForCashPayments] = useState(settings?.enforceShiftForCashPayments ?? false);
+  const [forcedImmediateSyncThreshold, setForcedImmediateSyncThreshold] = useState((settings?.forcedImmediateSyncThreshold ?? 1000).toString());
 
   // KDS Settings
   const [enableKdsSystem, setEnableKdsSystem] = useState(settings?.enableKdsSystem ?? false);
@@ -211,6 +212,7 @@ export default function SettingsPage() {
     const newLowStockThreshold = Number.parseInt(lowStockThreshold, 10) || 10;
     const newMaxHeldOrders = Number.parseInt(maxHeldOrders, 10) || 20;
     const newHeldOrderExpiryHours = heldOrderExpiryHours ? Number.parseInt(heldOrderExpiryHours, 10) : undefined;
+    const newForcedImmediateSyncThreshold = Number.parseFloat(forcedImmediateSyncThreshold) || 1000;
 
     updateBusinessSettings({
       businessName,
@@ -240,6 +242,7 @@ export default function SettingsPage() {
       maxHeldOrders: newMaxHeldOrders,
       heldOrderExpiryHours: newHeldOrderExpiryHours,
       requireHoldReason,
+      forcedImmediateSyncThreshold: newForcedImmediateSyncThreshold,
     });
 
     try {
@@ -1338,6 +1341,52 @@ export default function SettingsPage() {
                         <AlertTriangle className="h-3 w-3" /> Config Required
                       </div>
                     )}
+                  </div>
+                </div>
+
+                <Separator className="md:col-span-2" />
+
+                <div className="md:col-span-2 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+                      <ShieldAlert className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">Security & Sync Threshold</h3>
+                      <p className="text-sm text-muted-foreground">Force real-time server verification for large transactions</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 md:grid-cols-2 bg-muted/20 p-6 rounded-lg border border-dashed">
+                    <div className="space-y-3">
+                      <Label htmlFor="forcedImmediateSyncThreshold" className="flex items-center justify-between">
+                        <span>Immediate Sync Threshold</span>
+                        <Badge variant="outline" className="font-mono">{currency}</Badge>
+                      </Label>
+                      <Input
+                        id="forcedImmediateSyncThreshold"
+                        type="number"
+                        value={forcedImmediateSyncThreshold}
+                        onChange={e => setForcedImmediateSyncThreshold(e.target.value)}
+                        placeholder="1000"
+                        className="h-12 text-lg font-bold"
+                      />
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Sales <strong>above</strong> this amount will bypass the local queue and require a successful server response before completion. This prevents large offline sales that might fail later.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center p-4 bg-background rounded border">
+                       <div className="space-y-1">
+                          <p className="text-sm font-medium">Currently configured to:</p>
+                          <p className="text-2xl font-bold text-primary">
+                            {Number(forcedImmediateSyncThreshold).toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{currency}</span>
+                          </p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">
+                             Verification required above this limit
+                          </p>
+                       </div>
+                    </div>
                   </div>
                 </div>
               </div>

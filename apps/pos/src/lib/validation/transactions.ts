@@ -143,6 +143,9 @@ export const ProcessSaleInputSchema = z
       .optional()
       .nullable(),
 
+    forcedImmediateSyncThreshold: z.number().optional(),
+    total: z.number().optional(),
+
     amountReceived: z
       .number({
         invalid_type_error: 'Amount received must be a number',

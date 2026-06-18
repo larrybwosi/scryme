@@ -400,6 +400,7 @@ export interface BusinessSettings {
   maxHeldOrders: number;
   heldOrderExpiryHours?: number;
   requireHoldReason: boolean;
+  forcedImmediateSyncThreshold: number;
 }
 
 export interface Customer {
@@ -938,6 +939,7 @@ export const usePosStore = create<PosStore>()(
         maxHeldOrders: 20,
         heldOrderExpiryHours: 24,
         requireHoldReason: false,
+        forcedImmediateSyncThreshold: 1000,
       },
       employees: [],
       notifications: [],
@@ -1220,6 +1222,7 @@ export const usePosStore = create<PosStore>()(
             shareShiftBetweenUsers: true,
             enableAutoShiftPrompt: false,
             enforceShiftForCashPayments: false,
+            forcedImmediateSyncThreshold: 1000,
           },
           employees: [],
           notifications: [],
