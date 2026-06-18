@@ -8,7 +8,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { Banknote, History, RefreshCcw, Camera, Upload, X, Loader2 } from "lucide-react";
+import { Banknote, History, RefreshCcw, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 import { usePosStore } from "@/store/store";

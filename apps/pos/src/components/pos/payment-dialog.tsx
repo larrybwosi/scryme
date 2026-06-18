@@ -284,7 +284,8 @@ const PaymentModal = ({
 
   const { mutateAsync: createSale, isPending: isProcessing } = useProcessSale();
   const { data: unclaimedPayments, isLoading: isSearchingMpesa } = useMpesaSearch(mpesaSearchQuery);
-  const { mutateAsync: claimMpesaPayment, isPending: isClaimingMpesa } = useMpesaClaim();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { mutateAsync: _claimMpesaPayment, isPending: _isClaimingMpesa } = useMpesaClaim();
   const { mutateAsync: verifyWithSafaricom, isPending: isVerifyingSafaricom } = useMpesaVerifySafaricom();
 
   const { openPhysicalDrawer } = useCashDrawer();
@@ -605,6 +606,8 @@ const PaymentModal = ({
       enableStockTracking: true,
       notes: finalNotes,
       discountAmount: editableDiscount,
+      total: totalPayable,
+      forcedImmediateSyncThreshold: settings.forcedImmediateSyncThreshold,
       cashierName: currentMember?.name || 'Staff',
       // Pharmacy fields
       prescriptionId: (usePosStore.getState().currentOrder as any).prescriptionId,

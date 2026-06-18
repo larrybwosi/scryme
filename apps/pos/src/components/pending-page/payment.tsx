@@ -14,19 +14,15 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import {
   Loader2,
   Banknote,
   CreditCard,
   Smartphone,
   ShieldCheck,
-  Gift,
   Upload,
   X,
-  ImageIcon,
   Search,
-  RefreshCw,
   CheckCircle2,
   XCircle
 } from 'lucide-react';
