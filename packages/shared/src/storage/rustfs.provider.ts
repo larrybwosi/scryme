@@ -9,14 +9,15 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { StorageProvider, StorageUploadResult } from "./types";
+import { env } from "@repo/env";
 
 export class RustfsStorageProvider implements StorageProvider {
   private getClient() {
-    const endPoint = process.env.RUSTFS_ENDPOINT;
-    const accessKeyId = process.env.RUSTFS_ACCESS_KEY;
-    const secretAccessKey = process.env.RUSTFS_SECRET_KEY;
-    const region = process.env.RUSTFS_REGION || "us-east-1";
-    const forcePathStyle = process.env.RUSTFS_FORCE_PATH_STYLE !== "false";
+    const endPoint = env.RUSTFS_ENDPOINT;
+    const accessKeyId = env.RUSTFS_ACCESS_KEY;
+    const secretAccessKey = env.RUSTFS_SECRET_KEY;
+    const region = env.RUSTFS_REGION || "us-east-1";
+    const forcePathStyle = env.RUSTFS_FORCE_PATH_STYLE;
 
     if (!endPoint || !accessKeyId || !secretAccessKey) {
       throw new Error("RustFS configuration missing in environment variables.");
@@ -34,7 +35,7 @@ export class RustfsStorageProvider implements StorageProvider {
   }
 
   private getBucketName() {
-    return process.env.RUSTFS_BUCKET || "dealio-uploads";
+    return env.RUSTFS_BUCKET || "dealio-uploads";
   }
 
   async upload(
@@ -56,8 +57,7 @@ export class RustfsStorageProvider implements StorageProvider {
 
     await client.send(command);
 
-    const publicUrlBase =
-      process.env.RUSTFS_PUBLIC_URL || process.env.RUSTFS_ENDPOINT;
+    const publicUrlBase = env.RUSTFS_PUBLIC_URL || env.RUSTFS_ENDPOINT;
     const url = `${publicUrlBase}/${bucketName}/${filename}`;
 
     return {
@@ -147,8 +147,7 @@ export class RustfsStorageProvider implements StorageProvider {
 
     await client.send(command);
 
-    const publicUrlBase =
-      process.env.RUSTFS_PUBLIC_URL || process.env.RUSTFS_ENDPOINT;
+    const publicUrlBase = env.RUSTFS_PUBLIC_URL || env.RUSTFS_ENDPOINT;
     const url = `${publicUrlBase}/${bucketName}/${filename}`;
 
     return {

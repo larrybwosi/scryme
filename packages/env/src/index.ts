@@ -63,6 +63,23 @@ const serverSchema = z.object({
   OPENOBSERVE_ORG: z.string().optional(),
   OPENOBSERVE_STREAM: z.string().optional(),
   OPENOBSERVE_TOKEN: z.string().optional(),
+
+  // Storage Configuration
+  STORAGE_PROVIDER: z.enum(["sanity", "rustfs"]).default("sanity"),
+
+  // Sanity Configuration
+  SANITY_PROJECT_ID: z.string().optional(),
+  SANITY_DATASET: z.string().optional(),
+  SANITY_API_TOKEN: z.string().optional(),
+
+  // RustFS (S3 Compatible) Configuration
+  RUSTFS_ENDPOINT: z.string().url().optional(),
+  RUSTFS_ACCESS_KEY: z.string().optional(),
+  RUSTFS_SECRET_KEY: z.string().optional(),
+  RUSTFS_REGION: z.string().default("us-east-1"),
+  RUSTFS_BUCKET: z.string().default("dealio-uploads"),
+  RUSTFS_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
+  RUSTFS_PUBLIC_URL: z.string().url().optional(),
 });
 
 const clientSchema = z.object({
@@ -75,11 +92,6 @@ const clientSchema = z.object({
 
 // ─────────────────────────────────────────────
 // Env file loader (Node.js only — skipped in browser)
-// Used by both Next.js (if called before framework init)
-// and NestJS (called at module load time).
-// @nestjs/config / Next.js will also load .env files on
-// their own, but this ensures the vars are available for
-// this validation step regardless of framework.
 // ─────────────────────────────────────────────
 function loadEnvFiles() {
   if (isBrowser) return;
@@ -109,7 +121,6 @@ function loadEnvFiles() {
     // App-level files take priority over root-level files.
     // We load root first so app-level can override with override:true.
     const envFiles = [
-      // Root level (lowest priority)
       ...(rootDir && rootDir !== currentDir
         ? [path.join(rootDir, ".env"), path.join(rootDir, ".env.local")]
         : []),
@@ -174,6 +185,20 @@ function getRawEnv() {
     OPENOBSERVE_ORG: process.env.OPENOBSERVE_ORG,
     OPENOBSERVE_STREAM: process.env.OPENOBSERVE_STREAM,
     OPENOBSERVE_TOKEN: process.env.OPENOBSERVE_TOKEN,
+    // Storage Configuration
+    STORAGE_PROVIDER: process.env.STORAGE_PROVIDER,
+    // Sanity Configuration
+    SANITY_PROJECT_ID: process.env.SANITY_PROJECT_ID,
+    SANITY_DATASET: process.env.SANITY_DATASET,
+    SANITY_API_TOKEN: process.env.SANITY_API_TOKEN,
+    // RustFS (S3 Compatible) Configuration
+    RUSTFS_ENDPOINT: process.env.RUSTFS_ENDPOINT,
+    RUSTFS_ACCESS_KEY: process.env.RUSTFS_ACCESS_KEY,
+    RUSTFS_SECRET_KEY: process.env.RUSTFS_SECRET_KEY,
+    RUSTFS_REGION: process.env.RUSTFS_REGION,
+    RUSTFS_BUCKET: process.env.RUSTFS_BUCKET,
+    RUSTFS_FORCE_PATH_STYLE: process.env.RUSTFS_FORCE_PATH_STYLE,
+    RUSTFS_PUBLIC_URL: process.env.RUSTFS_PUBLIC_URL,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
@@ -187,16 +212,12 @@ function getRawEnv() {
 // Parse and validate
 // ─────────────────────────────────────────────
 function parseEnv() {
-  // NestJS and standalone Node processes need to load .env themselves.
-  // Next.js already loads .env files before module evaluation, so this
-  // is a no-op there (vars already set, dotenv skips them unless override).
   if (!isBrowser) {
     loadEnvFiles();
   }
 
   const raw = isBrowser ? process.env : getRawEnv();
 
-  // Browser: only validate public client vars
   if (isBrowser) {
     const parsed = clientSchema.safeParse(raw);
     if (!parsed.success) {
@@ -210,7 +231,6 @@ function parseEnv() {
       z.infer<typeof clientSchema>;
   }
 
-  // NestJS: only needs server vars — NEXT_PUBLIC_* won't exist and that's fine
   if (isNestJs) {
     const parsed = serverSchema.safeParse(raw);
     if (!parsed.success && process.env.NODE_ENV !== "test") {
@@ -220,14 +240,12 @@ function parseEnv() {
       );
       throw new Error("Invalid environment variables");
     }
-    // Fill client vars with empty defaults so the type is satisfied
     return {
       ...(parsed.data ?? {}),
-      ...clientSchema.parse({}), // uses schema defaults
+      ...clientSchema.parse({}),
     } as z.infer<typeof serverSchema> & z.infer<typeof clientSchema>;
   }
 
-  // Next.js server: validate both server + client vars
   const fullSchema = serverSchema.merge(clientSchema);
   const parsed = fullSchema.safeParse(raw);
   if (!parsed.success && process.env.NODE_ENV !== "test") {
@@ -243,5 +261,4 @@ function parseEnv() {
 }
 
 export const env = parseEnv();
-
 export type Env = typeof env;
