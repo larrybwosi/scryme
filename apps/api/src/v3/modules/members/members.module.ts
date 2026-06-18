@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import {
   MembersController,
@@ -16,7 +15,6 @@ import { DepartmentUseCase } from "./application/use-cases/department.use-case";
 import { AttendanceUseCase } from "./application/use-cases/attendance.use-case";
 
 @Module({
-  imports: [forwardRef(() => V3AuthModule)],
   controllers: [
     MembersController,
     TerminalMembersController,

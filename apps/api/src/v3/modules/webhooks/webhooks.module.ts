@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { WebhookController } from "./interfaces/http/webhook.controller";
@@ -9,7 +8,6 @@ import { WindmillCallbackUseCase } from "./application/use-cases/WindmillCallbac
 
 @Module({
   imports: [
-    forwardRef(() => V3AuthModule),
     BullModule.registerQueue({
       name: "webhooks",
     }),

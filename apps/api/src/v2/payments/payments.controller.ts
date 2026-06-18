@@ -2,7 +2,7 @@ import { Controller, Body, Post } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { PaymentsService } from "./payments.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2/types";
+import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 @ApiTags("Payments")
 @Controller("payments")

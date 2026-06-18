@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { V3CommonModule } from "../../common/v3-common.module";
 import { PrismaModule } from "../../../prisma/prisma.module";
@@ -17,7 +16,6 @@ import { DocumentModule } from "@/common/documents/document.module";
 
 @Module({
   imports: [
-    forwardRef(() => V3AuthModule),
     V3CommonModule,
     PrismaModule,
     DocumentModule,

@@ -121,8 +121,9 @@ export class WorkflowExecutionEngine {
         data: { status: "HALTED" },
       });
 
-      const { workflowQueue } =
-        await import("../../infrastructure/queues/workflow.queue");
+      const { workflowQueue } = await import(
+        "../../infrastructure/queues/workflow.queue-definition"
+      );
       await workflowQueue.add(
         "resume-workflow",
         { instanceId },

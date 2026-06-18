@@ -20,7 +20,7 @@ const { mockDb } = vi.hoisted(() => ({
 }));
 
 // Mock @repo/shared/api/v2/types
-vi.mock("@repo/shared/api/v2/types", () => ({
+vi.mock("@repo/shared/api/v2/types/context", () => ({
   V2ApiContext: {},
 }));
 
@@ -33,7 +33,7 @@ import { CatalogService } from "../catalog.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../../redis/redis.service";
 import { SupplierService } from "@repo/suppliers/server";
-import { V2ApiContext } from "@repo/shared/api/v2/types";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 describe("CatalogService", () => {
   let service: CatalogService;

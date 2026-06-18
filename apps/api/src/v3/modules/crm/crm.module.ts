@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { CrmController } from "./interfaces/http/crm.controller";
@@ -12,7 +11,6 @@ import { CrmSyncProcessor } from "./infrastructure/workers/crm-sync.processor";
 
 @Module({
   imports: [
-    forwardRef(() => V3AuthModule),
     BullModule.registerQueue({
       name: "crm-sync",
     }),

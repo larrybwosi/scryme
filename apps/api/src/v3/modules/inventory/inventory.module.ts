@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { SuppliersModule } from "@repo/suppliers/server";
 import { InventoryController } from "./interfaces/http/inventory.controller";
@@ -31,7 +30,6 @@ import { RedisModule } from "../../../redis/redis.module";
 
 @Global()
 @Module({
-  imports: [forwardRef(() => V3AuthModule)],
   controllers: [InventoryController],
   providers: [
     InventoryResolver,

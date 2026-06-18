@@ -3,16 +3,10 @@ import { UploadController } from "../upload.controller";
 import { BadRequestException } from "@nestjs/common";
 
 // Mock storageService
-vi.mock("@repo/shared/storage", () => ({
-  SanityStorageProvider: vi
-    .fn()
-    .mockImplementation(() => ({
-      upload: vi.fn().mockResolvedValue({ url: "http://test.com" }),
-    })),
+vi.mock("@repo/shared/storage/service", () => ({
   storageService: {
     upload: vi.fn().mockResolvedValue({ url: "http://example.com/test.png" }),
   },
-  AllowPublic: () => () => {},
 }));
 
 describe("UploadController", () => {

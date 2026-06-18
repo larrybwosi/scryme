@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Query, Param } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { CustomersService } from "./customers.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2/types";
+import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 @ApiTags("Customers")
 @Controller("customers")

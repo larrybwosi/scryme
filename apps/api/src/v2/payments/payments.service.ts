@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { MpesaService } from "@repo/mpesa/server";
-import { V2ApiContext } from "@repo/shared/api/v2/types";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 @Injectable()
 export class PaymentsService {
