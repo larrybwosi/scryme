@@ -63,7 +63,7 @@ const locationSchema = z.object({
 
 type LocationFormValues = z.infer<typeof locationSchema>;
 
-interface LocationSheetProps {
+interface LocationSheetProps extends React.ComponentPropsWithoutRef<typeof SheetTrigger> {
   children?: React.ReactNode;
   location?: any;
   locations?: any[];
@@ -77,6 +77,7 @@ export function LocationSheet({
   locations = [],
   members = [],
   isEdit = false,
+  ...props
 }: LocationSheetProps) {
   const [open, setOpen] = useState(false);
 
@@ -141,7 +142,9 @@ export function LocationSheet({
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+      <SheetTrigger asChild {...props}>
+        {children}
+      </SheetTrigger>
       <SheetContent className="sm:max-w-xl flex flex-col h-full p-0">
         <SheetHeader className="p-6 border-b">
           <SheetTitle>{location ? "Edit Location" : "Add Location"}</SheetTitle>

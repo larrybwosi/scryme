@@ -9,6 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { ZoneDialog } from "./zone-dialog";
 import { deleteZone } from "../../app/actions/locations";
 import { toast } from "sonner";
@@ -80,11 +85,19 @@ export function ZoneList({ locationId, zones }: ZoneListProps) {
                   </div>
                 </div>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical size={16} />
-                    </Button>
-                  </DropdownMenuTrigger>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${zone.name}`}>
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Actions</TooltipContent>
+                  </Tooltip>
                   <DropdownMenuContent align="end">
                     <ZoneDialog locationId={locationId} zone={zone}>
                       <DropdownMenuItem onSelect={e => e.preventDefault()}>

@@ -43,7 +43,7 @@ const unitSchema = z.object({
 
 type UnitFormValues = z.infer<typeof unitSchema>;
 
-interface UnitDialogProps {
+interface UnitDialogProps extends React.ComponentPropsWithoutRef<typeof DialogTrigger> {
   children?: React.ReactNode;
   locationId: string;
   zones?: any[];
@@ -55,7 +55,16 @@ export function UnitDialog({
   locationId,
   zones = [],
   unit,
+  ...props
 }: UnitDialogProps) {
+  // If we receive button-like props (variant, size), it means we are being used directly as a trigger
+  // In that case, we should render a Button
+  const trigger = (props as any).variant ? (
+    <Button {...(props as any)}>{children}</Button>
+  ) : (
+    children
+  );
+
   const [open, setOpen] = useState(false);
 
   const form = useForm<UnitFormValues>({
@@ -93,7 +102,9 @@ export function UnitDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild {...props}>
+        {trigger}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
