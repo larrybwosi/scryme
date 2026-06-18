@@ -3,6 +3,7 @@ import { getPriceList, getProductsForPricing, getUniqueCustomerTags } from "../.
 import { getCategories } from "../../../actions/inventory";
 import { PriceListItemTable } from "../../../../components/inventory/pricelist-item-table";
 import { PricingRuleTable } from "../../../../components/inventory/pricing-rule-table";
+import { PriceListCustomerTable } from "../../../../components/inventory/pricelist-customer-table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Plus, Globe, Tag, Calendar, ChevronLeft, Settings } from "lucide-react";
 import Link from "next/link";
@@ -139,12 +140,16 @@ export default async function PriceListDetailPage({
         <TabsList className="bg-white border mb-4">
           <TabsTrigger value="items">Price List Items ({priceList.items.length})</TabsTrigger>
           <TabsTrigger value="rules">Pricing Rules ({priceList.rules.length})</TabsTrigger>
+          <TabsTrigger value="customers">Customers ({priceList.customers.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="items" className="mt-0">
           <PriceListItemTable priceListId={priceList.id} items={priceList.items} />
         </TabsContent>
         <TabsContent value="rules" className="mt-0">
           <PricingRuleTable priceListId={priceList.id} rules={priceList.rules} />
+        </TabsContent>
+        <TabsContent value="customers" className="mt-0">
+          <PriceListCustomerTable priceListId={priceList.id} customers={priceList.customers} />
         </TabsContent>
       </Tabs>
     </div>
