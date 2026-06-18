@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { OrdersService } from "../orders.service";
 import { PrismaService } from "@/prisma/prisma.service";
-import { V2ApiContext } from "@repo/shared/api/v2/types";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { BadRequestException } from "@nestjs/common";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 

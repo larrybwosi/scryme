@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { DevicesService } from "./devices.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types";
+import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 @ApiTags("Devices")
 @Controller("devices")

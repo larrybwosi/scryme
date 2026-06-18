@@ -10,7 +10,8 @@ import { RedisService } from "../redis/redis.service";
 import { ZitadelCustomerService } from "../zitadel/zitadel-customer.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { V2ApiContext, ROLE_PERMISSIONS } from "@repo/shared/api/v2/types";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { ROLE_PERMISSIONS } from "@repo/shared/api/v2/types/permissions";
 import {
   validateDeviceKey,
   verifyMemberToken,
