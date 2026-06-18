@@ -44,6 +44,7 @@ describe("UpdateCustomerUseCase", () => {
     expect(prisma.client.customer.update).toHaveBeenCalledWith({
       where: { id: custId },
       data: expect.objectContaining({ name: "John Updated" }),
+      select: expect.any(Object),
     });
   });
 });

@@ -20,6 +20,8 @@ export class UpdateCustomerUseCase {
 
     const customer = await this.prisma.client.customer.findFirst({
       where: { id: customerId, organizationId },
+      // ⚡ Bolt Optimization: Use targeted select for verification to reduce database payload.
+      select: { id: true },
     });
 
     if (!customer) {
@@ -34,6 +36,17 @@ export class UpdateCustomerUseCase {
         phone: dto.phone,
         pinnedLocation: dto.location ? { address: dto.location } : undefined,
         deliveryNotes: dto.metadata ? JSON.stringify(dto.metadata) : undefined,
+      },
+      // ⚡ Bolt Optimization: Use targeted select for the updated record
+      // to reduce database payload and serialization overhead.
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
