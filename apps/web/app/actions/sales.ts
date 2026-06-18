@@ -409,6 +409,8 @@ export async function addAttachmentToPayment(
     mimeType: string;
     sizeBytes?: number;
     description?: string;
+    shortCode?: string;
+    shortUrl?: string;
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
@@ -695,19 +697,47 @@ export async function uploadFileAction(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
-   const { storageService } = await import("@repo/shared/storage/service");
+  const { storageService } = await import("@repo/shared/storage/service");
+  const { generateShortCode } = await import("@repo/shared/utils");
+  const { env } = await import("@repo/env");
+  const { v7: uuidv7 } = await import("uuid");
+
+  const fileExtension =
+    file.name
+      .split(".")
+      .pop()
+      ?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
+  const fileName = `${uuidv7()}.${fileExtension}`;
+
   const buffer = Buffer.from(await file.arrayBuffer());
-  const result = await storageService.upload(
-    buffer,
-    file.name,
-    file.type,
-  );
+  const result = await storageService.upload(buffer, fileName, file.type, {
+    organizationId: auth.organizationId!,
+  });
+
+  const shortCode = generateShortCode();
+  const shortUrl = `${env.NEXT_PUBLIC_API_URL}/s/${shortCode}`;
+
+  const attachment = await db.attachment.create({
+    data: {
+      id: fileName,
+      fileName: file.name,
+      fileUrl: result.url,
+      shortCode,
+      shortUrl,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
+    },
+  });
 
   return {
-    fileName: file.name,
-    fileUrl: result.url,
-    mimeType: file.type,
-    sizeBytes: file.size,
+    id: attachment.id,
+    fileName: attachment.fileName || "file",
+    fileUrl: attachment.fileUrl || "",
+    shortUrl: attachment.shortUrl || "",
+    mimeType: attachment.mimeType,
+    sizeBytes: attachment.sizeBytes || 0,
   };
 }
 
@@ -719,6 +749,8 @@ export async function uploadFulfillmentAttachment(
     mimeType: string;
     sizeBytes?: number;
     description?: string;
+    shortCode?: string;
+    shortUrl?: string;
   }
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);

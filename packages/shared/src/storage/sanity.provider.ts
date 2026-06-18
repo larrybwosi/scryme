@@ -50,4 +50,12 @@ export class SanityStorageProvider implements StorageProvider {
     const client = this.getClient();
     await client.delete(id);
   }
+
+  async getSignedUrl(id: string): Promise<string> {
+    // Sanity assets are generally public via their CDN if you have the ID/URL.
+    // For "signed" URLs, Sanity has a different mechanism, but for this provider
+    // we'll return a proxy-able URL or the original URL.
+    // Since our goal is to proxy everything, we might just return the ID or a placeholder.
+    return id;
+  }
 }
