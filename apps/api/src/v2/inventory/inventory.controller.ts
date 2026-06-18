@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { InventoryService } from "./inventory.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
 import { RequirePermission } from "../../common/decorators/auth.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2/types";
+import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { DocumentService } from "../../common/documents/document.service";
 import { PurchaseOrderUseCase } from "../../v3/modules/stocking/application/use-cases/purchase-order.use-case";
 import { StockTransferUseCase } from "../../v3/modules/stocking/application/use-cases/stock-transfer.use-case";

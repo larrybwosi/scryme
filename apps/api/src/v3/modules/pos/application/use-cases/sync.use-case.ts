@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { type V3ApiContext } from "@repo/shared/api/v2/types";
+import { type V3ApiContext } from "@repo/shared/api/v2/types/context";
 import {
   getPosProducts,
   getPosProductsDelta,

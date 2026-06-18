@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { OrderController } from "./interfaces/http/order.controller";
 import { OrderResolver } from "./interfaces/graphql/order.resolver";
@@ -18,7 +17,6 @@ import { FinanceModule } from "../finance/finance.module";
 
 @Module({
   imports: [
-    forwardRef(() => V3AuthModule),
     PrismaModule,
     RedisModule,
     WebhooksModule,

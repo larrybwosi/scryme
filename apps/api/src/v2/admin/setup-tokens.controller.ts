@@ -11,7 +11,7 @@ import {
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { PrismaService } from "@/prisma/prisma.service";
 import { v2Context } from "@/common/decorators/v2-context.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2/types";
+import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { Permissions } from "@/common/decorators/auth.decorator";
 import {
   createDeviceSetupTokenCore as createDeviceSetupToken,

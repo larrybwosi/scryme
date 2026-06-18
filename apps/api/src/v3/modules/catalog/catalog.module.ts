@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, Global } from "@nestjs/common";
 import { ProductController } from "./interfaces/http/product.controller";
 import { ProductResolver } from "./interfaces/graphql/product.resolver";
@@ -15,7 +14,7 @@ import { InventoryModule } from "../inventory/inventory.module";
 
 @Global()
 @Module({
-  imports: [V3AuthModule, PrismaModule, RedisModule, InventoryModule],
+  imports: [PrismaModule, RedisModule, InventoryModule],
   controllers: [ProductController],
   providers: [
     ProductResolver,

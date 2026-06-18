@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../../../prisma/prisma.module";
 import { StockingController } from "./interfaces/http/stocking.controller";
@@ -15,7 +14,6 @@ import { DocumentModule } from "../../../common/documents/document.module";
 
 @Module({
   imports: [
-    forwardRef(() => V3AuthModule),
     PrismaModule,
     InventoryModule,
     CatalogModule,

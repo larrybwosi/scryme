@@ -5,7 +5,7 @@ import {
   Res,
   BadRequestException,
 } from "@nestjs/common";
-import { storageService } from "@repo/shared/storage";
+import { storageService } from "@repo/shared/storage/service";
 import { v7 as uuidv7 } from "uuid";
 
 @Controller("upload")

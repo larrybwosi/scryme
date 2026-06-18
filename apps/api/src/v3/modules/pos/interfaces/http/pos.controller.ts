@@ -13,10 +13,10 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from "@nestjs/swagger";
-import { V3AuthService } from "../../../auth/infrastructure/services/v3-auth.service";
+import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
-import { type V3ApiContext } from "@repo/shared/api/v2/types";
+import { type V3ApiContext } from "@repo/shared/api/v2/types/context";
 import { ProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
@@ -38,7 +38,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 @UseInterceptors(StandardResponseInterceptor)
 export class PosController {
   constructor(
-    private readonly authService: V3AuthService,
+    private readonly authCore: V3AuthCoreService,
     private readonly processSaleUseCase: ProcessSaleUseCase,
     private readonly syncUseCase: SyncUseCase,
     private readonly getTransactionsUseCase: GetTransactionsUseCase,
@@ -61,7 +61,7 @@ export class PosController {
     description: "Invalid token",
   })
   async provision(@Body() body: ProvisionDeviceDto) {
-    return this.authService.provisionDevice(body.token);
+    return this.authCore.provisionDevice(body.token);
   }
 
   @Post("login")
@@ -80,7 +80,7 @@ export class PosController {
     description: "Invalid credentials",
   })
   async login(@Body() body: PosLoginDto) {
-    const accessToken = await this.authService.loginMember(
+    const accessToken = await this.authCore.loginMember(
       body.clientId,
       body.pin,
     );
