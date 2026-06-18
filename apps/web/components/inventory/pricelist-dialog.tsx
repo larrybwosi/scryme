@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@repo/ui/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@repo/ui/components/ui/sheet";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
@@ -99,13 +99,16 @@ export function PriceListDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-[500px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>
             {priceList ? "Edit Price List" : "Create Price List"}
-          </DialogTitle>
-        </DialogHeader>
+          </SheetTitle>
+          <SheetDescription>
+            Configure the basic settings, validity, and customer targeting for this price list.
+          </SheetDescription>
+        </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -240,7 +243,7 @@ export function PriceListDialog({
             )}
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-3 pt-6">
             <Button
               type="button"
               variant="outline"
@@ -250,9 +253,9 @@ export function PriceListDialog({
             <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : priceList ? "Update" : "Create"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
