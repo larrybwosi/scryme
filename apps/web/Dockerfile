@@ -38,7 +38,6 @@ RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scrip
 
 # Copy full source code and turbo configuration
 COPY --from=pruner /app/out/full/ .
-COPY turbo.json turbo.json
 
 # Build-time environment variables
 ARG NEXT_PUBLIC_API_URL
