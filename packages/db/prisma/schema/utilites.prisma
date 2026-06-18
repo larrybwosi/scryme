@@ -2,6 +2,8 @@ model Attachment {
   id          String   @id @default(cuid())
   fileName    String?  // Optional, as a note won't have a file name
   fileUrl     String?  // Optional, as a note won't have a URL
+  shortCode   String?  @unique
+  shortUrl    String?
   mimeType    String   // e.g., "image/jpeg", "application/pdf", "text/markdown"
   sizeBytes   Int?
   description String?
