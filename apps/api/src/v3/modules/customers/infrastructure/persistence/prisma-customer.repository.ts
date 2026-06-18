@@ -19,6 +19,17 @@ export class PrismaCustomerRepository implements ICustomerRepository {
       take: pagination?.limit || 10,
       skip: pagination?.offset || 0,
       orderBy: { createdAt: "desc" },
+      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // of large or sensitive fields (like deliveryNotes, tags, pinnedLocation, etc.) in lists.
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return customers.map(
@@ -38,6 +49,17 @@ export class PrismaCustomerRepository implements ICustomerRepository {
   async findById(id: string): Promise<Customer | null> {
     const c = await this.prisma.client.customer.findUnique({
       where: { id },
+      // ⚡ Bolt Optimization: Targeted select for scalar fields
+      // to reduce database payload and serialization overhead.
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!c) return null;
@@ -67,6 +89,16 @@ export class PrismaCustomerRepository implements ICustomerRepository {
         email: customer.email,
         phone: customer.phone,
         organizationId: customer.organizationId,
+      },
+      // ⚡ Bolt Optimization: Targeted select for the returned record
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
