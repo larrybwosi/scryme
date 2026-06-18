@@ -17,10 +17,27 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Switch } from "@repo/ui/components/ui/switch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, Save, Hash, Palette, ShieldCheck, FileText, Plus, Trash2, Upload, X } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  Hash,
+  Palette,
+  ShieldCheck,
+  FileText,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { updateInvoiceConfig } from "../../actions/invoice-config";
 import { uploadFileAction } from "../../actions/sales";
 import Image from "next/image";
@@ -48,10 +65,14 @@ const formSchema = z.object({
   showTerms: z.boolean(),
   showNotes: z.boolean(),
   showLineNumbers: z.boolean(),
-  customFields: z.array(z.object({
-    label: z.string(),
-    value: z.string(),
-  })).optional(),
+  customFields: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -92,7 +113,9 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
       showTerms: initialConfig?.showTerms ?? true,
       showNotes: initialConfig?.showNotes ?? true,
       showLineNumbers: initialConfig?.showLineNumbers ?? false,
-      customFields: Array.isArray(initialConfig?.customFields) ? initialConfig.customFields : [],
+      customFields: Array.isArray(initialConfig?.customFields)
+        ? initialConfig.customFields
+        : [],
     },
   });
 
@@ -148,7 +171,8 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               <CardTitle>Branding & Identity</CardTitle>
             </div>
             <CardDescription>
-              Customize how your business appears on documents. These override global settings.
+              Customize how your business appears on documents. These override
+              global settings.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
@@ -159,7 +183,10 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                   <FormItem>
                     <FormLabel>Company Name Override</FormLabel>
                     <FormControl>
-                      <Input placeholder="Leave blank to use default" {...field} />
+                      <Input
+                        placeholder="Leave blank to use default"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -172,7 +199,11 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                     <FormLabel>Brand Primary Color</FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
-                        <Input type="color" className="w-12 p-1 h-9" {...field} />
+                        <Input
+                          type="color"
+                          className="w-12 p-1 h-9"
+                          {...field}
+                        />
                         <Input {...field} placeholder="#000000" />
                       </div>
                     </FormControl>
@@ -191,31 +222,31 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                       <div className="space-y-4">
                         {field.value ? (
                           <div className="relative w-32 h-32 border rounded-lg overflow-hidden group">
-                            <Image
+                            {/*<Image
                               src={field.value}
                               alt="Invoice Logo"
                               fill
                               className="object-contain p-2"
-                            />
+                            />*/}
                             <button
                               type="button"
                               onClick={() => field.onChange("")}
-                              className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
+                              className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                               <X className="w-3 h-3" />
                             </button>
                           </div>
                         ) : (
                           <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                          >
+                            className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors">
                             {isUploading ? (
                               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                             ) : (
                               <>
                                 <Upload className="w-6 h-6 text-muted-foreground" />
-                                <span className="text-[10px] text-muted-foreground font-medium">Upload Logo</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">
+                                  Upload Logo
+                                </span>
                               </>
                             )}
                           </div>
@@ -230,7 +261,9 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                         />
                       </div>
                     </FormControl>
-                    <FormDescription>Custom logo specifically for invoices (Max 10MB)</FormDescription>
+                    <FormDescription>
+                      Custom logo specifically for invoices (Max 10MB)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -287,7 +320,10 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 <FormItem>
                   <FormLabel>Address Override</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Full billing address..." {...field} />
+                    <Textarea
+                      placeholder="Full billing address..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -344,10 +380,14 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        onChange={e =>
+                          field.onChange(e.target.valueAsNumber || 0)
+                        }
                       />
                     </FormControl>
-                    <FormDescription>The next invoice will use this number</FormDescription>
+                    <FormDescription>
+                      The next invoice will use this number
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -361,10 +401,14 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                        onChange={e =>
+                          field.onChange(e.target.valueAsNumber || 0)
+                        }
                       />
                     </FormControl>
-                    <FormDescription>e.g. 5 becomes 00005 if padding is 5</FormDescription>
+                    <FormDescription>
+                      e.g. 5 becomes 00005 if padding is 5
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -391,9 +435,14 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 <FormItem>
                   <FormLabel>Footer Text</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Registered in England & Wales No. 123456" {...field} />
+                    <Textarea
+                      placeholder="Registered in England & Wales No. 123456"
+                      {...field}
+                    />
                   </FormControl>
-                  <FormDescription>Appears at the very bottom of every page</FormDescription>
+                  <FormDescription>
+                    Appears at the very bottom of every page
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -405,7 +454,10 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                   <FormItem>
                     <FormLabel>Default Notes</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Thank you for your business!" {...field} />
+                      <Textarea
+                        placeholder="Thank you for your business!"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -417,7 +469,10 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                   <FormItem>
                     <FormLabel>Terms & Conditions</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Please pay within 30 days..." {...field} />
+                      <Textarea
+                        placeholder="Please pay within 30 days..."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -470,8 +525,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                   variant="ghost"
                   size="icon"
                   className="text-destructive"
-                  onClick={() => remove(index)}
-                >
+                  onClick={() => remove(index)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -481,8 +535,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               variant="outline"
               size="sm"
               onClick={() => append({ label: "", value: "" })}
-              className="mt-2"
-            >
+              className="mt-2">
               <Plus className="w-4 h-4 mr-2" /> Add Custom Field
             </Button>
           </CardContent>
@@ -505,7 +558,9 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                   <div className="space-y-0.5">
-                    <FormLabel>Show &quot;Powered by Scryme&quot; branding</FormLabel>
+                    <FormLabel>
+                      Show &quot;Powered by Scryme&quot; branding
+                    </FormLabel>
                     <FormDescription>
                       Remove Scryme branding from the bottom of your documents.
                     </FormDescription>
@@ -546,7 +601,9 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                   <FormControl>
                     <Input placeholder="DRAFT, CONFIDENTIAL, etc." {...field} />
                   </FormControl>
-                  <FormDescription>Displays diagonally across every page</FormDescription>
+                  <FormDescription>
+                    Displays diagonally across every page
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -559,9 +616,14 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 name="showTaxBreakdown"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <FormLabel className="text-xs">Show Tax Breakdown</FormLabel>
+                    <FormLabel className="text-xs">
+                      Show Tax Breakdown
+                    </FormLabel>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -572,7 +634,10 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <FormLabel className="text-xs">Show Line Numbers</FormLabel>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}

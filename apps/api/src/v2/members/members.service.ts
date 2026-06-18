@@ -8,7 +8,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { createMemberToken } from "@repo/shared/api/v2/services/auth";
 import { MemberRole, Status } from "@repo/db";
-import * as bcrypt from "bcryptjs";
+import * as argon2 from "argon2";
 
 @Injectable()
 export class MembersService {
@@ -72,7 +72,7 @@ export class MembersService {
       });
     }
 
-    const pinHash = pin ? await bcrypt.hash(pin, 10) : undefined;
+    const pinHash = pin ? await argon2.hash(pin, 10) : undefined;
 
     return this.prisma.client.member.create({
       data: {
@@ -91,7 +91,7 @@ export class MembersService {
     const { pin, ...updateData } = data;
 
     if (pin) {
-      updateData.pinHash = await bcrypt.hash(pin, 10);
+      updateData.pinHash = await argon2.hash(pin, 10);
     }
 
     return this.prisma.client.member.update({
@@ -119,12 +119,13 @@ export class MembersService {
 
   async changeMemberPin(ctx: V2ApiContext, id: string, pin: string) {
     const { organizationId } = ctx;
-    const pinHash = await bcrypt.hash(pin, 10);
+    const pinHash = await argon2.hash(pin, 10);
     return this.prisma.client.member.update({
       where: { id, organizationId },
       data: { pinHash },
     });
   }
+
 
   async login(
     ctx: V2ApiContext,
@@ -162,7 +163,7 @@ export class MembersService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    const isPinValid = await bcrypt.compare(pin, member.pinHash);
+    const isPinValid = await argon2.verify(member.pinHash, pin);
     if (!isPinValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
@@ -175,29 +176,32 @@ export class MembersService {
     let attendanceLogId = activeLog?.id;
 
     if (!activeLog) {
-      await this.prisma.client.$transaction(async (tx) => {
-        const log = await tx.attendanceLog.create({
-          data: {
-            organizationId,
-            memberId: member.id,
-            checkInTime: new Date(),
-            checkInLocationId: locationId,
-            notes: "Checked in via terminal login",
-          },
-        });
+      await this.prisma.client.$transaction(
+        async tx => {
+          const log = await tx.attendanceLog.create({
+            data: {
+              organizationId,
+              memberId: member.id,
+              checkInTime: new Date(),
+              checkInLocationId: locationId,
+              notes: "Checked in via terminal login",
+            },
+          });
 
-        await tx.member.update({
-          where: { id: member.id },
-          data: {
-            isCheckedIn: true,
-            lastCheckInTime: new Date(),
-            currentCheckInLocationId: locationId,
-            currentAttendanceLogId: log.id,
-            status: Status.ONLINE,
-          },
-        });
-        attendanceLogId = log.id;
-      });
+          await tx.member.update({
+            where: { id: member.id },
+            data: {
+              isCheckedIn: true,
+              lastCheckInTime: new Date(),
+              currentCheckInLocationId: locationId,
+              currentAttendanceLogId: log.id,
+              status: Status.ONLINE,
+            },
+          });
+          attendanceLogId = log.id;
+        },
+        { timeout: 10000 },
+      );
     }
 
     const token = await createMemberToken(
@@ -221,4 +225,6 @@ export class MembersService {
       restoredSession: !!activeLog,
     };
   }
+}
+
 }
