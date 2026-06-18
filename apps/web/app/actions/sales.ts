@@ -693,29 +693,28 @@ export async function approveFulfillment(id: string) {
 }
 
 export async function uploadFileAction(formData: FormData) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const authResult = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth } = authResult;
+
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
-  const { storageService } = await import("@repo/shared/storage/service");
-  const { generateShortCode } = await import("@repo/shared/utils");
-  const { env } = await import("@repo/env");
+  const { storageService, StorageCoreService } = await import(
+    "@repo/shared/storage"
+  );
   const { v7: uuidv7 } = await import("uuid");
 
-  const fileExtension =
-    file.name
-      .split(".")
-      .pop()
-      ?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
-  const fileName = `${uuidv7()}.${fileExtension}`;
+  const fileName = StorageCoreService.generateStorageFileName(
+    file.name,
+    uuidv7(),
+  );
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const result = await storageService.upload(buffer, fileName, file.type, {
     organizationId: auth.organizationId!,
   });
 
-  const shortCode = generateShortCode();
-  const shortUrl = `${env.NEXT_PUBLIC_API_URL}/s/${shortCode}`;
+  const { shortCode, shortUrl } = StorageCoreService.generateShortUrlInfo();
 
   const attachment = await db.attachment.create({
     data: {

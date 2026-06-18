@@ -68,11 +68,21 @@ export class DocumentService {
     const dnFileName = `delivery-note-${transaction.number}.pdf`;
 
     const [invoiceUpload, dnUpload] = await Promise.all([
-      storageService.upload(invoiceBuffer, invoiceFileName, "application/pdf"),
-      storageService.upload(dnBuffer, dnFileName, "application/pdf"),
+      storageService.upload(invoiceBuffer, invoiceFileName, "application/pdf", {
+        organizationId,
+      }),
+      storageService.upload(dnBuffer, dnFileName, "application/pdf", {
+        organizationId,
+      }),
     ]);
 
     // 6. Create Attachments
+    const { StorageCoreService } = await import("../../storage");
+    const { shortCode: invoiceShortCode, shortUrl: invoiceShortUrl } =
+      StorageCoreService.generateShortUrlInfo();
+    const { shortCode: dnShortCode, shortUrl: dnShortUrl } =
+      StorageCoreService.generateShortUrlInfo();
+
     await db.attachment.createMany({
       data: [
         {
@@ -81,7 +91,9 @@ export class DocumentService {
           transactionId,
           fulfillmentId,
           fileName: invoiceFileName,
-          fileUrl: invoiceUpload.url || (invoiceUpload as any).publicUrl,
+          fileUrl: invoiceUpload.url,
+          shortCode: invoiceShortCode,
+          shortUrl: invoiceShortUrl,
           mimeType: "application/pdf",
           description: "Auto-generated Invoice",
           sizeBytes: invoiceBuffer.length,
@@ -92,7 +104,9 @@ export class DocumentService {
           transactionId,
           fulfillmentId,
           fileName: dnFileName,
-          fileUrl: dnUpload.url || (dnUpload as any).publicUrl,
+          fileUrl: dnUpload.url,
+          shortCode: dnShortCode,
+          shortUrl: dnShortUrl,
           mimeType: "application/pdf",
           description: "Auto-generated Delivery Note",
           sizeBytes: dnBuffer.length,
