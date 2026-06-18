@@ -72,7 +72,7 @@ export class MembersService {
       });
     }
 
-    const pinHash = pin ? await argon2.hash(pin, 10) : undefined;
+    const pinHash = pin ? await argon2.hash(pin) : undefined;
 
     return this.prisma.client.member.create({
       data: {
@@ -91,7 +91,7 @@ export class MembersService {
     const { pin, ...updateData } = data;
 
     if (pin) {
-      updateData.pinHash = await argon2.hash(pin, 10);
+      updateData.pinHash = await argon2.hash(pin);
     }
 
     return this.prisma.client.member.update({
@@ -119,13 +119,12 @@ export class MembersService {
 
   async changeMemberPin(ctx: V2ApiContext, id: string, pin: string) {
     const { organizationId } = ctx;
-    const pinHash = await argon2.hash(pin, 10);
+    const pinHash = await argon2.hash(pin);
     return this.prisma.client.member.update({
       where: { id, organizationId },
       data: { pinHash },
     });
   }
-
 
   async login(
     ctx: V2ApiContext,
@@ -225,6 +224,4 @@ export class MembersService {
       restoredSession: !!activeLog,
     };
   }
-}
-
 }
