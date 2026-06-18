@@ -30,10 +30,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       code = (exception as any).code;
       details = (exception as any).details;
     } else if (exception instanceof Error) {
-      // In production, we don't want to leak internal error messages
-      message = process.env.NODE_ENV === 'production'
-        ? 'Internal server error'
-        : exception.message;
+      message = exception.message;
+    }
+
+    // Security: In production, mask internal server errors (500+) to prevent information leakage
+    if (process.env.NODE_ENV === 'production' && status >= 500) {
+      message = 'Internal server error';
+      code = 'INTERNAL_SERVER_ERROR';
+      details = undefined;
     }
 
     response.status(status).send({
