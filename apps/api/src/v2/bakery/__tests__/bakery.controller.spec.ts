@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { BakeryController } from "../bakery.controller";
 import { BakeryService } from "../bakery.service";
 import { PrismaService } from "@/prisma/prisma.service";
-import { V2ApiContext } from "@repo/shared/api/v2/types";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 describe("BakeryController", () => {
   let controller: BakeryController;
