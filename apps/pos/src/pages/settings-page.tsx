@@ -166,6 +166,7 @@ export default function SettingsPage() {
   const [tillNumber, setTillNumber] = useState(settings?.tillNumber || '');
   const [cashDrawerPort, setCashDrawerPort] = useState(settings?.cashDrawerPort || '');
   const [enableAutoStart, setEnableAutoStart] = useState(settings?.enableAutoStart ?? false);
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(settings?.autoPrintConfig?.enabled ?? false);
   const [enableBarcodeScanner, setEnableBarcodeScanner] = useState(settings?.enableBarcodeScanner ?? true);
 
   // Multi-user / Shift Settings
@@ -232,6 +233,10 @@ export default function SettingsPage() {
       enableCustomerDisplay: settings.customerDisplayConfig?.enabled ?? true,
       cashDrawerPort,
       enableAutoStart,
+      autoPrintConfig: {
+        ...settings.autoPrintConfig,
+        enabled: autoPrintEnabled,
+      },
       enableBarcodeScanner,
       enableKdsSystem,
       shareCartBetweenUsers,
@@ -364,19 +369,21 @@ export default function SettingsPage() {
           <TabsContent value="general">
             <GeneralSettings
               businessName={businessName}
-            setBusinessName={setBusinessName}
-            businessType={businessType}
-            handleBusinessTypeChange={handleBusinessTypeChange}
-            businessConfigs={businessConfigs}
-            currentConfig={currentConfig}
-            currency={currency}
-            setCurrency={setCurrency}
-            taxRate={taxRate}
-            setTaxRate={setTaxRate}
-            allowSaveUnpaidOrders={allowSaveUnpaidOrders}
-            setAllowSaveUnpaidOrders={setAllowSaveUnpaidOrders}
-            enableAutoStart={enableAutoStart}
+              setBusinessName={setBusinessName}
+              businessType={businessType}
+              handleBusinessTypeChange={handleBusinessTypeChange}
+              businessConfigs={businessConfigs}
+              currentConfig={currentConfig}
+              currency={currency}
+              setCurrency={setCurrency}
+              taxRate={taxRate}
+              setTaxRate={setTaxRate}
+              allowSaveUnpaidOrders={allowSaveUnpaidOrders}
+              setAllowSaveUnpaidOrders={setAllowSaveUnpaidOrders}
+              enableAutoStart={enableAutoStart}
               setEnableAutoStart={setEnableAutoStart}
+              autoPrintEnabled={autoPrintEnabled}
+              setAutoPrintEnabled={setAutoPrintEnabled}
             />
 
             {import.meta.env.MODE === 'standalone' && (
