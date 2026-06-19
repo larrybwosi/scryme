@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   AlertCircle,
   Building2,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
@@ -35,6 +36,21 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
@@ -47,6 +63,8 @@ export function ContactsView() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
   // Use SWR for data fetching
   const {
@@ -93,27 +111,24 @@ export function ContactsView() {
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
   const handleDelete = async (id: string) => {
-    if (
-      typeof window !== "undefined" &&
-      window.confirm("Are you sure you want to delete this contact?")
-    ) {
-      try {
-        setDeletingId(id);
-        const updatedContacts = contacts.filter((c: any) => c.id !== id);
-        mutate(updatedContacts, false);
-        await deleteCustomer(id);
-        toast.success("Contact deleted successfully");
-        mutate();
-        if (paged.length === 1 && page > 1) {
-          setPage(page - 1);
-        }
-      } catch (error) {
-        mutate();
-        toast.error("Failed to delete contact");
-        console.error("Failed to delete contact", error);
-      } finally {
-        setDeletingId(null);
+    try {
+      setDeletingId(id);
+      const updatedContacts = contacts.filter((c: any) => c.id !== id);
+      mutate(updatedContacts, false);
+      await deleteCustomer(id);
+      toast.success("Contact deleted successfully");
+      mutate();
+      if (paged.length === 1 && page > 1) {
+        setPage(page - 1);
       }
+    } catch (error) {
+      mutate();
+      toast.error("Failed to delete contact");
+      console.error("Failed to delete contact", error);
+    } finally {
+      setDeletingId(null);
+      setIsDeleteDialogOpen(false);
+      setContactToDelete(null);
     }
   };
 
@@ -284,13 +299,29 @@ export function ContactsView() {
                             </SheetContent>
                           </Sheet>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors" disabled={deletingId === contact.id}>
-                                <MoreHorizontal size={14} />
-                              </button>
-                            </DropdownMenuTrigger>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                                    disabled={deletingId === contact.id}
+                                    aria-label="More actions"
+                                  >
+                                    <MoreHorizontal size={14} />
+                                  </button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>More actions</TooltipContent>
+                            </Tooltip>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(contact.id)} disabled={deletingId === contact.id}>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setContactToDelete(contact.id);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                disabled={deletingId === contact.id}
+                              >
                                 {deletingId === contact.id ? "Deleting..." : "Delete"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -309,16 +340,76 @@ export function ContactsView() {
               Showing {startItem}–{endItem} of {filtered.length} contacts
             </p>
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safeCurrentPage === 1} className="w-8 h-8">
-                <ChevronLeft size={14} />
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safeCurrentPage === totalPages} className="w-8 h-8">
-                <ChevronRight size={14} />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={safeCurrentPage === 1}
+                    className="w-8 h-8"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Previous page</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safeCurrentPage === totalPages}
+                    className="w-8 h-8"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Next page</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              contact and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setContactToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              onClick={(e) => {
+                e.preventDefault();
+                if (contactToDelete) {
+                  handleDelete(contactToDelete);
+                }
+              }}
+              disabled={!!deletingId}
+            >
+              {deletingId ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
