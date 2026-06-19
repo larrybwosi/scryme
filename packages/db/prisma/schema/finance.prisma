@@ -686,6 +686,10 @@ model ApprovalDecision {
   comments          String?
   decisionDate      DateTime?
 
+  // -- Scryme Integration --
+  scrymeMessageId   String?
+  scrymeChannelId   String?
+
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 

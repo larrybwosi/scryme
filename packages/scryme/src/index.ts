@@ -20,6 +20,18 @@ export interface ScrymeChatAction {
   value?: string;
 }
 
+export interface ScrymeChatUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface ScrymeChatChannel {
+  id: string;
+  slug: string;
+  type: 'public' | 'private' | 'dm';
+}
+
 export class ScrymeChatApiClient {
   private readonly baseUrl: string;
   private readonly clientId: string;
@@ -66,7 +78,7 @@ export class ScrymeChatApiClient {
   }
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
     path: string,
     data?: any
   ): Promise<T> {
@@ -109,6 +121,28 @@ export class ScrymeChatApiClient {
    */
   async sendMessage(workspaceSlug: string, channelSlug: string, message: ScrymeChatMessage): Promise<any> {
     return this.request('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages`, message);
+  }
+
+  /**
+   * Update an existing message.
+   */
+  async updateMessage(workspaceSlug: string, channelSlug: string, messageId: string, message: ScrymeChatMessage): Promise<any> {
+    return this.request('PATCH', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages/${messageId}`, message);
+  }
+
+  /**
+   * Find a user in the workspace by email.
+   */
+  async findUserByEmail(workspaceSlug: string, email: string): Promise<ScrymeChatUser | null> {
+    const users = await this.request<ScrymeChatUser[]>('GET', `/api/v2/m2m/workspaces/${workspaceSlug}/users?email=${encodeURIComponent(email)}`);
+    return users.length > 0 ? users[0] : null;
+  }
+
+  /**
+   * Get or create a direct message channel with a user.
+   */
+  async getDirectMessageChannel(workspaceSlug: string, userId: string): Promise<ScrymeChatChannel> {
+    return this.request<ScrymeChatChannel>('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/users/${userId}/dm`);
   }
 
   /**
