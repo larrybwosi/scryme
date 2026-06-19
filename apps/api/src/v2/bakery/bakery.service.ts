@@ -780,13 +780,44 @@ export class BakeryService {
   }
 
   // Templates
+  /**
+   * List all production templates.
+   * ⚡ Bolt: Optimized query by pruning deep relations (Member/User) and adding required relations (schedules/assistantBakers).
+   * This reduces payload size significantly while ensuring the frontend has all required data in a single request.
+   */
   async getTemplates(ctx: V2ApiContext) {
     const { organizationId } = ctx;
     return this.prisma.client.template.findMany({
       where: { organizationId },
       include: {
         recipe: true,
-        leadBaker: { include: { member: { include: { user: true } } } },
+        schedules: true,
+        assistantBakers: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
+        leadBaker: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -882,12 +913,30 @@ export class BakeryService {
     });
   }
 
+  /**
+   * List all bakers associated with the organization's bakery settings.
+   * ⚡ Bolt: Optimized query by pruning Member and User relations to only include display fields.
+   */
   async getBakers(ctx: V2ApiContext) {
     const { organizationId } = ctx;
     return this.prisma.client.bakeryBaker.findMany({
       where: { bakerySettings: { organizationId } },
-      include: {
-        member: { include: { user: true } },
+      select: {
+        id: true,
+        bakerySettingsId: true,
+        memberId: true,
+        specialties: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        member: {
+          select: {
+            id: true,
+            user: {
+              select: { id: true, name: true, email: true, image: true },
+            },
+          },
+        },
       },
     });
   }
