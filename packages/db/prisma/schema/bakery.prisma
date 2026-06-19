@@ -299,6 +299,13 @@ model BakerySettings {
   lowStockAlerts         Boolean        @default(true)
   timezone               String         @default("UTC")
 
+  // Scryme Reports
+  scrymeReportEnabled    Boolean        @default(false)
+  scrymeReportDay        Int            @default(1) // 0=Sunday, 1=Monday...
+  scrymeReportTime       String         @default("08:00")
+  scrymeReportSections   Json?          // { "batches": true, "waste": true, "yields": true, "top_recipes": true }
+  scrymeReportChannel    String?        @default("production-reports")
+
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 

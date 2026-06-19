@@ -117,6 +117,22 @@ export class ScrymeChatApiClient {
   }
 
   /**
+   * Create a new channel in a workspace.
+   */
+  async createChannel(
+    workspaceSlug: string,
+    name: string,
+    slug: string,
+    type: 'public' | 'private' = 'public'
+  ): Promise<ScrymeChatChannel> {
+    return this.request<ScrymeChatChannel>('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels`, {
+      name,
+      slug,
+      type,
+    });
+  }
+
+  /**
    * Send a message to a Scryme Chat channel.
    */
   async sendMessage(workspaceSlug: string, channelSlug: string, message: ScrymeChatMessage): Promise<any> {

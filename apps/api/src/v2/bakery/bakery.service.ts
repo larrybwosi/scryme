@@ -56,6 +56,63 @@ export class BakeryService {
       take: 100,
     });
   }
+  async getProductionStats(organizationId: string, startDate: Date, endDate: Date) {
+    const batches = await this.prisma.client.batch.findMany({
+      where: {
+        organizationId,
+        completedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        status: "COMPLETED",
+      },
+      include: {
+        recipe: {
+          include: {
+            systemUnit: true,
+            orgUnit: true,
+          },
+        },
+      },
+    });
+
+    const totalBatches = batches.length;
+    const totalWaste = batches.reduce(
+      (acc, b) => acc + Number(b.wasteQuantity || 0),
+      0,
+    );
+
+    const recipeStats: Record<
+      string,
+      { name: string; quantity: number; unit: string; waste: number }
+    > = {};
+
+    batches.forEach((batch) => {
+      const recipeId = batch.recipeId;
+      if (!recipeStats[recipeId]) {
+        recipeStats[recipeId] = {
+          name: batch.recipe.name,
+          quantity: 0,
+          unit: batch.recipe.systemUnit?.symbol || batch.recipe.orgUnit?.symbol || "",
+          waste: 0,
+        };
+      }
+      recipeStats[recipeId].quantity += Number(batch.actualQuantity || 0);
+      recipeStats[recipeId].waste += Number(batch.wasteQuantity || 0);
+    });
+
+    const topRecipes = Object.values(recipeStats)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
+    return {
+      totalBatches,
+      totalWaste,
+      topRecipes,
+      recipeStats: Object.values(recipeStats),
+    };
+  }
+
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
     const [batches, recipes, bakers] = await Promise.all([
