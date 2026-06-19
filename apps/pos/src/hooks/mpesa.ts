@@ -24,9 +24,12 @@ export const useMpesaSearch = (query: string) => {
     queryKey: ['mpesa-unclaimed', organizationId, query],
     queryFn: async () => {
       if (!organizationId || query.length < 3) return [];
-      const response = await axios.get(`${API_ENDPOINT}/api/v2/payments/mpesa/search-unclaimed/${organizationId}`, {
-        params: { q: query },
-      });
+      const response = await axios.get(
+        `${API_ENDPOINT}/api/v2/payments/mpesa/search-unclaimed`,
+        {
+          params: { q: query },
+        },
+      );
       return response.data as UnclaimedPayment[];
     },
     enabled: !!organizationId && query.length >= 3,
@@ -39,14 +42,13 @@ export const useMpesaClaim = () => {
 
   return useMutation({
     mutationFn: async (params: {
-      organizationId: string;
       unclaimedPaymentId: string;
       transactionId: string;
     }) => {
-      const response = await axios.post(`${API_ENDPOINT}/api/v2/payments/mpesa/claim`, {
-        ...params,
-        memberId: currentMember?.id || 'unknown',
-      });
+      const response = await axios.post(
+        `${API_ENDPOINT}/api/v2/payments/mpesa/claim`,
+        params,
+      );
       return response.data;
     },
     onSuccess: () => {
@@ -63,8 +65,11 @@ export const useMpesaClaim = () => {
 
 export const useMpesaVerifySafaricom = () => {
   return useMutation({
-    mutationFn: async (params: { organizationId: string; transactionCode: string }) => {
-      const response = await axios.post(`${API_ENDPOINT}/api/v2/payments/mpesa/verify-safaricom`, params);
+    mutationFn: async (params: { transactionCode: string }) => {
+      const response = await axios.post(
+        `${API_ENDPOINT}/api/v2/payments/mpesa/verify-safaricom`,
+        params,
+      );
       return response.data;
     },
     onSuccess: (data) => {

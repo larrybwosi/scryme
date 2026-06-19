@@ -1,5 +1,5 @@
 import React from "react";
-import { getStaffMemberDetail } from "../../actions/staff";
+import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
 import { notFound } from "next/navigation";
 import { StaffDetailHeader } from "../../../components/staff/detail/staff-detail-header";
 import { StaffOverview } from "../../../components/staff/detail/staff-overview";
@@ -20,7 +20,10 @@ export default async function StaffMemberPage({
   params: { id: string };
 }) {
   const { id } = await params;
-  const result = await getStaffMemberDetail(id);
+  const [result, membersResult] = await Promise.all([
+    getStaffMemberDetail(id),
+    getStaffMembers(),
+  ]);
 
   if (!result.success || !result.data) {
     if (result.error === "Member not found") {
@@ -89,7 +92,10 @@ export default async function StaffMemberPage({
         </TabsContent>
 
         <TabsContent value="settings" className="outline-none">
-          <StaffSettings member={member} />
+          <StaffSettings
+            member={member}
+            allMembers={membersResult.success ? membersResult.data : []}
+          />
         </TabsContent>
       </Tabs>
     </div>
