@@ -78,7 +78,7 @@ export class ScrymeChatApiClient {
   }
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
     path: string,
     data?: any
   ): Promise<T> {
