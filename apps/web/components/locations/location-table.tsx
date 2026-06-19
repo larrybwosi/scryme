@@ -26,6 +26,11 @@ import {
   MapPin,
   ExternalLink,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { deleteLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -127,17 +132,33 @@ export function LocationTable({ data, members }: LocationTableProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Link href={`/locations/${location.id}`}>
-                      <Button variant="ghost" size="icon">
-                        <ExternalLink size={16} />
-                      </Button>
-                    </Link>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={`/locations/${location.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`View details for ${location.name}`}>
+                            <ExternalLink size={16} />
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>View Details</TooltipContent>
+                    </Tooltip>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Actions for ${location.name}`}>
+                              <MoreHorizontal size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>Actions</TooltipContent>
+                      </Tooltip>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <LocationSheet

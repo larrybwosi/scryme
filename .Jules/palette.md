@@ -8,3 +8,7 @@
 ## 2025-06-12 - [Unified Sidebar Session Management]
 **Learning:** The sidebar's logout action was represented by a static icon without any functional binding or accessibility features (no button wrapper, no aria-label, no tooltip). This left users unable to sign out from the main dashboard.
 **Action:** Implement `handleLogout` using the `authClient.signOut` utility and ensure the logout trigger is a functional `button` wrapped in a `Tooltip` with a descriptive `aria-label`. For collapsed sidebars, place the logout action in the bottom utility section to ensure visibility.
+
+## 2025-06-12 - [Component Nesting & Prop Forwarding for Tooltips]
+**Learning:** When wrapping custom dialog/sheet components (like `UnitDialog`) in `TooltipTrigger asChild`, the custom component MUST forward props and refs to its internal trigger (`DialogTrigger`/`SheetTrigger`). Otherwise, event handlers (hover, click) are lost, breaking both the tooltip and the trigger.
+**Action:** Always extend `React.ComponentPropsWithoutRef<typeof Trigger>` in custom dialog/sheet props and spread `props` onto the internal trigger. If the custom component is used directly as a trigger, ensure it can render the appropriate semantic element (e.g., `Button`).
