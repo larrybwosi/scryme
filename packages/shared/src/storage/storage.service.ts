@@ -15,14 +15,19 @@ export class StorageService implements StorageProvider {
     }
   }
 
-  async upload(file: Buffer, filename: string, contentType: string, options?: { uploadAsFile?: boolean }) {
+  async upload(
+    file: Buffer,
+    filename: string,
+    contentType: string,
+    options?: { uploadAsFile?: boolean; organizationId?: string },
+  ) {
     // Ensure dealio- prefix as requested
     const finalFilename = filename.startsWith('dealio-') ? filename : `dealio-${filename}`;
     return this.provider.upload(file, finalFilename, contentType, options);
   }
 
-  async delete(id: string) {
-    return this.provider.delete(id);
+  async delete(id: string, organizationId?: string) {
+    return this.provider.delete(id, organizationId);
   }
 }
 

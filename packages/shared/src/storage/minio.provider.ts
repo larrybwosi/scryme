@@ -20,13 +20,21 @@ export class MinioStorageProvider implements StorageProvider {
     });
   }
 
-  private getBucketName() {
+  private getBucketName(organizationId?: string) {
+    if (organizationId) {
+      return `dealio-org-${organizationId.toLowerCase()}`;
+    }
     return process.env.MINIO_BUCKET || 'dealio-uploads';
   }
 
-  async upload(file: Buffer, filename: string, contentType: string): Promise<StorageUploadResult> {
+  async upload(
+    file: Buffer,
+    filename: string,
+    contentType: string,
+    options?: { organizationId?: string },
+  ): Promise<StorageUploadResult> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(options?.organizationId);
 
     // Ensure bucket exists
     const bucketExists = await client.bucketExists(bucketName);
@@ -66,9 +74,9 @@ export class MinioStorageProvider implements StorageProvider {
     };
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, organizationId?: string): Promise<void> {
     const client = this.getClient();
-    const bucketName = this.getBucketName();
+    const bucketName = this.getBucketName(organizationId);
     await client.removeObject(bucketName, id);
   }
 }

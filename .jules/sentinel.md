@@ -44,3 +44,8 @@
 **Vulnerability:** Found that M-Pesa payment verification and initiation endpoints were missing organization isolation. Users could verify any transaction status or trigger STK pushes for other organizations by providing a different `organizationId`.
 **Learning:** Secondary service modules (like payments or integrations) often lack the automatic organization scoping found in core modules. If controllers don't strictly enforce the authenticated context and pass it down to the service, it's easy to introduce cross-org IDOR vulnerabilities.
 **Prevention:** Always use the authenticated `V2ApiContext` in controllers and pass the `organizationId` to every service method that performs database lookups. Use `findFirst({ where: { id, organizationId } })` instead of `findUnique({ where: { id } })` to enforce multi-tenancy at the query level.
+
+## 2026-06-19 - [Multi-tenant Storage Isolation Leak]
+**Vulnerability:** The storage system was using a single shared bucket (or dataset) for all organizations. The `UploadController` was not passing organization context to the storage service, leading to lack of infrastructure-level isolation and potential for cross-tenant data access if file names were guessed.
+**Learning:** Security at the application layer (RBAC) is often insufficient if the underlying infrastructure (S3/Minio buckets) doesn't mirror the multi-tenant architecture. Incomplete implementations of "shared" services can easily bypass tenant boundaries.
+**Prevention:** Always enforce organization-scoping at the lowest possible layer (e.g., bucket name or database schema). Ensure that the authenticated context (`V2ApiContext`) is explicitly passed down to all infrastructure providers.
