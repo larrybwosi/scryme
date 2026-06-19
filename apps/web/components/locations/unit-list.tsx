@@ -9,6 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { UnitDialog } from "./unit-dialog";
 import { deleteUnit } from "../../app/actions/locations";
 import { toast } from "sonner";
@@ -74,21 +79,34 @@ export function UnitList({ locationId, zones, units }: UnitListProps) {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <UnitDialog locationId={locationId} zones={zones} unit={unit}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Edit size={14} />
-                  </Button>
-                </UnitDialog>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700"
-                  onClick={() => onDelete(unit.id)}>
-                  <Trash2 size={14} />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <UnitDialog
+                      locationId={locationId}
+                      zones={zones}
+                      unit={unit}
+                      variant="ghost"
+                      size="icon"
+                      className="transition-opacity"
+                      aria-label={`Edit ${unit.name}`}>
+                      <Edit size={14} />
+                    </UnitDialog>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit Unit</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="transition-opacity text-red-600 hover:text-red-700"
+                      onClick={() => onDelete(unit.id)}
+                      aria-label={`Delete ${unit.name}`}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete Unit</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           ))
