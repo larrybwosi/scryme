@@ -815,7 +815,15 @@ const PaymentModal = ({
 
             {/* Payment method tabs */}
             <div className="flex gap-1 p-3 border-b bg-background">
-              {PAYMENT_METHODS.filter(m => import.meta.env.MODE !== 'standalone' || m.id === 'CASH').map(method => (
+              {PAYMENT_METHODS.filter(m => {
+                const isStandalone = import.meta.env.MODE === 'standalone';
+                if (isStandalone && m.id !== 'CASH') return false;
+
+                // Only show Insurance if it's a pharmacy
+                if (m.id === 'INSURANCE' && settings.businessType !== 'pharmacy') return false;
+
+                return true;
+              }).map(method => (
                 <button
                   key={method.id}
                   onClick={() => {

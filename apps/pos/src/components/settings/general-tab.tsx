@@ -325,6 +325,8 @@ export default function GeneralSettings({
   setAllowSaveUnpaidOrders,
   enableAutoStart,
   setEnableAutoStart,
+  autoPrintEnabled,
+  setAutoPrintEnabled,
 }: {
   businessName: string;
   setBusinessName: (name: string) => void;
@@ -340,6 +342,8 @@ export default function GeneralSettings({
   setAllowSaveUnpaidOrders: (allow: boolean) => void;
   enableAutoStart: boolean;
   setEnableAutoStart: (enable: boolean) => void;
+  autoPrintEnabled: boolean;
+  setAutoPrintEnabled: (enable: boolean) => void;
 }) {
   const { currentLocation, allowNegativeStock, setAllowNegativeStock } = useAuthStore();
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
@@ -576,6 +580,19 @@ export default function GeneralSettings({
                 </p>
               </div>
               <Switch checked={enableAutoStart} onCheckedChange={setEnableAutoStart} />
+            </div>
+
+            <div className="flex items-center justify-between py-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Autoprint Receipts</Label>
+                </div>
+                <p className="text-xs text-muted-foreground max-w-[300px]">
+                  Automatically send receipt to printer after a successful sale.
+                </p>
+              </div>
+              <Switch checked={autoPrintEnabled} onCheckedChange={setAutoPrintEnabled} />
             </div>
 
             {import.meta.env.MODE !== 'standalone' && (
