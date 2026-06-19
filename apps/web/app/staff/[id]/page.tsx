@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
 import { notFound } from "next/navigation";
 import { StaffDetailHeader } from "@/components/staff/detail/staff-detail-header";
@@ -41,63 +41,68 @@ export default async function StaffMemberPage({
   const stats = result.stats;
 
   return (
-    <div className="flex flex-col gap-8 p-8 bg-gray-50/50 min-h-screen">
-      <StaffDetailHeader member={member} />
+    <Suspense>
+      <div className="flex flex-col gap-8 p-8 bg-gray-50/50 min-h-screen">
+        <StaffDetailHeader member={member} />
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-white border p-1 h-auto gap-1">
-          <TabsTrigger
-            value="overview"
-            className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
-            <LayoutDashboard size={16} />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="performance"
-            className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
-            <BarChart3 size={16} />
-            Performance
-          </TabsTrigger>
-          <TabsTrigger
-            value="activity"
-            className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
-            <Activity size={16} />
-            Activity
-          </TabsTrigger>
-          <TabsTrigger
-            value="settings"
-            className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
-            <Settings size={16} />
-            Settings
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="bg-white border p-1 h-auto gap-1">
+            <TabsTrigger
+              value="overview"
+              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <LayoutDashboard size={16} />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="performance"
+              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <BarChart3 size={16} />
+              Performance
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <Activity size={16} />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <Settings size={16} />
+              Settings
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 outline-none">
-          <StaffOverview stats={stats} />
-          <StaffActivity
-            transactions={member.transactions}
-            attendanceLogs={member.attendanceLogs}
-          />
-        </TabsContent>
+          <TabsContent value="overview" className="space-y-6 outline-none">
+            <StaffOverview stats={stats} />
+            <StaffActivity
+              transactions={member.transactions}
+              attendanceLogs={member.attendanceLogs}
+            />
+          </TabsContent>
 
-        <TabsContent value="performance" className="outline-none">
-          <StaffPerformance stats={stats} transactions={member.transactions} />
-        </TabsContent>
+          <TabsContent value="performance" className="outline-none">
+            <StaffPerformance
+              stats={stats}
+              transactions={member.transactions}
+            />
+          </TabsContent>
 
-        <TabsContent value="activity" className="outline-none">
-          <StaffActivity
-            transactions={member.transactions}
-            attendanceLogs={member.attendanceLogs}
-          />
-        </TabsContent>
+          <TabsContent value="activity" className="outline-none">
+            <StaffActivity
+              transactions={member.transactions}
+              attendanceLogs={member.attendanceLogs}
+            />
+          </TabsContent>
 
-        <TabsContent value="settings" className="outline-none">
-          <StaffSettings
-            member={member}
-            allMembers={membersResult.success ? membersResult.data : []}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="settings" className="outline-none">
+            <StaffSettings
+              member={member}
+              allMembers={membersResult.success ? membersResult.data : []}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Suspense>
   );
 }
