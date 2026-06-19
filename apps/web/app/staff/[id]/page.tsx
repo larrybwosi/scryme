@@ -49,7 +49,7 @@ export default async function StaffMemberPage({
         <StaffDetailHeader member={member} />
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border p-1 h-auto gap-1">
+          <TabsList className="bg-white border p-1 h-auto gap-1 overflow-x-auto">
             <TabsTrigger
               value="overview"
               className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
