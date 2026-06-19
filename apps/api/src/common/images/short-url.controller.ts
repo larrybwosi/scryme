@@ -74,6 +74,7 @@ export class ShortUrlController {
         const response = await axios.get(signedUrl, {
           responseType: "stream",
           timeout: 10000,
+          maxContentLength: 50 * 1024 * 1024, // 50MB limit
         });
 
         res.header("Content-Type", mimeType);

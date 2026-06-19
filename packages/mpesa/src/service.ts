@@ -371,12 +371,13 @@ export class MpesaService {
   /**
    * Reliable payment verification for POS clients.
    */
-  async verifyPayment(transactionId: string) {
+  async verifyPayment(transactionId: string, organizationId?: string) {
     // 1. Check if there is already a PAID payment for this transaction
     const successfulPayment = await db.payment.findFirst({
       where: {
         transactionId,
         status: 'PAID',
+        ...(organizationId ? { organizationId } : {}),
       },
     });
 
@@ -390,8 +391,11 @@ export class MpesaService {
     }
 
     // 2. Check the transaction status
-    const transaction = await db.transaction.findUnique({
-      where: { id: transactionId },
+    const transaction = await db.transaction.findFirst({
+      where: {
+        id: transactionId,
+        ...(organizationId ? { organizationId } : {}),
+      },
     });
 
     if (!transaction) throw new Error('Transaction not found');
@@ -449,7 +453,7 @@ export class MpesaService {
     userId?: string;
   }): Promise<any> {
     if (input.saleId) {
-      return this.verifyPayment(input.saleId);
+      return this.verifyPayment(input.saleId, input.organizationId);
     }
     // Search by transaction code (receipt)
     const payment = await db.payment.findFirst({
