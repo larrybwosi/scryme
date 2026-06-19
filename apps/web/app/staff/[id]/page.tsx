@@ -1,11 +1,11 @@
 import React from "react";
 import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
 import { notFound } from "next/navigation";
-import { StaffDetailHeader } from "../../../components/staff/detail/staff-detail-header";
-import { StaffOverview } from "../../../components/staff/detail/staff-overview";
-import { StaffActivity } from "../../../components/staff/detail/staff-activity";
-import { StaffSettings } from "../../../components/staff/detail/staff-settings";
-import { StaffPerformance } from "../../../components/staff/detail/staff-performance";
+import { StaffDetailHeader } from "@/components/staff/detail/staff-detail-header";
+import { StaffOverview } from "@/components/staff/detail/staff-overview";
+import { StaffActivity } from "@/components/staff/detail/staff-activity";
+import { StaffSettings } from "@/components/staff/detail/staff-settings";
+import { StaffPerformance } from "@/components/staff/detail/staff-performance";
 import {
   Tabs,
   TabsContent,
@@ -17,7 +17,7 @@ import { BarChart3, Activity, Settings, LayoutDashboard } from "lucide-react";
 export default async function StaffMemberPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const [result, membersResult] = await Promise.all([
