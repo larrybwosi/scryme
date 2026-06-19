@@ -31,10 +31,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
-import { deleteLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
 import Link from "next/link";
 import { LocationSheet } from "./location-sheet";
+import { DeleteLocationDialog } from "./delete-location-dialog";
 
 interface LocationTableProps {
   data: any[];
@@ -42,16 +42,7 @@ interface LocationTableProps {
 }
 
 export function LocationTable({ data, members }: LocationTableProps) {
-  async function onDelete(id: string) {
-    if (confirm("Are you sure you want to delete this location?")) {
-      try {
-        await deleteLocation(id);
-        toast.success("Location deleted successfully");
-      } catch (error: any) {
-        toast.error(error.message);
-      }
-    }
-  }
+  const [deletingLocation, setDeletingLocation] = React.useState<any>(null);
 
   return (
     <div className="rounded-md border bg-white">
@@ -174,7 +165,7 @@ export function LocationTable({ data, members }: LocationTableProps) {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
-                          onClick={() => onDelete(location.id)}>
+                          onClick={() => setDeletingLocation(location)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Location
                         </DropdownMenuItem>
@@ -187,6 +178,15 @@ export function LocationTable({ data, members }: LocationTableProps) {
           )}
         </TableBody>
       </Table>
+
+      {deletingLocation && (
+        <DeleteLocationDialog
+          locationId={deletingLocation.id}
+          locationName={deletingLocation.name}
+          open={!!deletingLocation}
+          onOpenChange={open => !open && setDeletingLocation(null)}
+        />
+      )}
     </div>
   );
 }
