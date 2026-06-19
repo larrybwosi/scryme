@@ -8,7 +8,6 @@ export class StorageService implements StorageProvider {
 
   constructor() {
     const providerType = env.STORAGE_PROVIDER || "sanity";
-    console.log("STORAGE, :", providerType);
 
     if (providerType === "rustfs") {
       this.provider = new RustfsStorageProvider();
@@ -21,7 +20,11 @@ export class StorageService implements StorageProvider {
     file: Buffer,
     filename: string,
     contentType: string,
-    options?: { uploadAsFile?: boolean; encrypt?: boolean; organizationId?: string },
+    options?: {
+      uploadAsFile?: boolean;
+      encrypt?: boolean;
+      organizationId?: string;
+    },
   ) {
     // Ensure dealio- prefix as requested
     const finalFilename = filename.startsWith("dealio-")

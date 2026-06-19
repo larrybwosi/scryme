@@ -19,8 +19,6 @@ export async function getStaffMembers() {
       organizationId: session.organizationId,
       deletedAt: null,
     },
-    // ⚡ Bolt: Use select instead of include to fetch only essential fields for the list view.
-    // This reduces database payload size and serialization overhead.
     select: {
       id: true,
       role: true,
@@ -180,8 +178,6 @@ export async function getStaffMemberDetail(
       id: memberId,
       organizationId: session.organizationId,
     },
-    // ⚡ Bolt: Use select instead of include to fetch only fields required for the detail view.
-    // This prunes unused scalar fields and large relations, reducing payload size.
     select: {
       id: true,
       organizationId: true,
@@ -301,9 +297,9 @@ export async function getStaffMemberDetail(
     });
 
     return {
-      totalSalesValue: totalSales._sum.finalTotal || 0,
+      totalSalesValue: Number(totalSales._sum.finalTotal) || 0,
       totalSalesCount: totalSales._count.id || 0,
-      monthlySalesValue: monthlySales._sum.finalTotal || 0,
+      monthlySalesValue: Number(monthlySales._sum.finalTotal) || 0,
       monthlySalesCount: monthlySales._count.id || 0,
       attendanceCount,
       avgTransactionValue:
