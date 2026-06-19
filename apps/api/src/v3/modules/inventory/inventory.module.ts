@@ -19,6 +19,8 @@ import { CheckB2BAvailabilityUseCase } from "./application/use-cases/check-b2b-a
 import { UnpackBatchUseCase } from "./application/use-cases/unpack-batch.use-case";
 import { ScanUnpackBatchUseCase } from "./application/use-cases/scan-unpack-batch.use-case";
 import { InventoryMovementService } from "./application/services/inventory-movement.service";
+import { StockMovementReportService } from "./application/services/stock-movement-report.service";
+import { StockMovementReportScheduler } from "./application/services/stock-movement-report.scheduler";
 import { InventoryIntegrityService } from "./application/services/inventory-integrity.service";
 import { QuickStockInquiryUseCase } from "./application/use-cases/quick-stock-inquiry.use-case";
 import { PrismaInventoryRepository } from "./infrastructure/persistence/prisma-inventory.repository";
@@ -27,9 +29,11 @@ import { IStockBatchRepository } from "./domain/repositories/stock-batch-reposit
 import { PrismaStockBatchRepository } from "./infrastructure/persistence/prisma-stock-batch.repository";
 import { PrismaModule } from "../../../prisma/prisma.module";
 import { RedisModule } from "../../../redis/redis.module";
+import { ScrymeModule } from "../../../v2/scryme/scryme.module";
 
 @Global()
 @Module({
+  imports: [ScrymeModule],
   controllers: [InventoryController],
   providers: [
     InventoryResolver,
@@ -46,6 +50,8 @@ import { RedisModule } from "../../../redis/redis.module";
     UnpackBatchUseCase,
     ScanUnpackBatchUseCase,
     InventoryMovementService,
+    StockMovementReportService,
+    StockMovementReportScheduler,
     InventoryIntegrityService,
     QuickStockInquiryUseCase,
     {
@@ -60,6 +66,7 @@ import { RedisModule } from "../../../redis/redis.module";
   exports: [
     GetInventoryUseCase,
     InventoryMovementService,
+    StockMovementReportService,
     InventoryIntegrityService,
   ],
 })

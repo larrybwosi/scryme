@@ -26,10 +26,12 @@ import { V2AuthGuard } from "./auth/v2-auth.guard";
 import { AuthorizationGuard } from "./common/guards/authorization.guard";
 import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
 import { BullModule } from "@nestjs/bullmq";
+import { ScheduleModule } from "@nestjs/schedule";
 import { env } from "@repo/env";
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     BullModule.forRoot({
       connection: {
         host: env.REDIS_HOST,

@@ -49,6 +49,7 @@ import { Breadcrumbs } from "../../components/breadcrumbs";
 import { toast } from "sonner";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { MemberSelector } from "../../components/member-selector";
+import { MultiMemberSelector } from "../../components/multi-member-selector";
 import { cn } from "@repo/ui/lib/utils";
 import { Separator } from "@repo/ui/components/ui/separator";
 
@@ -547,7 +548,15 @@ export default function WorkflowsPage() {
                         </label>
                       </div>
 
-                      {prop.format === "member" ? (
+                      {prop.format === "members" ? (
+                        <MultiMemberSelector
+                          value={configValues[key]}
+                          onValueChange={val =>
+                            setConfigValues({ ...configValues, [key]: val })
+                          }
+                          placeholder={`Select members for ${prop.title || key}...`}
+                        />
+                      ) : prop.format === "member" ? (
                         <MemberSelector
                           value={configValues[key]}
                           onValueChange={val =>
