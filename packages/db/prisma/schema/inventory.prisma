@@ -291,6 +291,7 @@ model Supplier {
 
   products          ProductSupplier[]
   priceHistory      SupplierPriceHistory[]
+  recurringBills    RecurringBill[]
   customBadges      String[]
   purchases         Purchase[]
   reorderRules      ReorderRule[]

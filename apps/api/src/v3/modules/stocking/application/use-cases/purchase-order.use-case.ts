@@ -15,6 +15,7 @@ import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
 import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
 import { emitPurchaseApprovalRequested } from "@repo/windmill/server";
 import { PricingManagementService } from "../../../catalog/application/services/pricing-management.service";
+import { AccountingService } from "../../../finance/application/services/accounting.service";
 
 @Injectable()
 export class PurchaseOrderUseCase {
@@ -22,6 +23,7 @@ export class PurchaseOrderUseCase {
     private readonly prisma: PrismaService,
     private readonly inventoryMovementService: InventoryMovementService,
     private readonly pricingManagementService: PricingManagementService,
+    private readonly accountingService: AccountingService,
   ) {}
 
   async create(
@@ -304,13 +306,20 @@ export class PurchaseOrderUseCase {
 
     if (!purchase) throw new NotFoundException("Purchase order not found");
 
-    return this.prisma.client.purchase.update({
+    const updatedPurchase = await this.prisma.client.purchase.update({
       where: { id: purchaseId },
       data: {
         status: PurchaseStatus.APPROVED,
         updatedAt: new Date(),
       },
     });
+
+    // Post to ledger after approval
+    await this.accountingService.postPurchaseToLedger(updatedPurchase.id).catch((err) =>
+      console.error("[PurchaseOrderUseCase] Failed to post purchase to ledger:", err),
+    );
+
+    return updatedPurchase;
   }
 
   async findAll(organizationId: string, pagination: PaginationQueryDto) {
