@@ -1088,9 +1088,7 @@ const PaymentModal = ({
                                   className="mt-1 h-auto py-0"
                                   disabled={isVerifyingSafaricom}
                                   onClick={async () => {
-                                    if (!useAuthStore.getState().currentLocation?.organizationId) return;
                                     await verifyWithSafaricom({
-                                      organizationId: useAuthStore.getState().currentLocation!.organizationId!,
                                       transactionCode: mpesaSearchQuery,
                                     });
                                   }}

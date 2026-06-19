@@ -59,6 +59,14 @@
 - Standardize on a set of defensive `axios` request configuration (timeouts, maxContentLength) for all internal services.
 - Ensure test suites for security-critical services (like `ImageService`) explicitly import test globals (like `describe`, `it`) for compatibility with modern Vitest environments.
 
+## 2026-06-21 - [Hardened M-Pesa Integration and Outbound Request Security]
+**Vulnerability:** 1) `MpesaController` endpoints were vulnerable to IDOR as they trusted `organizationId` from request parameters/body without validating ownership. 2) `ShortUrlController`, `ScrymeChatApiClient`, and `MpesaClient` lacked `timeout` and `maxContentLength` on outbound requests, exposing the service to DoS.
+
+**Learning:** Multi-tenant security must be enforced at the API boundary by deriving the tenant ID from the authenticated session context rather than client-supplied parameters. Furthermore, the DoS protection pattern for `axios` must be applied consistently to *all* external API clients, not just image services.
+
+**Prevention:**
+- Always use the `@v2Context()` decorator to retrieve `organizationId` and `memberId` for sensitive operations.
+- Enforce mandatory `timeout` and `maxContentLength` on all `axios` calls to prevent resource exhaustion from malicious or slow upstream responses.
 ## 2026-06-18 - [Hardened PIN Validation and Comprehensive Redaction]
 **Vulnerability:** 1) `V3AuthService` PIN validation was vulnerable to DoS by iterating through an unbounded list of members and performing `bcrypt.compare` on each. 2) The `redactSensitiveData` utility lacked protection for PII and financial data (SSN, Card Numbers, DOB).
 
