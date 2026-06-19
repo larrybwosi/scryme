@@ -3,7 +3,12 @@ import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { MpesaService } from "@repo/mpesa/server";
 import type { MpesaTriggerInput } from "@repo/mpesa/server";
 import type { FastifyRequest } from "fastify";
-import { AllowPublic } from "../../../common/decorators/auth.decorator";
+import {
+  AllowPublic,
+  RequirePermission,
+} from "../../../common/decorators/auth.decorator";
+import { v2Context } from "../../../common/decorators/v2-context.decorator";
+import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 @ApiTags("M-Pesa")
 @Controller("payments/mpesa")
@@ -57,48 +62,55 @@ export class MpesaController {
   }
 
   @Get("verify/:transactionId")
+  @RequirePermission("sale:read:location")
   @ApiOperation({ summary: "Verify M-Pesa Payment Status" })
   @ApiResponse({ status: 200, description: "Payment status retrieved" })
-  async verifyPayment(@Param("transactionId") transactionId: string) {
-    return this.mpesaService.verifyPayment(transactionId);
+  async verifyPayment(
+    @v2Context() ctx: V2ApiContext,
+    @Param("transactionId") transactionId: string,
+  ) {
+    return this.mpesaService.verifyPayment(transactionId, ctx.organizationId);
   }
 
-  @Get("search-unclaimed/:organizationId")
+  @Get("search-unclaimed")
+  @RequirePermission("product:manage:stock")
   @ApiOperation({ summary: "Search for unclaimed M-Pesa payments" })
   async searchUnclaimed(
-    @Param("organizationId") organizationId: string,
+    @v2Context() ctx: V2ApiContext,
     @Req() req: FastifyRequest & { query: { q: string } },
   ) {
     const query = (req.query as any).q || "";
-    return this.mpesaService.searchUnclaimedPayments(organizationId, query);
+    return this.mpesaService.searchUnclaimedPayments(ctx.organizationId, query);
   }
 
   @Post("claim")
+  @RequirePermission("product:manage:stock")
   @ApiOperation({ summary: "Claim an unclaimed M-Pesa payment" })
   async claimPayment(
+    @v2Context() ctx: V2ApiContext,
     @Body()
     body: {
-      organizationId: string;
       unclaimedPaymentId: string;
       transactionId: string;
-      memberId: string;
     },
   ) {
     return this.mpesaService.claimPayment(
-      body.organizationId,
+      ctx.organizationId,
       body.unclaimedPaymentId,
       body.transactionId,
-      body.memberId,
+      ctx.memberId || "system",
     );
   }
 
   @Post("verify-safaricom")
+  @RequirePermission("product:manage:stock")
   @ApiOperation({ summary: "Verify transaction code with Safaricom" })
   async verifySafaricom(
-    @Body() body: { organizationId: string; transactionCode: string },
+    @v2Context() ctx: V2ApiContext,
+    @Body() body: { transactionCode: string },
   ) {
     return this.mpesaService.verifyWithSafaricom(
-      body.organizationId,
+      ctx.organizationId,
       body.transactionCode,
     );
   }
