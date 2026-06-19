@@ -337,67 +337,56 @@ export function ReceiptDialog({ open, onOpenChange, completedOrder, onClose }: R
     );
   }, [formattedOrder, settings, qrCodePdfUrl, barcodeUrl]);
 
+  // Auto-print logic
+  useEffect(() => {
+    if (open && formattedOrder && settings.autoPrintConfig?.enabled && DocumentInstance && !isPrinting) {
+      const safeOrderNum = formattedOrder.orderNumber.replace(/[^a-z0-9]/gi, '_');
+      handlePrint(DocumentInstance, `Receipt_${safeOrderNum}`, {
+        ...formattedOrder,
+        subTotal: (formattedOrder as any).subTotal,
+        taxAmount: (formattedOrder as any).taxAmount,
+        discountAmount: (formattedOrder as any).discountAmount,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, formattedOrder, settings.autoPrintConfig?.enabled, !!DocumentInstance]);
+
   if (!formattedOrder) return null;
   const safeOrderNum = formattedOrder.orderNumber.replace(/[^a-z0-9]/gi, '_');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] md:max-w-[1000px] p-0 overflow-hidden border-border bg-background shadow-2xl duration-300">
-        <div className="grid grid-cols-1 md:grid-cols-2 h-[90vh] md:h-[700px]">
-          {/* LEFT: Actions Panel */}
-          <div className="order-2 md:order-1 bg-background h-full flex flex-col border-t md:border-t-0 md:border-r border-border/60">
-            <ActionPanel
-              completedOrder={completedOrder}
-              formattedOrder={formattedOrder}
-              onPrint={() => DocumentInstance && handlePrint(DocumentInstance, `Receipt_${safeOrderNum}`, {
-                ...formattedOrder,
-                // Ensure backend-specific fields are present even if TypeScript complained
-                subTotal: (formattedOrder as any).subTotal,
-                taxAmount: (formattedOrder as any).taxAmount,
-                discountAmount: (formattedOrder as any).discountAmount,
-              })}
-              onPrintLabels={async () => {
-                if (!completedOrder) return;
-                try {
-                  const result = await printNative('label', completedOrder as any, settings);
-                  if (result.success) {
-                    toast.success('Labels Sent to Printer');
-                  } else {
-                    throw new Error(result.error);
-                  }
-                } catch (error) {
-                  toast.error('Failed to print labels');
+      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-border bg-background shadow-2xl duration-300">
+        <div className="h-auto min-h-[500px] flex flex-col">
+          <ActionPanel
+            completedOrder={completedOrder}
+            formattedOrder={formattedOrder}
+            onPrint={() => DocumentInstance && handlePrint(DocumentInstance, `Receipt_${safeOrderNum}`, {
+              ...formattedOrder,
+              // Ensure backend-specific fields are present even if TypeScript complained
+              subTotal: (formattedOrder as any).subTotal,
+              taxAmount: (formattedOrder as any).taxAmount,
+              discountAmount: (formattedOrder as any).discountAmount,
+            })}
+            onPrintLabels={async () => {
+              if (!completedOrder) return;
+              try {
+                const result = await printNative('label', completedOrder as any, settings);
+                if (result.success) {
+                  toast.success('Labels Sent to Printer');
+                } else {
+                  throw new Error(result.error);
                 }
-              }}
-              onDownload={() => DocumentInstance && handleDownload(DocumentInstance, `Receipt_${safeOrderNum}`)}
-              onClose={onClose}
-              isPrinting={isPrinting}
-              isDownloading={isDownloading}
-              currency={settings.currency}
-            />
-          </div>
-
-          {/* RIGHT: Live Preview */}
-          <div className="order-1 md:order-2 relative bg-neutral-100 dark:bg-neutral-900/50 flex flex-col h-full overflow-hidden">
-            {/* Background Pattern for Texture */}
-            <div
-              className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none"
-              style={{
-                backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
-                backgroundSize: '24px 24px',
-              }}
-            ></div>
-
-            {/* Preview Label */}
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm">
-              <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-semibold text-foreground/80 tracking-wide uppercase">Receipt Preview</span>
-            </div>
-
-            <div className="flex-1 w-full h-full relative p-6 flex items-center justify-center">
-              <ReceiptPreviewWrapper document={DocumentInstance} />
-            </div>
-          </div>
+              } catch (error) {
+                toast.error('Failed to print labels');
+              }
+            }}
+            onDownload={() => DocumentInstance && handleDownload(DocumentInstance, `Receipt_${safeOrderNum}`)}
+            onClose={onClose}
+            isPrinting={isPrinting}
+            isDownloading={isDownloading}
+            currency={settings.currency}
+          />
         </div>
       </DialogContent>
     </Dialog>
