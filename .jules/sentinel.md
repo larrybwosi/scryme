@@ -39,3 +39,8 @@
 **Vulnerability:** The V3 `PublicInvoiceController` had download endpoints for invoices and receipts that were publicly accessible via UUID without any token verification, leading to an IDOR (Insecure Direct Object Reference) vulnerability.
 **Learning:** "Public" endpoints for sensitive documents should never be truly anonymous. They require a cryptographically signed "capability" token to ensure that only the intended recipient (who has the unique link) can access the resource.
 **Prevention:** Enforce signed token verification on all public-facing resource access points. Always validate that the ID and resource type embedded in the token match the requested resource to prevent token reuse across different entities.
+
+## 2026-06-19 - [Insecure Direct Object Reference (IDOR) in Payment Modules]
+**Vulnerability:** Found that M-Pesa payment verification and initiation endpoints were missing organization isolation. Users could verify any transaction status or trigger STK pushes for other organizations by providing a different `organizationId`.
+**Learning:** Secondary service modules (like payments or integrations) often lack the automatic organization scoping found in core modules. If controllers don't strictly enforce the authenticated context and pass it down to the service, it's easy to introduce cross-org IDOR vulnerabilities.
+**Prevention:** Always use the authenticated `V2ApiContext` in controllers and pass the `organizationId` to every service method that performs database lookups. Use `findFirst({ where: { id, organizationId } })` instead of `findUnique({ where: { id } })` to enforce multi-tenancy at the query level.
