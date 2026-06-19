@@ -76,6 +76,7 @@ const sidebarConfig: SidebarSection[] = [
         href: "/staff",
         items: [
           { title: "Staff Members", href: "/staff" },
+          { title: "Departments", href: "/staff/departments" },
           { title: "Drivers", href: "/staff/drivers" },
         ],
       },
