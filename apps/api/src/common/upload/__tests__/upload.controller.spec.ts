@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { UploadController } from "../upload.controller";
 import { BadRequestException } from "@nestjs/common";
+import { storageService } from "@repo/shared/storage";
 
 // Mock storageService
 vi.mock("@repo/shared/storage", () => ({
@@ -68,11 +69,17 @@ describe("UploadController", () => {
       send: vi.fn().mockImplementation((data) => data),
     };
 
-    const result = await controller.uploadFile(req as any, res as any);
+    await controller.uploadFile(req as any, res as any);
     expect(res.send).toHaveBeenCalledWith(
       expect.objectContaining({
         url: expect.any(String),
       }),
+    );
+    expect(storageService.upload).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      expect.any(String),
+      "image/png",
+      { organizationId: "org-123" },
     );
   });
 });

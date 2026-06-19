@@ -12,14 +12,19 @@ import { AllowPublic } from "../decorators/auth.decorator";
 import { PrismaService } from "../../prisma/prisma.service";
 import { storageService } from "@repo/shared/storage/service";
 import axios from "axios";
+import { RedisService } from "../../redis/redis.service";
 
 @Controller("s")
 export class ShortUrlController {
   private readonly logger = new Logger(ShortUrlController.name);
+  private readonly ATTACHMENT_CACHE_TTL = 3600; // 1 hour
+  private readonly FILE_CACHE_TTL = 1800; // 30 minutes
+  private readonly MAX_CACHE_SIZE = 5 * 1024 * 1024; // 5MB limit for Redis caching
 
   constructor(
     private readonly imageService: ImageService,
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
   ) {}
 
   @Get(":shortCode")
@@ -33,9 +38,22 @@ export class ShortUrlController {
     @Query("fm") fm?: string,
   ) {
     try {
-      const attachment = await this.prisma.client.attachment.findUnique({
-        where: { shortCode },
-      });
+      const cacheKey = `attachment:${shortCode}`;
+      let attachment = await this.redis.get<any>(cacheKey);
+
+      if (!attachment) {
+        attachment = await this.prisma.client.attachment.findUnique({
+          where: { shortCode },
+        });
+
+        if (attachment) {
+          await this.redis.setex(
+            cacheKey,
+            this.ATTACHMENT_CACHE_TTL,
+            attachment,
+          );
+        }
+      }
 
       if (!attachment) {
         return res.status(HttpStatus.NOT_FOUND).send("Link not found");
@@ -65,24 +83,48 @@ export class ShortUrlController {
         res.header("Cache-Control", "public, max-age=31536000, immutable");
         return res.status(HttpStatus.OK).send(data);
       } else {
-        // For non-images, we stream the file through
-        const signedUrl = await storageService.getSignedUrl(
-          attachmentId,
-          60,
-          organizationId,
-        );
-        const response = await axios.get(signedUrl, {
-          responseType: "stream",
-          timeout: 10000,
-          maxContentLength: 50 * 1024 * 1024, // 50MB limit
-        });
+        // For non-images, we attempt to use a streaming cache
+        const fileCacheKey = `file_content:${attachmentId}`;
+        const cachedFile = await this.redis.get<{
+          content: string;
+          mimeType: string;
+        }>(fileCacheKey);
 
         res.header("Content-Type", mimeType);
         res.header(
           "Content-Disposition",
           `inline; filename="${attachment.fileName || "file"}"`,
         );
-        return response.data.pipe(res);
+
+        if (cachedFile) {
+          const buffer = Buffer.from(cachedFile.content, "base64");
+          return res.status(HttpStatus.OK).send(buffer);
+        }
+
+        const signedUrl = await storageService.getSignedUrl(
+          attachmentId,
+          60,
+          organizationId,
+        );
+
+        // Fetch the file to stream it AND potentially cache it
+        const response = await axios.get(signedUrl, {
+          responseType: "arraybuffer",
+          timeout: 10000,
+          maxContentLength: 50 * 1024 * 1024, // 50MB total limit
+        });
+
+        const buffer = Buffer.from(response.data);
+
+        // Cache if it's small enough
+        if (buffer.length <= this.MAX_CACHE_SIZE) {
+          await this.redis.setex(fileCacheKey, this.FILE_CACHE_TTL, {
+            content: buffer.toString("base64"),
+            mimeType,
+          });
+        }
+
+        return res.status(HttpStatus.OK).send(buffer);
       }
     } catch (error) {
       this.logger.error(
