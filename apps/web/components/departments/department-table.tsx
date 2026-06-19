@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { EditDepartmentSheet } from "./edit-department-sheet";
 import { DeleteDepartmentDialog } from "./delete-department-dialog";
+import Image from "next/image";
 
 interface DepartmentTableProps {
   data: any[];
@@ -57,9 +58,14 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
               <TableRow key={dept.id} className="group hover:bg-gray-50/50">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border relative shrink-0">
                       {dept.image ? (
-                        <img src={dept.image} alt={dept.name} className="w-full h-full object-cover" />
+                        <Image
+                          src={dept.image}
+                          alt={dept.name}
+                          fill
+                          className="object-cover"
+                        />
                       ) : (
                         <Users className="text-gray-400" size={20} />
                       )}

@@ -1,6 +1,7 @@
 import React from "react";
 import { getDepartmentDetail } from "../../../actions/department";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import {
   Building2,
   Users,
@@ -40,14 +41,24 @@ export default async function DepartmentDetailPage({ params }: Props) {
       {/* Header Banner */}
       <div className="h-48 bg-[#1D1D1F] relative overflow-hidden">
         {dept.banner ? (
-          <img src={dept.banner} alt="banner" className="w-full h-full object-cover opacity-50" />
+          <Image
+            src={dept.banner}
+            alt="banner"
+            fill
+            className="object-cover opacity-50"
+          />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-r from-[#1D1D1F] to-[#34A853]/20" />
         )}
         <div className="absolute bottom-6 left-8 right-0 flex items-end gap-6">
-          <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative">
             {dept.image ? (
-              <img src={dept.image} alt="logo" className="w-full h-full object-cover" />
+              <Image
+                src={dept.image}
+                alt="logo"
+                fill
+                className="object-cover"
+              />
             ) : (
               <Building2 size={40} className="text-gray-400" />
             )}
