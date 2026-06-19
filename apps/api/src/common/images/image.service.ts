@@ -2,10 +2,15 @@ import { Injectable, Logger } from "@nestjs/common";
 import { storageService } from "@repo/shared/storage/service";
 import sharp from "sharp";
 import axios from "axios";
+import { RedisService } from "../../redis/redis.service";
+import crypto from "crypto";
 
 @Injectable()
 export class ImageService {
   private readonly logger = new Logger(ImageService.name);
+  private readonly IMAGE_CACHE_TTL = 86400 * 7; // 7 days
+
+  constructor(private readonly redis: RedisService) {}
 
   async optimizeImage(
     id: string,
@@ -17,7 +22,20 @@ export class ImageService {
       organizationId?: string;
     },
   ) {
+    const cacheKey = this.generateCacheKey(id, options);
+
     try {
+      const cachedImage = await this.redis.get<{
+        data: string;
+        contentType: string;
+      }>(cacheKey);
+      if (cachedImage) {
+        return {
+          data: Buffer.from(cachedImage.data, "base64"),
+          contentType: cachedImage.contentType,
+        };
+      }
+
       const providerType = process.env.STORAGE_PROVIDER || "sanity";
       let imageBuffer: Buffer;
       let contentType: string;
@@ -84,14 +102,33 @@ export class ImageService {
         resolveWithObject: true,
       });
 
+      const resultContentType = `image/${info.format}`;
+
+      // Cache the optimized image
+      await this.redis.setex(cacheKey, this.IMAGE_CACHE_TTL, {
+        data: data.toString("base64"),
+        contentType: resultContentType,
+      });
+
       return {
         data,
-        contentType: `image/${info.format}`,
+        contentType: resultContentType,
       };
     } catch (error) {
       this.logger.error(`Error optimizing image ${id}: ${error.message}`);
       throw error;
     }
+  }
+
+  private generateCacheKey(id: string, options: any): string {
+    const optionsString = JSON.stringify({
+      w: options.width,
+      h: options.height,
+      q: options.quality,
+      fm: options.format,
+    });
+    const hash = crypto.createHash("md5").update(optionsString).digest("hex");
+    return `opt_img:${id}:${hash}`;
   }
 
   private async getOriginalUrl(

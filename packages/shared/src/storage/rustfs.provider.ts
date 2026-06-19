@@ -38,7 +38,8 @@ export class RustfsStorageProvider implements StorageProvider {
 
   private getBucketName(organizationId?: string) {
     if (organizationId) {
-      return `dealio-org-${organizationId.toLowerCase()}`;
+      const bucketName = `dealio-org-${organizationId.toLowerCase()}`;
+      return bucketName;
     }
     return env.RUSTFS_BUCKET || "dealio-uploads";
   }
@@ -59,12 +60,19 @@ export class RustfsStorageProvider implements StorageProvider {
     file: Buffer,
     filename: string,
     contentType: string,
-    options?: { uploadAsFile?: boolean; encrypt?: boolean; organizationId?: string },
+    options?: {
+      uploadAsFile?: boolean;
+      encrypt?: boolean;
+      organizationId?: string;
+    },
   ): Promise<StorageUploadResult> {
     const client = this.getClient();
     const bucketName = this.getBucketName(options?.organizationId);
 
     if (options?.organizationId) {
+      console.log(
+        `[RustfsStorageProvider] Uploading to organization bucket: ${bucketName}`,
+      );
       await this.ensureBucketExists(client, bucketName);
     }
 
