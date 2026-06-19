@@ -112,10 +112,10 @@ export default async function DepartmentDetailPage({ params }: Props) {
                       {dept.head ? (
                         <>
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={dept.head.user.image} />
-                            <AvatarFallback>{dept.head.user.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={dept.head.user.image ?? undefined} />
+                            <AvatarFallback>{dept.head.user.name?.charAt(0) || "?"}</AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium truncate">{dept.head.user.name}</span>
+                          <span className="text-sm font-medium truncate">{dept.head.user.name ?? "Unknown"}</span>
                         </>
                       ) : (
                         <span className="text-sm text-gray-400 italic">Not assigned</span>

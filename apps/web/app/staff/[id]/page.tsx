@@ -84,7 +84,7 @@ export default async function StaffMemberPage({
 
           <TabsContent value="overview" className="space-y-6 outline-none">
             <StaffOverview stats={stats} />
-            <StaffDepartments memberships={departmentsResult.success ? departmentsResult.data : []} />
+            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
             <StaffActivity
               transactions={member.transactions}
               attendanceLogs={member.attendanceLogs}
@@ -113,7 +113,7 @@ export default async function StaffMemberPage({
           </TabsContent>
 
           <TabsContent value="departments" className="outline-none">
-            <StaffDepartments memberships={departmentsResult.success ? departmentsResult.data : []} />
+            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
           </TabsContent>
         </Tabs>
       </div>

@@ -69,8 +69,8 @@ export function EditDepartmentSheet({
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       headId: formData.get("headId") as string,
-      image: images[0] || null,
-      banner: banners[0] || null,
+      image: images[0] || undefined,
+      banner: banners[0] || undefined,
     };
 
     const result = await updateDepartment(department.id, data);
