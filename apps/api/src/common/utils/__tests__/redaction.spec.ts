@@ -43,6 +43,26 @@ describe("redactSensitiveData", () => {
     expect(redacted[1].password).toBe("[REDACTED]");
   });
 
+  it("should redact newly added sensitive keys", () => {
+    const data = {
+      cvc: "123",
+      cardNumber: "1234567812345678",
+      card_number: "8765432187654321",
+      ssn: "000-00-0000",
+      dob: "1990-01-01",
+      birthday: "1990-01-01",
+      safe: "data",
+    };
+    const redacted = redactSensitiveData(data);
+    expect(redacted.cvc).toBe("[REDACTED]");
+    expect(redacted.cardNumber).toBe("[REDACTED]");
+    expect(redacted.card_number).toBe("[REDACTED]");
+    expect(redacted.ssn).toBe("[REDACTED]");
+    expect(redacted.dob).toBe("[REDACTED]");
+    expect(redacted.birthday).toBe("[REDACTED]");
+    expect(redacted.safe).toBe("data");
+  });
+
   it("should handle null and undefined", () => {
     expect(redactSensitiveData(null)).toBe(null);
     expect(redactSensitiveData(undefined)).toBe(undefined);

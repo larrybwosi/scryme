@@ -21,6 +21,12 @@ export function redactSensitiveData(
     "otp",
     "passcode",
     "cvv",
+    "cvc",
+    "cardNumber",
+    "card_number",
+    "ssn",
+    "dob",
+    "birthday",
   ],
 ): any {
   if (data === null || data === undefined) {
