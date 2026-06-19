@@ -2,6 +2,8 @@ model Organization {
   id           String   @id @default(cuid())
   name         String
   slug         String   @unique
+  taxId              String? // KRA PIN for Kenya
+  registrationNumber String?
   deletedAt    DateTime?
   version      Int      @default(0)
   logo         String?
@@ -136,6 +138,11 @@ model Organization {
   priceLists          PriceList[]
   pricingRules        PricingRule[]
   pricingBundles      PricingBundle[]
+
+  ledgerAccounts      LedgerAccount[]
+  journalEntries      JournalEntry[]
+  bankStatements      BankStatement[]
+  recurringBills      RecurringBill[]
   priceImportJobs     PriceImportJob[]
   priceChangeRequests PriceChangeRequest[]
   costCenters         CostCenter[]
@@ -338,6 +345,8 @@ model Member {
   // Budget Relations
   createdBudgets         Budget[]       @relation("BudgetCreator")
   generatedBudgetReports BudgetReport[] @relation("BudgetReportGenerator")
+  journalEntries         JournalEntry[]
+  recurringBills         RecurringBill[] @relation
   qualityIncidents       QualityIncident[] @relation("IncidentReporter")
   qcResults              QCResult[] @relation("QCPerformer")
 
