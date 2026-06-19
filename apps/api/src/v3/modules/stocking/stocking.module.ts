@@ -11,6 +11,7 @@ import { InventoryModule } from "../inventory/inventory.module";
 import { CatalogModule } from "../catalog/catalog.module";
 import { CycleCountingService } from "./application/services/cycle-counting.service";
 import { DocumentModule } from "../../../common/documents/document.module";
+import { FinanceModule } from "../finance/finance.module";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DocumentModule } from "../../../common/documents/document.module";
     InventoryModule,
     CatalogModule,
     DocumentModule,
+    forwardRef(() => FinanceModule),
   ],
   controllers: [StockingController],
   providers: [

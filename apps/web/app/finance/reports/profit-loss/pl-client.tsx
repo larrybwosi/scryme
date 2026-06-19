@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getProfitLoss } from "../../../actions/accounting";
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table";
@@ -16,11 +16,7 @@ export function PLClient() {
     to: endOfMonth(new Date()),
   });
 
-  useEffect(() => {
-    loadReport();
-  }, [dateRange]);
-
-  async function loadReport() {
+  const loadReport = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getProfitLoss(dateRange.from.toISOString(), dateRange.to.toISOString());
@@ -30,7 +26,11 @@ export function PLClient() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [dateRange]);
+
+  useEffect(() => {
+    loadReport();
+  }, [loadReport]);
 
   if (loading && !report) return <div>Loading report...</div>;
 
