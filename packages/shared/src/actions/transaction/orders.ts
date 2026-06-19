@@ -19,6 +19,7 @@ import {
 } from "../../lib/validations/order";
 import { unitCalculationService } from "../../lib/services/unit-calculation.service";
 import { realtimeService } from "../../realtime";
+import { documentService } from "../../lib/services/document.service";
 import { z } from "zod";
 
 // --- STATS FUNCTION ---
@@ -486,6 +487,25 @@ export async function createOrder(
         entityId: transactionId,
         description: `Created order ${result.number}. Total: ${result.finalTotal}`,
       });
+
+      // 9. --- Auto-Generate Documents for Non-POS Sales ---
+      if (result.type !== TransactionType.POS_SALE) {
+        try {
+          // If a fulfillment was created, we attach it to that. Otherwise, just the transaction.
+          const fulfillmentId = result.fulfillments?.[0]?.id;
+          if (fulfillmentId) {
+            await documentService.generateAndAttachProofDocuments({
+              transactionId: result.id,
+              fulfillmentId,
+              organizationId,
+              memberId,
+            });
+          }
+        } catch (docErr) {
+          console.error("Failed to auto-generate documents:", docErr);
+          // Don't fail the whole order creation if document generation fails
+        }
+      }
     }
 
     return {

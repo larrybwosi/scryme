@@ -22,6 +22,10 @@ import {
   Hash,
   Tag,
   Lock,
+  Briefcase,
+  Calendar,
+  Heart,
+  Users,
 } from "lucide-react";
 import {
   updateMemberCustomization,
@@ -37,8 +41,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
+import { ImageUpload } from "../../image-upload";
 
-export function StaffSettings({ member }: { member: any }) {
+export function StaffSettings({
+  member,
+  allMembers = [],
+}: {
+  member: any;
+  allMembers?: any[];
+}) {
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [form, setForm] = useState({
@@ -49,6 +60,16 @@ export function StaffSettings({ member }: { member: any }) {
     age: member.age || "",
     gender: member.gender || "",
     tags: member.tags || "",
+    image: member.user?.image || "",
+    jobTitle: member.jobTitle || "",
+    employmentType: member.employmentType || "",
+    joiningDate: member.joiningDate
+      ? new Date(member.joiningDate).toISOString().split("T")[0]
+      : "",
+    emergencyContactName: member.emergencyContactName || "",
+    emergencyContactPhone: member.emergencyContactPhone || "",
+    emergencyContactRelation: member.emergencyContactRelation || "",
+    managerId: member.managerId || "",
   });
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -122,6 +143,15 @@ export function StaffSettings({ member }: { member: any }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Profile Image</Label>
+                <ImageUpload
+                  value={form.image ? [form.image] : []}
+                  onChange={urls => setForm({ ...form, image: urls[0] || "" })}
+                  maxImages={1}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
@@ -198,7 +228,7 @@ export function StaffSettings({ member }: { member: any }) {
                 <Label htmlFor="address">Address</Label>
                 <div className="relative">
                   <Home
-                    className="absolute left-3 top-3 text-gray-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                     size={16}
                   />
                   <Input
@@ -211,6 +241,155 @@ export function StaffSettings({ member }: { member: any }) {
                     }
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-white">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Briefcase size={20} className="text-blue-500" />
+                Employment Details
+              </CardTitle>
+              <CardDescription>
+                Corporate position and employment contract information.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="jobTitle">Job Title</Label>
+                  <div className="relative">
+                    <Briefcase
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={16}
+                    />
+                    <Input
+                      id="jobTitle"
+                      className="pl-10"
+                      placeholder="e.g. Senior Accountant"
+                      value={form.jobTitle}
+                      onChange={e =>
+                        setForm({ ...form, jobTitle: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="employmentType">Employment Type</Label>
+                  <Select
+                    value={form.employmentType || ""}
+                    onValueChange={val =>
+                      setForm({ ...form, employmentType: val })
+                    }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FULL_TIME">Full-time</SelectItem>
+                      <SelectItem value="PART_TIME">Part-time</SelectItem>
+                      <SelectItem value="CONTRACT">Contract</SelectItem>
+                      <SelectItem value="INTERN">Intern</SelectItem>
+                      <SelectItem value="TEMPORARY">Temporary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="joiningDate">Joining Date</Label>
+                  <div className="relative">
+                    <Calendar
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={16}
+                    />
+                    <Input
+                      id="joiningDate"
+                      type="date"
+                      className="pl-10"
+                      value={form.joiningDate}
+                      onChange={e =>
+                        setForm({ ...form, joiningDate: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="manager">Reporting Manager</Label>
+                  <Select
+                    value={form.managerId || ""}
+                    onValueChange={val => setForm({ ...form, managerId: val })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Manager</SelectItem>
+                      {allMembers
+                        .filter(m => m.id !== member.id)
+                        .map(m => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.user?.name || m.user?.email}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-white">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Heart size={20} className="text-rose-500" />
+                Emergency Contact
+              </CardTitle>
+              <CardDescription>
+                Primary contact in case of an emergency.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyName">Contact Name</Label>
+                  <Input
+                    id="emergencyName"
+                    placeholder="Full Name"
+                    value={form.emergencyContactName}
+                    onChange={e =>
+                      setForm({ ...form, emergencyContactName: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                  <Input
+                    id="emergencyPhone"
+                    placeholder="+254..."
+                    value={form.emergencyContactPhone}
+                    onChange={e =>
+                      setForm({
+                        ...form,
+                        emergencyContactPhone: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emergencyRelation">Relationship</Label>
+                <Input
+                  id="emergencyRelation"
+                  placeholder="e.g. Spouse, Parent, Sibling"
+                  value={form.emergencyContactRelation}
+                  onChange={e =>
+                    setForm({
+                      ...form,
+                      emergencyContactRelation: e.target.value,
+                    })
+                  }
+                />
               </div>
             </CardContent>
           </Card>

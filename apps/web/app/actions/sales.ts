@@ -144,6 +144,11 @@ export async function getTransactionById(id: string) {
           user: true,
         },
       },
+      attachments: {
+        orderBy: {
+          uploadedAt: "desc",
+        },
+      },
     },
   });
 }

@@ -46,11 +46,18 @@ export class ScrymeChatApiClient {
       throw new Error('Scryme Chat M2M credentials missing');
     }
 
-    const response = await axios.post(`${this.baseUrl}/api/v2/oauth/token`, {
-      grant_type: 'client_credentials',
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-    });
+    const response = await axios.post(
+      `${this.baseUrl}/api/v2/oauth/token`,
+      {
+        grant_type: 'client_credentials',
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+      },
+      {
+        timeout: 10000,
+        maxContentLength: 1 * 1024 * 1024, // 1MB for token
+      }
+    );
 
     this.accessToken = response.data.access_token;
     // Assuming 1 hour expiry if not provided
@@ -73,6 +80,8 @@ export class ScrymeChatApiClient {
         Authorization: `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
       },
+      timeout: 10000,
+      maxContentLength: 10 * 1024 * 1024, // 10MB limit
     });
 
     return response.data;

@@ -197,6 +197,23 @@ export async function getStaffMemberDetail(
       age: true,
       gender: true,
       tags: true,
+      jobTitle: true,
+      employmentType: true,
+      joiningDate: true,
+      emergencyContactName: true,
+      emergencyContactPhone: true,
+      emergencyContactRelation: true,
+      managerId: true,
+      manager: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
       user: {
         select: {
           id: true,
@@ -309,6 +326,14 @@ export async function updateMemberCustomization(
     age?: string;
     gender?: string;
     tags?: string;
+    image?: string;
+    jobTitle?: string;
+    employmentType?: any;
+    joiningDate?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    emergencyContactRelation?: string;
+    managerId?: string;
   },
 ) {
   const session = await getServerAuth();
@@ -328,6 +353,13 @@ export async function updateMemberCustomization(
     age: data.age,
     gender: data.gender,
     tags: data.tags,
+    jobTitle: data.jobTitle,
+    employmentType: data.employmentType,
+    joiningDate: data.joiningDate ? new Date(data.joiningDate) : undefined,
+    emergencyContactName: data.emergencyContactName,
+    emergencyContactPhone: data.emergencyContactPhone,
+    emergencyContactRelation: data.emergencyContactRelation,
+    managerId: data.managerId === "" ? null : data.managerId,
   };
 
   if (data.cardId !== undefined) {
@@ -342,10 +374,18 @@ export async function updateMemberCustomization(
   }
 
   try {
-    await db.member.update({
+    const member = await db.member.update({
       where: { id: memberId, organizationId: session.organizationId },
       data: updateData,
+      select: { userId: true },
     });
+
+    if (data.image) {
+      await db.user.update({
+        where: { id: member.userId },
+        data: { image: data.image },
+      });
+    }
 
     revalidatePath("/staff");
     revalidatePath(`/staff/${memberId}`);

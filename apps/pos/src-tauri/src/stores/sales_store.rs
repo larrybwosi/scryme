@@ -284,6 +284,11 @@ pub async fn process_sale(
 
     let is_interactive_payment = ["MPESA", "PAYBILL", "TILL"].contains(&payment_method.as_str());
 
+    // Check if sale total exceeds threshold for immediate sync
+    let total_amount = payload.get("total").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let threshold = payload.get("forcedImmediateSyncThreshold").and_then(|v| v.as_f64()).unwrap_or(f64::MAX);
+    let exceeds_threshold = total_amount > threshold;
+
     if payment_method == "CASH" {
         let total = payload.get("amountReceived").and_then(|v| v.as_f64())
             .or_else(|| payload.get("total").and_then(|v| v.as_f64()));
@@ -316,22 +321,36 @@ pub async fn process_sale(
         }
     }
 
-    if is_interactive_payment {
-        info!("[SalesStore] Attempting immediate sync for interactive payment: {}", payment_method);
+    if is_interactive_payment || exceeds_threshold {
+        let reason = if is_interactive_payment {
+            payment_method.clone()
+        } else {
+            format!("Sale amount ({:.2}) exceeds threshold ({:.2})", total_amount, threshold)
+        };
+
+        info!("[SalesStore] Attempting immediate sync: {}", reason);
         match push_single_sale(auth_state, &location_id, &payload).await {
             Ok(server_resp) => {
                 return Ok(SaleResponse {
                     success: true,
-                    message: "Transaction initiated successfully.".into(),
+                    message: "Transaction completed successfully.".into(),
                     server_response: Some(server_resp),
                 });
             }
             Err(e) => {
-                error!("[SalesStore] Immediate sync failed for {}: {}", payment_method, e);
-                return Err(SalesError::PaymentProcessingError(format!(
-                    "{} requires an active internet connection. Please check your network or switch to Cash.", 
-                    payment_method
-                )).into());
+                error!("[SalesStore] Immediate sync failed for {}: {}", reason, e);
+                let error_msg = if exceeds_threshold {
+                    format!(
+                        "This sale of {:.2} exceeds the security threshold and requires an active internet connection to verify. Please check your network.",
+                        total_amount
+                    )
+                } else {
+                    format!(
+                        "{} requires an active internet connection. Please check your network or switch to Cash.",
+                        payment_method
+                    )
+                };
+                return Err(SalesError::PaymentProcessingError(error_msg).into());
             }
         }
     }
