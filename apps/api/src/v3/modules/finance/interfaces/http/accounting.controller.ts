@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from "@nestjs/common";
 import { AccountingService } from "../../application/services/accounting.service";
 import { FinancialReportingService } from "../../application/services/financial-reporting.service";
-import { AuthGuard } from "@nestjs/passport"; // Simplified, use actual guard
-import { CurrentUser } from "../../../../common/decorators/current-user.decorator";
+import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 
 @Controller("v3/finance/accounting")
+@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 export class AccountingController {
   constructor(
     private readonly accountingService: AccountingService,

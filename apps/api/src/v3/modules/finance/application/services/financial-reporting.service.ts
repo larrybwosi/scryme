@@ -1,23 +1,22 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../../../prisma/prisma.service";
-import { format } from "date-fns";
+import { PrismaService } from "../../../../../prisma/prisma.service";
 
 @Injectable()
 export class FinancialReportingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getProfitAndLoss(organizationId: string, startDate: Date, endDate: Date) {
-    const accounts = await this.prisma.ledgerAccount.findMany({
+    const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId,
-        type: { in: ["REVENUE", "EXPENSE"] },
+        type: { in: ["REVENUE", "EXPENSE"] as any[] },
       },
       include: {
         journalLines: {
           where: {
             journalEntry: {
               organizationId,
-              status: "POSTED",
+              status: "POSTED" as any,
               entryDate: { gte: startDate, lte: endDate },
             },
           },
@@ -59,17 +58,17 @@ export class FinancialReportingService {
   }
 
   async getBalanceSheet(organizationId: string, asOfDate: Date) {
-    const accounts = await this.prisma.ledgerAccount.findMany({
+    const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId,
-        type: { in: ["ASSET", "LIABILITY", "EQUITY"] },
+        type: { in: ["ASSET", "LIABILITY", "EQUITY"] as any[] },
       },
       include: {
         journalLines: {
           where: {
             journalEntry: {
               organizationId,
-              status: "POSTED",
+              status: "POSTED" as any,
               entryDate: { lte: asOfDate },
             },
           },
@@ -110,25 +109,22 @@ export class FinancialReportingService {
       }
     }
 
-    // Add Current Year Earnings to Equity (Simplified P&L integration)
-    // In a real system, this would be part of a closing process or calculated dynamically
-
     return report;
   }
 
   async getCashFlowStatement(organizationId: string, startDate: Date, endDate: Date) {
     // Simplified Cash Flow (Direct Method - tracking Cash/Bank account movements)
-    const cashAccounts = await this.prisma.ledgerAccount.findMany({
+    const cashAccounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId,
-        subType: { in: ["CASH", "BANK"] },
+        subType: { in: ["CASH", "BANK"] as any[] },
       },
       include: {
         journalLines: {
           where: {
             journalEntry: {
               organizationId,
-              status: "POSTED",
+              status: "POSTED" as any,
               entryDate: { gte: startDate, lte: endDate },
             },
           },
@@ -159,7 +155,6 @@ export class FinancialReportingService {
         if (line.journalEntry.sourceType === "SALE" || line.journalEntry.sourceType === "EXPENSE") {
           report.operatingActivities.push(activity);
         } else {
-          // Default to operating for now, in real systems we'd use account types/source mapping
           report.operatingActivities.push(activity);
         }
         report.netCashChange += amount;
@@ -170,7 +165,7 @@ export class FinancialReportingService {
   }
 
   async getKenyanTaxSummary(organizationId: string, startDate: Date, endDate: Date) {
-    const filings = await this.prisma.taxFiling.findMany({
+    const filings = await this.prisma.client.taxFiling.findMany({
       where: {
         organizationId,
         periodStartDate: { gte: startDate },
@@ -181,17 +176,15 @@ export class FinancialReportingService {
       },
     });
 
-    // Kenyan VAT-7 Summary Logic
-    // This would aggregate Sales VAT (Output Tax) and Purchase VAT (Input Tax)
-    const ledgerData = await this.prisma.journalLine.findMany({
+    const ledgerData = await this.prisma.client.journalLine.findMany({
       where: {
         journalEntry: {
           organizationId,
-          status: "POSTED",
+          status: "POSTED" as any,
           entryDate: { gte: startDate, lte: endDate },
         },
         ledgerAccount: {
-          subType: "TAX_PAYABLE",
+          subType: "TAX_PAYABLE" as any,
         },
       },
       include: {
