@@ -6,16 +6,19 @@ import {
   Req,
   Headers,
   NotFoundException,
+  UseGuards,
 } from "@nestjs/common";
 import { ScrymeService } from "./scryme.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import { PrismaService } from "../../prisma/prisma.service";
+import { ScrymeApprovalService } from "./scryme-approval.service";
 
 @Controller("v2/scryme")
 export class ScrymeController {
   constructor(
     private readonly scrymeService: ScrymeService,
     private readonly prisma: PrismaService,
+    private readonly scrymeApprovalService: ScrymeApprovalService,
   ) {}
 
   @AllowPublic()
@@ -41,6 +44,27 @@ export class ScrymeController {
     }
 
     return this.scrymeService.provisionWorkspace(org.id, org.name, org.slug);
+  }
+
+  @Post("notify")
+  async notify(@Body("requestId") requestId: string) {
+    return this.scrymeApprovalService.notifyApprovers(requestId);
+  }
+
+  @Post("update-messages")
+  async updateMessages(
+    @Body() data: { requestId: string; memberId: string; stepNumber: number },
+  ) {
+    return this.scrymeApprovalService.updateStepMessages(
+      data.requestId,
+      data.memberId,
+      data.stepNumber,
+    );
+  }
+
+  @Post("notify-requester")
+  async notifyRequester(@Body("requestId") requestId: string) {
+    return this.scrymeApprovalService.notifyRequester(requestId);
   }
 
   @Get("config")

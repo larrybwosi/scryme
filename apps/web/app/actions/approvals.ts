@@ -12,6 +12,10 @@ import {
   ApprovalDecision,
   MemberRole,
 } from "@repo/db/client";
+import {
+  submitForApprovalCore,
+  makeApprovalDecisionCore,
+} from "@repo/shared/actions/finance/approvals";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
@@ -63,7 +67,6 @@ export async function submitForApproval(
   },
   tx?: any,
 ) {
-  const client = tx || db;
   const { auth } = await checkPermission([
     "OWNER",
     "ADMIN",
@@ -71,119 +74,82 @@ export async function submitForApproval(
     "EMPLOYEE",
   ]);
 
-  // 1. Find if there's an active workflow for this type
-  const triggerEvent =
-    data.type === "EXPENSE"
-      ? "EXPENSE_CREATED"
-      : data.type === "PURCHASE_ORDER"
-        ? "PURCHASE_ORDER_CREATED"
-        : null;
-
-  const workflow = await client.approvalWorkflow.findFirst({
-    where: {
-      organizationId: auth.organizationId,
-      isActive: true,
-      triggerEvent: triggerEvent,
-    },
-    include: {
-      steps: {
-        orderBy: { stepNumber: "asc" },
-        include: {
-          conditions: true,
-          actions: true,
-        },
-      },
-    },
-  });
-
-  // If no workflow, create a pending request for manual approval by admins
-  const request = await client.approvalRequest.create({
-    data: {
-      organizationId: auth.organizationId,
-      requesterId: auth.memberId,
-      relatedId: data.relatedId,
-      requestType: data.type,
-      amount: data.amount,
-      relatedRecordNumber: data.relatedRecordNumber,
-      status: "PENDING",
-      workflowId: workflow?.id,
-    },
-  });
-
-  // Update the related record status
-  if (data.type === "EXPENSE") {
-    await client.expense.update({
-      where: { id: data.relatedId },
-      data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
-    });
-  } else if (data.type === "PURCHASE_ORDER") {
-    await client.purchase.update({
-      where: { id: data.relatedId },
-      data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
-    });
-  }
+  const request = await submitForApprovalCore(
+    auth.organizationId,
+    auth.memberId,
+    data,
+    tx,
+  );
 
   revalidatePath("/finance/approvals");
+
+  // Trigger Scryme notifications asynchronously
+  if (process.env.PUBLIC_API_URL) {
+    fetch(`${process.env.PUBLIC_API_URL}/v2/scryme/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: request.id }),
+    }).catch((err) =>
+      console.error("Failed to trigger Scryme notification:", err),
+    );
+  }
+
   return request;
 }
 
 export async function makeApprovalDecision(data: {
   requestId: string;
-  status: "APPROVED" | "REJECTED";
+  status: "APPROVED" | "REJECTED" | "REQUEST_INFO";
   comments?: string;
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  const request = await db.approvalRequest.findUnique({
-    where: { id: data.requestId },
-    include: { workflow: { include: { steps: true } } },
-  });
+  const result = await makeApprovalDecisionCore(
+    auth.organizationId,
+    auth.memberId,
+    data,
+  );
+  const { request, finalStatus, nextStep, originalStep } = result;
 
-  if (!request) throw new Error("Request not found");
+  // Update Scryme messages for the step where decision was made
+  if (process.env.PUBLIC_API_URL) {
+    fetch(`${process.env.PUBLIC_API_URL}/v2/scryme/update-messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId: request.id,
+        memberId: auth.memberId,
+        stepNumber: originalStep,
+      }),
+    }).catch((err) => console.error("Failed to update Scryme messages:", err));
+  }
 
-  // Record decision
-  await db.approvalDecision.create({
-    data: {
-      approvalRequestId: data.requestId,
-      approverId: auth.memberId,
-      status: data.status as ApprovalStatus,
-      comments: data.comments,
-      decisionDate: new Date(),
-      stepNumber: request.currentStep,
-    },
-  });
+  // If moved to next step, notify new approvers
+  if (nextStep > originalStep && process.env.PUBLIC_API_URL) {
+    fetch(`${process.env.PUBLIC_API_URL}/v2/scryme/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: request.id }),
+    }).catch((err) =>
+      console.error("Failed to trigger next step Scryme notification:", err),
+    );
+  }
 
-  // Simplified multi-step logic
-  await db.approvalRequest.update({
-    where: { id: data.requestId },
-    data: { status: data.status as ApprovalStatus },
-  });
-
-  // Update related record
-  if (data.status === "APPROVED") {
-    if (request.requestType === "EXPENSE") {
-      await db.expense.update({
-        where: { id: request.relatedId },
-        data: { status: "APPROVED" },
-      });
-    } else if (request.requestType === "PURCHASE_ORDER") {
-      await db.purchase.update({
-        where: { id: request.relatedId },
-        data: { status: "APPROVED" },
-      });
-    }
-  } else if (data.status === "REJECTED") {
-    if (request.requestType === "EXPENSE") {
-      await db.expense.update({
-        where: { id: request.relatedId },
-        data: { status: "REJECTED" },
-      });
-    } else if (request.requestType === "PURCHASE_ORDER") {
-      await db.purchase.update({
-        where: { id: request.relatedId },
-        data: { status: "REJECTED" },
-      });
-    }
+  // If final decision or info requested, notify requester
+  if (
+    (finalStatus === "APPROVED" ||
+      finalStatus === "REJECTED" ||
+      finalStatus === "REQUEST_INFO") &&
+    nextStep === originalStep &&
+    process.env.PUBLIC_API_URL
+  ) {
+    fetch(`${process.env.PUBLIC_API_URL}/v2/scryme/notify-requester`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: request.id }),
+    }).catch((err) =>
+      console.error("Failed to notify requester via Scryme:", err),
+    );
   }
 
   revalidatePath("/finance/approvals");

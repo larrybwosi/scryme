@@ -47,6 +47,7 @@
     "./actions/transaction/orders": "./src/actions/transaction/orders.ts",
     "./actions/organization/mpesa-trigger": "./src/actions/organization/mpesa-trigger.service.ts",
     "./actions/api-management": "./src/actions/api-management/index.ts",
+    "./actions/finance/approvals": "./src/actions/finance/approvals.ts",
     "./types/action-response": "./src/types/action-response.ts"
   },
   "scripts": {

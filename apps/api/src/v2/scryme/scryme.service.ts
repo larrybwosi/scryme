@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeChatApiClient } from "@repo/scryme";
 import { createHmac } from "crypto";
+import { makeApprovalDecisionCore } from "@repo/shared/actions/finance/approvals";
 
 @Injectable()
 export class ScrymeService {
@@ -77,6 +78,91 @@ export class ScrymeService {
 
     if (payload.event === "message.action") {
       const { workspaceSlug, action, message, user } = payload.data;
+
+      if (
+        action.id.startsWith("approve:") ||
+        action.id.startsWith("decline:") ||
+        action.id.startsWith("request_info:")
+      ) {
+        const decisionId = action.value;
+        const [actionType] = action.id.split(":");
+
+        const decision = await this.prisma.client.approvalDecision.findUnique({
+          where: { id: decisionId },
+          include: {
+            approvalRequest: true,
+            approver: { include: { user: true } },
+          },
+        });
+
+        if (decision && decision.approver.user.email === user.email) {
+          const status =
+            actionType === "approve"
+              ? "APPROVED"
+              : actionType === "decline"
+                ? "REJECTED"
+                : "REQUEST_INFO";
+
+          const result = await makeApprovalDecisionCore(
+            decision.approvalRequest.organizationId,
+            decision.approverId,
+            {
+              requestId: decision.approvalRequestId,
+              status: status as any,
+              comments: "Action taken via Scryme Chat",
+            },
+          );
+
+          const { request, finalStatus, nextStep, originalStep } = result;
+
+          // Process side effects (notifications)
+          if (process.env.PUBLIC_API_URL) {
+            const baseUrl = process.env.PUBLIC_API_URL.replace(/\/$/, "");
+
+            // Update Scryme messages for the step
+            fetch(`${baseUrl}/v2/scryme/update-messages`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                requestId: request.id,
+                memberId: decision.approverId,
+                stepNumber: originalStep,
+              }),
+            }).catch((err) =>
+              this.logger.error("Failed to trigger update-messages:", err),
+            );
+
+            // If moved to next step, notify new approvers
+            if (nextStep > originalStep) {
+              fetch(`${baseUrl}/v2/scryme/notify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requestId: request.id }),
+              }).catch((err) =>
+                this.logger.error("Failed to trigger notify for next step:", err),
+              );
+            }
+
+            // If final decision or info requested, notify requester
+            if (
+              (finalStatus === "APPROVED" ||
+                finalStatus === "REJECTED" ||
+                finalStatus === "REQUEST_INFO") &&
+              nextStep === originalStep
+            ) {
+              fetch(`${baseUrl}/v2/scryme/notify-requester`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ requestId: request.id }),
+              }).catch((err) =>
+                this.logger.error("Failed to trigger notify-requester:", err),
+              );
+            }
+          }
+
+          return { status: "success", message: `Action ${status} processed` };
+        }
+      }
 
       // Find the organization associated with this workspace
       const config = await (
