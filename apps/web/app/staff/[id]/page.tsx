@@ -1,18 +1,20 @@
 import React, { Suspense } from "react";
 import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
+import { getMemberDepartments } from "../../actions/department";
 import { notFound } from "next/navigation";
 import { StaffDetailHeader } from "@/components/staff/detail/staff-detail-header";
 import { StaffOverview } from "@/components/staff/detail/staff-overview";
 import { StaffActivity } from "@/components/staff/detail/staff-activity";
 import { StaffSettings } from "@/components/staff/detail/staff-settings";
 import { StaffPerformance } from "@/components/staff/detail/staff-performance";
+import { StaffDepartments } from "@/components/staff/detail/staff-departments";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { BarChart3, Activity, Settings, LayoutDashboard } from "lucide-react";
+import { BarChart3, Activity, Settings, LayoutDashboard, Building2 } from "lucide-react";
 
 export default async function StaffMemberPage({
   params,
@@ -20,9 +22,10 @@ export default async function StaffMemberPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, membersResult] = await Promise.all([
+  const [result, membersResult, departmentsResult] = await Promise.all([
     getStaffMemberDetail(id),
     getStaffMembers(),
+    getMemberDepartments(id),
   ]);
 
   if (!result.success || !result.data) {
@@ -46,7 +49,7 @@ export default async function StaffMemberPage({
         <StaffDetailHeader member={member} />
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border p-1 h-auto gap-1">
+          <TabsList className="bg-white border p-1 h-auto gap-1 overflow-x-auto">
             <TabsTrigger
               value="overview"
               className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
@@ -71,10 +74,17 @@ export default async function StaffMemberPage({
               <Settings size={16} />
               Settings
             </TabsTrigger>
+            <TabsTrigger
+              value="departments"
+              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <Building2 size={16} />
+              Departments
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 outline-none">
             <StaffOverview stats={stats} />
+            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
             <StaffActivity
               transactions={member.transactions}
               attendanceLogs={member.attendanceLogs}
@@ -100,6 +110,10 @@ export default async function StaffMemberPage({
               member={member}
               allMembers={membersResult.success ? membersResult.data : []}
             />
+          </TabsContent>
+
+          <TabsContent value="departments" className="outline-none">
+            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
           </TabsContent>
         </Tabs>
       </div>
