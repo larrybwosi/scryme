@@ -132,6 +132,11 @@ export const UpdateBakerySettingsSchema = z.object({
   autoApproveBatches: z.boolean().optional(),
   lowStockAlerts: z.boolean().optional(),
   timezone: z.string().optional(),
+  scrymeReportEnabled: z.boolean().optional(),
+  scrymeReportDay: z.number().int().min(0).max(6).optional(),
+  scrymeReportTime: z.string().optional(),
+  scrymeReportSections: z.any().optional(),
+  scrymeReportChannel: z.string().optional().nullable(),
 });
 
 export const AddBakerSchema = z.object({

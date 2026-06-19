@@ -88,6 +88,11 @@ export default function SettingsPage() {
     autoCreateDailyBatches: settings?.autoCreateDailyBatches || false,
     expiryWarningDays: settings?.expiryWarningDays || 3,
     authMode: settings?.authMode || 'SSO',
+    scrymeReportEnabled: settings?.scrymeReportEnabled || false,
+    scrymeReportDay: settings?.scrymeReportDay ?? 1,
+    scrymeReportTime: settings?.scrymeReportTime || '08:00',
+    scrymeReportSections: settings?.scrymeReportSections || { batches: true, waste: true, yields: true, top_recipes: true },
+    scrymeReportChannel: settings?.scrymeReportChannel || 'production-reports',
   });
 
   const [brandingData, setBrandingData] = useState(branding);
@@ -109,6 +114,11 @@ export default function SettingsPage() {
         autoCreateDailyBatches: settings.autoCreateDailyBatches || false,
         expiryWarningDays: settings.expiryWarningDays || 3,
         authMode: settings.authMode || 'SSO',
+        scrymeReportEnabled: settings.scrymeReportEnabled || false,
+        scrymeReportDay: settings.scrymeReportDay ?? 1,
+        scrymeReportTime: settings.scrymeReportTime || '08:00',
+        scrymeReportSections: settings.scrymeReportSections || { batches: true, waste: true, yields: true, top_recipes: true },
+        scrymeReportChannel: settings.scrymeReportChannel || 'production-reports',
       });
     }
   }, [settings]);
@@ -168,6 +178,20 @@ export default function SettingsPage() {
       setBrandingData(branding);
     }
   }, [branding]);
+
+  const [isTestingReport, setIsTestingReport] = useState(false);
+
+  const handleTestReport = async () => {
+    setIsTestingReport(true);
+    try {
+      await sdk.client.post('/bakery/settings/test-report');
+      toast.success('Test report triggered. Check Scryme Chat.');
+    } catch (error) {
+      toast.error('Failed to trigger test report');
+    } finally {
+      setIsTestingReport(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -648,6 +672,7 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'notifications' && (
+            <div className="space-y-6">
             <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -685,6 +710,139 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Cloud className="h-5 w-5 text-indigo-500" />
+                  Scryme Chat Production Reports
+                </CardTitle>
+                <CardDescription>Configure weekly production reports sent to Scryme Chat.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Enable Weekly Reports</Label>
+                    <p className="text-sm text-slate-500">Send a summary of production activity every week.</p>
+                  </div>
+                  <Switch
+                    checked={formData.scrymeReportEnabled}
+                    onCheckedChange={checked => setFormData({ ...formData, scrymeReportEnabled: checked })}
+                  />
+                </div>
+
+                {formData.scrymeReportEnabled && (
+                  <>
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Delivery Day</Label>
+                        <Select
+                          value={formData.scrymeReportDay.toString()}
+                          onValueChange={val => setFormData({ ...formData, scrymeReportDay: parseInt(val) })}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">Sunday</SelectItem>
+                            <SelectItem value="1">Monday</SelectItem>
+                            <SelectItem value="2">Tuesday</SelectItem>
+                            <SelectItem value="3">Wednesday</SelectItem>
+                            <SelectItem value="4">Thursday</SelectItem>
+                            <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Delivery Time (HH:MM)</Label>
+                        <Input
+                          type="time"
+                          value={formData.scrymeReportTime}
+                          onChange={e => setFormData({ ...formData, scrymeReportTime: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Target Channel Slug</Label>
+                      <Input
+                        value={formData.scrymeReportChannel || ''}
+                        onChange={e => setFormData({ ...formData, scrymeReportChannel: e.target.value })}
+                        placeholder="production-reports"
+                      />
+                      <p className="text-[10px] text-slate-500">The channel in Scryme Chat where the report will be posted.</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Report Sections</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="section-batches"
+                            checked={formData.scrymeReportSections?.batches}
+                            onCheckedChange={checked => setFormData({
+                              ...formData,
+                              scrymeReportSections: { ...formData.scrymeReportSections, batches: checked }
+                            })}
+                          />
+                          <Label htmlFor="section-batches" className="text-sm">Batch Summary</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="section-waste"
+                            checked={formData.scrymeReportSections?.waste}
+                            onCheckedChange={checked => setFormData({
+                              ...formData,
+                              scrymeReportSections: { ...formData.scrymeReportSections, waste: checked }
+                            })}
+                          />
+                          <Label htmlFor="section-waste" className="text-sm">Waste Analysis</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="section-yields"
+                            checked={formData.scrymeReportSections?.yields}
+                            onCheckedChange={checked => setFormData({
+                              ...formData,
+                              scrymeReportSections: { ...formData.scrymeReportSections, yields: checked }
+                            })}
+                          />
+                          <Label htmlFor="section-yields" className="text-sm">Production Yields</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="section-top_recipes"
+                            checked={formData.scrymeReportSections?.top_recipes}
+                            onCheckedChange={checked => setFormData({
+                              ...formData,
+                              scrymeReportSections: { ...formData.scrymeReportSections, top_recipes: checked }
+                            })}
+                          />
+                          <Label htmlFor="section-top_recipes" className="text-sm">Top Recipes</Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Test Configuration</p>
+                        <p className="text-xs text-slate-500">Send a sample report to Scryme Chat immediately.</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleTestReport}
+                        disabled={isTestingReport}
+                      >
+                        {isTestingReport ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+                        Send Test Report
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+            </div>
           )}
 
           {activeTab === 'units' && <UnitsSettingsSection />}

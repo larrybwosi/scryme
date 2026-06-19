@@ -13,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { BakeryService } from "./bakery.service";
+import { BakeryReportService } from "./reports/bakery-report.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
 import {
   RequirePermission,
@@ -44,7 +45,10 @@ import {
 @ApiTags("Bakery")
 @Controller("bakery")
 export class BakeryController {
-  constructor(private readonly bakeryService: BakeryService) {}
+  constructor(
+    private readonly bakeryService: BakeryService,
+    private readonly bakeryReportService: BakeryReportService,
+  ) {}
 
   @Get()
   @RequirePermission("bakery:batch:view")
@@ -302,6 +306,14 @@ export class BakeryController {
   @UsePipes(new ZodValidationPipe(UpdateBakerySettingsSchema))
   async updateSettings(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.updateSettings(ctx, data);
+  }
+
+  @Post("settings/test-report")
+  @RequirePermission("bakery:settings:manage")
+  async testReport(@v2Context() ctx: V2ApiContext) {
+    const { organizationId } = ctx;
+    await this.bakeryReportService.generateAndSendReport(organizationId, 7);
+    return { status: "success", message: "Test report triggered" };
   }
 
   @Get("bakers")

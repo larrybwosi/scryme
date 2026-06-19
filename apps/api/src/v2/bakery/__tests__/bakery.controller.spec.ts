@@ -1,12 +1,17 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BakeryController } from "../bakery.controller";
 import { BakeryService } from "../bakery.service";
+import { BakeryReportService } from "../reports/bakery-report.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 describe("BakeryController", () => {
   let controller: BakeryController;
   let service: BakeryService;
+
+  const mockBakeryReportService = {
+    generateAndSendReport: vi.fn(),
+  };
 
   const mockBakeryService = {
     getBakeryOverview: vi.fn(),
@@ -75,6 +80,7 @@ describe("BakeryController", () => {
       controllers: [BakeryController],
       providers: [
         { provide: BakeryService, useValue: mockBakeryService },
+        { provide: BakeryReportService, useValue: mockBakeryReportService },
         { provide: PrismaService, useValue: {} },
       ],
     }).compile();
