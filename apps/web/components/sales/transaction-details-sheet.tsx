@@ -33,6 +33,7 @@ import {
   Calendar,
   Paperclip,
   Plus,
+  ExternalLink,
 } from "lucide-react";
 import {
   getTransactionById,
@@ -230,21 +231,26 @@ export function TransactionDetailsSheet({
 
             {/* Core Tab System */}
             <Tabs defaultValue="items" className="w-full">
-              <TabsList className="w-full grid grid-cols-3 bg-zinc-200/60 p-1 border border-zinc-200/40 rounded-lg">
+              <TabsList className="w-full grid grid-cols-4 bg-zinc-200/60 p-1 border border-zinc-200/40 rounded-lg">
                 <TabsTrigger
                   value="items"
                   className="text-xs font-medium data-[state=active]:shadow-sm">
-                  Line Items ({transaction.items?.length || 0})
+                  Items ({transaction.items?.length || 0})
                 </TabsTrigger>
                 <TabsTrigger
                   value="payments"
                   className="text-xs font-medium data-[state=active]:shadow-sm">
-                  Ledger & Payments
+                  Payments
+                </TabsTrigger>
+                <TabsTrigger
+                  value="documents"
+                  className="text-xs font-medium data-[state=active]:shadow-sm">
+                  Docs ({transaction.attachments?.length || 0})
                 </TabsTrigger>
                 <TabsTrigger
                   value="details"
                   className="text-xs font-medium data-[state=active]:shadow-sm">
-                  Entity Details
+                  Details
                 </TabsTrigger>
               </TabsList>
 
@@ -324,6 +330,95 @@ export function TransactionDetailsSheet({
                       </span>
                     </div>
                   </div>
+                </div>
+              </TabsContent>
+
+              {/* Documents Panel */}
+              <TabsContent
+                value="documents"
+                className="mt-4 space-y-4 outline-none">
+                <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm shadow-zinc-100/50">
+                  <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-zinc-400" />
+                      Stored Documents
+                    </h3>
+                  </div>
+
+                  {transaction.attachments?.length > 0 ? (
+                    <div className="divide-y divide-zinc-100">
+                      {transaction.attachments.map((att: any) => (
+                        <div
+                          key={att.id}
+                          className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400">
+                              {att.mimeType === "application/pdf" ? (
+                                <FileText className="w-5 h-5 text-red-500" />
+                              ) : att.mimeType.startsWith("image/") ? (
+                                <Paperclip className="w-5 h-5 text-blue-500" />
+                              ) : (
+                                <Paperclip className="w-5 h-5" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-zinc-900">
+                                {att.fileName}
+                              </p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[10px] text-zinc-400 font-medium">
+                                  {att.description || "No description"}
+                                </span>
+                                <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                                <span className="text-[10px] text-zinc-400 font-medium">
+                                  {format(
+                                    new Date(att.uploadedAt),
+                                    "MMM d, yyyy",
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                              asChild>
+                              <a
+                                href={att.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer">
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                              asChild>
+                              <a href={att.fileUrl} download={att.fileName}>
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-12 text-center space-y-2">
+                      <div className="w-12 h-12 rounded-full bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-300 mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-medium text-zinc-500">
+                        No documents archived
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        Invoices and receipts for orders are automatically
+                        stored here.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
