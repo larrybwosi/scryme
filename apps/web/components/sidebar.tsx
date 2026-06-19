@@ -3,12 +3,25 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@repo/ui/components/ui/alert-dialog";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import {
   ChevronLeft,
   ChevronRight,
@@ -130,8 +143,10 @@ const sidebarConfig: SidebarSection[] = [
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session, isPending } = useSession();
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -318,7 +333,7 @@ export function Sidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutDialog(true)}
                   aria-label="Sign out"
                   className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
                   <LogOut size={20} />
@@ -345,27 +360,59 @@ export function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 bg-gray-50 border-t flex items-center justify-between">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold flex-shrink-0">
-            N
-          </div>
+      <div
+        className={cn(
+          "p-4 bg-gray-50 border-t flex items-center justify-between",
+          isCollapsed && "justify-center",
+        )}>
+        <div
+          className={cn(
+            "flex items-center gap-3 overflow-hidden",
+            isCollapsed && "w-full",
+          )}>
+          {isPending ? (
+            <Skeleton
+              className={cn(
+                "w-10 h-10 rounded-full shrink-0",
+                isCollapsed && "mx-auto",
+              )}
+            />
+          ) : (
+            <div
+              className={cn(
+                "w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold flex-shrink-0",
+                isCollapsed && "mx-auto",
+              )}>
+              {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+          )}
           {!isCollapsed && (
-            <div className="overflow-hidden">
-              <div className="font-bold text-sm truncate text-[#1D1D1F]">
-                Rahat Ali
-              </div>
-              <div className="text-[11px] text-gray-500 truncate">
-                Super Admin
-              </div>
+            <div className="overflow-hidden flex flex-col gap-1">
+              {isPending ? (
+                <>
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </>
+              ) : (
+                <>
+                  <div className="font-bold text-sm truncate text-[#1D1D1F]">
+                    {session?.user?.name}
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="w-fit text-[10px] px-1.5 py-0 h-4 capitalize bg-gray-200 text-gray-700 border-none">
+                    {(session?.user as any)?.role || "user"}
+                  </Badge>
+                </>
+              )}
             </div>
           )}
         </div>
-        {!isCollapsed && (
+        {!isCollapsed && !isPending && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutDialog(true)}
                 aria-label="Sign out"
                 className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors">
                 <LogOut size={16} />
@@ -375,6 +422,26 @@ export function Sidebar() {
           </Tooltip>
         )}
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will log you out of your account and you will need to sign in
+              again to access your dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white">
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }
