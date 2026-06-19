@@ -258,6 +258,17 @@ model Member {
   gender    String?
   tags      String?
 
+  jobTitle               String?
+  employmentType         EmploymentType?
+  joiningDate            DateTime?
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+  emergencyContactRelation String?
+
+  managerId String?
+  manager   Member?  @relation("MemberManager", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates Member[] @relation("MemberManager")
+
   auditLogs    AuditLog[]
   transactions Transaction[]
   returns      Return[]
@@ -400,6 +411,14 @@ enum MembershipStatus {
   PENDING_APPROVAL
   SUSPENDED
   REJECTED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  TEMPORARY
 }
 
 model AttendanceLog {
