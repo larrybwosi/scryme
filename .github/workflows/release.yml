@@ -42,7 +42,7 @@ jobs:
       - name: Lint and Type Check
         run: pnpm turbo lint type-check
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
 
       - name: Run API Tests
         run: pnpm --filter api test
