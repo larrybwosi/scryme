@@ -12,3 +12,7 @@
 ## 2025-06-12 - [Component Nesting & Prop Forwarding for Tooltips]
 **Learning:** When wrapping custom dialog/sheet components (like `UnitDialog`) in `TooltipTrigger asChild`, the custom component MUST forward props and refs to its internal trigger (`DialogTrigger`/`SheetTrigger`). Otherwise, event handlers (hover, click) are lost, breaking both the tooltip and the trigger.
 **Action:** Always extend `React.ComponentPropsWithoutRef<typeof Trigger>` in custom dialog/sheet props and spread `props` onto the internal trigger. If the custom component is used directly as a trigger, ensure it can render the appropriate semantic element (e.g., `Button`).
+
+## 2025-06-19 - [Accessible Destructive Actions with Feedback]
+**Learning:** Using native `confirm()` for destructive actions is a missed opportunity for brand consistency and accessibility. Furthermore, users often experience "click uncertainty" during network requests if there is no immediate visual feedback (like a loading spinner) on the action button.
+**Action:** Replace native confirmation dialogs with themed `AlertDialog` components. Always include a loading state (spinner + "Deleting...") in the confirmation button to provide immediate feedback for asynchronous operations.
