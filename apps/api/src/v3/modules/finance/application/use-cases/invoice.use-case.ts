@@ -35,7 +35,31 @@ export class InvoiceUseCase {
         balanceDue: grandTotal,
         items: { create: items },
       },
-      include: { items: true },
+      // ⚡ Bolt Optimization: Use targeted select for scalar fields and items
+      // to reduce database payload size and serialization overhead.
+      select: {
+        id: true,
+        customerId: true,
+        customerName: true,
+        postingDate: true,
+        dueDate: true,
+        netTotal: true,
+        totalTaxes: true,
+        grandTotal: true,
+        amountPaid: true,
+        balanceDue: true,
+        status: true,
+        kraPin: true,
+        kraCompliant: true,
+        etrMode: true,
+        organizationId: true,
+        transactionId: true,
+        templateId: true,
+        templateVersion: true,
+        createdAt: true,
+        updatedAt: true,
+        items: true,
+      },
     });
   }
 
@@ -49,7 +73,29 @@ export class InvoiceUseCase {
   async createInvoiceFromOrder(organizationId: string, orderId: string) {
     const order = await this.prisma.client.transaction.findFirst({
       where: { id: orderId, organizationId },
-      include: { items: true, businessAccount: true },
+      // ⚡ Bolt Optimization: Use targeted select for order data and items
+      // to reduce database load and serialization overhead.
+      select: {
+        id: true,
+        totalPaid: true,
+        finalTotal: true,
+        subtotal: true,
+        businessAccount: {
+          select: {
+            name: true,
+          },
+        },
+        items: {
+          select: {
+            sku: true,
+            productName: true,
+            variantName: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+          },
+        },
+      },
     });
 
     if (!order) throw new NotFoundException("Order not found");
@@ -94,20 +140,78 @@ export class InvoiceUseCase {
   async getInvoices(organizationId: string) {
     return await this.prisma.client.invoice.findMany({
       where: { organizationId },
-      include: { items: true, template: true },
+      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // and network payload size by excluding large relations like 'items'.
+      select: {
+        id: true,
+        customerName: true,
+        postingDate: true,
+        dueDate: true,
+        grandTotal: true,
+        amountPaid: true,
+        balanceDue: true,
+        status: true,
+        template: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
   }
 
   async getInvoiceById(organizationId: string, invoiceId: string) {
+    // ⚡ Bolt Optimization: Shared select block for detail view and status synchronization.
+    const invoiceSelect = {
+      id: true,
+      customerId: true,
+      customerName: true,
+      postingDate: true,
+      dueDate: true,
+      netTotal: true,
+      totalTaxes: true,
+      grandTotal: true,
+      amountPaid: true,
+      balanceDue: true,
+      status: true,
+      kraPin: true,
+      kraCompliant: true,
+      etrMode: true,
+      organizationId: true,
+      transactionId: true,
+      templateId: true,
+      templateVersion: true,
+      createdAt: true,
+      updatedAt: true,
+      items: true,
+      template: {
+        select: {
+          id: true,
+          name: true,
+          logoUrl: true,
+          templateData: true,
+        },
+      },
+      organization: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      transaction: {
+        select: {
+          id: true,
+          totalPaid: true,
+          finalTotal: true,
+        },
+      },
+    };
+
     const invoice = await this.prisma.client.invoice.findFirst({
       where: { id: invoiceId, organizationId },
-      include: {
-        items: true,
-        template: true,
-        organization: true,
-        transaction: true,
-      },
+      select: invoiceSelect,
     });
     if (!invoice) throw new NotFoundException("Invoice not found");
 
@@ -134,12 +238,7 @@ export class InvoiceUseCase {
             balanceDue: balanceDue,
             status: status,
           },
-          include: {
-            items: true,
-            template: true,
-            organization: true,
-            transaction: true,
-          },
+          select: invoiceSelect,
         });
       }
     }
@@ -172,7 +271,31 @@ export class InvoiceUseCase {
           create: items,
         },
       },
-      include: { items: true },
+      // ⚡ Bolt Optimization: Use targeted select for scalar fields and items
+      // to reduce database payload size and serialization overhead.
+      select: {
+        id: true,
+        customerId: true,
+        customerName: true,
+        postingDate: true,
+        dueDate: true,
+        netTotal: true,
+        totalTaxes: true,
+        grandTotal: true,
+        amountPaid: true,
+        balanceDue: true,
+        status: true,
+        kraPin: true,
+        kraCompliant: true,
+        etrMode: true,
+        organizationId: true,
+        transactionId: true,
+        templateId: true,
+        templateVersion: true,
+        createdAt: true,
+        updatedAt: true,
+        items: true,
+      },
     });
   }
 
