@@ -126,7 +126,6 @@ jobs:
     needs: [filter]
     if: |
       needs.filter.outputs.api == 'true' ||
-      needs.filter.outputs.packages == 'true' ||
       needs.filter.outputs.workflow == 'true' ||
       needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
@@ -170,7 +169,7 @@ jobs:
             ${{ runner.os }}-turbo-api-
 
       - name: Build and Verify
-        run: pnpm turbo build lint type-check test --filter=api...
+        run: pnpm turbo build lint type-check test --filter=api
 
   lint-typecheck:
     needs: [filter, validation-needed]
