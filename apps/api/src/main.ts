@@ -25,53 +25,55 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  // Request logging for debugging
-  app
-    .getHttpAdapter()
-    .getInstance()
-    .addHook("onRequest", (request, reply, done) => {
-      const startTime = Date.now();
-      const { method, url, headers, body, query } = request;
+  // Request logging for debugging - only in non-production or if explicitly enabled
+  if (env.NODE_ENV !== "production" || process.env.ENABLE_REQUEST_LOGGING === "true") {
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .addHook("onRequest", (request, reply, done) => {
+        const startTime = Date.now();
+        const { method, url, headers, body, query } = request;
 
-      // Log incoming request
-      console.log({
-        timestamp: new Date().toISOString(),
-        type: "INCOMING_REQUEST",
-        method,
-        url,
-        headers: {
-          "user-agent": headers["user-agent"],
-          "content-type": headers["content-type"],
-          "x-api-key": headers["x-api-key"] ? "[REDACTED]" : undefined,
-          "x-member-token": headers["x-member-token"]
-            ? "[REDACTED]"
-            : undefined,
-          authorization: headers.authorization ? "[REDACTED]" : undefined,
-        },
-        query: Object.keys(query || {}).length
-          ? redactSensitiveData(query)
-          : undefined,
-        body:
-          body && Object.keys(body).length
-            ? redactSensitiveData(body)
-            : undefined,
-      });
-
-      // Log response when request completes
-      reply.raw.on("finish", () => {
-        const duration = Date.now() - startTime;
+        // Log incoming request
         console.log({
           timestamp: new Date().toISOString(),
-          type: "REQUEST_COMPLETED",
+          type: "INCOMING_REQUEST",
           method,
           url,
-          statusCode: reply.statusCode,
-          duration: `${duration}ms`,
+          headers: {
+            "user-agent": headers["user-agent"],
+            "content-type": headers["content-type"],
+            "x-api-key": headers["x-api-key"] ? "[REDACTED]" : undefined,
+            "x-member-token": headers["x-member-token"]
+              ? "[REDACTED]"
+              : undefined,
+            authorization: headers.authorization ? "[REDACTED]" : undefined,
+          },
+          query: Object.keys(query || {}).length
+            ? redactSensitiveData(query)
+            : undefined,
+          body:
+            body && Object.keys(body as any).length
+              ? redactSensitiveData(body)
+              : undefined,
         });
-      });
 
-      done();
-    });
+        // Log response when request completes
+        reply.raw.on("finish", () => {
+          const duration = Date.now() - startTime;
+          console.log({
+            timestamp: new Date().toISOString(),
+            type: "REQUEST_COMPLETED",
+            method,
+            url,
+            statusCode: reply.statusCode,
+            duration: `${duration}ms`,
+          });
+        });
+
+        done();
+      });
+  }
 
   // Middlewares & Plugins
   await app.register(fastifyCookie as any);

@@ -5,6 +5,7 @@ import { env } from "@repo/env";
 
 export interface IRedisClient {
   get: <T>(key: string) => Promise<T | null>;
+  getBuffer: (key: string) => Promise<Buffer | null>;
   setex: <T>(key: string, ttl: number, value: T) => Promise<void>;
   del: (...keys: string[]) => Promise<number>;
   keys: (pattern: string) => Promise<string[]>;
@@ -42,9 +43,18 @@ export class RedisService implements OnModuleInit {
           const value = await upstash.get(key);
           return this.parseRedisJSON<T>(value);
         },
+        getBuffer: async (key: string): Promise<Buffer | null> => {
+          const value = await upstash.get(key);
+          if (value === null) return null;
+          return Buffer.from(value as string, "base64");
+        },
         setex: async <T>(key: string, ttl: number, value: T) => {
           const stringValue =
-            typeof value === "string" ? value : JSON.stringify(value);
+            value instanceof Buffer
+              ? value.toString("base64")
+              : typeof value === "string"
+                ? value
+                : JSON.stringify(value);
           await upstash.set(key, stringValue, { ex: ttl });
         },
         del: (...keys: string[]) => upstash.del(...keys),
@@ -74,10 +84,17 @@ export class RedisService implements OnModuleInit {
           const value = await ioredis.get(key);
           return this.parseRedisJSON<T>(value);
         },
+        getBuffer: async (key: string): Promise<Buffer | null> => {
+          return await ioredis.getBuffer(key);
+        },
         setex: async <T>(key: string, ttl: number, value: T) => {
-          const stringValue =
-            typeof value === "string" ? value : JSON.stringify(value);
-          await ioredis.setex(key, ttl, stringValue);
+          if (value instanceof Buffer) {
+            await ioredis.setex(key, ttl, value);
+          } else {
+            const stringValue =
+              typeof value === "string" ? value : JSON.stringify(value);
+            await ioredis.setex(key, ttl, stringValue);
+          }
         },
         del: (...keys: string[]) => ioredis.del(...keys),
         keys: (pattern: string) => ioredis.keys(pattern),
@@ -114,6 +131,10 @@ export class RedisService implements OnModuleInit {
 
   async get<T>(key: string): Promise<T | null> {
     return this.client.get<T>(key);
+  }
+
+  async getBuffer(key: string): Promise<Buffer | null> {
+    return this.client.getBuffer(key);
   }
 
   async setex<T>(key: string, ttl: number, value: T): Promise<void> {
