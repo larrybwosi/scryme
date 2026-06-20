@@ -141,8 +141,12 @@ export async function createDepartment(data: {
   name: string;
   description?: string;
   headId?: string;
+  parentId?: string;
+  locationId?: string;
+  costCenterId?: string;
   image?: string;
   banner?: string;
+  settings?: any;
 }) {
   try {
     const session = await checkAdminPermission();
@@ -151,9 +155,13 @@ export async function createDepartment(data: {
       data: {
         name: data.name,
         description: data.description,
-        headId: data.headId || null,
+        headId: data.headId === "none" ? null : data.headId,
+        parentId: data.parentId === "none" ? null : data.parentId,
+        locationId: data.locationId === "none" ? null : data.locationId,
+        costCenterId: data.costCenterId === "none" ? null : data.costCenterId,
         image: data.image,
         banner: data.banner,
+        settings: data.settings || {},
         organizationId: session.organizationId,
       },
     });
@@ -182,8 +190,12 @@ export async function updateDepartment(
     name?: string;
     description?: string;
     headId?: string;
+    parentId?: string;
+    locationId?: string;
+    costCenterId?: string;
     image?: string;
     banner?: string;
+    settings?: any;
   },
 ) {
   try {
@@ -202,9 +214,13 @@ export async function updateDepartment(
       data: {
         name: data.name,
         description: data.description,
-        headId: data.headId === "" ? null : data.headId,
+        headId: (data.headId === "" || data.headId === "none") ? null : data.headId,
+        parentId: (data.parentId === "" || data.parentId === "none") ? null : data.parentId,
+        locationId: (data.locationId === "" || data.locationId === "none") ? null : data.locationId,
+        costCenterId: (data.costCenterId === "" || data.costCenterId === "none") ? null : data.costCenterId,
         image: data.image,
         banner: data.banner,
+        settings: data.settings,
       },
     });
 

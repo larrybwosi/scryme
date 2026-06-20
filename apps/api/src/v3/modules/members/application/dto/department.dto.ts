@@ -29,6 +29,25 @@ export class CreateDepartmentDto {
   @IsOptional()
   @IsString()
   headId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  costCenterId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  settings?: any;
 }
 
 export class UpdateDepartmentDto {
@@ -51,6 +70,25 @@ export class UpdateDepartmentDto {
   @IsOptional()
   @IsString()
   headId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  costCenterId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  settings?: any;
 }
 
 export class DepartmentResponseDto {

@@ -307,6 +307,7 @@ model CostCenter {
 
   expenses       Expense[]
   budgets        Budget[]
+  departments    Department[]
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
