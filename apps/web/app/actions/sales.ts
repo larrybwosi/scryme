@@ -335,9 +335,58 @@ export async function addPayment(
     },
   });
 
+  // Generation of invoice and receipt on payment
+  const { documentService } = await import(
+    "@repo/shared/lib/services/document"
+  );
+  try {
+    await Promise.all([
+      documentService.generateAndSaveInvoice(
+        transactionId,
+        auth.organizationId!,
+        auth.memberId!,
+      ),
+      documentService.generateAndSaveReceipt(
+        transactionId,
+        auth.organizationId!,
+        auth.memberId!,
+      ),
+    ]);
+  } catch (err) {
+    console.error("Failed to generate documents on payment:", err);
+  }
+
   revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${transactionId}`);
   return payment;
+}
+
+export async function generateDocumentAction(
+  transactionId: string,
+  type: "invoice" | "receipt",
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const { documentService } = await import(
+    "@repo/shared/lib/services/document"
+  );
+
+  if (type === "invoice") {
+    await documentService.generateAndSaveInvoice(
+      transactionId,
+      auth.organizationId!,
+      auth.memberId!,
+    );
+  } else {
+    await documentService.generateAndSaveReceipt(
+      transactionId,
+      auth.organizationId!,
+      auth.memberId!,
+    );
+  }
+
+  revalidatePath(`/sales/transactions/${transactionId}`);
+  return { success: true };
 }
 
 export async function getFulfillments(params: {
