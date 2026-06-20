@@ -19,7 +19,7 @@ export class InsightService {
     });
 
     const totalSpent = transactions.reduce(
-      (acc, tx) => acc + Number(tx.finalTotal),
+      (acc: number, tx: { finalTotal: any }) => acc + Number(tx.finalTotal),
       0,
     );
     const purchaseCount = transactions.length;
@@ -48,7 +48,7 @@ export class InsightService {
     let recencyScore = 0;
     if (transactions.length > 0) {
       const lastPurchase = new Date(
-        Math.max(...transactions.map((t) => t.createdAt.getTime())),
+        Math.max(...transactions.map((t: { createdAt: Date }) => t.createdAt.getTime())),
       );
       const daysSinceLastPurchase =
         (Date.now() - lastPurchase.getTime()) / (1000 * 60 * 60 * 24);
@@ -69,7 +69,11 @@ export class InsightService {
       lastPurchaseDate:
         transactions.length > 0
           ? new Date(
-              Math.max(...transactions.map((t) => t.createdAt.getTime())),
+              Math.max(
+                ...transactions.map((t: { createdAt: Date }) =>
+                  t.createdAt.getTime(),
+                ),
+              )
             )
           : null,
     };
