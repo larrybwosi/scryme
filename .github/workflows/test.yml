@@ -122,6 +122,56 @@ jobs:
             echo "needed=false" >> $GITHUB_OUTPUT
           fi
 
+  api-ci:
+    needs: [filter]
+    if: |
+      needs.filter.outputs.api == 'true' ||
+      needs.filter.outputs.packages == 'true' ||
+      needs.filter.outputs.workflow == 'true' ||
+      needs.filter.outputs.test_workflow == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_OPTIONS: "--max-old-space-size=8192"
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma Client
+        run: pnpm generate
+
+      - name: Turbo Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-api-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-api-
+
+      - name: Build and Verify
+        run: pnpm turbo build lint type-check test --filter=api...
+
   lint-typecheck:
     needs: [filter, validation-needed]
     if: needs.validation-needed.outputs.needed == 'true'
@@ -154,7 +204,7 @@ jobs:
       - name: Lint and Type Check Apps
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -168,7 +218,6 @@ jobs:
             FILTER=""
             if [ "${{ needs.filter.outputs.pos }}" == "true" ]; then FILTER="$FILTER --filter=pos..."; fi
             if [ "${{ needs.filter.outputs.bakery }}" == "true" ]; then FILTER="$FILTER --filter=bakery..."; fi
-            if [ "${{ needs.filter.outputs.api }}" == "true" ]; then FILTER="$FILTER --filter=api..."; fi
             if [ "${{ needs.filter.outputs.crm }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
             if [ "${{ needs.filter.outputs.web }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
 
@@ -188,7 +237,7 @@ jobs:
       - name: Lint and Type Check Packages
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -342,9 +391,6 @@ jobs:
           if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             pnpm --filter pos test:frontend
           fi
-          if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            pnpm --filter api test
-          fi
 
   e2e-tests:
     needs: [filter]
@@ -379,7 +425,6 @@ jobs:
     needs: [filter, lint-typecheck]
     if: |
       github.event_name == 'pull_request' && (
-        needs.filter.outputs.api == 'true' ||
         needs.filter.outputs.crm == 'true' ||
         needs.filter.outputs.web == 'true' ||
         needs.filter.outputs.packages == 'true' ||
@@ -416,7 +461,7 @@ jobs:
       - name: Build
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -427,13 +472,12 @@ jobs:
 
           if [ "$APPS_CHANGED" == "true" ]; then
             FILTER=""
-            if [ "${{ needs.filter.outputs.api }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=api..."; fi
             if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
             if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
             pnpm turbo build $FILTER
           elif [ "$ROOT_CHANGED" == "true" ]; then
             echo "Root changes detected and no app changes, building all apps..."
-            pnpm turbo build --filter=api... --filter=crm... --filter=web...
+            pnpm turbo build --filter=crm... --filter=web...
           else
             echo "No app changes requiring build-verify detected"
           fi
