@@ -34,12 +34,14 @@ import {
   Paperclip,
   Plus,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import {
   getTransactionById,
   updateTransactionStatus,
   uploadFileAction,
   addAttachmentToPayment,
+  generateDocumentAction,
 } from "../../app/actions/sales";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
@@ -59,6 +61,8 @@ export function TransactionDetailsSheet({
   const [transaction, setTransaction] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
+  const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
 
   const fetchTransaction = useCallback(async () => {
     if (!transactionId) return;
@@ -87,6 +91,25 @@ export function TransactionDetailsSheet({
       fetchTransaction();
     } catch (error) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleGenerateDocument = async (type: "invoice" | "receipt") => {
+    if (!transaction) return;
+    if (type === "invoice") setIsGeneratingInvoice(true);
+    else setIsGeneratingReceipt(true);
+
+    try {
+      await generateDocumentAction(transaction.id, type);
+      toast.success(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`,
+      );
+      fetchTransaction();
+    } catch (error) {
+      toast.error(`Failed to generate ${type}`);
+    } finally {
+      if (type === "invoice") setIsGeneratingInvoice(false);
+      else setIsGeneratingReceipt(false);
     }
   };
 
@@ -169,25 +192,27 @@ export function TransactionDetailsSheet({
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
-                asChild>
-                <a
-                  href={`/api/sales/documents/${transaction.id}?type=invoice`}
-                  download>
-                  <Download className="w-3.5 h-3.5 text-zinc-500" />
-                  Invoice
-                </a>
+                onClick={() => handleGenerateDocument("invoice")}
+                disabled={isGeneratingInvoice}>
+                {isGeneratingInvoice ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5 text-zinc-500" />
+                )}
+                Gen Invoice
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
-                asChild>
-                <a
-                  href={`/api/sales/documents/${transaction.id}?type=receipt`}
-                  download>
+                onClick={() => handleGenerateDocument("receipt")}
+                disabled={isGeneratingReceipt}>
+                {isGeneratingReceipt ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
                   <Receipt className="w-3.5 h-3.5 text-zinc-500" />
-                  Receipt
-                </a>
+                )}
+                Gen Receipt
               </Button>
             </div>
           </div>
@@ -337,76 +362,122 @@ export function TransactionDetailsSheet({
               <TabsContent
                 value="documents"
                 className="mt-4 space-y-4 outline-none">
-                <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm shadow-zinc-100/50">
-                  <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5 text-zinc-400" />
-                      Stored Documents
-                    </h3>
-                  </div>
-
+                <div className="space-y-6">
                   {transaction.attachments?.length > 0 ? (
-                    <div className="divide-y divide-zinc-100">
-                      {transaction.attachments.map((att: any) => (
-                        <div
-                          key={att.id}
-                          className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400">
-                              {att.mimeType === "application/pdf" ? (
-                                <FileText className="w-5 h-5 text-red-500" />
-                              ) : att.mimeType.startsWith("image/") ? (
-                                <Paperclip className="w-5 h-5 text-blue-500" />
-                              ) : (
-                                <Paperclip className="w-5 h-5" />
-                              )}
+                    (() => {
+                      const sortedAttachments = [...transaction.attachments].sort(
+                        (a, b) =>
+                          new Date(b.uploadedAt).getTime() -
+                          new Date(a.uploadedAt).getTime(),
+                      );
+
+                      const groups = sortedAttachments.reduce(
+                        (acc: any, att: any) => {
+                          const desc = att.description?.toLowerCase() || "";
+                          let group = "Others";
+                          if (desc.includes("invoice")) group = "Invoices";
+                          else if (desc.includes("receipt")) group = "Receipts";
+                          else if (
+                            desc.includes("proof") ||
+                            desc.includes("delivery")
+                          )
+                            group = "Delivery & Proofs";
+
+                          if (!acc[group]) acc[group] = [];
+                          acc[group].push(att);
+                          return acc;
+                        },
+                        {},
+                      );
+
+                      const order = [
+                        "Invoices",
+                        "Receipts",
+                        "Delivery & Proofs",
+                        "Others",
+                      ];
+
+                      return order.map(groupName => {
+                        const docs = groups[groupName];
+                        if (!docs) return null;
+
+                        return (
+                          <div
+                            key={groupName}
+                            className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm shadow-zinc-100/50">
+                            <div className="p-4 border-b border-zinc-100 bg-zinc-50/50">
+                              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                                <FileText className="w-3.5 h-3.5 text-zinc-400" />
+                                {groupName} ({docs.length})
+                              </h3>
                             </div>
-                            <div>
-                              <p className="text-sm font-semibold text-zinc-900">
-                                {att.fileName}
-                              </p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] text-zinc-400 font-medium">
-                                  {att.description || "No description"}
-                                </span>
-                                <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                                <span className="text-[10px] text-zinc-400 font-medium">
-                                  {format(
-                                    new Date(att.uploadedAt),
-                                    "MMM d, yyyy",
-                                  )}
-                                </span>
-                              </div>
+                            <div className="divide-y divide-zinc-100">
+                              {docs.map((att: any) => (
+                                <div
+                                  key={att.id}
+                                  className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400">
+                                      {att.mimeType === "application/pdf" ? (
+                                        <FileText className="w-5 h-5 text-red-500" />
+                                      ) : att.mimeType.startsWith("image/") ? (
+                                        <Paperclip className="w-5 h-5 text-blue-500" />
+                                      ) : (
+                                        <Paperclip className="w-5 h-5" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-semibold text-zinc-900">
+                                        {att.fileName}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-[10px] text-zinc-400 font-medium">
+                                          {att.description || "No description"}
+                                        </span>
+                                        <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                                        <span className="text-[10px] text-zinc-400 font-medium">
+                                          {format(
+                                            new Date(att.uploadedAt),
+                                            "MMM d, yyyy HH:mm",
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                      asChild>
+                                      <a
+                                        href={att.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer">
+                                        <ExternalLink className="w-4 h-4" />
+                                      </a>
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                      asChild>
+                                      <a
+                                        href={att.fileUrl}
+                                        download={att.fileName}>
+                                        <Download className="w-4 h-4" />
+                                      </a>
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
-                              asChild>
-                              <a
-                                href={att.fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer">
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
-                              asChild>
-                              <a href={att.fileUrl} download={att.fileName}>
-                                <Download className="w-4 h-4" />
-                              </a>
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        );
+                      });
+                    })()
                   ) : (
-                    <div className="p-12 text-center space-y-2">
+                    <div className="bg-white border border-zinc-200/80 rounded-xl p-12 text-center space-y-2">
                       <div className="w-12 h-12 rounded-full bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-300 mb-2">
                         <FileText className="w-6 h-6" />
                       </div>
