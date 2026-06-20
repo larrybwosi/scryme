@@ -11,10 +11,18 @@ import {
   AddDepartmentMemberDto,
 } from "../dto/department.dto";
 import { AuditLogAction, AuditEntityType } from "@repo/db";
+import { ScrymeChatApiClient } from "@repo/scryme";
+import { PlaneApiClient } from "@repo/plane";
 
 @Injectable()
 export class DepartmentUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  private scrymeClient: ScrymeChatApiClient;
+  private planeClient: PlaneApiClient;
+
+  constructor(private readonly prisma: PrismaService) {
+    this.scrymeClient = new ScrymeChatApiClient();
+    this.planeClient = new PlaneApiClient();
+  }
 
   async getDepartments(organizationId: string, query: DepartmentQueryDto) {
     const { page = 1, limit = 10, search } = query;
@@ -75,6 +83,45 @@ export class DepartmentUseCase {
         organizationId,
       },
     });
+
+    // Handle Integrations (Scryme & Plane)
+    try {
+      const [scrymeConfig, planeConfig] = await Promise.all([
+        this.prisma.client.scrymeConfiguration.findUnique({ where: { organizationId } }),
+        this.prisma.client.planeConfiguration.findUnique({ where: { organizationId } }),
+      ]);
+
+      const updates: any = {};
+
+      if (scrymeConfig?.workspaceSlug && scrymeConfig.isActive) {
+        const channelSlug = `dept-${department.name.toLowerCase().replace(/\s+/g, '-')}`;
+        const channel = await this.scrymeClient.createChannel(
+          scrymeConfig.workspaceSlug,
+          department.name,
+          channelSlug,
+        );
+        updates.scrymeChannelId = channel.id;
+      }
+
+      if (planeConfig?.workspaceSlug && planeConfig.isActive) {
+        const projectIdentifier = department.name.substring(0, 3).toUpperCase();
+        const project = await this.planeClient.createProject(
+          planeConfig.workspaceSlug,
+          department.name,
+          projectIdentifier,
+        );
+        updates.planeProjectId = project.id;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await this.prisma.client.department.update({
+          where: { id: department.id },
+          data: updates,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to provision integrations for department:', error);
+    }
 
     await this.prisma.client.auditLog.create({
       data: {
@@ -173,6 +220,38 @@ export class DepartmentUseCase {
         canManageBudget: dto.canManageBudget,
       },
     });
+
+    // Automatic Sync to Integrations
+    try {
+      const fullDept = await this.prisma.client.department.findUnique({
+        where: { id: departmentId },
+        include: { organization: { include: { scrymeConfiguration: true, planeConfiguration: true } } }
+      });
+      const fullMember = await this.prisma.client.member.findUnique({
+        where: { id: dto.memberId },
+        include: { user: { select: { email: true } } }
+      });
+
+      if (fullDept && fullMember?.user?.email) {
+        const { scrymeConfiguration, planeConfiguration, slug } = fullDept.organization;
+
+        if (fullDept.scrymeChannelId && scrymeConfiguration?.workspaceSlug) {
+          await this.scrymeClient.addUserToChannel(
+            scrymeConfiguration.workspaceSlug,
+            fullDept.scrymeChannelId, // Assuming Scryme API accepts ID or Slug
+            fullMember.user.email
+          );
+        }
+
+        if (fullDept.planeProjectId && planeConfiguration?.workspaceSlug) {
+           // Plane requires adding to workspace first, then project
+           await this.planeClient.addWorkspaceMember(planeConfiguration.workspaceSlug, fullMember.user.email);
+           await this.planeClient.addProjectMember(planeConfiguration.workspaceSlug, fullDept.planeProjectId, fullMember.id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to sync member to integrations:', error);
+    }
 
     return membership;
   }

@@ -130,6 +130,16 @@ export async function submitForApprovalCore(
     });
   }
 
+  // Trigger Scryme notification if configured
+  if (process.env.PUBLIC_API_URL) {
+    const baseUrl = process.env.PUBLIC_API_URL.replace(/\/$/, "");
+    fetch(`${baseUrl}/v2/scryme/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: request.id }),
+    }).catch((err) => console.error("Failed to trigger scryme notification:", err));
+  }
+
   return request;
 }
 
@@ -295,5 +305,46 @@ export async function makeApprovalDecisionCore(
     }
   }
 
-  return { request, finalStatus, nextStep, originalStep: request.currentStep };
+  const result = { request, finalStatus, nextStep, originalStep: request.currentStep };
+
+  // Trigger Scryme notification updates if configured
+  if (process.env.PUBLIC_API_URL) {
+    const baseUrl = process.env.PUBLIC_API_URL.replace(/\/$/, "");
+
+    // Update Scryme messages for the current step
+    fetch(`${baseUrl}/v2/scryme/update-messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId: request.id,
+        memberId: memberId,
+        stepNumber: result.originalStep,
+      }),
+    }).catch((err) => console.error("Failed to trigger scryme update-messages:", err));
+
+    // If moved to next step, notify new approvers
+    if (nextStep > result.originalStep) {
+      fetch(`${baseUrl}/v2/scryme/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: request.id }),
+      }).catch((err) => console.error("Failed to trigger scryme notify for next step:", err));
+    }
+
+    // If final decision or info requested, notify requester
+    if (
+      (finalStatus === "APPROVED" ||
+        finalStatus === "REJECTED" ||
+        finalStatus === "REQUEST_INFO") &&
+      nextStep === result.originalStep
+    ) {
+      fetch(`${baseUrl}/v2/scryme/notify-requester`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: request.id }),
+      }).catch((err) => console.error("Failed to trigger scryme notify-requester:", err));
+    }
+  }
+
+  return result;
 }
