@@ -28,13 +28,20 @@ export function redactSensitiveData(
     "dob",
     "birthday",
   ],
+  depth = 0,
+  maxDepth = 5,
 ): any {
-  if (data === null || data === undefined) {
+  if (data === null || data === undefined || depth > maxDepth) {
     return data;
   }
 
   if (Array.isArray(data)) {
-    return data.map(item => redactSensitiveData(item, sensitiveKeys));
+    if (data.length > 100) {
+      return `[Array of ${data.length} items]`;
+    }
+    return data.map((item) =>
+      redactSensitiveData(item, sensitiveKeys, depth + 1, maxDepth),
+    );
   }
 
   if (typeof data === "object") {
@@ -44,7 +51,12 @@ export function redactSensitiveData(
         if (sensitiveKeys.includes(key)) {
           redactedData[key] = "[REDACTED]";
         } else {
-          redactedData[key] = redactSensitiveData(data[key], sensitiveKeys);
+          redactedData[key] = redactSensitiveData(
+            data[key],
+            sensitiveKeys,
+            depth + 1,
+            maxDepth,
+          );
         }
       }
     }

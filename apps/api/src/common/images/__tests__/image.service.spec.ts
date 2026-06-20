@@ -19,6 +19,7 @@ describe("ImageService", () => {
   beforeEach(async () => {
     mockRedisService = {
       get: vi.fn(),
+      getBuffer: vi.fn(),
       setex: vi.fn(),
     };
 
