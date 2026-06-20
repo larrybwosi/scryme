@@ -147,7 +147,7 @@ jobs:
           --health-retries 5
     env:
       NODE_OPTIONS: "--max-old-space-size=8192"
-      DATABASE_URL: postgresql://postgres@localhost:5432/postgres
+      DATABASE_URL: postgresql://localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -276,7 +276,7 @@ jobs:
             pnpm turbo lint type-check --filter="./packages/*"
           fi
         env:
-          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
+          DATABASE_URL: postgresql://localhost:5432/postgres
 
   rust-pos:
     needs: filter
@@ -434,7 +434,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: "--max-old-space-size=8192"
-      BETTER_AUTH_SECRET: "mock-secret-for-build"
+      BETTER_AUTH_SECRET: "secret"
       NEXT_PUBLIC_API_URL: "http://localhost:3002"
     steps:
       - uses: actions/checkout@v4
@@ -482,5 +482,5 @@ jobs:
             echo "No app changes requiring build-verify detected"
           fi
         env:
-          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
+          DATABASE_URL: postgresql://localhost:5432/postgres
           NODE_ENV: production
