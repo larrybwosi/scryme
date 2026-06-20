@@ -421,6 +421,7 @@ model InventoryLocation {
   stockValuations           StockValuation[]
   expenses                  Expense[]
   budgets                   Budget[]
+  departments               Department[]
   fromStockRequests         StockRequest[]             @relation("FromStockRequests")
   toStockRequests           StockRequest[]             @relation("ToStockRequests")
   fromStockTransfers        StockTransfer[]            @relation("FromLocation")

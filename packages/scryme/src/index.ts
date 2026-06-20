@@ -133,6 +133,19 @@ export class ScrymeChatApiClient {
   }
 
   /**
+   * Add a user to a channel.
+   */
+  async addUserToChannel(
+    workspaceSlug: string,
+    channelSlug: string,
+    email: string
+  ): Promise<any> {
+    return this.request('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/members`, {
+      email
+    });
+  }
+
+  /**
    * Send a message to a Scryme Chat channel.
    */
   async sendMessage(workspaceSlug: string, channelSlug: string, message: ScrymeChatMessage): Promise<any> {

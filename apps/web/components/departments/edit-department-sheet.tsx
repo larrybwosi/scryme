@@ -21,8 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { updateDepartment } from "../../app/actions/department";
+import { updateDepartment, getDepartments } from "../../app/actions/department";
 import { getStaffMembers } from "../../app/actions/staff";
+import { getInventoryLocations } from "../../app/actions/finance";
+import { getCostCenters } from "../../app/actions/finance-settings";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ImageUpload } from "../image-upload";
@@ -46,16 +48,28 @@ export function EditDepartmentSheet({
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [costCenters, setCostCenters] = useState<any[]>([]);
+  const [parentDepartments, setParentDepartments] = useState<any[]>([]);
   const [images, setImages] = useState<string[]>(department.image ? [department.image] : []);
   const [banners, setBanners] = useState<string[]>(department.banner ? [department.banner] : []);
   const router = useRouter();
 
   const handleOpenChange = async (newOpen: boolean) => {
     setOpen(newOpen);
-    if (newOpen && members.length === 0) {
-      const result = await getStaffMembers();
-      if (result.success) {
-        setMembers(result.data || []);
+    if (newOpen) {
+      const [membersResult, locationsResult, costCentersResult, departmentsResult] = await Promise.all([
+        getStaffMembers(),
+        getInventoryLocations(),
+        getCostCenters(),
+        getDepartments(),
+      ]);
+
+      if (membersResult.success) setMembers(membersResult.data || []);
+      setLocations(locationsResult || []);
+      setCostCenters(costCentersResult || []);
+      if (departmentsResult.success && departmentsResult.data) {
+        setParentDepartments(departmentsResult.data.filter((d: any) => d.id !== department.id) || []);
       }
     }
   };
@@ -69,6 +83,9 @@ export function EditDepartmentSheet({
       name: formData.get("name") as string,
       description: formData.get("description") as string,
       headId: formData.get("headId") as string,
+      parentId: formData.get("parentId") as string,
+      locationId: formData.get("locationId") as string,
+      costCenterId: formData.get("costCenterId") as string,
       image: images[0] || undefined,
       banner: banners[0] || undefined,
     };
@@ -118,21 +135,76 @@ export function EditDepartmentSheet({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="headId">Department Head</Label>
-              <Select name="headId" defaultValue={department.headId || ""}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a head (Optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No Head Assigned</SelectItem>
-                  {members.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="headId">Department Head</Label>
+                <Select name="headId" defaultValue={department.headId || "none"}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select head" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Head Assigned</SelectItem>
+                    {members.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="parentId">Parent Department</Label>
+                <Select name="parentId" defaultValue={department.parentId || "none"}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None (Top Level)</SelectItem>
+                    {parentDepartments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="locationId">Linked Location</Label>
+                <Select name="locationId" defaultValue={department.locationId || "none"}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="costCenterId">Cost Center</Label>
+                <Select name="costCenterId" defaultValue={department.costCenterId || "none"}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select cost center" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {costCenters.map((cc) => (
+                      <SelectItem key={cc.id} value={cc.id}>
+                        {cc.code} - {cc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">

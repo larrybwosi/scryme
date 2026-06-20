@@ -197,6 +197,9 @@ model Organization {
   // Scryme Integration
   scrymeConfiguration ScrymeConfiguration?
 
+  // Plane Integration
+  planeConfiguration PlaneConfiguration?
+
   reportAutomations ReportAutomation[]
   reportChannels    ReportChannel[]
 
@@ -630,6 +633,25 @@ model Department {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // --- Hierarchy ---
+  parentId       String?
+  parent         Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  subDepartments Department[] @relation("DepartmentHierarchy")
+
+  // --- External Entity Links ---
+  locationId     String?
+  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  costCenterId   String?
+  costCenter     CostCenter?        @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  // --- Integration Tracking ---
+  scrymeChannelId String?
+  planeProjectId  String?
+
+  // --- Enterprise Logic ---
+  settings     Json? // Enterprise specific settings (notifications, thresholds, etc.)
+  customFields Json?
+
   headId                 String?
   head                   Member?                 @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
   departmentMembers      DepartmentMember[]
@@ -638,10 +660,11 @@ model Department {
   budgets                Budget[]                @relation("DepartmentBudgets")
   purchaseApprovalChains PurchaseApprovalChain[]
 
-  customFields Json?
-
   @@unique([organizationId, name])
   @@index([organizationId])
+  @@index([parentId])
+  @@index([locationId])
+  @@index([costCenterId])
   @@map("department")
 }
 
