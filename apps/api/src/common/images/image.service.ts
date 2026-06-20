@@ -25,14 +25,16 @@ export class ImageService {
     const cacheKey = this.generateCacheKey(id, options);
 
     try {
-      const cachedImage = await this.redis.get<{
-        data: string;
-        contentType: string;
-      }>(cacheKey);
-      if (cachedImage) {
+      const contentTypeCacheKey = `${cacheKey}:type`;
+      const [cachedData, cachedContentType] = await Promise.all([
+        this.redis.getBuffer(cacheKey),
+        this.redis.get<string>(contentTypeCacheKey),
+      ]);
+
+      if (cachedData && cachedContentType) {
         return {
-          data: Buffer.from(cachedImage.data, "base64"),
-          contentType: cachedImage.contentType,
+          data: cachedData,
+          contentType: cachedContentType,
         };
       }
 
@@ -104,11 +106,16 @@ export class ImageService {
 
       const resultContentType = `image/${info.format}`;
 
-      // Cache the optimized image
-      await this.redis.setex(cacheKey, this.IMAGE_CACHE_TTL, {
-        data: data.toString("base64"),
-        contentType: resultContentType,
-      });
+      // Cache the optimized image data and its content type separately
+      // Using buffer for data to avoid base64 overhead
+      await Promise.all([
+        this.redis.setex(cacheKey, this.IMAGE_CACHE_TTL, data),
+        this.redis.setex(
+          `${cacheKey}:type`,
+          this.IMAGE_CACHE_TTL,
+          resultContentType,
+        ),
+      ]);
 
       return {
         data,
