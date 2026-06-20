@@ -68,11 +68,11 @@ export class ReviewsService {
   }
 
   async updateReview(ctx: V2ApiContext, reviewId: string, data: any) {
-    const { customerId } = ctx;
+    const { customerId, organizationId } = ctx;
     if (!customerId) throw new BadRequestException('Customer ID is required');
 
-    const review = await this.prisma.client.productReview.findUnique({
-      where: { id: reviewId },
+    const review = await this.prisma.client.productReview.findFirst({
+      where: { id: reviewId, organizationId },
     });
 
     if (!review) throw new NotFoundException('Review not found');
@@ -90,11 +90,11 @@ export class ReviewsService {
   }
 
   async deleteReview(ctx: V2ApiContext, reviewId: string) {
-    const { customerId, permissions } = ctx;
+    const { customerId, permissions, organizationId } = ctx;
     if (!customerId) throw new BadRequestException('Customer ID is required');
 
-    const review = await this.prisma.client.productReview.findUnique({
-      where: { id: reviewId },
+    const review = await this.prisma.client.productReview.findFirst({
+      where: { id: reviewId, organizationId },
     });
 
     if (!review) throw new NotFoundException('Review not found');

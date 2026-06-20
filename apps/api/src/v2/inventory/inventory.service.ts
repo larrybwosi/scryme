@@ -114,14 +114,16 @@ export class InventoryService {
   }
 
   async createInventoryItem(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
     return this.prisma.client.productVariantStock.create({
-      data: { ...data },
+      data: { ...data, organizationId },
     });
   }
 
   async getInventoryItem(ctx: V2ApiContext, id: string) {
-    const stock = await this.prisma.client.productVariantStock.findUnique({
-      where: { id },
+    const { organizationId } = ctx;
+    const stock = await this.prisma.client.productVariantStock.findFirst({
+      where: { id, organizationId },
       include: {
         variant: { include: { product: true } },
         location: true,
@@ -132,21 +134,35 @@ export class InventoryService {
   }
 
   async updateInventoryItem(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const stock = await this.prisma.client.productVariantStock.findFirst({
+      where: { id, organizationId },
+    });
+    if (!stock) throw new NotFoundException("Inventory item not found");
+
     return this.prisma.client.productVariantStock.update({
       where: { id },
-      data,
+      data: { ...data, organizationId },
     });
   }
 
   async deleteInventoryItem(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+    const stock = await this.prisma.client.productVariantStock.findFirst({
+      where: { id, organizationId },
+    });
+    if (!stock) throw new NotFoundException("Inventory item not found");
+
     return this.prisma.client.productVariantStock.delete({
       where: { id },
     });
   }
 
   async getInventoryMovements(ctx: V2ApiContext, inventoryId: string) {
+    const { organizationId } = ctx;
     return this.prisma.client.stockMovement.findMany({
       where: {
+        organizationId,
         OR: [{ fromLocationId: inventoryId }, { toLocationId: inventoryId }],
       },
       orderBy: { createdAt: "desc" },
@@ -158,14 +174,16 @@ export class InventoryService {
     inventoryId: string,
     data: any,
   ) {
+    const { organizationId } = ctx;
     return this.prisma.client.stockMovement.create({
-      data: { ...data },
+      data: { ...data, organizationId },
     });
   }
 
   async getInventoryAdjustments(ctx: V2ApiContext, inventoryId: string) {
+    const { organizationId } = ctx;
     return this.prisma.client.stockAdjustment.findMany({
-      where: { variantId: inventoryId },
+      where: { variantId: inventoryId, organizationId },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -175,6 +193,12 @@ export class InventoryService {
     inventoryId: string,
     adjustmentId: string,
   ) {
+    const { organizationId } = ctx;
+    const adjustment = await this.prisma.client.stockAdjustment.findFirst({
+      where: { id: adjustmentId, organizationId },
+    });
+    if (!adjustment) throw new NotFoundException("Adjustment not found");
+
     return this.prisma.client.stockAdjustment.update({
       where: { id: adjustmentId },
       data: { status: "APPROVED" as any },
