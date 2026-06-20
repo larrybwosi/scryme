@@ -184,15 +184,22 @@ export class NotificationEngine {
       return;
     }
 
-    await axios.post(url, {
-      id: dispatch.id,
-      template: dispatch.templateId,
-      subject: dispatch.finalSubject,
-      content: dispatch.finalContent,
-      data: dispatch.data,
-      recipients: dispatch.recipientIds,
-      timestamp: new Date().toISOString(),
-    });
+    await axios.post(
+      url,
+      {
+        id: dispatch.id,
+        template: dispatch.templateId,
+        subject: dispatch.finalSubject,
+        content: dispatch.finalContent,
+        data: dispatch.data,
+        recipients: dispatch.recipientIds,
+        timestamp: new Date().toISOString(),
+      },
+      {
+        timeout: 10000,
+        maxContentLength: 1024 * 1024, // 1MB limit for response
+      },
+    );
   }
 
   private async deliverDiscord(dispatch: any) {
@@ -248,6 +255,8 @@ export class NotificationEngine {
           Authorization: `Bot ${botToken}`,
           "Content-Type": "application/json",
         },
+        timeout: 10000,
+        maxContentLength: 1024 * 1024, // 1MB limit for response
       },
     );
   }

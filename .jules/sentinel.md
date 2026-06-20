@@ -75,3 +75,12 @@
 **Prevention:**
 - Always enforce hard limits (`take`) on database queries that feed into cryptographic loops.
 - Use a comprehensive, standardized redaction list that includes `cardNumber`, `cvc`, `ssn`, and `dob` to ensure compliance with privacy standards across all logs.
+
+## 2026-06-25 - [DoS Mitigation for Outbound Notification Webhooks]
+**Vulnerability:** The `NotificationEngine` in both `notifications` and `windmill` packages lacked `timeout` and `maxContentLength` on outbound `axios` calls to external webhooks and the Discord API. A slow or malicious endpoint could cause the notification worker to hang or consume excessive memory.
+
+**Learning:** External integration points, especially user-configurable webhooks, are critical DoS vectors. Furthermore, duplicated logic across packages (like `notifications` and `windmill`) requires coordinated hardening to ensure comprehensive protection.
+
+**Prevention:**
+- Standardize all outbound HTTP requests with a defensive default configuration (10s timeout, 1MB payload limit unless otherwise required).
+- Identify and consolidate (or parallel-harden) duplicated service logic to prevent security gaps in secondary packages.
