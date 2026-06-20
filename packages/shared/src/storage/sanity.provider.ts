@@ -20,7 +20,12 @@ export class SanityStorageProvider implements StorageProvider {
     });
   }
 
-  async upload(file: Buffer, filename: string, contentType: string, options?: { uploadAsFile?: boolean }): Promise<StorageUploadResult> {
+  async upload(
+    file: Buffer,
+    filename: string,
+    contentType: string,
+    options?: { uploadAsFile?: boolean; organizationId?: string },
+  ): Promise<StorageUploadResult> {
     const client = this.getClient();
     const assetType = options?.uploadAsFile ? 'file' : 'image';
 
@@ -35,7 +40,7 @@ export class SanityStorageProvider implements StorageProvider {
     };
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, _organizationId?: string): Promise<void> {
     const client = this.getClient();
     await client.delete(id);
   }
