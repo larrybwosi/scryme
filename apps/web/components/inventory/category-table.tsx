@@ -23,6 +23,7 @@ import {
   Tag,
   ChevronDown,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { deleteCategory } from "../../app/actions/inventory";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ interface CategoryTableProps {
 
 export function CategoryTable({ data }: CategoryTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -63,13 +65,15 @@ export function CategoryTable({ data }: CategoryTableProps) {
   };
 
   const handleDelete = async (id: string) => {
+    setIsDeleting(true);
     try {
       await deleteCategory(id);
       toast.success("Category deleted successfully");
+      setDeletingId(null);
     } catch (error: any) {
       toast.error(error.message || "Failed to delete category");
     } finally {
-      setDeletingId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -100,22 +104,31 @@ export function CategoryTable({ data }: CategoryTableProps) {
                     <div className="flex items-center gap-3">
                       <div className="w-6 flex items-center justify-center">
                         {category.subcategories?.length > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 p-0"
-                            aria-label={
-                              expandedIds.has(category.id)
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 p-0"
+                                aria-label={
+                                  expandedIds.has(category.id)
+                                    ? "Collapse category"
+                                    : "Expand category"
+                                }
+                                onClick={() => toggleExpand(category.id)}>
+                                {expandedIds.has(category.id) ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {expandedIds.has(category.id)
                                 ? "Collapse category"
-                                : "Expand category"
-                            }
-                            onClick={() => toggleExpand(category.id)}>
-                            {expandedIds.has(category.id) ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </Button>
+                                : "Expand category"}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                       <div
@@ -246,11 +259,22 @@ export function CategoryTable({ data }: CategoryTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => deletingId && handleDelete(deletingId)}>
-              Delete
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeleting}
+              onClick={e => {
+                e.preventDefault();
+                deletingId && handleDelete(deletingId);
+              }}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
