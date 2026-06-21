@@ -50,7 +50,9 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    admin(),
+    admin({
+      defaultRole: UserRole.MEMBER,
+    }),
     customSession(async ({ user, session }) => {
       const cacheKey = `session-cache:${user.id}`;
       try {
