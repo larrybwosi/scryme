@@ -914,7 +914,13 @@ export class BakeryService {
     });
   }
 
-  async updateBaker(id: string, data: any) {
+  async updateBaker(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const baker = await this.prisma.client.bakeryBaker.findFirst({
+      where: { id, bakerySettings: { organizationId } },
+    });
+    if (!baker) throw new NotFoundException('Baker not found');
+
     return this.prisma.client.bakeryBaker.update({
       where: { id },
       data,
