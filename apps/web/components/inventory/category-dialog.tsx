@@ -130,7 +130,9 @@ export function CategoryDialog({
 
           <div className="py-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Category Name</Label>
+              <Label htmlFor="name">
+                Category Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="name"
                 placeholder="e.g., Electronics, Bakery, Drinks"
@@ -196,6 +198,7 @@ export function CategoryDialog({
                   }
                   placeholder="#000000"
                   className="flex-1"
+                  aria-label="Color hex code"
                 />
               </div>
             </div>
