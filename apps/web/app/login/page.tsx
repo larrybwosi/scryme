@@ -23,12 +23,12 @@ import { Button } from "@repo/ui/components/ui/button";
 
 // Zod validation schemas
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.email("Please enter a valid email address"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -168,7 +168,6 @@ const LoginPageContent = () => {
     searchParams.get("redirect") ||
     searchParams.get("returnTo");
 
-  // ✅ FIX: moved router.push out of render into a useEffect
   useEffect(() => {
     if (session.data) {
       router.push("/dashboard");
