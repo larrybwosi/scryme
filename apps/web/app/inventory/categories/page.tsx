@@ -22,7 +22,7 @@ export default async function CategoriesPage() {
           </div>
           <div className="flex items-center gap-3">
             <CategoryDialog>
-              <Button className="gap-2">
+              <Button className="gap-2 bg-zinc-900 text-white hover:bg-zinc-800">
                 <Plus size={16} />
                 <span>Add Category</span>
               </Button>
