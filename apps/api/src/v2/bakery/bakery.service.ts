@@ -56,60 +56,73 @@ export class BakeryService {
       take: 100,
     });
   }
+  /**
+   * Calculates production statistics for a given organization and date range.
+   * ⚡ Bolt: Optimized using database-level aggregation and grouping to avoid O(N) in-memory processing.
+   * This reduces memory usage and network overhead, especially for organizations with many batches.
+   */
   async getProductionStats(organizationId: string, startDate: Date, endDate: Date) {
-    const batches = await this.prisma.client.batch.findMany({
-      where: {
-        organizationId,
-        completedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-        status: "COMPLETED",
+    const where = {
+      organizationId,
+      completedAt: {
+        gte: startDate,
+        lte: endDate,
       },
-      include: {
-        recipe: {
-          include: {
-            systemUnit: true,
-            orgUnit: true,
-          },
+      status: "COMPLETED" as any,
+    };
+
+    // Use Prisma's aggregate and groupBy for efficient database-level calculations
+    const [aggregation, groups] = await Promise.all([
+      this.prisma.client.batch.aggregate({
+        where,
+        _count: { _all: true },
+        _sum: { wasteQuantity: true },
+      }),
+      this.prisma.client.batch.groupBy({
+        where,
+        by: ["recipeId"],
+        _sum: {
+          actualQuantity: true,
+          wasteQuantity: true,
         },
+      }),
+    ]);
+
+    const recipeIds = groups.map((g) => g.recipeId);
+
+    // Fetch only necessary recipe details for the recipes found in the batches
+    const recipes = await this.prisma.client.recipe.findMany({
+      where: { id: { in: recipeIds } },
+      select: {
+        id: true,
+        name: true,
+        systemUnit: { select: { symbol: true } },
+        orgUnit: { select: { symbol: true } },
       },
     });
 
-    const totalBatches = batches.length;
-    const totalWaste = batches.reduce(
-      (acc, b) => acc + Number(b.wasteQuantity || 0),
-      0,
-    );
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
 
-    const recipeStats: Record<
-      string,
-      { name: string; quantity: number; unit: string; waste: number }
-    > = {};
-
-    batches.forEach((batch) => {
-      const recipeId = batch.recipeId;
-      if (!recipeStats[recipeId]) {
-        recipeStats[recipeId] = {
-          name: batch.recipe.name,
-          quantity: 0,
-          unit: batch.recipe.systemUnit?.symbol || batch.recipe.orgUnit?.symbol || "",
-          waste: 0,
-        };
-      }
-      recipeStats[recipeId].quantity += Number(batch.actualQuantity || 0);
-      recipeStats[recipeId].waste += Number(batch.wasteQuantity || 0);
+    const recipeStats = groups.map((g) => {
+      const recipe = recipeMap.get(g.recipeId);
+      return {
+        name: recipe?.name || "Unknown",
+        quantity: Number(g._sum.actualQuantity || 0),
+        unit:
+          recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
+        waste: Number(g._sum.wasteQuantity || 0),
+      };
     });
 
-    const topRecipes = Object.values(recipeStats)
+    const topRecipes = [...recipeStats]
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
     return {
-      totalBatches,
-      totalWaste,
+      totalBatches: aggregation._count._all,
+      totalWaste: Number(aggregation._sum.wasteQuantity || 0),
       topRecipes,
-      recipeStats: Object.values(recipeStats),
+      recipeStats,
     };
   }
 
