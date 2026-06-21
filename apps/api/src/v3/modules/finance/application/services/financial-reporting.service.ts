@@ -6,23 +6,28 @@ export class FinancialReportingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getProfitAndLoss(organizationId: string, startDate: Date, endDate: Date) {
-    const accounts = await this.prisma.client.ledgerAccount.findMany({
-      where: {
-        organizationId,
-        type: { in: ["REVENUE", "EXPENSE"] as any[] },
-      },
-      include: {
-        journalLines: {
-          where: {
-            journalEntry: {
-              organizationId,
-              status: "POSTED" as any,
-              entryDate: { gte: startDate, lte: endDate },
-            },
+    const [accounts, lineSums] = await Promise.all([
+      this.prisma.client.ledgerAccount.findMany({
+        where: {
+          organizationId,
+          type: { in: ["REVENUE", "EXPENSE"] as any[] },
+        },
+        select: { id: true, name: true, code: true, type: true },
+      }),
+      this.prisma.client.journalLine.groupBy({
+        by: ["ledgerAccountId"],
+        where: {
+          journalEntry: {
+            organizationId,
+            status: "POSTED" as any,
+            entryDate: { gte: startDate, lte: endDate },
           },
         },
-      },
-    });
+        _sum: { debit: true, credit: true },
+      }),
+    ]);
+
+    const sumMap = new Map(lineSums.map(s => [s.ledgerAccountId, s._sum]));
 
     const report = {
       revenue: [] as any[],
@@ -33,14 +38,12 @@ export class FinancialReportingService {
     };
 
     for (const account of accounts) {
-      const balance = account.journalLines.reduce((sum, line) => {
-        // Revenue increases with Credit, Expenses increase with Debit
-        if (account.type === "REVENUE") {
-          return sum + (Number(line.credit) - Number(line.debit));
-        } else {
-          return sum + (Number(line.debit) - Number(line.credit));
-        }
-      }, 0);
+      const sums = sumMap.get(account.id) || { debit: 0, credit: 0 };
+      const debit = Number(sums.debit || 0);
+      const credit = Number(sums.credit || 0);
+
+      // Revenue increases with Credit, Expenses increase with Debit
+      const balance = account.type === "REVENUE" ? credit - debit : debit - credit;
 
       const entry = { name: account.name, code: account.code, balance };
 
@@ -58,23 +61,28 @@ export class FinancialReportingService {
   }
 
   async getBalanceSheet(organizationId: string, asOfDate: Date) {
-    const accounts = await this.prisma.client.ledgerAccount.findMany({
-      where: {
-        organizationId,
-        type: { in: ["ASSET", "LIABILITY", "EQUITY"] as any[] },
-      },
-      include: {
-        journalLines: {
-          where: {
-            journalEntry: {
-              organizationId,
-              status: "POSTED" as any,
-              entryDate: { lte: asOfDate },
-            },
+    const [accounts, lineSums] = await Promise.all([
+      this.prisma.client.ledgerAccount.findMany({
+        where: {
+          organizationId,
+          type: { in: ["ASSET", "LIABILITY", "EQUITY"] as any[] },
+        },
+        select: { id: true, name: true, code: true, type: true },
+      }),
+      this.prisma.client.journalLine.groupBy({
+        by: ["ledgerAccountId"],
+        where: {
+          journalEntry: {
+            organizationId,
+            status: "POSTED" as any,
+            entryDate: { lte: asOfDate },
           },
         },
-      },
-    });
+        _sum: { debit: true, credit: true },
+      }),
+    ]);
+
+    const sumMap = new Map(lineSums.map(s => [s.ledgerAccountId, s._sum]));
 
     const report = {
       assets: [] as any[],
@@ -86,14 +94,12 @@ export class FinancialReportingService {
     };
 
     for (const account of accounts) {
-      const balance = account.journalLines.reduce((sum, line) => {
-        // Assets increase with Debit, Liabilities/Equity increase with Credit
-        if (account.type === "ASSET") {
-          return sum + (Number(line.debit) - Number(line.credit));
-        } else {
-          return sum + (Number(line.credit) - Number(line.debit));
-        }
-      }, 0);
+      const sums = sumMap.get(account.id) || { debit: 0, credit: 0 };
+      const debit = Number(sums.debit || 0);
+      const credit = Number(sums.credit || 0);
+
+      // Assets increase with Debit, Liabilities/Equity increase with Credit
+      const balance = account.type === "ASSET" ? debit - credit : credit - debit;
 
       const entry = { name: account.name, code: account.code, balance };
 
@@ -113,23 +119,27 @@ export class FinancialReportingService {
   }
 
   async getCashFlowStatement(organizationId: string, startDate: Date, endDate: Date) {
-    // Simplified Cash Flow (Direct Method - tracking Cash/Bank account movements)
-    const cashAccounts = await this.prisma.client.ledgerAccount.findMany({
+    // Optimized Cash Flow (Direct Method - tracking Cash/Bank account movements)
+    // Fetch journal lines directly for cash/bank accounts to avoid loading full LedgerAccount relation
+    const journalLines = await this.prisma.client.journalLine.findMany({
       where: {
-        organizationId,
-        subType: { in: ["CASH", "BANK"] as any[] },
+        journalEntry: {
+          organizationId,
+          status: "POSTED" as any,
+          entryDate: { gte: startDate, lte: endDate },
+        },
+        ledgerAccount: {
+          subType: { in: ["CASH", "BANK"] as any[] },
+        },
       },
-      include: {
-        journalLines: {
-          where: {
-            journalEntry: {
-              organizationId,
-              status: "POSTED" as any,
-              entryDate: { gte: startDate, lte: endDate },
-            },
-          },
-          include: {
-            journalEntry: true,
+      select: {
+        debit: true,
+        credit: true,
+        journalEntry: {
+          select: {
+            entryDate: true,
+            description: true,
+            sourceType: true,
           },
         },
       },
@@ -142,63 +152,75 @@ export class FinancialReportingService {
       netCashChange: 0,
     };
 
-    for (const account of cashAccounts) {
-      for (const line of account.journalLines) {
-        const amount = Number(line.debit) - Number(line.credit);
-        const activity = {
-          date: line.journalEntry.entryDate,
-          description: line.journalEntry.description,
-          amount,
-        };
+    for (const line of journalLines) {
+      const amount = Number(line.debit) - Number(line.credit);
+      const activity = {
+        date: line.journalEntry.entryDate,
+        description: line.journalEntry.description,
+        amount,
+      };
 
-        // Simplified classification based on source type
-        if (line.journalEntry.sourceType === "SALE" || line.journalEntry.sourceType === "EXPENSE") {
-          report.operatingActivities.push(activity);
-        } else {
-          report.operatingActivities.push(activity);
-        }
-        report.netCashChange += amount;
+      // Simplified classification based on source type
+      if (line.journalEntry.sourceType === "SALE" || line.journalEntry.sourceType === "EXPENSE") {
+        report.operatingActivities.push(activity);
+      } else {
+        // Fallback or other classifications can go here
+        report.operatingActivities.push(activity);
       }
+      report.netCashChange += amount;
     }
 
     return report;
   }
 
   async getKenyanTaxSummary(organizationId: string, startDate: Date, endDate: Date) {
-    const filings = await this.prisma.client.taxFiling.findMany({
-      where: {
-        organizationId,
-        periodStartDate: { gte: startDate },
-        periodEndDate: { lte: endDate },
-      },
-      include: {
-        taxAuthority: true,
-      },
-    });
-
-    const ledgerData = await this.prisma.client.journalLine.findMany({
-      where: {
-        journalEntry: {
+    const [filings, outputTaxResult, inputTaxResult] = await Promise.all([
+      this.prisma.client.taxFiling.findMany({
+        where: {
           organizationId,
-          status: "POSTED" as any,
-          entryDate: { gte: startDate, lte: endDate },
+          periodStartDate: { gte: startDate },
+          periodEndDate: { lte: endDate },
         },
-        ledgerAccount: {
-          subType: "TAX_PAYABLE" as any,
+        select: {
+          id: true,
+          status: true,
+          periodStartDate: true,
+          periodEndDate: true,
+          taxAuthority: { select: { name: true } },
         },
-      },
-      include: {
-        journalEntry: true,
-      },
-    });
+      }),
+      this.prisma.client.journalLine.aggregate({
+        where: {
+          journalEntry: {
+            organizationId,
+            status: "POSTED" as any,
+            entryDate: { gte: startDate, lte: endDate },
+            sourceType: "SALE" as any,
+          },
+          ledgerAccount: {
+            subType: "TAX_PAYABLE" as any,
+          },
+        },
+        _sum: { credit: true },
+      }),
+      this.prisma.client.journalLine.aggregate({
+        where: {
+          journalEntry: {
+            organizationId,
+            status: "POSTED" as any,
+            entryDate: { gte: startDate, lte: endDate },
+            sourceType: { in: ["PURCHASE", "EXPENSE"] as any[] },
+          },
+          ledgerAccount: {
+            subType: "TAX_PAYABLE" as any,
+          },
+        },
+        _sum: { debit: true },
+      }),
+    ]);
 
-    const outputTax = ledgerData
-      .filter(l => l.journalEntry.sourceType === "SALE")
-      .reduce((sum, l) => sum + Number(l.credit), 0);
-
-    const inputTax = ledgerData
-      .filter(l => l.journalEntry.sourceType === "PURCHASE" || l.journalEntry.sourceType === "EXPENSE")
-      .reduce((sum, l) => sum + Number(l.debit), 0);
+    const outputTax = Number(outputTaxResult._sum.credit || 0);
+    const inputTax = Number(inputTaxResult._sum.debit || 0);
 
     return {
       vatSummary: {

@@ -393,4 +393,9 @@ export const Mappers = {
 export { WaybillDocument } from './templates/v1/Waybill';
 export { DeliveryNoteDocument } from './templates/v1/DeliveryNote';
 export { InvoicePDF as SimpleInvoicePDF } from './templates/v1/InvoicePDF';
+export {
+  getInvoiceTemplate,
+  renderInvoiceTemplate,
+} from './templates/v1/invoice-templates';
+export { ReceiptTemplate as ReceiptTemplateV2 } from './templates/v2/ReceiptTemplate';
 export { DocumentGenerator } from './index';
