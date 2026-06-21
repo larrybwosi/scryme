@@ -167,7 +167,7 @@ export async function createDepartment(data: {
     });
 
     // If a head is assigned, also add them as a department member with HEAD role
-    if (data.headId) {
+    if (data.headId && data.headId !== "none" && data.headId !== "") {
       await db.departmentMember.create({
         data: {
           departmentId: department.id,

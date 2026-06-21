@@ -128,7 +128,10 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
                     <SelectItem value="none">No Head Assigned</SelectItem>
                     {members.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
-                        {member.user.name}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{member.user.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{member.user.email}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

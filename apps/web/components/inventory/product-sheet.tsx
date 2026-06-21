@@ -42,6 +42,7 @@ import { ImageUpload } from "../image-upload";
 import { useDebounce } from "use-debounce";
 import slugify from "slugify";
 import { cn } from "@repo/ui/lib/utils";
+import Link from "next/link";
 
 interface ProductSheetProps {
   children?: React.ReactNode;
@@ -405,28 +406,42 @@ export function ProductSheet({
 
                   <FieldWrapper className="w-1/2 pr-2">
                     <FieldLabel htmlFor="category">Category</FieldLabel>
-                    <Select
-                      value={formData.categoryId}
-                      onValueChange={value =>
-                        setFormData({ ...formData, categoryId: value })
-                      }
-                      required>
-                      <SelectTrigger
-                        id="category"
-                        className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
-                        <SelectValue placeholder="Select category…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem
-                            key={cat.id}
-                            value={cat.id}
-                            className="text-sm">
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {categories.length === 0 ? (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
+                          No categories available
+                        </div>
+                        <Link
+                          href="/inventory/categories"
+                          className="text-[10px] text-zinc-500 hover:text-zinc-900 underline flex items-center gap-1 transition-colors">
+                          <Plus className="h-3 w-3" />
+                          Create categories first
+                        </Link>
+                      </div>
+                    ) : (
+                      <Select
+                        value={formData.categoryId}
+                        onValueChange={value =>
+                          setFormData({ ...formData, categoryId: value })
+                        }
+                        required>
+                        <SelectTrigger
+                          id="category"
+                          className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
+                          <SelectValue placeholder="Select category…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem
+                              key={cat.id}
+                              value={cat.id}
+                              className="text-sm">
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </FieldWrapper>
                 </div>
               </section>
