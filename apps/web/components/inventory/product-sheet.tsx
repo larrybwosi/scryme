@@ -32,6 +32,7 @@ import {
   Check,
   AlertCircle,
   Package,
+  Plus,
   Tag,
   DollarSign,
   BarChart2,
