@@ -19,9 +19,16 @@ export class MpesaController {
   @ApiOperation({ summary: "Initiate M-Pesa STK Push" })
   @ApiResponse({ status: 200, description: "STK Push initiated successfully" })
   async initiateStkPush(
+    @v2Context() ctx: V2ApiContext,
     @Body() input: MpesaTriggerInput & { userId?: string },
   ) {
-    return this.mpesaService.initiateStkPush(input);
+    // Enforce organizationId from context to prevent IDOR
+    const sanitizedInput = {
+      ...input,
+      organizationId: ctx.organizationId,
+      userId: ctx.memberId || input.userId || "system",
+    };
+    return this.mpesaService.initiateStkPush(sanitizedInput);
   }
 
   @AllowPublic()
