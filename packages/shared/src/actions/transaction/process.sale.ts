@@ -711,7 +711,18 @@ export async function processSale(
       },
     });
 
-    // --- 11. Real-time Notification ---
+    // --- 11. Document Generation ---
+    const { documentService } = await import(
+      "../../lib/services/document.service"
+    );
+    documentService
+      .generateAndSaveInvoice(result.id, organizationId, memberId || null)
+      .catch(err => console.error("Failed to auto-generate POS invoice:", err));
+    documentService
+      .generateAndSaveReceipt(result.id, organizationId, memberId || null)
+      .catch(err => console.error("Failed to auto-generate POS receipt:", err));
+
+    // --- 12. Real-time Notification ---
     realtimeService
       .publish(`org:${organizationId}:transactions`, "transaction:created", {
         id: result.id,
