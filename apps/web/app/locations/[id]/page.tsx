@@ -32,6 +32,7 @@ import {
 import { LocationSheet } from "../../../components/locations/location-sheet";
 import { ZoneList } from "../../../components/locations/zone-list";
 import { UnitList } from "../../../components/locations/unit-list";
+import { LocationManagementTab } from "../../../components/locations/location-management-tab";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -179,7 +180,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
         {/* Right Column: Hierarchy & Storage */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="hierarchy" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="hierarchy" className="gap-2">
                 <Layers size={16} />
                 Hierarchy & Zones
@@ -187,6 +188,10 @@ export default async function LocationDetailPage({ params }: PageProps) {
               <TabsTrigger value="storage" className="gap-2">
                 <Box size={16} />
                 Storage Units
+              </TabsTrigger>
+              <TabsTrigger value="management" className="gap-2">
+                <Settings size={16} />
+                Enterprise
               </TabsTrigger>
             </TabsList>
 
@@ -253,6 +258,10 @@ export default async function LocationDetailPage({ params }: PageProps) {
                 zones={location.zones}
                 units={location.storageUnits}
               />
+            </TabsContent>
+
+            <TabsContent value="management" className="space-y-4">
+              <LocationManagementTab location={location} />
             </TabsContent>
           </Tabs>
         </div>
