@@ -58,10 +58,8 @@ export class MpesaService {
       return true;
     }
 
-    if (!isWhitelisted) {
-      console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
-      throw new ForbiddenException('Invalid Callback Source');
-    }
+    console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
+    throw new ForbiddenException('Invalid Callback Source');
   }
 
   private ipToLong(ip: string): number {
