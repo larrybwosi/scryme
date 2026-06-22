@@ -472,21 +472,38 @@ pub async fn print_receipt_native(
     let width = if is_58mm { 32 } else { 48 };
     let cols = if is_58mm { (14, 4, 6, 8) } else { (22, 6, 9, 11) };
 
+    // Layout and style from config
+    let template = config.get("template").and_then(|v| v.as_str()).unwrap_or("standard");
+    let alignment_val = config.get("textAlignment").and_then(|v| v.as_str()).unwrap_or("center");
+    let alignment = if alignment_val == "center" { 1 } else { 0 };
+    let divider_style = config.get("dividerStyle").and_then(|v| v.as_str()).unwrap_or("dashed");
+
     // --- LOGO ---
     if config.get("showLogo").and_then(|v| v.as_bool()).unwrap_or(true) {
         if let Some(logo_path) = config.get("logoUrl").and_then(|v| v.as_str()) {
             if !logo_path.is_empty() {
-                let _ = esc.logo(logo_path, is_58mm);
+                let logo_pos_str = config.get("logoPosition").and_then(|v| v.as_str()).unwrap_or("center");
+                let logo_pos = if logo_pos_str == "center" { 1 } else if logo_pos_str == "right" { 2 } else { 0 };
+                let logo_width = config.get("logoWidth").and_then(|v| v.as_u64()).unwrap_or(50) as u8;
+                let _ = esc.logo_enhanced(logo_path, is_58mm, logo_pos, logo_width);
             }
         }
     }
 
-    // --- HEADER (Center Aligned) ---
-    esc.align(1);
+    // --- HEADER (Aligned per config) ---
+    esc.align(alignment);
     if let Some(biz_name) = settings.get("businessName").and_then(|v| v.as_str()) {
-        esc.size(2, 2); // Double height and width
+        let title_font_size = config.get("titleFontSize").and_then(|v| v.as_u64()).unwrap_or(2) as u8;
+        // Map PDF font size roughly to ESC/POS size (1-8)
+        let size = if title_font_size > 20 { 3 } else if title_font_size > 12 { 2 } else { 1 };
+
+        esc.size(size, size);
         esc.bold(true);
-        esc.text_line(biz_name);
+        if template == "modern" {
+            esc.text_line(biz_name);
+        } else {
+            esc.text_line(&biz_name.to_uppercase());
+        }
         
         esc.size(1, 1); // Reset
         esc.bold(false);
@@ -561,13 +578,19 @@ pub async fn print_receipt_native(
     
     esc.feed(1);
 
-    // --- META DATA (Left Aligned) ---
+    // --- META DATA ---
     esc.align(0);
-    esc.divider(width);
+    esc.divider_styled(width, divider_style);
 
     if config.get("showOrderNumber").and_then(|v| v.as_bool()).unwrap_or(true) {
         if let Some(order_num) = order.get("orderNumber").and_then(|v| v.as_str()) {
             esc.text_line(&format!("Receipt No: {}", order_num));
+        }
+    }
+
+    if config.get("showTransactionId").and_then(|v| v.as_bool()).unwrap_or(false) {
+        if let Some(id) = order.get("id").and_then(|v| v.as_str()) {
+            esc.text_line(&format!("Trans ID: {}", id));
         }
     }
 
@@ -603,11 +626,17 @@ pub async fn print_receipt_native(
     }
     
     // --- TABLE HEADER ---
-    esc.divider(width);
-    esc.bold(true);
-    esc.item_row("ITEM", "QTY", "PRICE", "AMT", cols);
-    esc.bold(false);
-    esc.divider(width);
+    if template == "modern" {
+        esc.inverse(true);
+        esc.item_row("ITEM", "QTY", "PRICE", "AMT", cols);
+        esc.inverse(false);
+    } else {
+        esc.divider_styled(width, divider_style);
+        esc.bold(true);
+        esc.item_row("ITEM", "QTY", "PRICE", "AMT", cols);
+        esc.bold(false);
+        esc.divider_styled(width, divider_style);
+    }
 
     // --- ITEMS LOOP ---
     if let Some(items) = order.get("items").and_then(|v| v.as_array()) {
@@ -651,7 +680,7 @@ pub async fn print_receipt_native(
             }
         }
     }
-    esc.divider(width);
+    esc.divider_styled(width, divider_style);
 
     // --- TOTALS (Left/Right Aligned) ---
     if config.get("showSubtotal").and_then(|v| v.as_bool()).unwrap_or(true) {
@@ -679,12 +708,22 @@ pub async fn print_receipt_native(
     // Big Total Row
     if let Some(total) = order.get("total").and_then(|v| v.as_f64()) {
         esc.feed(1);
-        esc.size(2, 2);
-        esc.bold(true);
-        // Because text is 2x wide, the character width for this line is halved
-        let double_width = width / 2;
-        let currency = settings.get("currency").and_then(|v| v.as_str()).unwrap_or("KSH");
-        esc.text_left_right("TOTAL:", &format!("{} {:.2}", currency, total), double_width);
+
+        if template == "modern" {
+            esc.inverse(true);
+            esc.bold(true);
+            esc.size(2, 2);
+            let double_width = width / 2;
+            let currency = settings.get("currency").and_then(|v| v.as_str()).unwrap_or("KSH");
+            esc.text_left_right("TOTAL:", &format!("{} {:.2}", currency, total), double_width);
+            esc.inverse(false);
+        } else {
+            esc.size(2, 2);
+            esc.bold(true);
+            let double_width = width / 2;
+            let currency = settings.get("currency").and_then(|v| v.as_str()).unwrap_or("KSH");
+            esc.text_left_right("TOTAL:", &format!("{} {:.2}", currency, total), double_width);
+        }
         
         // Reset styles
         esc.size(1, 1);
@@ -725,9 +764,9 @@ pub async fn print_receipt_native(
     }
 
     // --- FOOTER & BARCODES (Center Aligned) ---
-    esc.align(1);
+    esc.align(alignment);
     esc.feed(1);
-    esc.divider(width);
+    esc.divider_styled(width, divider_style);
     
     // Header text (from content tab)
     if let Some(header_text) = config.get("headerText").and_then(|v| v.as_str()) {
@@ -827,6 +866,14 @@ pub async fn print_receipt_native(
         }
     }
 
+    if config.get("showSignatureLine").and_then(|v| v.as_bool()).unwrap_or(false) {
+        let label = config.get("signatureLineText").and_then(|v| v.as_str()).unwrap_or("Customer Signature");
+        esc.feed(2);
+        esc.divider(width);
+        esc.text_line(label);
+    }
+
+    esc.feed(1);
     esc.text_line("Goods once sold are not returnable.");
 
     // --- FINISH BUILDING COMMANDS ---
