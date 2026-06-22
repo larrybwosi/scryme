@@ -32,7 +32,11 @@ export class PrismaOrderRepository implements IOrderRepository {
           locationId: true,
           createdAt: true,
           updatedAt: true,
-          items: true,
+          // OPTIMIZATION (Bolt ⚡): Replaced 'items: true' with '_count: { select: { items: true } }'
+          // for paginated list view to reduce payload size while still providing item count for UI.
+          _count: {
+            select: { items: true },
+          },
         },
       },
     );
@@ -51,7 +55,9 @@ export class PrismaOrderRepository implements IOrderRepository {
             o.locationId,
             o.createdAt,
             o.updatedAt,
-            o.items,
+            // OPTIMIZATION (Bolt ⚡): Passing item count via a mock array of appropriate length.
+            // This allows the domain entity to report the correct count without loading all records.
+            new Array(o._count?.items || 0).fill({}),
           ),
       ),
     };
