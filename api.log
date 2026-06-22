@@ -1,0 +1,25 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> api@3.0.0 dev /app/apps/api
+> nest start --watch
+
+
+ Info  Webpack is building your sources...
+
+/app/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  api@3.0.0 dev: `nest start --watch`
+Command failed with signal "SIGTERM"
+Error: write EPIPE
+    at target._send (node:internal/child_process:877:20)
+    at target.send (node:internal/child_process:751:19)
+    at /app/node_modules/.pnpm/fork-ts-checker-webpack-plugin@9.1.0_typescript@5.9.3_webpack@5.106.0_@swc+core@1.15.40_784804454575e1720128bc2ef187ba7e/node_modules/fork-ts-checker-webpack-plugin/lib/rpc/expose-rpc.js:27:31
+    at new Promise (<anonymous>)
+    at sendMessage (/app/node_modules/.pnpm/fork-ts-checker-webpack-plugin@9.1.0_typescript@5.9.3_webpack@5.106.0_@swc+core@1.15.40_784804454575e1720128bc2ef187ba7e/node_modules/fork-ts-checker-webpack-plugin/lib/rpc/expose-rpc.js:19:38)
+    at /app/node_modules/.pnpm/fork-ts-checker-webpack-plugin@9.1.0_typescript@5.9.3_webpack@5.106.0_@swc+core@1.15.40_784804454575e1720128bc2ef187ba7e/node_modules/fork-ts-checker-webpack-plugin/lib/rpc/expose-rpc.js:60:27
+    at Generator.next (<anonymous>)
+    at fulfilled (/app/node_modules/.pnpm/fork-ts-checker-webpack-plugin@9.1.0_typescript@5.9.3_webpack@5.106.0_@swc+core@1.15.40_784804454575e1720128bc2ef187ba7e/node_modules/fork-ts-checker-webpack-plugin/lib/rpc/expose-rpc.js:5:58)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  errno: -32,
+  code: 'EPIPE',
+  syscall: 'write'
+}

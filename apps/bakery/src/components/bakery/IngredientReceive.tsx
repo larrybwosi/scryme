@@ -43,7 +43,7 @@ import {
   Box,
 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import sdk from '@/lib/sdk';
 import { useUnits } from '@/lib/units/hooks';
 import {
   calculateLineQuantity,
@@ -338,13 +338,15 @@ function BulkReceiveDialog({
       const normalizedPayload = {
         ...payload,
         lines: payload.lines.map(line => ({
-          ...line,
+          ingredientId: line.ingredientId,
           quantity: calculateLineQuantity(line),
           unitCost: calculateLineUnitCost(line),
+          lotNumber: line.lotNumber,
+          expiryDate: line.expiryDate,
+          supplier: line.supplier,
         }))
       };
-      const response = await axios.post('/api/bakery/ingredients/receive', normalizedPayload);
-      return response.data;
+      return sdk.bakery.receiveIngredients(normalizedPayload as any);
     },
     onSuccess: (responseData, variables) => {
       toast.success(
@@ -357,7 +359,7 @@ function BulkReceiveDialog({
     },
     onError: (error: any) => {
       // Extract the error message from the API response if available
-      const errorMessage = error.response?.data?.error || 'Failed to commit Goods Receipt Note. Please try again.';
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to commit Goods Receipt Note. Please try again.';
       toast.error(errorMessage);
     },
   });
