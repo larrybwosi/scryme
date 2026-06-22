@@ -415,6 +415,31 @@ export class BakeryController {
     return this.bakeryService.receiveIngredients(ctx, data);
   }
 
+  @Post("ingredients")
+  @RequirePermission("product:create")
+  async createIngredient(@v2Context() ctx: V2ApiContext, @Body() data: any) {
+    return this.bakeryService.createIngredient(ctx, data);
+  }
+
+  @Patch("ingredients/:id")
+  @RequirePermission("product:update")
+  async updateIngredient(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+    @Body() data: any,
+  ) {
+    return this.bakeryService.updateIngredient(ctx, id, data);
+  }
+
+  @Delete("ingredients/:id")
+  @RequirePermission("product:delete")
+  async deleteIngredient(
+    @v2Context() ctx: V2ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.bakeryService.deleteIngredient(ctx, id);
+  }
+
   @AllowPublic()
   @Get("update/:target/:current_version")
   @ApiOperation({ summary: "Get latest update for Bakery app" })
