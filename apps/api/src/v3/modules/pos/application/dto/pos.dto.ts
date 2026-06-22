@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNotEmpty } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsString, IsNotEmpty, IsOptional } from "class-validator";
 
 export class ProvisionDeviceDto {
   @ApiProperty({
@@ -24,6 +24,14 @@ export class PosLoginDto {
   @IsString()
   @IsNotEmpty()
   pin: string;
+
+  @ApiPropertyOptional({
+    example: "CARD-123",
+    description: "Optional card ID for optimized member lookup",
+  })
+  @IsString()
+  @IsOptional()
+  cardId?: string;
 }
 
 export class PosLoginResponseDto {
