@@ -59,6 +59,12 @@ const locationSchema = z.object({
       phone: z.string().optional(),
     })
     .optional(),
+  capacity: z
+    .object({
+      total: z.number().optional(),
+      unit: z.string().optional(),
+    })
+    .optional(),
 });
 
 type LocationFormValues = z.infer<typeof locationSchema>;
@@ -101,6 +107,10 @@ export function LocationSheet({
       contact: {
         email: location?.contact?.email || "",
         phone: location?.contact?.phone || "",
+      },
+      capacity: {
+        total: location?.capacity?.total || 0,
+        unit: location?.capacity?.unit || "units",
       },
     },
   });
@@ -402,7 +412,7 @@ export function LocationSheet({
                   control={form.control}
                   name="isDefault"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
                           Default Location
@@ -421,6 +431,46 @@ export function LocationSheet({
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium border-b pb-2">
+                    Enterprise Capacity
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="capacity.total"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Capacity</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={e =>
+                                field.onChange(e.target.valueAsNumber || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="capacity.unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Pallets, etc." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
               </div>
             </ScrollArea>
             <SheetFooter className="p-6 border-t bg-white">
