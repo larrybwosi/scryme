@@ -64,6 +64,7 @@ export function InventoryTable({ data }: InventoryTableProps) {
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
   const [isProductSheetOpen, setIsProductSheetOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
@@ -330,23 +331,34 @@ export function InventoryTable({ data }: InventoryTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={async () => {
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeleting}
+              onClick={async e => {
+                e.preventDefault();
                 if (deletingId) {
+                  setIsDeleting(true);
                   try {
                     await deleteProduct(deletingId);
                     toast.success("Product deleted successfully");
+                    setDeletingId(null);
+                    setIsDeleteDialogOpen(false);
                   } catch (e) {
                     toast.error("Failed to delete product");
                   } finally {
-                    setDeletingId(null);
-                    setIsDeleteDialogOpen(false);
+                    setIsDeleting(false);
                   }
                 }
               }}>
-              Delete
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
