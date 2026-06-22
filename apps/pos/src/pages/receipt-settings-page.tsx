@@ -20,6 +20,7 @@ import { ReceiptPdfDocument } from '@/components/receipt-pdf';
 import { PDFKitchenTicket } from '@/components/receipts/pdf-kitchen-ticket';
 import { usePdfActions } from '@/hooks/use-pdf-actions';
 import { ReceiptPreviewWrapper } from '@/components/pos/receipt-preview-wrapper';
+import { ThermalReceiptPreview } from '@/components/pos/thermal-receipt-preview';
 import { getBusinessConfig } from '@/lib/business-configs';
 import {
   Download,
@@ -1714,17 +1715,33 @@ export default function ReceiptSettingsPage() {
                 transformOrigin: 'center center',
               }}
             >
-              <ReceiptPreviewWrapper
-                document={
-                  <ReceiptPdfDocument
+              {config.paperSize === 'Letter' ? (
+                <ReceiptPreviewWrapper
+                  document={
+                    <ReceiptPdfDocument
+                      order={sampleOrder}
+                      settings={{ ...settings, receiptConfig: config }}
+                      qrCodeUrl={qrCodeDataUrl}
+                      barcodeUrl={barcodeUrl}
+                      branchName="Main Branch"
+                    />
+                  }
+                />
+              ) : (
+                <div className="bg-white h-full w-full overflow-auto flex justify-center py-10 no-scrollbar">
+                  <ThermalReceiptPreview
                     order={sampleOrder}
-                    settings={{ ...settings, receiptConfig: config }}
-                    qrCodeUrl={qrCodeDataUrl}
-                    barcodeUrl={barcodeUrl}
+                    config={config}
+                    businessName={settings.businessName}
+                    businessSlogan={settings.businessSlogan}
+                    address={settings.address}
+                    phone={settings.phone}
+                    email={settings.email}
+                    website={settings.website}
                     branchName="Main Branch"
                   />
-                }
-              />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex-1 overflow-auto w-full flex justify-center">
