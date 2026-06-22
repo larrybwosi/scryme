@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { deleteSupplier } from "../../app/actions/supplier";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 interface DeleteSupplierModalProps {
   supplierId: string;
@@ -65,8 +66,15 @@ export function DeleteSupplierModal({
               handleDelete();
             }}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700">
-            {isDeleting ? "Deleting..." : "Delete Supplier"}
+            className="bg-red-600 hover:bg-red-700 text-white">
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete Supplier"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

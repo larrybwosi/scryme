@@ -25,11 +25,17 @@ import {
   Globe,
   Tag,
   Calendar,
+  Loader2,
 } from "lucide-react";
 import { deletePriceList } from "../../app/actions/pricing";
 import { toast } from "sonner";
 import { PriceListDialog } from "./pricelist-dialog";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,16 +54,19 @@ interface PriceListTableProps {
 
 export function PriceListTable({ data, availableTags }: PriceListTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editingPriceList, setEditingPriceList] = useState<any | null>(null);
 
   const handleDelete = async (id: string) => {
+    setIsDeleting(true);
     try {
       await deletePriceList(id);
       toast.success("Price list deleted successfully");
+      setDeletingId(null);
     } catch (error: any) {
       toast.error(error.message || "Failed to delete price list");
     } finally {
-      setDeletingId(null);
+      setIsDeleting(false);
     }
   };
 
@@ -150,11 +159,19 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            aria-label="More actions">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>More actions</TooltipContent>
+                    </Tooltip>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
                         <Link href={`/inventory/pricelists/${priceList.id}`}>
@@ -200,11 +217,22 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => deletingId && handleDelete(deletingId)}>
-              Delete
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeleting}
+              onClick={e => {
+                e.preventDefault();
+                deletingId && handleDelete(deletingId);
+              }}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
