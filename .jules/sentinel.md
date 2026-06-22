@@ -49,3 +49,8 @@
 **Vulnerability:** The storage system was using a single shared bucket (or dataset) for all organizations. The `UploadController` was not passing organization context to the storage service, leading to lack of infrastructure-level isolation and potential for cross-tenant data access if file names were guessed.
 **Learning:** Security at the application layer (RBAC) is often insufficient if the underlying infrastructure (S3/Minio buckets) doesn't mirror the multi-tenant architecture. Incomplete implementations of "shared" services can easily bypass tenant boundaries.
 **Prevention:** Always enforce organization-scoping at the lowest possible layer (e.g., bucket name or database schema). Ensure that the authenticated context (`V2ApiContext`) is explicitly passed down to all infrastructure providers.
+
+## 2026-06-21 - [IDOR in Nested Relations & Multi-tenant Hardening]
+**Vulnerability:** Found that `BakeryService.updateBaker` was allowing updates to any baker by ID without verifying the organization's ownership. This was because the model lacked a direct `organizationId` and the service wasn't checking the parent relation.
+**Learning:** Models that are "nested" (linked to an organization via a settings or configuration model) are prime targets for IDOR because they lack a direct `organizationId` foreign key. Standard `findUnique` calls on these models often bypass tenant boundaries.
+**Prevention:** Always verify ownership for nested models by querying through their relations (e.g., `where: { id, parent: { organizationId } }`). Additionally, harden the schema by adding `@@unique([id, organizationId])` to all multi-tenant models to facilitate atomic, organization-scoped queries.

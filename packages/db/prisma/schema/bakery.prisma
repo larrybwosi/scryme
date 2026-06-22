@@ -9,6 +9,7 @@ model BakeryCategory {
   updatedAt      DateTime     @updatedAt
 
   @@unique([organizationId, name])
+  @@unique([id, organizationId])
   @@index([organizationId])
   @@map("bakery_category")
 }
@@ -416,6 +417,7 @@ model DeliveryPartner {
   updatedAt      DateTime     @updatedAt
 
   @@unique([organizationId, name])
+  @@unique([id, organizationId])
   @@index([organizationId])
   @@map("delivery_partner")
 }

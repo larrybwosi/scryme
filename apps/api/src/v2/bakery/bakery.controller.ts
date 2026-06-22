@@ -248,7 +248,7 @@ export class BakeryController {
   @Patch('bakers/:id')
   @RequirePermission('bakery:settings:manage')
   async updateBaker(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() data: any) {
-    return this.bakeryService.updateBaker(id, data);
+    return this.bakeryService.updateBaker(ctx, id, data);
   }
 
   @Delete('bakers/:id')

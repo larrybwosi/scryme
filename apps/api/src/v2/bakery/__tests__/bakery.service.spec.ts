@@ -30,6 +30,10 @@ describe('BakeryService', () => {
         count: vi.fn(),
         create: vi.fn(),
       },
+      bakeryBaker: {
+        findFirst: vi.fn(),
+        update: vi.fn(),
+      },
       $transaction: vi.fn((cb) => cb(mockPrisma.client)),
     },
   };
@@ -109,6 +113,35 @@ describe('BakeryService', () => {
       mockPrisma.client.productVariant.findUnique.mockResolvedValue(null);
 
       await expect(service.updateIngredient(ctx, 'invalid', {})).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('updateBaker', () => {
+    it('should update a baker if it belongs to the organization', async () => {
+      const ctx = { organizationId: 'org-1' } as any;
+      const id = 'baker-1';
+      const data = { specialties: ['bread'] };
+
+      mockPrisma.client.bakeryBaker.findFirst.mockResolvedValue({ id: 'baker-1' });
+      mockPrisma.client.bakeryBaker.update.mockResolvedValue({ id: 'baker-1', ...data });
+
+      const result = await service.updateBaker(ctx, id, data);
+
+      expect(mockPrisma.client.bakeryBaker.findFirst).toHaveBeenCalledWith({
+        where: { id, bakerySettings: { organizationId: 'org-1' } },
+      });
+      expect(mockPrisma.client.bakeryBaker.update).toHaveBeenCalledWith({
+        where: { id },
+        data,
+      });
+      expect(result.specialties).toContain('bread');
+    });
+
+    it('should throw NotFoundException if baker does not belong to the organization', async () => {
+      const ctx = { organizationId: 'org-1' } as any;
+      mockPrisma.client.bakeryBaker.findFirst.mockResolvedValue(null);
+
+      await expect(service.updateBaker(ctx, 'other-baker', {})).rejects.toThrow(NotFoundException);
     });
   });
 });
