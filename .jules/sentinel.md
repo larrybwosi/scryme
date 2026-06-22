@@ -84,3 +84,13 @@
 **Prevention:**
 - Standardize all outbound HTTP requests with a defensive default configuration (10s timeout, 1MB payload limit unless otherwise required).
 - Identify and consolidate (or parallel-harden) duplicated service logic to prevent security gaps in secondary packages.
+
+## 2026-06-27 - [Hardened PIN Authentication and O(1) Lookup]
+**Vulnerability:** `V3AuthCoreService` performed an $O(N)$ loop of `bcrypt.compare` operations on all active members during PIN-based login. This created a high-severity DoS vector for large organizations and allowed for unbounded brute-force attempts.
+
+**Learning:** Simple capping of search results (as seen in previous PRs) causes functional regressions for large tenants. A robust fix combines $O(1)$ database lookups (using `cardId`) with Redis-based rate limiting to eliminate the computational cost and mitigate brute-force risks simultaneously.
+
+**Prevention:**
+- Always prefer unique identifiers (like `cardId`, `badgeId`, or `email`) for initial lookups to ensure authentication logic is $O(1)$ relative to the number of users.
+- Implement per-organization or per-device rate limiting for all PIN/password validation endpoints to protect against DoS and brute-force attacks.
+- Synchronize security hardening across duplicated or similar services (e.g., `V3AuthService` and `V3AuthCoreService`) to prevent architectural gaps.

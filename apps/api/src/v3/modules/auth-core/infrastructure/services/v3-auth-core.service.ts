@@ -6,10 +6,14 @@ import * as jwt from "jsonwebtoken";
 import { decrypt } from "@repo/shared/api/v2/utils/encryption";
 import { timingSafeMatch } from "@repo/shared/api/v2/utils/crypto";
 import { provisionDeviceV3 } from "@repo/shared/lib/provisioning/v3";
+import { RedisService } from "@/redis/redis.service";
 
 @Injectable()
 export class V3AuthCoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async provisionDevice(token: string) {
     try {
@@ -101,90 +105,140 @@ export class V3AuthCoreService {
     }
   }
 
-async loginMember(clientId: string, pin: string) {
-  const client = await this.validateLoginClient(clientId);
-  const member = await this.validateLoginMember(client.organizationId, pin);
-  await this.handleMemberCheckIn(client, member);
-  return this.generateToken(client, member);
-}
-
-private async validateLoginClient(clientId: string) {
-  const client = await this.prisma.client.v3ApiClient.findUnique({
-    where: { clientId },
-    include: { organization: true },
-  });
-  if (!client) throw new UnauthorizedException("Invalid client");
-  return client;
-}
-
-private async validateLoginMember(organizationId: string, pin: string) {
-  // Security: Limit the number of members to check to prevent DoS via expensive bcrypt loops.
-  // Organizations with > 100 members should use a more specific identifier for login.
-  const MAX_MEMBERS_TO_CHECK = 100;
-
-  const members = await this.prisma.client.member.findMany({
-    where: {
-      organizationId,
-      isActive: true,
-      pinHash: { not: null },
-    },
-    take: MAX_MEMBERS_TO_CHECK + 1,
-  });
-
-  let checkedCount = 0;
-  for (const member of members) {
-    if (checkedCount >= MAX_MEMBERS_TO_CHECK) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-
-    if (member.pinHash && (await bcrypt.compare(pin, member.pinHash))) {
-      return member;
-    }
-    checkedCount++;
+  async loginMember(clientId: string, pin: string, cardId?: string) {
+    const client = await this.validateLoginClient(clientId);
+    const member = await this.validateLoginMember(
+      client.organizationId,
+      pin,
+      cardId,
+      client.clientId,
+    );
+    await this.handleMemberCheckIn(client, member);
+    return this.generateToken(client, member);
   }
 
-  throw new UnauthorizedException("Invalid credentials");
-}
+  private async validateLoginClient(clientId: string) {
+    const client = await this.prisma.client.v3ApiClient.findUnique({
+      where: { clientId },
+      include: { organization: true },
+    });
+    if (!client) throw new UnauthorizedException("Invalid client");
+    return client;
+  }
 
-private async handleMemberCheckIn(client: any, member: any) {
-  const registry = await this.prisma.client.deviceRegistry.findFirst({
-    where: { apiKeyId: client.id },
-  });
-  if (!registry) return;
+  private async validateLoginMember(
+    organizationId: string,
+    pin: string,
+    cardId?: string,
+    clientId?: string,
+  ) {
+    const MAX_PIN_ATTEMPTS = 3;
+    const LOCKOUT_DURATION_SECONDS = 900; // 15 minutes
 
-  const existingLog = await this.prisma.client.attendanceLog.findFirst({
-    where: { memberId: member.id, checkOutTime: null },
-  });
+    const rateLimitKey = `v3_pin_attempts:${organizationId}:${clientId || "global"}`;
+    const currentAttempts = (await this.redis.get<number>(rateLimitKey)) || 0;
 
-  if (!existingLog) {
-    await this.recordCheckIn(
-      client.organizationId,
-      member.id,
-      registry.locationId,
+    if (currentAttempts >= MAX_PIN_ATTEMPTS) {
+      const ttl = await this.redis.ttl(rateLimitKey);
+      const minutesLeft = Math.ceil(ttl / 60);
+      throw new UnauthorizedException(
+        `Account locked. Try again in ${minutesLeft} minutes.`,
+      );
+    }
+
+    // Optimization: If cardId is provided, use O(1) lookup
+    if (cardId) {
+      const member = await this.prisma.client.member.findUnique({
+        where: { organizationId_cardId: { organizationId, cardId } },
+      });
+
+      if (
+        member &&
+        member.isActive &&
+        member.pinHash &&
+        (await bcrypt.compare(pin, member.pinHash))
+      ) {
+        await this.redis.del(rateLimitKey);
+        return member;
+      }
+    } else {
+      // Security: Limit the number of members to check to prevent DoS via expensive bcrypt loops.
+      // Organizations with > 100 members should use a more specific identifier for login.
+      const MAX_MEMBERS_TO_CHECK = 100;
+
+      const members = await this.prisma.client.member.findMany({
+        where: {
+          organizationId,
+          isActive: true,
+          pinHash: { not: null },
+        },
+        take: MAX_MEMBERS_TO_CHECK + 1,
+      });
+
+      let checkedCount = 0;
+      for (const member of members) {
+        if (checkedCount >= MAX_MEMBERS_TO_CHECK) {
+          throw new UnauthorizedException("Invalid credentials");
+        }
+
+        if (member.pinHash && (await bcrypt.compare(pin, member.pinHash))) {
+          await this.redis.del(rateLimitKey);
+          return member;
+        }
+        checkedCount++;
+      }
+    }
+
+    // Track failed attempts
+    const newCount = await this.redis.incr(rateLimitKey);
+    if (newCount === 1) {
+      await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
+    }
+
+    throw new UnauthorizedException(
+      `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
     );
   }
-}
 
-private async recordCheckIn(
-  organizationId: string,
-  memberId: string,
-  locationId: string,
-) {
-  await this.prisma.client.attendanceLog.create({
-    data: {
-      memberId,
-      organizationId,
-      checkInTime: new Date(),
-      checkInLocationId: locationId,
-    },
-  });
-  await this.prisma.client.member.update({
-    where: { id: memberId },
-    data: {
-      isCheckedIn: true,
-      lastCheckInTime: new Date(),
-      currentCheckInLocationId: locationId,
-    },
-  });
-}
+  private async handleMemberCheckIn(client: any, member: any) {
+    const registry = await this.prisma.client.deviceRegistry.findFirst({
+      where: { apiKeyId: client.id },
+    });
+    if (!registry) return;
+
+    const existingLog = await this.prisma.client.attendanceLog.findFirst({
+      where: { memberId: member.id, checkOutTime: null },
+    });
+
+    if (!existingLog) {
+      await this.recordCheckIn(
+        client.organizationId,
+        member.id,
+        registry.locationId,
+      );
+    }
+  }
+
+  private async recordCheckIn(
+    organizationId: string,
+    memberId: string,
+    locationId: string,
+  ) {
+    await this.prisma.client.attendanceLog.create({
+      data: {
+        memberId,
+        organizationId,
+        checkInTime: new Date(),
+        checkInLocationId: locationId,
+      },
+    });
+    await this.prisma.client.member.update({
+      where: { id: memberId },
+      data: {
+        isCheckedIn: true,
+        lastCheckInTime: new Date(),
+        currentCheckInLocationId: locationId,
+      },
+    });
+  }
 }
