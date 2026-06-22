@@ -115,22 +115,16 @@ export class BakeryService {
 
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    const [batches, recipes, bakers] = await Promise.all([
+    const [batches, recipes, bakers, stockItems, recipesList] = await Promise.all([
       this.prisma.client.batch.findMany({
         where: { organizationId },
-        take: 5,
+        take: 10,
         orderBy: { scheduledStartAt: "desc" },
-        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
-        select: {
-          id: true,
-          batchNumber: true,
-          status: true,
-          scheduledStartAt: true,
-          productionDate: true,
+        include: {
           recipe: { select: { id: true, name: true } },
           leadBaker: {
-            select: {
-              member: { select: { user: { select: { name: true } } } },
+            include: {
+              member: { include: { user: { select: { name: true } } } },
             },
           },
         },
@@ -139,22 +133,76 @@ export class BakeryService {
       this.prisma.client.bakeryBaker.count({
         where: { bakerySettings: { organizationId } },
       }),
+      this.prisma.client.productVariantStock.findMany({
+        where: {
+          organizationId,
+          variant: { product: { type: "RAW_MATERIAL" as any } },
+        },
+        include: {
+          variant: { include: { baseUnit: true, baseOrgUnit: true } },
+        },
+      }),
+      this.prisma.client.recipe.findMany({
+        where: { organizationId },
+        include: { category: true },
+      }),
     ]);
 
+    const lowStockIngredients = stockItems
+      .filter(s => Number(s.availableStock) <= Number(s.reorderPoint || 0))
+      .map(s => ({
+        id: s.id,
+        name: s.variant.name,
+        sku: s.variant.sku,
+        current: Number(s.availableStock),
+        reorder: Number(s.reorderPoint || 0),
+        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
+      }));
+
+    const recipesByCategory: Record<string, number> = {};
+    recipesList.forEach(r => {
+      const catName = r.category?.name || "Uncategorized";
+      recipesByCategory[catName] = (recipesByCategory[catName] || 0) + 1;
+    });
+
+    const totalInventoryValue = stockItems.reduce(
+      (acc, s) => acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
+      0,
+    );
+
     return {
-      recentBatches: batches,
+      recentBatches: batches.map(b => ({
+        ...b,
+        productionDate: b.scheduledStartAt,
+      })),
       recipesCount: recipes,
       bakersCount: bakers,
-      averageRecipeCost: 0,
-      recipesByCategory: {},
-      totalInventoryValue: 0,
+      averageRecipeCost: recipesList.length
+        ? recipesList.reduce((acc, r) => acc + Number(r.costPrice || 0), 0) / recipesList.length
+        : 0,
+      recipesByCategory,
+      totalInventoryValue,
+      lowStockIngredients,
+      stockData: stockItems.slice(0, 10).map(s => ({
+        id: s.id,
+        name: s.variant.name,
+        current: Number(s.availableStock),
+        reorder: Number(s.reorderPoint || 0),
+        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
+      })),
       summary: {
         totalBatches: batches.length,
         activeBatches: batches.filter((b: any) => b.status === "IN_PROGRESS")
           .length,
-        completedToday: batches.filter((b: any) => b.status === "COMPLETED")
-          .length,
-        lowStockItems: 0,
+        completedToday: batches.filter((b: any) => {
+            const today = new Date();
+            return b.status === "COMPLETED" &&
+                   b.completedAt &&
+                   b.completedAt.toDateString() === today.toDateString();
+        }).length,
+        lowStockItems: lowStockIngredients.length,
       },
     };
   }
@@ -165,7 +213,7 @@ export class BakeryService {
    */
   async getIngredients(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    return this.prisma.client.productVariant.findMany({
+    const variants = await this.prisma.client.productVariant.findMany({
       where: {
         product: {
           organizationId,
@@ -175,35 +223,39 @@ export class BakeryService {
           { producedByRecipe: { isNot: null } },
         ],
       },
-      select: {
-        id: true,
-        name: true,
-        sku: true,
-        buyingPrice: true,
-        reorderPoint: true,
-        reorderQty: true,
-        isActive: true,
-        tags: true,
+      include: {
         product: {
-          select: {
-            id: true,
-            name: true,
-            category: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+          include: {
+            category: true,
           },
         },
-        baseUnit: {
-          select: {
-            id: true,
-            name: true,
-            symbol: true,
-          },
-        },
+        baseUnit: true,
+        baseOrgUnit: true,
+        variantStocks: true,
       },
+    });
+
+    return variants.map(v => {
+      const currentStock = v.variantStocks.reduce(
+        (sum, s) => sum + Number(s.availableStock || 0),
+        0,
+      );
+      return {
+        id: v.id,
+        productId: v.productId,
+        name: v.name || v.product.name,
+        sku: v.sku,
+        unitPrice: Number(v.buyingPrice || 0),
+        currentStock,
+        reorderLevel: v.reorderPoint || 0,
+        maxStock: v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
+        unit: v.baseUnit || v.baseOrgUnit || { symbol: "" },
+        category: v.product.category,
+        tags: v.tags,
+        lastRestocked: v.updatedAt,
+        averageUsagePerWeek: 0,
+        totalUsed: 0,
+      };
     });
   }
 
@@ -1267,6 +1319,113 @@ export class BakeryService {
         transaction: { include: { customer: true, deliveryPartner: true } },
         driver: true,
       },
+    });
+  }
+
+  async createIngredient(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
+    const {
+      name,
+      sku,
+      categoryId,
+      description,
+      buyingPrice,
+      reorderPoint,
+      baseUnitId,
+      baseOrgUnitId,
+      stockingUnitId,
+      stockingOrgUnitId,
+    } = data;
+
+    return this.prisma.client.$transaction(async tx => {
+      const product = await tx.product.create({
+        data: {
+          name,
+          description,
+          categoryId,
+          organizationId,
+          sku: sku || `RM-${Date.now()}`,
+          type: "RAW_MATERIAL" as any,
+          variants: {
+            create: [
+              {
+                name,
+                sku: sku || `RM-${Date.now()}-VAR`,
+                buyingPrice: buyingPrice || 0,
+                reorderPoint: reorderPoint || 0,
+                baseUnitId,
+                baseOrgUnitId,
+                stockingUnitId,
+                stockingOrgUnitId,
+                attributes: {},
+              },
+            ],
+          },
+        },
+        include: { variants: true },
+      });
+
+      return product;
+    });
+  }
+
+  async updateIngredient(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const {
+      name,
+      sku,
+      categoryId,
+      description,
+      buyingPrice,
+      reorderPoint,
+      baseUnitId,
+      baseOrgUnitId,
+      stockingUnitId,
+      stockingOrgUnitId,
+    } = data;
+
+    return this.prisma.client.$transaction(async tx => {
+      // Find the product first to get its variant
+      const product = await tx.product.findFirst({
+        where: { id, organizationId },
+        include: { variants: true },
+      });
+
+      if (!product) throw new NotFoundException("Ingredient not found");
+
+      const updatedProduct = await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          categoryId,
+        },
+      });
+
+      if (product.variants.length > 0) {
+        await tx.productVariant.update({
+          where: { id: product.variants[0].id },
+          data: {
+            name,
+            sku,
+            buyingPrice,
+            reorderPoint,
+            baseUnitId,
+            baseOrgUnitId,
+            stockingUnitId,
+            stockingOrgUnitId,
+          },
+        });
+      }
+
+      return updatedProduct;
+    });
+  }
+
+  async deleteIngredient(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+    return this.prisma.client.product.delete({
+      where: { id, organizationId },
     });
   }
 
