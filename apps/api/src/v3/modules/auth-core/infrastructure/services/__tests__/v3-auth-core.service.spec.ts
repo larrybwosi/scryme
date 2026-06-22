@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UnauthorizedException } from "@nestjs/common";
 import { V3AuthCoreService } from "../v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "@/redis/redis.service";
 import * as bcrypt from "bcryptjs";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
@@ -18,11 +19,23 @@ describe("V3AuthCoreService", () => {
       providers: [
         V3AuthCoreService,
         {
+          provide: RedisService,
+          useValue: {
+            get: vi.fn(),
+            set: vi.fn(),
+            del: vi.fn(),
+            incr: vi.fn(),
+            expire: vi.fn(),
+            ttl: vi.fn(),
+          },
+        },
+        {
           provide: PrismaService,
           useValue: {
             client: {
               member: {
                 findMany: vi.fn(),
+                findUnique: vi.fn(),
               },
               v3ApiClient: {
                 findUnique: vi.fn(),
