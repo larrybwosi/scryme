@@ -16,3 +16,7 @@
 ## 2025-06-19 - [Accessible Destructive Actions with Feedback]
 **Learning:** Using native `confirm()` for destructive actions is a missed opportunity for brand consistency and accessibility. Furthermore, users often experience "click uncertainty" during network requests if there is no immediate visual feedback (like a loading spinner) on the action button.
 **Action:** Replace native confirmation dialogs with themed `AlertDialog` components. Always include a loading state (spinner + "Deleting...") in the confirmation button to provide immediate feedback for asynchronous operations.
+
+## 2025-06-20 - [Standardized Form Feedback & Validation Visibility]
+**Learning:** Forms lacked immediate feedback during submission, leading to "click uncertainty." Mandatory fields were also not visually distinguished from optional ones, increasing the cognitive load for users during data entry.
+**Action:** Always include a loading spinner (e.g., `Loader2`) and descriptive state text (e.g., "Creating...") in submit buttons when `isSubmitting` is true. Mark required fields with a red asterisk (`<span className="text-red-500">*</span>`) in the label to provide clear visual cues.
