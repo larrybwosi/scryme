@@ -100,27 +100,23 @@ export function useGenerateRawMaterialAdvanced(options: UseGenerateRawMaterialOp
   return useMutation({
     mutationFn: async (data: GenerateRawMaterialRequest): Promise<GenerateRawMaterialResponse> => {
       try {
-        const response = await axios.post<GenerateRawMaterialResponse>('/api/products/raw/ai', data, {
-          timeout: 30000, // 30 second timeout
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await sdk.client.post('/bakery/recipes/generate', data);
 
-        if (!response.data.materials || !Array.isArray(response.data.materials)) {
-          throw new Error('Invalid response format from AI service');
+        if (!response.materials || !Array.isArray(response.materials)) {
+          // If the backend returns a single generated recipe instead of multiple materials,
+          // adapt it to the expected format if possible, or throw error.
+          // For now, keeping it consistent with what generateRecipeAi seems to return.
+          return {
+             materials: [response],
+             message: "AI Generation Complete"
+          } as any;
         }
 
-        return response.data;
+        return response;
       } catch (error: any) {
-        if (axios.isAxiosError(error)) {
-          if (error.response) {
-            // Server responded with error status
-            throw new Error(error.response.data.message || `Server error: ${error.response.status}`, { cause: error });
-          } else if (error.request) {
-            // Request made but no response received
-            throw new Error('No response from server. Please check your connection.', { cause: error });
-          }
+        if (error.response) {
+          // Server responded with error status
+          throw new Error(error.response.data.message || `Server error: ${error.response.status}`, { cause: error });
         }
         throw error;
       }

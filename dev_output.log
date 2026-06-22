@@ -1,0 +1,32 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@3.0.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 570ms
+○ Compiling proxy ...
+
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:271:11)
+    at module evaluation (../../packages/env/src/index.ts:278:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0l_z11c._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_07keiqb._.js:1098:30)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_07keiqb._.js:1163:30)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_07keiqb._.js:1448:30)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0uwfvb7._.js:5:30)
+  269 |       parsed.error.flatten().fieldErrors,
+  270 |     );
+> 271 |     throw new Error("Invalid environment variables");
+      |           ^
+  272 |   }
+  273 |
+  274 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &

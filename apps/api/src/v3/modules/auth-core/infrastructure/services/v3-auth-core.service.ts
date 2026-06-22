@@ -162,20 +162,30 @@ export class V3AuthCoreService {
         return member;
       }
     } else {
-      // Fallback: O(N) loop with strict rate limiting
+      // Security: Limit the number of members to check to prevent DoS via expensive bcrypt loops.
+      // Organizations with > 100 members should use a more specific identifier for login.
+      const MAX_MEMBERS_TO_CHECK = 100;
+
       const members = await this.prisma.client.member.findMany({
         where: {
           organizationId,
           isActive: true,
           pinHash: { not: null },
         },
+        take: MAX_MEMBERS_TO_CHECK + 1,
       });
 
+      let checkedCount = 0;
       for (const member of members) {
+        if (checkedCount >= MAX_MEMBERS_TO_CHECK) {
+          throw new UnauthorizedException("Invalid credentials");
+        }
+
         if (member.pinHash && (await bcrypt.compare(pin, member.pinHash))) {
           await this.redis.del(rateLimitKey);
           return member;
         }
+        checkedCount++;
       }
     }
 

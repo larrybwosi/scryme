@@ -2,43 +2,39 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiResponse } from "../tanstack-axios";
 import { toast } from "sonner";
 import { Supplier } from "@/components/suppliers/types";
-import axios from "axios";
+import sdk from "../sdk";
 
   const suppliers = {
     list: async (): Promise<ApiResponse<Supplier[]>> =>
-      axios.get(`/api/suppliers`).then(res => res.data),
+      sdk.client.get(`/catalog/suppliers`),
     create: async ( data: any): Promise<ApiResponse<Supplier>> =>
-      axios.post(`/api/suppliers`, data).then(res => res.data),
+      sdk.client.post(`/catalog/suppliers`, data),
     get: async ( supplierId: string): Promise<ApiResponse<Supplier>> =>
-      axios.get(`/api/suppliers/${supplierId}`).then(res => res),
+      sdk.client.get(`/catalog/suppliers/${supplierId}`),
     update: async (
       supplierId: string,
       data: Partial<Supplier>
     ): Promise<ApiResponse<Supplier>> =>
-      axios.patch(`/api/suppliers/${supplierId}`, data).then(res => res.data),
+      sdk.client.patch(`/catalog/suppliers/${supplierId}`, data),
     delete: async ( supplierId: string): Promise<ApiResponse<void>> =>
-      axios.delete(`/api/suppliers/${supplierId}`).then(res => res.data),
+      sdk.client.delete(`/catalog/suppliers/${supplierId}`),
     search: async (
       query: string,
       filters?: Record<string, any>
     ): Promise<ApiResponse<Supplier[]>> =>
-      axios
-        .get(`/api/suppliers/search`, {
+      sdk.client.get(`/catalog/suppliers/search`, {
           params: { q: query, ...filters },
-        })
-        .then(res => res.data),
+        }),
     products: {
       list: async ( supplierId: string): Promise<ApiResponse<ProductSupplier[]>> =>
-        axios.get(`/api/suppliers/${supplierId}/products`).then(res => res.data),
+        sdk.client.get(`/catalog/suppliers/${supplierId}/products`),
       create: async (
         supplierId: string,
         data: AddProductSupplierPayload
       ): Promise<ApiResponse<ProductSupplier>> =>
-        axios.post(`/api/suppliers/${supplierId}/products`, data).then(res => res.data),
+        sdk.client.post(`/catalog/suppliers/${supplierId}/products`, data),
       delete: async ( supplierId: string, productId: string): Promise<ApiResponse<void>> =>
-        axios
-          .delete(`/api/suppliers/${supplierId}/products`, { data: { productId } })
-          .then(res => res.data),
+        sdk.client.delete(`/catalog/suppliers/${supplierId}/products`, { data: { productId } }),
     },
   };
 export const useListSuppliers = () => {
@@ -126,8 +122,7 @@ export const useListSupplierProducts = (supplierId: string) => {
   return useQuery<ProductSupplier[], Error>({
     queryKey: ['supplier-products', supplierId],
     queryFn: async () => {
-      const response = await axios.get(`/api/suppliers/${supplierId}/products`);
-      return response.data.data || [];
+      return await sdk.client.get(`/catalog/suppliers/${supplierId}/products`);
     },
     enabled: !!supplierId,
   });
@@ -193,9 +188,7 @@ export const useGetSupplierDeliveries = (supplierId: string) => {
   return useQuery({
     queryKey: ['supplier-deliveries', supplierId],
     queryFn: async (): Promise<Delivery[]> => {
-      const response = await fetch(`/api/suppliers/${supplierId}/deliveries`);
-      const result = await response.json();
-      return result.data || [];
+      return await sdk.client.get(`/catalog/suppliers/${supplierId}/deliveries`);
     },
     enabled: !!supplierId,
   });
