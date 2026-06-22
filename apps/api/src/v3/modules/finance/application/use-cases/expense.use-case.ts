@@ -239,12 +239,46 @@ export class ExpenseUseCase {
 
     return await this.prisma.client.expense.findMany({
       where,
-      include: {
-        category: true,
-        member: { include: { user: { select: { name: true, email: true } } } },
-        pettyCashFund: true,
-        utilityAccount: true,
-        location: true,
+      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // and network payload size by fetching only necessary fields.
+      select: {
+        id: true,
+        expenseNumber: true,
+        description: true,
+        expenseDate: true,
+        amount: true,
+        currencyCode: true,
+        exchangeRate: true,
+        baseAmount: true,
+        taxAmount: true,
+        taxRate: true,
+        paymentMethod: true,
+        status: true,
+        isReimbursable: true,
+        isBillable: true,
+        receiptUrl: true,
+        notes: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true,
+        categoryId: true,
+        locationId: true,
+        memberId: true,
+        supplierId: true,
+        purchaseId: true,
+        budgetId: true,
+        pettyCashFundId: true,
+        utilityAccountId: true,
+        category: { select: { id: true, name: true } },
+        location: { select: { id: true, name: true } },
+        member: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+        pettyCashFund: { select: { id: true, name: true } },
+        utilityAccount: { select: { id: true, name: true } },
       },
       orderBy: { expenseDate: "desc" },
     });
@@ -264,6 +298,16 @@ export class ExpenseUseCase {
     return await this.prisma.client.$transaction(async (tx) => {
       const expense = await tx.expense.findFirst({
         where: { id: expenseId, organizationId },
+        // ⚡ Bolt Optimization: Select only required fields for verification
+        // and post-approval actions to reduce database I/O.
+        select: {
+          id: true,
+          status: true,
+          amount: true,
+          description: true,
+          pettyCashFundId: true,
+          budgetId: true,
+        },
       });
 
       if (!expense) throw new NotFoundException("Expense not found");
