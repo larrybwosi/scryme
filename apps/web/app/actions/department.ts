@@ -29,12 +29,14 @@ export async function getDepartments(search?: string) {
     const departments = await db.department.findMany({
       where: {
         organizationId: session.organizationId,
-        ...(search ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } }
-          ]
-        } : {})
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {}),
       },
       include: {
         head: {
@@ -115,12 +117,12 @@ export async function getDepartmentDetail(id: string) {
                 approver: {
                   include: {
                     user: {
-                      select: { name: true }
-                    }
-                  }
-                }
+                      select: { name: true },
+                    },
+                  },
+                },
               },
-              orderBy: { stepOrder: "asc" }
+              orderBy: { stepOrder: "asc" },
             },
           },
         },
@@ -156,8 +158,8 @@ export async function createDepartment(data: {
         name: data.name,
         description: data.description,
         headId: data.headId === "none" ? null : data.headId,
-        parentId: data.parentId === "none" ? null : data.parentId,
-        locationId: data.locationId === "none" ? null : data.locationId,
+        parentId: data.parentId === "none" ? null : data.parentId || null,
+        locationId: data.locationId === "none" ? null : data.locationId || null,
         costCenterId: data.costCenterId === "none" ? null : data.costCenterId,
         image: data.image,
         banner: data.banner,
@@ -214,10 +216,20 @@ export async function updateDepartment(
       data: {
         name: data.name,
         description: data.description,
-        headId: (data.headId === "" || data.headId === "none") ? null : data.headId,
-        parentId: (data.parentId === "" || data.parentId === "none") ? null : data.parentId,
-        locationId: (data.locationId === "" || data.locationId === "none") ? null : data.locationId,
-        costCenterId: (data.costCenterId === "" || data.costCenterId === "none") ? null : data.costCenterId,
+        headId:
+          data.headId === "" || data.headId === "none" ? null : data.headId,
+        parentId:
+          data.parentId === "" || data.parentId === "none"
+            ? null
+            : data.parentId,
+        locationId:
+          data.locationId === "" || data.locationId === "none"
+            ? null
+            : data.locationId,
+        costCenterId:
+          data.costCenterId === "" || data.costCenterId === "none"
+            ? null
+            : data.costCenterId,
         image: data.image,
         banner: data.banner,
         settings: data.settings,
@@ -420,7 +432,7 @@ export async function createDepartmentBudget(data: {
   try {
     const session = await checkAdminPermission();
 
-    const budget = await db.$transaction(async (tx) => {
+    const budget = await db.$transaction(async tx => {
       const newBudget = await tx.budget.create({
         data: {
           organizationId: session.organizationId,
@@ -452,7 +464,10 @@ export async function createDepartmentBudget(data: {
   }
 }
 
-export async function updateDepartmentActiveBudget(departmentId: string, budgetId: string | null) {
+export async function updateDepartmentActiveBudget(
+  departmentId: string,
+  budgetId: string | null,
+) {
   try {
     await checkAdminPermission();
 
@@ -529,18 +544,20 @@ export async function getDepartmentStats() {
 
   try {
     const [totalDepartments, totalMembers, totalBudget] = await Promise.all([
-      db.department.count({ where: { organizationId: session.organizationId } }),
+      db.department.count({
+        where: { organizationId: session.organizationId },
+      }),
       db.departmentMember.count({
-        where: { department: { organizationId: session.organizationId } }
+        where: { department: { organizationId: session.organizationId } },
       }),
       db.budget.aggregate({
         where: {
           organizationId: session.organizationId,
           isActive: true,
-          periodEnd: { gte: new Date() }
+          periodEnd: { gte: new Date() },
         },
-        _sum: { amount: true }
-      })
+        _sum: { amount: true },
+      }),
     ]);
 
     return {
@@ -548,8 +565,8 @@ export async function getDepartmentStats() {
       data: {
         totalDepartments,
         totalMembers,
-        totalBudget: Number(totalBudget._sum.amount) || 0
-      }
+        totalBudget: Number(totalBudget._sum.amount) || 0,
+      },
     };
   } catch (error: any) {
     return { success: false, error: error.message };

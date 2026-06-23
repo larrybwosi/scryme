@@ -3,11 +3,12 @@
 # ---------------------------------------------------------
 FROM node:22-slim AS base
 
-# Prisma needs openssl, and ca-certificates. Slim needs more build tools than alpine for some native modules if they were used,
-# but for runtime it's generally fine.
+# Prisma needs openssl, and ca-certificates.
+# 💡 FIXED: Added wget here so the Stage 4 HEALTHCHECK actually works!
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm (aligned with version 10.33.0)
@@ -22,7 +23,8 @@ FROM base AS pruner
 WORKDIR /app
 RUN pnpm add -g turbo
 COPY . .
-RUN turbo prune api --docker
+
+RUN turbo prune --scope=api --docker
 
 # ---------------------------------------------------------
 # Stage 3: Installer & Builder
@@ -44,7 +46,6 @@ COPY --from=pruner /app/out/full/ .
 RUN npx turbo run generate
 
 # Build the API and its internal workspace dependencies
-# Use serial execution and increased memory to prevent OOM during build
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npx turbo build --filter=api... --concurrency=1
 
