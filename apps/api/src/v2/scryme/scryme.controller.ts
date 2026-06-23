@@ -9,7 +9,12 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ScrymeService } from "./scryme.service";
-import { AllowPublic } from "../../common/decorators/auth.decorator";
+import {
+  AllowPublic,
+  RequirePermission,
+} from "../../common/decorators/auth.decorator";
+import { v2Context } from "../../common/decorators/v2-context.decorator";
+import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeApprovalService } from "./scryme-approval.service";
 
@@ -31,9 +36,8 @@ export class ScrymeController {
   }
 
   @Post("provision")
-  async provision(@Req() req: any) {
-    const ctx = req.v2Context;
-
+  @RequirePermission("settings:manage")
+  async provision(@v2Context() ctx: V2ApiContext) {
     // Fetch actual organization details
     const org = await this.prisma.client.organization.findUnique({
       where: { id: ctx.organizationId },
@@ -47,15 +51,25 @@ export class ScrymeController {
   }
 
   @Post("notify")
-  async notify(@Body("requestId") requestId: string) {
-    return this.scrymeApprovalService.notifyApprovers(requestId);
+  @RequirePermission("settings:manage")
+  async notify(
+    @v2Context() ctx: V2ApiContext,
+    @Body("requestId") requestId: string,
+  ) {
+    return this.scrymeApprovalService.notifyApprovers(
+      ctx.organizationId,
+      requestId,
+    );
   }
 
   @Post("update-messages")
+  @RequirePermission("settings:manage")
   async updateMessages(
+    @v2Context() ctx: V2ApiContext,
     @Body() data: { requestId: string; memberId: string; stepNumber: number },
   ) {
     return this.scrymeApprovalService.updateStepMessages(
+      ctx.organizationId,
       data.requestId,
       data.memberId,
       data.stepNumber,
@@ -63,13 +77,20 @@ export class ScrymeController {
   }
 
   @Post("notify-requester")
-  async notifyRequester(@Body("requestId") requestId: string) {
-    return this.scrymeApprovalService.notifyRequester(requestId);
+  @RequirePermission("settings:manage")
+  async notifyRequester(
+    @v2Context() ctx: V2ApiContext,
+    @Body("requestId") requestId: string,
+  ) {
+    return this.scrymeApprovalService.notifyRequester(
+      ctx.organizationId,
+      requestId,
+    );
   }
 
   @Get("config")
-  async getConfig(@Req() req: any) {
-    const ctx = req.v2Context;
+  @RequirePermission("settings:manage")
+  async getConfig(@v2Context() ctx: V2ApiContext) {
     return this.scrymeService.getConfiguration(ctx.organizationId);
   }
 }
