@@ -9,11 +9,17 @@ import { FastifyReply } from "fastify";
 import { ApiError } from "@repo/shared/api/v2/errors";
 import { env } from "@repo/env";
 import { OpenObserveService } from "../services/openobserve.service";
+import { redactSensitiveData } from "../utils/redaction";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
-    console.error("Unhandled Exception:", exception);
+    // @security Redact the entire exception object before logging to prevent
+    // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
+    const redactedException = redactSensitiveData(exception);
+
+    console.error("Unhandled Exception:", redactedException);
+
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<any>();
 
@@ -69,7 +75,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
             correlationId,
           });
         } else if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
-          openObserveService.logException(exception, {
+          openObserveService.logException(redactedException, {
             path: request.url,
             method: request.method,
             ip,

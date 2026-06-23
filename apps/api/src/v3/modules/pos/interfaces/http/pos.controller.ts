@@ -83,6 +83,7 @@ export class PosController {
     const accessToken = await this.authCore.loginMember(
       body.clientId,
       body.pin,
+      body.cardId,
     );
     return { accessToken };
   }

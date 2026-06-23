@@ -67,4 +67,52 @@ describe("redactSensitiveData", () => {
     expect(redactSensitiveData(null)).toBe(null);
     expect(redactSensitiveData(undefined)).toBe(undefined);
   });
+
+  it("should redact enhanced sensitive keys", () => {
+    const data = {
+      authorization: "Bearer token123",
+      "x-api-key": "secret-key",
+      "x-member-token": "member-token",
+      cookie: "session=123",
+      signature: "sig-456",
+      mpesaPassKey: "pass-789",
+      secret_key: "sk-abc",
+      access_key: "ak-def",
+      client_id: "cid-ghi",
+      clientId: "cid-jkl",
+      safe: "public",
+    };
+    const redacted = redactSensitiveData(data);
+    expect(redacted.authorization).toBe("[REDACTED]");
+    expect(redacted["x-api-key"]).toBe("[REDACTED]");
+    expect(redacted["x-member-token"]).toBe("[REDACTED]");
+    expect(redacted.cookie).toBe("[REDACTED]");
+    expect(redacted.signature).toBe("[REDACTED]");
+    expect(redacted.mpesaPassKey).toBe("[REDACTED]");
+    expect(redacted.secret_key).toBe("[REDACTED]");
+    expect(redacted.access_key).toBe("[REDACTED]");
+    expect(redacted.client_id).toBe("[REDACTED]");
+    expect(redacted.clientId).toBe("[REDACTED]");
+    expect(redacted.safe).toBe("public");
+  });
+
+  it("should redact sensitive properties on Error objects", () => {
+    const error = new Error("Database connection failed") as any;
+    error.secret_key = "sensitive-db-key";
+    error.config = {
+      apiKey: "secret-api-key",
+      db: {
+        password: "db-password",
+      },
+    };
+
+    const redacted = redactSensitiveData(error);
+
+    expect(redacted.name).toBe("Error");
+    expect(redacted.message).toBe("Database connection failed");
+    expect(redacted.stack).toBeDefined();
+    expect(redacted.secret_key).toBe("[REDACTED]");
+    expect(redacted.config.apiKey).toBe("[REDACTED]");
+    expect(redacted.config.db.password).toBe("[REDACTED]");
+  });
 });
