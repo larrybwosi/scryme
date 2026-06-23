@@ -170,7 +170,7 @@ export class PurchaseOrderUseCase {
 
           // Handle QC Results if provided
           if (batchDto.qcResults) {
-            await (tx as any).qCResult.create({
+            await tx.qcResult.create({
               data: {
                 organizationId,
                 templateId: batchDto.qcResults.templateId,

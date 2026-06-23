@@ -70,7 +70,7 @@ describe("Stocking Edge Cases", () => {
       stockTransferItem: {
         update: vi.fn(),
       },
-      qCResult: {
+      qcResult: {
         create: vi.fn(),
       },
       serialNumber: {
