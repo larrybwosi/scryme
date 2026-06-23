@@ -45,12 +45,18 @@ export class PricingResolverService {
         validTo: { gte: new Date() },
       },
       orderBy: { priority: "desc" },
-      include: {
+      select: {
+        id: true,
+        // ⚡ Bolt Optimization: Use targeted select to fetch only the price
+        // instead of the entire PriceListItem record and its relations.
         items: {
           where: {
             variantId,
             isActive: true,
             minQuantity: { lte: quantity },
+          },
+          select: {
+            price: true,
           },
           orderBy: { minQuantity: "desc" },
           take: 1,
