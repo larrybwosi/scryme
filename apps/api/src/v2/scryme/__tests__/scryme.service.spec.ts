@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ScrymeService } from "../scryme.service";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { ScrymeApprovalService } from "../scryme-approval.service";
 import { createHmac } from "crypto";
 import { BadRequestException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -13,12 +14,22 @@ describe("ScrymeService", () => {
     client: {
       scrymeConfiguration: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         upsert: vi.fn(),
       },
       windmillExecution: {
         create: vi.fn(),
       },
+      approvalDecision: {
+        findUnique: vi.fn(),
+      },
     },
+  };
+
+  const mockScrymeApprovalService = {
+    notifyApprovers: vi.fn(),
+    updateStepMessages: vi.fn(),
+    notifyRequester: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -26,6 +37,7 @@ describe("ScrymeService", () => {
       providers: [
         ScrymeService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ScrymeApprovalService, useValue: mockScrymeApprovalService },
       ],
     }).compile();
 
@@ -52,7 +64,7 @@ describe("ScrymeService", () => {
         .update(JSON.stringify(payload))
         .digest("hex");
 
-      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
         organizationId: "org-1",
         organization: {
           windmillConfiguration: { id: "wm-1" },

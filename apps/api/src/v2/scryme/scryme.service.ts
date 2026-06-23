@@ -3,13 +3,17 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeChatApiClient } from "@repo/scryme";
 import { createHmac } from "crypto";
 import { makeApprovalDecisionCore } from "@repo/shared/actions/finance/approvals";
+import { ScrymeApprovalService } from "./scryme-approval.service";
 
 @Injectable()
 export class ScrymeService {
   private readonly logger = new Logger(ScrymeService.name);
   private readonly scrymeClient = new ScrymeChatApiClient();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scrymeApprovalService: ScrymeApprovalService,
+  ) {}
 
   async getConfiguration(organizationId: string) {
     return this.prisma.client.scrymeConfiguration.findUnique({
@@ -58,7 +62,16 @@ export class ScrymeService {
   async handleWebhook(signature: string, payload: any) {
     // Verify Signature
     const secret = process.env.SCRYME_WEBHOOK_SECRET;
-    if (secret && signature) {
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (secret) {
+      if (!signature) {
+        this.logger.warn(
+          "Missing Scryme webhook signature while secret is configured",
+        );
+        throw new BadRequestException("Missing signature");
+      }
+
       const expectedSignature = createHmac("sha256", secret)
         .update(JSON.stringify(payload))
         .digest("hex");
@@ -67,11 +80,15 @@ export class ScrymeService {
         this.logger.warn("Invalid Scryme webhook signature");
         throw new BadRequestException("Invalid signature");
       }
-    } else if (secret && !signature) {
-      this.logger.warn(
-        "Missing Scryme webhook signature while secret is configured",
+    } else if (isProduction) {
+      this.logger.error(
+        "SCRYME_WEBHOOK_SECRET is not configured in production. Webhooks are disabled for security.",
       );
-      throw new BadRequestException("Missing signature");
+      throw new BadRequestException("Webhooks disabled: configuration missing");
+    } else {
+      this.logger.warn(
+        "SCRYME_WEBHOOK_SECRET is not configured. Webhook signature verification is skipped (Development mode only).",
+      );
     }
 
     this.logger.log(`Received Scryme webhook: ${payload.event}`);
@@ -115,31 +132,21 @@ export class ScrymeService {
 
           const { request, finalStatus, nextStep, originalStep } = result;
 
-          // Process side effects (notifications)
-          if (process.env.PUBLIC_API_URL) {
-            const baseUrl = process.env.PUBLIC_API_URL.replace(/\/$/, "");
-
+          // Process side effects (notifications) directly via service to avoid insecure/buggy internal fetch
+          try {
             // Update Scryme messages for the step
-            fetch(`${baseUrl}/v2/scryme/update-messages`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                requestId: request.id,
-                memberId: decision.approverId,
-                stepNumber: originalStep,
-              }),
-            }).catch((err) =>
-              this.logger.error("Failed to trigger update-messages:", err),
+            await this.scrymeApprovalService.updateStepMessages(
+              request.organizationId,
+              request.id,
+              decision.approverId,
+              originalStep,
             );
 
             // If moved to next step, notify new approvers
             if (nextStep > originalStep) {
-              fetch(`${baseUrl}/v2/scryme/notify`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId: request.id }),
-              }).catch((err) =>
-                this.logger.error("Failed to trigger notify for next step:", err),
+              await this.scrymeApprovalService.notifyApprovers(
+                request.organizationId,
+                request.id,
               );
             }
 
@@ -150,14 +157,13 @@ export class ScrymeService {
                 finalStatus === "REQUEST_INFO") &&
               nextStep === originalStep
             ) {
-              fetch(`${baseUrl}/v2/scryme/notify-requester`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ requestId: request.id }),
-              }).catch((err) =>
-                this.logger.error("Failed to trigger notify-requester:", err),
+              await this.scrymeApprovalService.notifyRequester(
+                request.organizationId,
+                request.id,
               );
             }
+          } catch (err: any) {
+            this.logger.error(`Failed to process Scryme side effects: ${err.message}`);
           }
 
           return { status: "success", message: `Action ${status} processed` };
@@ -167,7 +173,7 @@ export class ScrymeService {
       // Find the organization associated with this workspace
       const config = await (
         this.prisma.client as any
-      ).scrymeConfiguration.findUnique({
+      ).scrymeConfiguration.findFirst({
         where: { workspaceSlug },
         include: { organization: { include: { windmillConfiguration: true } } },
       });
