@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { storageService } from "@repo/shared/storage/service";
-import sharp from "sharp";
+import sharp, { FormatEnum } from "sharp";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
 import crypto from "crypto";
@@ -89,7 +89,7 @@ export class ImageService {
         });
       }
 
-      const format = (options.format || "webp") as keyof sharp.FormatEnum;
+      const format = (options.format || "webp") as keyof FormatEnum;
       const quality = options.quality || 75;
 
       if (format === "webp") {
