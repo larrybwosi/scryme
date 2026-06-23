@@ -35,9 +35,20 @@ export class DepartmentUseCase {
       this.prisma.client.department.count({ where }),
       this.prisma.client.department.findMany({
         where,
-        include: {
+        // ⚡ Bolt Optimization: Targeted select for list view to reduce
+        // data transfer and avoid fetching sensitive head member fields.
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          description: true,
+          organizationId: true,
+          createdAt: true,
           head: {
-            include: { user: { select: { name: true } } },
+            select: {
+              id: true,
+              user: { select: { name: true, image: true } },
+            },
           },
           _count: { select: { departmentMembers: true } },
         },
@@ -56,12 +67,42 @@ export class DepartmentUseCase {
   async getDepartment(organizationId: string, id: string) {
     const department = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
-      include: {
-        head: { include: { user: { select: { name: true, email: true } } } },
+      // ⚡ Bolt Optimization: Replace deep 'include' with targeted 'select'
+      // to avoid over-fetching member details (like pinHash) and reduce payload size.
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        banner: true,
+        description: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
+        parentId: true,
+        locationId: true,
+        costCenterId: true,
+        scrymeChannelId: true,
+        planeProjectId: true,
+        head: {
+          select: {
+            id: true,
+            role: true,
+            user: { select: { name: true, email: true, image: true } },
+          },
+        },
         departmentMembers: {
-          include: {
+          select: {
+            id: true,
+            role: true,
+            canApproveExpenses: true,
+            canManageBudget: true,
             member: {
-              include: { user: { select: { name: true, email: true } } },
+              select: {
+                id: true,
+                role: true,
+                isActive: true,
+                user: { select: { name: true, email: true, image: true } },
+              },
             },
           },
         },
