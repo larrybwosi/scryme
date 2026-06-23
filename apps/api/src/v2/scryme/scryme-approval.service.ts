@@ -12,9 +12,9 @@ export class ScrymeApprovalService {
   /**
    * Send an approval request to all approvers in the current step via Scryme Chat.
    */
-  async notifyApprovers(requestId: string) {
-    const request = await this.prisma.client.approvalRequest.findUnique({
-      where: { id: requestId },
+  async notifyApprovers(organizationId: string, requestId: string) {
+    const request = await this.prisma.client.approvalRequest.findFirst({
+      where: { id: requestId, organizationId },
       include: {
         requester: { include: { user: true } },
         organization: { include: { scrymeConfiguration: true } },
@@ -116,12 +116,13 @@ export class ScrymeApprovalService {
    * Update Scryme messages for all approvers of a step when a decision is made.
    */
   async updateStepMessages(
+    organizationId: string,
     requestId: string,
     decisionByMemberId: string,
     stepNumber: number,
   ) {
-    const request = await this.prisma.client.approvalRequest.findUnique({
-      where: { id: requestId },
+    const request = await this.prisma.client.approvalRequest.findFirst({
+      where: { id: requestId, organizationId },
       include: {
         organization: { include: { scrymeConfiguration: true } },
         decisions: {
@@ -188,9 +189,9 @@ export class ScrymeApprovalService {
   /**
    * Notify the requester about a decision (approval, rejection, or info request).
    */
-  async notifyRequester(requestId: string) {
-    const request = await this.prisma.client.approvalRequest.findUnique({
-      where: { id: requestId },
+  async notifyRequester(organizationId: string, requestId: string) {
+    const request = await this.prisma.client.approvalRequest.findFirst({
+      where: { id: requestId, organizationId },
       include: {
         requester: { include: { user: true } },
         organization: { include: { scrymeConfiguration: true } },

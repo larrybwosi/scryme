@@ -94,3 +94,14 @@
 - Always prefer unique identifiers (like `cardId`, `badgeId`, or `email`) for initial lookups to ensure authentication logic is $O(1)$ relative to the number of users.
 - Implement per-organization or per-device rate limiting for all PIN/password validation endpoints to protect against DoS and brute-force attacks.
 - Synchronize security hardening across duplicated or similar services (e.g., `V3AuthService` and `V3AuthCoreService`) to prevent architectural gaps.
+
+## 2026-06-23 - [Hardened Scryme Integration and Fixed Internal Fetch Loopback]
+**Vulnerability:** 1) Insecure Direct Object Reference (IDOR) in `ScrymeApprovalService` endpoints (`notify`, etc.) where `requestId` was not checked against the requester's `organizationId`. 2) Authentication bypass via internal HTTP `fetch` calls using `PUBLIC_API_URL` to trigger side effects from webhooks. 3) Missing authorization on sensitive workspace provisioning endpoints.
+
+**Learning:** Internal loopbacks via HTTP `fetch` are both a performance anti-pattern and a security risk, as they often attempt to bypass global guards or rely on "trusted" internal URLs. Additionally, Prisma's `findUnique` is strictly for primary keys or unique indices; adding additional filters like `organizationId` requires `findFirst` to avoid runtime failures.
+
+**Prevention:**
+- Always inject services directly for internal communication instead of calling the API via HTTP.
+- Ensure every database lookup for multi-tenant data includes the `organizationId` filter.
+- Use `findFirst` for lookups involving both a primary key and a tenant ID.
+- Fail-securely for webhooks in production if signature verification secrets are missing.
