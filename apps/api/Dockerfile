@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install pnpm (aligned with version 10.33.0)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.34.1 --activate
 
 # ---------------------------------------------------------
 # Stage 2: Pruner (Turborepo)
@@ -23,8 +23,10 @@ FROM base AS pruner
 WORKDIR /app
 RUN pnpm add -g turbo
 COPY . .
-
-RUN turbo prune --scope=api --docker
+# Remove potentially conflicting build artifacts from the host
+RUN rm -rf .turbo && rm -rf node_modules
+# Run prune
+RUN turbo prune api --docker
 
 # ---------------------------------------------------------
 # Stage 3: Installer & Builder
@@ -43,11 +45,11 @@ RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scrip
 COPY --from=pruner /app/out/full/ .
 
 # Generate Prisma Client
-RUN npx turbo run generate
+RUN pnpm turbo run generate
 
 # Build the API and its internal workspace dependencies
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npx turbo build --filter=api... --concurrency=1
+RUN pnpm turbo build --filter=api... --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
