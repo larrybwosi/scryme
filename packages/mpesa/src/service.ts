@@ -36,7 +36,7 @@ export class MpesaService {
   /**
    * Validates if the request is coming from Safaricom.
    */
-  validateWebhookIp(ip: string) {
+  validateWebhookIp(ip: string): boolean {
     if (process.env.NODE_ENV === 'development' || process.env.SKIP_IP_VALIDATION === 'true') {
       return true;
     }
@@ -54,10 +54,12 @@ export class MpesaService {
       return range === cleanIp;
     });
 
-    if (!isWhitelisted) {
-      console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
-      throw new ForbiddenException('Invalid Callback Source');
+    if (isWhitelisted) {
+      return true;
     }
+
+    console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
+    throw new ForbiddenException('Invalid Callback Source');
   }
 
   private ipToLong(ip: string): number {
@@ -371,10 +373,11 @@ export class MpesaService {
   /**
    * Reliable payment verification for POS clients.
    */
-  async verifyPayment(transactionId: string) {
+  async verifyPayment(organizationId: string, transactionId: string) {
     // 1. Check if there is already a PAID payment for this transaction
     const successfulPayment = await db.payment.findFirst({
       where: {
+        organizationId,
         transactionId,
         status: 'PAID',
       },
@@ -390,8 +393,8 @@ export class MpesaService {
     }
 
     // 2. Check the transaction status
-    const transaction = await db.transaction.findUnique({
-      where: { id: transactionId },
+    const transaction = await db.transaction.findFirst({
+      where: { id: transactionId, organizationId },
     });
 
     if (!transaction) throw new Error('Transaction not found');
@@ -403,6 +406,7 @@ export class MpesaService {
     // 3. Check for pending STK Push requests
     const pendingRequest = await db.mpesaPaymentRequest.findFirst({
       where: {
+        organizationId,
         saleNumber: transaction.number,
         status: 'PENDING',
       },
@@ -422,6 +426,7 @@ export class MpesaService {
     // 4. Check Unclaimed Payments (C2B)
     const unclaimed = await db.unclaimedPayment.findFirst({
       where: {
+        organizationId,
         billRefNumber: transaction.number,
         claimed: false,
       },
@@ -449,7 +454,7 @@ export class MpesaService {
     userId?: string;
   }): Promise<any> {
     if (input.saleId) {
-      return this.verifyPayment(input.saleId);
+      return this.verifyPayment(input.organizationId, input.saleId);
     }
     // Search by transaction code (receipt)
     const payment = await db.payment.findFirst({

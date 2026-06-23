@@ -54,3 +54,8 @@
 **Vulnerability:** Found that `BakeryService.updateBaker` was allowing updates to any baker by ID without verifying the organization's ownership. This was because the model lacked a direct `organizationId` and the service wasn't checking the parent relation.
 **Learning:** Models that are "nested" (linked to an organization via a settings or configuration model) are prime targets for IDOR because they lack a direct `organizationId` foreign key. Standard `findUnique` calls on these models often bypass tenant boundaries.
 **Prevention:** Always verify ownership for nested models by querying through their relations (e.g., `where: { id, parent: { organizationId } }`). Additionally, harden the schema by adding `@@unique([id, organizationId])` to all multi-tenant models to facilitate atomic, organization-scoped queries.
+
+## 2026-06-22 - [Insecure Direct Object Reference (IDOR) in M-Pesa Payment Module]
+**Vulnerability:** The `MpesaController` was trusting client-provided `organizationId` in `initiateStkPush` and `verifyPayment` endpoints, allowing cross-tenant data access or manipulation.
+**Learning:** External integrations often bypass standard tenant scoping filters if not explicitly coded to use the authenticated context. Trusting IDs from request bodies or parameters without verifying ownership is a classic IDOR pattern.
+**Prevention:** Always use `@v2Context()` to retrieve the authenticated `organizationId` and use it as a mandatory filter in all database queries (`findFirst({ where: { id, organizationId } })`). Never trust client-provided tenant identifiers.

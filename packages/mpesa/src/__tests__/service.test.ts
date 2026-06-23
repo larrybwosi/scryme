@@ -19,6 +19,9 @@ jest.mock('@repo/db', () => ({
       update: jest.fn(),
       findFirst: jest.fn(),
     },
+    invoice: {
+      updateMany: jest.fn(),
+    },
     mpesaPaymentRequest: {
       create: jest.fn(),
       updateMany: jest.fn(),
@@ -36,10 +39,13 @@ jest.mock('@repo/db', () => ({
 }));
 
 jest.mock('@repo/shared', () => ({
-  decrypt: jest.fn((val) => Promise.resolve(val)),
   realtimeService: {
     publish: jest.fn(),
   },
+}));
+
+jest.mock('@repo/shared/server', () => ({
+    decrypt: jest.fn((val) => val),
 }));
 
 jest.mock('../client');
@@ -127,7 +133,7 @@ describe('MpesaService', () => {
         processedAt: new Date(),
       });
 
-      const result = await service.verifyPayment('tx_123');
+      const result = await service.verifyPayment('org_123', 'tx_123');
 
       expect(result.status).toBe('PAID');
       expect(result.receipt).toBe('REC123');
@@ -135,13 +141,13 @@ describe('MpesaService', () => {
 
     it('should return PROCESSING if an STK push is pending', async () => {
       (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.transaction.findUnique as jest.Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
+      (db.transaction.findFirst as jest.Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
       (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue({
         status: 'PENDING',
         checkoutRequestId: 'ws_123',
       });
 
-      const result = await service.verifyPayment('tx_123');
+      const result = await service.verifyPayment('org_123', 'tx_123');
 
       expect(result.status).toBe('PROCESSING');
       expect(result.checkoutRequestId).toBe('ws_123');
@@ -149,7 +155,7 @@ describe('MpesaService', () => {
 
     it('should return UNCLAIMED_FOUND if a matching unclaimed payment exists', async () => {
         (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-        (db.transaction.findUnique as jest.Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
+        (db.transaction.findFirst as jest.Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
         (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue(null);
         (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue({
             transId: 'REC456',
@@ -157,7 +163,7 @@ describe('MpesaService', () => {
             billRefNumber: 'ORD-123'
         });
 
-        const result = await service.verifyPayment('tx_123');
+        const result = await service.verifyPayment('org_123', 'tx_123');
 
         expect(result.status).toBe('UNCLAIMED_FOUND');
         expect(result.receipt).toBe('REC456');
