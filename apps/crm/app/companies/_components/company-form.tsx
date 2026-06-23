@@ -17,7 +17,12 @@ import {
 } from '@repo/ui/components/ui/form';
 import { Input } from '@repo/ui/components/ui/input';
 import { Button } from '@repo/ui/components/ui/button';
-import { Plus, Trash2, Contact } from 'lucide-react';
+import { Plus, Trash2, Contact, Loader2 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 interface CompanyFormProps {
   initialData?: BusinessAccountFormValues & { id: string };
@@ -61,7 +66,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
           name="name"
           render={({ field }: { field: any }) => (
             <FormItem>
-              <FormLabel>Company Name</FormLabel>
+              <FormLabel>Company Name <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="Acme Corp" {...field} />
               </FormControl>
@@ -104,13 +109,19 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             <div className="space-y-3">
               {fields.map((field, index) => (
                 <div key={field.id} className="p-3 border border-border rounded-lg bg-muted/30 space-y-3 relative group">
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Remove contact"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove contact</TooltipContent>
+                  </Tooltip>
                   <FormField
                     control={form.control}
                     name={`contacts.${index}.name`}
@@ -157,7 +168,14 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
 
         <div className="pt-4 flex justify-end gap-3">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {initialData ? 'Update' : 'Create'} Company
+            {form.formState.isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {initialData ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              <>{initialData ? 'Update' : 'Create'} Company</>
+            )}
           </Button>
         </div>
       </form>
