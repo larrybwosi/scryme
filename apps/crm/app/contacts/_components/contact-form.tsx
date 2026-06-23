@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui/components/ui/select';
+import { Loader2 } from 'lucide-react';
 
 interface ContactFormProps {
   initialData?: CustomerFormValues & { id: string };
@@ -74,7 +75,7 @@ export function ContactForm({ initialData, onSuccess, businessAccountId }: Conta
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="Jane Smith" {...field} />
               </FormControl>
@@ -138,7 +139,14 @@ export function ContactForm({ initialData, onSuccess, businessAccountId }: Conta
         />
         <div className="pt-4 flex justify-end gap-3">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {initialData ? 'Update' : 'Create'} Contact
+            {form.formState.isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {initialData ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              <>{initialData ? 'Update' : 'Create'} Contact</>
+            )}
           </Button>
         </div>
       </form>
