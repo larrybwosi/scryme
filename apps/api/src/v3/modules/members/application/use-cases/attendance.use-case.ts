@@ -39,8 +39,25 @@ export class AttendanceUseCase {
       this.prisma.client.attendanceLog.count({ where }),
       this.prisma.client.attendanceLog.findMany({
         where,
-        include: {
-          member: { include: { user: { select: { name: true } } } },
+        // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' to reduce payload size and DB I/O.
+        select: {
+          id: true,
+          memberId: true,
+          checkInTime: true,
+          checkOutTime: true,
+          checkInLocationId: true,
+          checkOutLocationId: true,
+          durationMinutes: true,
+          notes: true,
+          isAutoCheckout: true,
+          createdAt: true,
+          updatedAt: true,
+          member: {
+            select: {
+              id: true,
+              user: { select: { name: true } },
+            },
+          },
           checkInLocation: { select: { name: true } },
           checkOutLocation: { select: { name: true } },
         },
