@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@prisma/client": "latest",
-    "@prisma/client-runtime-utils": "7.2.0",
+    "@prisma/client-runtime-utils": "7.8.0",
     "@repo/env": "workspace:*",
     "dotenv": "^17.2.3",
     "pg": "^8.21.0"
