@@ -105,3 +105,13 @@
 - Ensure every database lookup for multi-tenant data includes the `organizationId` filter.
 - Use `findFirst` for lookups involving both a primary key and a tenant ID.
 - Fail-securely for webhooks in production if signature verification secrets are missing.
+
+## 2026-06-24 - [Enforced Windmill Webhook Signature Verification]
+**Vulnerability:** The `WindmillCallbackController` in V3 API exposed public endpoints for automation callbacks (approvals, batch disposal, etc.) without any authentication or signature verification. An attacker could spoof callbacks to approve unauthorized expenses or manipulate inventory status.
+
+**Learning:** Replicating V2 patterns (like M-Pesa or Scryme) in V3 often misses critical security middlewares or manual checks if not explicitly included in the new architecture's decorators.
+
+**Prevention:**
+- Always implement HMAC-SHA256 signature verification for any webhook or callback endpoint.
+- Use `crypto.timingSafeEqual` for signature comparisons to prevent timing attacks.
+- Enforce strict "fail-secure" behavior in production: reject requests if the verification secret is missing from the configuration.
