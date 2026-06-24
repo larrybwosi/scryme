@@ -11,10 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm (aligned with version 10.33.0)
+# Install pnpm safely via npm (aligned with version 10.34.1)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.34.1 --activate
+RUN npm install -g pnpm@10.34.1
 
 # ---------------------------------------------------------
 # Stage 2: Pruner (Turborepo)
