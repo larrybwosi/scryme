@@ -42,8 +42,18 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     const batch = await this.prisma.client.stockBatch.findUnique({
       where: { id },
       include: {
-        supplier: true,
-        variant: true,
+        supplier: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        variant: {
+          select: {
+            name: true,
+            sku: true,
+          },
+        },
       },
     });
     return batch ? this.mapToEntity(batch) : null;
@@ -56,8 +66,18 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     const batch = await this.prisma.client.stockBatch.findFirst({
       where: { batchNumber, organizationId },
       include: {
-        supplier: true,
-        variant: true,
+        supplier: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        variant: {
+          select: {
+            name: true,
+            sku: true,
+          },
+        },
       },
     });
     return batch ? this.mapToEntity(batch) : null;
@@ -67,10 +87,10 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     // Recursive query for children is handled by Prisma include if we know depth,
     // or we can just fetch top level and user can drill down.
     // For enterprise, we might want a few levels.
+    // Optimization: Removed unused 'parent' include to save a join.
     const batch = await this.prisma.client.stockBatch.findUnique({
       where: { id },
       include: {
-        parent: true,
         children: {
           include: {
             children: true,
@@ -85,29 +105,44 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     const batch = await this.prisma.client.stockBatch.findUnique({
       where: { id },
       include: {
-        supplier: true,
+        supplier: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
         variant: {
-          include: {
-            product: true,
+          select: {
+            name: true,
+            sku: true,
           },
         },
         movements: {
           include: {
-            fromLocation: true,
-            toLocation: true,
+            fromLocation: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            toLocation: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
             member: {
               include: {
-                user: true,
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
           orderBy: {
             movementDate: "desc",
-          },
-        },
-        parent: {
-          include: {
-            supplier: true,
           },
         },
       },
