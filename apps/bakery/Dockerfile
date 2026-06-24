@@ -29,7 +29,6 @@ COPY . .
 # Remove potentially conflicting build artifacts from the host
 RUN rm -rf .turbo && rm -rf node_modules
 
-# NOTE: If your app's package.json name is scoped (e.g. "@my-repo/bakery"),
 # change "bakery" below to match that exact name.
 RUN turbo prune bakery --docker
 
