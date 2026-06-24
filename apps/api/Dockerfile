@@ -81,7 +81,7 @@ COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma ./prisma
 
 # Copy entrypoint script safely from the pruned context
-COPY --from=pruner --chown=nestjs:nodejs /app/apps/api/entrypoint.sh ./entrypoint.sh
+COPY --from=pruner /app/out/full/apps/api/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 USER nestjs
