@@ -7,6 +7,11 @@ import { revalidatePath } from "next/cache";
 export async function updateReceiptConfig(data: {
   showLogo?: boolean;
   logoUrl?: string;
+  companyName?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  primaryColor?: string;
 }) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
@@ -21,12 +26,17 @@ export async function updateReceiptConfig(data: {
   });
 
   revalidatePath("/settings/documents");
-  return config;
+  return config as any;
 }
 
 export async function updateWaybillConfig(data: {
   showLogo?: boolean;
   logoUrl?: string;
+  companyName?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  primaryColor?: string;
 }) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
@@ -41,5 +51,5 @@ export async function updateWaybillConfig(data: {
   });
 
   revalidatePath("/settings/documents");
-  return config;
+  return config as any;
 }

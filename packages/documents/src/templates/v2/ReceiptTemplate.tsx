@@ -8,6 +8,7 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import { ReceiptData } from "../../types";
+import { formatCurrency } from "../../server";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -339,17 +340,19 @@ const fmt = (n: number, currency = "") =>
   `${currency}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
-  const currency = data.currencySymbol ?? data.currency ?? "";
   const branding = data.branding;
   const logoUrl = branding?.logoUrl;
   const orgName = branding?.companyName || "Our Company";
   const orgAddress = branding?.companyAddress;
+  const currencySettings = data.currencySettings || { code: data.currency || 'USD', symbol: data.currencySymbol || '$', locale: 'en-US' };
+
+  const fmt = (val: number) => formatCurrency(val, currencySettings);
 
   return (
     <Document>
       <Page size="A4" style={s.page}>
         {/* ── Header Band ── */}
-        <View style={s.headerBand}>
+        <View style={[s.headerBand, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
           <View>
             {logoUrl && (
               <Image
@@ -374,7 +377,7 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
         </View>
 
         {/* ── Teal accent rule ── */}
-        <View style={s.accentRule} />
+        <View style={[s.accentRule, branding?.primaryColor ? { backgroundColor: branding.primaryColor, opacity: 0.8 } : {}]} />
 
         {/* ── Meta Row ── */}
         <View style={s.metaRow}>
@@ -449,8 +452,8 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
             <Text style={s.cellDesc}>{item.itemName || item.description || 'Item'}</Text>
             <Text style={s.cellQty}>{item.quantity || 0}</Text>
-            <Text style={s.cellRate}>{fmt(item.rate || item.unitPrice || 0, currency)}</Text>
-            <Text style={s.cellAmt}>{fmt(item.amount || item.totalPrice || 0, currency)}</Text>
+            <Text style={s.cellRate}>{fmt(item.rate || item.unitPrice || 0)}</Text>
+            <Text style={s.cellAmt}>{fmt(item.amount || item.totalPrice || 0)}</Text>
           </View>
         ))}
 
@@ -459,27 +462,27 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           <View style={s.totalsInner}>
             <View style={s.totalsRow}>
               <Text style={s.totalsLabel}>Subtotal</Text>
-              <Text style={s.totalsValue}>{fmt(data.subtotal, currency)}</Text>
+              <Text style={s.totalsValue}>{fmt(data.subtotal)}</Text>
             </View>
 
             {(data.discountTotal || 0) > 0 && (
               <View style={s.totalsRow}>
                 <Text style={s.totalsLabel}>Discount</Text>
-                <Text style={s.discountValue}>
-                  − {fmt(data.discountTotal || 0, currency)}
+                <Text style={[s.discountValue, branding?.primaryColor ? { color: branding.primaryColor } : {}]}>
+                  − {fmt(data.discountTotal || 0)}
                 </Text>
               </View>
             )}
 
             <View style={s.totalsRow}>
               <Text style={s.totalsLabel}>Tax</Text>
-              <Text style={s.totalsValue}>{fmt(data.tax, currency)}</Text>
+              <Text style={s.totalsValue}>{fmt(data.tax)}</Text>
             </View>
 
-            <View style={s.grandTotalBar}>
+            <View style={[s.grandTotalBar, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
               <Text style={s.grandTotalLabel}>Amount paid</Text>
               <Text style={s.grandTotalValue}>
-                {fmt(data.total, currency)}
+                {fmt(data.total)}
               </Text>
             </View>
 
@@ -488,13 +491,13 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
                 <View style={s.cashRow}>
                   <Text style={s.totalsLabel}>Cash received</Text>
                   <Text style={s.totalsValue}>
-                    {fmt(data.amountReceived, currency)}
+                    {fmt(data.amountReceived)}
                   </Text>
                 </View>
                 <View style={s.cashRow}>
                   <Text style={s.totalsLabel}>Change returned</Text>
                   <Text style={s.totalsValue}>
-                    {fmt(data.change ?? 0, currency)}
+                    {fmt(data.change ?? 0)}
                   </Text>
                 </View>
               </View>
@@ -526,16 +529,18 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
 };
 
 export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
-  const currency = data.currencySymbol ?? data.currency ?? "";
   const branding = data.branding;
   const logoUrl = branding?.logoUrl;
   const orgName = branding?.companyName || "Our Company";
   const orgAddress = branding?.companyAddress;
+  const currencySettings = data.currencySettings || { code: data.currency || 'USD', symbol: data.currencySymbol || '$', locale: 'en-US' };
+
+  const fmt = (val: number) => formatCurrency(val, currencySettings);
 
   return (
     <Page size="A4" style={s.page}>
       {/* ── Header Band ── */}
-      <View style={s.headerBand}>
+      <View style={[s.headerBand, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
         <View>
           {logoUrl && (
             <Image
@@ -558,7 +563,7 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
       </View>
 
       {/* ── Teal accent rule ── */}
-      <View style={s.accentRule} />
+      <View style={[s.accentRule, branding?.primaryColor ? { backgroundColor: branding.primaryColor, opacity: 0.8 } : {}]} />
 
       {/* ── Meta Row ── */}
       <View style={s.metaRow}>
@@ -615,10 +620,10 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
           <Text style={s.cellDesc}>{item.itemName || item.description}</Text>
           <Text style={s.cellQty}>{item.quantity}</Text>
           <Text style={s.cellRate}>
-            {fmt(item.rate || item.unitPrice || 0, currency)}
+            {fmt(item.rate || item.unitPrice || 0)}
           </Text>
           <Text style={s.cellAmt}>
-            {fmt(item.amount || item.totalPrice || 0, currency)}
+            {fmt(item.amount || item.totalPrice || 0)}
           </Text>
         </View>
       ))}
@@ -628,26 +633,26 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
         <View style={s.totalsInner}>
           <View style={s.totalsRow}>
             <Text style={s.totalsLabel}>Subtotal</Text>
-            <Text style={s.totalsValue}>{fmt(data.subtotal, currency)}</Text>
+            <Text style={s.totalsValue}>{fmt(data.subtotal)}</Text>
           </View>
 
           {(data.discountTotal || 0) > 0 && (
             <View style={s.totalsRow}>
               <Text style={s.totalsLabel}>Discount</Text>
-              <Text style={s.discountValue}>
-                − {fmt(data.discountTotal || 0, currency)}
+              <Text style={[s.discountValue, branding?.primaryColor ? { color: branding.primaryColor } : {}]}>
+                − {fmt(data.discountTotal || 0)}
               </Text>
             </View>
           )}
 
           <View style={s.totalsRow}>
             <Text style={s.totalsLabel}>Tax</Text>
-            <Text style={s.totalsValue}>{fmt(data.tax, currency)}</Text>
+            <Text style={s.totalsValue}>{fmt(data.tax)}</Text>
           </View>
 
-          <View style={s.grandTotalBar}>
+          <View style={[s.grandTotalBar, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
             <Text style={s.grandTotalLabel}>Amount paid</Text>
-            <Text style={s.grandTotalValue}>{fmt(data.total, currency)}</Text>
+            <Text style={s.grandTotalValue}>{fmt(data.total)}</Text>
           </View>
 
           {data.amountReceived !== undefined && (
@@ -655,13 +660,13 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
               <View style={s.cashRow}>
                 <Text style={s.totalsLabel}>Cash received</Text>
                 <Text style={s.totalsValue}>
-                  {fmt(data.amountReceived, currency)}
+                  {fmt(data.amountReceived)}
                 </Text>
               </View>
               <View style={s.cashRow}>
                 <Text style={s.totalsLabel}>Change returned</Text>
                 <Text style={s.totalsValue}>
-                  {fmt(data.change ?? 0, currency)}
+                  {fmt(data.change ?? 0)}
                 </Text>
               </View>
             </View>
