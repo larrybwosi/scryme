@@ -17,6 +17,10 @@ const nextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http",
+        hostname: "scryme-rustfs-5a3a70-100-92-168-31.sslip.io",
+      },
+      {
         protocol: "https",
         hostname: "**",
       },
