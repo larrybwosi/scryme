@@ -4,11 +4,15 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { ZitadelService } from "@repo/zitadel/server";
 import { CrmSyncService } from "../../../../crm/infrastructure/services/crm-sync.service";
 
-vi.mock("@repo/zitadel/server", () => ({
-  ZitadelService: vi.fn().mockImplementation(() => ({
-    getUser: vi.fn().mockResolvedValue({ id: "zit-123" }),
-  })),
-}));
+vi.mock("@repo/zitadel/server", () => {
+  return {
+    ZitadelService: vi.fn().mockImplementation(function() {
+      return {
+        getUser: vi.fn().mockResolvedValue({ id: "zit-123" }),
+      };
+    }),
+  };
+});
 
 vi.mock("@repo/windmill/server", () => ({
   emitCustomerCreated: vi.fn().mockResolvedValue({}),
