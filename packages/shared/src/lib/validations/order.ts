@@ -12,6 +12,7 @@ export const OrderItemInputSchema = z.object({
   sellingUnitId: z.string().optional(),
   quantity: z.number().int().positive("Quantity must be a positive integer"),
   unitPrice: z.number().nonnegative("Price cannot be negative").optional(),
+  notes: z.string().optional(),
 });
 
 export const OrderPaymentInputSchema = z.object({

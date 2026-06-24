@@ -1,10 +1,7 @@
 import {
-  FulfillmentType,
   PaymentStatus,
   TransactionType,
   TransactionStatus,
-  FulfillmentStatus,
-  AllocationStatus,
   PaymentMethod,
   db,
   Prisma,
@@ -25,29 +22,29 @@ export async function processSale(
   memberId: string,
 ): Promise<ProcessSaleResult> {
   try {
-    // 1. Validation
     const validation = ProcessSaleInputSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error: `Invalid sale data: ${validation.error.errors.map((e) => e.message).join(", ")}`,
+        message: "Validation failed",
+        error: `Invalid sale data: ${validation.error.issues.map((e) => e.message).join(", ")}`,
       };
     }
 
     const {
-      items,
-      paymentMethod,
-      amountPaid,
-      customerId,
-      businessAccountId,
+      cartItems: items,
       locationId,
-      taxIds,
-      enableStockTracking = true,
       isWholesale = false,
+      payments,
+      amountReceived,
       notes,
+      enableStockTracking = true,
+      taxIds,
     } = validation.data;
 
-    // 2. Fetch Org Settings
+    const amountPaid = amountReceived || 0;
+    const paymentMethod = payments[0]?.method || PaymentMethod.CASH;
+
     const orgData = await db.organization.findUnique({
       where: { id: organizationId },
       select: { settings: true },
@@ -62,13 +59,11 @@ export async function processSale(
     const highValueThreshold =
       settings?.highValueTaxThreshold ?? new Prisma.Decimal(100000);
 
-    // 3. Main Transaction
     const result = await db.$transaction(
       async (tx) => {
         const variantIds = items.map((item) => item.variantId);
         const now = new Date();
 
-        // Prefetch variants with selling units
         const [allVariants, applicableTaxes, activePriceLists] =
           await Promise.all([
             tx.productVariant.findMany({
@@ -112,13 +107,13 @@ export async function processSale(
                 ],
                 OR: [
                   { isGlobal: true },
-                  ...(customerId
-                    ? [{ customers: { some: { id: customerId } } }]
+                  ...(validation.data.customerId
+                    ? [{ customers: { some: { id: validation.data.customerId } } }]
                     : []),
-                  ...(businessAccountId
+                  ...(validation.data.businessAccountId
                     ? [
                         {
-                          businessAccounts: { some: { id: businessAccountId } },
+                          businessAccounts: { some: { id: validation.data.businessAccountId } },
                         },
                       ]
                     : []),
@@ -148,14 +143,13 @@ export async function processSale(
             throw new Error(`Variant ${item.variantId} not found`);
           }
 
-          // Pricing
           const { price: resolvedPrice } =
             await unitCalculationService.resolvePrice({
               variantId: item.variantId,
               sellingUnitId: item.sellingUnitId,
               quantity: item.quantity,
-              customerId,
-              businessAccountId,
+              customerId: validation.data.customerId,
+              businessAccountId: validation.data.businessAccountId,
               organizationId,
               isWholesale,
               tx,
@@ -166,7 +160,6 @@ export async function processSale(
           const lineSubtotal = resolvedPrice.mul(item.quantity);
           transactionSubTotal = transactionSubTotal.add(lineSubtotal);
 
-          // Stock Allocation
           const allocationsCreateData: any[] = [];
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
 
@@ -198,8 +191,7 @@ export async function processSale(
             allocationsCreateData.push(...allocationResult.allocations);
             unitCost = allocationResult.unitCost;
 
-            const currentDeduction =
-              variantStockUpdates.get(item.variantId) || 0;
+            const currentDeduction = variantStockUpdates.get(item.variantId) || 0;
             variantStockUpdates.set(
               item.variantId,
               currentDeduction + allocationResult.stockDeductionTotal,
@@ -207,44 +199,45 @@ export async function processSale(
           }
 
           transactionItemsCreateData.push({
-            productId: variant.productId,
             variantId: item.variantId,
-            organizationId,
+            productName: variant.product.name,
+            variantName: variant.name || variant.product.name,
+            sku: variant.sku,
             quantity: item.quantity,
+            listPrice: variant.retailPrice || 0,
             unitPrice: resolvedPrice,
             unitCost,
-            subTotal: lineSubtotal,
+            subtotal: lineSubtotal,
             taxAmount: 0,
-            totalAmount: lineSubtotal,
+            lineTotal: lineSubtotal,
             discountAmount: 0,
             sellingUnitId: item.sellingUnitId,
-            allocations: { create: allocationsCreateData },
+            stockAllocations: { create: allocationsCreateData },
           });
         }
 
-        // Taxes
         let transactionTaxTotal = new Prisma.Decimal(0);
         for (const line of transactionItemsCreateData) {
           let lineTax = new Prisma.Decimal(0);
           for (const tax of applicableTaxes) {
-            lineTax = lineTax.add(line.subTotal.mul(tax.rate));
+            lineTax = lineTax.add(line.subtotal.mul(tax.rate));
           }
           line.taxAmount = lineTax;
-          line.totalAmount = line.subTotal.add(lineTax);
+          line.lineTotal = line.subtotal.add(lineTax);
           transactionTaxTotal = transactionTaxTotal.add(lineTax);
         }
 
         const finalTotal = transactionSubTotal.add(transactionTaxTotal);
 
-        // Transaction Record
         const transaction = await tx.transaction.create({
           data: {
+            number: `SALE-${Date.now()}`,
             organizationId,
             memberId,
-            customerId,
-            businessAccountId,
+            customerId: validation.data.customerId,
+            businessAccountId: validation.data.businessAccountId,
             locationId,
-            type: TransactionType.SALE,
+            type: TransactionType.POS_SALE,
             status: TransactionStatus.COMPLETED,
             paymentStatus:
               amountPaid >= finalTotal.toNumber()
@@ -252,13 +245,14 @@ export async function processSale(
                 : amountPaid > 0
                   ? PaymentStatus.PARTIALLY_PAID
                   : PaymentStatus.UNPAID,
-            subTotal: transactionSubTotal,
-            taxAmount: transactionTaxTotal,
-            discountAmount: 0,
+            subtotal: transactionSubTotal,
+            taxTotal: transactionTaxTotal,
+            discountTotal: 0,
             finalTotal,
             totalPaid: amountPaid,
-            currency: baseCurrency,
-            notes,
+            currencyCode: baseCurrency,
+            baseCurrencyTotal: finalTotal,
+            notes: notes || "",
             items: { create: transactionItemsCreateData },
             payments: {
               create:
@@ -269,16 +263,14 @@ export async function processSale(
                         method: paymentMethod as PaymentMethod,
                         status: PaymentStatus.PAID,
                         organizationId,
-                        memberId,
                       },
                     ]
                   : [],
             },
           },
-          include: { items: { include: { allocations: true } } },
+          include: { items: true },
         });
 
-        // Global Stock Update
         if (enableStockTracking && locationId) {
           for (const [vId, ded] of variantStockUpdates) {
             await tx.productVariantStock.update({
@@ -296,7 +288,6 @@ export async function processSale(
       { timeout: 20000 },
     );
 
-    // 4. Tax Integration (External)
     if (taxIntegrationEnabled) {
       try {
         await navariService.reportSale(result as any, {
@@ -308,8 +299,8 @@ export async function processSale(
       }
     }
 
-    return { success: true, transaction: result as TransactionWithDetails };
+    return { success: true, message: "Sale processed successfully", transactionId: result.id, data: result };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { success: false, message: error.message, error: error.message };
   }
 }

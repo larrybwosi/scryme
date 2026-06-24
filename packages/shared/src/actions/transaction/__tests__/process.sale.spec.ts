@@ -1,16 +1,24 @@
 import { processSale } from '../process.sale';
 import { db } from '@repo/db';
-import { Decimal } from 'decimal.js';
 
 jest.mock('@repo/db', () => ({
-  prisma: {
+  db: {
     $transaction: jest.fn(),
     productVariant: {
-      findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
     transaction: {
       create: jest.fn(),
     },
+    organization: {
+      findUnique: jest.fn(),
+    },
+    taxRate: {
+        findMany: jest.fn(),
+    },
+    priceList: {
+        findMany: jest.fn(),
+    }
   },
   PaymentMethod: {
       CASH: 'CASH'
@@ -23,7 +31,15 @@ jest.mock('@repo/db', () => ({
   },
   PaymentStatus: {
       PAID: 'PAID',
-      COMPLETED: 'COMPLETED'
+      UNPAID: 'UNPAID'
+  },
+  Prisma: {
+      Decimal: jest.fn().mockImplementation((val) => ({
+          toNumber: () => Number(val),
+          mul: jest.fn().mockReturnThis(),
+          add: jest.fn().mockReturnThis(),
+          toNumberValue: Number(val)
+      }))
   }
 }));
 
@@ -44,7 +60,7 @@ describe('processSale Action', () => {
           amount: 200,
         },
       ],
-      discountAmount: 0,
+      enableStockTracking: false,
     };
 
     const mockVariant = {
@@ -56,19 +72,23 @@ describe('processSale Action', () => {
       product: {
         name: 'Product 1',
       },
+      sellingUnits: []
     };
 
     (db.$transaction as jest.Mock).mockImplementation(async (cb) => {
         return await cb(db);
     });
 
-    (db.productVariant.findUnique as jest.Mock).mockResolvedValue(mockVariant);
+    (db.organization.findUnique as jest.Mock).mockResolvedValue({ settings: {} });
+    (db.productVariant.findMany as jest.Mock).mockResolvedValue([mockVariant]);
+    (db.taxRate.findMany as jest.Mock).mockResolvedValue([]);
+    (db.priceList.findMany as jest.Mock).mockResolvedValue([]);
     (db.transaction.create as jest.Mock).mockResolvedValue({
         id: 'txn_1',
         number: 'SALE-123'
     });
 
-    const result = await processSale('org_1', 'member_1', mockData);
+    const result = await processSale('org_1', mockData, 'member_1');
 
     expect(result.success).toBe(true);
     expect(result.transactionId).toBe('txn_1');

@@ -5,14 +5,10 @@ import {
   PaymentStatus,
   AuditEntityType,
   AuditLogAction,
-  FulfillmentStatus,
-  StockAdjustmentReason,
-  AllocationStatus,
   Prisma,
 } from "@repo/db";
 import { createAuditLog } from "../../lib/logs/logger";
 import {
-  OrderFilterSchema,
   CreateOrderInput,
   CreateOrderInputSchema,
 } from "../../lib/validations/order";
@@ -28,7 +24,7 @@ export async function createOrder(
     const validation = CreateOrderInputSchema.safeParse(input);
     if (!validation.success) {
       throw new Error(
-        `Invalid order data: ${validation.error.errors.map((e) => e.message).join(", ")}`,
+        `Invalid order data: ${validation.error.issues.map((e) => e.message).join(", ")}`,
       );
     }
 
@@ -36,13 +32,13 @@ export async function createOrder(
       items,
       taxIds,
       enableStockTracking = true,
-      isWholesale = false, // Defaults to retail if not specified
+      isWholesale = false,
       ...orderData
     } = validation.data;
 
     const { customerId, businessAccountId, locationId } = orderData;
 
-    // 2. --- Fetch Organization Settings & Data ---
+    // 2. --- Fetch Organization Settings ---
     const orgData = await db.organization.findUnique({
       where: { id: organizationId },
       select: { settings: true },
@@ -59,7 +55,6 @@ export async function createOrder(
         const variantIds = items.map((item) => item.variantId);
         const now = new Date();
 
-        // Parallel Fetch: Variants, Taxes and Price Lists
         const [allVariants, applicableTaxes, activePriceLists] =
           await Promise.all([
             tx.productVariant.findMany({
@@ -130,21 +125,16 @@ export async function createOrder(
 
         const variantsMap = new Map(allVariants.map((v: any) => [v.id, v]));
 
-        // 4. --- Process Items (Pricing & Stock) ---
         let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: any[] =
-          [];
+        const transactionItemsCreateData: any[] = [];
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
           const variant = variantsMap.get(item.variantId) as any;
           if (!variant) {
-            throw new Error(
-              `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
-            );
+            throw new Error(`Variant ${item.variantId} not found`);
           }
 
-          // A. Resolve Price using Service
           const { price: resolvedPrice } =
             await unitCalculationService.resolvePrice({
               variantId: item.variantId,
@@ -163,9 +153,7 @@ export async function createOrder(
           const lineSubtotal = resolvedPrice.mul(item.quantity);
           transactionSubTotal = transactionSubTotal.add(lineSubtotal);
 
-          // B. Stock Allocation using Service
-          const allocationsCreateData: any[] =
-            [];
+          const allocationsCreateData: any[] = [];
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
 
           const selectedSellingUnit = item.sellingUnitId
@@ -176,9 +164,7 @@ export async function createOrder(
 
           if (enableStockTracking && locationId) {
             const conversionMultiplier =
-              selectedSellingUnit?.conversionMultiplier
-                ? selectedSellingUnit.conversionMultiplier.toNumber()
-                : 1;
+              selectedSellingUnit?.conversionMultiplier?.toNumber() || 1;
 
             const allocationResult =
               await unitCalculationService.calculateStockAllocation({
@@ -198,96 +184,79 @@ export async function createOrder(
             allocationsCreateData.push(...allocationResult.allocations);
             unitCost = allocationResult.unitCost;
 
-            const currentVariantStockUpdate =
-              variantStockUpdates.get(item.variantId) || 0;
+            const currentDeduction = variantStockUpdates.get(item.variantId) || 0;
             variantStockUpdates.set(
               item.variantId,
-              currentVariantStockUpdate + allocationResult.stockDeductionTotal,
+              currentDeduction + allocationResult.stockDeductionTotal,
             );
           }
 
-          // C. Prepare Transaction Item Data
           transactionItemsCreateData.push({
-            productId: variant.productId,
             variantId: item.variantId,
-            organizationId,
+            productName: variant.product.name,
+            variantName: variant.name || variant.product.name,
+            sku: variant.sku,
             quantity: item.quantity,
+            listPrice: variant.retailPrice || 0,
             unitPrice: resolvedPrice,
-            unitCost: unitCost,
-            subTotal: lineSubtotal,
-            taxAmount: new Prisma.Decimal(0), // Calculated later
-            totalAmount: lineSubtotal, // Updated after tax
-            discountAmount: new Prisma.Decimal(0),
+            unitCost,
+            subtotal: lineSubtotal,
+            discountAmount: 0,
+            taxAmount: 0,
+            lineTotal: lineSubtotal,
             sellingUnitId: item.sellingUnitId,
-            notes: item.notes,
-            allocations: {
-              create: allocationsCreateData,
-            },
+            notes: item.notes || "",
+            stockAllocations: { create: allocationsCreateData },
           });
         }
 
-        // 5. --- Global Tax Calculation ---
         let transactionTaxTotal = new Prisma.Decimal(0);
-        for (const lineItem of transactionItemsCreateData) {
+        for (const line of transactionItemsCreateData) {
           let lineTax = new Prisma.Decimal(0);
           for (const tax of applicableTaxes) {
-            const amount = lineItem.subTotal.mul(tax.rate);
-            lineTax = lineTax.add(amount);
+            lineTax = lineTax.add(line.subtotal.mul(tax.rate));
           }
-          lineItem.taxAmount = lineTax;
-          lineItem.totalAmount = lineItem.subTotal.add(lineTax);
+          line.taxAmount = lineTax;
+          line.lineTotal = line.subtotal.add(lineTax);
           transactionTaxTotal = transactionTaxTotal.add(lineTax);
         }
 
-        const transactionFinalTotal =
-          transactionSubTotal.add(transactionTaxTotal);
+        const finalTotal = transactionSubTotal.add(transactionTaxTotal);
 
-        // 6. --- Create Main Transaction Record ---
         const transaction = await tx.transaction.create({
           data: {
+            number: `ORD-${Date.now()}`,
             organizationId,
             memberId,
             customerId,
             businessAccountId,
             locationId,
-            type: TransactionType.SALE,
-            status: TransactionStatus.COMPLETED,
+            type: validation.data.type,
+            status: TransactionStatus.CONFIRMED,
             paymentStatus: PaymentStatus.UNPAID,
-            subTotal: transactionSubTotal,
-            taxAmount: transactionTaxTotal,
-            discountAmount: new Prisma.Decimal(0),
-            finalTotal: transactionFinalTotal,
-            totalPaid: new Prisma.Decimal(0),
-            currency: baseCurrency,
+            subtotal: transactionSubTotal,
+            taxTotal: transactionTaxTotal,
+            discountTotal: 0,
+            finalTotal,
+            baseCurrencyTotal: finalTotal,
+            currencyCode: baseCurrency,
             items: {
               create: transactionItemsCreateData.map((item) => ({
                 ...item,
-                allocations: item.allocations,
+                stockAllocations: item.stockAllocations,
               })),
             },
           },
-          include: {
-            items: {
-              include: {
-                allocations: true,
-              },
-            },
-          },
+          include: { items: true },
         });
 
-        // 7. --- Update Global Stock Levels ---
         if (enableStockTracking && locationId) {
-          for (const [variantId, deduction] of variantStockUpdates) {
+          for (const [vId, ded] of variantStockUpdates) {
             await tx.productVariantStock.update({
-              where: {
-                variantId_locationId: {
-                  variantId,
-                  locationId,
-                },
-              },
+              where: { variantId_locationId: { variantId: vId, locationId } },
               data: {
-                currentStock: { decrement: deduction },
-                availableStock: { decrement: deduction },
+                currentStock: { decrement: ded },
+                availableStock: { decrement: ded },
               },
             });
           }
@@ -295,30 +264,24 @@ export async function createOrder(
 
         return transaction;
       },
-      {
-        timeout: 15000, // Extend timeout for complex stock/pricing logic
-      },
+      { timeout: 15000 },
     );
 
-    // 8. --- Post-Transaction Actions (Audit Logs) ---
-    await createAuditLog({
+    await createAuditLog(db, {
       organizationId,
       memberId,
       action: AuditLogAction.CREATE,
       entityType: AuditEntityType.TRANSACTION,
       entityId: result.id,
+      description: `Order ${result.number} created`,
       details: {
         total: result.finalTotal.toNumber(),
-        itemsCount: result.items.length,
+        itemsCount: (result as any).items?.length || 0,
       },
     });
 
     return { success: true, transaction: result };
   } catch (error: any) {
-    console.error("Order creation failed:", error);
-    return {
-      success: false,
-      error: error.message || "An unexpected error occurred.",
-    };
+    return { success: false, error: error.message };
   }
 }
