@@ -3,7 +3,7 @@ import { SidebarWrapper } from '../components/sidebar-wrapper';
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import type { Metadata } from 'next';
-import { RealtimeProvider } from "@repo/shared/realtime-client";
+import { RealtimeProvider } from "@repo/shared/realtime/client";
 
 export const metadata: Metadata = {
   title: 'Scryme CRM',

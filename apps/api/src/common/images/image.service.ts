@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { storageService } from "@repo/shared/storage/service";
+import { storageService } from "@repo/shared/storage";
 import sharp, { FormatEnum } from "sharp";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
