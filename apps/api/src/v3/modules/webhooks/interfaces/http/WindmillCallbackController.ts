@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Logger,
+  Headers,
   InternalServerErrorException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
@@ -24,8 +25,16 @@ export class WindmillCallbackController {
   @Post()
   @ApiOperation({ summary: "Handle status callbacks from Windmill (V3)" })
   @ApiResponse({ status: 200, description: "Callback processed successfully" })
-  async handleCallback(@Body() payload: WindmillCallbackPayload) {
+  async handleCallback(
+    @Body() payload: WindmillCallbackPayload,
+    @Headers("x-windmill-signature") signature: string,
+  ) {
     try {
+      await this.callbackUseCase.verifySignature(
+        payload.organizationId,
+        signature,
+        payload,
+      );
       return await this.callbackUseCase.handleGeneralCallback(payload);
     } catch (error) {
       this.logger.error(
@@ -37,8 +46,16 @@ export class WindmillCallbackController {
 
   @Post("approval")
   @ApiOperation({ summary: "Handle approval callbacks from Windmill (V3)" })
-  async handleApprovalCallback(@Body() payload: ApprovalCallbackPayload) {
+  async handleApprovalCallback(
+    @Body() payload: ApprovalCallbackPayload,
+    @Headers("x-windmill-signature") signature: string,
+  ) {
     try {
+      await this.callbackUseCase.verifySignature(
+        payload.organizationId,
+        signature,
+        payload,
+      );
       return await this.callbackUseCase.handleApprovalCallback(payload);
     } catch (error) {
       this.logger.error(
@@ -56,8 +73,14 @@ export class WindmillCallbackController {
   })
   async handleBakeryDisposalCallback(
     @Body() payload: BakeryDisposalCallbackPayload,
+    @Headers("x-windmill-signature") signature: string,
   ) {
     try {
+      await this.callbackUseCase.verifySignature(
+        payload.organizationId,
+        signature,
+        payload,
+      );
       return await this.callbackUseCase.handleBakeryDisposalCallback(payload);
     } catch (error) {
       this.logger.error(
@@ -73,8 +96,16 @@ export class WindmillCallbackController {
   @ApiOperation({
     summary: "Handle generic outcome callbacks from Windmill (V3)",
   })
-  async handleOutcomeCallback(@Body() payload: GenericOutcomePayload) {
+  async handleOutcomeCallback(
+    @Body() payload: GenericOutcomePayload,
+    @Headers("x-windmill-signature") signature: string,
+  ) {
     try {
+      await this.callbackUseCase.verifySignature(
+        payload.organizationId,
+        signature,
+        payload,
+      );
       return await this.callbackUseCase.handleOutcomeCallback(payload);
     } catch (error) {
       this.logger.error(
