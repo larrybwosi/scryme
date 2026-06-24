@@ -23,7 +23,7 @@ import { bulkUpdateLocationStock } from "../../app/actions/stock-management";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useDebounce } from "usehooks-ts";
+import { useDebounce } from "use-debounce";
 
 interface StockItem {
   variantId: string;
@@ -53,7 +53,7 @@ export function LocationStockTable({
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const debouncedSearch = useDebounce(search, 500);
+  const [debouncedSearch] = useDebounce(search, 500);
 
   const [pendingChanges, setPendingChanges] = useState<Record<string, number>>(
     {},
