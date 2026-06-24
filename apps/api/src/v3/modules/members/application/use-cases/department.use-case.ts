@@ -272,7 +272,7 @@ export class DepartmentUseCase {
       });
       const fullMember = await this.prisma.client.member.findUnique({
         where: { id: dto.memberId },
-        include: { user: { select: { email: true } } }
+        include: { user: { select: { email: true, scrymeUserId: true } } }
       });
 
       if (fullDept && fullMember?.user?.email) {
