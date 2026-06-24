@@ -322,8 +322,9 @@ export class DepartmentUseCase {
             throw err;
           }
         }
+      }
 
-        if (fullDept.planeProjectId && planeConfiguration?.workspaceSlug) {
+      if (fullDept.planeProjectId && planeConfiguration?.workspaceSlug) {
            // Plane requires adding to workspace first, then project
            await this.planeClient.addWorkspaceMember(planeConfiguration.workspaceSlug, fullMember.user.email);
            await this.planeClient.addProjectMember(planeConfiguration.workspaceSlug, fullDept.planeProjectId, fullMember.id);
