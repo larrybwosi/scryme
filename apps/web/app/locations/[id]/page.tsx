@@ -14,6 +14,7 @@ import {
   Layers,
   Box,
   ChevronRight,
+  Database,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -33,6 +34,8 @@ import { LocationSheet } from "../../../components/locations/location-sheet";
 import { ZoneList } from "../../../components/locations/zone-list";
 import { UnitList } from "../../../components/locations/unit-list";
 import { LocationManagementTab } from "../../../components/locations/location-management-tab";
+import { LocationStockTable } from "../../../components/locations/location-stock-table";
+import { db } from "@repo/db";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -43,6 +46,41 @@ export default async function LocationDetailPage({ params }: PageProps) {
   const location = await getLocation(id);
   const allLocations = await getLocations();
   const members = await getMembersForSelect();
+
+  // Fetch all variants with their stock for this location
+  const allVariants = await db.productVariant.findMany({
+    where: {
+      product: {
+        organizationId: location?.organizationId,
+      },
+      isActive: true,
+    },
+    include: {
+      product: {
+        select: {
+          name: true,
+        },
+      },
+      variantStocks: {
+        where: {
+          locationId: id,
+        },
+      },
+    },
+    orderBy: {
+      product: {
+        name: "asc",
+      },
+    },
+  });
+
+  const formattedStock = allVariants.map(v => ({
+    variantId: v.id,
+    name: v.product.name,
+    variantName: v.name,
+    sku: v.sku,
+    currentStock: v.variantStocks[0]?.currentStock.toNumber() || 0,
+  }));
 
   if (!location) {
     notFound();
@@ -180,14 +218,18 @@ export default async function LocationDetailPage({ params }: PageProps) {
         {/* Right Column: Hierarchy & Storage */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="hierarchy" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="hierarchy" className="gap-2">
                 <Layers size={16} />
-                Hierarchy & Zones
+                Hierarchy
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="gap-2">
+                <Database size={16} />
+                Stock
               </TabsTrigger>
               <TabsTrigger value="storage" className="gap-2">
                 <Box size={16} />
-                Storage Units
+                Storage
               </TabsTrigger>
               <TabsTrigger value="management" className="gap-2">
                 <Settings size={16} />
@@ -250,6 +292,23 @@ export default async function LocationDetailPage({ params }: PageProps) {
 
               {/* Zones Section */}
               <ZoneList locationId={location.id} zones={location.zones} />
+            </TabsContent>
+
+            <TabsContent value="stock" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Database size={18} className="text-blue-600" />
+                    Inventory Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LocationStockTable
+                    locationId={location.id}
+                    initialData={formattedStock}
+                  />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="storage" className="space-y-4">
