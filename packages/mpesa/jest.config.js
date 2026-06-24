@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleNameMapper: {
-    '^@repo/db$': '<rootDir>/../db/src/index.ts',
+    '^@repo/db$': '<rootDir>/../db/src/client.ts',
     '^@repo/shared$': '<rootDir>/../shared/src/index.ts',
     '^next-sanity$': '<rootDir>/../../node_modules/next-sanity/dist/index.js',
   },
