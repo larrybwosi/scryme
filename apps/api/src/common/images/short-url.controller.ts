@@ -10,7 +10,7 @@ import {
 import { ImageService } from "./image.service";
 import { AllowPublic } from "../decorators/auth.decorator";
 import { PrismaService } from "../../prisma/prisma.service";
-import { storageService } from "@repo/shared/storage/service";
+import { storageService } from "@repo/shared/storage";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
 
