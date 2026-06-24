@@ -68,29 +68,39 @@ export class V3RealtimeGateway
     }
   }
 
+  private async validateChannelAccess(
+    context: any,
+    channel: string,
+  ): Promise<boolean> {
+    if (!context) return false;
+
+    // Basic ownership check for common V3 patterns
+    if (channel.startsWith("order:")) {
+      const orderId = channel.split(":")[1];
+      const order = await this.prisma.client.transaction.findUnique({
+        where: { id: orderId },
+        select: { organizationId: true },
+      });
+      return !!order && order.organizationId === context.organizationId;
+    }
+
+    if (channel.startsWith("inventory:")) {
+      const orgId = channel.split(":")[1];
+      return orgId === context.organizationId;
+    }
+
+    // Deny access to unknown channel patterns by default (Fail Securely)
+    return false;
+  }
+
   @SubscribeMessage("join")
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string; options?: { rewind?: number } },
   ) {
     const context = (client as any).v3Context;
-    if (!context) return { event: "error", message: "Unauthorized" };
-
-    // Basic ownership check for common V3 patterns
-    if (data.channel.startsWith("order:")) {
-      const orderId = data.channel.split(":")[1];
-      const order = await this.prisma.client.transaction.findUnique({
-        where: { id: orderId },
-        select: { organizationId: true },
-      });
-      if (!order || order.organizationId !== context.organizationId) {
-        return { event: "error", message: "Unauthorized" };
-      }
-    } else if (data.channel.startsWith("inventory:")) {
-      const orgId = data.channel.split(":")[1];
-      if (orgId !== context.organizationId) {
-        return { event: "error", message: "Unauthorized" };
-      }
+    if (!(await this.validateChannelAccess(context, data.channel))) {
+      return { event: "error", message: "Unauthorized" };
     }
 
     client.join(data.channel);
@@ -113,23 +123,8 @@ export class V3RealtimeGateway
     @MessageBody() data: { channel: string; metadata?: any },
   ) {
     const context = (client as any).v3Context;
-    if (!context) return { event: "error", message: "Unauthorized" };
-
-    // Same security check as join
-    if (data.channel.startsWith("order:")) {
-      const orderId = data.channel.split(":")[1];
-      const order = await this.prisma.client.transaction.findUnique({
-        where: { id: orderId },
-        select: { organizationId: true },
-      });
-      if (!order || order.organizationId !== context.organizationId) {
-        return { event: "error", message: "Unauthorized" };
-      }
-    } else if (data.channel.startsWith("inventory:")) {
-      const orgId = data.channel.split(":")[1];
-      if (orgId !== context.organizationId) {
-        return { event: "error", message: "Unauthorized" };
-      }
+    if (!(await this.validateChannelAccess(context, data.channel))) {
+      return { event: "error", message: "Unauthorized" };
     }
 
     const clientId = context.memberId || client.id;
@@ -197,6 +192,11 @@ export class V3RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string; event: string; data: any },
   ) {
+    const context = (client as any).v3Context;
+    if (!(await this.validateChannelAccess(context, data.channel))) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     await this.redis.saveMessage(data.channel, data.event, data.data);
     this.server.to(data.channel).emit(data.event, data.data);
   }
