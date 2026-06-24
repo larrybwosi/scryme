@@ -28,9 +28,11 @@ export class PlaneApiClient {
     this.client = axios.create({
       baseURL: `${this.baseUrl.replace(/\/$/, '')}/api/v1`,
       headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.accessToken}`,
+        "Content-Type": "application/json",
       },
+      timeout: 10000,
+      maxContentLength: 10 * 1024 * 1024, // 10MB limit
     });
   }
 

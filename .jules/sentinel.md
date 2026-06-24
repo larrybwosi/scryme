@@ -85,6 +85,15 @@
 - Standardize all outbound HTTP requests with a defensive default configuration (10s timeout, 1MB payload limit unless otherwise required).
 - Identify and consolidate (or parallel-harden) duplicated service logic to prevent security gaps in secondary packages.
 
+## 2026-06-26 - [Consistent Outbound Request Hardening and Redaction Coverage]
+**Vulnerability:** 1) The `@repo/plane` package lacked the standard `timeout` and `maxContentLength` protections applied to other API clients, exposing the service to DoS. 2) The `redactSensitiveData` utility was missing camelCase variants (`accessToken`, `refreshToken`) and integration-specific credentials (M-Pesa, private keys).
+
+**Learning:** In a monorepo, security hardening patterns applied to core services must be systematically audited across all workspace packages. Secondary or integration-specific packages often lag behind global security standards.
+
+**Prevention:**
+- When implementing a new security pattern (like `axios` hardening), use workspace-wide searches to ensure all clients are updated.
+- Proactively expand redaction lists to include all naming conventions (camelCase, snake_case) and provider-specific credential keys used in the codebase.
+
 ## 2026-06-27 - [Hardened PIN Authentication and O(1) Lookup]
 **Vulnerability:** `V3AuthCoreService` performed an $O(N)$ loop of `bcrypt.compare` operations on all active members during PIN-based login. This created a high-severity DoS vector for large organizations and allowed for unbounded brute-force attempts.
 
