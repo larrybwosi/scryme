@@ -1372,21 +1372,22 @@ export async function importProducts(
         }
 
         // Check if product exists (using base SKU or by name in organization)
-        let product = await tx.product.findFirst({
+        const foundProduct = await tx.product.findFirst({
           where: {
             OR: [{ sku: baseSku }, { name: productData.name }],
             organizationId: context.organizationId,
           },
         });
 
-        if (product) {
+        let targetProduct;
+        if (foundProduct) {
           if (strategy === "skip") {
             results.skipped++;
             return;
           } else {
             // Replace/Update strategy for product details
-            product = await tx.product.update({
-              where: { id: product.id },
+            targetProduct = await tx.product.update({
+              where: { id: foundProduct.id },
               data: {
                 name: productData.name,
                 description: productData.description,
@@ -1397,7 +1398,7 @@ export async function importProducts(
           }
         } else {
           // Create New Product
-          product = await tx.product.create({
+          targetProduct = await tx.product.create({
             data: {
               name: productData.name,
               sku: baseSku,
@@ -1419,37 +1420,34 @@ export async function importProducts(
             variantSku = `${baseSku}-${variantData.variantName.substring(0, 3).toUpperCase()}-${random}`;
           }
 
-          let existingVariant = await tx.productVariant.findFirst({
+          const foundVariant = await tx.productVariant.findFirst({
             where: {
               sku: variantSku,
               product: { organizationId: context.organizationId },
             },
-            include: { product: true },
           });
 
-          if (existingVariant) {
+          let targetVariant;
+          if (foundVariant) {
             if (strategy === "replace") {
-              // If the variant belongs to a different product, we might have a problem
-              // but if the user wants to "replace", we update the record.
-              // To be safe, we only update if it belongs to our current product or if we want to "move" it.
-              // For simplicity, let's update it and ensure it's linked to the correct product.
-              existingVariant = await tx.productVariant.update({
-                where: { id: existingVariant.id },
+              targetVariant = await tx.productVariant.update({
+                where: { id: foundVariant.id },
                 data: {
-                  productId: product.id, // Ensure it's under the correct product
+                  productId: targetProduct.id,
                   name: variantData.variantName,
                   buyingPrice: new Decimal(variantData.buyingPrice),
                   retailPrice: new Decimal(variantData.retailPrice),
                   barcode: variantData.barcode,
                 },
-                include: { product: true },
               });
+            } else {
+              // strategy === "skip", just use the found variant
+              targetVariant = foundVariant;
             }
-            // If skip, we don't update
           } else {
-            existingVariant = await tx.productVariant.create({
+            targetVariant = await tx.productVariant.create({
               data: {
-                productId: product.id,
+                productId: targetProduct.id,
                 name: variantData.variantName,
                 sku: variantSku,
                 barcode: variantData.barcode,
@@ -1469,7 +1467,7 @@ export async function importProducts(
             const existingStock = await tx.productVariantStock.findUnique({
               where: {
                 variantId_locationId: {
-                  variantId: existingVariant.id,
+                  variantId: targetVariant.id,
                   locationId: defaultLocation.id,
                 },
               },
@@ -1477,9 +1475,6 @@ export async function importProducts(
 
             if (!existingStock || strategy === "replace") {
               if (existingStock) {
-                // If replacing, we might want to adjust stock, but that's complex.
-                // For simplicity in import, let's only set stock if it doesn't exist.
-                // Or maybe we should increment it? "Replace" strategy usually implies setting to what's in the file.
                 await tx.productVariantStock.update({
                   where: { id: existingStock.id },
                   data: {
@@ -1490,8 +1485,8 @@ export async function importProducts(
               } else {
                 await tx.productVariantStock.create({
                   data: {
-                    productId: product.id,
-                    variantId: existingVariant.id,
+                    productId: targetProduct.id,
+                    variantId: targetVariant.id,
                     locationId: defaultLocation.id,
                     currentStock: new Decimal(variantData.initialStock),
                     availableStock: new Decimal(variantData.initialStock),
@@ -1503,19 +1498,19 @@ export async function importProducts(
               const batch = await tx.stockBatch.create({
                 data: {
                   organizationId: context.organizationId,
-                  variantId: existingVariant.id,
+                  variantId: targetVariant.id,
                   locationId: defaultLocation.id,
                   initialQuantity: new Decimal(variantData.initialStock),
                   currentQuantity: new Decimal(variantData.initialStock),
                   purchasePrice: new Decimal(variantData.buyingPrice),
                   receivedDate: new Date(),
-                  batchNumber: `IMPORT-${existingVariant.sku}-${Date.now().toString().slice(-4)}`,
+                  batchNumber: `IMPORT-${targetVariant.sku}-${Date.now().toString().slice(-4)}`,
                 },
               });
 
               const adjustment = await tx.stockAdjustment.create({
                 data: {
-                  variantId: existingVariant.id,
+                  variantId: targetVariant.id,
                   locationId: defaultLocation.id,
                   memberId: context.memberId,
                   quantity: new Decimal(variantData.initialStock),
@@ -1529,7 +1524,7 @@ export async function importProducts(
 
               await tx.stockMovement.create({
                 data: {
-                  variantId: existingVariant.id,
+                  variantId: targetVariant.id,
                   quantity: new Decimal(variantData.initialStock),
                   toLocationId: defaultLocation.id,
                   movementType: "INITIAL_STOCK",
@@ -1546,7 +1541,7 @@ export async function importProducts(
             const existingStock = await tx.productVariantStock.findUnique({
               where: {
                 variantId_locationId: {
-                  variantId: existingVariant.id,
+                  variantId: targetVariant.id,
                   locationId: defaultLocation.id,
                 },
               },
@@ -1554,8 +1549,8 @@ export async function importProducts(
             if (!existingStock) {
               await tx.productVariantStock.create({
                 data: {
-                  productId: product.id,
-                  variantId: existingVariant.id,
+                  productId: targetProduct.id,
+                  variantId: targetVariant.id,
                   locationId: defaultLocation.id,
                   currentStock: new Decimal(0),
                   availableStock: new Decimal(0),
