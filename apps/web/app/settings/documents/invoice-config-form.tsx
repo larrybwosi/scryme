@@ -222,12 +222,12 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                       <div className="space-y-4">
                         {field.value ? (
                           <div className="relative w-32 h-32 border rounded-lg overflow-hidden group">
-                            {/*<Image
+                            <Image
                               src={field.value}
                               alt="Invoice Logo"
                               fill
                               className="object-contain p-2"
-                            />*/}
+                            />
                             <button
                               type="button"
                               onClick={() => field.onChange("")}
