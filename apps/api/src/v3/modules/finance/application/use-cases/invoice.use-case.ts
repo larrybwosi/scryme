@@ -251,7 +251,7 @@ export class InvoiceUseCase {
     invoiceId: string,
     dto: UpdateInvoiceDto,
   ) {
-    const { items, ...invoiceData } = dto;
+    const { items, customer, templateId, ...invoiceData } = dto;
     const invoice = await this.getInvoiceById(organizationId, invoiceId);
     if (invoice.status === "PAID")
       throw new BadRequestException("Cannot update a paid invoice");
@@ -260,7 +260,6 @@ export class InvoiceUseCase {
 
     return await this.prisma.client.invoice.update({
       where: { id: invoiceId },
-      // @ts-expect-error some error.
       data: {
         ...invoiceData,
         netTotal,
