@@ -38,8 +38,17 @@ export class NotificationEngine {
       templateName,
       data,
       recipients,
-      channels = ["WEBHOOK"],
     } = options;
+
+    let { channels = ["WEBHOOK"] } = options;
+
+    // Enterprise: Standardize Scryme as primary channel if active
+    const scrymeConfig = await db.scrymeConfiguration.findUnique({
+      where: { organizationId },
+    });
+    if (scrymeConfig?.isActive && !channels.includes("SCRYME")) {
+      channels = ["SCRYME", ...channels];
+    }
 
     // 1. Fetch template
     const template = await db.notificationTemplate.findUnique({
@@ -147,7 +156,12 @@ export class NotificationEngine {
           await this.deliverWebhook(dispatch);
         }
         if (channel === "SCRYME") {
-          await this.deliverScryme(dispatch);
+          try {
+            await this.deliverScryme(dispatch);
+          } catch (err: any) {
+             console.error(`Failed to deliver to Scryme: ${err.message}`);
+             // Don't fail the whole dispatch if one channel fails
+          }
         }
         if (channel === "DISCORD") {
           await this.deliverDiscord(dispatch);

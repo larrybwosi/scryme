@@ -33,28 +33,42 @@ export class ScrymeApprovalService {
       request.organization.scrymeConfiguration.workspaceSlug;
     if (!workspaceSlug) return;
 
+    // Enterprise: Post to a central discussion channel if configured (e.g., department channel)
+    await this.notifyDiscussionChannel(organizationId, requestId);
+
     const pendingDecisions = request.decisions.filter(
       (d) => d.stepNumber === request.currentStep,
     );
 
     for (const decision of pendingDecisions) {
       try {
-        const approverEmail = decision.approver.user.email;
-        const scrymeUser = await this.scrymeClient.findUserByEmail(
-          workspaceSlug,
-          approverEmail,
-        );
+        let scrymeUserId = decision.approver.user.scrymeUserId;
 
-        if (!scrymeUser) {
-          this.logger.warn(
-            `Approver ${approverEmail} not found in Scryme workspace ${workspaceSlug}`,
+        if (!scrymeUserId) {
+          const approverEmail = decision.approver.user.email;
+          const scrymeUser = await this.scrymeClient.findUserByEmail(
+            workspaceSlug,
+            approverEmail,
           );
-          continue;
+
+          if (!scrymeUser) {
+            this.logger.warn(
+              `Approver ${approverEmail} not found in Scryme workspace ${workspaceSlug}`,
+            );
+            continue;
+          }
+          scrymeUserId = scrymeUser.id;
+
+          // Update for next time
+          await this.prisma.client.user.update({
+            where: { id: decision.approver.user.id },
+            data: { scrymeUserId },
+          });
         }
 
         const dmChannel = await this.scrymeClient.getDirectMessageChannel(
           workspaceSlug,
-          scrymeUser.id,
+          scrymeUserId,
         );
 
         const actions: ScrymeChatAction[] = [
@@ -88,12 +102,24 @@ export class ScrymeApprovalService {
           `*Type:* ${request.requestType}\n\n` +
           `Please review and take action.`;
 
+        // Enterprise: DO NOT use scrymeThreadId in DMs across different users.
+        // DM threads are user-specific. Instead, we use it only if it was started in THIS DM.
+        const existingDmMessage = await this.prisma.client.scrymeMessage.findFirst({
+          where: {
+            relatedId: requestId,
+            recipientId: decision.approverId,
+            channelSlug: dmChannel.slug,
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
         const message = await this.scrymeClient.sendMessage(
           workspaceSlug,
           dmChannel.slug,
           {
             content,
             actions,
+            threadId: existingDmMessage?.messageId || undefined,
           },
         );
 
@@ -102,6 +128,20 @@ export class ScrymeApprovalService {
           data: {
             scrymeMessageId: message.id,
             scrymeChannelId: dmChannel.slug,
+          },
+        });
+
+        // Log message for audit and threading
+        await this.prisma.client.scrymeMessage.create({
+          data: {
+            organizationId,
+            workspaceSlug,
+            channelSlug: dmChannel.slug,
+            messageId: message.id,
+            content,
+            recipientId: decision.approverId,
+            eventType: "APPROVAL_REQUEST",
+            relatedId: requestId,
           },
         });
       } catch (error: any) {
@@ -215,17 +255,27 @@ export class ScrymeApprovalService {
     if (!latestDecision) return;
 
     try {
-      const requesterEmail = request.requester.user.email;
-      const scrymeUser = await this.scrymeClient.findUserByEmail(
-        workspaceSlug,
-        requesterEmail,
-      );
+      let scrymeUserId = request.requester.user.scrymeUserId;
 
-      if (!scrymeUser) return;
+      if (!scrymeUserId) {
+        const requesterEmail = request.requester.user.email;
+        const scrymeUser = await this.scrymeClient.findUserByEmail(
+          workspaceSlug,
+          requesterEmail,
+        );
+
+        if (!scrymeUser) return;
+        scrymeUserId = scrymeUser.id;
+
+        await this.prisma.client.user.update({
+          where: { id: request.requester.user.id },
+          data: { scrymeUserId },
+        });
+      }
 
       const dmChannel = await this.scrymeClient.getDirectMessageChannel(
         workspaceSlug,
-        scrymeUser.id,
+        scrymeUserId,
       );
 
       let statusEmoji = "ℹ️";
@@ -264,6 +314,67 @@ export class ScrymeApprovalService {
       this.logger.error(
         `Failed to notify requester via Scryme: ${error.message}`,
       );
+    }
+  }
+
+  /**
+   * Enterprise: Post to a central discussion channel for the approval request.
+   */
+  private async notifyDiscussionChannel(organizationId: string, requestId: string) {
+    const request = await this.prisma.client.approvalRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        requester: { include: { user: true } },
+        organization: { include: { scrymeConfiguration: true } },
+      },
+    });
+
+    if (!request || !request.organization.scrymeConfiguration?.workspaceSlug) return;
+
+    const workspaceSlug = request.organization.scrymeConfiguration.workspaceSlug;
+
+    // Determine target channel (e.g., 'finance-approvals' or department channel)
+    let targetChannel = "notifications";
+
+    // Try to find the requester's department channel
+    const deptMember = await this.prisma.client.departmentMember.findFirst({
+      where: { memberId: request.requesterId },
+      include: { department: true }
+    });
+
+    if (deptMember?.department?.scrymeChannelId) {
+      targetChannel = deptMember.department.scrymeChannelId;
+    }
+
+    const content = `💬 *Discussion Thread for Approval: ${request.relatedRecordNumber}*\n` +
+      `Requested by: ${request.requester.user.name || request.requester.user.email}\n` +
+      `Amount: ${request.currency} ${request.amount.toString()}\n` +
+      `Please use this thread for team discussion regarding this request.`;
+
+    try {
+      // If we don't have a central thread ID yet, create the root message
+      if (!request.scrymeThreadId) {
+        const message = await this.scrymeClient.sendMessage(workspaceSlug, targetChannel, { content });
+
+        await this.prisma.client.approvalRequest.update({
+          where: { id: requestId },
+          data: { scrymeThreadId: message.id }
+        });
+
+        await this.prisma.client.scrymeMessage.create({
+          data: {
+            organizationId,
+            workspaceSlug,
+            channelSlug: targetChannel,
+            messageId: message.id,
+            content,
+            eventType: "APPROVAL_DISCUSSION_ROOT",
+            relatedId: requestId,
+          }
+        });
+      }
+    } catch (error: any) {
+      this.logger.error(`Failed to post to discussion channel: ${error.message}`);
     }
   }
 }

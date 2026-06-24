@@ -659,6 +659,8 @@ model ApprovalRequest {
   status              ApprovalStatus      @default(PENDING)
   currentStep         Int                 @default(1)
 
+  scrymeThreadId      String?             // For enterprise threaded discussions
+
   workflowId          String?
   workflow            ApprovalWorkflow?   @relation("WorkflowApprovalRequests", fields: [workflowId], references: [id], onDelete: SetNull)
 
