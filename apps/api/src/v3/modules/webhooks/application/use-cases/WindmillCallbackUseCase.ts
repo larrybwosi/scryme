@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import * as crypto from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
   ApprovalCallbackPayload,
@@ -19,6 +25,52 @@ export class WindmillCallbackUseCase {
   private readonly logger = new Logger(WindmillCallbackUseCase.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  async verifySignature(
+    organizationId: string,
+    signature: string,
+    payload: any,
+  ) {
+    const config = await this.prisma.client.windmillConfiguration.findUnique({
+      where: { organizationId },
+    });
+
+    const secret = config?.webhookSecret;
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (!secret) {
+      if (isProduction) {
+        this.logger.error(
+          `Windmill webhook secret not configured for org ${organizationId} in production`,
+        );
+        throw new UnauthorizedException("Webhooks disabled: secret missing");
+      }
+      this.logger.warn(
+        `Windmill webhook secret not configured for org ${organizationId}. Skipping verification in dev.`,
+      );
+      return;
+    }
+
+    if (!signature) {
+      throw new UnauthorizedException("Missing signature");
+    }
+
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(JSON.stringify(payload))
+      .digest("hex");
+
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    if (
+      signatureBuffer.length !== expectedBuffer.length ||
+      !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+    ) {
+      this.logger.warn(`Invalid Windmill signature for org ${organizationId}`);
+      throw new UnauthorizedException("Invalid signature");
+    }
+  }
 
   async handleGeneralCallback(payload: WindmillCallbackPayload) {
     this.logger.log(
