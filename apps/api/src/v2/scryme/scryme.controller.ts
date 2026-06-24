@@ -93,4 +93,11 @@ export class ScrymeController {
   async getConfig(@v2Context() ctx: V2ApiContext) {
     return this.scrymeService.getConfiguration(ctx.organizationId);
   }
+
+  @Post("sync-users")
+  @RequirePermission("settings:manage")
+  async syncUsers(@v2Context() ctx: V2ApiContext) {
+    await this.scrymeService.syncUsers(ctx.organizationId, true); // Force sync
+    return { status: "success", message: "User sync completed" };
+  }
 }

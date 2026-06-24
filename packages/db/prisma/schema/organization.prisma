@@ -196,6 +196,7 @@ model Organization {
 
   // Scryme Integration
   scrymeConfiguration ScrymeConfiguration?
+  scrymeMessages      ScrymeMessage[]
 
   // Plane Integration
   planeConfiguration PlaneConfiguration?

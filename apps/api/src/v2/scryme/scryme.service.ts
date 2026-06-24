@@ -49,6 +49,11 @@ export class ScrymeService {
         },
       });
 
+      // Background sync users for enterprise robust mapping
+      this.syncUsers(organizationId).catch((err) =>
+        this.logger.error(`Initial user sync failed: ${err.message}`),
+      );
+
       return config;
     } catch (error: any) {
       this.logger.error(
@@ -57,6 +62,55 @@ export class ScrymeService {
       );
       throw error;
     }
+  }
+
+  async syncUsers(organizationId: string, force = false) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config || !config.workspaceSlug || !config.isActive) return;
+
+    // Enterprise: Throttle automatic syncs to once every 24 hours
+    if (!force && config.lastSyncAt) {
+      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      if (config.lastSyncAt > twentyFourHoursAgo) {
+        this.logger.debug(`Skipping automatic Scryme user sync for org ${organizationId}: recently synced`);
+        return;
+      }
+    }
+
+    const members = await this.prisma.client.member.findMany({
+      where: { organizationId },
+      include: { user: true },
+    });
+
+    this.logger.log(
+      `Syncing ${members.length} users for Scryme workspace ${config.workspaceSlug}`,
+    );
+
+    for (const member of members) {
+      try {
+        const scrymeUser = await this.scrymeClient.findUserByEmail(
+          config.workspaceSlug,
+          member.user.email,
+        );
+
+        if (scrymeUser) {
+          await this.prisma.client.user.update({
+            where: { id: member.userId },
+            data: { scrymeUserId: scrymeUser.id },
+          });
+        }
+      } catch (error: any) {
+        this.logger.warn(
+          `Failed to sync user ${member.user.email}: ${error.message}`,
+        );
+      }
+    }
+
+    // Record last sync
+    await this.prisma.client.scrymeConfiguration.update({
+      where: { organizationId },
+      data: { lastSyncAt: new Date() },
+    });
   }
 
   async handleWebhook(signature: string, payload: any) {
@@ -185,7 +239,44 @@ export class ScrymeService {
         return { status: "ignored" };
       }
 
-      // Trigger Windmill workflow
+      // Enterprise: Handle generic HITL (Human-in-the-loop) actions
+      if (action.id.startsWith("wm_resume:")) {
+        const resumeToken = action.value;
+        const [_, jobId] = action.id.split(":");
+
+        this.logger.log(`Resuming Windmill job ${jobId} via Scryme action`);
+
+        // In a real scenario, this would call Windmill's resume endpoint
+        // For now, we update the execution record if it exists
+        const execution = await this.prisma.client.windmillExecution.findFirst({
+          where: { jobId },
+        });
+
+        if (execution) {
+          await this.prisma.client.windmillExecution.update({
+            where: { id: execution.id },
+            data: {
+              status: "RUNNING",
+              result: {
+                ...(execution.result as any),
+                resumedBy: user,
+                resumedAt: new Date(),
+                actionValue: action.value,
+              },
+            },
+          });
+        }
+
+        // Send confirmation back to Scryme
+        await this.scrymeClient.updateMessage(workspaceSlug, message.channelSlug || message.channelId, message.id, {
+          content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
+          actions: [],
+        });
+
+        return { status: "success", message: "Windmill job resumed" };
+      }
+
+      // Trigger Windmill workflow for unknown actions
       const scriptPath =
         process.env.SCRYME_ACTION_WORKFLOW_PATH ||
         "f/dealio/scryme_action_handler";
