@@ -44,12 +44,14 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
       include: {
         supplier: {
           select: {
+            id: true,
             name: true,
             email: true,
           },
         },
         variant: {
           select: {
+            id: true,
             name: true,
             sku: true,
           },
@@ -68,12 +70,14 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
       include: {
         supplier: {
           select: {
+            id: true,
             name: true,
             email: true,
           },
         },
         variant: {
           select: {
+            id: true,
             name: true,
             sku: true,
           },
@@ -107,12 +111,14 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
       include: {
         supplier: {
           select: {
+            id: true,
             name: true,
             email: true,
           },
         },
         variant: {
           select: {
+            id: true,
             name: true,
             sku: true,
           },
@@ -135,7 +141,9 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
               include: {
                 user: {
                   select: {
+                    id: true,
                     name: true,
+                    email: true,
                   },
                 },
               },
