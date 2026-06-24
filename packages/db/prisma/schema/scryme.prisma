@@ -8,8 +8,37 @@ model ScrymeConfiguration {
 
   isActive Boolean @default(true)
 
+  lastSyncAt DateTime? // For enterprise sync throttling
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("scryme_configuration")
+}
+
+model ScrymeMessage {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  workspaceSlug  String
+  channelSlug    String
+  messageId      String       @unique // The ID returned by Scryme API
+  threadId       String?      // If this message belongs to a thread
+
+  content        String?      @db.Text
+  senderId       String?      // Dealio Member ID of the sender if internal
+  recipientId    String?      // Dealio Member ID of the recipient if DM
+
+  eventType      String?      // e.g., "APPROVAL_REQUEST", "NOTIFICATION", "HITL_PAUSE"
+  relatedId      String?      // ID of the related entity (e.g., ApprovalRequest ID)
+
+  metadata       Json?        // Additional context
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([relatedId])
+  @@map("scryme_messages")
 }

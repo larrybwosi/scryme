@@ -10,6 +10,7 @@ export interface ScrymeChatMessage {
   content: string;
   attachments?: any[];
   actions?: ScrymeChatAction[];
+  threadId?: string;
 }
 
 export interface ScrymeChatAction {
