@@ -54,14 +54,24 @@ export class MpesaService {
       return range === cleanIp;
     });
 
-    if (!isWhitelisted) {
-      console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
-      throw new ForbiddenException('Invalid Callback Source');
+    if (isWhitelisted) {
+      return true;
     }
+
+    console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
+    throw new ForbiddenException('Invalid Callback Source');
   }
 
   private ipToLong(ip: string): number {
     return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+  }
+
+  private async getOrganizationByShortCode(shortCode: string): Promise<string | null> {
+    const config = await db.paymentCredentials.findFirst({
+      where: { mpesaShortCode: shortCode },
+      select: { organizationId: true },
+    });
+    return config?.organizationId || null;
   }
 
   /**
@@ -137,7 +147,7 @@ export class MpesaService {
 
       await db.$transaction(async (tx: any) => {
         const updatedPayment = await tx.payment.update({
-          where: { id: paymentId },
+          where: { id: paymentId, organizationId },
           data: {
             status: paymentStatus,
             gatewayTxnId: mpesaReceipt,
@@ -241,11 +251,16 @@ export class MpesaService {
       return { ResultCode: 1, ResultDesc: 'Invalid payload' };
     }
 
-    const { BillRefNumber } = parsed.data;
+    const { BillRefNumber, BusinessShortCode } = parsed.data;
+    const organizationId = await this.getOrganizationByShortCode(BusinessShortCode);
+
+    if (!organizationId) {
+      return { ResultCode: 1, ResultDesc: 'Invalid ShortCode' };
+    }
 
     // Check if a transaction exists with this order number
     const transaction = await db.transaction.findFirst({
-      where: { number: BillRefNumber },
+      where: { number: BillRefNumber, organizationId },
     });
 
     if (!transaction) {
@@ -270,10 +285,16 @@ export class MpesaService {
       parsed.data;
 
     const amount = Number(TransAmount);
+    const organizationId = await this.getOrganizationByShortCode(BusinessShortCode);
+
+    if (!organizationId) {
+      console.error(`M-Pesa C2B Confirmation for unknown ShortCode: ${BusinessShortCode}`);
+      return { success: false, error: 'Invalid ShortCode' };
+    }
 
     // Attempt to find the transaction by order number
     const transaction = await db.transaction.findFirst({
-      where: { number: BillRefNumber },
+      where: { number: BillRefNumber, organizationId },
       include: { organization: true },
     });
 
@@ -344,6 +365,7 @@ export class MpesaService {
               lastName: LastName,
               billRefNumber: BillRefNumber,
               shortCode: BusinessShortCode,
+              organizationId,
               rawResponse: payload as any,
             },
           });
