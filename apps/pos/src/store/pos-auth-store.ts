@@ -1,7 +1,7 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
-import { API_ENDPOINT } from '@/lib/axios';
+import { API_ENDPOINT_DEFAULT } from '@/lib/axios';
 
 type LocationType =
   | 'RETAIL_SHOP'
@@ -57,6 +57,7 @@ export type Member = {
 
 interface PosAuthState {
   isConfigured: boolean;
+  apiUrl: string;
   currentMember: Member | null;
   checkedInMembers: Member[];
   currentLocation: InventoryLocation | null;
@@ -82,6 +83,7 @@ interface PosAuthActions {
   refreshSession: () => void;
   resetAll: () => void;
   resetDevice: () => void;
+  setApiUrl: (url: string) => void;
   completeSetup: (deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string | null) => void;
 
   // Async initialization
@@ -98,6 +100,7 @@ const STORAGE_KEY = 'pos-auth-storage-v3';
 
 const initialState: PosAuthState = {
   isConfigured: false,
+  apiUrl: API_ENDPOINT_DEFAULT,
   currentMember: null,
   checkedInMembers: [],
   currentLocation: null,
@@ -191,6 +194,10 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         set({ currentLocation: null });
       },
 
+      setApiUrl: (url: string) => {
+        set({ apiUrl: url });
+      },
+
       resetAll: () => {
         set({ ...initialState, isInitialized: false });
       },
@@ -272,6 +279,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       },
 
       provisionDevice: async (setupToken: string) => {
+        const { apiUrl } = get();
         const response = await invoke<any>('authenticated_api_request', {
           method: 'POST',
           path: 'api/v2/devices/provision',
@@ -282,7 +290,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           const { apiKey, device, organization } = response.data;
 
           await invoke('set_device_config', {
-            baseUrl: API_ENDPOINT,
+            baseUrl: apiUrl,
             locationId: device.locationId,
             deviceKey: apiKey,
             orgSlug: organization.slug,
@@ -303,8 +311,9 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       },
 
       registerDevice: async (apiKey: string, location: InventoryLocation, orgSlug: string) => {
+        const { apiUrl } = get();
         await invoke('set_device_config', {
-          baseUrl: API_ENDPOINT,
+          baseUrl: apiUrl,
           locationId: location.id,
           deviceKey: apiKey,
           orgSlug,
@@ -366,6 +375,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       partialize: state => ({
         // REMOVED deviceKey and memberToken from here for security
         isConfigured: state.isConfigured,
+        apiUrl: state.apiUrl,
         currentLocation: state.currentLocation,
         currentMember: state.currentMember,
         checkedInMembers: state.checkedInMembers,
