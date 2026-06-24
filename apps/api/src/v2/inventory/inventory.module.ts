@@ -6,9 +6,10 @@ import { PurchaseOrderUseCase } from "../../v3/modules/stocking/application/use-
 import { StockTransferUseCase } from "../../v3/modules/stocking/application/use-cases/stock-transfer.use-case";
 import { StockRequestUseCase } from "../../v3/modules/stocking/application/use-cases/stock-request.use-case";
 import { InventoryModule as V3InventoryModule } from "../../v3/modules/inventory/inventory.module";
+import { FinanceModule } from "../../v3/modules/finance/finance.module";
 
 @Module({
-  imports: [DocumentModule, V3InventoryModule],
+  imports: [DocumentModule, V3InventoryModule, FinanceModule],
   controllers: [InventoryController],
   providers: [
     InventoryService,
