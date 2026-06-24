@@ -3,7 +3,7 @@ import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { commonStyles as styles } from './document-styles';
 import { PDFHeader, PDFFooter, PDFGrid, PDFCol, PDFTable, PDFTableRow, PDFTableCell } from './PDFComponents';
 import { InvoiceData } from '../../types';
-import { formatCurrency } from '../../server';
+import { formatCurrency } from '../../utils';
 
 const invoiceStyles = StyleSheet.create({
   totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 20 },

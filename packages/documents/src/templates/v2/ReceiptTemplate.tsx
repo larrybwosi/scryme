@@ -8,7 +8,7 @@ import {
   Image,
 } from "@react-pdf/renderer";
 import { ReceiptData } from "../../types";
-import { formatCurrency } from "../../server";
+import { formatCurrency } from "../../utils";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -344,7 +344,11 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
   const logoUrl = branding?.logoUrl;
   const orgName = branding?.companyName || "Our Company";
   const orgAddress = branding?.companyAddress;
-  const currencySettings = data.currencySettings || { code: data.currency || 'USD', symbol: data.currencySymbol || '$', locale: 'en-US' };
+  const currencySettings = data.currencySettings || {
+    code: data.currency || "USD",
+    symbol: data.currencySymbol || "$",
+    locale: "en-US",
+  };
 
   const fmt = (val: number) => formatCurrency(val, currencySettings);
 
