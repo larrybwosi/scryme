@@ -5,9 +5,10 @@ import { ZitadelService } from "@repo/zitadel/server";
 import { CrmSyncService } from "../../../../crm/infrastructure/services/crm-sync.service";
 
 vi.mock("@repo/zitadel/server", () => ({
-  ZitadelService: vi.fn().mockImplementation(() => ({
-    getUser: vi.fn().mockResolvedValue({ id: "zit-123" }),
-  })),
+  ZitadelService: vi.fn().mockImplementation(function (this: any) {
+    this.getUser = vi.fn().mockResolvedValue({ id: "zit-123" });
+    return this;
+  }),
 }));
 
 vi.mock("@repo/windmill/server", () => ({
