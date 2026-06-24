@@ -28,11 +28,17 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import {
   Upload,
   FileSpreadsheet,
   ArrowRight,
   CheckCircle2,
   AlertCircle,
+  HelpCircle,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -47,7 +53,19 @@ import {
   type ProductImportData,
 } from "../../app/actions/inventory";
 
-type Step = "UPLOAD" | "MAPPING" | "PREVIEW" | "RESULTS";
+type Step = "UPLOAD" | "MAPPING" | "GROUPING" | "PREVIEW" | "RESULTS";
+
+interface ProductGroup {
+  id: string;
+  name: string;
+  categoryName: string;
+  description?: string;
+  variants: {
+    id: string;
+    variantName: string;
+    originalRowIndex: number;
+  }[];
+}
 
 const REQUIRED_FIELDS = [
   { key: "name", label: "Product Name" },
@@ -72,6 +90,7 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mappings, setMappings] = useState<Record<string, string>>({});
+  const [groups, setGroups] = useState<ProductGroup[]>([]);
   const [strategy, setStrategy] = useState<"skip" | "replace">("skip");
   const [isImporting, setIsImporting] = useState(false);
   const [results, setResults] = useState<{
@@ -90,6 +109,7 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
     setCsvData([]);
     setHeaders([]);
     setMappings({});
+    setGroups([]);
     setStrategy("skip");
     setIsImporting(false);
     setResults(null);
@@ -181,6 +201,145 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
     setStep("MAPPING");
   };
 
+  const findLongestCommonPrefix = (strings: string[]) => {
+    if (strings.length === 0) return "";
+    let prefix = strings[0];
+    for (let i = 1; i < strings.length; i++) {
+      while (strings[i].indexOf(prefix) !== 0) {
+        prefix = prefix.substring(0, prefix.length - 1);
+        if (prefix === "") return "";
+      }
+    }
+    // Trim to last full word
+    const lastSpace = prefix.lastIndexOf(" ");
+    return lastSpace > 0 ? prefix.substring(0, lastSpace).trim() : prefix;
+  };
+
+  const generateGroups = () => {
+    const nameHeader = mappings.name;
+    const categoryHeader = mappings.categoryName;
+    const descriptionHeader = mappings.description;
+
+    if (!nameHeader) return;
+
+    const suggestions: ProductGroup[] = [];
+    const processedIndices = new Set<number>();
+
+    // Sort by name to find potential groups more easily
+    const sortedData = csvData
+      .map((row, index) => ({ row, index }))
+      .sort((a, b) =>
+        String(a.row[nameHeader]).localeCompare(String(b.row[nameHeader])),
+      );
+
+    for (let i = 0; i < sortedData.length; i++) {
+      if (processedIndices.has(sortedData[i].index)) continue;
+
+      const current = sortedData[i];
+      const currentName = String(current.row[nameHeader]);
+      const potentialGroupIndices = [i];
+
+      for (let j = i + 1; j < sortedData.length; j++) {
+        if (processedIndices.has(sortedData[j].index)) continue;
+
+        const next = sortedData[j];
+        const nextName = String(next.row[nameHeader]);
+
+        // Heuristic: share at least the first word and have high similarity
+        const firstWordCurrent = currentName.split(" ")[0];
+        const firstWordNext = nextName.split(" ")[0];
+
+        const commonPrefixLen = findLongestCommonPrefix([
+          currentName,
+          nextName,
+        ]).length;
+
+        if (
+          (firstWordCurrent &&
+            firstWordCurrent === firstWordNext &&
+            commonPrefixLen >= 3) ||
+          commonPrefixLen >= 5
+        ) {
+          potentialGroupIndices.push(j);
+        } else {
+          // Since it's sorted, if the first word doesn't match, we can stop looking for this group
+          break;
+        }
+      }
+
+      if (potentialGroupIndices.length > 1) {
+        const groupRows = potentialGroupIndices.map(idx => sortedData[idx]);
+        const groupNames = groupRows.map(r => String(r.row[nameHeader]));
+        let commonPrefix = findLongestCommonPrefix(groupNames);
+
+        // If no common prefix or prefix is too short, don't group automatically but maybe we should?
+        // Let's be conservative.
+        if (commonPrefix.length < 3) {
+          commonPrefix = currentName;
+          // If we can't find a good common prefix, just treat them as individual products for now
+          // or use the first one's name as base.
+        }
+
+        const variants = groupRows.map(r => {
+          const fullName = String(r.row[nameHeader]);
+          let variantName = fullName.substring(commonPrefix.length).trim();
+          if (!variantName) variantName = "Default";
+
+          return {
+            id: Math.random().toString(36).substring(7),
+            variantName,
+            originalRowIndex: r.index,
+          };
+        });
+
+        suggestions.push({
+          id: Math.random().toString(36).substring(7),
+          name: commonPrefix,
+          categoryName: String(
+            categoryHeader && categoryHeader !== "none"
+              ? groupRows[0].row[categoryHeader]
+              : "Uncategorized",
+          ),
+          description:
+            descriptionHeader && descriptionHeader !== "none"
+              ? String(groupRows[0].row[descriptionHeader] || "")
+              : undefined,
+          variants,
+        });
+
+        potentialGroupIndices.forEach(idx =>
+          processedIndices.add(sortedData[idx].index),
+        );
+      } else {
+        // Individual product
+        suggestions.push({
+          id: Math.random().toString(36).substring(7),
+          name: currentName,
+          categoryName: String(
+            categoryHeader && categoryHeader !== "none"
+              ? current.row[categoryHeader]
+              : "Uncategorized",
+          ),
+          description:
+            descriptionHeader && descriptionHeader !== "none"
+              ? String(current.row[descriptionHeader] || "")
+              : undefined,
+          variants: [
+            {
+              id: Math.random().toString(36).substring(7),
+              variantName: "Default",
+              originalRowIndex: current.index,
+            },
+          ],
+        });
+        processedIndices.add(current.index);
+      }
+    }
+
+    setGroups(suggestions);
+    setStep("GROUPING");
+  };
+
   const downloadTemplate = (format: "csv" | "xlsx") => {
     const data = [
       {
@@ -227,32 +386,32 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
   const handleImport = async () => {
     setIsImporting(true);
     try {
-      const productsToImport: ProductImportData[] = csvData.map(row => ({
-        name: String(row[mappings.name] || ""),
-        sku:
-          mappings.sku && mappings.sku !== "none"
-            ? String(row[mappings.sku] || "")
-            : "",
-        categoryName:
-          mappings.categoryName && mappings.categoryName !== "none"
-            ? String(row[mappings.categoryName] || "Uncategorized")
-            : "Uncategorized",
-        buyingPrice:
-          parseFloat(String(row[mappings.buyingPrice] || "0")) || 0,
-        retailPrice:
-          parseFloat(String(row[mappings.retailPrice] || "0")) || 0,
-        initialStock:
-          mappings.initialStock && mappings.initialStock !== "none"
-            ? parseInt(String(row[mappings.initialStock] || "0")) || 0
-            : 0,
-        description:
-          mappings.description && mappings.description !== "none"
-            ? String(row[mappings.description] || "")
-            : undefined,
-        barcode:
-          mappings.barcode && mappings.barcode !== "none"
-            ? String(row[mappings.barcode] || "")
-            : undefined,
+      const productsToImport: ProductImportData[] = groups.map(group => ({
+        name: group.name,
+        categoryName: group.categoryName,
+        description: group.description,
+        variants: group.variants.map(v => {
+          const row = csvData[v.originalRowIndex];
+          return {
+            variantName: v.variantName,
+            sku:
+              mappings.sku && mappings.sku !== "none"
+                ? String(row[mappings.sku] || "")
+                : "",
+            buyingPrice:
+              parseFloat(String(row[mappings.buyingPrice] || "0")) || 0,
+            retailPrice:
+              parseFloat(String(row[mappings.retailPrice] || "0")) || 0,
+            initialStock:
+              mappings.initialStock && mappings.initialStock !== "none"
+                ? parseInt(String(row[mappings.initialStock] || "0")) || 0
+                : 0,
+            barcode:
+              mappings.barcode && mappings.barcode !== "none"
+                ? String(row[mappings.barcode] || "")
+                : undefined,
+          };
+        }),
       }));
 
       const res = await importProducts(productsToImport, strategy);
@@ -424,7 +583,194 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
               </Button>
               <Button
                 disabled={!isMappingValid}
-                onClick={() => setStep("PREVIEW")}>
+                onClick={generateGroups}>
+                Continue to Grouping
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+
+        {step === "GROUPING" && (
+          <div className="space-y-6">
+            <div className="p-4 border rounded-lg bg-blue-50/50 border-blue-100 flex gap-3">
+              <HelpCircle className="w-5 h-5 text-blue-600 shrink-0" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium">Variant Recognition</p>
+                <p>
+                  We've identified potential product variants based on naming
+                  patterns. You can adjust the groupings and names below.
+                </p>
+              </div>
+            </div>
+
+            <div className="max-h-[400px] overflow-auto border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product Name</TableHead>
+                    <TableHead>Variants</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="w-[120px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {groups.map((group, groupIdx) => (
+                    <TableRow key={group.id}>
+                      <TableCell>
+                        <Input
+                          value={group.name}
+                          onChange={e => {
+                            const newGroups = [...groups];
+                            newGroups[groupIdx].name = e.target.value;
+                            setGroups(newGroups);
+                          }}
+                          className="h-8 py-1"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {group.variants.map((v, vIdx) => (
+                            <div
+                              key={v.id}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs border border-blue-200">
+                              <input
+                                value={v.variantName}
+                                onChange={e => {
+                                  const newGroups = [...groups];
+                                  newGroups[groupIdx].variants[vIdx].variantName =
+                                    e.target.value;
+                                  setGroups(newGroups);
+                                }}
+                                className="bg-transparent border-none focus:ring-0 w-16 p-0 text-xs"
+                              />
+                              {group.variants.length > 1 && (
+                                <button
+                                  onClick={() => {
+                                    const newGroups = [...groups];
+                                    const [variant] = newGroups[
+                                      groupIdx
+                                    ].variants.splice(vIdx, 1);
+                                    newGroups.push({
+                                      id: Math.random()
+                                        .toString(36)
+                                        .substring(7),
+                                      name: String(
+                                        csvData[variant.originalRowIndex][
+                                          mappings.name
+                                        ],
+                                      ),
+                                      categoryName: group.categoryName,
+                                      description: group.description,
+                                      variants: [
+                                        { ...variant, variantName: "Default" },
+                                      ],
+                                    });
+                                    setGroups(newGroups);
+                                  }}
+                                  className="hover:text-blue-900">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {group.categoryName}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {group.variants.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs h-7 px-2"
+                              onClick={() => {
+                                const newGroups = [...groups];
+                                const variantsToUngroup = newGroups.splice(
+                                  groupIdx,
+                                  1,
+                                )[0].variants;
+                                variantsToUngroup.forEach(v => {
+                                  newGroups.push({
+                                    id: Math.random().toString(36).substring(7),
+                                    name: String(
+                                      csvData[v.originalRowIndex][
+                                        mappings.name
+                                      ],
+                                    ),
+                                    categoryName: group.categoryName,
+                                    description: group.description,
+                                    variants: [
+                                      { ...v, variantName: "Default" },
+                                    ],
+                                  });
+                                });
+                                setGroups(newGroups);
+                              }}>
+                              Ungroup
+                            </Button>
+                          )}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-7 px-2">
+                                Merge...
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-0">
+                              <div className="p-2 border-b">
+                                <h5 className="text-xs font-semibold">
+                                  Merge into another product
+                                </h5>
+                              </div>
+                              <div className="max-h-48 overflow-auto p-1">
+                                {groups
+                                  .filter(g => g.id !== group.id)
+                                  .map(targetGroup => (
+                                    <button
+                                      key={targetGroup.id}
+                                      className="w-full text-left px-2 py-1.5 text-xs hover:bg-gray-100 rounded truncate"
+                                      onClick={() => {
+                                        const newGroups = [...groups];
+                                        const sourceGroup = newGroups.find(
+                                          g => g.id === group.id,
+                                        );
+                                        const targetIdx = newGroups.findIndex(
+                                          g => g.id === targetGroup.id,
+                                        );
+                                        if (sourceGroup && targetIdx !== -1) {
+                                          newGroups[targetIdx].variants.push(
+                                            ...sourceGroup.variants,
+                                          );
+                                          const finalGroups = newGroups.filter(
+                                            g => g.id !== group.id,
+                                          );
+                                          setGroups(finalGroups);
+                                        }
+                                      }}>
+                                      {targetGroup.name}
+                                    </button>
+                                  ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setStep("MAPPING")}>
+                Back
+              </Button>
+              <Button onClick={() => setStep("PREVIEW")}>
                 Continue to Preview
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
@@ -439,9 +785,10 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
               <div className="text-sm text-blue-800">
                 <p className="font-medium">Import Summary</p>
                 <p>
-                  You are about to import {csvData.length} products. Existing
-                  products with the same SKU will be handled based on your
-                  selection below.
+                  You are about to import {groups.length} products with{" "}
+                  {groups.reduce((acc, g) => acc + g.variants.length, 0)} total
+                  variants. Existing products with the same SKU will be handled
+                  based on your selection below.
                 </p>
               </div>
             </div>
@@ -472,26 +819,26 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {REQUIRED_FIELDS.map(f => (
-                      <TableHead key={f.key}>{f.label}</TableHead>
-                    ))}
+                    <TableHead>Product Name</TableHead>
+                    <TableHead>Variants</TableHead>
+                    <TableHead>Category</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {csvData.slice(0, 10).map((row, i) => (
+                  {groups.slice(0, 10).map((group, i) => (
                     <TableRow key={i}>
-                      {REQUIRED_FIELDS.map(f => (
-                        <TableCell key={f.key}>
-                          {row[mappings[f.key]]}
-                        </TableCell>
-                      ))}
+                      <TableCell className="font-medium">{group.name}</TableCell>
+                      <TableCell>
+                        {group.variants.map(v => v.variantName).join(", ")}
+                      </TableCell>
+                      <TableCell>{group.categoryName}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              {csvData.length > 10 && (
+              {groups.length > 10 && (
                 <div className="p-3 text-center text-xs text-gray-500 border-t">
-                  And {csvData.length - 10} more rows...
+                  And {groups.length - 10} more products...
                 </div>
               )}
             </div>
@@ -499,7 +846,7 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setStep("MAPPING")}
+                onClick={() => setStep("GROUPING")}
                 disabled={isImporting}>
                 Back
               </Button>

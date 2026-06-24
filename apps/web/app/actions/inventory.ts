@@ -1276,15 +1276,21 @@ export async function getStockAdjustmentHistory(variantId: string): Promise<
   });
 }
 
-export type ProductImportData = {
-  name: string;
+export type ProductVariantImportData = {
+  variantName: string;
   sku: string;
-  categoryName: string;
   buyingPrice: number;
   retailPrice: number;
   initialStock?: number;
-  description?: string;
   barcode?: string;
+};
+
+export type ProductImportData = {
+  name: string;
+  sku?: string;
+  categoryName: string;
+  description?: string;
+  variants: ProductVariantImportData[];
 };
 
 export async function importProducts(
@@ -1318,21 +1324,21 @@ export async function importProducts(
     existingCategories.map(c => [c.name.toLowerCase(), c.id]),
   );
 
+  const defaultLocation =
+    (await db.inventoryLocation.findFirst({
+      where: {
+        organizationId: context.organizationId,
+        isDefault: true,
+      },
+    })) ||
+    (await db.inventoryLocation.findFirst({
+      where: { organizationId: context.organizationId },
+    }));
+
   for (const productData of products) {
     try {
       await db.$transaction(async tx => {
-        // 1. Handle SKU Autogeneration
-        let sku = productData.sku;
-        if (!sku || sku.trim() === "") {
-          const prefix = (productData.name || "PRD")
-            .substring(0, 3)
-            .toUpperCase()
-            .padEnd(3, "X");
-          const random = Math.floor(10000 + Math.random() * 90000);
-          sku = `${prefix}-${random}`;
-        }
-
-        // 2. Handle Category
+        // 1. Handle Category
         const categoryName =
           !productData.categoryName || productData.categoryName.trim() === ""
             ? "Uncategorized"
@@ -1351,157 +1357,214 @@ export async function importProducts(
           categoryMap.set(categoryName.toLowerCase(), categoryId);
         }
 
-        // 3. Check for existing product/variant by SKU
-        const existingVariant = await tx.productVariant.findFirst({
+        // Determine base SKU if not provided
+        let baseSku = productData.sku;
+        if (!baseSku) {
+          baseSku = productData.variants[0]?.sku;
+        }
+        if (!baseSku || baseSku.trim() === "") {
+          const prefix = (productData.name || "PRD")
+            .substring(0, 3)
+            .toUpperCase()
+            .padEnd(3, "X");
+          const random = Math.floor(10000 + Math.random() * 90000);
+          baseSku = `${prefix}-${random}`;
+        }
+
+        // Check if product exists (using base SKU or by name in organization)
+        let product = await tx.product.findFirst({
           where: {
-            sku: sku,
-            product: { organizationId: context.organizationId },
+            OR: [{ sku: baseSku }, { name: productData.name }],
+            organizationId: context.organizationId,
           },
-          include: { product: true },
         });
 
-        if (existingVariant) {
+        if (product) {
           if (strategy === "skip") {
             results.skipped++;
             return;
           } else {
-            // Replace/Update strategy
-            await tx.product.update({
-              where: { id: existingVariant.productId },
+            // Replace/Update strategy for product details
+            product = await tx.product.update({
+              where: { id: product.id },
               data: {
                 name: productData.name,
                 description: productData.description,
                 categoryId: categoryId,
               },
             });
-
-            await tx.productVariant.update({
-              where: { id: existingVariant.id },
-              data: {
-                buyingPrice: new Decimal(productData.buyingPrice),
-                retailPrice: new Decimal(productData.retailPrice),
-                barcode: productData.barcode,
-              },
-            });
-
             results.replaced++;
-            return;
-          }
-        }
-
-        // 4. Create New Product
-        const product = await tx.product.create({
-          data: {
-            name: productData.name,
-            sku: sku,
-            slug: await generateProductSlug(productData.name + "-" + sku),
-            description: productData.description,
-            categoryId: categoryId,
-            organizationId: context.organizationId,
-            type: "FINISHED_GOOD",
-            barcode: productData.barcode,
-          },
-        });
-
-        // 5. Create Default Variant
-        const variant = await tx.productVariant.create({
-          data: {
-            productId: product.id,
-            name: "Default",
-            sku: sku,
-            barcode: productData.barcode,
-            buyingPrice: new Decimal(productData.buyingPrice),
-            retailPrice: new Decimal(productData.retailPrice),
-            attributes: {},
-          },
-        });
-
-        // 5. Handle Initial Stock
-        if (productData.initialStock && productData.initialStock > 0) {
-          const defaultLocation =
-            (await tx.inventoryLocation.findFirst({
-              where: {
-                organizationId: context.organizationId,
-                isDefault: true,
-              },
-            })) ||
-            (await tx.inventoryLocation.findFirst({
-              where: { organizationId: context.organizationId },
-            }));
-
-          if (defaultLocation) {
-            await tx.productVariantStock.create({
-              data: {
-                productId: product.id,
-                variantId: variant.id,
-                locationId: defaultLocation.id,
-                currentStock: new Decimal(productData.initialStock),
-                availableStock: new Decimal(productData.initialStock),
-                organizationId: context.organizationId,
-              },
-            });
-
-            const batch = await tx.stockBatch.create({
-              data: {
-                organizationId: context.organizationId,
-                variantId: variant.id,
-                locationId: defaultLocation.id,
-                initialQuantity: new Decimal(productData.initialStock),
-                currentQuantity: new Decimal(productData.initialStock),
-                purchasePrice: new Decimal(productData.buyingPrice),
-                receivedDate: new Date(),
-                batchNumber: `IMPORT-${variant.sku}-${Date.now().toString().slice(-4)}`,
-              },
-            });
-
-            const adjustment = await tx.stockAdjustment.create({
-              data: {
-                variantId: variant.id,
-                locationId: defaultLocation.id,
-                memberId: context.memberId,
-                quantity: new Decimal(productData.initialStock),
-                reason: "INITIAL_STOCK",
-                notes: "Initial stock from CSV import",
-                status: "APPROVED",
-                organizationId: context.organizationId,
-                stockBatchId: batch.id,
-              },
-            });
-
-            await tx.stockMovement.create({
-              data: {
-                variantId: variant.id,
-                quantity: new Decimal(productData.initialStock),
-                toLocationId: defaultLocation.id,
-                movementType: "INITIAL_STOCK",
-                adjustmentId: adjustment.id,
-                memberId: context.memberId,
-                notes: "Initial stock from CSV import",
-                organizationId: context.organizationId,
-                stockBatchId: batch.id,
-              },
-            });
           }
         } else {
-          // Create empty stock record for default location if possible
-          const defaultLocation = await tx.inventoryLocation.findFirst({
-            where: { organizationId: context.organizationId },
+          // Create New Product
+          product = await tx.product.create({
+            data: {
+              name: productData.name,
+              sku: baseSku,
+              slug: await generateProductSlug(productData.name + "-" + baseSku),
+              description: productData.description,
+              categoryId: categoryId,
+              organizationId: context.organizationId,
+              type: "FINISHED_GOOD",
+            },
           });
-          if (defaultLocation) {
-            await tx.productVariantStock.create({
+          results.success++;
+        }
+
+        // Process Variants
+        for (const variantData of productData.variants) {
+          let variantSku = variantData.sku;
+          if (!variantSku || variantSku.trim() === "") {
+            const random = Math.floor(1000 + Math.random() * 9000);
+            variantSku = `${baseSku}-${variantData.variantName.substring(0, 3).toUpperCase()}-${random}`;
+          }
+
+          let existingVariant = await tx.productVariant.findFirst({
+            where: {
+              sku: variantSku,
+              product: { organizationId: context.organizationId },
+            },
+            include: { product: true },
+          });
+
+          if (existingVariant) {
+            if (strategy === "replace") {
+              // If the variant belongs to a different product, we might have a problem
+              // but if the user wants to "replace", we update the record.
+              // To be safe, we only update if it belongs to our current product or if we want to "move" it.
+              // For simplicity, let's update it and ensure it's linked to the correct product.
+              existingVariant = await tx.productVariant.update({
+                where: { id: existingVariant.id },
+                data: {
+                  productId: product.id, // Ensure it's under the correct product
+                  name: variantData.variantName,
+                  buyingPrice: new Decimal(variantData.buyingPrice),
+                  retailPrice: new Decimal(variantData.retailPrice),
+                  barcode: variantData.barcode,
+                },
+                include: { product: true },
+              });
+            }
+            // If skip, we don't update
+          } else {
+            existingVariant = await tx.productVariant.create({
               data: {
                 productId: product.id,
-                variantId: variant.id,
-                locationId: defaultLocation.id,
-                currentStock: new Decimal(0),
-                availableStock: new Decimal(0),
-                organizationId: context.organizationId,
+                name: variantData.variantName,
+                sku: variantSku,
+                barcode: variantData.barcode,
+                buyingPrice: new Decimal(variantData.buyingPrice),
+                retailPrice: new Decimal(variantData.retailPrice),
+                attributes: {},
               },
             });
           }
-        }
 
-        results.success++;
+          // Handle Initial Stock for variant
+          if (
+            variantData.initialStock &&
+            variantData.initialStock > 0 &&
+            defaultLocation
+          ) {
+            const existingStock = await tx.productVariantStock.findUnique({
+              where: {
+                variantId_locationId: {
+                  variantId: existingVariant.id,
+                  locationId: defaultLocation.id,
+                },
+              },
+            });
+
+            if (!existingStock || strategy === "replace") {
+              if (existingStock) {
+                // If replacing, we might want to adjust stock, but that's complex.
+                // For simplicity in import, let's only set stock if it doesn't exist.
+                // Or maybe we should increment it? "Replace" strategy usually implies setting to what's in the file.
+                await tx.productVariantStock.update({
+                  where: { id: existingStock.id },
+                  data: {
+                    currentStock: new Decimal(variantData.initialStock),
+                    availableStock: new Decimal(variantData.initialStock),
+                  },
+                });
+              } else {
+                await tx.productVariantStock.create({
+                  data: {
+                    productId: product.id,
+                    variantId: existingVariant.id,
+                    locationId: defaultLocation.id,
+                    currentStock: new Decimal(variantData.initialStock),
+                    availableStock: new Decimal(variantData.initialStock),
+                    organizationId: context.organizationId,
+                  },
+                });
+              }
+
+              const batch = await tx.stockBatch.create({
+                data: {
+                  organizationId: context.organizationId,
+                  variantId: existingVariant.id,
+                  locationId: defaultLocation.id,
+                  initialQuantity: new Decimal(variantData.initialStock),
+                  currentQuantity: new Decimal(variantData.initialStock),
+                  purchasePrice: new Decimal(variantData.buyingPrice),
+                  receivedDate: new Date(),
+                  batchNumber: `IMPORT-${existingVariant.sku}-${Date.now().toString().slice(-4)}`,
+                },
+              });
+
+              const adjustment = await tx.stockAdjustment.create({
+                data: {
+                  variantId: existingVariant.id,
+                  locationId: defaultLocation.id,
+                  memberId: context.memberId,
+                  quantity: new Decimal(variantData.initialStock),
+                  reason: "INITIAL_STOCK",
+                  notes: "Initial stock from CSV import",
+                  status: "APPROVED",
+                  organizationId: context.organizationId,
+                  stockBatchId: batch.id,
+                },
+              });
+
+              await tx.stockMovement.create({
+                data: {
+                  variantId: existingVariant.id,
+                  quantity: new Decimal(variantData.initialStock),
+                  toLocationId: defaultLocation.id,
+                  movementType: "INITIAL_STOCK",
+                  adjustmentId: adjustment.id,
+                  memberId: context.memberId,
+                  notes: "Initial stock from CSV import",
+                  organizationId: context.organizationId,
+                  stockBatchId: batch.id,
+                },
+              });
+            }
+          } else if (defaultLocation) {
+            // Ensure stock record exists even if 0
+            const existingStock = await tx.productVariantStock.findUnique({
+              where: {
+                variantId_locationId: {
+                  variantId: existingVariant.id,
+                  locationId: defaultLocation.id,
+                },
+              },
+            });
+            if (!existingStock) {
+              await tx.productVariantStock.create({
+                data: {
+                  productId: product.id,
+                  variantId: existingVariant.id,
+                  locationId: defaultLocation.id,
+                  currentStock: new Decimal(0),
+                  availableStock: new Decimal(0),
+                  organizationId: context.organizationId,
+                },
+              });
+            }
+          }
+        }
       });
     } catch (error: any) {
       results.failed++;
