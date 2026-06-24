@@ -19,6 +19,137 @@ import {
   endOfDay,
 } from "date-fns";
 import Decimal from "decimal.js";
+import { getServerAuth } from "@repo/auth/server";
+
+export async function bulkUpdateLocationStock(
+  locationId: string,
+  updates: { variantId: string; newTotalStock: number }[],
+): Promise<{ success: boolean; message: string }> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) {
+    throw new Error("Unauthorized");
+  }
+
+  if (updates.length === 0) {
+    return { success: true, message: "No updates provided." };
+  }
+
+  await db.$transaction(async tx => {
+    for (const update of updates) {
+      const { variantId, newTotalStock } = update;
+
+      // 1. Get current stock
+      const stockRecord = await tx.productVariantStock.findUnique({
+        where: {
+          variantId_locationId: {
+            variantId,
+            locationId,
+          },
+        },
+      });
+
+      const currentStock = stockRecord?.currentStock || new Decimal(0);
+      const diff = new Decimal(newTotalStock).minus(currentStock);
+
+      if (diff.isZero()) continue;
+
+      // 2. Create Stock Adjustment
+      const adjustment = await tx.stockAdjustment.create({
+        data: {
+          variantId,
+          locationId,
+          memberId: context.memberId!,
+          quantity: diff,
+          reason: "INVENTORY_COUNT",
+          notes: "Bulk update from location stock table",
+          status: "APPROVED",
+          organizationId: context.organizationId,
+        },
+      });
+
+      // 3. Create Stock Movement
+      await tx.stockMovement.create({
+        data: {
+          organizationId: context.organizationId,
+          variantId,
+          quantity: diff,
+          fromLocationId: diff.isNegative() ? locationId : null,
+          toLocationId: diff.isPositive() ? locationId : null,
+          movementType: diff.isPositive() ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT",
+          adjustmentId: adjustment.id,
+          memberId: context.memberId!,
+          notes: "Bulk update from location stock table",
+        },
+      });
+
+      // 4. Update or Create ProductVariantStock
+      if (stockRecord) {
+        await tx.productVariantStock.update({
+          where: { id: stockRecord.id },
+          data: {
+            currentStock: new Decimal(newTotalStock),
+            availableStock: { increment: diff }, // Assuming available follows current
+          },
+        });
+      } else {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: variantId },
+          select: { productId: true },
+        });
+
+        if (!variant) throw new Error(`Variant ${variantId} not found`);
+
+        await tx.productVariantStock.create({
+          data: {
+            organizationId: context.organizationId,
+            productId: variant.productId,
+            variantId,
+            locationId,
+            currentStock: new Decimal(newTotalStock),
+            availableStock: new Decimal(newTotalStock),
+          },
+        });
+      }
+
+      // 5. Handle Batch if adding stock
+      if (diff.isPositive()) {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: variantId },
+          select: { buyingPrice: true, sku: true },
+        });
+
+        const batch = await tx.stockBatch.create({
+          data: {
+            organizationId: context.organizationId,
+            variantId,
+            locationId,
+            initialQuantity: diff,
+            currentQuantity: diff,
+            purchasePrice: variant?.buyingPrice || new Decimal(0),
+            receivedDate: new Date(),
+            batchNumber: `BULK-${variant?.sku || "VAR"}-${Date.now().toString().slice(-4)}`,
+          },
+        });
+
+        await tx.stockAdjustment.update({
+          where: { id: adjustment.id },
+          data: { stockBatchId: batch.id },
+        });
+
+        await tx.stockMovement.update({
+          where: { adjustmentId: adjustment.id },
+          data: { stockBatchId: batch.id },
+        });
+      }
+    }
+  });
+
+  revalidatePath(`/locations/${locationId}`);
+  revalidatePath("/stocking/list");
+  revalidatePath("/inventory");
+
+  return { success: true, message: "Stock updated successfully." };
+}
 
 export async function getStockDashboardStats(): Promise<any> {
   const context = await getOrganizationContext();
