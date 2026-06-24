@@ -10,9 +10,9 @@ import {
 import { io, Socket } from "socket.io-client";
 import axios from "axios";
 
-import { PresenceMember } from "./realtime/types";
-import { applyDelta } from "./realtime/delta";
-import { getAblyRealtime, Realtime } from "./ably-client";
+import { PresenceMember } from "./types";
+import { applyDelta } from "./delta";
+import { getAblyRealtime, Realtime } from "../ably/client";
 
 interface RealtimeContextType {
   socket: Socket | null;

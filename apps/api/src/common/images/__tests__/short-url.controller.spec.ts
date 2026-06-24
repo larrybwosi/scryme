@@ -3,7 +3,7 @@ import { ShortUrlController } from "../short-url.controller";
 import { HttpStatus } from "@nestjs/common";
 
 // Mocks
-vi.mock("@repo/shared/storage/service", () => ({
+vi.mock("@repo/shared/storage", () => ({
   storageService: {
     getSignedUrl: vi.fn().mockResolvedValue("http://signed.url"),
   },
