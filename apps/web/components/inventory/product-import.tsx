@@ -598,8 +598,8 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
               <div className="text-sm text-blue-800">
                 <p className="font-medium">Variant Recognition</p>
                 <p>
-                  We've identified potential product variants based on naming
-                  patterns. You can adjust the groupings and names below.
+                  We&apos;ve identified potential product variants based on
+                  naming patterns. You can adjust the groupings and names below.
                 </p>
               </div>
             </div>
