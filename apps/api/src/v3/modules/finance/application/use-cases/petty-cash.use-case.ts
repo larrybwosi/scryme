@@ -80,11 +80,26 @@ export class PettyCashUseCase {
   async getFunds(organizationId: string) {
     return await this.prisma.client.pettyCashFund.findMany({
       where: { organizationId },
-      include: {
+      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // of large relation trees while ensuring all scalar fields are present.
+      select: {
+        id: true,
+        name: true,
+        amount: true,
+        floatAmount: true,
+        currencyCode: true,
+        organizationId: true,
+        responsibleMemberId: true,
+        locationId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
         responsibleMember: {
-          include: {
+          select: {
+            id: true,
             user: {
               select: {
+                id: true,
                 name: true,
                 email: true,
               },
@@ -98,11 +113,26 @@ export class PettyCashUseCase {
   async getFundById(organizationId: string, fundId: string) {
     const fund = await this.prisma.client.pettyCashFund.findFirst({
       where: { id: fundId, organizationId },
-      include: {
+      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // of large relation trees while ensuring all scalar fields are present.
+      select: {
+        id: true,
+        name: true,
+        amount: true,
+        floatAmount: true,
+        currencyCode: true,
+        organizationId: true,
+        responsibleMemberId: true,
+        locationId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
         responsibleMember: {
-          include: {
+          select: {
+            id: true,
             user: {
               select: {
+                id: true,
                 name: true,
                 email: true,
               },
@@ -130,11 +160,22 @@ export class PettyCashUseCase {
 
     return await this.prisma.client.pettyCashTransaction.findMany({
       where: { fundId },
-      include: {
+      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // of large relation trees while ensuring all scalar fields are present.
+      select: {
+        id: true,
+        fundId: true,
+        type: true,
+        amount: true,
+        description: true,
+        memberId: true,
+        createdAt: true,
         member: {
-          include: {
+          select: {
+            id: true,
             user: {
               select: {
+                id: true,
                 name: true,
               },
             },
