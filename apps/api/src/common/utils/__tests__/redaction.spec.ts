@@ -96,6 +96,30 @@ describe("redactSensitiveData", () => {
     expect(redacted.safe).toBe("public");
   });
 
+  it("should redact additional Sentinel-added keys", () => {
+    const data = {
+      accessToken: "access123",
+      refreshToken: "refresh456",
+      mpesaConsumerKey: "ckey789",
+      mpesaConsumerSecret: "csec012",
+      consumerKey: "ckey345",
+      consumerSecret: "csec678",
+      privateKey: "pk789",
+      private_key: "pk012",
+      normal: "value",
+    };
+    const redacted = redactSensitiveData(data);
+    expect(redacted.accessToken).toBe("[REDACTED]");
+    expect(redacted.refreshToken).toBe("[REDACTED]");
+    expect(redacted.mpesaConsumerKey).toBe("[REDACTED]");
+    expect(redacted.mpesaConsumerSecret).toBe("[REDACTED]");
+    expect(redacted.consumerKey).toBe("[REDACTED]");
+    expect(redacted.consumerSecret).toBe("[REDACTED]");
+    expect(redacted.privateKey).toBe("[REDACTED]");
+    expect(redacted.private_key).toBe("[REDACTED]");
+    expect(redacted.normal).toBe("value");
+  });
+
   it("should redact sensitive properties on Error objects", () => {
     const error = new Error("Database connection failed") as any;
     error.secret_key = "sensitive-db-key";
