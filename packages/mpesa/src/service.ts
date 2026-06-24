@@ -128,7 +128,13 @@ export class MpesaService {
    */
   async handleStkCallback(organizationId: string, paymentId: string, payload: MpesaCallbackPayload) {
     try {
-      const { Body } = payload;
+      // Security: Validate payload
+      const parsed = mpesaCallbackSchema.safeParse(payload);
+      if (!parsed.success) {
+        throw new Error('Invalid M-Pesa Callback Payload');
+      }
+
+      const { Body } = parsed.data;
       const { stkCallback } = Body;
       const { ResultCode, ResultDesc, CallbackMetadata, CheckoutRequestID } = stkCallback;
 
@@ -136,6 +142,15 @@ export class MpesaService {
       const amountPaid = Number(CallbackMetadata?.Item?.find((item) => item.Name === 'Amount')?.Value || 0);
 
       const paymentStatus = ResultCode === 0 ? 'PAID' : 'FAILED';
+
+      // Security: Verify that the payment belongs to the organization
+      const payment = await db.payment.findFirst({
+        where: { id: paymentId, organizationId },
+      });
+
+      if (!payment) {
+        throw new ForbiddenException('Payment not found or does not belong to organization');
+      }
 
       await db.$transaction(async (tx: any) => {
         const updatedPayment = await tx.payment.update({
@@ -150,9 +165,12 @@ export class MpesaService {
           },
         });
 
-        // Update the MpesaPaymentRequest
+        // Update the MpesaPaymentRequest - Scoped by organizationId for security
         await tx.mpesaPaymentRequest.updateMany({
-          where: { checkoutRequestId: CheckoutRequestID },
+          where: {
+            checkoutRequestId: CheckoutRequestID,
+            organizationId,
+          },
           data: {
             status: ResultCode === 0 ? 'SUCCESS' : 'FAILED',
             resultCode: ResultCode,
@@ -243,11 +261,25 @@ export class MpesaService {
       return { ResultCode: 1, ResultDesc: 'Invalid payload' };
     }
 
-    const { BillRefNumber } = parsed.data;
+    const { BillRefNumber, BusinessShortCode } = parsed.data;
 
-    // Check if a transaction exists with this order number
+    // Security: Find the organization associated with this shortcode to prevent cross-tenant collisions
+    const credentials = await db.paymentCredentials.findFirst({
+      where: { mpesaShortCode: BusinessShortCode },
+      select: { organizationId: true },
+    });
+
+    if (!credentials) {
+      console.warn(`C2B Validation: No organization found for shortcode ${BusinessShortCode}`);
+      return { ResultCode: 1, ResultDesc: 'Invalid ShortCode' };
+    }
+
+    // Check if a transaction exists with this order number AND organizationId
     const transaction = await db.transaction.findFirst({
-      where: { number: BillRefNumber },
+      where: {
+        number: BillRefNumber,
+        organizationId: credentials.organizationId,
+      },
     });
 
     if (!transaction) {
@@ -273,9 +305,25 @@ export class MpesaService {
 
     const amount = Number(TransAmount);
 
-    // Attempt to find the transaction by order number
+    // Security: Find the organization associated with this shortcode
+    const credentials = await db.paymentCredentials.findFirst({
+      where: { mpesaShortCode: BusinessShortCode },
+      select: { organizationId: true },
+    });
+
+    if (!credentials) {
+      console.error(`C2B Confirmation: No organization found for shortcode ${BusinessShortCode}`);
+      return { success: false, error: 'Invalid ShortCode' };
+    }
+
+    const organizationId = credentials.organizationId;
+
+    // Attempt to find the transaction by order number AND organizationId
     const transaction = await db.transaction.findFirst({
-      where: { number: BillRefNumber },
+      where: {
+        number: BillRefNumber,
+        organizationId,
+      },
       include: { organization: true },
     });
 
@@ -284,7 +332,7 @@ export class MpesaService {
         await db.$transaction(async (tx: any) => {
           // Idempotency check: check if payment already recorded
           const existingPayment = await tx.payment.findFirst({
-            where: { gatewayTxnId: TransID },
+            where: { gatewayTxnId: TransID, organizationId },
           });
 
           if (existingPayment) return;
@@ -292,7 +340,7 @@ export class MpesaService {
           const payment = await tx.payment.create({
             data: {
               transactionId: transaction.id,
-              organizationId: transaction.organizationId,
+              organizationId,
               method: 'MPESA',
               status: 'PAID',
               amount: amount,
@@ -308,7 +356,7 @@ export class MpesaService {
 
           await this.updateTransactionOnPayment(tx, transaction.id, amount);
 
-          await realtimeService.publish(`organization:${transaction.organizationId}:payments`, 'payment-update', {
+          await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
             transactionId: transaction.id,
             status: 'COMPLETED',
             data: {
@@ -320,7 +368,7 @@ export class MpesaService {
           // Audit Logging
           await tx.auditLog.create({
             data: {
-              organizationId: transaction.organizationId,
+              organizationId,
               action: 'CREATE',
               entityType: 'PAYMENT_GATEWAY',
               entityId: payment.id,
@@ -340,6 +388,7 @@ export class MpesaService {
               transId: TransID,
               transTime: new Date(), // Should ideally parse TransTime from Safaricom format
               amount: amount,
+              organizationId,
               msisdn: MSISDN,
               firstName: FirstName,
               middleName: MiddleName,
@@ -353,6 +402,7 @@ export class MpesaService {
           // Audit Logging for unclaimed
           await tx.auditLog.create({
             data: {
+              organizationId,
               action: 'CREATE',
               entityType: 'PAYMENT_GATEWAY',
               entityId: unclaimed.id,

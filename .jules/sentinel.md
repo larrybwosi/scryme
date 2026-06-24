@@ -59,3 +59,8 @@
 **Vulnerability:** The `MpesaController` was trusting client-provided `organizationId` in `initiateStkPush` and `verifyPayment` endpoints, allowing cross-tenant data access or manipulation.
 **Learning:** External integrations often bypass standard tenant scoping filters if not explicitly coded to use the authenticated context. Trusting IDs from request bodies or parameters without verifying ownership is a classic IDOR pattern.
 **Prevention:** Always use `@v2Context()` to retrieve the authenticated `organizationId` and use it as a mandatory filter in all database queries (`findFirst({ where: { id, organizationId } })`). Never trust client-provided tenant identifiers.
+
+## 2026-06-24 - [IDOR in M-Pesa Webhooks and Outbound Call Vulnerabilities]
+**Vulnerability:** M-Pesa C2B Confirmation webhooks were looking up transactions globally by `BillRefNumber` without verifying the organization's shortcode. STK Push callbacks were updating payments without verifying they belonged to the organization in the callback URL. Outbound API calls lacked timeouts/size limits.
+**Learning:** Webhooks that use human-readable identifiers (like order numbers) are high-risk for cross-tenant collisions. Idempotency checks must also be scoped to the tenant. Outbound integration calls can be a DoS vector if not hardened.
+**Prevention:** Always resolve the tenant context (e.g., via `BusinessShortCode`) before performing any business logic in unauthenticated webhooks. Scope all `update` and `find` operations with an explicit `organizationId`. Enforce strict `timeout` and `maxContentLength` on all outbound HTTP client instances.

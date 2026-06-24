@@ -17,6 +17,8 @@ export class MpesaClient {
     try {
       const response = await axios.get(`${this.baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
         headers: { Authorization: `Basic ${authString}` },
+        timeout: 10000,
+        maxContentLength: 1024 * 1024, // 1MB
       });
       return response.data.access_token;
     } catch (error: any) {
@@ -64,7 +66,11 @@ export class MpesaClient {
           AccountReference: params.accountReference,
           TransactionDesc: params.transactionDesc,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000,
+          maxContentLength: 1024 * 1024, // 1MB
+        }
       );
       return response.data;
     } catch (error: any) {
@@ -97,7 +103,11 @@ export class MpesaClient {
           Timestamp: timestamp,
           CheckoutRequestID: checkoutRequestId,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000,
+          maxContentLength: 1024 * 1024, // 1MB
+        }
       );
       return response.data;
     } catch (error: any) {
@@ -122,7 +132,11 @@ export class MpesaClient {
           ConfirmationURL: params.confirmationUrl,
           ValidationURL: params.validationUrl,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000,
+          maxContentLength: 1024 * 1024, // 1MB
+        }
       );
       return response.data;
     } catch (error: any) {
