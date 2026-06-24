@@ -39,42 +39,73 @@ import { db } from "@repo/db";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    search?: string;
+    page?: string;
+  }>;
 }
 
-export default async function LocationDetailPage({ params }: PageProps) {
+export default async function LocationDetailPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { id } = await params;
+  const { search, page } = await searchParams;
+  const currentPage = parseInt(page || "1");
+  const pageSize = 50;
+  const skip = (currentPage - 1) * pageSize;
+
   const location = await getLocation(id);
   const allLocations = await getLocations();
   const members = await getMembersForSelect();
 
-  // Fetch all variants with their stock for this location
-  const allVariants = await db.productVariant.findMany({
-    where: {
-      product: {
-        organizationId: location?.organizationId,
-      },
-      isActive: true,
-    },
-    include: {
-      product: {
-        select: {
-          name: true,
-        },
-      },
-      variantStocks: {
-        where: {
-          locationId: id,
-        },
-      },
-    },
-    orderBy: {
-      product: {
-        name: "asc",
-      },
-    },
-  });
+  if (!location) {
+    notFound();
+  }
 
-  const formattedStock = allVariants.map(v => ({
+  const where: any = {
+    product: {
+      organizationId: location.organizationId,
+    },
+    isActive: true,
+  };
+
+  if (search) {
+    where.OR = [
+      { product: { name: { contains: search, mode: "insensitive" } } },
+      { name: { contains: search, mode: "insensitive" } },
+      { sku: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  // Fetch variants with their stock for this location
+  const [totalVariants, variants] = await Promise.all([
+    db.productVariant.count({ where }),
+    db.productVariant.findMany({
+      where,
+      include: {
+        product: {
+          select: {
+            name: true,
+          },
+        },
+        variantStocks: {
+          where: {
+            locationId: id,
+          },
+        },
+      },
+      orderBy: {
+        product: {
+          name: "asc",
+        },
+      },
+      skip,
+      take: pageSize,
+    }),
+  ]);
+
+  const formattedStock = variants.map(v => ({
     variantId: v.id,
     name: v.product.name,
     variantName: v.name,
@@ -306,6 +337,9 @@ export default async function LocationDetailPage({ params }: PageProps) {
                   <LocationStockTable
                     locationId={location.id}
                     initialData={formattedStock}
+                    totalItems={totalVariants}
+                    pageSize={pageSize}
+                    currentPage={currentPage}
                   />
                 </CardContent>
               </Card>
