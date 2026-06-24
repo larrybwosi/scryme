@@ -1,12 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ImageService } from "../image.service";
 import axios from "axios";
-import { storageService } from "@repo/shared/storage/service";
+import { storageService } from "@repo/shared/storage";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RedisService } from "../../../redis/redis.service";
 
 vi.mock("axios");
-vi.mock("@repo/shared/storage/service", () => ({
+vi.mock("@repo/shared/storage", () => ({
   storageService: {
     getSignedUrl: vi.fn(),
   },

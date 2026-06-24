@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Activity, Zap, ZapOff } from "lucide-react";
-import { useRealtime } from "@repo/shared/realtime-client";
+import { useRealtime } from "@repo/shared/realtime/client";
 import { TransactionTable } from "./transaction-table";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
