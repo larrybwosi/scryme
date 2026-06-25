@@ -576,7 +576,7 @@ pub async fn print_receipt_native(
         }
     }
     
-    esc.feed(1);
+    // (removed extra feed(1) here — divider below already provides separation)
 
     // --- META DATA ---
     esc.align(0);
@@ -706,9 +706,8 @@ pub async fn print_receipt_native(
     }
 
     // Big Total Row
+    // (removed feed(1) before total — the size/bold change already creates enough visual separation)
     if let Some(total) = order.get("total").and_then(|v| v.as_f64()) {
-        esc.feed(1);
-
         if template == "modern" {
             esc.inverse(true);
             esc.bold(true);
@@ -728,7 +727,7 @@ pub async fn print_receipt_native(
         // Reset styles
         esc.size(1, 1);
         esc.bold(false);
-        esc.feed(1);
+        // (removed trailing feed(1) — next section starts immediately)
     }
 
     // Show Savings
@@ -765,7 +764,7 @@ pub async fn print_receipt_native(
 
     // --- FOOTER & BARCODES (Center Aligned) ---
     esc.align(alignment);
-    esc.feed(1);
+    // (removed feed(1) before footer divider)
     esc.divider_styled(width, divider_style);
     
     // Header text (from content tab)
@@ -851,7 +850,7 @@ pub async fn print_receipt_native(
     if config.get("showReturnPolicy").and_then(|v| v.as_bool()).unwrap_or(false) {
         if let Some(policy) = config.get("returnPolicyText").and_then(|v| v.as_str()) {
             if !policy.is_empty() {
-                esc.feed(1);
+                // (removed feed(1) before this — text_line spacing is sufficient)
                 esc.text_line(policy);
             }
         }
@@ -860,7 +859,7 @@ pub async fn print_receipt_native(
     if config.get("showLegalDisclaimer").and_then(|v| v.as_bool()).unwrap_or(false) {
         if let Some(disclaimer) = config.get("legalDisclaimerText").and_then(|v| v.as_str()) {
             if !disclaimer.is_empty() {
-                esc.feed(1);
+                // (removed feed(1) before this)
                 esc.text_line(disclaimer);
             }
         }
@@ -868,16 +867,16 @@ pub async fn print_receipt_native(
 
     if config.get("showSignatureLine").and_then(|v| v.as_bool()).unwrap_or(false) {
         let label = config.get("signatureLineText").and_then(|v| v.as_str()).unwrap_or("Customer Signature");
-        esc.feed(2);
+        esc.feed(1); // was feed(2) — one blank line is enough lead-in for the signature divider
         esc.divider(width);
         esc.text_line(label);
     }
 
-    esc.feed(1);
+    // (removed feed(1) before final disclaimer line — it directly follows the prior content)
     esc.text_line("Goods once sold are not returnable.");
 
     // --- FINISH BUILDING COMMANDS ---
-    esc.feed(4);
+    esc.feed(2); // was feed(4) — 2 lines is enough clearance for the cutter on most printers
     esc.cut();
 
     // 1. EXTRACT RAW BYTES

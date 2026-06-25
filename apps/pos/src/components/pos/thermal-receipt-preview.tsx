@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { type ReceiptConfig, type Order } from '@/store/store';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -21,7 +20,6 @@ export function ThermalReceiptPreview({
   order,
   config,
   businessName,
-  businessSlogan,
   address,
   phone,
   email,
