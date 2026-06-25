@@ -3,6 +3,7 @@ import { InventoryService } from "../inventory.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "../../../common/services/realtime.service";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { NotFoundException } from "@nestjs/common";
 
 describe("InventoryService", () => {
   let service: InventoryService;
@@ -24,6 +25,9 @@ describe("InventoryService", () => {
             client: {
               productVariantStock: {
                 findMany: vi.fn(),
+                findFirst: vi.fn(),
+                updateMany: vi.fn(),
+                deleteMany: vi.fn(),
                 count: vi.fn(),
               },
             },
@@ -69,5 +73,18 @@ describe("InventoryService", () => {
       expect(item.availableStock).toBe(10);
       expect(item.isLowStock).toBe(false);
     });
+  describe("getInventoryItem (IDOR Check)", () => {
+    it("should throw NotFoundException if item belongs to a different organization", async () => {
+      const ctx = { organizationId: "my-org" } as any;
+      const stockId = "stock-123";
+
+      // Mock findFirst to return null because of the organizationId filter
+      (prisma.client.productVariantStock.findFirst as any).mockResolvedValue(null);
+
+      await expect(service.getInventoryItem(ctx, stockId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
   });
 });
