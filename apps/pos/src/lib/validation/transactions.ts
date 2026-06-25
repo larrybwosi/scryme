@@ -42,6 +42,7 @@ export const OrderFulfillmentSchema = z.object({
 
 export const CreateOrderSchema = z.object({
   customerId: z.string().cuid('Invalid customer ID'),
+  memberId: z.string().optional(),
   locationId: z.string().cuid('Invalid location ID'),
   type: z.nativeEnum(TransactionType).refine(type => type !== TransactionType.POS_SALE, {
     message: 'Use the POS sale endpoint for POS transactions',
@@ -95,6 +96,7 @@ export const ProcessSaleInputSchema = z
       .min(1, 'At least one cart item is required'),
 
     locationId: z.string({ required_error: 'Location ID is required' }).min(1, 'Location ID cannot be empty'),
+    memberId: z.string().optional(),
     saleNumber: z.string().optional().nullable(),
     isWholesale: z.boolean().optional().default(false),
 

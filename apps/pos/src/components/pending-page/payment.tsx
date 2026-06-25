@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
+import { useAuthStore } from '@/store/pos-auth-store';
 import { useRealtimeStore } from '@/store/realtimeStore';
 import { useMpesaSearch } from '@/hooks/mpesa';
 import { PaymentMethod } from '@/hooks/sales';
@@ -57,6 +58,8 @@ const normalizePhoneNumber = (phone: string, config: { countryCode: string }): s
 
 export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDialogProps) {
   const queryClient = useQueryClient();
+  const { currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
   const formatCurrency = useFormattedCurrency();
   const PHONE_CONFIG = getCurrentPhoneConfig();
   const settings = usePosStore(state => state.settings);
@@ -176,6 +179,7 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
       reference: reference || undefined,
       notes: notes || undefined,
       filePath: filePath || undefined,
+      memberId,
     });
   };
 
