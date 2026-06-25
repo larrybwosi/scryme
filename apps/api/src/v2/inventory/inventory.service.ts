@@ -121,14 +121,19 @@ export class InventoryService {
   }
 
   async createInventoryItem(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
     return this.prisma.client.productVariantStock.create({
-      data: { ...data },
+      data: {
+        ...data,
+        organizationId,
+      },
     });
   }
 
   async getInventoryItem(ctx: V2ApiContext, id: string) {
-    const stock = await this.prisma.client.productVariantStock.findUnique({
-      where: { id },
+    const { organizationId } = ctx;
+    const stock = await this.prisma.client.productVariantStock.findFirst({
+      where: { id, organizationId },
       include: {
         variant: { include: { product: true } },
         location: true,
@@ -139,21 +144,45 @@ export class InventoryService {
   }
 
   async updateInventoryItem(ctx: V2ApiContext, id: string, data: any) {
-    return this.prisma.client.productVariantStock.update({
-      where: { id },
-      data,
+    const { organizationId } = ctx;
+
+    // Remove organizationId from data if present to prevent accidental re-assignment
+    const { organizationId: _, ...updateData } = data;
+
+    // Use updateMany with a filter on organizationId to ensure multi-tenant isolation.
+    // Prisma's update does not support non-unique filters.
+    const result = await this.prisma.client.productVariantStock.updateMany({
+      where: { id, organizationId },
+      data: updateData,
     });
+
+    if (result.count === 0) {
+      throw new NotFoundException("Inventory item not found");
+    }
+
+    // Fetch the updated record to return it, maintaining current service contract.
+    return this.getInventoryItem(ctx, id);
   }
 
   async deleteInventoryItem(ctx: V2ApiContext, id: string) {
-    return this.prisma.client.productVariantStock.delete({
-      where: { id },
+    const { organizationId } = ctx;
+
+    const result = await this.prisma.client.productVariantStock.deleteMany({
+      where: { id, organizationId },
     });
+
+    if (result.count === 0) {
+      throw new NotFoundException("Inventory item not found");
+    }
+
+    return { success: true };
   }
 
   async getInventoryMovements(ctx: V2ApiContext, inventoryId: string) {
+    const { organizationId } = ctx;
     return this.prisma.client.stockMovement.findMany({
       where: {
+        organizationId,
         OR: [{ fromLocationId: inventoryId }, { toLocationId: inventoryId }],
       },
       orderBy: { createdAt: "desc" },
@@ -165,14 +194,22 @@ export class InventoryService {
     inventoryId: string,
     data: any,
   ) {
+    const { organizationId } = ctx;
     return this.prisma.client.stockMovement.create({
-      data: { ...data },
+      data: {
+        ...data,
+        organizationId,
+      },
     });
   }
 
   async getInventoryAdjustments(ctx: V2ApiContext, inventoryId: string) {
+    const { organizationId } = ctx;
     return this.prisma.client.stockAdjustment.findMany({
-      where: { variantId: inventoryId },
+      where: {
+        organizationId,
+        variantId: inventoryId,
+      },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -182,10 +219,22 @@ export class InventoryService {
     inventoryId: string,
     adjustmentId: string,
   ) {
-    return this.prisma.client.stockAdjustment.update({
-      where: { id: adjustmentId },
-      data: { status: "APPROVED" as any },
+    const { organizationId } = ctx;
+
+    const result = await this.prisma.client.stockAdjustment.updateMany({
+      where: { id: adjustmentId, organizationId },
+      data: {
+        status: "APPROVED" as any,
+        approvedById: ctx.memberId,
+        approvedAt: new Date(),
+      },
     });
+
+    if (result.count === 0) {
+      throw new NotFoundException("Stock adjustment not found");
+    }
+
+    return { success: true };
   }
 
   async adjustStock(data: any) {

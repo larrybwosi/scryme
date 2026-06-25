@@ -339,6 +339,13 @@ model ReceiptConfig {
   showLogo Boolean @default(true)
   logoUrl  String?
 
+  // Branding Overrides
+  primaryColor   String?
+  companyName    String?
+  companyAddress String?
+  companyEmail   String?
+  companyPhone   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -353,6 +360,13 @@ model WaybillConfig {
 
   showLogo Boolean @default(true)
   logoUrl  String?
+
+  // Branding Overrides
+  primaryColor   String?
+  companyName    String?
+  companyAddress String?
+  companyEmail   String?
+  companyPhone   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
