@@ -107,10 +107,10 @@ export function EnhancedDocumentSettings({
     else config = waybillConfig;
 
     const baseDetails = {
-      name: (type === "INVOICE" && config?.companyName) || organization?.name,
-      address: (type === "INVOICE" && config?.companyAddress) || organization?.address,
-      phone: (type === "INVOICE" && config?.companyPhone) || organization?.phone,
-      email: (type === "INVOICE" && config?.companyEmail) || organization?.email,
+      name: config?.companyName || organization?.name,
+      address: config?.companyAddress || organization?.address,
+      phone: config?.companyPhone || organization?.phone,
+      email: config?.companyEmail || organization?.email,
       logo: (config?.showLogo ?? true) ? (config?.logoUrl || organization?.logo) : null,
     };
 
@@ -121,12 +121,28 @@ export function EnhancedDocumentSettings({
 
     if (mockData.branding) {
       mockData.branding.primaryColor =
-        invoiceConfig?.primaryColor || mockData.branding.primaryColor;
-      mockData.branding.showPoweredBy = invoiceConfig?.showPoweredBy ?? true;
-      mockData.branding.watermarkText = invoiceConfig?.watermarkText;
+        config?.primaryColor || organization?.primaryColor || mockData.branding.primaryColor;
+      mockData.branding.showPoweredBy = config?.showPoweredBy ?? true;
+      mockData.branding.watermarkText = config?.watermarkText;
       mockData.branding.showLogo = config?.showLogo ?? true;
+      mockData.branding.companyName = baseDetails.name;
+      mockData.branding.companyAddress = baseDetails.address;
+      mockData.branding.companyPhone = baseDetails.phone;
+      mockData.branding.companyEmail = baseDetails.email;
+      mockData.branding.logoUrl = baseDetails.logo;
     }
-    mockData.footerText = invoiceConfig?.footerText;
+
+    mockData.currency = organization?.settings?.defaultCurrency || 'USD';
+    const symbolMap: Record<string, string> = { 'USD': '$', 'KES': 'KSh', 'EUR': '€', 'GBP': '£' };
+    mockData.currencySymbol = symbolMap[mockData.currency] || mockData.currency;
+    mockData.currencySettings = {
+      code: mockData.currency,
+      symbol: mockData.currencySymbol,
+      locale: organization?.settings?.defaultTimezone === 'Africa/Nairobi' ? 'en-KE' : 'en-US',
+      precision: 2
+    };
+
+    mockData.footerText = config?.footerText;
     return mockData;
   };
 

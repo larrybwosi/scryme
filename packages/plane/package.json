@@ -6,7 +6,6 @@
     "axios": "^1.16.1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "typescript": "5.9.3"
+    "@repo/typescript-config": "workspace:*"
   }
 }

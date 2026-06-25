@@ -3,6 +3,7 @@ import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { commonStyles as styles } from './document-styles';
 import { PDFHeader, PDFFooter, PDFGrid, PDFCol, PDFTable, PDFTableRow, PDFTableCell } from './PDFComponents';
 import { InvoiceData } from '../../types';
+import { formatCurrency } from '../../utils';
 
 const invoiceStyles = StyleSheet.create({
   totalsSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 20 },
@@ -19,6 +20,9 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
   const logoUrl = branding?.logoUrl;
   const orgName = branding?.companyName;
   const orgAddress = branding?.companyAddress;
+  const currencySettings = data.currencySettings || { code: data.currency || 'USD', symbol: data.currencySymbol || '$', locale: 'en-US' };
+
+  const fmt = (val: number) => formatCurrency(val, currencySettings);
 
   return (
   <Document>
@@ -29,6 +33,7 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
         orgAddress={orgAddress}
         title="INVOICE"
         number={`#${data.invoiceNumber}`}
+        primaryColor={branding?.primaryColor}
       />
       <View style={styles.section}>
         <PDFGrid>
@@ -84,22 +89,22 @@ export const InvoiceTemplate = ({ data }: { data: InvoiceData }) => {
                 <Text style={{ fontSize: 7, color: '#666' }}>{item.itemCode || item.sku}</Text>
               </View>
               <PDFTableCell width="15%">{item.quantity || 0}</PDFTableCell>
-              <PDFTableCell width="20%">{(item.rate || item.unitPrice || 0).toFixed(2)}</PDFTableCell>
-              <PDFTableCell width="25%">{(item.amount || item.totalPrice || 0).toFixed(2)}</PDFTableCell>
+              <PDFTableCell width="20%">{fmt(item.rate || item.unitPrice || 0)}</PDFTableCell>
+              <PDFTableCell width="25%">{fmt(item.amount || item.totalPrice || 0)}</PDFTableCell>
             </PDFTableRow>
           ))}
         </PDFTable>
       </View>
       <View style={invoiceStyles.totalsSection}>
         <View style={invoiceStyles.totalsTable}>
-          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Net Total</Text><Text style={styles.value}>{(data.subtotal || 0).toFixed(2)}</Text></View>
-          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Tax</Text><Text style={styles.value}>{(data.tax || 0).toFixed(2)}</Text></View>
-          <View style={[invoiceStyles.totalsRow, invoiceStyles.grandTotal]}><Text style={{ fontWeight: 'bold' }}>Grand Total</Text><Text style={{ fontWeight: 'bold' }}>{(data.total || 0).toFixed(2)}</Text></View>
+          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Net Total</Text><Text style={styles.value}>{fmt(data.subtotal || 0)}</Text></View>
+          <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Tax</Text><Text style={styles.value}>{fmt(data.tax || 0)}</Text></View>
+          <View style={[invoiceStyles.totalsRow, invoiceStyles.grandTotal, { borderTopColor: branding?.primaryColor || '#2563eb' }]}><Text style={{ fontWeight: 'bold' }}>Grand Total</Text><Text style={{ fontWeight: 'bold' }}>{fmt(data.total || 0)}</Text></View>
           {data.amountPaid !== undefined && (
-            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Amount Paid</Text><Text style={styles.value}>{(data.amountPaid || 0).toFixed(2)}</Text></View>
+            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Amount Paid</Text><Text style={styles.value}>{fmt(data.amountPaid || 0)}</Text></View>
           )}
           {data.balanceDue !== undefined && (
-            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Balance Due</Text><Text style={[styles.value, { color: data.balanceDue > 0 ? '#dc2626' : '#059669' }]}>{(data.balanceDue || 0).toFixed(2)}</Text></View>
+            <View style={invoiceStyles.totalsRow}><Text style={styles.label}>Balance Due</Text><Text style={[styles.value, { color: data.balanceDue > 0 ? '#dc2626' : '#059669' }]}>{fmt(data.balanceDue || 0)}</Text></View>
           )}
         </View>
       </View>

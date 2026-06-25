@@ -174,7 +174,7 @@ export function StaffSettings({
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   <Select
-                    value={form.gender || ""}
+                    value={form.gender || undefined}
                     onValueChange={val => setForm({ ...form, gender: val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -278,7 +278,7 @@ export function StaffSettings({
                 <div className="space-y-2">
                   <Label htmlFor="employmentType">Employment Type</Label>
                   <Select
-                    value={form.employmentType || ""}
+                    value={form.employmentType || undefined}
                     onValueChange={val =>
                       setForm({ ...form, employmentType: val })
                     }>
@@ -307,24 +307,25 @@ export function StaffSettings({
                     <Input
                       id="joiningDate"
                       type="date"
-                      className="pl-10"
+                      className="pl-10 opacity-70 cursor-not-allowed bg-gray-50"
                       value={form.joiningDate}
-                      onChange={e =>
-                        setForm({ ...form, joiningDate: e.target.value })
-                      }
+                      readOnly
+                      disabled
                     />
                   </div>
+                  <p className="text-[10px] text-gray-400">
+                    Joining date cannot be modified once set.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="manager">Reporting Manager</Label>
                   <Select
-                    value={form.managerId || ""}
+                    value={form.managerId || undefined}
                     onValueChange={val => setForm({ ...form, managerId: val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select manager" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Manager</SelectItem>
                       {allMembers
                         .filter(m => m.id !== member.id)
                         .map(m => (
