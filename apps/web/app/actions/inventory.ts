@@ -16,6 +16,41 @@ import {
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 
+async function getDefaultPieceUnit(organizationId: string): Promise<{
+  systemUnitId?: string;
+  orgUnitId?: string;
+}> {
+  // 1. Check for OrganizationUnit "Piece"
+  const orgUnit = await db.organizationUnit.findFirst({
+    where: {
+      organizationId,
+      name: { equals: "Piece", mode: "insensitive" },
+      isActive: true,
+    },
+  });
+
+  if (orgUnit) {
+    return { orgUnitId: orgUnit.id };
+  }
+
+  // 2. Check for SystemUnit "Piece"
+  const systemUnit = await db.systemUnit.findFirst({
+    where: {
+      OR: [
+        { name: { equals: "Piece", mode: "insensitive" } },
+        { symbol: { equals: "pc", mode: "insensitive" } },
+      ],
+      isActive: true,
+    },
+  });
+
+  if (systemUnit) {
+    return { systemUnitId: systemUnit.id };
+  }
+
+  return {};
+}
+
 export async function getInventoryLocations(): Promise<
   { id: string; name: string; isDefault: boolean }[]
 > {
@@ -145,6 +180,8 @@ export async function createProduct(data: {
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+
   return db.$transaction(async tx => {
     // 1. Create the Product
     const product = await tx.product.create({
@@ -168,6 +205,22 @@ export async function createProduct(data: {
         buyingPrice: new Decimal(data.buyingPrice),
         retailPrice: new Decimal(data.retailPrice),
         attributes: {}, // Required by schema
+        baseUnitId: pieceUnit.systemUnitId,
+        baseOrgUnitId: pieceUnit.orgUnitId,
+        stockingUnitId: pieceUnit.systemUnitId,
+        stockingOrgUnitId: pieceUnit.orgUnitId,
+      },
+    });
+
+    // 2b. Create Default Selling Unit
+    await tx.variantSellingUnit.create({
+      data: {
+        variantId: variant.id,
+        systemUnitId: pieceUnit.systemUnitId,
+        orgUnitId: pieceUnit.orgUnitId,
+        retailPrice: new Decimal(data.retailPrice),
+        conversionMultiplier: new Decimal(1),
+        isActive: true,
       },
     });
 
@@ -1040,6 +1093,8 @@ export async function createVariant(data: {
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+
   return db.$transaction(async tx => {
     const variant = await tx.productVariant.create({
       data: {
@@ -1049,6 +1104,22 @@ export async function createVariant(data: {
         buyingPrice: new Decimal(data.buyingPrice),
         retailPrice: new Decimal(data.retailPrice),
         attributes: {},
+        baseUnitId: pieceUnit.systemUnitId,
+        baseOrgUnitId: pieceUnit.orgUnitId,
+        stockingUnitId: pieceUnit.systemUnitId,
+        stockingOrgUnitId: pieceUnit.orgUnitId,
+      },
+    });
+
+    // Create Default Selling Unit
+    await tx.variantSellingUnit.create({
+      data: {
+        variantId: variant.id,
+        systemUnitId: pieceUnit.systemUnitId,
+        orgUnitId: pieceUnit.orgUnitId,
+        retailPrice: new Decimal(data.retailPrice),
+        conversionMultiplier: new Decimal(1),
+        isActive: true,
       },
     });
 
@@ -1315,6 +1386,8 @@ export async function importProducts(
     errors: [] as string[],
   };
 
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+
   // Pre-fetch all categories for the organization to optimize lookups
   const existingCategories = await db.category.findMany({
     where: { organizationId: context.organizationId },
@@ -1438,6 +1511,13 @@ export async function importProducts(
                   buyingPrice: new Decimal(variantData.buyingPrice),
                   retailPrice: new Decimal(variantData.retailPrice),
                   barcode: variantData.barcode,
+                  baseUnitId: foundVariant.baseUnitId || pieceUnit.systemUnitId,
+                  baseOrgUnitId:
+                    foundVariant.baseOrgUnitId || pieceUnit.orgUnitId,
+                  stockingUnitId:
+                    foundVariant.stockingUnitId || pieceUnit.systemUnitId,
+                  stockingOrgUnitId:
+                    foundVariant.stockingOrgUnitId || pieceUnit.orgUnitId,
                 },
               });
             } else {
@@ -1454,6 +1534,28 @@ export async function importProducts(
                 buyingPrice: new Decimal(variantData.buyingPrice),
                 retailPrice: new Decimal(variantData.retailPrice),
                 attributes: {},
+                baseUnitId: pieceUnit.systemUnitId,
+                baseOrgUnitId: pieceUnit.orgUnitId,
+                stockingUnitId: pieceUnit.systemUnitId,
+                stockingOrgUnitId: pieceUnit.orgUnitId,
+              },
+            });
+          }
+
+          // Ensure at least one selling unit exists
+          const existingSellingUnits = await tx.variantSellingUnit.findMany({
+            where: { variantId: targetVariant.id },
+          });
+
+          if (existingSellingUnits.length === 0) {
+            await tx.variantSellingUnit.create({
+              data: {
+                variantId: targetVariant.id,
+                systemUnitId: pieceUnit.systemUnitId,
+                orgUnitId: pieceUnit.orgUnitId,
+                retailPrice: new Decimal(variantData.retailPrice),
+                conversionMultiplier: new Decimal(1),
+                isActive: true,
               },
             });
           }
@@ -1571,4 +1673,83 @@ export async function importProducts(
 
   revalidatePath("/inventory");
   return results;
+}
+
+export async function fixMissingUnits(): Promise<{
+  processed: number;
+  updated: number;
+}> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+  if (!pieceUnit.systemUnitId && !pieceUnit.orgUnitId) {
+    throw new Error("Default Piece unit not found");
+  }
+
+  const variants = await db.productVariant.findMany({
+    where: {
+      product: { organizationId: context.organizationId },
+      OR: [
+        { baseUnitId: null, baseOrgUnitId: null },
+        { stockingUnitId: null, stockingOrgUnitId: null },
+        { sellingUnits: { none: {} } },
+      ],
+    },
+    include: {
+      sellingUnits: true,
+    },
+  });
+
+  let updatedCount = 0;
+
+  for (const variant of variants) {
+    await db.$transaction(async tx => {
+      const needsBaseUnit = !variant.baseUnitId && !variant.baseOrgUnitId;
+      const needsStockingUnit =
+        !variant.stockingUnitId && !variant.stockingOrgUnitId;
+      const needsSellingUnit = variant.sellingUnits.length === 0;
+
+      if (needsBaseUnit || needsStockingUnit) {
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data: {
+            baseUnitId: needsBaseUnit
+              ? pieceUnit.systemUnitId
+              : variant.baseUnitId,
+            baseOrgUnitId: needsBaseUnit
+              ? pieceUnit.orgUnitId
+              : variant.baseOrgUnitId,
+            stockingUnitId: needsStockingUnit
+              ? pieceUnit.systemUnitId
+              : variant.stockingUnitId,
+            stockingOrgUnitId: needsStockingUnit
+              ? pieceUnit.orgUnitId
+              : variant.stockingOrgUnitId,
+          },
+        });
+      }
+
+      if (needsSellingUnit) {
+        await tx.variantSellingUnit.create({
+          data: {
+            variantId: variant.id,
+            systemUnitId: pieceUnit.systemUnitId,
+            orgUnitId: pieceUnit.orgUnitId,
+            retailPrice: variant.retailPrice,
+            conversionMultiplier: new Decimal(1),
+            isActive: true,
+          },
+        });
+      }
+
+      updatedCount++;
+    });
+  }
+
+  revalidatePath("/inventory");
+  return {
+    processed: variants.length,
+    updated: updatedCount,
+  };
 }
