@@ -7,6 +7,7 @@ jest.mock('@repo/db', () => ({
   db: {
     paymentCredentials: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
     },
     payment: {
       findUnique: jest.fn(),
@@ -80,6 +81,7 @@ describe('MpesaService', () => {
         status: 'DRAFT',
       };
 
+      (db.paymentCredentials.findFirst as jest.Mock).mockResolvedValue({ organizationId: 'org_123' });
       (db.transaction.findFirst as jest.Mock).mockResolvedValue(mockTransaction);
       (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
       (db.payment.create as jest.Mock).mockResolvedValue({ id: 'pay_123' });
@@ -90,6 +92,9 @@ describe('MpesaService', () => {
 
       await service.handleC2BConfirmation(payload);
 
+      expect(db.paymentCredentials.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { mpesaShortCode: '174379' }
+      }));
       expect(db.payment.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -110,6 +115,7 @@ describe('MpesaService', () => {
     });
 
     it('should mark as unclaimed if transaction not found', async () => {
+      (db.paymentCredentials.findFirst as jest.Mock).mockResolvedValue({ organizationId: 'org_123' });
       (db.transaction.findFirst as jest.Mock).mockResolvedValue(null);
       (db.unclaimedPayment.upsert as jest.Mock).mockResolvedValue({ id: 'unclaimed_123' });
 
@@ -117,6 +123,7 @@ describe('MpesaService', () => {
 
       expect(db.unclaimedPayment.upsert).toHaveBeenCalledWith(expect.objectContaining({
         where: { transId: 'RKT88MN6W3' },
+        create: expect.objectContaining({ organizationId: 'org_123' })
       }));
       expect(db.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({ status: 'WARNING' }),
