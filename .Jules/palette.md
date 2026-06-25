@@ -20,3 +20,7 @@
 ## 2025-06-20 - [Standardized Form Feedback & Validation Visibility]
 **Learning:** Forms lacked immediate feedback during submission, leading to "click uncertainty." Mandatory fields were also not visually distinguished from optional ones, increasing the cognitive load for users during data entry.
 **Action:** Always include a loading spinner (e.g., `Loader2`) and descriptive state text (e.g., "Creating...") in submit buttons when `isSubmitting` is true. Mark required fields with a red asterisk (`<span className="text-red-500">*</span>`) in the label to provide clear visual cues.
+
+## 2025-06-21 - [Standardized Department Management UX]
+**Learning:** Department management components were lagging behind the standardized UX patterns used in other modules (like Locations), specifically relying on native `confirm()` and lacking accessibility features (Tooltips/aria-labels) for action buttons.
+**Action:** Always replace native `confirm()` with themed `AlertDialog` and ensure icon-only buttons in tables have both `Tooltip` and `aria-label`. Include loading states in all destructive action confirmations.
