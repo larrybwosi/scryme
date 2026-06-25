@@ -21,7 +21,7 @@ import { ALLOW_PUBLIC_KEY } from "../common/decorators/auth.decorator";
 import { OpenObserveService } from "../common/services/openobserve.service";
 import { FastifyRequest } from "fastify";
 import { db } from "@repo/db";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 
 @Injectable()
 export class V2AuthGuard implements CanActivate {

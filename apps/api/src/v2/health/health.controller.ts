@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import * as crypto from "node:crypto";
 import { PrismaService } from "@/prisma/prisma.service";

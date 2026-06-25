@@ -27,7 +27,7 @@ import { AuthorizationGuard } from "./common/guards/authorization.guard";
 import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
 import { BullModule } from "@nestjs/bullmq";
 import { ScheduleModule } from "@nestjs/schedule";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 
 @Module({
   imports: [

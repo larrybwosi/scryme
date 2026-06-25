@@ -1,4 +1,4 @@
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 import { NestFactory } from "@nestjs/core";
 import {
   FastifyAdapter,

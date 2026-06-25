@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 
 @Injectable()
 export class OpenObserveService {

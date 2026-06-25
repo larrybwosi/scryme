@@ -5,7 +5,7 @@ import {
   CommunicationProvider,
 } from "../../domain/communication-provider.interface";
 import axios from "axios";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 
 @Injectable()
 export class SlackProvider implements CommunicationProvider {

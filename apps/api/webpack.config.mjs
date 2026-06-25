@@ -43,6 +43,9 @@ export default function modifyWebpackConfig(
     ] as any,
     resolve: {
       ...options.resolve,
+      extensionAlias: {
+        ".js": [".ts", ".js"],
+      },
       alias: {
         ...options.resolve?.alias,
         "@": path.resolve(__dirname, "src"),

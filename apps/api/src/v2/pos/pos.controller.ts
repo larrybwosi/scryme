@@ -8,7 +8,7 @@ import {
   Res,
   UsePipes,
 } from "@nestjs/common";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { PosService } from "./pos.service";
 import { PosSaleService } from "./pos-sale.service";

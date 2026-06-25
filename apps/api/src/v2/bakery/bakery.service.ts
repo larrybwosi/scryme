@@ -15,7 +15,7 @@ import {
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 
 @Injectable()
 export class BakeryService {

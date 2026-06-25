@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Redis } from "ioredis";
 import { Redis as UpstashRedis } from "@upstash/redis";
-import { env } from "@repo/env";
+import { env } from "@repo/env/nest";
 
 export interface IRedisClient {
   get: <T>(key: string) => Promise<T | null>;
