@@ -740,20 +740,30 @@ pub async fn get_ably_auth_token_command(
 
 #[tauri::command]
 pub async fn update_base_url(state: State<'_, AuthState>, base_url: String) -> Result<(), String> {
-    let mut override_guard = state
-        .base_url_override
-        .lock()
-        .map_err(|_| "Lock error on override")?;
-    *override_guard = Some(base_url.clone());
+    {
+        let mut override_guard = state
+            .base_url_override
+            .lock()
+            .map_err(|_| "Lock error on override")?;
+        *override_guard = Some(base_url.clone());
+    }
 
     // Also update device_config if it exists so it's persisted on next save
-    let mut config_guard = state.device_config.lock().map_err(|_| "Lock error on config")?;
-    if let Some(config) = config_guard.as_mut() {
-        config.base_url = base_url;
-        // Re-persist if we've already established a config
-        let config_to_save = config.clone();
-        drop(config_guard); // Drop lock before async call
-        AuthState::save_to_keyring_async(&config_to_save)
+    let config_to_save = {
+        let mut config_guard = state
+            .device_config
+            .lock()
+            .map_err(|_| "Lock error on config")?;
+        if let Some(config) = config_guard.as_mut() {
+            config.base_url = base_url;
+            Some(config.clone())
+        } else {
+            None
+        }
+    };
+
+    if let Some(config) = config_to_save {
+        AuthState::save_to_keyring_async(&config)
             .await
             .map_err(|e| e.to_string())?;
     }
