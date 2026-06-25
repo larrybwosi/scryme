@@ -350,7 +350,8 @@ export async function updateMemberCustomization(
     gender: data.gender,
     tags: data.tags,
     jobTitle: data.jobTitle,
-    employmentType: data.employmentType === "" ? null : data.employmentType,
+    employmentType: data.employmentType,
+    joiningDate: data.joiningDate ? new Date(data.joiningDate) : undefined,
     emergencyContactName: data.emergencyContactName,
     emergencyContactPhone: data.emergencyContactPhone,
     emergencyContactRelation: data.emergencyContactRelation,
@@ -386,7 +387,6 @@ export async function updateMemberCustomization(
     revalidatePath(`/staff/${memberId}`);
     return { success: true };
   } catch (error: any) {
-    console.error("Error updating member customization:", error);
     if (error.code === "P2002") {
       return { success: false, error: "Card ID already in use" };
     }

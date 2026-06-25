@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeChatApiClient } from "@repo/scryme";
-import * as crypto from "crypto";
+import { createHmac } from "crypto";
 import { makeApprovalDecisionCore } from "@repo/shared/actions/finance/approvals";
 import { ScrymeApprovalService } from "./scryme-approval.service";
 
@@ -126,18 +126,11 @@ export class ScrymeService {
         throw new BadRequestException("Missing signature");
       }
 
-      const expectedSignature = crypto
-        .createHmac("sha256", secret)
+      const expectedSignature = createHmac("sha256", secret)
         .update(JSON.stringify(payload))
         .digest("hex");
 
-      const signatureBuffer = Buffer.from(signature);
-      const expectedBuffer = Buffer.from(expectedSignature);
-
-      if (
-        signatureBuffer.length !== expectedBuffer.length ||
-        !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
-      ) {
+      if (signature !== expectedSignature) {
         this.logger.warn("Invalid Scryme webhook signature");
         throw new BadRequestException("Invalid signature");
       }

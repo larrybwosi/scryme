@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import { API_ENDPOINT } from '@/lib/axios';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { toast } from 'sonner';
 
@@ -16,7 +17,7 @@ export interface UnclaimedPayment {
 }
 
 export const useMpesaSearch = (query: string) => {
-  const { currentLocation, apiUrl } = useAuthStore();
+  const { currentLocation } = useAuthStore();
   const organizationId = currentLocation?.organizationId;
 
   return useQuery({
@@ -24,7 +25,7 @@ export const useMpesaSearch = (query: string) => {
     queryFn: async () => {
       if (!organizationId || query.length < 3) return [];
       const response = await axios.get(
-        `${apiUrl}/api/v2/payments/mpesa/search-unclaimed`,
+        `${API_ENDPOINT}/api/v2/payments/mpesa/search-unclaimed`,
         {
           params: { q: query },
         },
@@ -37,7 +38,7 @@ export const useMpesaSearch = (query: string) => {
 
 export const useMpesaClaim = () => {
   const queryClient = useQueryClient();
-  const { currentMember, apiUrl } = useAuthStore();
+  const { currentMember } = useAuthStore();
 
   return useMutation({
     mutationFn: async (params: {
@@ -45,7 +46,7 @@ export const useMpesaClaim = () => {
       transactionId: string;
     }) => {
       const response = await axios.post(
-        `${apiUrl}/api/v2/payments/mpesa/claim`,
+        `${API_ENDPOINT}/api/v2/payments/mpesa/claim`,
         params,
       );
       return response.data;
@@ -63,11 +64,10 @@ export const useMpesaClaim = () => {
 };
 
 export const useMpesaVerifySafaricom = () => {
-  const { apiUrl } = useAuthStore();
   return useMutation({
     mutationFn: async (params: { transactionCode: string }) => {
       const response = await axios.post(
-        `${apiUrl}/api/v2/payments/mpesa/verify-safaricom`,
+        `${API_ENDPOINT}/api/v2/payments/mpesa/verify-safaricom`,
         params,
       );
       return response.data;

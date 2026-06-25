@@ -26,11 +26,6 @@ import Image from "next/image";
 const formSchema = z.object({
   showLogo: z.boolean(),
   logoUrl: z.string().optional(),
-  companyName: z.string().optional(),
-  companyAddress: z.string().optional(),
-  companyPhone: z.string().optional(),
-  companyEmail: z.string().optional(),
-  primaryColor: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -52,11 +47,6 @@ export function DocumentConfigForm({ type, initialConfig }: DocumentConfigFormPr
     defaultValues: {
       showLogo: initialConfig?.showLogo ?? true,
       logoUrl: initialConfig?.logoUrl || "",
-      companyName: initialConfig?.companyName || "",
-      companyAddress: initialConfig?.companyAddress || "",
-      companyPhone: initialConfig?.companyPhone || "",
-      companyEmail: initialConfig?.companyEmail || "",
-      primaryColor: initialConfig?.primaryColor || "",
     },
   });
 
@@ -114,86 +104,6 @@ export function DocumentConfigForm({ type, initialConfig }: DocumentConfigFormPr
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Name Override</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Leave blank to use default"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="primaryColor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand Primary Color</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          className="w-12 p-1 h-9"
-                          {...field}
-                        />
-                        <Input {...field} placeholder="#000000" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                name="companyEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="billing@company.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="companyPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+1..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              name="companyAddress"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address Override</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Full billing address..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               name="showLogo"
               render={({ field }) => (

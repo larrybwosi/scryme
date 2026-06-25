@@ -12,41 +12,7 @@ interface ReportSaleOptions {
   highValueThreshold: number;
 }
 
-export class NavariService {
-  private _client: AxiosInstance | null = null;
-
-  private get client(): AxiosInstance {
-    if (!this._client) {
-      this._client = axios.create({
-        baseURL: getNavariBaseUrl(),
-        timeout: 30000,
-        maxContentLength: 10 * 1024 * 1024, // 10MB limit
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    }
-    return this._client;
-  }
-
-  /**
-   * Check if Navari is globally disabled
-   */
-  private async isGloballyDisabled(): Promise<boolean> {
-    try {
-      const setting = await db.globalSetting.findUnique({
-        where: { key: "navari_emergency_disable" },
-      });
-      return setting?.value === "true";
-    } catch (error) {
-      // If the table doesn't exist yet or other error, assume not disabled
-      return false;
-    }
-  }
-
-  /**
-   * Validate if Navari can be used for an organization
-   */
+class NavariService {
   private async validateAccess(
     organizationId: string,
     options: { taxOnly?: boolean } = {},

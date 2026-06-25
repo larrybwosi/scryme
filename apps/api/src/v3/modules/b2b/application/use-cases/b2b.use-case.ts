@@ -74,20 +74,6 @@ export class B2BUseCase {
       );
     }
 
-    // ⚡ Bolt: Optimized order creation by batching variant lookups to avoid N+1 query problem.
-    const variantIds = data.items.map((item: any) => item.variantId);
-    const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds } },
-      select: {
-        id: true,
-        name: true,
-        sku: true,
-        product: { select: { name: true } },
-      },
-    });
-
-    const variantMap = new Map(variants.map(v => [v.id, v]));
-
     const transaction = await this.prisma.client.transaction.create({
       data: {
         organizationId,
@@ -100,26 +86,32 @@ export class B2BUseCase {
         finalTotal: subtotal,
         baseCurrencyTotal: subtotal,
         items: {
-          create: data.items.map((item: any) => {
-            const variant = variantMap.get(item.variantId);
+          create: await Promise.all(
+            data.items.map(async (item: any) => {
+              const variant =
+                await this.prisma.client.productVariant.findUnique({
+                  where: { id: item.variantId },
+                  include: { product: true },
+                });
 
-            if (!variant)
-              throw new Error(`Variant ${item.variantId} not found`);
+              if (!variant)
+                throw new Error(`Variant ${item.variantId} not found`);
 
-            return {
-              variantId: item.variantId,
-              productName: variant.product.name,
-              variantName: variant.name || "Default",
-              sku: variant.sku || "",
-              quantity: item.quantity,
-              listPrice: item.price || 0,
-              unitPrice: item.price || 0,
-              unitCost: 0,
-              subtotal: (item.price || 0) * item.quantity,
-              lineTotal: (item.price || 0) * item.quantity,
-              organizationId,
-            };
-          }),
+              return {
+                variantId: item.variantId,
+                productName: variant.product.name,
+                variantName: variant.name || "Default",
+                sku: variant.sku || "",
+                quantity: item.quantity,
+                listPrice: item.price || 0,
+                unitPrice: item.price || 0,
+                unitCost: 0,
+                subtotal: (item.price || 0) * item.quantity,
+                lineTotal: (item.price || 0) * item.quantity,
+                organizationId,
+              };
+            }),
+          ),
         },
       },
     });

@@ -54,15 +54,16 @@ export class RealtimeGateway
   async handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
     const clientId = client.handshake.auth.clientId || client.id;
-    const presenceChannels = (client as any).presenceChannels as Set<string>;
 
-    if (presenceChannels) {
-      for (const channel of presenceChannels) {
-        await this.redis.leavePresence(channel, clientId);
-        const members = await this.redis.getPresence(channel);
-        this.server.to(channel).emit("presence:update", { channel, members });
-      }
-      presenceChannels.clear();
+    // Cleanup presence in all rooms the client was in
+    // For simplicity, we search all presence keys and remove this client
+    const presenceKeys = await this.redis.keys("realtime:presence:*");
+    for (const key of presenceKeys) {
+      const channel = key.replace("realtime:presence:", "");
+      await this.redis.leavePresence(channel, clientId);
+
+      const members = await this.redis.getPresence(channel);
+      this.server.to(channel).emit("presence:update", { channel, members });
     }
   }
 
@@ -134,12 +135,6 @@ export class RealtimeGateway
     const clientId = client.handshake.auth.clientId || client.id;
     await this.redis.enterPresence(data.channel, clientId, data.metadata);
 
-    // Track presence channel on client for cleanup on disconnect
-    if (!(client as any).presenceChannels) {
-      (client as any).presenceChannels = new Set<string>();
-    }
-    (client as any).presenceChannels.add(data.channel);
-
     // Broadcast presence update to the room
     const members = await this.redis.getPresence(data.channel);
     this.server
@@ -156,10 +151,6 @@ export class RealtimeGateway
   ) {
     const clientId = client.handshake.auth.clientId || client.id;
     await this.redis.leavePresence(data.channel, clientId);
-
-    if ((client as any).presenceChannels) {
-      (client as any).presenceChannels.delete(data.channel);
-    }
 
     // Broadcast presence update
     const members = await this.redis.getPresence(data.channel);

@@ -79,26 +79,25 @@ export class ImageService {
         contentType = response.headers["content-type"] as string;
       }
 
-      const format = (options.format || "webp") as keyof FormatEnum;
-      const quality = options.quality || 75;
-
-      let transformer = sharp(imageBuffer, { failOn: "none" });
+      let transformer = sharp(imageBuffer);
 
       if (options.width || options.height) {
         transformer = transformer.resize({
           width: options.width,
           height: options.height,
           fit: "cover",
-          withoutEnlargement: true,
         });
       }
 
+      const format = (options.format || "webp") as keyof FormatEnum;
+      const quality = options.quality || 75;
+
       if (format === "webp") {
-        transformer = transformer.webp({ quality, effort: 4 });
+        transformer = transformer.webp({ quality });
       } else if (format === "jpeg" || (format as string) === "jpg") {
-        transformer = transformer.jpeg({ quality, mozjpeg: true });
+        transformer = transformer.jpeg({ quality });
       } else if (format === "png") {
-        transformer = transformer.png({ quality, compressionLevel: 8 });
+        transformer = transformer.png({ quality });
       }
 
       const { data, info } = await transformer.toBuffer({
@@ -106,9 +105,6 @@ export class ImageService {
       });
 
       const resultContentType = `image/${info.format}`;
-
-      // Explicitly clear imageBuffer to help GC if it's large
-      (imageBuffer as any) = null;
 
       // Cache the optimized image data and its content type separately
       // Using buffer for data to avoid base64 overhead

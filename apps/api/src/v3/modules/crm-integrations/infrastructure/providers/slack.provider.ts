@@ -36,7 +36,6 @@ export class SlackProvider implements CommunicationProvider {
           redirect_uri: this.redirectUri,
         },
         timeout: 10000,
-        maxContentLength: 1 * 1024 * 1024, // 1MB limit for response
       },
     );
 
@@ -74,7 +73,6 @@ export class SlackProvider implements CommunicationProvider {
       {
         headers: { Authorization: `Bearer ${accessToken}` },
         timeout: 10000,
-        maxContentLength: 1 * 1024 * 1024, // 1MB limit for response
       },
     );
 
@@ -134,7 +132,6 @@ export class SlackProvider implements CommunicationProvider {
         params: { user: slackUserId },
         headers: { Authorization: `Bearer ${accessToken}` },
         timeout: 10000,
-        maxContentLength: 1 * 1024 * 1024, // 1MB limit for response
       });
 
       if (response.data.ok) {

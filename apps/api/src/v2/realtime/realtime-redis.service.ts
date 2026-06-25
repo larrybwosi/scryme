@@ -63,27 +63,7 @@ export class RealtimeRedisService {
     const key = `${this.PRESENCE_PREFIX}${channel}`;
     const members = await this.redis.hgetall<PresenceMember>(key);
 
-    if (Object.keys(members).length === 0) return [];
-
     const twoMinsAgo = Date.now() - 120 * 1000;
-    const activeMembers: PresenceMember[] = [];
-    const expiredClientIds: string[] = [];
-
-    for (const [clientId, member] of Object.entries(members)) {
-      if (member.timestamp > twoMinsAgo) {
-        activeMembers.push(member);
-      } else {
-        expiredClientIds.push(clientId);
-      }
-    }
-
-    // Cleanup expired members asynchronously to keep the read fast
-    if (expiredClientIds.length > 0) {
-      this.redis.hdel(key, ...expiredClientIds).catch((err) => {
-        console.error(`Failed to cleanup expired presence members for ${channel}:`, err);
-      });
-    }
-
-    return activeMembers;
+    return Object.values(members).filter((m) => m.timestamp > twoMinsAgo);
   }
 }

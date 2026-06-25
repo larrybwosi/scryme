@@ -9,7 +9,7 @@ import { ICustomerRepository } from "../../domain/repositories/customer-reposito
 import { RegisterCustomerDto } from "../dto/register-customer.dto";
 import { Customer } from "../../domain/entities/customer.entity";
 import { PrismaService } from "@/prisma/prisma.service";
-// import { ZitadelService } from "@repo/zitadel/server";
+import { ZitadelService } from "@repo/zitadel/server";
 import { randomUUID } from "crypto";
 import { emitCustomerCreated } from "@repo/windmill/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
@@ -32,7 +32,7 @@ export class RegisterCustomerUseCase {
 
     await this.verifyZitadelUser(dto.zitadelUserId);
 
-    const result = await this.prisma.client.$transaction(async tx => {
+    const result = await this.prisma.client.$transaction(async (tx) => {
       const internalId = await this.getOrCreateInternalMapping(
         tx,
         organizationId,
@@ -71,18 +71,18 @@ export class RegisterCustomerUseCase {
   }
 
   private async verifyZitadelUser(zitadelUserId: string) {
-    // const zitadelSvc = new ZitadelService();
-    // try {
-    //   const user = await zitadelSvc.getUser(zitadelUserId);
-    //   if (!user)
-    //     throw new NotFoundException(
-    //       `Zitadel user with ID ${zitadelUserId} not found`,
-    //     );
-    // } catch (e) {
-    //   throw new NotFoundException(
-    //     `Zitadel user with ID ${zitadelUserId} not found`,
-    //   );
-    // }
+    const zitadelSvc = new ZitadelService();
+    try {
+      const user = await zitadelSvc.getUser(zitadelUserId);
+      if (!user)
+        throw new NotFoundException(
+          `Zitadel user with ID ${zitadelUserId} not found`,
+        );
+    } catch (e) {
+      throw new NotFoundException(
+        `Zitadel user with ID ${zitadelUserId} not found`,
+      );
+    }
   }
 
   private async getOrCreateInternalMapping(
@@ -184,7 +184,7 @@ export class RegisterCustomerUseCase {
         customerId: result.id,
         name: result.name,
         email: result.email,
-      }).catch(err =>
+      }).catch((err) =>
         this.logger.warn(
           `Failed to trigger Windmill for customer ${result.id}: ${err instanceof Error ? err.message : String(err)}`,
         ),

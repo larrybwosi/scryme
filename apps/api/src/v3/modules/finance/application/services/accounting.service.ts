@@ -107,7 +107,7 @@ export class AccountingService {
   async postSaleToLedger(transactionId: string) {
     const transaction = await this.prisma.client.transaction.findUnique({
       where: { id: transactionId },
-      // ⚡ Bolt Optimization: Removed 'items: true' as they are not used in this ledger logic.
+      include: { items: true },
     });
 
     if (!transaction) return;
@@ -150,7 +150,7 @@ export class AccountingService {
   async postPurchaseToLedger(purchaseId: string) {
     const purchase = await this.prisma.client.purchase.findUnique({
       where: { id: purchaseId },
-      // ⚡ Bolt Optimization: Removed 'items: true' as they are not used in this ledger logic.
+      include: { items: true },
     });
 
     if (!purchase || purchase.status !== "APPROVED") return;
@@ -196,23 +196,7 @@ export class AccountingService {
   async postExpenseToLedger(expenseId: string) {
     const expense = await this.prisma.client.expense.findUnique({
       where: { id: expenseId },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
-      // to reduce database payload and memory pressure.
-      select: {
-        id: true,
-        organizationId: true,
-        memberId: true,
-        expenseNumber: true,
-        description: true,
-        amount: true,
-        taxAmount: true,
-        status: true,
-        category: {
-          select: {
-            ledgerAccountId: true,
-          },
-        },
-      },
+      include: { category: true },
     });
 
     if (!expense || expense.status !== "APPROVED") return;
@@ -275,41 +259,20 @@ export class AccountingService {
       include: { journalEntry: true },
     });
 
-    // ⚡ Bolt Optimization: Use a Map to index candidates by amount.
-    // This reduces the complexity from O(N*M) to O(N+M), which is critical
-    // for bank reconciliation with thousands of transactions.
-    const candidatesByAmount = new Map<string, any[]>();
-    for (const c of candidates) {
-      const journalAmount =
-        Number(c.debit) > 0 ? Number(c.debit) : -Number(c.credit);
-      const key = journalAmount.toFixed(2);
-      if (!candidatesByAmount.has(key)) {
-        candidatesByAmount.set(key, []);
-      }
-      candidatesByAmount.get(key)!.push(c);
-    }
-
     let matchCount = 0;
-    const threeDays = 3 * 24 * 60 * 60 * 1000;
 
     for (const line of statement.lines) {
-      const lineAmount = Number(line.amount);
-      const key = lineAmount.toFixed(2);
-      const possibleMatches = candidatesByAmount.get(key) || [];
+      const match = candidates.find(c => {
+        const lineAmount = Number(line.amount);
+        const journalAmount = lineAmount > 0 ? Number(c.debit) : -Number(c.credit);
 
-      const matchIndex = possibleMatches.findIndex((c) => {
-        const dateDiff = Math.abs(
-          new Date(line.transactionDate).getTime() -
-            new Date(c.journalEntry.entryDate).getTime(),
-        );
-        return dateDiff <= threeDays;
+        const dateDiff = Math.abs(new Date(line.transactionDate).getTime() - new Date(c.journalEntry.entryDate).getTime());
+        const threeDays = 3 * 24 * 60 * 60 * 1000;
+
+        return Math.abs(lineAmount - journalAmount) < 0.01 && dateDiff <= threeDays;
       });
 
-      if (matchIndex !== -1) {
-        const match = possibleMatches[matchIndex];
-        // Remove from memory pool to prevent double matching in the same run
-        possibleMatches.splice(matchIndex, 1);
-
+      if (match) {
         await this.prisma.client.$transaction([
           this.prisma.client.bankStatementLine.update({
             where: { id: line.id },

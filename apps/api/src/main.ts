@@ -31,7 +31,7 @@ async function bootstrap() {
       .getHttpAdapter()
       .getInstance()
       .addHook("onRequest", (request, reply, done) => {
-        (request as any).startTime = Date.now();
+        const startTime = Date.now();
         const { method, url, headers, body, query } = request;
 
         // Log incoming request
@@ -58,23 +58,19 @@ async function bootstrap() {
               : undefined,
         });
 
-        done();
-      });
-
-    app
-      .getHttpAdapter()
-      .getInstance()
-      .addHook("onResponse", (request, reply, done) => {
-        const startTime = (request as any).startTime || Date.now();
-        const duration = Date.now() - startTime;
-        console.log({
-          timestamp: new Date().toISOString(),
-          type: "REQUEST_COMPLETED",
-          method: request.method,
-          url: request.url,
-          statusCode: reply.statusCode,
-          duration: `${duration}ms`,
+        // Log response when request completes
+        reply.raw.on("finish", () => {
+          const duration = Date.now() - startTime;
+          console.log({
+            timestamp: new Date().toISOString(),
+            type: "REQUEST_COMPLETED",
+            method,
+            url,
+            statusCode: reply.statusCode,
+            duration: `${duration}ms`,
+          });
         });
+
         done();
       });
   }

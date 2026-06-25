@@ -1,13 +1,5 @@
 import { InvoiceData } from './templates/v1/invoice-templates';
-import {
-  WaybillData,
-  ReceiptData,
-  TransactionAnalyticsExportData,
-  StockReportData,
-  DeliveryNoteData,
-  BrandingOptions,
-  CurrencySettings
-} from './types';
+import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData, DeliveryNoteData } from './types';
 import * as crypto from 'crypto';
 
 /**
@@ -27,19 +19,32 @@ export function generateVerificationHash(data: {
     .toUpperCase();
 }
 
-import {
-  resolveBranding,
-  resolveCurrencySettings,
-  formatCurrency,
-  formatAddress,
-} from "./utils";
+/**
+ * Format address object or string to a string.
+ */
+export function formatAddress(input: any): string {
+  if (!input) return '';
+  if (typeof input === 'string') return input;
 
-export {
-  resolveBranding,
-  resolveCurrencySettings,
-  formatCurrency,
-  formatAddress,
-};
+  const target = input.address && typeof input.address === 'object' ? input.address : input;
+  const data = typeof target === 'object' ? target : input;
+
+  if (!data || typeof data !== 'object') return String(input);
+
+  const parts = [
+    data.street,
+    data.street1,
+    data.street2,
+    data.line1,
+    data.city,
+    data.state,
+    data.zipCode,
+    data.postalCode,
+    data.country,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : '';
+}
 
 /**
  * Data Mappers to transform Prisma entities to Document data structures.
@@ -60,7 +65,9 @@ export const Mappers = {
     const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
     const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
 
-    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+    const config = transaction.organization?.waybillConfig || {};
+    const showLogo = config.showLogo ?? true;
+    const logoUrl = showLogo ? (config.logoUrl || transaction.organization?.logo) : null;
 
     return {
       id: fulfillment?.id || transaction.id,
@@ -68,7 +75,15 @@ export const Mappers = {
       orderNumber: transaction.number,
       date: fulfillment?.createdAt || transaction.createdAt || new Date(),
       qrCodeUrl,
-      branding,
+      branding: {
+        logoUrl,
+        showLogo,
+        companyName: transaction.organization?.name || 'Sender',
+        companyAddress: senderAddress,
+        companyPhone: transaction.location?.phone || transaction.organization?.phone,
+        companyEmail: transaction.organization?.email,
+        primaryColor: transaction.organization?.primaryColor,
+      },
       sender: {
         name: transaction.organization?.name || 'Sender',
         address: senderAddress,
@@ -93,9 +108,6 @@ export const Mappers = {
    */
   toReceiptData(transaction: any): ReceiptData {
     if (!transaction) throw new Error('Transaction is required for Receipt mapping');
-
-    const currencySettings = resolveCurrencySettings(transaction, transaction.organization);
-    const branding = resolveBranding(transaction.organization, transaction.organization?.receiptConfig);
 
     return {
       id: transaction.id,
@@ -131,10 +143,15 @@ export const Mappers = {
       paymentMethod: transaction.payments?.[0]?.method || 'CASH',
       amountReceived: transaction.payments?.[0]?.amountReceived ? Number(transaction.payments[0].amountReceived) : undefined,
       change: transaction.payments?.[0]?.change ? Number(transaction.payments[0].change) : undefined,
-      currency: currencySettings.code,
-      currencySymbol: currencySettings.symbol,
-      currencySettings,
-      branding,
+      branding: {
+        companyName: transaction.organization?.name || 'Organization',
+        companyAddress: formatAddress(transaction.organization?.address),
+        logoUrl: (transaction.organization?.receiptConfig?.showLogo ?? true)
+          ? (transaction.organization?.receiptConfig?.logoUrl || transaction.organization?.logo)
+          : null,
+        showLogo: transaction.organization?.receiptConfig?.showLogo ?? true,
+        primaryColor: transaction.organization?.primaryColor,
+      },
     };
   },
 
@@ -151,7 +168,11 @@ export const Mappers = {
       id: organization?.id || 'org',
       number: 'ANALYTICS-' + new Date().getTime(),
       date: new Date(),
-      branding: resolveBranding(organization),
+      branding: {
+        companyName: organization?.name || 'Organization',
+        logoUrl: organization?.logo,
+        primaryColor: organization?.primaryColor,
+      },
       dateRangeText,
       activeFiltersText,
       transactions: transactions.map(t => ({
@@ -180,7 +201,11 @@ export const Mappers = {
       id: report.id,
       number: 'STOCK-' + report.id,
       date: report.createdAt,
-      branding: resolveBranding(report.organization),
+      branding: {
+        companyName: report.organization?.name || 'Organization',
+        logoUrl: report.organization?.logo,
+        primaryColor: report.organization?.primaryColor,
+      },
       name: report.name,
       generatedBy: report.generatedBy?.user?.name || 'System',
       items: (data?.items || []).map((item: any) => ({
@@ -199,8 +224,8 @@ export const Mappers = {
   toInvoiceData(transaction: any, options: { currencySymbolMap?: Record<string, string>, logoPath?: string } = {}): InvoiceData {
     if (!transaction) throw new Error('Transaction is required for Invoice mapping');
 
-    const currencySettings = resolveCurrencySettings(transaction, transaction.organization);
-    const branding = resolveBranding(transaction.organization, transaction.organization?.invoiceConfig);
+    const defaultCurrency = transaction.organization?.settings?.defaultCurrency || 'USD';
+    const currencySymbol = options.currencySymbolMap?.[defaultCurrency] || defaultCurrency;
 
     const netTotal = Number(transaction.subtotal || 0);
     const totalTaxes = Number(transaction.taxTotal || 0);
@@ -243,6 +268,23 @@ export const Mappers = {
     });
 
     const config = transaction.organization?.invoiceConfig || {};
+    const showLogo = config.showLogo ?? true;
+    const logoUrl = showLogo ? (config.logoUrl || transaction.organization?.logo) : null;
+
+    const branding = {
+      companyName: config.companyName || transaction.organization?.name || 'Organization',
+      companyAddress: config.companyAddress || formatAddress(transaction.organization?.address),
+      companyPhone: config.companyPhone || transaction.organization?.phone,
+      companyEmail: config.companyEmail || transaction.organization?.email,
+      logoUrl,
+      showLogo,
+      companyWebsite: config.companyWebsite || transaction.organization?.website || '',
+      companyTagline: transaction.organization?.description || '',
+      primaryColor: config.primaryColor || transaction.organization?.primaryColor,
+      showPoweredBy: config.showPoweredBy ?? true,
+      watermarkText: config.watermarkText,
+      customFields: config.customFields,
+    };
 
     let invoiceNumber = transaction.number;
     if (config.invoiceNumberPrefix || config.invoiceNumberSuffix || config.invoiceNumberPadding) {
@@ -271,9 +313,8 @@ export const Mappers = {
       locationName: transaction.location?.name,
       createdBy: transaction.member?.user?.name,
 
-      currencySymbol: currencySettings.symbol,
-      currency: currencySettings.code,
-      currencySettings,
+      currencySymbol,
+      currency: defaultCurrency,
 
       branding,
 
@@ -309,19 +350,29 @@ export const Mappers = {
    * Maps a Transaction entity to DeliveryNoteData.
    */
   toDeliveryNoteData(transaction: any, fulfillment?: any): DeliveryNoteData {
+    const senderAddress = formatAddress(transaction.location?.address) || formatAddress(transaction.organization?.address) || 'Main Office';
+
     const shippingAddressObj = fulfillment?.shippingAddress || transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
     const recipientAddress = formatAddress(shippingAddressObj);
     const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
     const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
-
-    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
 
     return {
       id: fulfillment?.id || transaction.id,
       number: `DN-${transaction.number}`,
       orderNumber: transaction.number,
       date: fulfillment?.createdAt || transaction.createdAt || new Date(),
-      branding,
+      branding: {
+        logoUrl: (transaction.organization?.waybillConfig?.showLogo ?? true)
+          ? (transaction.organization?.waybillConfig?.logoUrl || transaction.organization?.logo)
+          : null,
+        showLogo: transaction.organization?.waybillConfig?.showLogo ?? true,
+        companyName: transaction.organization?.name || 'Sender',
+        companyAddress: senderAddress,
+        companyPhone: transaction.location?.phone || transaction.organization?.phone,
+        companyEmail: transaction.organization?.email,
+        primaryColor: transaction.organization?.primaryColor,
+      },
       customer: {
         name: transaction.customer?.name || 'Walk-in Customer',
         email: transaction.customer?.email,

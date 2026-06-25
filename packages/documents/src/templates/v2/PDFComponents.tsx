@@ -2,15 +2,15 @@ import React from 'react';
 import { Text, View, Image } from '@react-pdf/renderer';
 import { commonStyles as styles } from './document-styles';
 
-export const PDFHeader = ({ logoUrl, orgName, orgAddress, title, number, primaryColor }: any) => (
-  <View style={[styles.header, primaryColor ? { borderBottom: `2px solid ${primaryColor}`, paddingBottom: 10, marginBottom: 20 } : {}]}>
+export const PDFHeader = ({ logoUrl, orgName, orgAddress, title, number }: any) => (
+  <View style={styles.header}>
     <View>
       {logoUrl && <Image src={logoUrl} style={styles.logo} />}
-      <Text style={{ fontSize: 14, fontWeight: 'bold', color: primaryColor || '#000' }}>{orgName}</Text>
+      <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{orgName}</Text>
       {orgAddress && <Text style={{ fontSize: 8 }}>{orgAddress}</Text>}
     </View>
     <View style={{ textAlign: 'right' }}>
-      <Text style={[styles.title, primaryColor ? { color: primaryColor } : {}]}>{title}</Text>
+      <Text style={styles.title}>{title}</Text>
       <Text style={styles.value}>{number}</Text>
     </View>
   </View>

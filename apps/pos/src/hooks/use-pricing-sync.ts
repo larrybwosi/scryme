@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { API_ENDPOINT } from '@/lib/axios';
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMutation } from '@tanstack/react-query';
@@ -10,6 +11,10 @@ export const usePosPricingSync = () => {
 
   const syncMutation = useMutation({
     mutationFn: async () => {
+      if (!API_ENDPOINT) {
+        console.warn('API Endpoint is missing, sending empty string to Rust for debugging.');
+      }
+
       const result = await invoke('sync_pricing_command', {});
       return result;
     },

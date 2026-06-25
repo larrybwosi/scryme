@@ -356,33 +356,10 @@ export class InvoiceUseCase {
   async getDownloadStreamDirect(invoiceId: string) {
     const invoice = await this.prisma.client.invoice.findUnique({
       where: { id: invoiceId },
-      include: {
-        items: true,
-        organization: {
-          include: {
-            settings: true,
-            invoiceConfig: true,
-          },
-        },
-        template: true,
-      },
+      include: { items: true, organization: true, template: true },
     });
     if (!invoice) throw new NotFoundException("Invoice not found");
-
-    const invoiceData = Mappers.toInvoiceData(
-      {
-        ...invoice,
-        number: invoice.id.substring(0, 8).toUpperCase(),
-        subtotal: invoice.netTotal,
-        taxTotal: invoice.totalTaxes,
-        finalTotal: invoice.grandTotal,
-        createdAt: invoice.postingDate,
-        payments: [{ amount: invoice.amountPaid }],
-      },
-      {},
-    );
-
-    return this.documentService.generateInvoicePDF(invoiceData);
+    return this.generatePDF(invoice);
   }
 
   async getReceiptDownloadStream(transactionId: string) {
@@ -390,24 +367,9 @@ export class InvoiceUseCase {
       where: { id: transactionId },
       include: {
         items: true,
-        customer: {
-          include: {
-            addresses: true,
-          },
-        },
-        organization: {
-          include: {
-            settings: true,
-            receiptConfig: true,
-          },
-        },
+        customer: true,
+        organization: true,
         payments: true,
-        location: true,
-        member: {
-          include: {
-            user: true,
-          },
-        },
       },
     });
 
@@ -416,6 +378,42 @@ export class InvoiceUseCase {
     const receiptData = Mappers.toReceiptData(transaction);
 
     return this.documentService.generateReceiptPDF(receiptData);
+  }
+
+  private async generatePDF(invoice: any) {
+    const templateData = (invoice.template?.templateData as any) || {};
+    const pdfData = {
+      id: invoice.id,
+      number: invoice.id.substring(0, 8).toUpperCase(),
+      invoiceNumber: invoice.id.substring(0, 8).toUpperCase(),
+      status: invoice.status,
+      date: invoice.postingDate.toLocaleDateString(),
+      customerName: invoice.customerName || invoice.customer,
+      customerAddress: "",
+      branding: {
+        companyName: invoice.organization.name,
+        companyAddress: (invoice.organization as any).address || "",
+        logoUrl: invoice.template?.logoUrl || "",
+      },
+      items: invoice.items.map(item => ({
+        id: item.id,
+        itemCode: item.itemCode,
+        itemName: item.itemName,
+        description: item.itemName,
+        quantity: item.quantity,
+        rate: item.rate,
+        amount: item.amount,
+        unitPrice: item.rate,
+        totalPrice: item.amount,
+      })),
+      subtotal: invoice.netTotal,
+      tax: invoice.totalTaxes,
+      total: invoice.grandTotal,
+      amountPaid: invoice.amountPaid,
+      balanceDue: invoice.balanceDue,
+      ...templateData,
+    };
+    return this.documentService.generateInvoicePDF(pdfData);
   }
 
   async getTemplates(organizationId: string) {
