@@ -105,7 +105,7 @@ const SetupTokenStep = ({
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [error, setError] = useState('');
   const [showApiSettings, setShowApiSettings] = useState(false);
-  const { provisionDevice, apiUrl, setApiUrl } = useAuthStore();
+  const { provisionDevice, rawApiUrl, setApiUrl, applyApiUrl } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +158,7 @@ const SetupTokenStep = ({
               <Input
                 id="apiUrl"
                 type="url"
-                value={apiUrl}
+                value={rawApiUrl}
                 onChange={e => setApiUrl(e.target.value)}
                 className="h-10 text-xs font-mono rounded-none border-zinc-200"
                 placeholder="https://api.example.com"
@@ -166,14 +166,17 @@ const SetupTokenStep = ({
               <Button
                 type="button"
                 size="sm"
-                onClick={() => window.location.reload()}
+                onClick={async () => {
+                  await applyApiUrl();
+                  setShowApiSettings(false);
+                }}
                 className="h-10 rounded-none bg-zinc-800 text-white"
               >
                 Apply
               </Button>
             </div>
             <p className="text-[9px] text-zinc-400 italic">
-              Caution: Changing this affects all terminal requests. Apply will reload the page.
+              Caution: Changing this affects all terminal requests.
             </p>
           </div>
         )}
