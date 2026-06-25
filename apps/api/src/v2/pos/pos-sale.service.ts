@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
-// Proxy to the shared actions
 import { processSale } from "@repo/shared/actions/transaction/process-sale";
 import { triggerStkPush } from "@repo/shared/actions/organization/mpesa-trigger";
 import { createOrder } from "@repo/shared/actions/transaction/orders";
@@ -22,6 +21,10 @@ export class PosSaleService {
       throw new BadRequestException(
         "locationId is required (set on the device API key or pass it in the request body)",
       );
+    }
+
+    if (!memberId) {
+      throw new BadRequestException("You should be logged in to create a sale");
     }
 
     // 1. Validate Input
