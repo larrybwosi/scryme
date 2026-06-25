@@ -29,8 +29,8 @@ COPY . .
 # Remove potentially conflicting build artifacts from the host
 RUN rm -rf .turbo && rm -rf node_modules
 
-# change "bakery" below to match that exact name.
-RUN turbo prune bakery --docker
+# change "pos" below to match that exact name.
+RUN turbo prune pos --docker
 
 # ---------------------------------------------------------
 # Stage 3: Installer & Builder
@@ -51,11 +51,8 @@ COPY --from=pruner /app/out/full/ .
 # Build-time environment variables for Vite
 ENV VITE_API_URL=APP_VITE_API_URL_PLACEHOLDER
 
-# Generate Prisma Client
-RUN pnpm turbo run generate
-
-# Build the Bakery app
-RUN pnpm turbo build --filter=bakery
+# Build the POS app
+RUN pnpm turbo build --filter=pos
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -66,18 +63,18 @@ FROM nginx:alpine AS runner
 RUN apk add --no-cache wget
 
 # Copy the built static files from the installer stage
-COPY --from=installer /app/apps/bakery/dist /usr/share/nginx/html
+COPY --from=installer /app/apps/pos/dist /usr/share/nginx/html
 
 # Copy the Nginx configuration safely from the pruned context
-COPY --from=pruner /app/out/full/apps/bakery/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=pruner /app/out/full/apps/pos/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy entrypoint script safely from the pruned context
-COPY --from=pruner /app/out/full/apps/bakery/entrypoint.sh /entrypoint.sh
+COPY --from=pruner /app/out/full/apps/pos/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 3003
+EXPOSE 3004
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3003/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3004/ || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
