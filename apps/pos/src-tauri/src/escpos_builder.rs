@@ -75,11 +75,14 @@ impl EscPosBuilder {
         self.bytes.extend_from_slice(&[0x1D, 0x42, n]);
     }
 
+    /// Performs a full cut. Call `feed(3)` before this to ensure the last
+    /// printed line clears the cutter blade — the minimum needed on most
+    /// printers without wasting extra paper.
     pub fn cut(&mut self) {
         self.bytes.extend_from_slice(&[0x1D, 0x56, 0x41, 0x00]); // GS V A 0 (Full Cut)
     }
 
-    // --- NEW: LAYOUT & FORMATTING HELPERS ---
+    // --- LAYOUT & FORMATTING HELPERS ---
 
     /// Prints a divider line of dashes to match the PDF divider style.
     /// Provide your paper width in characters (e.g., 32 for 58mm, 48 for 80mm).
@@ -141,8 +144,8 @@ impl EscPosBuilder {
         self.text_line(&formatted_row);
     }
 
-    // --- NEW: NATIVE 1D BARCODE (CODE128) ---
-    /// Prints a standard 1D Barcode with text below it. Perfect for order numbers.
+    // --- NATIVE 1D BARCODE (CODE128) ---
+    /// Prints a standard 1D barcode with text below it. Perfect for order numbers.
     pub fn barcode_1d(&mut self, data: &str, symbology: Option<&str>) {
         // HRI characters print position: 2 = Below the barcode
         self.bytes.extend_from_slice(&[0x1D, 0x48, 0x02]);
@@ -182,7 +185,6 @@ impl EscPosBuilder {
             }
             _ => {
                 // Default to CODE128
-                // Print barcode using CODE128 (System 73 / 0x49)
                 // ESC/POS CODE128 requires a subset character prepended to the data.
                 // We use Subset B '{B' (0x7B, 0x42) for standard alphanumerics.
                 let mut barcode_data = vec![0x7B, 0x42];
@@ -196,7 +198,7 @@ impl EscPosBuilder {
             }
         }
         
-        self.feed(2); // Padding below the barcode
+        self.feed(1); // Minimal feed to clear barcode from print head
     }
 
     // --- NATIVE QR CODE ---
@@ -228,7 +230,7 @@ impl EscPosBuilder {
         // GS ( k 0x03 0x00 0x31 0x51 0x30
         self.bytes.extend_from_slice(&[0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
         
-        self.feed(2); // Add some padding below it
+        self.feed(1); // Minimal feed to clear QR code from print head
     }
 
     // --- NATIVE LOGO PRINTING (GS v 0) ---
@@ -281,7 +283,7 @@ impl EscPosBuilder {
             }
         }
         
-        self.feed(1); // Give it some breathing room after the image
+        // No trailing feed — caller controls spacing after the logo.
         self.align(0); // Reset to left
         Ok(())
     }
