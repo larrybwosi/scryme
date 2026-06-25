@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
+import { useAuthStore } from '@/store/pos-auth-store';
 
 // API call function using invoke
-export const dispatchOrder = async (transactionId: string, payload: any) => {
+export const dispatchOrder = async (transactionId: string, payload: any, memberId?: string) => {
   // Convert date to ISO string for the API if present
   const formattedPayload = {
     ...payload,
@@ -12,7 +13,10 @@ export const dispatchOrder = async (transactionId: string, payload: any) => {
 
   const response = await invoke('dispatch_order_command', {
     transactionId,
-    payload: formattedPayload,
+    payload: {
+      ...formattedPayload,
+      memberId,
+    },
   });
   return response;
 };
@@ -25,8 +29,11 @@ interface UseDispatchOrderMutationOptions {
 
 export function useDispatchOrderMutation({ transactionId, onSuccess, onError }: UseDispatchOrderMutationOptions) {
   const queryClient = useQueryClient();
+  const { currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
+
   return useMutation({
-    mutationFn: (values: any) => dispatchOrder(transactionId, values),
+    mutationFn: (values: any) => dispatchOrder(transactionId, values, memberId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast.success('Order Dispatched', {
@@ -56,6 +63,8 @@ export function useReconcileDeliveryMutation({
   onError,
 }: UseReconcileDeliveryMutationOptions) {
   const queryClient = useQueryClient();
+  const { currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
 
   return useMutation({
     mutationFn: async (data: { outcome: string; receivedBy?: string; failureReason?: string; filePath?: string }) => {
@@ -69,6 +78,7 @@ export function useReconcileDeliveryMutation({
         receivedBy: data.receivedBy,
         failureReason: data.failureReason,
         filePath: data.filePath,
+        memberId,
       });
     },
     onSuccess: () => {

@@ -114,8 +114,9 @@ export type { RustQueuedSale };
  * 3. Rust attempts background sync immediately.
  */
 export const useProcessSale = () => {
-  const { currentLocation } = useAuthStore();
+  const { currentLocation, currentMember } = useAuthStore();
   const locationId = currentLocation?.id;
+  const memberId = currentMember?.id;
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -129,6 +130,7 @@ export const useProcessSale = () => {
       const payload = {
         ...data,
         locationId,
+        memberId,
       };
 
       // Call Rust Command (Non-blocking background process)
@@ -360,8 +362,9 @@ export const useOldSalesCheck = () => {
 };
 
 export const useCreateOrder = (options: UseCreateOrderOptions = {}) => {
-  const { currentLocation } = useAuthStore();
+  const { currentLocation, currentMember } = useAuthStore();
   const locationId = currentLocation?.id;
+  const memberId = currentMember?.id;
 
   return useMutation({
     mutationFn: async (newOrder: OrderFormValues) => {
@@ -369,7 +372,10 @@ export const useCreateOrder = (options: UseCreateOrderOptions = {}) => {
 
       const response = await invoke<any>('create_order_command', {
         locationId,
-        order: newOrder,
+        order: {
+          ...newOrder,
+          memberId,
+        },
       });
       return response;
     },
