@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { bulkUpdateOrgUnitsStatus } from "../../actions/units";
+import { fixMissingUnits } from "../../actions/inventory";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Plus,
@@ -144,6 +145,21 @@ export function UnitsPageContent({
     );
   };
 
+  const [isFixingUnits, setIsFixingUnits] = useState(false);
+  const handleFixMissingUnits = async () => {
+    setIsFixingUnits(true);
+    try {
+      const result = await fixMissingUnits();
+      toast.success(
+        `Fixed units for ${result.updated} variants out of ${result.processed} processed`,
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fix units");
+    } finally {
+      setIsFixingUnits(false);
+    }
+  };
+
   const handleBulkStatusUpdate = async (isActive: boolean) => {
     if (selectedUnitIds.length === 0) return;
     setIsBulkLoading(true);
@@ -175,14 +191,25 @@ export function UnitsPageContent({
               Unit Management
             </h1>
           </div>
-          <UnitDialog systemUnits={systemUnits}>
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
-              className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-none rounded-md h-8 px-3 text-xs font-medium">
-              <Plus size={13} />
-              Add Unit
+              variant="outline"
+              disabled={isFixingUnits}
+              onClick={handleFixMissingUnits}
+              className="gap-2 h-8 px-3 text-xs font-medium">
+              <Settings2 size={13} />
+              {isFixingUnits ? "Fixing..." : "Fix Missing Units"}
             </Button>
-          </UnitDialog>
+            <UnitDialog systemUnits={systemUnits}>
+              <Button
+                size="sm"
+                className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-none rounded-md h-8 px-3 text-xs font-medium">
+                <Plus size={13} />
+                Add Unit
+              </Button>
+            </UnitDialog>
+          </div>
         </div>
 
         {/* Stat bar */}
