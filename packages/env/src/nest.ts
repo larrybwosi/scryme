@@ -40,7 +40,7 @@ function loadEnvFiles() {
           path: file,
           override: true,
         });
-        expand({ ...config, override: true });
+        expand(config);
       }
     }
   } catch (e) {

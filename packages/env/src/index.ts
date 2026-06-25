@@ -58,7 +58,7 @@ function loadEnvFiles() {
           override: true,
           debug: false,
         });
-        expand({ ...config, override: true });
+        expand(config);
       }
     }
   } catch (e) {
