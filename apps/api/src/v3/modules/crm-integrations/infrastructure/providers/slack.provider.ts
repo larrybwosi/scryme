@@ -25,6 +25,8 @@ export class SlackProvider implements CommunicationProvider {
         code,
         redirect_uri: this.redirectUri,
       },
+      timeout: 10000,
+      maxContentLength: 1048576, // 1MB
     });
 
     if (!response.data.ok) {
@@ -57,6 +59,8 @@ export class SlackProvider implements CommunicationProvider {
       thread_ts: message.threadId,
     }, {
       headers: { Authorization: `Bearer ${accessToken}` },
+      timeout: 10000,
+      maxContentLength: 1048576, // 1MB
     });
 
     if (!response.data.ok) {
@@ -104,6 +108,8 @@ export class SlackProvider implements CommunicationProvider {
       const response = await axios.get('https://slack.com/api/users.info', {
         params: { user: slackUserId },
         headers: { Authorization: `Bearer ${accessToken}` },
+        timeout: 10000,
+        maxContentLength: 1048576, // 1MB
       });
 
       if (response.data.ok) {
