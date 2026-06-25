@@ -174,7 +174,7 @@ export function StaffSettings({
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   <Select
-                    value={form.gender || ""}
+                    value={form.gender || undefined}
                     onValueChange={val => setForm({ ...form, gender: val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -278,7 +278,7 @@ export function StaffSettings({
                 <div className="space-y-2">
                   <Label htmlFor="employmentType">Employment Type</Label>
                   <Select
-                    value={form.employmentType || ""}
+                    value={form.employmentType || undefined}
                     onValueChange={val =>
                       setForm({ ...form, employmentType: val })
                     }>
@@ -318,13 +318,12 @@ export function StaffSettings({
                 <div className="space-y-2">
                   <Label htmlFor="manager">Reporting Manager</Label>
                   <Select
-                    value={form.managerId || ""}
+                    value={form.managerId || undefined}
                     onValueChange={val => setForm({ ...form, managerId: val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select manager" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Manager</SelectItem>
                       {allMembers
                         .filter(m => m.id !== member.id)
                         .map(m => (
