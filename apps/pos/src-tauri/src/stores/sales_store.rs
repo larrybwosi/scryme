@@ -284,16 +284,24 @@ pub async fn process_sale(
 
     let is_interactive_payment = ["MPESA", "PAYBILL", "TILL"].contains(&payment_method.as_str());
 
+    // Check if sale total exceeds threshold for immediate sync
+    let total_amount = payload.get("total").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let threshold = payload.get("forcedImmediateSyncThreshold").and_then(|v| v.as_f64()).unwrap_or(f64::MAX);
+    let exceeds_threshold = total_amount > threshold;
+
     if payment_method == "CASH" {
-        if let Some(total) = payload.get("total").and_then(|v| v.as_f64()) {
+        let total = payload.get("amountReceived").and_then(|v| v.as_f64())
+            .or_else(|| payload.get("total").and_then(|v| v.as_f64()));
+
+        if let Some(t) = total {
             if !cfg!(feature = "standalone") {
-                if let Err(e) = crate::shift_store::record_cash_sale(&app, shift_state, total).await {
+                if let Err(e) = crate::shift_store::record_cash_sale(&app, shift_state, t).await {
                     error!("[SalesStore] Failed to record cash sale in shift: {}", e);
                 } else {
-                    info!("[SalesStore] Recorded cash sale of {:.2}", total);
+                    info!("[SalesStore] Recorded cash sale of {:.2}", t);
                 }
             } else {
-                info!("[SalesStore] Standalone Mode: Bypassing shift cash recording for amount {:.2}", total);
+                info!("[SalesStore] Standalone Mode: Bypassing shift cash recording for amount {:.2}", t);
             }
         }
     }
@@ -313,22 +321,36 @@ pub async fn process_sale(
         }
     }
 
-    if is_interactive_payment {
-        info!("[SalesStore] Attempting immediate sync for interactive payment: {}", payment_method);
+    if is_interactive_payment || exceeds_threshold {
+        let reason = if is_interactive_payment {
+            payment_method.clone()
+        } else {
+            format!("Sale amount ({:.2}) exceeds threshold ({:.2})", total_amount, threshold)
+        };
+
+        info!("[SalesStore] Attempting immediate sync: {}", reason);
         match push_single_sale(auth_state, &location_id, &payload).await {
             Ok(server_resp) => {
                 return Ok(SaleResponse {
                     success: true,
-                    message: "Transaction initiated successfully.".into(),
+                    message: "Transaction completed successfully.".into(),
                     server_response: Some(server_resp),
                 });
             }
             Err(e) => {
-                error!("[SalesStore] Immediate sync failed for {}: {}", payment_method, e);
-                return Err(SalesError::PaymentProcessingError(format!(
-                    "{} requires an active internet connection. Please check your network or switch to Cash.", 
-                    payment_method
-                )).into());
+                error!("[SalesStore] Immediate sync failed for {}: {}", reason, e);
+                let error_msg = if exceeds_threshold {
+                    format!(
+                        "This sale of {:.2} exceeds the security threshold and requires an active internet connection to verify. Please check your network.",
+                        total_amount
+                    )
+                } else {
+                    format!(
+                        "{} requires an active internet connection. Please check your network or switch to Cash.",
+                        payment_method
+                    )
+                };
+                return Err(SalesError::PaymentProcessingError(error_msg).into());
             }
         }
     }
@@ -720,13 +742,54 @@ pub async fn get_sales_history_command(
 #[tauri::command]
 pub async fn record_payment_command(
     auth_state: State<'_, AuthState>,
-    payload: serde_json::Value,
+    transaction_id: String,
+    amount: f64,
+    method: String,
+    reference: Option<String>,
+    notes: Option<String>,
+    file_path: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let url_path = crate::api_config::routes::SALE_PAYMENTS.to_string();
-    let res = auth_state.build_request(reqwest::Method::POST, &url_path)?.json(&payload).send().await.map_err(|e| e.to_string())?;
+    let request = auth_state.build_request(reqwest::Method::POST, &url_path)?;
 
-    if !res.status().is_success() {
-        return Err(format!("Payment recording failed: {} - {}", res.status(), res.text().await.unwrap_or_default()));
+    let mut form = reqwest::multipart::Form::new()
+        .text("transactionId", transaction_id)
+        .text("amount", amount.to_string())
+        .text("method", method);
+
+    if let Some(r) = reference {
+        form = form.text("reference", r);
+    }
+    if let Some(n) = notes {
+        form = form.text("notes", n);
+    }
+
+    if let Some(path) = file_path {
+        match tokio::fs::read(&path).await {
+            Ok(file_bytes) => {
+                let file_name = std::path::Path::new(&path)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+
+                let part = reqwest::multipart::Part::bytes(file_bytes)
+                    .file_name(file_name)
+                    .mime_str("application/octet-stream")
+                    .map_err(|e| e.to_string())?;
+
+                form = form.part("file", part);
+            }
+            Err(e) => return Err(format!("Failed to read file at {}: {}", path, e)),
+        }
+    }
+
+    let res = request.multipart(form).send().await.map_err(|e| e.to_string())?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_text = res.text().await.unwrap_or_default();
+        return Err(format!("Payment recording failed: {} - {}", status, err_text));
     }
 
     res.json().await.map_err(|e| e.to_string())

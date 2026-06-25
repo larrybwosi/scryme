@@ -39,6 +39,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Button } from '@repo/ui/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
 import {
   DropdownMenu,
@@ -127,9 +128,20 @@ export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier
     <div className="flex flex-col gap-6 p-6 bg-slate-50/50 min-h-screen">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full h-8 w-8">
-            <ChevronRight className="h-4 w-4 rotate-180" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => router.back()}
+                className="rounded-full h-8 w-8"
+                aria-label="Go back"
+              >
+                <ChevronRight className="h-4 w-4 rotate-180" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Go back</TooltipContent>
+          </Tooltip>
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">{supplier.name}</h1>
             <div className="flex items-center gap-2 mt-1.5 text-muted-foreground text-sm">
@@ -317,27 +329,39 @@ export const SupplierDetailView: React.FC<SupplierDetailViewProps> = ({ supplier
                               </td>
                               <td className="px-4 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                                 <div className="flex justify-end gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-slate-500"
-                                    onClick={() => setUpdatePriceData({
-                                      open: true,
-                                      productId: p.productId,
-                                      productName: p.product.name,
-                                      price: p.costPrice
-                                    })}
-                                  >
-                                    <DollarSign className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                                    onClick={() => handleDeleteProduct(p.productId)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-slate-500"
+                                        onClick={() => setUpdatePriceData({
+                                          open: true,
+                                          productId: p.productId,
+                                          productName: p.product.name,
+                                          price: p.costPrice
+                                        })}
+                                        aria-label="Update Price"
+                                      >
+                                        <DollarSign className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Update Price</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                                        onClick={() => handleDeleteProduct(p.productId)}
+                                        aria-label="Delete Product"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Delete Product</TooltipContent>
+                                  </Tooltip>
                                 </div>
                               </td>
                             </tr>

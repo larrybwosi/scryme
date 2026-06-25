@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsOptional, IsArray } from "class-validator";
 
 export class CheckB2BAvailabilityDto {
   @ApiProperty({ required: false })

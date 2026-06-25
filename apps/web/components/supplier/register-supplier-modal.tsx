@@ -90,7 +90,9 @@ export function RegisterSupplierModal() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#1D1D1F]">Register Supplier</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-[#1D1D1F]">
+            Register Supplier
+          </DialogTitle>
           <DialogDescription>
             Add a new supplier to your organization network.
           </DialogDescription>
@@ -103,9 +105,15 @@ export function RegisterSupplierModal() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Supplier Name</FormLabel>
+                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                      Supplier Name
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Acme Inc" {...field} className="h-11 rounded-xl bg-gray-50/50 border-gray-200" />
+                      <Input
+                        placeholder="Acme Inc"
+                        {...field}
+                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,9 +124,15 @@ export function RegisterSupplierModal() {
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Supplier Code</FormLabel>
+                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                      Supplier Code
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="ACM-001" {...field} className="h-11 rounded-xl bg-gray-50/50 border-gray-200 font-mono" />
+                      <Input
+                        placeholder="ACM-001"
+                        {...field}
+                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200 font-mono"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -132,9 +146,15 @@ export function RegisterSupplierModal() {
                 name="contactName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Contact Person</FormLabel>
+                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                      Contact Person
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} className="h-11 rounded-xl bg-gray-50/50 border-gray-200" />
+                      <Input
+                        placeholder="John Doe"
+                        {...field}
+                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -145,18 +165,26 @@ export function RegisterSupplierModal() {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Supplier Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                      Supplier Type
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-11 rounded-xl bg-gray-50/50 border-gray-200">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="rounded-xl">
-                        <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                        <SelectItem value="manufacturer">
+                          Manufacturer
+                        </SelectItem>
                         <SelectItem value="distributor">Distributor</SelectItem>
                         <SelectItem value="wholesaler">Wholesaler</SelectItem>
-                        <SelectItem value="service_provider">Service Provider</SelectItem>
+                        <SelectItem value="service_provider">
+                          Service Provider
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -171,9 +199,15 @@ export function RegisterSupplierModal() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Email</FormLabel>
+                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                      Email
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="john@acme.com" {...field} className="h-11 rounded-xl bg-gray-50/50 border-gray-200" />
+                      <Input
+                        placeholder="john@acme.com"
+                        {...field}
+                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -184,9 +218,15 @@ export function RegisterSupplierModal() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Phone</FormLabel>
+                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                      Phone
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="+254..." {...field} className="h-11 rounded-xl bg-gray-50/50 border-gray-200" />
+                      <Input
+                        placeholder="+254..."
+                        {...field}
+                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -198,17 +238,32 @@ export function RegisterSupplierModal() {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Office Address</FormLabel>
+                  <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    Office Address
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Industrial Area, Nairobi" {...field} className="h-11 rounded-xl bg-gray-50/50 border-gray-200" />
+                    <Input
+                      placeholder="123 Industrial Area, Nairobi"
+                      {...field}
+                      className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter className="pt-4">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="rounded-xl h-11 px-6">Cancel</Button>
-              <Button type="submit" disabled={isSubmitting} className="rounded-xl h-11 px-10 font-bold">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+                className="rounded-xl h-11 px-6">
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-xl h-11 px-10 font-bold">
                 {isSubmitting ? "Registering..." : "Register Supplier"}
               </Button>
             </DialogFooter>

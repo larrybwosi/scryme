@@ -1,9 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsArray, ValidateNested, IsOptional } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class SaleItemDto {
-  @ApiProperty({ example: 'var_123' })
+  @ApiProperty({ example: "var_123" })
   @IsString()
   @IsNotEmpty()
   variantId: string;
@@ -12,13 +19,16 @@ export class SaleItemDto {
   @IsNumber()
   quantity: number;
 
-  @ApiProperty({ example: 15.99, description: 'Client provided price (validated against DB)' })
+  @ApiProperty({
+    example: 15.99,
+    description: "Client provided price (validated against DB)",
+  })
   @IsNumber()
   unitPrice: number;
 }
 
 export class SalePaymentDto {
-  @ApiProperty({ example: 'CASH' })
+  @ApiProperty({ example: "CASH" })
   @IsString()
   @IsNotEmpty()
   method: string;
@@ -51,12 +61,12 @@ export class ProcessSaleDto {
   @IsOptional()
   discountAmount?: number;
 
-  @ApiProperty({ example: '+1234567890', required: false })
+  @ApiProperty({ example: "+1234567890", required: false })
   @IsString()
   @IsOptional()
   customerPhone?: string;
 
-  @ApiProperty({ example: 'Quick sale', required: false })
+  @ApiProperty({ example: "Quick sale", required: false })
   @IsString()
   @IsOptional()
   notes?: string;

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Table,
@@ -50,6 +50,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
             <TableHead>Number</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Location</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -63,7 +64,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
               </TableCell>
             </TableRow>
           ) : (
-            expenses.map((expense) => (
+            expenses.map(expense => (
               <TableRow key={expense.id}>
                 <TableCell>
                   {format(new Date(expense.expenseDate), "MMM d, yyyy")}
@@ -79,6 +80,11 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{expense.category.name}</Badge>
+                </TableCell>
+                <TableCell>
+                  {expense.location?.name || (
+                    <span className="text-zinc-400 italic text-xs">Global</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {new Intl.NumberFormat("en-US", {

@@ -23,6 +23,7 @@ enum TransactionStatus {
   PROCESSING
   READY
   DISPATCHED
+  DELIVERED
   COMPLETED
   CANCELLED
   FAILED
@@ -278,6 +279,12 @@ model Payment {
   updatedAt       DateTime           @updatedAt
   notes           String?
 
+  // Cheque details
+  chequeDate DateTime?
+  bankName   String?
+
+  attachments Attachment[]
+
   @@index([transactionId])
   @@index([status])
   @@index([payoutId])
@@ -322,6 +329,50 @@ model UnclaimedPayment {
   @@index([msisdn])
   @@index([claimed])
   @@map("unclaimed_payment")
+}
+
+model ReceiptConfig {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  showLogo Boolean @default(true)
+  logoUrl  String?
+
+  // Branding Overrides
+  primaryColor   String?
+  companyName    String?
+  companyAddress String?
+  companyEmail   String?
+  companyPhone   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("receipt_config")
+}
+
+model WaybillConfig {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  showLogo Boolean @default(true)
+  logoUrl  String?
+
+  // Branding Overrides
+  primaryColor   String?
+  companyName    String?
+  companyAddress String?
+  companyEmail   String?
+  companyPhone   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("waybill_config")
 }
 
 // ===================================
@@ -433,6 +484,8 @@ model Fulfillment {
   deliveredAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  attachments Attachment[]
 
   @@index([transactionId])
   @@index([status])

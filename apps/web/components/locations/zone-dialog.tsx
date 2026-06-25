@@ -42,13 +42,18 @@ const zoneSchema = z.object({
 
 type ZoneFormValues = z.infer<typeof zoneSchema>;
 
-interface ZoneDialogProps {
+interface ZoneDialogProps extends React.ComponentPropsWithoutRef<typeof DialogTrigger> {
   children?: React.ReactNode;
   locationId: string;
   zone?: any;
 }
 
-export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
+export function ZoneDialog({
+  children,
+  locationId,
+  zone,
+  ...props
+}: ZoneDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<ZoneFormValues>({
@@ -83,7 +88,9 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild {...props}>
+        {children}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{zone ? "Edit Zone" : "Add Storage Zone"}</DialogTitle>
@@ -138,15 +145,14 @@ export function ZoneDialog({ children, locationId, zone }: ZoneDialogProps) {
                     <FormLabel>Unit</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(UnitType).map((unit) => (
+                        {Object.values(UnitType).map(unit => (
                           <SelectItem key={unit} value={unit}>
                             {unit}
                           </SelectItem>

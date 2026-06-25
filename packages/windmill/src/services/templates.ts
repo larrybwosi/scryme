@@ -78,35 +78,11 @@ export class WindmillTemplateService {
         workspaceSlug,
       );
 
-      // Also provision Scryme Chat if credentials exist
-      let scrymeChatWorkspaceId = config.scrymeChatWorkspaceId;
-      let scrymeChatWorkspaceSlug = config.scrymeChatWorkspaceSlug;
-
-      if (
-        !scrymeChatWorkspaceId &&
-        process.env.SCRYME_CHAT_CLIENT_ID &&
-        process.env.SCRYME_CHAT_CLIENT_SECRET
-      ) {
-        try {
-          const scrymeClient = new ScrymeChatApiClient();
-          const scrymeWorkspace = await scrymeClient.createWorkspace(
-            orgName,
-            workspaceSlug,
-          );
-          scrymeChatWorkspaceId = scrymeWorkspace.id;
-          scrymeChatWorkspaceSlug = scrymeWorkspace.slug;
-        } catch (e) {
-          console.error("Failed to provision Scryme Chat workspace:", e);
-        }
-      }
-
       config = await prisma.windmillConfiguration.update({
         where: { organizationId },
         data: {
           workspaceId: workspaceSlug,
           workspaceName: orgName,
-          scrymeChatWorkspaceId,
-          scrymeChatWorkspaceSlug,
         },
       });
     }
@@ -144,7 +120,23 @@ export class WindmillTemplateService {
    * Scans the templates directory and returns a list of available templates with metadata.
    */
   static async getTemplates(): Promise<WindmillTemplate[]> {
-    const templatesDir = path.join(__dirname, "../templates");
+    // In some environments (like Next.js), __dirname might not point where we expect.
+    // We try to find the templates directory relative to the package root.
+    let templatesDir = path.join(__dirname, "../templates");
+
+    try {
+      await fs.access(templatesDir);
+    } catch (e) {
+      // Fallback for different build structures (e.g. if we are in dist/services/)
+      templatesDir = path.join(process.cwd(), "../../packages/windmill/templates");
+      try {
+        await fs.access(templatesDir);
+      } catch (e2) {
+        // Final fallback for monorepo root
+        templatesDir = path.join(process.cwd(), "packages/windmill/templates");
+      }
+    }
+
     const templates: WindmillTemplate[] = [];
 
     await this.walkTemplates(

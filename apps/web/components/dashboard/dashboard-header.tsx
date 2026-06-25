@@ -42,33 +42,47 @@ export function DashboardHeader({ userName, date }: DashboardHeaderProps) {
       <div className="flex gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="bg-black text-white hover:bg-black/90 hover:text-white border-none h-9">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-black text-white hover:bg-black/90 hover:text-white border-none h-9">
               <Calendar className="mr-2 h-4 w-4" />
               {timeframeLabels[timeframe]}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTimeframe("week")}>This Week</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTimeframe("month")}>This Month</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTimeframe("year")}>This Year</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeframe("week")}>
+              This Week
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeframe("month")}>
+              This Month
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeframe("year")}>
+              This Year
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 h-9">
-               <div className="flex items-center gap-2">
-                 <div className="flex -space-x-1">
-                    <div className="h-4 w-4 rounded-full border border-white bg-slate-100 flex items-center justify-center">
-                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                    </div>
-                    <div className="h-4 w-4 rounded-full border border-white bg-slate-800 flex items-center justify-center">
-                         <div className="h-1.5 w-1.5 rounded-full bg-white" />
-                    </div>
-                 </div>
-                 <span>Compare: Last {timeframe === 'year' ? 'Year' : 'Month'}</span>
-                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
-               </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white border-slate-200 h-9">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-1">
+                  <div className="h-4 w-4 rounded-full border border-white bg-slate-100 flex items-center justify-center">
+                    <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  </div>
+                  <div className="h-4 w-4 rounded-full border border-white bg-slate-800 flex items-center justify-center">
+                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                  </div>
+                </div>
+                <span>
+                  Compare: Last {timeframe === "year" ? "Year" : "Month"}
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -77,7 +91,10 @@ export function DashboardHeader({ userName, date }: DashboardHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="outline" size="sm" className="bg-white border-slate-200 h-9">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-white border-slate-200 h-9">
           <Settings2 className="mr-2 h-4 w-4" />
           Edit Widget
         </Button>

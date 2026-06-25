@@ -38,3 +38,94 @@
 **Prevention:**
 - Enable `ThrottlerGuard` globally to provide a baseline defense for all endpoints.
 - Avoid $O(N)$ cryptographic loops in authentication logic. Store salts or use search-optimized hashing strategies if direct lookups are needed, or ensure strict rate limits are applied specifically to these endpoints.
+
+## 2026-06-15 - [Hardened Image Optimization Pipeline]
+**Vulnerability:** The `ImageService` was vulnerable to SSRF and DoS. It fetched images from arbitrary URLs provided in the `id` parameter when in Sanity mode and lacked timeouts or size limits on external requests, allowing for network probing and memory exhaustion.
+
+**Learning:** Image optimization services that fetch external assets are prime targets for SSRF. Trusting "IDs" without strict format validation can lead to unintended proxying of internal resources.
+
+**Prevention:**
+- Strictly validate external asset identifiers using regex (e.g., Sanity's `image-[hash]-[dimensions]-[extension]` format).
+- Always enforce `timeout` and `maxContentLength` on outbound HTTP requests for asset fetching to prevent DoS.
+- Reject raw URLs in parameters that expect specific asset IDs.
+
+## 2026-06-17 - [Strict Validation and Outbound DoS Protections]
+**Vulnerability:** 1) `ImageService` arbitrary URL fallback was still accessible if loose ID validation failed, leading to SSRF. 2) GitHub update checks in `BakeryService` and Slack API calls in `SlackProvider` lacked timeouts and size limits, exposing the server to DoS via resource exhaustion.
+
+**Learning:** "Trust but verify" isn't enough for ID parameters that influence outbound requests; use strict, exclusive validation (allow-listing). Furthermore, *all* outbound HTTP requests must be bounded by timeouts and size limits to prevent the server from becoming a victim of upstream "Slowloris" or large payload attacks.
+
+**Prevention:**
+- Never fallback to raw parameter values when constructing outbound request URLs.
+- Standardize on a set of defensive `axios` request configuration (timeouts, maxContentLength) for all internal services.
+- Ensure test suites for security-critical services (like `ImageService`) explicitly import test globals (like `describe`, `it`) for compatibility with modern Vitest environments.
+
+## 2026-06-21 - [Hardened M-Pesa Integration and Outbound Request Security]
+**Vulnerability:** 1) `MpesaController` endpoints were vulnerable to IDOR as they trusted `organizationId` from request parameters/body without validating ownership. 2) `ShortUrlController`, `ScrymeChatApiClient`, and `MpesaClient` lacked `timeout` and `maxContentLength` on outbound requests, exposing the service to DoS.
+
+**Learning:** Multi-tenant security must be enforced at the API boundary by deriving the tenant ID from the authenticated session context rather than client-supplied parameters. Furthermore, the DoS protection pattern for `axios` must be applied consistently to *all* external API clients, not just image services.
+
+**Prevention:**
+- Always use the `@v2Context()` decorator to retrieve `organizationId` and `memberId` for sensitive operations.
+- Enforce mandatory `timeout` and `maxContentLength` on all `axios` calls to prevent resource exhaustion from malicious or slow upstream responses.
+## 2026-06-18 - [Hardened PIN Validation and Comprehensive Redaction]
+**Vulnerability:** 1) `V3AuthService` PIN validation was vulnerable to DoS by iterating through an unbounded list of members and performing `bcrypt.compare` on each. 2) The `redactSensitiveData` utility lacked protection for PII and financial data (SSN, Card Numbers, DOB).
+
+**Learning:** Documented vulnerabilities (like the PIN DoS) require strict enforcement (e.g., `take` in Prisma and loop counters) to be truly mitigated. Redaction lists should proactively include standard PII/PCI identifiers beyond just authentication tokens.
+
+**Prevention:**
+- Always enforce hard limits (`take`) on database queries that feed into cryptographic loops.
+- Use a comprehensive, standardized redaction list that includes `cardNumber`, `cvc`, `ssn`, and `dob` to ensure compliance with privacy standards across all logs.
+
+## 2026-06-25 - [DoS Mitigation for Outbound Notification Webhooks]
+**Vulnerability:** The `NotificationEngine` in both `notifications` and `windmill` packages lacked `timeout` and `maxContentLength` on outbound `axios` calls to external webhooks and the Discord API. A slow or malicious endpoint could cause the notification worker to hang or consume excessive memory.
+
+**Learning:** External integration points, especially user-configurable webhooks, are critical DoS vectors. Furthermore, duplicated logic across packages (like `notifications` and `windmill`) requires coordinated hardening to ensure comprehensive protection.
+
+**Prevention:**
+- Standardize all outbound HTTP requests with a defensive default configuration (10s timeout, 1MB payload limit unless otherwise required).
+- Identify and consolidate (or parallel-harden) duplicated service logic to prevent security gaps in secondary packages.
+
+## 2026-06-26 - [Consistent Outbound Request Hardening and Redaction Coverage]
+**Vulnerability:** 1) The `@repo/plane` package lacked the standard `timeout` and `maxContentLength` protections applied to other API clients, exposing the service to DoS. 2) The `redactSensitiveData` utility was missing camelCase variants (`accessToken`, `refreshToken`) and integration-specific credentials (M-Pesa, private keys).
+
+**Learning:** In a monorepo, security hardening patterns applied to core services must be systematically audited across all workspace packages. Secondary or integration-specific packages often lag behind global security standards.
+
+**Prevention:**
+- When implementing a new security pattern (like `axios` hardening), use workspace-wide searches to ensure all clients are updated.
+- Proactively expand redaction lists to include all naming conventions (camelCase, snake_case) and provider-specific credential keys used in the codebase.
+
+## 2026-06-27 - [Hardened PIN Authentication and O(1) Lookup]
+**Vulnerability:** `V3AuthCoreService` performed an $O(N)$ loop of `bcrypt.compare` operations on all active members during PIN-based login. This created a high-severity DoS vector for large organizations and allowed for unbounded brute-force attempts.
+
+**Learning:** Simple capping of search results (as seen in previous PRs) causes functional regressions for large tenants. A robust fix combines $O(1)$ database lookups (using `cardId`) with Redis-based rate limiting to eliminate the computational cost and mitigate brute-force risks simultaneously.
+
+**Prevention:**
+- Always prefer unique identifiers (like `cardId`, `badgeId`, or `email`) for initial lookups to ensure authentication logic is $O(1)$ relative to the number of users.
+- Implement per-organization or per-device rate limiting for all PIN/password validation endpoints to protect against DoS and brute-force attacks.
+- Synchronize security hardening across duplicated or similar services (e.g., `V3AuthService` and `V3AuthCoreService`) to prevent architectural gaps.
+
+## 2026-06-23 - [Hardened Scryme Integration and Fixed Internal Fetch Loopback]
+**Vulnerability:** 1) Insecure Direct Object Reference (IDOR) in `ScrymeApprovalService` endpoints (`notify`, etc.) where `requestId` was not checked against the requester's `organizationId`. 2) Authentication bypass via internal HTTP `fetch` calls using `PUBLIC_API_URL` to trigger side effects from webhooks. 3) Missing authorization on sensitive workspace provisioning endpoints.
+
+**Learning:** Internal loopbacks via HTTP `fetch` are both a performance anti-pattern and a security risk, as they often attempt to bypass global guards or rely on "trusted" internal URLs. Additionally, Prisma's `findUnique` is strictly for primary keys or unique indices; adding additional filters like `organizationId` requires `findFirst` to avoid runtime failures.
+
+**Prevention:**
+- Always inject services directly for internal communication instead of calling the API via HTTP.
+- Ensure every database lookup for multi-tenant data includes the `organizationId` filter.
+- Use `findFirst` for lookups involving both a primary key and a tenant ID.
+- Fail-securely for webhooks in production if signature verification secrets are missing.
+
+## 2026-06-24 - [Enforced Windmill Webhook Signature Verification]
+**Vulnerability:** The `WindmillCallbackController` in V3 API exposed public endpoints for automation callbacks (approvals, batch disposal, etc.) without any authentication or signature verification. An attacker could spoof callbacks to approve unauthorized expenses or manipulate inventory status.
+
+**Learning:** Replicating V2 patterns (like M-Pesa or Scryme) in V3 often misses critical security middlewares or manual checks if not explicitly included in the new architecture's decorators.
+
+**Prevention:**
+- Always implement HMAC-SHA256 signature verification for any webhook or callback endpoint.
+- Use `crypto.timingSafeEqual` for signature comparisons to prevent timing attacks.
+- Enforce strict "fail-secure" behavior in production: reject requests if the verification secret is missing from the configuration.
+
+## 2026-06-25 - [Hardened Scryme Webhook Signature Verification]
+**Vulnerability:** The Scryme webhook handler used a standard string comparison (`!==`) to verify HMAC signatures, which is vulnerable to timing attacks. An attacker could potentially brute-force the signature by measuring response times.
+**Learning:** Even when using strong cryptographic hashes like SHA-256, the comparison of the resulting digests must also be cryptographically secure. Constant-time comparison is essential for all signature and token validations.
+**Prevention:** Always use `crypto.timingSafeEqual` for comparing signatures, tokens, or any sensitive cryptographic digests. Ensure that length checks are performed before the constant-time comparison to avoid Node.js runtime errors while maintaining security.

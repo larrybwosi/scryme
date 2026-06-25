@@ -102,13 +102,12 @@ export default async function ReorderRulesPage() {
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className="h-32 text-center text-gray-500"
-                    >
+                      className="h-32 text-center text-gray-500">
                       No reorder rules configured yet.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rules.map((rule) => (
+                  rules.map(rule => (
                     <TableRow key={rule.id}>
                       <TableCell className="font-medium">
                         {rule.product.name}
@@ -127,8 +126,7 @@ export default async function ReorderRulesPage() {
                         {rule.isActive ? (
                           <Badge
                             variant="secondary"
-                            className="bg-green-50 text-green-700"
-                          >
+                            className="bg-green-50 text-green-700">
                             Active
                           </Badge>
                         ) : (

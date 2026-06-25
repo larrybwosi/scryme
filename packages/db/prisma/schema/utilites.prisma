@@ -2,6 +2,8 @@ model Attachment {
   id          String   @id @default(cuid())
   fileName    String?  // Optional, as a note won't have a file name
   fileUrl     String?  // Optional, as a note won't have a URL
+  shortCode   String?  @unique
+  shortUrl    String?
   mimeType    String   // e.g., "image/jpeg", "application/pdf", "text/markdown"
   sizeBytes   Int?
   description String?
@@ -17,12 +19,18 @@ model Attachment {
   transactionId      String?
   transactions        Transaction?      @relation(fields: [transactionId], references: [id])
 
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
   purchaseId  String?
   purchase    Purchase?  @relation(fields: [purchaseId], references: [id])
   expenseId  String?
   expense    Expense?  @relation(fields: [expenseId], references: [id])
   stockBatchId  String?
   stockBatch    StockBatch?  @relation(fields: [stockBatchId], references: [id])
+
+  fulfillmentId String?
+  fulfillment   Fulfillment? @relation(fields: [fulfillmentId], references: [id])
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

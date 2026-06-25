@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CheckB2BAvailabilityDto } from '../dto/check-b2b-availability.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CheckB2BAvailabilityDto } from "../dto/check-b2b-availability.dto";
 
 @Injectable()
 export class CheckB2BAvailabilityUseCase {
@@ -20,24 +20,28 @@ export class CheckB2BAvailabilityUseCase {
       }
 
       if (!locationId && dto.businessAccountId) {
-        const businessAccount = await this.prisma.client.businessAccount.findUnique({
-          where: { id: dto.businessAccountId },
-          select: { defaultLocationId: true },
-        });
+        const businessAccount =
+          await this.prisma.client.businessAccount.findUnique({
+            where: { id: dto.businessAccountId },
+            select: { defaultLocationId: true },
+          });
         locationId = businessAccount?.defaultLocationId || undefined;
       }
 
       if (!locationId) {
-        const defaultLocation = await this.prisma.client.inventoryLocation.findFirst({
-          where: { organizationId, isDefault: true },
-          select: { id: true },
-        });
+        const defaultLocation =
+          await this.prisma.client.inventoryLocation.findFirst({
+            where: { organizationId, isDefault: true },
+            select: { id: true },
+          });
         locationId = defaultLocation?.id;
       }
     }
 
     if (!locationId) {
-      throw new BadRequestException('Location could not be resolved. Please provide a locationId.');
+      throw new BadRequestException(
+        "Location could not be resolved. Please provide a locationId.",
+      );
     }
 
     // 2. Fetch Stock for Variants at Location
@@ -53,8 +57,8 @@ export class CheckB2BAvailabilityUseCase {
       },
     });
 
-    return dto.variantIds.map(variantId => {
-      const stock = stocks.find(s => s.variantId === variantId);
+    return dto.variantIds.map((variantId) => {
+      const stock = stocks.find((s) => s.variantId === variantId);
       return {
         variantId,
         locationId,

@@ -3,20 +3,31 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { authClient, useSession } from "@/lib/auth-client";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@repo/ui/components/ui/alert-dialog";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import {
   ChevronLeft,
   ChevronRight,
   LayoutDashboard,
-  CalendarDays,
-  BedDouble,
   ShoppingCart,
   Users,
-  UserSquare2,
   MapPin,
   Megaphone,
   FileBarChart,
@@ -28,9 +39,6 @@ import {
   Boxes,
   Package,
   TrendingUp,
-  ArrowLeftRight,
-  ShieldCheck,
-  FileText,
   Zap,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
@@ -66,7 +74,11 @@ const sidebarConfig: SidebarSection[] = [
         title: "Manage Staff",
         icon: Users,
         href: "/staff",
-        items: [],
+        items: [
+          { title: "Staff Members", href: "/staff" },
+          { title: "Departments", href: "/staff/departments" },
+          { title: "Drivers", href: "/staff/drivers" },
+        ],
       },
       { title: "Locations", icon: MapPin, href: "/locations" },
       { title: "Promotions", icon: Megaphone, href: "/promotions" },
@@ -77,6 +89,7 @@ const sidebarConfig: SidebarSection[] = [
         items: [
           { title: "Product List", href: "/inventory" },
           { title: "Suppliers", href: "/inventory/supplier" },
+          { title: "Units", href: "/inventory/units" },
         ],
       },
       {
@@ -97,9 +110,7 @@ const sidebarConfig: SidebarSection[] = [
   },
   {
     title: "AUTOMATIONS",
-    items: [
-      { title: "Workflows", icon: Zap, href: "/workflows" },
-    ],
+    items: [{ title: "Workflows", icon: Zap, href: "/workflows" }],
   },
   {
     title: "ACCOUNTING",
@@ -133,12 +144,24 @@ const sidebarConfig: SidebarSection[] = [
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session, isPending } = useSession();
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+        },
+      },
+    });
+  };
 
   const toggleSubmenu = (title: string) => {
-    setOpenMenus((prev) =>
-      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
+    setOpenMenus(prev =>
+      prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title],
     );
   };
 
@@ -147,15 +170,13 @@ export function Sidebar() {
       className={cn(
         "flex flex-col h-screen border-r bg-white transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[80px]" : "w-[280px]",
-      )}
-    >
+      )}>
       {/* Brand Header */}
       <div
         className={cn(
           "flex items-center h-[80px] px-6",
           isCollapsed ? "flex-col justify-center gap-2" : "justify-between",
-        )}
-      >
+        )}>
         {!isCollapsed ? (
           <>
             <div className="flex items-center gap-2">
@@ -169,8 +190,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Collapse sidebar"
-              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
-            >
+              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors">
               <ChevronLeft size={14} />
             </button>
           </>
@@ -179,8 +199,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Expand sidebar"
-              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors"
-            >
+              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors">
               <ChevronRight size={14} />
             </button>
             <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
@@ -205,7 +224,7 @@ export function Sidebar() {
                 const isOpen = openMenus.includes(item.title);
                 const isActive =
                   pathname === item.href ||
-                  item.items?.some((sub) => sub.href === pathname);
+                  item.items?.some(sub => sub.href === pathname);
 
                 const itemContent = (
                   <button
@@ -222,8 +241,7 @@ export function Sidebar() {
                         ? "text-[#34A853] bg-[#34A853]/5 font-medium"
                         : "text-gray-500 hover:bg-gray-50",
                       isCollapsed && "justify-center",
-                    )}
-                  >
+                    )}>
                     <div className="flex items-center gap-3">
                       <item.icon
                         size={20}
@@ -250,7 +268,9 @@ export function Sidebar() {
                     {isCollapsed ? (
                       <Tooltip>
                         <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
-                        <TooltipContent side="right">{item.title}</TooltipContent>
+                        <TooltipContent side="right">
+                          {item.title}
+                        </TooltipContent>
                       </Tooltip>
                     ) : (
                       itemContent
@@ -269,8 +289,7 @@ export function Sidebar() {
                                 isSubActive
                                   ? "text-[#1D1D1F] font-bold"
                                   : "text-gray-500 hover:text-gray-800",
-                              )}
-                            >
+                              )}>
                               {subItem.title}
                             </Link>
                           );
@@ -293,8 +312,7 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   aria-label="Notifications"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-                >
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
                   <div className="relative">
                     <Bell size={20} />
                     <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
@@ -307,12 +325,22 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   aria-label="Support"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg"
-                >
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
                   <HelpCircle size={20} />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Support</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowLogoutDialog(true)}
+                  aria-label="Sign out"
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
+                  <LogOut size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Sign out</TooltipContent>
             </Tooltip>
           </>
         ) : (
@@ -333,26 +361,88 @@ export function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 bg-gray-50 border-t flex items-center justify-between">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold flex-shrink-0">
-            N
-          </div>
+      <div
+        className={cn(
+          "p-4 bg-gray-50 border-t flex items-center justify-between",
+          isCollapsed && "justify-center",
+        )}>
+        <div
+          className={cn(
+            "flex items-center gap-3 overflow-hidden",
+            isCollapsed && "w-full",
+          )}>
+          {isPending ? (
+            <Skeleton
+              className={cn(
+                "w-10 h-10 rounded-full shrink-0",
+                isCollapsed && "mx-auto",
+              )}
+            />
+          ) : (
+            <div
+              className={cn(
+                "w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold flex-shrink-0",
+                isCollapsed && "mx-auto",
+              )}>
+              {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+            </div>
+          )}
           {!isCollapsed && (
-            <div className="overflow-hidden">
-              <div className="font-bold text-sm truncate text-[#1D1D1F]">
-                Rahat Ali
-              </div>
-              <div className="text-[11px] text-gray-500 truncate">
-                Super Admin
-              </div>
+            <div className="overflow-hidden flex flex-col gap-1">
+              {isPending ? (
+                <>
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </>
+              ) : (
+                <>
+                  <div className="font-bold text-sm truncate text-[#1D1D1F]">
+                    {session?.user?.name}
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="w-fit text-[10px] px-1.5 py-0 h-4 capitalize bg-gray-200 text-gray-700 border-none">
+                    {(session?.user as any)?.role || "user"}
+                  </Badge>
+                </>
+              )}
             </div>
           )}
         </div>
-        {!isCollapsed && (
-          <LogOut size={16} className="text-gray-400 cursor-pointer" />
+        {!isCollapsed && !isPending && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setShowLogoutDialog(true)}
+                aria-label="Sign out"
+                className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors">
+                <LogOut size={16} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Sign out</TooltipContent>
+          </Tooltip>
         )}
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will log you out of your account and you will need to sign in
+              again to access your dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white">
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

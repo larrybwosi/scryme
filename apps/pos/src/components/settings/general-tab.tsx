@@ -33,7 +33,6 @@ import { useState } from 'react';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useUpdater } from '@/lib/providers/UpdateProvider';
 import axios from 'axios';
-import { API_ENDPOINT } from '@/lib/axios';
 import { toast } from 'sonner';
 
 // ─── Update Status UI Helpers ────────────────────────────────────────────────
@@ -82,12 +81,13 @@ function ConnectionTestCard() {
   const [isTesting, setIsTesting] = useState(false);
   const [lastTested, setLastTested] = useState<string | null>(null);
   const [status, setStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const apiUrl = useAuthStore(state => state.apiUrl);
 
   const testConnection = async () => {
     setIsTesting(true);
     setStatus('IDLE');
     try {
-      const response = await axios.get(`${API_ENDPOINT}/api/v2/health/ping`, { timeout: 5000 });
+      const response = await axios.get(`${apiUrl}/api/v2/health/ping`, { timeout: 5000 });
       if (response.data?.message === 'pong') {
         setStatus('SUCCESS');
         toast.success('Connection to Scryme API successful');
@@ -121,7 +121,7 @@ function ConnectionTestCard() {
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Server Endpoint</p>
-            <p className="text-sm font-mono mt-1 truncate max-w-[250px]">{API_ENDPOINT}</p>
+            <p className="text-sm font-mono mt-1 truncate max-w-[250px]">{apiUrl}</p>
           </div>
           <Button variant="outline" size="sm" onClick={testConnection} disabled={isTesting} className="gap-2 text-xs">
             {isTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
@@ -325,6 +325,8 @@ export default function GeneralSettings({
   setAllowSaveUnpaidOrders,
   enableAutoStart,
   setEnableAutoStart,
+  autoPrintEnabled,
+  setAutoPrintEnabled,
 }: {
   businessName: string;
   setBusinessName: (name: string) => void;
@@ -340,6 +342,8 @@ export default function GeneralSettings({
   setAllowSaveUnpaidOrders: (allow: boolean) => void;
   enableAutoStart: boolean;
   setEnableAutoStart: (enable: boolean) => void;
+  autoPrintEnabled: boolean;
+  setAutoPrintEnabled: (enable: boolean) => void;
 }) {
   const { currentLocation, allowNegativeStock, setAllowNegativeStock } = useAuthStore();
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
@@ -576,6 +580,19 @@ export default function GeneralSettings({
                 </p>
               </div>
               <Switch checked={enableAutoStart} onCheckedChange={setEnableAutoStart} />
+            </div>
+
+            <div className="flex items-center justify-between py-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">Autoprint Receipts</Label>
+                </div>
+                <p className="text-xs text-muted-foreground max-w-[300px]">
+                  Automatically send receipt to printer after a successful sale.
+                </p>
+              </div>
+              <Switch checked={autoPrintEnabled} onCheckedChange={setAutoPrintEnabled} />
             </div>
 
             {import.meta.env.MODE !== 'standalone' && (

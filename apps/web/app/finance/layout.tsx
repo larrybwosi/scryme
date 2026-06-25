@@ -1,5 +1,5 @@
-import React from 'react';
-import { FinanceTabs } from '../../components/finance/finance-tabs';
+import React from "react";
+import { FinanceTabs } from "../../components/finance/finance-tabs";
 
 export default function FinanceLayout({
   children,
@@ -9,9 +9,7 @@ export default function FinanceLayout({
   return (
     <div className="p-8 max-w-[1400px] mx-auto">
       <FinanceTabs />
-      <div className="mt-6">
-        {children}
-      </div>
+      <div className="mt-6">{children}</div>
     </div>
   );
 }

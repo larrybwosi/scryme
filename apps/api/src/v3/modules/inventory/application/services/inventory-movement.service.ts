@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { MovementType, SerialNumberStatus } from '@repo/db';
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { MovementType, SerialNumberStatus } from "@repo/db";
 
 export interface MovementData {
   organizationId: string;
@@ -41,7 +41,7 @@ export class InventoryMovementService {
 
     // Validate quantity is not negative
     if (quantity < 0) {
-      throw new BadRequestException('Movement quantity cannot be negative');
+      throw new BadRequestException("Movement quantity cannot be negative");
     }
 
     // 1. Create Stock Movement record
@@ -60,8 +60,11 @@ export class InventoryMovementService {
         notes,
         serialNumbers: serialNumbers
           ? {
-              connect: serialNumbers.map(sn => ({
-                organizationId_serialNumber: { organizationId, serialNumber: sn },
+              connect: serialNumbers.map((sn) => ({
+                organizationId_serialNumber: {
+                  organizationId,
+                  serialNumber: sn,
+                },
               })),
             }
           : undefined,
@@ -72,10 +75,14 @@ export class InventoryMovementService {
     if (serialNumbers && serialNumbers.length > 0) {
       let newStatus: SerialNumberStatus = SerialNumberStatus.IN_STOCK;
 
-      if (movementType === MovementType.SALE) newStatus = SerialNumberStatus.SOLD;
-      else if (movementType === MovementType.TRANSFER) newStatus = SerialNumberStatus.TRANSFERRED;
-      else if (movementType === MovementType.ADJUSTMENT_OUT) newStatus = SerialNumberStatus.DAMAGED;
-      else if (movementType === MovementType.SUPPLIER_RETURN) newStatus = SerialNumberStatus.RETURNED;
+      if (movementType === MovementType.SALE)
+        newStatus = SerialNumberStatus.SOLD;
+      else if (movementType === MovementType.TRANSFER)
+        newStatus = SerialNumberStatus.TRANSFERRED;
+      else if (movementType === MovementType.ADJUSTMENT_OUT)
+        newStatus = SerialNumberStatus.DAMAGED;
+      else if (movementType === MovementType.SUPPLIER_RETURN)
+        newStatus = SerialNumberStatus.RETURNED;
 
       await tx.serialNumber.updateMany({
         where: {
@@ -90,14 +97,28 @@ export class InventoryMovementService {
     }
 
     // 3. Verify Stock Integrity (Automated Check)
-    await this.verifyIntegrity(tx, organizationId, variantId, fromLocationId, toLocationId);
+    await this.verifyIntegrity(
+      tx,
+      organizationId,
+      variantId,
+      fromLocationId,
+      toLocationId,
+    );
 
-    this.logger.log(`Recorded ${movementType} movement for variant ${variantId} (qty: ${quantity})`);
+    this.logger.log(
+      `Recorded ${movementType} movement for variant ${variantId} (qty: ${quantity})`,
+    );
 
     return movement;
   }
 
-  private async verifyIntegrity(tx: any, organizationId: string, variantId: string, fromLoc?: string, toLoc?: string) {
+  private async verifyIntegrity(
+    tx: any,
+    organizationId: string,
+    variantId: string,
+    fromLoc?: string,
+    toLoc?: string,
+  ) {
     const locationIds = [fromLoc, toLoc].filter(Boolean) as string[];
 
     for (const locationId of locationIds) {
@@ -106,15 +127,23 @@ export class InventoryMovementService {
       });
 
       const batches = await tx.stockBatch.findMany({
-        where: { organizationId, variantId, locationId, currentQuantity: { gt: 0 } },
+        where: {
+          organizationId,
+          variantId,
+          locationId,
+          currentQuantity: { gt: 0 },
+        },
       });
 
-      const totalBatchQty = batches.reduce((acc: number, b: any) => acc + Number(b.currentQuantity), 0);
+      const totalBatchQty = batches.reduce(
+        (acc: number, b: any) => acc + Number(b.currentQuantity),
+        0,
+      );
       const currentStock = Number(stock?.currentStock || 0);
 
       if (Math.abs(totalBatchQty - currentStock) > 0.001) {
         this.logger.error(
-          `[Integrity Alert] Stock mismatch for variant ${variantId} at location ${locationId}. Stock: ${currentStock}, Batches: ${totalBatchQty}`
+          `[Integrity Alert] Stock mismatch for variant ${variantId} at location ${locationId}. Stock: ${currentStock}, Batches: ${totalBatchQty}`,
         );
         // In highly strict enterprise systems, we might block the transaction here.
       }

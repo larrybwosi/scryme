@@ -1,7 +1,8 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useMemo } from 'react';
-import { Decimal } from 'decimal.js';;
+import { Decimal } from 'decimal.js';
+import { customAlphabet } from 'nanoid';
 
 /**
  * Merge Tailwind CSS classes with clsx
@@ -308,4 +309,14 @@ export function combineDateTime(dateInput: Date | string, timeInput: Date | stri
   }
 
   return date;
+}
+
+/**
+ * Generates an 8-character unguessable short code.
+ * Uses a safe alphabet (no confusing characters like 0, O, 1, I).
+ */
+export function generateShortCode(): string {
+  const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  const nanoid = customAlphabet(alphabet, 8);
+  return nanoid();
 }

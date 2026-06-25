@@ -5,6 +5,7 @@ import { mockInvoke } from '@/test/mocks/tauri';
 // Mock API_ENDPOINT
 vi.mock('@/lib/axios', () => ({
   API_ENDPOINT: 'http://localhost:3000',
+  API_ENDPOINT_DEFAULT: 'http://localhost:3000',
 }));
 
 describe('PosAuthStore', () => {

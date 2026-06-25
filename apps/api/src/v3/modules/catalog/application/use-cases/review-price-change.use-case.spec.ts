@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Test, TestingModule } from '@nestjs/testing';
-import { ReviewPriceChangeUseCase } from './review-price-change.use-case';
-import { PrismaService } from '@/prisma/prisma.service';
-import { PriceChangeStatus } from '@repo/db';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
+import { ReviewPriceChangeUseCase } from "./review-price-change.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PriceChangeStatus } from "@repo/db";
+import { NotFoundException, BadRequestException } from "@nestjs/common";
 
-describe('ReviewPriceChangeUseCase', () => {
+describe("ReviewPriceChangeUseCase", () => {
   let useCase: ReviewPriceChangeUseCase;
   let prisma: any;
 
@@ -22,7 +22,7 @@ describe('ReviewPriceChangeUseCase', () => {
         priceHistory: {
           create: vi.fn(),
         },
-        $transaction: vi.fn((cb) => cb(prisma.client)),
+        $transaction: vi.fn(cb => cb(prisma.client)),
       },
     };
 
@@ -36,24 +36,27 @@ describe('ReviewPriceChangeUseCase', () => {
     useCase = module.get<ReviewPriceChangeUseCase>(ReviewPriceChangeUseCase);
   });
 
-  it('should approve a price change request', async () => {
-    const requestId = 'req-1';
-    const organizationId = 'org-1';
-    const memberId = 'mem-1';
+  it("should approve a price change request", async () => {
+    const requestId = "req-1";
+    const organizationId = "org-1";
+    const memberId = "mem-1";
     const request = {
       id: requestId,
       organizationId,
-      priceListItemId: 'pli-1',
+      priceListItemId: "pli-1",
       oldPrice: 10,
       newPrice: 15,
       oldCost: 8,
       newCost: 12,
       status: PriceChangeStatus.PENDING,
-      reason: 'Cost increase',
+      reason: "Cost increase",
     };
 
     prisma.client.priceChangeRequest.findUnique.mockResolvedValue(request);
-    prisma.client.priceChangeRequest.update.mockResolvedValue({ ...request, status: PriceChangeStatus.APPROVED });
+    prisma.client.priceChangeRequest.update.mockResolvedValue({
+      ...request,
+      status: PriceChangeStatus.APPROVED,
+    });
 
     const result = await useCase.execute({
       organizationId,
@@ -80,26 +83,29 @@ describe('ReviewPriceChangeUseCase', () => {
     expect(result.status).toBe(PriceChangeStatus.APPROVED);
   });
 
-  it('should reject a price change request', async () => {
-    const requestId = 'req-1';
-    const organizationId = 'org-1';
-    const memberId = 'mem-1';
+  it("should reject a price change request", async () => {
+    const requestId = "req-1";
+    const organizationId = "org-1";
+    const memberId = "mem-1";
     const request = {
       id: requestId,
       organizationId,
-      priceListItemId: 'pli-1',
+      priceListItemId: "pli-1",
       status: PriceChangeStatus.PENDING,
     };
 
     prisma.client.priceChangeRequest.findUnique.mockResolvedValue(request);
-    prisma.client.priceChangeRequest.update.mockResolvedValue({ ...request, status: PriceChangeStatus.REJECTED });
+    prisma.client.priceChangeRequest.update.mockResolvedValue({
+      ...request,
+      status: PriceChangeStatus.REJECTED,
+    });
 
     const result = await useCase.execute({
       organizationId,
       requestId,
       memberId,
       status: PriceChangeStatus.REJECTED,
-      rejectionReason: 'Too expensive',
+      rejectionReason: "Too expensive",
     });
 
     expect(prisma.client.priceListItem.update).not.toHaveBeenCalled();
@@ -108,32 +114,36 @@ describe('ReviewPriceChangeUseCase', () => {
       where: { id: requestId },
       data: expect.objectContaining({
         status: PriceChangeStatus.REJECTED,
-        rejectionReason: 'Too expensive',
+        rejectionReason: "Too expensive",
       }),
     });
   });
 
-  it('should throw NotFoundException if request not found', async () => {
+  it("should throw NotFoundException if request not found", async () => {
     prisma.client.priceChangeRequest.findUnique.mockResolvedValue(null);
 
-    await expect(useCase.execute({
-      organizationId: 'org-1',
-      requestId: 'non-existent',
-      memberId: 'mem-1',
-      status: PriceChangeStatus.APPROVED,
-    })).rejects.toThrow(NotFoundException);
+    await expect(
+      useCase.execute({
+        organizationId: "org-1",
+        requestId: "non-existent",
+        memberId: "mem-1",
+        status: PriceChangeStatus.APPROVED,
+      }),
+    ).rejects.toThrow(NotFoundException);
   });
 
-  it('should throw BadRequestException if request is not pending', async () => {
+  it("should throw BadRequestException if request is not pending", async () => {
     prisma.client.priceChangeRequest.findUnique.mockResolvedValue({
       status: PriceChangeStatus.APPROVED,
     });
 
-    await expect(useCase.execute({
-      organizationId: 'org-1',
-      requestId: 'req-1',
-      memberId: 'mem-1',
-      status: PriceChangeStatus.APPROVED,
-    })).rejects.toThrow(BadRequestException);
+    await expect(
+      useCase.execute({
+        organizationId: "org-1",
+        requestId: "req-1",
+        memberId: "mem-1",
+        status: PriceChangeStatus.APPROVED,
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

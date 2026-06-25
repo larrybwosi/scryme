@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import {
   Zap,
@@ -15,6 +15,9 @@ import {
   Loader2,
   Plus,
   AlertCircle,
+  Settings,
+  ChevronRight,
+  Info,
 } from "lucide-react";
 import {
   Table,
@@ -35,16 +38,20 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@repo/ui/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 import { PageHeader } from "../../components/page-header";
 import { Breadcrumbs } from "../../components/breadcrumbs";
-import {
-  getAvailableWorkflowsAction as getAvailableWorkflows,
-  provisionWorkflowAction as provisionWorkflow,
-  triggerWorkflowAction as triggerWorkflow,
-  getWorkflowHistoryAction as getWorkflowHistory,
-} from "../actions/workflows";
 import { toast } from "sonner";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
+import { MemberSelector } from "../../components/member-selector";
+import { MultiMemberSelector } from "../../components/multi-member-selector";
+import { cn } from "@repo/ui/lib/utils";
+import { Separator } from "@repo/ui/components/ui/separator";
 
 // Define proper types
 interface Workflow {
@@ -52,6 +59,7 @@ interface Workflow {
   name: string;
   description: string;
   isProvisioned: boolean;
+  settings?: Record<string, any>;
   schema?: {
     properties?: Record<string, any>;
   };
@@ -66,15 +74,10 @@ interface WorkflowHistory {
   result?: any;
 }
 
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-// Fetcher function that extracts data from API response
+// Fetcher function that extracts data from local API response
 const workflowsFetcher = async (): Promise<Workflow[]> => {
-  const response = await getAvailableWorkflows();
+  const res = await fetch("/api/workflows/available");
+  const response = await res.json();
   if (response.success && response.data) {
     return response.data;
   }
@@ -82,7 +85,10 @@ const workflowsFetcher = async (): Promise<Workflow[]> => {
 };
 
 const historyFetcher = async (path: string): Promise<WorkflowHistory[]> => {
-  const response = await getWorkflowHistory(path);
+  const res = await fetch(
+    `/api/workflows/history?path=${encodeURIComponent(path)}`,
+  );
+  const response = await res.json();
   if (response.success && response.data) {
     return response.data;
   }
@@ -90,7 +96,6 @@ const historyFetcher = async (path: string): Promise<WorkflowHistory[]> => {
 };
 
 export default function WorkflowsPage() {
-  const { mutate: globalMutate } = useSWRConfig();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null,
@@ -99,7 +104,14 @@ export default function WorkflowsPage() {
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [configValues, setConfigValues] = useState<Record<string, any>>({});
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [selectedJobLogs, setSelectedJobLogs] = useState<{
+    jobId: string;
+    logs: string;
+  } | null>(null);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   // SWR for workflows
   const {
@@ -116,19 +128,27 @@ export default function WorkflowsPage() {
   // SWR for workflow history (only when a workflow is selected)
   const {
     data: history = [],
-    error: historyError,
     isLoading: historyLoading,
     mutate: mutateHistory,
   } = useSWR<WorkflowHistory[]>(
-    selectedWorkflow ? ["workflow-history", selectedWorkflow.path] : null,
-    () =>
-      selectedWorkflow
-        ? historyFetcher(selectedWorkflow.path)
-        : Promise.resolve([]),
+    selectedWorkflow
+      ? ["workflow-history", selectedWorkflow.path, statusFilter]
+      : null,
+    () => {
+      if (!selectedWorkflow) return Promise.resolve([]);
+      const url = new URL(`/api/workflows/history`, window.location.origin);
+      url.searchParams.set("path", selectedWorkflow.path);
+      if (statusFilter !== "ALL") {
+        url.searchParams.set("status", statusFilter);
+      }
+      return fetch(url.toString())
+        .then(res => res.json())
+        .then(res => res.data || []);
+    },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 30000,
+      dedupingInterval: 5000, // Frequent refresh for history
     },
   );
 
@@ -146,10 +166,16 @@ export default function WorkflowsPage() {
 
     setIsProvisioning(true);
     try {
-      const response = await provisionWorkflow(
-        selectedWorkflow.path,
-        configValues,
-      );
+      const res = await fetch("/api/workflows/provision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: selectedWorkflow.path,
+          settings: configValues,
+        }),
+      });
+      const response = await res.json();
+
       if (response.success) {
         toast.success("Workflow provisioned successfully");
         setIsProvisionSheetOpen(false);
@@ -167,7 +193,16 @@ export default function WorkflowsPage() {
   const handleTrigger = async (workflow: Workflow) => {
     setIsTriggering(true);
     try {
-      const response = await triggerWorkflow(workflow.path, {});
+      const res = await fetch("/api/workflows/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: workflow.path,
+          inputs: {},
+        }),
+      });
+      const response = await res.json();
+
       if (response.success) {
         toast.success("Workflow execution started");
         setSelectedWorkflow(workflow);
@@ -185,24 +220,83 @@ export default function WorkflowsPage() {
 
   const handleOpenHistory = async (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
+    setStatusFilter("ALL");
     setIsHistorySheetOpen(true);
-    await mutateHistory(); // Refresh history when opening
+  };
+
+  const handleCancelJob = async (jobId: string) => {
+    setIsCancelling(jobId);
+    try {
+      const res = await fetch("/api/workflows/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId }),
+      });
+      const response = await res.json();
+      if (response.success) {
+        toast.success("Job cancelled successfully");
+        mutateHistory();
+      } else {
+        toast.error(response.error || "Failed to cancel job");
+      }
+    } catch (error) {
+      toast.error("An error occurred while cancelling");
+    } finally {
+      setIsCancelling(null);
+    }
+  };
+
+  const handleViewLogs = async (jobId: string) => {
+    setIsLoadingLogs(true);
+    setSelectedJobLogs(null);
+    try {
+      const res = await fetch(`/api/workflows/logs?jobId=${jobId}`);
+      const response = await res.json();
+      if (response.success) {
+        setSelectedJobLogs({ jobId, logs: response.data });
+      } else {
+        toast.error(response.error || "Failed to fetch logs");
+      }
+    } catch (error) {
+      toast.error("An error occurred while fetching logs");
+    } finally {
+      setIsLoadingLogs(false);
+    }
   };
 
   const handleOpenProvision = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
-    const savedValues: Record<string, any> = {};
+    const initialValues: Record<string, any> = {};
 
     const properties = workflow.schema?.properties;
     if (properties) {
-      Object.keys(properties).forEach((key) => {
-        savedValues[key] = properties[key]?.default ?? "";
+      Object.entries(properties).forEach(([key, prop]: [string, any]) => {
+        // Priority: Current provisioned setting > Schema default > empty string
+        initialValues[key] =
+          workflow.settings?.[key] ??
+          prop.default ??
+          (prop.type === "boolean" ? false : "");
       });
     }
 
-    setConfigValues(savedValues);
+    setConfigValues(initialValues);
     setIsProvisionSheetOpen(true);
   };
+
+  // Group fields by their "group" property
+  const groupedFields = useMemo(() => {
+    if (!selectedWorkflow?.schema?.properties) return {};
+
+    const groups: Record<string, [string, any][]> = {};
+    Object.entries(selectedWorkflow.schema.properties).forEach(
+      ([key, prop]: [string, any]) => {
+        const groupName = prop.group || "General Configuration";
+        if (!groups[groupName]) groups[groupName] = [];
+        groups[groupName].push([key, prop]);
+      },
+    );
+    return groups;
+  }, [selectedWorkflow]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -279,14 +373,13 @@ export default function WorkflowsPage() {
               placeholder="Search workflows..."
               className="pl-9 bg-white"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
           <Button
             variant="outline"
             onClick={() => mutateWorkflows()}
-            disabled={workflowsLoading}
-          >
+            disabled={workflowsLoading}>
             <History className="w-4 h-4 mr-2" />
             {workflowsLoading ? "Loading..." : "Refresh"}
           </Button>
@@ -319,8 +412,7 @@ export default function WorkflowsPage() {
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="h-48 text-center text-gray-500"
-                >
+                  className="h-48 text-center text-gray-500">
                   {searchTerm
                     ? "No workflows found matching your search."
                     : "No workflows available. Check back later."}
@@ -330,8 +422,7 @@ export default function WorkflowsPage() {
               filteredWorkflows.map((workflow: Workflow) => (
                 <TableRow
                   key={workflow.path}
-                  className="group hover:bg-gray-50/50 transition-colors"
-                >
+                  className="group hover:bg-gray-50/50 transition-colors">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -352,15 +443,13 @@ export default function WorkflowsPage() {
                     {workflow.isProvisioned ? (
                       <Badge
                         variant="outline"
-                        className="text-green-600 border-green-200 bg-green-50"
-                      >
+                        className="text-green-600 border-green-200 bg-green-50">
                         Provisioned
                       </Badge>
                     ) : (
                       <Badge
                         variant="outline"
-                        className="text-gray-400 border-gray-200"
-                      >
+                        className="text-gray-400 border-gray-200">
                         Not Active
                       </Badge>
                     )}
@@ -372,23 +461,20 @@ export default function WorkflowsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleOpenHistory(workflow)}
-                          >
+                            onClick={() => handleOpenHistory(workflow)}>
                             <History className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleOpenProvision(workflow)}
-                          >
+                            onClick={() => handleOpenProvision(workflow)}>
                             <Settings2 className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
                             className="bg-[#34A853] hover:bg-[#2d9248]"
                             onClick={() => handleTrigger(workflow)}
-                            disabled={isTriggering}
-                          >
+                            disabled={isTriggering}>
                             {isTriggering ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
@@ -401,8 +487,7 @@ export default function WorkflowsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleOpenProvision(workflow)}
-                        >
+                          onClick={() => handleOpenProvision(workflow)}>
                           <Plus className="w-4 h-4 mr-2" /> Provision
                         </Button>
                       )}
@@ -417,78 +502,146 @@ export default function WorkflowsPage() {
 
       {/* Provisioning Sheet */}
       <Sheet open={isProvisionSheetOpen} onOpenChange={setIsProvisionSheetOpen}>
-        <SheetContent className="sm:max-w-[500px]">
-          <SheetHeader>
-            <SheetTitle>Provision Workflow</SheetTitle>
-            <SheetDescription>
-              Configure and activate the {selectedWorkflow?.name} automation for
-              your organization.
+        <SheetContent className="sm:max-w-[550px] overflow-y-auto">
+          <SheetHeader className="space-y-4">
+            <div className="flex items-center gap-2 text-[#34A853]">
+              <Settings className="w-5 h-5" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                Workflow Configuration
+              </span>
+            </div>
+            <SheetTitle className="text-2xl font-bold">
+              {selectedWorkflow?.isProvisioned
+                ? "Edit Settings"
+                : "Provision Workflow"}
+            </SheetTitle>
+            <SheetDescription className="text-base">
+              Configure <strong>{selectedWorkflow?.name}</strong> to match your
+              organization&apos;s needs.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="py-8 space-y-6">
-            {selectedWorkflow?.schema?.properties &&
-              Object.entries(selectedWorkflow.schema.properties).map(
-                ([key, prop]: [string, any]) => (
-                  <div key={key} className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {prop.title || key}
-                    </label>
-                    {prop.type === "boolean" ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-[#34A853] focus:ring-[#34A853]"
-                          checked={configValues[key] ?? prop.default}
-                          onChange={(e) =>
+          <div className="py-8 space-y-10">
+            {Object.entries(groupedFields).map(([groupName, fields]) => (
+              <div key={groupName} className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                    {groupName}
+                  </h3>
+                  <Separator className="flex-1" />
+                </div>
+
+                <div className="space-y-5">
+                  {fields.map(([key, prop]: [string, any]) => (
+                    <div key={key} className="space-y-2.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                          {prop.title || key}
+                          {prop.description && (
+                            <div className="group relative">
+                              <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                                {prop.description}
+                              </div>
+                            </div>
+                          )}
+                        </label>
+                      </div>
+
+                      {prop.format === "members" ? (
+                        <MultiMemberSelector
+                          value={configValues[key]}
+                          onValueChange={val =>
+                            setConfigValues({ ...configValues, [key]: val })
+                          }
+                          placeholder={`Select members for ${prop.title || key}...`}
+                        />
+                      ) : prop.format === "member" ? (
+                        <MemberSelector
+                          value={configValues[key]}
+                          onValueChange={val =>
+                            setConfigValues({ ...configValues, [key]: val })
+                          }
+                          placeholder={`Select member for ${prop.title || key}...`}
+                        />
+                      ) : prop.type === "boolean" ? (
+                        <div
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer",
+                            configValues[key]
+                              ? "bg-green-50 border-green-200"
+                              : "bg-gray-50 border-gray-200",
+                          )}
+                          onClick={() =>
                             setConfigValues({
                               ...configValues,
-                              [key]: e.target.checked,
+                              [key]: !configValues[key],
+                            })
+                          }>
+                          <span className="text-sm font-medium text-gray-600">
+                            {configValues[key] ? "Enabled" : "Disabled"}
+                          </span>
+                          <div
+                            className={cn(
+                              "w-10 h-5 rounded-full relative transition-colors p-1",
+                              configValues[key]
+                                ? "bg-[#34A853]"
+                                : "bg-gray-300",
+                            )}>
+                            <div
+                              className={cn(
+                                "w-3 h-3 bg-white rounded-full transition-transform",
+                                configValues[key]
+                                  ? "translate-x-5"
+                                  : "translate-x-0",
+                              )}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <Input
+                          type={prop.type === "number" ? "number" : "text"}
+                          placeholder={
+                            prop.default?.toString() || `Enter ${key}...`
+                          }
+                          value={configValues[key] ?? ""}
+                          onChange={e =>
+                            setConfigValues({
+                              ...configValues,
+                              [key]:
+                                prop.type === "number"
+                                  ? Number(e.target.value)
+                                  : e.target.value,
                             })
                           }
+                          className="h-11 bg-white focus:ring-[#34A853] focus:border-[#34A853]"
                         />
-                        <span className="text-sm text-gray-500">Enabled</span>
-                      </div>
-                    ) : (
-                      <Input
-                        type={prop.type === "number" ? "number" : "text"}
-                        placeholder={prop.default?.toString()}
-                        value={configValues[key] ?? ""}
-                        onChange={(e) =>
-                          setConfigValues({
-                            ...configValues,
-                            [key]: e.target.value,
-                          })
-                        }
-                      />
-                    )}
-                    {prop.description && (
-                      <p className="text-[11px] text-gray-400">
-                        {prop.description}
-                      </p>
-                    )}
-                  </div>
-                ),
-              )}
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <SheetFooter>
+          <SheetFooter className="pt-6 border-t mt-auto">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setIsProvisionSheetOpen(false)}
-            >
+              className="px-6">
               Cancel
             </Button>
             <Button
-              className="bg-[#34A853] hover:bg-[#2d9248]"
+              className="bg-[#34A853] hover:bg-[#2d9248] px-8 h-11"
               onClick={handleProvision}
-              disabled={isProvisioning}
-            >
-              {isProvisioning && (
+              disabled={isProvisioning}>
+              {isProvisioning ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
               )}
               {selectedWorkflow?.isProvisioned
-                ? "Save Settings"
+                ? "Update Configuration"
                 : "Activate Workflow"}
             </Button>
           </SheetFooter>
@@ -497,55 +650,152 @@ export default function WorkflowsPage() {
 
       {/* History Sheet */}
       <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
-        <SheetContent className="sm:max-w-[600px]">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <History className="w-5 h-5 text-gray-400" />
+        <SheetContent className="sm:max-w-[700px] overflow-y-auto">
+          <SheetHeader className="pb-6 border-b">
+            <SheetTitle className="flex items-center gap-2 text-xl">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <History className="w-5 h-5 text-gray-600" />
+              </div>
               Execution History
             </SheetTitle>
             <SheetDescription>
-              Recent runs for {selectedWorkflow?.name}.
+              Recent automated runs for{" "}
+              <strong>{selectedWorkflow?.name}</strong>.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-8 space-y-4">
-            {historyLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[#34A853]" />
-              </div>
-            ) : history.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 border-2 border-dashed rounded-xl">
-                No history found for this workflow.
-              </div>
-            ) : (
-              history.map((run: WorkflowHistory) => (
-                <div
-                  key={run.id}
-                  className="p-4 rounded-lg border border-gray-100 bg-gray-50/50 space-y-3"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium flex items-center gap-2">
-                        Job:{" "}
-                        <span className="font-mono text-xs text-gray-500">
-                          {run.jobId}
-                        </span>
-                        <ExternalLink className="w-3 h-3 text-gray-400 cursor-pointer hover:text-blue-500" />
-                      </div>
-                      <div className="text-[11px] text-gray-400">
-                        {new Date(run.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                    {getStatusBadge(run.status)}
+          <div className="mt-6">
+            <Tabs
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+              className="w-full">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
+                <TabsTrigger value="ALL">All</TabsTrigger>
+                <TabsTrigger value="RUNNING">Running</TabsTrigger>
+                <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
+                <TabsTrigger value="FAILED">Failed</TabsTrigger>
+                <TabsTrigger value="CANCELLED">Cancelled</TabsTrigger>
+              </TabsList>
+
+              <div className="space-y-6">
+                {historyLoading ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#34A853]" />
+                    <p className="text-sm text-gray-500 animate-pulse">
+                      Fetching latest runs...
+                    </p>
                   </div>
-                  {run.result && (
-                    <div className="p-3 bg-white rounded border border-gray-100 text-[11px] font-mono overflow-auto max-h-32">
-                      <pre>{JSON.stringify(run.result, null, 2)}</pre>
+                ) : history.length === 0 ? (
+                  <div className="text-center py-20 px-6 border-2 border-dashed rounded-2xl bg-gray-50/50">
+                    <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                      <Clock className="w-6 h-6 text-gray-300" />
                     </div>
-                  )}
-                </div>
-              ))
-            )}
+                    <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                      No history yet
+                    </h4>
+                    <p className="text-xs text-gray-500">
+                      Runs will appear here once the workflow is triggered
+                      manually or by system events.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {history.map((run: WorkflowHistory) => (
+                      <div
+                        key={run.id}
+                        className="p-5 rounded-xl border border-gray-100 bg-white hover:border-gray-200 transition-all shadow-sm space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1.5">
+                            <div className="text-sm font-bold flex items-center gap-2 text-gray-900">
+                              Job Instance
+                              <span className="font-mono text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">
+                                {run.jobId}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                              <Clock className="w-3 h-3" />
+                              {new Date(run.createdAt).toLocaleString(
+                                undefined,
+                                {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                },
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(run.status)}
+                            {(run.status === "RUNNING" ||
+                              run.status === "PENDING") && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-red-600 border-red-100 hover:bg-red-50"
+                                onClick={() => handleCancelJob(run.jobId)}
+                                disabled={isCancelling === run.jobId}>
+                                {isCancelling === run.jobId ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <XCircle className="w-3 h-3" />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {run.result && (
+                          <div className="rounded-lg bg-gray-900 p-4 relative group">
+                            <div className="absolute right-3 top-3 text-[10px] text-gray-500 font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                              JSON Result
+                            </div>
+                            <pre className="text-[11px] font-mono text-blue-300 overflow-x-auto max-h-40 custom-scrollbar">
+                              {JSON.stringify(run.result, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center">
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-xs text-blue-600 font-semibold gap-1"
+                            onClick={() => handleViewLogs(run.jobId)}
+                            disabled={isLoadingLogs}>
+                            {isLoadingLogs ? (
+                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                            ) : null}
+                            View Detailed Logs{" "}
+                            <ChevronRight className="w-3 h-3" />
+                          </Button>
+
+                          {selectedJobLogs?.jobId === run.jobId && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-[10px] h-6"
+                              onClick={() => setSelectedJobLogs(null)}>
+                              Hide Logs
+                            </Button>
+                          )}
+                        </div>
+
+                        {selectedJobLogs?.jobId === run.jobId && (
+                          <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 mt-2">
+                            <div className="text-[10px] text-gray-400 font-mono uppercase mb-2">
+                              Stdout / Stderr
+                            </div>
+                            <pre className="text-[11px] font-mono text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar">
+                              {selectedJobLogs.logs ||
+                                "No logs available for this run."}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Tabs>
           </div>
         </SheetContent>
       </Sheet>

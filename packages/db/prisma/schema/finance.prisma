@@ -28,6 +28,8 @@ model Expense {
   // -- Categorization & GL --
   categoryId           String
   category             ExpenseCategory            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  ledgerAccountId      String?
+  ledgerAccount        LedgerAccount?             @relation(fields: [ledgerAccountId], references: [id], onDelete: SetNull)
 
   // -- Dimensions (For Reporting) --
   costCenterId         String?                    // Link to new CostCenter model
@@ -106,6 +108,8 @@ model ExpenseCategory {
 
   // -- Accounting Integration --
   glCode             String?                 // General Ledger Account Code (e.g., 6000)
+  ledgerAccountId    String?
+  ledgerAccount      LedgerAccount?          @relation(fields: [ledgerAccountId], references: [id], onDelete: SetNull)
   taxRateDefault     Decimal?                @default(0) // Default tax %
 
   color              String?
@@ -303,6 +307,7 @@ model CostCenter {
 
   expenses       Expense[]
   budgets        Budget[]
+  departments    Department[]
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -327,6 +332,9 @@ model PettyCashFund {
 
   responsibleMemberId String
   responsibleMember   Member    @relation("ResponsibleForFund", fields: [responsibleMemberId], references: [id], onDelete: Restrict)
+
+  locationId     String?
+  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   isActive       Boolean       @default(true)
   createdAt      DateTime      @default(now())
@@ -651,6 +659,8 @@ model ApprovalRequest {
   status              ApprovalStatus      @default(PENDING)
   currentStep         Int                 @default(1)
 
+  scrymeThreadId      String?             // For enterprise threaded discussions
+
   workflowId          String?
   workflow            ApprovalWorkflow?   @relation("WorkflowApprovalRequests", fields: [workflowId], references: [id], onDelete: SetNull)
 
@@ -678,6 +688,10 @@ model ApprovalDecision {
   status            ApprovalStatus  @default(PENDING)
   comments          String?
   decisionDate      DateTime?
+
+  // -- Scryme Integration --
+  scrymeMessageId   String?
+  scrymeChannelId   String?
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -878,4 +892,241 @@ enum ThreeWayMatchStatus {
   PARTIAL_MATCH   // Invoice matches PO but receipt is pending (or vice versa)
   MATCHED         // PO, Receipt, and Invoice align
   VARIANCE        // Discrepancy detected (Price or Qty difference)
+}
+
+// --------------------------------------------------------
+// GENERAL LEDGER & DOUBLE-ENTRY ACCOUNTING
+// --------------------------------------------------------
+
+model LedgerAccount {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String
+  code           String         // e.g., "1000", "2000"
+  description    String?
+  type           AccountType
+  subType        AccountSubType
+
+  // For hierarchical COA
+  parentId       String?
+  parent         LedgerAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children       LedgerAccount[] @relation("AccountHierarchy")
+
+  isActive       Boolean        @default(true)
+  isSystem       Boolean        @default(false) // If true, cannot be deleted (e.g., Retained Earnings)
+
+  journalLines      JournalLine[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model JournalEntry {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  entryDate      DateTime       @default(now())
+  postingDate    DateTime?      // When it was actually committed to the ledger
+  description    String
+  reference      String?        // Document #, Invoice #, etc.
+  sourceType     JournalSource?
+  sourceId       String?        // Link to Transaction, Expense, Purchase, etc.
+
+  status         JournalStatus  @default(DRAFT)
+
+  memberId       String         // Creator
+  member         Member         @relation(fields: [memberId], references: [id])
+
+  lines          JournalLine[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId, entryDate])
+  @@index([status])
+}
+
+model JournalLine {
+  id               String        @id @default(cuid())
+  journalEntryId   String
+  journalEntry     JournalEntry  @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  ledgerAccountId  String
+  ledgerAccount    LedgerAccount @relation(fields: [ledgerAccountId], references: [id], onDelete: Restrict)
+
+  description      String?
+  debit            Decimal       @default(0) @db.Decimal(19, 4)
+  credit           Decimal       @default(0) @db.Decimal(19, 4)
+
+  // For reconciliation
+  bankStatementLineId String?    @unique
+  bankStatementLine   BankStatementLine? @relation(fields: [bankStatementLineId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([journalEntryId])
+  @@index([ledgerAccountId])
+}
+
+// --------------------------------------------------------
+// BANK RECONCILIATION
+// --------------------------------------------------------
+
+model BankStatement {
+  id             String              @id @default(cuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  bankAccountId  String?             // Link to a LedgerAccount of type BANK
+  accountNumber  String
+  statementDate  DateTime
+
+  openingBalance Decimal             @db.Decimal(19, 4)
+  closingBalance Decimal             @db.Decimal(19, 4)
+
+  status         BankReconciliationStatus @default(DRAFT)
+
+  lines          BankStatementLine[]
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([organizationId])
+}
+
+model BankStatementLine {
+  id                String         @id @default(cuid())
+  statementId       String
+  statement         BankStatement  @relation(fields: [statementId], references: [id], onDelete: Cascade)
+
+  transactionDate   DateTime
+  description       String
+  reference         String?
+  amount            Decimal        @db.Decimal(19, 4) // Positive for deposits, negative for withdrawals
+
+  status            MatchStatus    @default(UNMATCHED)
+
+  journalLine       JournalLine?
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([statementId])
+}
+
+// --------------------------------------------------------
+// ENTERPRISE BILLING (RECURRING BILLS)
+// --------------------------------------------------------
+
+model RecurringBill {
+  id              String              @id @default(cuid())
+  organizationId  String
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  description     String
+  supplierId      String
+  supplier        Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+
+  amount          Decimal             @db.Decimal(19, 4)
+  currency        String              @default("KES")
+
+  frequency       RecurrenceFrequency
+  startDate       DateTime
+  endDate         DateTime?
+  nextDueDate     DateTime
+  isActive        Boolean             @default(true)
+
+  // Template for generated bills
+  notes           String?
+  taxRateId       String?
+
+  createdById     String
+  createdBy       Member              @relation(fields: [createdById], references: [id])
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([nextDueDate])
+}
+
+// --------------------------------------------------------
+// ADDITIONAL ENUMS
+// --------------------------------------------------------
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum AccountSubType {
+  // Assets
+  CASH
+  BANK
+  ACCOUNTS_RECEIVABLE
+  INVENTORY
+  OTHER_CURRENT_ASSET
+  FIXED_ASSET
+  ACCUMULATED_DEPRECIATION
+
+  // Liabilities
+  ACCOUNTS_PAYABLE
+  TAX_PAYABLE
+  OTHER_CURRENT_LIABILITY
+  LONG_TERM_LIABILITY
+
+  // Equity
+  EQUITY
+  RETAINED_EARNINGS
+
+  // Revenue
+  REVENUE
+  OTHER_INCOME
+
+  // Expenses
+  COST_OF_GOODS_SOLD
+  OPERATING_EXPENSE
+  FINANCIAL_EXPENSE
+  OTHER_EXPENSE
+}
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  VOIDED
+}
+
+enum JournalSource {
+  MANUAL
+  SALE
+  PURCHASE
+  EXPENSE
+  PAYMENT
+  PAYROLL
+  INVENTORY_ADJUSTMENT
+}
+
+enum BankReconciliationStatus {
+  DRAFT
+  IN_PROGRESS
+  RECONCILED
+}
+
+enum MatchStatus {
+  UNMATCHED
+  MATCHED
+  EXCLUDED
 }

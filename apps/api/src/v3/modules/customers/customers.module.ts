@@ -1,4 +1,3 @@
-import { V3AuthModule } from "../auth/auth.module";
 import { Module, forwardRef } from "@nestjs/common";
 import { CustomerController } from "./interfaces/http/customer.controller";
 import { CustomerResolver } from "./interfaces/graphql/customer.resolver";
@@ -17,7 +16,6 @@ import { CrmModule } from "../crm/crm.module";
   imports: [
     PrismaModule,
     RedisModule,
-    forwardRef(() => V3AuthModule),
     CrmModule,
   ],
   controllers: [CustomerController, BusinessAccountController],

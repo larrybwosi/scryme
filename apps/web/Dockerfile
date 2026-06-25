@@ -9,18 +9,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm
+# FIXED: Install pnpm safely via npm (aligned with version 10.34.1)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN npm install -g pnpm@10.34.1
 
 # ---------------------------------------------------------
 # Stage 2: Pruner (Turborepo)
 # ---------------------------------------------------------
 FROM base AS pruner
 WORKDIR /app
+# Install turbo globally
 RUN pnpm add -g turbo
+# Copy only necessary files (ensure .dockerignore is in root!)
 COPY . .
+# Remove potentially conflicting build artifacts from the host
+RUN rm -rf .turbo && rm -rf node_modules
+# Run prune
 RUN turbo prune web --docker
 
 # ---------------------------------------------------------
@@ -36,9 +41,8 @@ COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 # Install all dependencies securely
 RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
 
-# Copy full source code and turbo configuration
+# Copy full source code
 COPY --from=pruner /app/out/full/ .
-COPY turbo.json turbo.json
 
 # Build-time environment variables
 ARG NEXT_PUBLIC_API_URL
@@ -46,11 +50,11 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ARG BETTER_AUTH_SECRET
 ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 
-# Generate Prisma Client (if needed by Web)
-RUN npx turbo run generate
+# Generate Prisma Client
+RUN pnpm turbo run generate
 
-# Build the Web app and its internal workspace dependencies
-RUN npx turbo build --filter=web...
+# Build the Web app
+RUN pnpm turbo build --filter=web...
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -65,10 +69,13 @@ ENV PORT=3000
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs nextjs
 
-# Copy built outputs preserving workspace paths
+# FIXED: Correct paths for Next.js standalone output mapping
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+
+# CRITICAL: Next.js standalone needs the Prisma schema/engines explicitly available if imported
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma ./packages/db/prisma
 
 # Copy entrypoint script
 COPY --from=pruner --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh

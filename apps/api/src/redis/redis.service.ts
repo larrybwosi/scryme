@@ -1,10 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Redis } from 'ioredis';
-import { Redis as UpstashRedis } from '@upstash/redis';
-import { env } from '@repo/env';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Redis } from "ioredis";
+import { Redis as UpstashRedis } from "@upstash/redis";
+import { env } from "@repo/env";
 
 export interface IRedisClient {
   get: <T>(key: string) => Promise<T | null>;
+  getBuffer: (key: string) => Promise<Buffer | null>;
   setex: <T>(key: string, ttl: number, value: T) => Promise<void>;
   del: (...keys: string[]) => Promise<number>;
   keys: (pattern: string) => Promise<string[]>;
@@ -26,9 +27,13 @@ export class RedisService implements OnModuleInit {
   private client: IRedisClient;
 
   onModuleInit() {
-    const useIoredis = env.NODE_ENV !== 'production' || env.USE_IOREDIS_IN_PROD;
+    const useIoredis = env.NODE_ENV !== "production" || env.USE_IOREDIS_IN_PROD;
 
-    if (!useIoredis && env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
+    if (
+      !useIoredis &&
+      env.UPSTASH_REDIS_REST_URL &&
+      env.UPSTASH_REDIS_REST_TOKEN
+    ) {
       const upstash = new UpstashRedis({
         url: env.UPSTASH_REDIS_REST_URL,
         token: env.UPSTASH_REDIS_REST_TOKEN,
@@ -38,8 +43,18 @@ export class RedisService implements OnModuleInit {
           const value = await upstash.get(key);
           return this.parseRedisJSON<T>(value);
         },
+        getBuffer: async (key: string): Promise<Buffer | null> => {
+          const value = await upstash.get(key);
+          if (value === null) return null;
+          return Buffer.from(value as string, "base64");
+        },
         setex: async <T>(key: string, ttl: number, value: T) => {
-          const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+          const stringValue =
+            value instanceof Buffer
+              ? value.toString("base64")
+              : typeof value === "string"
+                ? value
+                : JSON.stringify(value);
           await upstash.set(key, stringValue, { ex: ttl });
         },
         del: (...keys: string[]) => upstash.del(...keys),
@@ -47,43 +62,64 @@ export class RedisService implements OnModuleInit {
         incr: (key: string) => upstash.incr(key),
         expire: (key: string, ttl: number) => upstash.expire(key, ttl),
         ttl: (key: string) => upstash.ttl(key),
-        lpush: (key: string, ...values: string[]) => upstash.lpush(key, ...values),
-        ltrim: (key: string, start: number, stop: number) => upstash.ltrim(key, start, stop),
-        lrange: (key: string, start: number, stop: number) => upstash.lrange(key, start, stop),
-        hset: (key: string, field: string, value: string) => upstash.hset(key, { [field]: value }),
-        hdel: (key: string, ...fields: string[]) => upstash.hdel(key, ...fields),
-        hgetall: (key: string) => upstash.hgetall(key) as Promise<Record<string, string>>,
+        lpush: (key: string, ...values: string[]) =>
+          upstash.lpush(key, ...values),
+        ltrim: (key: string, start: number, stop: number) =>
+          upstash.ltrim(key, start, stop),
+        lrange: (key: string, start: number, stop: number) =>
+          upstash.lrange(key, start, stop),
+        hset: (key: string, field: string, value: string) =>
+          upstash.hset(key, { [field]: value }),
+        hdel: (key: string, ...fields: string[]) =>
+          upstash.hdel(key, ...fields),
+        hgetall: (key: string) =>
+          upstash.hgetall(key) as Promise<Record<string, string>>,
       };
     } else {
-      const ioredis = new Redis(env.REDIS_URL || `redis://${env.REDIS_HOST}:${env.REDIS_PORT}`);
+      const ioredis = new Redis(
+        env.REDIS_URL || `redis://${env.REDIS_HOST}:${env.REDIS_PORT}`,
+      );
       this.client = {
         get: async <T>(key: string): Promise<T | null> => {
           const value = await ioredis.get(key);
           return this.parseRedisJSON<T>(value);
         },
+        getBuffer: async (key: string): Promise<Buffer | null> => {
+          return await ioredis.getBuffer(key);
+        },
         setex: async <T>(key: string, ttl: number, value: T) => {
-          const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-          await ioredis.setex(key, ttl, stringValue);
+          if (value instanceof Buffer) {
+            await ioredis.setex(key, ttl, value);
+          } else {
+            const stringValue =
+              typeof value === "string" ? value : JSON.stringify(value);
+            await ioredis.setex(key, ttl, stringValue);
+          }
         },
         del: (...keys: string[]) => ioredis.del(...keys),
         keys: (pattern: string) => ioredis.keys(pattern),
         incr: (key: string) => ioredis.incr(key),
         expire: (key: string, ttl: number) => ioredis.expire(key, ttl),
         ttl: (key: string) => ioredis.ttl(key),
-        lpush: (key: string, ...values: string[]) => ioredis.lpush(key, ...values),
-        ltrim: (key: string, start: number, stop: number) => ioredis.ltrim(key, start, stop),
-        lrange: (key: string, start: number, stop: number) => ioredis.lrange(key, start, stop),
-        hset: (key: string, field: string, value: string) => ioredis.hset(key, field, value),
-        hdel: (key: string, ...fields: string[]) => ioredis.hdel(key, ...fields),
+        lpush: (key: string, ...values: string[]) =>
+          ioredis.lpush(key, ...values),
+        ltrim: (key: string, start: number, stop: number) =>
+          ioredis.ltrim(key, start, stop),
+        lrange: (key: string, start: number, stop: number) =>
+          ioredis.lrange(key, start, stop),
+        hset: (key: string, field: string, value: string) =>
+          ioredis.hset(key, field, value),
+        hdel: (key: string, ...fields: string[]) =>
+          ioredis.hdel(key, ...fields),
         hgetall: (key: string) => ioredis.hgetall(key),
       };
     }
   }
 
-  private parseRedisJSON <T>(value: unknown): T | null {
+  private parseRedisJSON<T>(value: unknown): T | null {
     if (value === null || value === undefined) return null;
-    if (typeof value === 'object') return value as T;
-    if (typeof value === 'string') {
+    if (typeof value === "object") return value as T;
+    if (typeof value === "string") {
       try {
         return JSON.parse(value) as T;
       } catch (e) {
@@ -95,6 +131,10 @@ export class RedisService implements OnModuleInit {
 
   async get<T>(key: string): Promise<T | null> {
     return this.client.get<T>(key);
+  }
+
+  async getBuffer(key: string): Promise<Buffer | null> {
+    return this.client.getBuffer(key);
   }
 
   async setex<T>(key: string, ttl: number, value: T): Promise<void> {
@@ -145,7 +185,8 @@ export class RedisService implements OnModuleInit {
 
   // New hash methods
   async hset(key: string, field: string, value: any): Promise<number> {
-    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    const stringValue =
+      typeof value === "string" ? value : JSON.stringify(value);
     return this.client.hset(key, field, stringValue);
   }
 

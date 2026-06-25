@@ -42,7 +42,7 @@ export interface StockAllocationParams {
 }
 
 export interface AllocationResult {
-  allocations: Prisma.InventoryAllocationCreateWithoutTransactionItemInput[];
+  allocations: any[];
   unitCost: Decimal;
   stockDeductionTotal: number; // Total in base units
 }
@@ -232,10 +232,10 @@ class UnitCalculationService {
     let stockDeductionNeeded = quantityToFulfill * conversionMultiplier;
     const initialDeductionNeeded = stockDeductionNeeded;
     let totalCostForLineItem = new Decimal(0);
-    const allocations: Prisma.InventoryAllocationCreateWithoutTransactionItemInput[] =
+    const allocations: any[] =
       [];
 
-    const batchOrderBy: Prisma.StockBatchOrderByWithRelationInput[] =
+    const batchOrderBy: any[] =
       inventoryPolicy === "FEFO"
         ? [{ expiryDate: "asc" }, { receivedDate: "asc" }]
         : inventoryPolicy === "LIFO"

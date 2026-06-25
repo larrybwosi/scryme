@@ -119,15 +119,14 @@ export function PurchaseDialog({
                   <FormLabel>Supplier</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                    defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select supplier" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {suppliers.map((supplier) => (
+                      {suppliers.map(supplier => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </SelectItem>
@@ -148,8 +147,7 @@ export function PurchaseDialog({
                   size="sm"
                   onClick={() =>
                     append({ variantId: "", quantity: 1, unitCost: 0 })
-                  }
-                >
+                  }>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Item
                 </Button>
@@ -158,8 +156,7 @@ export function PurchaseDialog({
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-12 gap-4 items-end border p-3 rounded-lg relative"
-                >
+                  className="grid grid-cols-12 gap-4 items-end border p-3 rounded-lg relative">
                   <div className="col-span-6">
                     <FormField
                       control={form.control}
@@ -170,11 +167,9 @@ export function PurchaseDialog({
                             Product
                           </FormLabel>
                           <Select
-                            onValueChange={(val) => {
+                            onValueChange={val => {
                               field.onChange(val);
-                              const variant = variants.find(
-                                (v) => v.id === val,
-                              );
+                              const variant = variants.find(v => v.id === val);
                               if (variant) {
                                 form.setValue(
                                   `items.${index}.unitCost`,
@@ -182,15 +177,14 @@ export function PurchaseDialog({
                                 );
                               }
                             }}
-                            defaultValue={field.value}
-                          >
+                            defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select product" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {variants.map((variant) => (
+                              {variants.map(variant => (
                                 <SelectItem key={variant.id} value={variant.id}>
                                   {variant.name}
                                 </SelectItem>
@@ -243,8 +237,7 @@ export function PurchaseDialog({
                       size="sm"
                       className="text-red-500 hover:text-red-700 h-10"
                       onClick={() => remove(index)}
-                      disabled={fields.length === 1}
-                    >
+                      disabled={fields.length === 1}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -256,8 +249,7 @@ export function PurchaseDialog({
               <Button
                 type="submit"
                 className="w-full bg-[#34A853] hover:bg-[#2d9147]"
-                disabled={isPending}
-              >
+                disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Purchase Order
               </Button>

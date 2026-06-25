@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.34.1 --activate
 
 # ---------------------------------------------------------
 # Stage 2: Pruner (Turborepo)
@@ -21,6 +21,9 @@ FROM base AS pruner
 WORKDIR /app
 RUN pnpm add -g turbo
 COPY . .
+# Remove potentially conflicting build artifacts from the host
+RUN rm -rf .turbo && rm -rf node_modules
+# Run prune
 RUN turbo prune crm --docker
 
 # ---------------------------------------------------------
@@ -38,7 +41,6 @@ RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scrip
 
 # Copy full source code and turbo configuration
 COPY --from=pruner /app/out/full/ .
-COPY turbo.json turbo.json
 
 # Build-time environment variables
 ARG NEXT_PUBLIC_API_URL
@@ -47,10 +49,10 @@ ARG BETTER_AUTH_SECRET
 ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 
 # Generate Prisma Client (if needed by CRM)
-RUN npx turbo run generate
+RUN pnpm turbo run generate
 
 # Build the CRM and its internal workspace dependencies
-RUN npx turbo build --filter=crm...
+RUN pnpm turbo build --filter=crm...
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)

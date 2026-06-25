@@ -1,2 +1,3 @@
-import { Module } from '@nestjs/common';
-@Module({}) export class OrdersModule {}
+import { Module } from "@nestjs/common";
+@Module({})
+export class OrdersModule {}

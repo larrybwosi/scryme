@@ -4,6 +4,7 @@ import { z } from "zod";
 export enum OrderTransactionStatus {
   PENDING_CONFIRMATION = "PENDING_CONFIRMATION",
   CONFIRMED = "CONFIRMED",
+  DRAFT = "DRAFT",
 }
 
 export const OrderItemInputSchema = z.object({
@@ -43,8 +44,20 @@ export const CreateOrderInputSchema = z.object({
     .nativeEnum(OrderTransactionStatus)
     .default(OrderTransactionStatus.PENDING_CONFIRMATION),
   notes: z.string().optional(),
+  termsAndConditions: z.string().optional(),
   shippingFee: z.number().nonnegative().default(0),
   discountAmount: z.number().nonnegative().default(0),
+  deliveryPartnerId: z.string().optional(),
+  attachments: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileUrl: z.string(),
+        mimeType: z.string(),
+        sizeBytes: z.number().optional(),
+      }),
+    )
+    .optional(),
   taxIds: z.array(z.string()).optional(),
   enableStockTracking: z.boolean().optional(),
   isWholesale: z.boolean().optional(),

@@ -98,6 +98,21 @@ export async function getLocation(id: string): Promise<any> {
   });
 }
 
+export interface LocationCapacity {
+  total?: number;
+  unit?: string;
+  lowThreshold?: number;
+  highThreshold?: number;
+}
+
+export interface LocationSettings {
+  isProductionSite?: boolean;
+  allowDirectSales?: boolean;
+  requiresQC?: boolean;
+  restrictedAccess?: boolean;
+  operatingHours?: string;
+}
+
 export async function createLocation(data: {
   name: string;
   code?: string;
@@ -108,11 +123,14 @@ export async function createLocation(data: {
   managerId?: string;
   address?: any;
   contact?: any;
+  capacity?: LocationCapacity;
+  settings?: LocationSettings;
+  customFields?: any;
 }): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const location = await db.$transaction(async (tx) => {
+  const location = await db.$transaction(async tx => {
     if (data.isDefault) {
       await tx.inventoryLocation.updateMany({
         where: { organizationId: context.organizationId, isDefault: true },
@@ -122,7 +140,7 @@ export async function createLocation(data: {
 
     return tx.inventoryLocation.create({
       data: {
-        ...data,
+        ...(data as any),
         organizationId: context.organizationId,
       },
     });
@@ -145,12 +163,15 @@ export async function updateLocation(
     managerId?: string;
     address?: any;
     contact?: any;
+    capacity?: LocationCapacity;
+    settings?: LocationSettings;
+    customFields?: any;
   },
 ): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const location = await db.$transaction(async (tx) => {
+  const location = await db.$transaction(async tx => {
     if (data.isDefault) {
       await tx.inventoryLocation.updateMany({
         where: {
@@ -164,7 +185,7 @@ export async function updateLocation(
 
     return tx.inventoryLocation.update({
       where: { id, organizationId: context.organizationId },
-      data,
+      data: data as any,
     });
   });
 

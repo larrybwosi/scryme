@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { PriceChangeStatus } from '@repo/db';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { PriceChangeStatus } from "@repo/db";
 
 @Injectable()
 export class ReviewPriceChangeUseCase {
@@ -13,7 +17,8 @@ export class ReviewPriceChangeUseCase {
     status: PriceChangeStatus;
     rejectionReason?: string;
   }) {
-    const { organizationId, requestId, memberId, status, rejectionReason } = params;
+    const { organizationId, requestId, memberId, status, rejectionReason } =
+      params;
 
     /**
      * OPTIMIZATION (Bolt ⚡): Removed redundant 'include: { priceListItem: true }'.
@@ -25,12 +30,12 @@ export class ReviewPriceChangeUseCase {
       where: { id: requestId, organizationId },
     });
 
-    if (!request) throw new NotFoundException('Price change request not found');
+    if (!request) throw new NotFoundException("Price change request not found");
     if (request.status !== PriceChangeStatus.PENDING) {
       throw new BadRequestException(`Request is already ${request.status}`);
     }
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       if (status === PriceChangeStatus.APPROVED) {
         // Apply the new price
         await tx.priceListItem.update({
@@ -45,7 +50,7 @@ export class ReviewPriceChangeUseCase {
             previousPrice: request.oldPrice,
             newPrice: request.newPrice,
             changeReason: `Approved from request: ${request.reason}`,
-            changeType: 'APPROVAL',
+            changeType: "APPROVAL",
             changedBy: memberId,
             metadata: {
               requestId: request.id,
@@ -62,7 +67,8 @@ export class ReviewPriceChangeUseCase {
           status,
           reviewedBy: memberId,
           reviewedAt: new Date(),
-          rejectionReason: status === PriceChangeStatus.REJECTED ? rejectionReason : undefined,
+          rejectionReason:
+            status === PriceChangeStatus.REJECTED ? rejectionReason : undefined,
         },
       });
     });

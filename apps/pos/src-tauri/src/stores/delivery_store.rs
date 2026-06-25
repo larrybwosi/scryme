@@ -66,18 +66,25 @@ pub async fn dispatch_order_command(
 pub async fn reconcile_delivery_command(
     auth_state: State<'_, AuthState>,
     fulfillment_id: String,
+    outcome: String,
+    received_by: Option<String>,
+    failure_reason: Option<String>,
     file_path: Option<String>,
-    notes: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let request = auth_state.build_request(
         reqwest::Method::POST,
         crate::api_config::routes::DELIVERY_RECONCILE,
     )?;
 
-    let mut form = reqwest::multipart::Form::new().text("fulfilmentId", fulfillment_id);
+    let mut form = reqwest::multipart::Form::new()
+        .text("fulfilmentId", fulfillment_id)
+        .text("outcome", outcome);
 
-    if let Some(n) = notes {
-        form = form.text("notes", n);
+    if let Some(r) = received_by {
+        form = form.text("receivedBy", r);
+    }
+    if let Some(f) = failure_reason {
+        form = form.text("failureReason", f);
     }
 
     // If we have a file path, we need to read it and add it to the multipart form
@@ -99,7 +106,7 @@ pub async fn reconcile_delivery_command(
                     .mime_str("application/octet-stream") // Or try to guess mime type
                     .map_err(|e| e.to_string())?;
 
-                form = form.part("file", part);
+                form = form.part("proofImage", part);
             }
             Err(e) => return Err(format!("Failed to read file at {}: {}", path, e)),
         }

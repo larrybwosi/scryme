@@ -13,6 +13,7 @@ export class NavariService {
       this._client = axios.create({
         baseURL: getNavariBaseUrl(),
         timeout: 30000,
+        maxContentLength: 10 * 1024 * 1024, // 10MB limit
         headers: {
           "Content-Type": "application/json",
         },

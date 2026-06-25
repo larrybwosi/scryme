@@ -9,7 +9,7 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
-import { validateEncryptionKey } from "@repo/shared/server";
+import { validateEncryptionKey } from "@repo/shared/api/v2/utils/encryption";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
 import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
@@ -25,53 +25,59 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
-  // Request logging for debugging
-  app
-    .getHttpAdapter()
-    .getInstance()
-    .addHook("onRequest", (request, reply, done) => {
-      const startTime = Date.now();
-      const { method, url, headers, body, query } = request;
+  // Request logging for debugging - only in non-production or if explicitly enabled
+  if (env.NODE_ENV !== "production" || process.env.ENABLE_REQUEST_LOGGING === "true") {
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .addHook("onRequest", (request, reply, done) => {
+        (request as any).startTime = Date.now();
+        const { method, url, headers, body, query } = request;
 
-      // Log incoming request
-      console.log({
-        timestamp: new Date().toISOString(),
-        type: "INCOMING_REQUEST",
-        method,
-        url,
-        headers: {
-          "user-agent": headers["user-agent"],
-          "content-type": headers["content-type"],
-          "x-api-key": headers["x-api-key"] ? "[REDACTED]" : undefined,
-          "x-member-token": headers["x-member-token"]
-            ? "[REDACTED]"
+        // Log incoming request
+        console.log({
+          timestamp: new Date().toISOString(),
+          type: "INCOMING_REQUEST",
+          method,
+          url,
+          headers: {
+            "user-agent": headers["user-agent"],
+            "content-type": headers["content-type"],
+            "x-api-key": headers["x-api-key"] ? "[REDACTED]" : undefined,
+            "x-member-token": headers["x-member-token"]
+              ? "[REDACTED]"
+              : undefined,
+            authorization: headers.authorization ? "[REDACTED]" : undefined,
+          },
+          query: Object.keys(query || {}).length
+            ? redactSensitiveData(query)
             : undefined,
-          authorization: headers.authorization ? "[REDACTED]" : undefined,
-        },
-        query: Object.keys(query || {}).length
-          ? redactSensitiveData(query)
-          : undefined,
-        body:
-          body && Object.keys(body).length
-            ? redactSensitiveData(body)
-            : undefined,
+          body:
+            body && Object.keys(body as any).length
+              ? redactSensitiveData(body)
+              : undefined,
+        });
+
+        done();
       });
 
-      // Log response when request completes
-      reply.raw.on("finish", () => {
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .addHook("onResponse", (request, reply, done) => {
+        const startTime = (request as any).startTime || Date.now();
         const duration = Date.now() - startTime;
         console.log({
           timestamp: new Date().toISOString(),
           type: "REQUEST_COMPLETED",
-          method,
-          url,
+          method: request.method,
+          url: request.url,
           statusCode: reply.statusCode,
           duration: `${duration}ms`,
         });
+        done();
       });
-
-      done();
-    });
+  }
 
   // Middlewares & Plugins
   await app.register(fastifyCookie as any);

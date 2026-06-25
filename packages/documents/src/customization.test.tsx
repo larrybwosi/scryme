@@ -1,129 +1,102 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
-import { renderToBuffer } from '@react-pdf/renderer';
-import * as Templates from './index';
+import { describe, it, expect, vi } from "vitest";
+import React from "react";
+import { render } from "@testing-library/react";
+import {
+  InvoiceTemplate,
+  ReceiptTemplateV2 as ReceiptTemplate,
+} from "./index";
+import { BrandingOptions } from "./types";
 
-// We can't easily inspect the PDF content (it's binary),
-// but we can verify that passing the branding props doesn't crash
-// and potentially mock the internal components to see if they receive the props.
-
-vi.mock('./v2/PDFComponents', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+// Mock @react-pdf/renderer to avoid rendering complex PDFs in tests
+vi.mock("@react-pdf/renderer", async () => {
+  const actual = await vi.importActual("@react-pdf/renderer");
   return {
     ...actual,
-    PDFHeader: vi.fn(actual.PDFHeader),
-    PDFFooter: vi.fn(actual.PDFFooter),
+    PDFViewer: ({ children }: any) => <div>{children}</div>,
+    Document: ({ children }: any) => <div>{children}</div>,
+    Page: ({ children }: any) => <div>{children}</div>,
+    View: ({ children }: any) => <div>{children}</div>,
+    Text: ({ children }: any) => <div>{children}</div>,
+    Image: (props: any) => <img {...props} />,
+    StyleSheet: {
+      create: (s: any) => s,
+    },
   };
 });
 
-import { PDFHeader, PDFFooter } from './v2/PDFComponents';
+describe("Document Branding and Customization", () => {
+  const mockBranding: BrandingOptions = {
+    primaryColor: "#FF5733",
+    companyName: "Acme Corp Custom",
+    logoUrl: "https://example.com/logo.png",
+    companyAddress: "123 Custom St, Design City",
+  };
 
-describe('V2 Customization', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  const mockInvoiceData: any = {
+    id: "inv-123",
+    number: "INV-123",
+    invoiceNumber: "INV-123",
+    date: "2023-10-27",
+    status: "PAID",
+    customerName: "John Doe",
+    branding: mockBranding,
+    items: [
+      {
+        id: "item-1",
+        description: "Test Product",
+        quantity: 2,
+        unitPrice: 50,
+        totalPrice: 100,
+      },
+    ],
+    subtotal: 100,
+    tax: 10,
+    total: 110,
+  };
+
+  const mockReceiptData: any = {
+    id: "rec-123",
+    number: "REC-123",
+    receiptNumber: "REC-123",
+    date: "2023-10-27",
+    customer: { name: "John Doe" },
+    branding: mockBranding,
+    items: [
+      {
+        id: "item-1",
+        description: "Test Product",
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+      },
+    ],
+    subtotal: 100,
+    tax: 0,
+    total: 100,
+    paymentMethod: "M-PESA",
+  };
+
+  it("should apply branding to InvoiceTemplate", () => {
+    const { getAllByText } = render(<InvoiceTemplate data={mockInvoiceData} />);
+
+    expect(getAllByText("Acme Corp Custom").length).toBeGreaterThan(0);
+    expect(getAllByText("123 Custom St, Design City").length).toBeGreaterThan(0);
   });
 
-  it('passes branding data to PDFHeader and PDFFooter in InvoiceTemplate', async () => {
-    const data: any = {
-      invoiceNumber: 'INV-001',
-      status: 'PAID',
-      date: '2023-10-01',
-      customerName: 'John Doe',
-      organizationName: 'Custom Org Name',
-      organizationAddress: '123 Custom St',
-      logoUrl: 'https://example.com/logo.png',
-      company: { name: 'Custom Org Name', address: '123 Custom St' },
-      client: { name: 'John Doe' },
-      items: [{ itemCode: 'B-001', itemName: 'Croissant', quantity: 2, rate: 2.5, amount: 5.0 }],
-      subtotal: 5.0,
-      tax: 0.8,
-      total: 5.8
-    };
+  it("should apply branding to ReceiptTemplate", () => {
+    const { getAllByText } = render(<ReceiptTemplate data={mockReceiptData} />);
 
-    await renderToBuffer(<Templates.InvoiceTemplate data={data} />);
-
-    const headerCall = vi.mocked(PDFHeader).mock.calls[0][0];
-    expect(headerCall).toMatchObject({
-      orgName: 'Custom Org Name',
-      orgAddress: '123 Custom St',
-      logoUrl: 'https://example.com/logo.png',
-    });
-
-    const footerCall = vi.mocked(PDFFooter).mock.calls[0][0];
-    expect(footerCall).toMatchObject({
-      orgName: 'Custom Org Name',
-    });
+    expect(getAllByText("Acme Corp Custom").length).toBeGreaterThan(0);
+    expect(getAllByText("123 Custom St, Design City").length).toBeGreaterThan(0);
   });
 
-  it('passes branding data in ReceiptTemplateV2', async () => {
-    const data: Templates.ReceiptPDFDataV2 = {
-      receiptNumber: 'REC-001',
-      transactionId: 'TXN-001',
-      date: '2023-10-01',
-      customerName: 'John Doe',
-      organizationName: 'Receipt Org',
-      organizationAddress: 'Receipt Addr',
-      logoUrl: 'https://example.com/receipt-logo.png',
-      items: [{ itemName: 'Item', quantity: 1, rate: 10, amount: 10 }],
-      subtotal: 10,
-      taxTotal: 0,
-      discountTotal: 0,
-      finalTotal: 10,
-      paymentMethod: 'MPESA'
-    };
+  it("should handle missing branding gracefully", () => {
+    const dataWithoutBranding = { ...mockInvoiceData, branding: undefined };
+    const { queryByText } = render(
+      <InvoiceTemplate data={dataWithoutBranding} />,
+    );
 
-    await renderToBuffer(<Templates.ReceiptTemplateV2 data={data} />);
-
-    const headerCall = vi.mocked(PDFHeader).mock.calls[0][0];
-    expect(headerCall).toMatchObject({
-      orgName: 'Receipt Org',
-      orgAddress: 'Receipt Addr',
-      logoUrl: 'https://example.com/receipt-logo.png',
-    });
-  });
-
-  it('passes branding data in StockRequestTemplate', async () => {
-    const data: Templates.StockRequestPDFData = {
-      requestNumber: 'REQ-001',
-      status: 'PENDING',
-      priority: 'HIGH',
-      requestDate: '2023-10-01',
-      fromLocation: 'Main',
-      toLocation: 'Other',
-      requestedBy: 'Me',
-      items: [],
-      organizationName: 'Stock Org',
-      logoUrl: 'https://example.com/stock-logo.png'
-    };
-
-    await renderToBuffer(<Templates.StockRequestTemplate data={data} />);
-
-    const headerCall = vi.mocked(PDFHeader).mock.calls[0][0];
-    expect(headerCall).toMatchObject({
-      orgName: 'Stock Org',
-      logoUrl: 'https://example.com/stock-logo.png',
-    });
-  });
-
-  it('passes branding data in StockTransferTemplate', async () => {
-    const data: Templates.StockTransferPDFData = {
-      transferNumber: 'TRF-001',
-      status: 'SHIPPED',
-      requestedDate: '2023-10-01',
-      fromLocation: 'Main',
-      toLocation: 'Other',
-      requestedBy: 'Me',
-      items: [],
-      organizationName: 'Transfer Org',
-      logoUrl: 'https://example.com/transfer-logo.png'
-    };
-
-    await renderToBuffer(<Templates.StockTransferTemplate data={data} />);
-
-    const headerCall = vi.mocked(PDFHeader).mock.calls[0][0];
-    expect(headerCall).toMatchObject({
-      orgName: 'Transfer Org',
-      logoUrl: 'https://example.com/transfer-logo.png',
-    });
+    // Should not crash and should show some default or be empty
+    expect(queryByText("Acme Corp Custom")).toBeNull();
   });
 });

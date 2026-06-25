@@ -45,4 +45,7 @@ pub mod routes {
     pub const DRIVERS: &str = "api/v2/pos/drivers";
     pub const DELIVERY_DISPATCH: &str = "api/v2/pos/deliveries/dispatch";
     pub const DELIVERY_RECONCILE: &str = "api/v2/pos/deliveries/reconcile-pod";
+
+    // --- Upload ---
+    pub const UPLOAD: &str = "api/v3/upload";
 }

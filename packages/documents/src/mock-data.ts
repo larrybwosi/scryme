@@ -81,3 +81,34 @@ export function getMockInvoiceData(orgDetails?: any) {
   const transaction = getMockInvoiceTransaction(orgDetails);
   return Mappers.toInvoiceData(transaction);
 }
+
+export function getMockReceiptData(orgDetails?: any) {
+  const invoiceData = getMockInvoiceData(orgDetails);
+  return {
+    ...invoiceData,
+    receiptNumber: "REC-2024-001",
+    amountReceived: invoiceData.total,
+    change: 0,
+    paymentMethod: "BANK_TRANSFER",
+  };
+}
+
+export function getMockWaybillData(orgDetails?: any) {
+  const invoiceData = getMockInvoiceData(orgDetails);
+  return {
+    ...invoiceData,
+    orderNumber: "ORD-2024-001",
+    sender: {
+      name: orgDetails?.name || "Scryme Solutions Ltd",
+      address: orgDetails?.address || "123 Business Avenue, Suite 100, Nairobi, Kenya",
+      phone: orgDetails?.phone || "+254 712 345 678",
+      email: orgDetails?.email || "logistics@scryme.com",
+    },
+    recipient: {
+      name: "Acme Corporation",
+      address: "456 Industrial Road, Nairobi, Kenya",
+      phone: "+254 799 888 777",
+      email: "finance@acme.com",
+    },
+  };
+}

@@ -13,6 +13,7 @@
     "db:push": "turbo run db:push",
     "db:seed": "turbo run db:seed",
     "dev": "turbo run dev",
+    "start:dev": "docker compose -f docker-compose.dev.yml up -d",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
@@ -26,7 +27,7 @@
     "prisma": "latest",
     "tsx": "4.21.0",
     "turbo": "^2.9.15",
-    "typescript": "5.9.3"
+    "typescript": "5.7.3"
   },
   "engines": {
     "node": ">=24"
@@ -36,18 +37,20 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "latest",
+    "@swc/core": "^1.15.43",
     "@upstash/redis": "^1.38.0",
     "ably": "^2.21.0",
     "axios": "^1.16.1",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "socket.io-client": "^4.8.3",
+    "swc-loader": "^0.2.7",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },
   "pnpm": {
     "overrides": {
-      "typescript": "5.9.3",
+      "typescript": "5.7.3",
       "eslint": "8.57.0",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3",

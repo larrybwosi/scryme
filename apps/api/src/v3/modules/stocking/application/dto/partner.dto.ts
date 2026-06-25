@@ -1,6 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsNumber, IsEmail, IsBoolean } from 'class-validator';
-import { BenefitType, ReconciliationPolicy } from '@repo/db';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsEmail,
+  IsBoolean,
+} from "class-validator";
+import { BenefitType, ReconciliationPolicy } from "@repo/db";
 
 export class CreatePartnerDto {
   @ApiProperty()

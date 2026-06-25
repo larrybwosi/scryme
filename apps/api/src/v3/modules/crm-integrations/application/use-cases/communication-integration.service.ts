@@ -1,7 +1,7 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { SlackProvider } from '../../infrastructure/providers/slack.provider';
-import { CommunicationProvider } from '../../domain/communication-provider.interface';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { SlackProvider } from "../../infrastructure/providers/slack.provider";
+import { CommunicationProvider } from "../../domain/communication-provider.interface";
 
 @Injectable()
 export class CommunicationIntegrationService {
@@ -29,23 +29,29 @@ export class CommunicationIntegrationService {
 
     for (const msg of messages) {
       // 1. Identify Organization
-      const integration = await this.prisma.client.organizationIntegration.findFirst({
-        where: {
-          integrationDefinition: { slug: providerSlug },
-          credentials: { path: ['teamId'], equals: msg.metadata?.team }
-        },
-        include: { organization: true }
-      });
+      const integration =
+        await this.prisma.client.organizationIntegration.findFirst({
+          where: {
+            integrationDefinition: { slug: providerSlug },
+            credentials: { path: ["teamId"], equals: msg.metadata?.team },
+          },
+          include: { organization: true },
+        });
 
       if (!integration) {
-        this.logger.warn(`No integration found for ${providerSlug} team ${msg.metadata?.team}`);
+        this.logger.warn(
+          `No integration found for ${providerSlug} team ${msg.metadata?.team}`,
+        );
         continue;
       }
 
       // 2. Resolve Email (Slack specific for now)
       let email = msg.senderEmail;
-      if (!email && providerSlug === 'slack' && msg.metadata?.slackUser) {
-        email = await (provider as SlackProvider).getUserEmail(integration, msg.metadata.slackUser);
+      if (!email && providerSlug === "slack" && msg.metadata?.slackUser) {
+        email = await (provider as SlackProvider).getUserEmail(
+          integration,
+          msg.metadata.slackUser,
+        );
       }
 
       // 3. Resolve or Create Record
@@ -54,24 +60,28 @@ export class CommunicationIntegrationService {
         const record = await this.prisma.client.crmRecord.findFirst({
           where: {
             organizationId: integration.organizationId,
-            data: { path: ['email'], equals: email }
-          }
+            data: { path: ["email"], equals: email },
+          },
         });
 
         if (record) {
           recordId = record.id;
         } else {
-          const personDef = await this.prisma.client.crmObjectDefinition.findFirst({
-            where: { organizationId: integration.organizationId, name: 'person' }
-          });
+          const personDef =
+            await this.prisma.client.crmObjectDefinition.findFirst({
+              where: {
+                organizationId: integration.organizationId,
+                name: "person",
+              },
+            });
 
           if (personDef) {
             const newRecord = await this.prisma.client.crmRecord.create({
               data: {
                 organizationId: integration.organizationId,
                 objectId: personDef.id,
-                data: { email: email, name: email.split('@')[0] }
-              }
+                data: { email: email, name: email.split("@")[0] },
+              },
             });
             recordId = newRecord.id;
           }
@@ -84,7 +94,7 @@ export class CommunicationIntegrationService {
           data: {
             organizationId: integration.organizationId,
             recordId,
-            type: 'MESSAGE',
+            type: "MESSAGE",
             description: msg.text,
             metadata: {
               ...msg.metadata,
@@ -92,9 +102,9 @@ export class CommunicationIntegrationService {
               threadId: msg.externalThreadId,
               channelId: msg.externalChannelId,
               provider: providerSlug,
-              senderEmail: email
-            }
-          }
+              senderEmail: email,
+            },
+          },
         });
       }
     }
@@ -102,30 +112,35 @@ export class CommunicationIntegrationService {
     return { ok: true };
   }
 
-  async replyToActivity(organizationId: string, activityId: string, text: string) {
+  async replyToActivity(
+    organizationId: string,
+    activityId: string,
+    text: string,
+  ) {
     const activity = await this.prisma.client.crmActivity.findUnique({
       where: { id: activityId },
-      include: { record: true }
+      include: { record: true },
     });
 
     if (!activity || activity.organizationId !== organizationId) {
-      throw new NotFoundException('Activity not found');
+      throw new NotFoundException("Activity not found");
     }
 
     const metadata = activity.metadata as any;
     const providerSlug = metadata?.provider;
 
     if (!providerSlug) {
-      throw new Error('Activity does not have a linked provider for reply');
+      throw new Error("Activity does not have a linked provider for reply");
     }
 
-    const integration = await this.prisma.client.organizationIntegration.findFirst({
-      where: {
-        organizationId,
-        integrationDefinition: { slug: providerSlug },
-        isActive: true
-      }
-    });
+    const integration =
+      await this.prisma.client.organizationIntegration.findFirst({
+        where: {
+          organizationId,
+          integrationDefinition: { slug: providerSlug },
+          isActive: true,
+        },
+      });
 
     if (!integration) {
       throw new NotFoundException(`No active integration for ${providerSlug}`);
@@ -135,22 +150,22 @@ export class CommunicationIntegrationService {
     const result = await provider.sendMessage(integration, {
       text,
       threadId: metadata.threadId,
-      channelId: metadata.channelId
+      channelId: metadata.channelId,
     });
 
     return this.prisma.client.crmActivity.create({
       data: {
         organizationId,
         recordId: activity.recordId,
-        type: 'REPLY',
+        type: "REPLY",
         description: text,
         metadata: {
           ...metadata,
           externalId: result.externalId,
           threadId: result.threadId,
-          isReply: true
-        }
-      }
+          isReply: true,
+        },
+      },
     });
   }
 }

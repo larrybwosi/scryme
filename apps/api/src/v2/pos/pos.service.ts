@@ -7,17 +7,21 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { ably } from "@repo/shared/ably";
+import { createMemberToken } from "@repo/shared/api/v2/services/auth";
 import {
-  V2ApiContext,
-  ably,
-  createMemberToken,
   verifyQRToken,
   getDocumentUrl,
+} from "@repo/shared/api/v2/utils/tokens";
+import {
   getPosProducts,
   getPosProductsDelta,
+} from "@repo/shared/api/v2/utils/products";
+import {
   performDeliveryDispatch,
   performReconciliation,
-} from "@repo/shared/server";
+} from "@repo/shared/api/v2/utils/deliveries";
 import { ZodError } from "zod";
 import * as bcrypt from "bcryptjs";
 import {
@@ -176,7 +180,7 @@ export class PosService {
 
     const memberId = ctx.memberId;
 
-    await this.prisma.client.$transaction(async (tx) => {
+    await this.prisma.client.$transaction(async tx => {
       const member = await tx.member.findUnique({ where: { id: memberId } });
       if (!member || !member.isCheckedIn || !member.currentAttendanceLogId) {
         throw new BadRequestException("Member is not checked in.");
@@ -359,7 +363,7 @@ export class PosService {
     ]);
 
     const shipments = [
-      ...openPurchases.map((po) => ({
+      ...openPurchases.map(po => ({
         id: po.id,
         type: "PURCHASE_ORDER",
         referenceNumber: po.purchaseNumber,
@@ -367,7 +371,7 @@ export class PosService {
         date: po.orderDate,
         status: po.status,
         itemCount: po.items.length,
-        items: po.items.map((i) => ({
+        items: po.items.map(i => ({
           ...i,
           variant: {
             id: i.variant.id,
@@ -377,7 +381,7 @@ export class PosService {
         })),
         receiveApiUrl: `/api/purchases/${po.id}/receive`,
       })),
-      ...incomingTransfers.map((trf) => ({
+      ...incomingTransfers.map(trf => ({
         id: trf.id,
         type: "STOCK_TRANSFER",
         referenceNumber: trf.transferNumber,
@@ -385,7 +389,7 @@ export class PosService {
         date: trf.requestedDate,
         status: trf.status,
         itemCount: trf.items.length,
-        items: trf.items.map((i) => ({
+        items: trf.items.map(i => ({
           ...i,
           variant: {
             id: i.variant.id,
@@ -424,7 +428,7 @@ export class PosService {
       paymentStatus: transaction.paymentStatus,
       customerName: transaction.customer?.name || "Guest",
       itemCount: transaction.items.length,
-      items: transaction.items.map((i) => ({
+      items: transaction.items.map(i => ({
         name: i.productName,
         sku: i.sku,
         quantity: i.quantity,
@@ -445,11 +449,11 @@ export class PosService {
     const notificationChannel = `organization:${organizationId}:notifications`;
     const organizationChannel = `organization:${organizationId}:*`;
 
-    const provider = process.env.REALTIME_PROVIDER || 'ably';
+    const provider = process.env.REALTIME_PROVIDER || "ably";
 
     let tokenRequest: any;
 
-    if (provider === 'ably') {
+    if (provider === "ably") {
       tokenRequest = await ably.auth.requestToken({
         clientId: memberId,
         capability: JSON.stringify({
@@ -462,19 +466,28 @@ export class PosService {
           "store:*": ["subscribe", "publish", "history", "presence"],
           [paymentChannel]: ["subscribe"],
           [notificationChannel]: ["subscribe"],
-          [organizationChannel]: ["subscribe", "publish", "history", "presence"],
+          [organizationChannel]: [
+            "subscribe",
+            "publish",
+            "history",
+            "presence",
+          ],
         }),
         ttl: 3600 * 1000,
         timestamp: Date.now(),
       });
     } else {
       tokenRequest = {
-        token: 'socketio-placeholder-token',
+        token: "socketio-placeholder-token",
         clientId: memberId,
       };
     }
 
-    return { tokenRequest, provider, metadata: { organizationId, paymentChannel } };
+    return {
+      tokenRequest,
+      provider,
+      metadata: { organizationId, paymentChannel },
+    };
   }
 
   async getInventory(ctx: V2ApiContext, query: any) {
@@ -591,7 +604,7 @@ export class PosService {
       }),
     ]);
 
-    const formattedTransactions = transactions.map((t) => {
+    const formattedTransactions = transactions.map(t => {
       const paidAmount = (t as any).payments
         .reduce((sum: Decimal, p: any) => sum.plus(p.amount), new Decimal(0))
         .toNumber();
@@ -779,7 +792,7 @@ export class PosService {
 
     let totalEstimatedCost = new Decimal(0);
     const itemsToCreate = validated.items.map((item: any) => {
-      const variant = variants.find((v) => v.id === item.variantId);
+      const variant = variants.find(v => v.id === item.variantId);
       if (!variant)
         throw new BadRequestException(`Variant ${item.variantId} not found`);
       const itemCost = new Decimal(
@@ -997,8 +1010,8 @@ export class PosService {
       },
     });
 
-    const items = priceLists.flatMap((pl) =>
-      pl.items.map((item) => ({
+    const items = priceLists.flatMap(pl =>
+      pl.items.map(item => ({
         id: item.id,
         priceListId: item.priceListId,
         variantId: item.variantId,
@@ -1009,7 +1022,7 @@ export class PosService {
       })),
     );
 
-    const lists = priceLists.map((pl) => ({
+    const lists = priceLists.map(pl => ({
       id: pl.id,
       code: pl.code,
       priority: pl.priority,
@@ -1021,7 +1034,7 @@ export class PosService {
     }));
 
     const customerAllocations: Record<string, string[]> = {};
-    priceLists.forEach((pl) => {
+    priceLists.forEach(pl => {
       (pl as any).customers.forEach((cust: any) => {
         if (!customerAllocations[cust.id]) {
           customerAllocations[cust.id] = [];
@@ -1119,7 +1132,7 @@ export class PosService {
       },
     });
 
-    return drivers.map((d) => ({
+    return drivers.map(d => ({
       id: d.id,
       member: {
         name: d.user?.name || "Unknown Driver",

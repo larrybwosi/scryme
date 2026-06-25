@@ -50,7 +50,7 @@ interface RealtimeState {
 }
 
 export const useRealtimeStore = create<RealtimeState>((set, get) => ({
-  provider: (import.meta.env.VITE_REALTIME_PROVIDER as any) || 'ably',
+  provider: (import.meta.env.VITE_REALTIME_PROVIDER as any) || (import.meta.env.NEXT_PUBLIC_REALTIME_PROVIDER as any) || 'ably',
   ablyClient: null,
   socketClient: null,
   paymentChannel: null,
@@ -72,7 +72,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
     set({ status: 'loading', error: null, ablyClient: null, socketClient: null, authRetryCount: 0 });
 
     if (provider === 'socketio') {
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002';
 
       const socket = io(socketUrl, {
         transports: ['websocket'],

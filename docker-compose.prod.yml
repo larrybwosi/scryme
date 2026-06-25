@@ -308,6 +308,42 @@ services:
       - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
 
+  bakery:
+    build:
+      context: .
+      dockerfile: apps/bakery/Dockerfile
+    image: scryme-bakery:latest
+    restart: always
+    environment:
+      VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      NODE_ENV: production
+    depends_on:
+      - api
+    networks:
+      - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
+      - "traefik.http.services.bakery.loadbalancer.server.port=3003"
+
+  pos:
+    build:
+      context: .
+      dockerfile: apps/pos/Dockerfile
+    image: scryme-pos:latest
+    restart: always
+    environment:
+      VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      NODE_ENV: production
+    depends_on:
+      - api
+    networks:
+      - scryme-prod-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pos.rule=Host(`${POS_DOMAIN:-pos.scryme.local}`)"
+      - "traefik.http.services.pos.loadbalancer.server.port=3004"
+
 volumes:
   postgres_prod_data:
   zitadel_data:

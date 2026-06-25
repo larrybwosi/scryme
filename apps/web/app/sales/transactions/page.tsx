@@ -2,7 +2,6 @@ import { ReceiptText, Plus } from "lucide-react";
 import { PageHeader } from "../../../components/page-header";
 import { FilterBar } from "../../../components/filter-bar";
 import { getTransactions } from "../../actions/sales";
-import { TransactionTable } from "../../../components/sales/transaction-table";
 import {
   TransactionType,
   TransactionStatus,
@@ -10,6 +9,48 @@ import {
 } from "@repo/db/client";
 import { getOrganizationContext } from "@/app/actions/auth";
 import { RealtimeTransactionWrapper } from "../../../components/sales/realtime-transaction-wrapper";
+import { Suspense } from "react";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+
+async function TransactionList({
+  searchParams,
+  organizationId,
+}: {
+  searchParams: {
+    q?: string;
+    type?: string;
+    status?: string;
+    paymentStatus?: string;
+    locationId?: string;
+  };
+  organizationId?: string;
+}) {
+  const transactions = await getTransactions({
+    search: searchParams.q,
+    type: searchParams.type as TransactionType | "all",
+    status: searchParams.status as TransactionStatus | "all",
+    paymentStatus: searchParams.paymentStatus as PaymentStatus | "all",
+    locationId: searchParams.locationId,
+  });
+
+  return (
+    <RealtimeTransactionWrapper
+      initialTransactions={transactions}
+      organizationId={organizationId}
+    />
+  );
+}
+
+function TableFallback() {
+  return (
+    <div className="space-y-3 w-full">
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-20 w-full" />
+      <Skeleton className="h-20 w-full" />
+      <Skeleton className="h-20 w-full" />
+    </div>
+  );
+}
 
 export default async function TransactionsPage(props: {
   searchParams: Promise<{
@@ -22,17 +63,16 @@ export default async function TransactionsPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const context = await getOrganizationContext();
-
-  const transactions = await getTransactions({
-    search: searchParams.q,
-    type: searchParams.type as TransactionType | "all",
-    status: searchParams.status as TransactionStatus | "all",
-    paymentStatus: searchParams.paymentStatus as PaymentStatus | "all",
-    locationId: searchParams.locationId,
-  });
+  const suspenseKey = JSON.stringify(searchParams);
 
   return (
-    <div className="space-y-6">
+    /* Added a responsive outer container:
+      - mx-auto centers the layout on ultra-wide displays
+      - px-4 sm:px-6 lg:px-8 handles elegant side margins across mobile, tablet, and desktop
+      - py-6 handles top/bottom page spacing
+      - max-w-7xl (optional) keeps your dashboard content tight and readable
+    */
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader
         title="Transactions"
         subtitle="Manage sales, quotes, and orders"
@@ -46,10 +86,12 @@ export default async function TransactionsPage(props: {
 
       <FilterBar />
 
-      <RealtimeTransactionWrapper
-        initialTransactions={transactions}
-        organizationId={context?.organizationId}
-      />
+      <Suspense key={suspenseKey} fallback={<TableFallback />}>
+        <TransactionList
+          searchParams={searchParams}
+          organizationId={context?.organizationId}
+        />
+      </Suspense>
     </div>
   );
 }

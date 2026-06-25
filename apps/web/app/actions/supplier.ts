@@ -79,11 +79,14 @@ export async function getSuppliers(options?: {
     orderBy: { name: "asc" },
   });
 
-  const processedSuppliers: Supplier[] = suppliers.map((s) => {
+  const processedSuppliers: Supplier[] = suppliers.map(s => {
     const totalReviews = s.reviews.length;
-    const avgRating = totalReviews > 0
-      ? (s.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
-      : "0.0";
+    const avgRating =
+      totalReviews > 0
+        ? (
+            s.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+          ).toFixed(1)
+        : "0.0";
 
     return {
       ...s,
@@ -95,7 +98,7 @@ export async function getSuppliers(options?: {
   });
 
   if (options?.favorite) {
-    return processedSuppliers.filter((s) => s.isFavorite);
+    return processedSuppliers.filter(s => s.isFavorite);
   }
 
   return processedSuppliers;
@@ -132,26 +135,29 @@ export async function registerSupplier(data: {
   return supplier;
 }
 
-export async function updateSupplier(id: string, data: Partial<{
-  name: string;
-  code: string;
-  email: string;
-  phone: string;
-  primaryContact: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  type: any;
-  website: string;
-  taxId: string;
-  registrationNumber: string;
-  currency: string;
-  paymentTerms: string;
-  leadTime: number;
-  riskLevel: any;
-}>): Promise<any> {
+export async function updateSupplier(
+  id: string,
+  data: Partial<{
+    name: string;
+    code: string;
+    email: string;
+    phone: string;
+    primaryContact: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    type: any;
+    website: string;
+    taxId: string;
+    registrationNumber: string;
+    currency: string;
+    paymentTerms: string;
+    leadTime: number;
+    riskLevel: any;
+  }>,
+): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -160,7 +166,7 @@ export async function updateSupplier(id: string, data: Partial<{
   const supplier = await db.supplier.update({
     where: {
       id,
-      organizationId: auth.organizationId
+      organizationId: auth.organizationId,
     },
     data: {
       ...data,
@@ -182,7 +188,7 @@ export async function deleteSupplier(id: string): Promise<any> {
   await db.supplier.delete({
     where: {
       id,
-      organizationId: auth.organizationId
+      organizationId: auth.organizationId,
     },
   });
 
@@ -215,7 +221,10 @@ export async function addProductToSupplier(data: {
   return ps;
 }
 
-export async function removeProductFromSupplier(productSupplierId: string, supplierId: string): Promise<any> {
+export async function removeProductFromSupplier(
+  productSupplierId: string,
+  supplierId: string,
+): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");
@@ -294,9 +303,12 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   }
 
   const totalReviews = supplier.reviews.length;
-  const avgRating = totalReviews > 0
-    ? (supplier.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
-    : "0.0";
+  const avgRating =
+    totalReviews > 0
+      ? (
+          supplier.reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+        ).toFixed(1)
+      : "0.0";
 
   // Calculate rating counts for the UI
   const ratingCounts = [5, 4, 3, 2, 1].map(stars => {
@@ -362,7 +374,11 @@ export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
   revalidatePath(`/inventory/supplier/${supplierId}`);
 }
 
-export async function addSupplierReview(supplierId: string, rating: number, comment: string): Promise<any> {
+export async function addSupplierReview(
+  supplierId: string,
+  rating: number,
+  comment: string,
+): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");

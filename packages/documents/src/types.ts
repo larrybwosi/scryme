@@ -6,6 +6,11 @@ export interface BrandingOptions {
   companyEmail?: string;
   companyPhone?: string;
   companyWebsite?: string;
+  companyTagline?: string;
+  showLogo?: boolean;
+  showPoweredBy?: boolean;
+  watermarkText?: string;
+  customFields?: Array<{ label: string; value: string }>;
 }
 
 export interface Address {
@@ -31,42 +36,60 @@ export interface DocumentItem {
   totalPrice?: number;
   sku?: string;
   unit?: string;
+  itemCode?: string;
+  itemName?: string;
+  rate?: number;
+  amount?: number;
 }
 
 export type DocumentFormat = 'A4' | 'THERMAL';
 
-export interface PackingListData {
+export interface CurrencySettings {
+  code: string;
+  symbol?: string;
+  locale?: string;
+  precision?: number;
+}
+
+export interface BaseDocumentData {
+  id: string;
+  number: string;
+  date: string | Date;
+  branding?: BrandingOptions;
+  notes?: string;
+  currency?: string;
+  currencySymbol?: string;
+  currencySettings?: CurrencySettings;
+  tags?: string[];
+  locationName?: string;
+  createdBy?: string;
+  status?: string;
+}
+
+export interface PackingListData extends BaseDocumentData {
   orderNumber: string;
-  date: Date | string;
   customer: ContactInfo;
   shippingAddress: string | Address;
   items: Array<DocumentItem & { quantityPacked?: number }>;
-  notes?: string;
-  branding?: BrandingOptions;
 }
 
-export interface ReceiptData {
+export interface ReceiptData extends BaseDocumentData {
   receiptNumber: string;
   orderNumber?: string;
-  date: Date | string;
   customer: ContactInfo;
   items: DocumentItem[];
   subtotal: number;
   tax: number;
   total: number;
   paymentMethod?: string;
-  branding?: BrandingOptions;
   amountReceived?: number;
   change?: number;
   discountTotal?: number;
 }
 
-export interface WaybillData {
-  id: string;
+export interface WaybillData extends BaseDocumentData {
   orderNumber: string;
-  date: Date | string;
   qrCodeUrl?: string;
-  logoUrl?: string;
   sender: ContactInfo;
   recipient: ContactInfo & { notes?: string };
   meta?: {
@@ -76,14 +99,9 @@ export interface WaybillData {
   };
 }
 
-export interface StockReportData {
+export interface StockReportData extends BaseDocumentData {
   name: string;
-  date: string;
   generatedBy: string;
-  organization: {
-    name: string;
-    logo?: string;
-  };
   items: Array<{
     productName: string;
     variantName: string;
@@ -94,11 +112,7 @@ export interface StockReportData {
   }>;
 }
 
-export interface TransactionAnalyticsExportData {
-  organization: {
-    name: string;
-    logo?: string;
-  };
+export interface TransactionAnalyticsExportData extends BaseDocumentData {
   dateRangeText: string;
   activeFiltersText?: string;
   transactions: Array<{
@@ -115,4 +129,84 @@ export interface TransactionAnalyticsExportData {
       subtotal: number;
     }>;
   }>;
+}
+
+export interface InvoiceData extends BaseDocumentData {
+  invoiceNumber: string;
+  dueDate?: string;
+  status?: string;
+
+  customerName: string;
+  customerEmail?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+
+  items: Array<DocumentItem & {
+    details?: string;
+    // Legacy compatibility fields
+    qty?: number;
+    price?: number;
+    total?: number;
+    itemDescription?: string;
+  }>;
+
+  subtotal: number;
+  tax: number;
+  total: number;
+  discount?: number;
+  shipping?: number;
+  amountPaid?: number;
+  balanceDue?: number;
+
+  paymentTerms?: string;
+  bankDetails?: {
+    accountNo: string;
+    sortCode: string;
+  };
+
+  verificationHash?: string;
+  qrCode?: string;
+  invoiceNo?: string;
+  invoiceDate?: string;
+
+  // Legacy compatibility fields for top-level
+  grandTotal?: number;
+  taxRate?: number;
+  gstRate?: number;
+  isTaxInclusive?: boolean;
+  currencyCode?: string;
+  client?: any;
+  company?: any;
+  organization?: any;
+  billTo?: any;
+  billFrom?: any;
+  invoiceTo?: any;
+  billingAddress?: any;
+  shippingAddress?: any;
+  organizationName?: string;
+  organizationAddress?: string;
+  organizationDescription?: string;
+  companyName?: string;
+  companyTagline?: string;
+  companyContact?: any;
+  logo?: string | null;
+  logoUrl?: string | null;
+  website?: string | null;
+  footerWebsite?: string;
+  footerText?: string;
+  payment?: any;
+  paymentMethods?: any;
+  paymentInformation?: string;
+  installmentDetails?: any;
+  terms?: string;
+  termsAndConditions?: string;
+  signature?: any;
+}
+
+export interface DeliveryNoteData extends BaseDocumentData {
+  orderNumber: string;
+  customer: ContactInfo;
+  shippingAddress: string | Address;
+  items: DocumentItem[];
+  otp?: string;
 }

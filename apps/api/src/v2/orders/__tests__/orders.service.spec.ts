@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrdersService } from '../orders.service';
-import { PrismaService } from '@/prisma/prisma.service';
-import { V2ApiContext } from '@repo/shared/server';
-import { BadRequestException } from '@nestjs/common';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { Test, TestingModule } from "@nestjs/testing";
+import { OrdersService } from "../orders.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { BadRequestException } from "@nestjs/common";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
-describe('OrdersService', () => {
+describe("OrdersService", () => {
   let service: OrdersService;
   let prisma: PrismaService;
 
@@ -26,9 +26,23 @@ describe('OrdersService', () => {
               productVariant: {
                 findMany: vi.fn(),
               },
-              $transaction: vi.fn((cb) => cb({
-                transaction: { create: vi.fn().mockResolvedValue({ id: 'new-id', number: 'ECO-000001', status: 'PENDING', paymentStatus: 'UNPAID', finalTotal: 100, currencyCode: 'USD', createdAt: new Date() }) }
-              })),
+              $transaction: vi.fn((cb) =>
+                cb({
+                  transaction: {
+                    create: vi
+                      .fn()
+                      .mockResolvedValue({
+                        id: "new-id",
+                        number: "ECO-000001",
+                        status: "PENDING",
+                        paymentStatus: "UNPAID",
+                        finalTotal: 100,
+                        currencyCode: "USD",
+                        createdAt: new Date(),
+                      }),
+                  },
+                }),
+              ),
             },
           },
         },
@@ -39,16 +53,18 @@ describe('OrdersService', () => {
     prisma = module.get<PrismaService>(PrismaService);
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('createOrder', () => {
-    it('should throw BadRequestException for invalid input', async () => {
-      const ctx: V2ApiContext = { organizationId: 'org1' } as any;
+  describe("createOrder", () => {
+    it("should throw BadRequestException for invalid input", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1" } as any;
       const body = {}; // Missing required fields
 
-      await expect(service.createOrder(ctx, body)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(ctx, body)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

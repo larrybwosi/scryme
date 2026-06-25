@@ -1,15 +1,10 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "../../../components/page-header";
 import { getStockTransferList } from "../../actions/stock-management";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  Plus,
-  ArrowLeftRight,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Eye,
-} from "lucide-react";
+import { Plus, ArrowLeftRight, Search, Eye, FileDown } from "lucide-react";
 import Link from "next/link";
 import {
   Table,
@@ -22,9 +17,37 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
 import { Input } from "@repo/ui/components/ui/input";
+import { useDebounce } from "use-debounce";
 
-export default async function TransfersPage() {
-  const transfers = await getStockTransferList();
+export default function TransfersPage() {
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounce(search, 500);
+  const [transfers, setTransfers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const data = await getStockTransferList({ search: debouncedSearch });
+        setTransfers(data);
+      } catch (error) {
+        console.error("Failed to fetch stock transfers:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [debouncedSearch]);
+
+  const downloadPdf = () => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.append("search", debouncedSearch);
+    window.open(
+      `/api/stocking/documents/transfers?${params.toString()}`,
+      "_blank",
+    );
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -32,8 +55,7 @@ export default async function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-blue-50 text-blue-700 border-blue-200"
-          >
+            className="bg-blue-50 text-blue-700 border-blue-200">
             Pending Approval
           </Badge>
         );
@@ -41,8 +63,7 @@ export default async function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-indigo-50 text-indigo-700 border-indigo-200"
-          >
+            className="bg-indigo-50 text-indigo-700 border-indigo-200">
             Approved
           </Badge>
         );
@@ -50,8 +71,7 @@ export default async function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-amber-50 text-amber-700 border-amber-200"
-          >
+            className="bg-amber-50 text-amber-700 border-amber-200">
             Shipped
           </Badge>
         );
@@ -59,8 +79,7 @@ export default async function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-orange-50 text-orange-700 border-orange-200"
-          >
+            className="bg-orange-50 text-orange-700 border-orange-200">
             In Transit
           </Badge>
         );
@@ -68,8 +87,7 @@ export default async function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-green-50 text-green-700 border-green-200"
-          >
+            className="bg-green-50 text-green-700 border-green-200">
             Completed
           </Badge>
         );
@@ -90,12 +108,18 @@ export default async function TransfersPage() {
           description="Manage and track stock movements between locations."
           icon={<ArrowLeftRight size={24} />}
         />
-        <Link href="/stocking/transfers/new">
-          <Button className="gap-2">
-            <Plus size={16} />
-            <span>New Transfer</span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={downloadPdf}>
+            <FileDown size={18} />
+            Download PDF
           </Button>
-        </Link>
+          <Link href="/stocking/transfers/new">
+            <Button className="gap-2">
+              <Plus size={16} />
+              <span>New Transfer</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border">
@@ -109,12 +133,10 @@ export default async function TransfersPage() {
               type="text"
               placeholder="Search transfers..."
               className="pl-10 bg-white"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Filter size={14} />
-            <span>Filter</span>
-          </Button>
         </div>
 
         <Table>
@@ -130,17 +152,24 @@ export default async function TransfersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transfers.length === 0 ? (
+            {loading ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="h-32 text-center text-gray-500"
-                >
+                  className="h-32 text-center text-gray-500">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : transfers.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="h-32 text-center text-gray-500">
                   No stock transfers found.
                 </TableCell>
               </TableRow>
             ) : (
-              transfers.map((transfer) => (
+              transfers.map(transfer => (
                 <TableRow key={transfer.id}>
                   <TableCell className="font-medium">
                     {transfer.transferNumber}

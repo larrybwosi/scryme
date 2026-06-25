@@ -1,18 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateCrmActivityDto } from '../dto/crm-activity.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmActivityDto } from "../dto/crm-activity.dto";
 
 @Injectable()
 export class CrmActivityService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createActivity(organizationId: string, memberId: string | null, dto: CreateCrmActivityDto) {
+  async createActivity(
+    organizationId: string,
+    memberId: string | null,
+    dto: CreateCrmActivityDto,
+  ) {
     const record = await this.prisma.client.crmRecord.findFirst({
       where: { id: dto.recordId, organizationId },
     });
 
     if (!record) {
-      throw new NotFoundException('CRM Record not found');
+      throw new NotFoundException("CRM Record not found");
     }
 
     return this.prisma.client.crmActivity.create({
@@ -49,14 +53,14 @@ export class CrmActivityService {
 
     // Merge and sort by date
     const timeline = [
-      ...notes.map(n => ({
+      ...notes.map((n) => ({
         id: n.id,
-        type: 'NOTE',
+        type: "NOTE",
         content: n.content,
         timestamp: n.timelineDate,
         createdBy: n.createdBy,
       })),
-      ...activities.map(a => ({
+      ...activities.map((a) => ({
         id: a.id,
         type: a.type,
         description: a.description,
@@ -66,6 +70,8 @@ export class CrmActivityService {
       })),
     ];
 
-    return timeline.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return timeline.sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+    );
   }
 }

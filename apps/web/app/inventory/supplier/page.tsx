@@ -59,7 +59,7 @@ async function SupplierList({
   if (view === "grid") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {suppliers.map((supplier) => (
+        {suppliers.map(supplier => (
           <SupplierCard key={supplier.id} supplier={supplier} />
         ))}
       </div>
@@ -96,24 +96,20 @@ export default async function SupplierListPage({
           <div className="flex items-center gap-3">
             <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
               <Link
-                href={`/inventory/supplier?view=table&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ""}`}
-              >
+                href={`/inventory/supplier?view=table&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ""}`}>
                 <Button
                   variant={currentView === "table" ? "secondary" : "ghost"}
                   size="sm"
-                  className="h-8 w-8 p-0"
-                >
+                  className="h-8 w-8 p-0">
                   <List size={16} />
                 </Button>
               </Link>
               <Link
-                href={`/inventory/supplier?view=grid&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ""}`}
-              >
+                href={`/inventory/supplier?view=grid&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ""}`}>
                 <Button
                   variant={currentView === "grid" ? "secondary" : "ghost"}
                   size="sm"
-                  className="h-8 w-8 p-0"
-                >
+                  className="h-8 w-8 p-0">
                   <LayoutGrid size={16} />
                 </Button>
               </Link>
@@ -127,22 +123,19 @@ export default async function SupplierListPage({
             <TabsList className="flex items-center gap-1 border-b pb-px bg-transparent h-auto p-0">
               <TabsTrigger
                 value="all"
-                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none"
-              >
+                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none">
                 All Suppliers
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853] data-[state=active]:block hidden" />
               </TabsTrigger>
               <TabsTrigger
                 value="featured"
-                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none"
-              >
+                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none">
                 Featured
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853] data-[state=active]:block hidden" />
               </TabsTrigger>
               <TabsTrigger
                 value="favorites"
-                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none"
-              >
+                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none">
                 Favorites
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853] data-[state=active]:block hidden" />
               </TabsTrigger>
@@ -159,8 +152,7 @@ export default async function SupplierListPage({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 gap-2 rounded-lg"
-              >
+                className="h-9 gap-2 rounded-lg">
                 <Filter size={16} />
                 Filter
               </Button>

@@ -10,6 +10,7 @@ import {
   PaymentStatus,
   PaymentMethod,
   FulfillmentStatus,
+  FulfillmentType,
   MemberRole,
   Prisma,
 } from "@repo/db/client";
@@ -127,7 +128,11 @@ export async function getTransactionById(id: string) {
           },
         },
       },
-      payments: true,
+      payments: {
+        include: {
+          attachments: true,
+        },
+      },
       fulfillments: {
         include: {
           items: true,
@@ -137,6 +142,11 @@ export async function getTransactionById(id: string) {
       member: {
         include: {
           user: true,
+        },
+      },
+      attachments: {
+        orderBy: {
+          uploadedAt: "desc",
         },
       },
     },
@@ -201,7 +211,7 @@ export async function createTransaction(data: {
       paymentStatus: "UNPAID",
       notes: data.notes,
       items: {
-        create: data.items.map((item) => ({
+        create: data.items.map(item => ({
           variantId: item.variantId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -268,6 +278,14 @@ export async function addPayment(
     method: PaymentMethod;
     reference?: string;
     notes?: string;
+    chequeDate?: Date;
+    bankName?: string;
+    attachments?: {
+      fileName: string;
+      fileUrl: string;
+      mimeType: string;
+      sizeBytes?: number;
+    }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
@@ -287,7 +305,18 @@ export async function addPayment(
       method: data.method,
       referenceNumber: data.reference,
       notes: data.notes,
+      chequeDate: data.chequeDate,
+      bankName: data.bankName,
       status: "COMPLETED",
+      attachments: data.attachments
+        ? {
+            create: data.attachments.map(att => ({
+              ...att,
+              organizationId: auth.organizationId!,
+              memberId: auth.memberId!,
+            })),
+          }
+        : undefined,
     },
   });
 
@@ -306,9 +335,58 @@ export async function addPayment(
     },
   });
 
+  // Generation of invoice and receipt on payment
+  const { documentService } = await import(
+    "@repo/shared/lib/services/document"
+  );
+  try {
+    await Promise.all([
+      documentService.generateAndSaveInvoice(
+        transactionId,
+        auth.organizationId!,
+        auth.memberId!,
+      ),
+      documentService.generateAndSaveReceipt(
+        transactionId,
+        auth.organizationId!,
+        auth.memberId!,
+      ),
+    ]);
+  } catch (err) {
+    console.error("Failed to generate documents on payment:", err);
+  }
+
   revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${transactionId}`);
   return payment;
+}
+
+export async function generateDocumentAction(
+  transactionId: string,
+  type: "invoice" | "receipt",
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const { documentService } = await import(
+    "@repo/shared/lib/services/document"
+  );
+
+  if (type === "invoice") {
+    await documentService.generateAndSaveInvoice(
+      transactionId,
+      auth.organizationId!,
+      auth.memberId!,
+    );
+  } else {
+    await documentService.generateAndSaveReceipt(
+      transactionId,
+      auth.organizationId!,
+      auth.memberId!,
+    );
+  }
+
+  revalidatePath(`/sales/transactions/${transactionId}`);
+  return { success: true };
 }
 
 export async function getFulfillments(params: {
@@ -377,11 +455,89 @@ export async function updateFulfillmentStatus(
   return fulfillment;
 }
 
-export async function createOrderAction(data: any) {
+export async function addAttachmentToPayment(
+  paymentId: string,
+  data: {
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    sizeBytes?: number;
+    description?: string;
+    shortCode?: string;
+    shortUrl?: string;
+  },
+) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
-  // console.log(data);
+
+  const attachment = await db.attachment.create({
+    data: {
+      ...data,
+      paymentId,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
+    },
+  });
+
+  return attachment;
+}
+
+export async function createFulfillment(data: {
+  transactionId: string;
+  type: FulfillmentType;
+  items: { transactionItemId: string; quantity: number }[];
+  shippingAddressId?: string;
+  pickupLocationId?: string;
+}) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.create({
+    data: {
+      transactionId: data.transactionId,
+      type: data.type,
+      shippingAddressId: data.shippingAddressId,
+      pickupLocationId: data.pickupLocationId,
+      status: "PENDING",
+      items: {
+        create: data.items.map(item => ({
+          transactionItemId: item.transactionItemId,
+          quantity: item.quantity,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/sales/transactions");
+  revalidatePath("/sales/deliveries");
+
+  // Background generation of proof documents
+   const { documentService } = await import('@repo/shared/lib/services/document');
+  documentService.generateAndAttachProofDocuments({
+      transactionId: fulfillment.transactionId,
+      fulfillmentId: fulfillment.id,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
+  }).catch(err => console.error('Failed to generate proof documents:', err));
+
+  return fulfillment;
+}
+
+export async function createOrderAction(data: {
+  type: TransactionType;
+  customerId: string;
+  businessAccountId?: string;
+  locationId: string;
+  items: any[];
+  notes?: string;
+  termsAndConditions?: string;
+  discountAmount?: number;
+  shippingFee?: number;
+  deliveryPartnerId?: string;
+  shippingAddressId?: string;
+}) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
   if (data.type === "POS_SALE") {
-    const { processSale } = await import("@repo/shared/server");
+    const { processSale } = await import("@repo/shared/actions/transaction/process-sale");
 
     // Transform OrderForm data to ProcessSaleInput
     const saleData = {
@@ -391,6 +547,7 @@ export async function createOrderAction(data: any) {
       })),
       locationId: data.locationId,
       customerId: data.customerId,
+      businessAccountId: data.businessAccountId,
       discountAmount: data.discountAmount,
       notes: data.notes,
       payments: [
@@ -404,7 +561,9 @@ export async function createOrderAction(data: any) {
                 (item.taxAmount || 0) -
                 (item.discountAmount || 0),
               0,
-            ) - (data.discountAmount || 0),
+            ) -
+            (data.discountAmount || 0) +
+            (data.shippingFee || 0),
         },
       ],
       enableStockTracking: true,
@@ -424,15 +583,25 @@ export async function createOrderAction(data: any) {
   }
 
   // Import shared logic for QUOTE and SALES_ORDER
-  const { createOrder } = await import("@repo/shared/server");
+  const { createOrder } = await import("@repo/shared/actions/transaction/orders");
+  const { OrderTransactionStatus } = await import("@repo/shared/lib/validations/order");
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,
+    businessAccountId: data.businessAccountId,
     type: data.type === "QUOTE" ? "QUOTE" : "SALES_ORDER",
-    status: data.type === "QUOTE" ? "DRAFT" : "PENDING_CONFIRMATION",
+    status:
+      data.type === "QUOTE"
+        ? OrderTransactionStatus.DRAFT
+        : OrderTransactionStatus.PENDING_CONFIRMATION,
+    payments: [],
+    shippingFee: data.shippingFee || 0,
+    discountAmount: data.discountAmount || 0,
+    deliveryPartnerId: data.deliveryPartnerId,
     fulfillment: {
       type: "DELIVERY", // Default
       pickupLocationId: data.locationId,
+      shippingAddressId: data.shippingAddressId,
     },
   });
 
@@ -486,22 +655,175 @@ export async function reconcileFulfillment(
   data: {
     notes?: string;
     receivedBy?: string;
+    otp?: string;
+    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  const fulfillment = await db.fulfillment.update({
+  const fulfillment = await db.fulfillment.findUnique({
     where: { id },
+    include: { attachments: true }
+  });
+
+  if (!fulfillment) throw new Error("Fulfillment not found");
+
+  // If OTP is provided, verify it
+  if (data.otp && fulfillment.confirmationToken && data.otp !== fulfillment.confirmationToken) {
+    throw new Error("Invalid verification code");
+  }
+
+  const result = await db.$transaction(async (tx) => {
+    const updatedFulfillment = await tx.fulfillment.update({
+      where: { id },
+      data: {
+        // We don't mark as reconciled yet, staff will do that
+        receivedBy: data.receivedBy,
+        deliveryNotes: data.notes,
+        status: "DELIVERED", // Mark as delivered once OTP is verified
+        deliveredAt: new Date(),
+        attachments: data.attachments ? {
+          create: data.attachments.map(att => ({
+            ...att,
+            organizationId: auth.organizationId!,
+            memberId: auth.memberId!,
+            transactionId: fulfillment.transactionId,
+          }))
+        } : undefined,
+      },
+    });
+
+    // Update Transaction status to DELIVERED as well
+    await tx.transaction.update({
+      where: { id: fulfillment.transactionId },
+      data: { status: "DELIVERED" }
+    });
+
+    return updatedFulfillment;
+  });
+
+  revalidatePath("/sales/deliveries");
+  revalidatePath("/sales/transactions");
+  return result;
+}
+
+export async function approveFulfillment(id: string) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.findUnique({
+    where: { id },
+    include: { transaction: true }
+  });
+
+  if (!fulfillment) throw new Error("Fulfillment not found");
+
+  const result = await db.$transaction(async (tx) => {
+    const updatedFulfillment = await tx.fulfillment.update({
+      where: { id },
+      data: {
+        isReconciled: true,
+        reconciledAt: new Date(),
+        reconciledBy: auth.memberId,
+        status: "COMPLETED",
+      },
+    });
+
+    // When staff approves, mark the transaction as completed
+    await tx.transaction.update({
+      where: { id: fulfillment.transactionId },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
+    return updatedFulfillment;
+  });
+
+  revalidatePath("/sales/deliveries");
+  revalidatePath("/sales/transactions");
+  revalidatePath(`/sales/transactions/${fulfillment.transactionId}`);
+  return result;
+}
+
+export async function uploadFileAction(formData: FormData) {
+  const authResult = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth } = authResult;
+
+  const file = formData.get("file") as File;
+  if (!file) throw new Error("No file provided");
+
+  const { storageService, StorageCoreService } = await import(
+    "@repo/shared/storage"
+  );
+  const { v7: uuidv7 } = await import("uuid");
+
+  const fileName = StorageCoreService.generateStorageFileName(
+    file.name,
+    uuidv7(),
+  );
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await storageService.upload(buffer, fileName, file.type, {
+    organizationId: auth.organizationId!,
+  });
+
+  const { shortCode, shortUrl } = StorageCoreService.generateShortUrlInfo();
+
+  const attachment = await db.attachment.create({
     data: {
-      isReconciled: true,
-      reconciledAt: new Date(),
-      reconciledBy: auth.memberId,
-      receivedBy: data.receivedBy,
-      deliveryNotes: data.notes,
-      status: "COMPLETED",
+      id: fileName,
+      fileName: file.name,
+      fileUrl: result.url,
+      shortCode,
+      shortUrl,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
+    },
+  });
+
+  return {
+    id: attachment.id,
+    fileName: attachment.fileName || "file",
+    fileUrl: attachment.fileUrl || "",
+    shortUrl: attachment.shortUrl || "",
+    mimeType: attachment.mimeType,
+    sizeBytes: attachment.sizeBytes || 0,
+  };
+}
+
+export async function uploadFulfillmentAttachment(
+  fulfillmentId: string,
+  data: {
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    sizeBytes?: number;
+    description?: string;
+    shortCode?: string;
+    shortUrl?: string;
+  }
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.findUnique({
+    where: { id: fulfillmentId }
+  });
+
+  if (!fulfillment) throw new Error("Fulfillment not found");
+
+  const attachment = await db.attachment.create({
+    data: {
+      ...data,
+      fulfillmentId,
+      transactionId: fulfillment.transactionId,
+      organizationId: auth.organizationId!,
+      memberId: auth.memberId!,
     },
   });
 
   revalidatePath("/sales/deliveries");
-  return fulfillment;
+  return attachment;
 }

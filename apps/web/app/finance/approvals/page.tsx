@@ -1,7 +1,7 @@
-import { ShieldCheck } from 'lucide-react';
-import { PageHeader } from '../../../components/page-header';
-import { getApprovalRequests } from '../../actions/approvals';
-import { ApprovalList } from '../../../components/finance/approval-list';
+import { ShieldCheck } from "lucide-react";
+import { PageHeader } from "../../../components/page-header";
+import { getApprovalRequests } from "../../actions/approvals";
+import { ApprovalList } from "../../../components/finance/approval-list";
 
 export default async function ApprovalsPage() {
   const requests = await getApprovalRequests();

@@ -1,5 +1,5 @@
 import { db, ZitadelConfiguration } from "@repo/db";
-import { BaseIntegrationService, IntegrationStatus, IntegrationConnectionResult } from "@repo/shared";
+import { BaseIntegrationService, IntegrationStatus, IntegrationConnectionResult } from "@repo/shared/integrations";
 import { Metadata } from "nice-grpc-common";
 import { OIDCAuthMethodType, OIDCGrantType, OIDCResponseType } from "@zitadel/node/dist/api/generated/zitadel/app.js";
 import { PrivateLabelingSetting } from "@zitadel/node/dist/api/generated/zitadel/project.js";

@@ -9,6 +9,6 @@ export class Order {
     public readonly locationId: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
-    public readonly items: any[] = []
+    public readonly items: any[] = [],
   ) {}
 }

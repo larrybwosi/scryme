@@ -1,5 +1,9 @@
 import React from "react";
-import { getLocation, getLocations, getMembersForSelect } from "../../actions/locations";
+import {
+  getLocation,
+  getLocations,
+  getMembersForSelect,
+} from "../../actions/locations";
 import { notFound } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -9,15 +13,29 @@ import {
   Settings,
   Layers,
   Box,
-  ChevronRight
+  ChevronRight,
+  Database,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import { LocationSheet } from "../../../components/locations/location-sheet";
 import { ZoneList } from "../../../components/locations/zone-list";
 import { UnitList } from "../../../components/locations/unit-list";
+import { LocationManagementTab } from "../../../components/locations/location-management-tab";
+import { LocationStockTable } from "../../../components/locations/location-stock-table";
+import { db } from "@repo/db";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -29,6 +47,41 @@ export default async function LocationDetailPage({ params }: PageProps) {
   const allLocations = await getLocations();
   const members = await getMembersForSelect();
 
+  // Fetch all variants with their stock for this location
+  const allVariants = await db.productVariant.findMany({
+    where: {
+      product: {
+        organizationId: location?.organizationId,
+      },
+      isActive: true,
+    },
+    include: {
+      product: {
+        select: {
+          name: true,
+        },
+      },
+      variantStocks: {
+        where: {
+          locationId: id,
+        },
+      },
+    },
+    orderBy: {
+      product: {
+        name: "asc",
+      },
+    },
+  });
+
+  const formattedStock = allVariants.map(v => ({
+    variantId: v.id,
+    name: v.product.name,
+    variantName: v.name,
+    sku: v.sku,
+    currentStock: v.variantStocks[0]?.currentStock.toNumber() || 0,
+  }));
+
   if (!location) {
     notFound();
   }
@@ -39,8 +92,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
       <div className="flex flex-col gap-4">
         <Link
           href="/locations"
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[#1D1D1F] transition-colors w-fit"
-        >
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[#1D1D1F] transition-colors w-fit">
           <ArrowLeft size={14} />
           Back to Locations
         </Link>
@@ -52,21 +104,33 @@ export default async function LocationDetailPage({ params }: PageProps) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-[#1D1D1F]">{location.name}</h1>
+                <h1 className="text-2xl font-bold text-[#1D1D1F]">
+                  {location.name}
+                </h1>
                 <Badge variant="secondary" className="capitalize">
                   {location.locationType.toLowerCase().replace("_", " ")}
                 </Badge>
                 {location.isDefault && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Default</Badge>
+                  <Badge
+                    variant="outline"
+                    className="bg-blue-50 text-blue-700 border-blue-200">
+                    Default
+                  </Badge>
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {location.code ? `Code: ${location.code}` : "No location code assigned"}
+                {location.code
+                  ? `Code: ${location.code}`
+                  : "No location code assigned"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <LocationSheet location={location} locations={allLocations} members={members} isEdit>
+            <LocationSheet
+              location={location}
+              locations={allLocations}
+              members={members}
+              isEdit>
               <Button variant="outline" className="gap-2">
                 <Settings size={16} />
                 <span>Configure</span>
@@ -86,15 +150,21 @@ export default async function LocationDetailPage({ params }: PageProps) {
             <CardContent className="space-y-4 text-sm">
               <div className="flex justify-between py-2 border-b">
                 <span className="text-muted-foreground">Manager</span>
-                <span className="font-medium">{location.manager?.user?.name || "Unassigned"}</span>
+                <span className="font-medium">
+                  {location.manager?.user?.name || "Unassigned"}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-muted-foreground">Parent Location</span>
-                <span className="font-medium">{location.parentLocation?.name || "Root"}</span>
+                <span className="font-medium">
+                  {location.parentLocation?.name || "Root"}
+                </span>
               </div>
               <div className="space-y-1">
                 <span className="text-muted-foreground block">Description</span>
-                <p className="text-[#1D1D1F]">{location.description || "No description provided."}</p>
+                <p className="text-[#1D1D1F]">
+                  {location.description || "No description provided."}
+                </p>
               </div>
 
               <div className="space-y-2 pt-2">
@@ -103,11 +173,17 @@ export default async function LocationDetailPage({ params }: PageProps) {
                   {location.address ? (
                     <>
                       <p>{(location.address as any).street}</p>
-                      <p>{(location.address as any).city}, {(location.address as any).state} {(location.address as any).zipCode}</p>
+                      <p>
+                        {(location.address as any).city},{" "}
+                        {(location.address as any).state}{" "}
+                        {(location.address as any).zipCode}
+                      </p>
                       <p>{(location.address as any).country}</p>
                     </>
                   ) : (
-                    <p className="italic text-muted-foreground">No address added</p>
+                    <p className="italic text-muted-foreground">
+                      No address added
+                    </p>
                   )}
                 </div>
               </div>
@@ -120,12 +196,20 @@ export default async function LocationDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                <div className="text-xs text-blue-600 font-semibold uppercase mb-1">Sub-locations</div>
-                <div className="text-2xl font-bold text-blue-900">{location.childLocations.length}</div>
+                <div className="text-xs text-blue-600 font-semibold uppercase mb-1">
+                  Sub-locations
+                </div>
+                <div className="text-2xl font-bold text-blue-900">
+                  {location.childLocations.length}
+                </div>
               </div>
               <div className="p-4 rounded-xl bg-orange-50 border border-orange-100">
-                <div className="text-xs text-orange-600 font-semibold uppercase mb-1">Zones</div>
-                <div className="text-2xl font-bold text-orange-900">{location.zones.length}</div>
+                <div className="text-xs text-orange-600 font-semibold uppercase mb-1">
+                  Zones
+                </div>
+                <div className="text-2xl font-bold text-orange-900">
+                  {location.zones.length}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -134,14 +218,22 @@ export default async function LocationDetailPage({ params }: PageProps) {
         {/* Right Column: Hierarchy & Storage */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="hierarchy" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="hierarchy" className="gap-2">
                 <Layers size={16} />
-                Hierarchy & Zones
+                Hierarchy
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="gap-2">
+                <Database size={16} />
+                Stock
               </TabsTrigger>
               <TabsTrigger value="storage" className="gap-2">
                 <Box size={16} />
-                Storage Units
+                Storage
+              </TabsTrigger>
+              <TabsTrigger value="management" className="gap-2">
+                <Settings size={16} />
+                Enterprise
               </TabsTrigger>
             </TabsList>
 
@@ -156,8 +248,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
                   <LocationSheet
                     locations={allLocations}
                     members={members}
-                    location={{ parentLocationId: location.id }}
-                  >
+                    location={{ parentLocationId: location.id }}>
                     <Button size="sm" variant="outline" className="gap-2">
                       <Plus size={14} />
                       Add Sub-location
@@ -180,11 +271,18 @@ export default async function LocationDetailPage({ params }: PageProps) {
                               <MapPin size={18} />
                             </div>
                             <div>
-                              <div className="font-medium text-sm">{child.name}</div>
-                              <div className="text-[10px] uppercase font-bold text-muted-foreground">{child.locationType}</div>
+                              <div className="font-medium text-sm">
+                                {child.name}
+                              </div>
+                              <div className="text-[10px] uppercase font-bold text-muted-foreground">
+                                {child.locationType}
+                              </div>
                             </div>
                           </div>
-                          <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-500" />
+                          <ChevronRight
+                            size={16}
+                            className="text-gray-300 group-hover:text-blue-500"
+                          />
                         </div>
                       </Link>
                     ))
@@ -196,12 +294,33 @@ export default async function LocationDetailPage({ params }: PageProps) {
               <ZoneList locationId={location.id} zones={location.zones} />
             </TabsContent>
 
+            <TabsContent value="stock" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Database size={18} className="text-blue-600" />
+                    Inventory Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LocationStockTable
+                    locationId={location.id}
+                    initialData={formattedStock}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="storage" className="space-y-4">
               <UnitList
                 locationId={location.id}
                 zones={location.zones}
                 units={location.storageUnits}
               />
+            </TabsContent>
+
+            <TabsContent value="management" className="space-y-4">
+              <LocationManagementTab location={location} />
             </TabsContent>
           </Tabs>
         </div>

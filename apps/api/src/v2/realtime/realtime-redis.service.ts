@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { RedisService } from '../../redis/redis.service';
-import { PresenceMember } from '@repo/shared';
+import { Injectable } from "@nestjs/common";
+import { RedisService } from "../../redis/redis.service";
+import { PresenceMember } from "@repo/shared/realtime/types";
 
 @Injectable()
 export class RealtimeRedisService {
-  private readonly HISTORY_PREFIX = 'realtime:history:';
-  private readonly PRESENCE_PREFIX = 'realtime:presence:';
-  private readonly LAST_STATE_PREFIX = 'realtime:last_state:';
+  private readonly HISTORY_PREFIX = "realtime:history:";
+  private readonly PRESENCE_PREFIX = "realtime:presence:";
+  private readonly LAST_STATE_PREFIX = "realtime:last_state:";
   private readonly HISTORY_TTL = 300; // 5 minutes in seconds
   private readonly MAX_HISTORY_ITEMS = 100;
 
@@ -33,7 +33,7 @@ export class RealtimeRedisService {
   async getHistory(channel: string): Promise<any[]> {
     const key = `${this.HISTORY_PREFIX}${channel}`;
     const rawHistory = await this.redis.lrange(key, 0, -1);
-    return rawHistory.map(raw => JSON.parse(raw)).reverse();
+    return rawHistory.map((raw) => JSON.parse(raw)).reverse();
   }
 
   async getLastState(channel: string, event: string): Promise<any | null> {
@@ -63,7 +63,27 @@ export class RealtimeRedisService {
     const key = `${this.PRESENCE_PREFIX}${channel}`;
     const members = await this.redis.hgetall<PresenceMember>(key);
 
-    const twoMinsAgo = Date.now() - (120 * 1000);
-    return Object.values(members).filter(m => m.timestamp > twoMinsAgo);
+    if (Object.keys(members).length === 0) return [];
+
+    const twoMinsAgo = Date.now() - 120 * 1000;
+    const activeMembers: PresenceMember[] = [];
+    const expiredClientIds: string[] = [];
+
+    for (const [clientId, member] of Object.entries(members)) {
+      if (member.timestamp > twoMinsAgo) {
+        activeMembers.push(member);
+      } else {
+        expiredClientIds.push(clientId);
+      }
+    }
+
+    // Cleanup expired members asynchronously to keep the read fast
+    if (expiredClientIds.length > 0) {
+      this.redis.hdel(key, ...expiredClientIds).catch((err) => {
+        console.error(`Failed to cleanup expired presence members for ${channel}:`, err);
+      });
+    }
+
+    return activeMembers;
   }
 }

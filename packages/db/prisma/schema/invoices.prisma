@@ -186,6 +186,7 @@ model InvoiceConfig {
   companyWebsite String?
 
   // Layout Toggles
+  showLogo         Boolean @default(true)
   showTaxBreakdown Boolean @default(true)
   showTerms        Boolean @default(true)
   showNotes        Boolean @default(true)
@@ -194,6 +195,21 @@ model InvoiceConfig {
   // Default Content
   defaultTerms String? @db.Text
   defaultNotes String? @db.Text
+  footerText   String? @db.Text
+
+  // Numbering Configuration
+  invoiceNumberPrefix  String?
+  invoiceNumberSuffix  String?
+  invoiceNumberStart   Int     @default(1)
+  invoiceNumberPadding Int     @default(0)
+
+  // Enterprise Options
+  showPoweredBy    Boolean @default(true)
+  watermarkText    String?
+  enableAuditTrail Boolean @default(false)
+
+  // Flexible fields for specific regulatory IDs or custom labels
+  customFields Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

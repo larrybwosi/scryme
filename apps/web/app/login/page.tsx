@@ -23,12 +23,12 @@ import { Button } from "@repo/ui/components/ui/button";
 
 // Zod validation schemas
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.email("Please enter a valid email address"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -89,8 +89,7 @@ const FloatingTag = ({
     className={cn(
       "absolute px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-full shadow-lg hidden lg:block",
       className,
-    )}
-  >
+    )}>
     {name}
   </div>
 );
@@ -111,8 +110,7 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm"
-  >
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm">
     {disabled ? (
       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
     ) : (
@@ -170,7 +168,6 @@ const LoginPageContent = () => {
     searchParams.get("redirect") ||
     searchParams.get("returnTo");
 
-  // ✅ FIX: moved router.push out of render into a useEffect
   useEffect(() => {
     if (session.data) {
       router.push("/dashboard");
@@ -281,8 +278,7 @@ const LoginPageContent = () => {
                       `/sign-up${queryString ? `?${queryString}` : ""}`,
                     );
                   }}
-                  className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors cursor-pointer"
-                >
+                  className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors cursor-pointer">
                   Sign up
                 </button>
               </p>
@@ -333,12 +329,10 @@ const LoginPageContent = () => {
 
               <form
                 onSubmit={handleSubmitLogin(handleLogin)}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 <FieldWrapper
                   label="Work email"
-                  error={loginErrors.email?.message}
-                >
+                  error={loginErrors.email?.message}>
                   <Input
                     type="email"
                     {...registerLogin("email")}
@@ -359,8 +353,7 @@ const LoginPageContent = () => {
                     <button
                       type="button"
                       onClick={() => setCurrentView("forgot-password")}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors cursor-pointer"
-                    >
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors cursor-pointer">
                       Forgot password?
                     </button>
                   </div>
@@ -377,10 +370,9 @@ const LoginPageContent = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword((v) => !v)}
+                      onClick={() => setShowPassword(v => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                      tabIndex={-1}
-                    >
+                      tabIndex={-1}>
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
@@ -399,8 +391,7 @@ const LoginPageContent = () => {
                 <Button
                   type="submit"
                   className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer"
-                  disabled={isLoading}
-                >
+                  disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -421,8 +412,7 @@ const LoginPageContent = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <button
                 onClick={() => setCurrentView("login")}
-                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors cursor-pointer"
-              >
+                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors cursor-pointer">
                 <ArrowLeft className="w-4 h-4" /> Back to login
               </button>
 
@@ -442,12 +432,10 @@ const LoginPageContent = () => {
 
               <form
                 onSubmit={handleSubmitForgot(handleForgotPassword)}
-                className="space-y-6"
-              >
+                className="space-y-6">
                 <FieldWrapper
                   label="Work email"
-                  error={forgotErrors.email?.message}
-                >
+                  error={forgotErrors.email?.message}>
                   <Input
                     type="email"
                     {...registerForgot("email")}
@@ -463,8 +451,7 @@ const LoginPageContent = () => {
                 <Button
                   type="submit"
                   className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer"
-                  disabled={isLoading}
-                >
+                  disabled={isLoading}>
                   {isLoading ? "Processing..." : "Send reset instructions"}
                 </Button>
               </form>
@@ -564,8 +551,7 @@ const LoginPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-white">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
         </div>
-      }
-    >
+      }>
       <LoginPageContent />
     </Suspense>
   );

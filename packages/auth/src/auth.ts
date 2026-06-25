@@ -2,13 +2,16 @@ import { betterAuth } from "better-auth";
 import { authOptions } from "./index";
 import { admin } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
-import { customSession } from "better-auth/plugins/custom-session";
+import { customSession } from "better-auth/plugins";
 import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
-import { getRedisClient } from "@repo/shared/server";
+import { getRedisClient } from "@repo/shared/redis";
 
 export const auth = betterAuth({
   ...(authOptions as any),
+  session: {
+    preserveSessionInDatabase: true,
+  },
   secondaryStorage: {
     get: async (key: string) => {
       try {
@@ -47,7 +50,9 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    admin(),
+    admin({
+      defaultRole: UserRole.MEMBER,
+    }),
     customSession(async ({ user, session }) => {
       const cacheKey = `session-cache:${user.id}`;
       try {

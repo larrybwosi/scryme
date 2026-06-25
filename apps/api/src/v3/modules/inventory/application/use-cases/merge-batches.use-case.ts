@@ -29,7 +29,7 @@ export class MergeBatchesUseCase {
     }
 
     const batches = await Promise.all(
-      batchIds.map((id) => this.stockBatchRepository.findById(id)),
+      batchIds.map(id => this.stockBatchRepository.findById(id)),
     );
 
     // Validation
@@ -54,7 +54,7 @@ export class MergeBatchesUseCase {
       0,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Create the merged target batch
       const mergedBatch = await tx.stockBatch.create({
         data: {

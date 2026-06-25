@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -46,7 +46,11 @@ interface AddProductModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: AddProductModalProps) {
+export function AddProductToCatalogModal({
+  supplierId,
+  isOpen,
+  onOpenChange,
+}: AddProductModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -63,7 +67,7 @@ export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: A
   useEffect(() => {
     if (isOpen) {
       setIsLoadingProducts(true);
-      getInventoryProducts({}).then((data) => {
+      getInventoryProducts({}).then(data => {
         setProducts(data);
         setIsLoadingProducts(false);
       });
@@ -97,7 +101,8 @@ export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: A
         <DialogHeader>
           <DialogTitle>Add Product to Catalog</DialogTitle>
           <DialogDescription>
-            Select a product from your inventory to add to this supplier&apos;s catalog.
+            Select a product from your inventory to add to this supplier&apos;s
+            catalog.
           </DialogDescription>
         </DialogHeader>
 
@@ -109,14 +114,22 @@ export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: A
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Select Product</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-11 rounded-xl">
-                        <SelectValue placeholder={isLoadingProducts ? "Loading products..." : "Select a product"} />
+                        <SelectValue
+                          placeholder={
+                            isLoadingProducts
+                              ? "Loading products..."
+                              : "Select a product"
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {products.map((product) => (
+                      {products.map(product => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.name} ({product.sku})
                         </SelectItem>
@@ -136,7 +149,12 @@ export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: A
                   <FormItem>
                     <FormLabel>Buying Cost (KES)</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" step="0.01" className="h-11 rounded-xl" />
+                      <Input
+                        {...field}
+                        type="number"
+                        step="0.01"
+                        className="h-11 rounded-xl"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -158,11 +176,20 @@ export function AddProductToCatalogModal({ supplierId, isOpen, onOpenChange }: A
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl h-11 px-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="rounded-xl h-11 px-6">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="rounded-xl h-11 px-6">
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="rounded-xl h-11 px-6">
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Add to Catalog
               </Button>
             </DialogFooter>

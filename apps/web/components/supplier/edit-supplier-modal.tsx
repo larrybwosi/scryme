@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -60,7 +60,11 @@ interface EditSupplierModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditSupplierModal({ supplier, isOpen, onOpenChange }: EditSupplierModalProps) {
+export function EditSupplierModal({
+  supplier,
+  isOpen,
+  onOpenChange,
+}: EditSupplierModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -151,17 +155,23 @@ export function EditSupplierModal({ supplier, isOpen, onOpenChange }: EditSuppli
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                        <SelectItem value="manufacturer">
+                          Manufacturer
+                        </SelectItem>
                         <SelectItem value="distributor">Distributor</SelectItem>
                         <SelectItem value="wholesaler">Wholesaler</SelectItem>
-                        <SelectItem value="service_provider">Service Provider</SelectItem>
+                        <SelectItem value="service_provider">
+                          Service Provider
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -174,7 +184,9 @@ export function EditSupplierModal({ supplier, isOpen, onOpenChange }: EditSuppli
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Risk Level</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select risk level" />
@@ -248,7 +260,7 @@ export function EditSupplierModal({ supplier, isOpen, onOpenChange }: EditSuppli
             </div>
 
             <div className="grid grid-cols-2 gap-4 border-t pt-4">
-               <FormField
+              <FormField
                 control={form.control}
                 name="taxId"
                 render={({ field }) => (
@@ -345,7 +357,10 @@ export function EditSupplierModal({ supplier, isOpen, onOpenChange }: EditSuppli
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

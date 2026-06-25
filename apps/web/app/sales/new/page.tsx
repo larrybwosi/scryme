@@ -9,6 +9,18 @@ export default async function NewOrderPage() {
 
   const customers = await db.customer.findMany({
     where: { organizationId: auth?.organizationId },
+    include: { addresses: true },
+    orderBy: { name: "asc" },
+  });
+
+  const businessAccounts = await db.businessAccount.findMany({
+    where: { organizationId: auth?.organizationId },
+    include: { addresses: true },
+    orderBy: { name: "asc" },
+  });
+
+  const deliveryPartners = await db.deliveryPartner.findMany({
+    where: { organizationId: auth?.organizationId },
     orderBy: { name: "asc" },
   });
 
@@ -34,14 +46,17 @@ export default async function NewOrderPage() {
     },
   });
 
-  const formattedVariants = variants.map((v) => ({
+  const formattedVariants = variants.map(v => ({
     id: v.id,
     name: v.name,
     sku: v.sku,
     productName: v.product.name,
     retailPrice: Number(v.retailPrice),
     buyingPrice: Number(v.buyingPrice),
-    stock: v.variantStocks.reduce((acc, s) => acc + Number(s.availableStock), 0),
+    stock: v.variantStocks.reduce(
+      (acc, s) => acc + Number(s.availableStock),
+      0,
+    ),
   }));
 
   const organization = await db.organization.findUnique({
@@ -59,6 +74,8 @@ export default async function NewOrderPage() {
 
       <OrderForm
         customers={customers}
+        businessAccounts={businessAccounts}
+        deliveryPartners={deliveryPartners}
         locations={locations}
         variants={formattedVariants}
         currency={organization?.settings?.defaultCurrency || "USD"}

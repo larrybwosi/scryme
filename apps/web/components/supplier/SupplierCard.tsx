@@ -3,8 +3,17 @@
 import Link from "next/link";
 import { Star, MapPin, Globe, Phone, Mail, MoreVertical } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@repo/ui/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@repo/ui/components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { toggleFavoriteSupplier } from "../../app/actions/supplier";
 import { useState } from "react";
@@ -43,9 +52,13 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-lg leading-tight">{supplier.name}</h3>
+              <h3 className="font-semibold text-lg leading-tight">
+                {supplier.name}
+              </h3>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary" className="text-[10px] uppercase font-bold py-0 h-4">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] uppercase font-bold py-0 h-4">
                   {supplier.type.replace("_", " ")}
                 </Badge>
                 <div className="flex items-center text-yellow-500 fill-yellow-500">
@@ -81,7 +94,9 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
           <div className="flex items-center gap-2">
             <MapPin size={14} />
             <span className="truncate">
-              {supplier.city && supplier.country ? `${supplier.city}, ${supplier.country}` : "Global"}
+              {supplier.city && supplier.country
+                ? `${supplier.city}, ${supplier.country}`
+                : "Global"}
             </span>
           </div>
         </div>
@@ -94,8 +109,9 @@ export function SupplierCard({ supplier }: SupplierCardProps) {
           variant="outline"
           size="icon"
           onClick={handleToggleFavorite}
-          className={cn(isFavorite && "text-yellow-500 border-yellow-500 bg-yellow-50")}
-        >
+          className={cn(
+            isFavorite && "text-yellow-500 border-yellow-500 bg-yellow-50",
+          )}>
           <Star size={18} className={cn(isFavorite && "fill-current")} />
         </Button>
       </CardFooter>

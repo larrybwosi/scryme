@@ -39,15 +39,14 @@ export function ReorderRuleForm({
 
   return (
     <form
-      action={async (formData) => {
+      action={async formData => {
         formData.set("productId", productId);
         formData.set("locationId", locationId);
         await onSave(formData);
         setProductId("");
         setLocationId("");
       }}
-      className="space-y-4"
-    >
+      className="space-y-4">
       <div>
         <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
           Product
@@ -68,7 +67,7 @@ export function ReorderRuleForm({
             <SelectValue placeholder="Select location..." />
           </SelectTrigger>
           <SelectContent>
-            {locations.map((l) => (
+            {locations.map(l => (
               <SelectItem key={l.id} value={l.id}>
                 {l.name}
               </SelectItem>

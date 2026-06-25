@@ -1,10 +1,10 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 import { isTauri, isOfflineMode } from '@/lib/sdk';
+import sdk from '@/lib/sdk';
 import { tauriInvoke } from '@/lib/tauri-bridge';
 
 // Types (copied from main file for completeness)
@@ -56,16 +56,14 @@ const fetchSystemUnits = async (): Promise<SystemUnit[]> => {
   if (isTauri() || isOfflineMode()) {
     return tauriInvoke<SystemUnit[]>('get_system_units');
   }
-  const response = await axios.get('/api/units/system');
-  return response.data;
+  return sdk.client.get('/units/system');
 };
 
 const fetchOrganizationUnits = async (): Promise<OrganizationUnit[]> => {
   if (isTauri() || isOfflineMode()) {
     return tauriInvoke<OrganizationUnit[]>('get_organization_units', { organizationId: 'local-org' });
   }
-  const response = await axios.get(`/api/units/organization`);
-  return response.data;
+  return sdk.client.get(`/units/organization`);
 };
 
 const createOrganizationUnit = async (data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
@@ -75,8 +73,7 @@ const createOrganizationUnit = async (data: Partial<OrganizationUnit>): Promise<
         unit: { ...data, organizationId: 'local-org', isActive: true }
     });
   }
-  const response = await axios.post('/api/units/organization', data);
-  return response.data;
+  return sdk.client.post('/units/organization', data);
 };
 
 const updateOrganizationUnit = async (unitId: string, data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
@@ -87,8 +84,7 @@ const updateOrganizationUnit = async (unitId: string, data: Partial<Organization
     });
     return { id: unitId, ...data, organizationId: 'local-org' } as OrganizationUnit;
   }
-  const response = await axios.patch(`/api/units/organization/${unitId}`, data);
-  return response.data;
+  return sdk.client.patch(`/units/organization/${unitId}`, data);
 };
 
 const deleteOrganizationUnit = async (unitId: string): Promise<void> => {
@@ -96,7 +92,7 @@ const deleteOrganizationUnit = async (unitId: string): Promise<void> => {
     await tauriInvoke('delete_organization_unit', { userId: 'local-user', id: unitId });
     return;
   }
-  await axios.delete(`/api/units/organization/${unitId}`);
+  return sdk.client.delete(`/units/organization/${unitId}`);
 };
 
 // Main hook

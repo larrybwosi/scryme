@@ -75,17 +75,32 @@ impl EscPosBuilder {
         self.bytes.extend_from_slice(&[0x1D, 0x42, n]);
     }
 
+    /// Performs a full cut. Call `feed(3)` before this to ensure the last
+    /// printed line clears the cutter blade — the minimum needed on most
+    /// printers without wasting extra paper.
     pub fn cut(&mut self) {
         self.bytes.extend_from_slice(&[0x1D, 0x56, 0x41, 0x00]); // GS V A 0 (Full Cut)
     }
 
-    // --- NEW: LAYOUT & FORMATTING HELPERS ---
+    // --- LAYOUT & FORMATTING HELPERS ---
 
     /// Prints a divider line of dashes to match the PDF divider style.
     /// Provide your paper width in characters (e.g., 32 for 58mm, 48 for 80mm).
     pub fn divider(&mut self, char_width: usize) {
         let dashes = "-".repeat(char_width);
         self.text_line(&dashes);
+    }
+
+    /// Prints a styled divider line.
+    /// style: "solid" | "dashed" | "dotted"
+    pub fn divider_styled(&mut self, char_width: usize, style: &str) {
+        let char = match style {
+            "dashed" => "-",
+            "dotted" => ".",
+            _ => "-", // Default to solid as "-" is most standard for ESC/POS
+        };
+        let line = char.repeat(char_width);
+        self.text_line(&line);
     }
 
     /// Aligns left string to the left margin, right string to the right margin.
@@ -129,8 +144,8 @@ impl EscPosBuilder {
         self.text_line(&formatted_row);
     }
 
-    // --- NEW: NATIVE 1D BARCODE (CODE128) ---
-    /// Prints a standard 1D Barcode with text below it. Perfect for order numbers.
+    // --- NATIVE 1D BARCODE (CODE128) ---
+    /// Prints a standard 1D barcode with text below it. Perfect for order numbers.
     pub fn barcode_1d(&mut self, data: &str, symbology: Option<&str>) {
         // HRI characters print position: 2 = Below the barcode
         self.bytes.extend_from_slice(&[0x1D, 0x48, 0x02]);
@@ -170,7 +185,6 @@ impl EscPosBuilder {
             }
             _ => {
                 // Default to CODE128
-                // Print barcode using CODE128 (System 73 / 0x49)
                 // ESC/POS CODE128 requires a subset character prepended to the data.
                 // We use Subset B '{B' (0x7B, 0x42) for standard alphanumerics.
                 let mut barcode_data = vec![0x7B, 0x42];
@@ -184,7 +198,7 @@ impl EscPosBuilder {
             }
         }
         
-        self.feed(2); // Padding below the barcode
+        self.feed(1); // Minimal feed to clear barcode from print head
     }
 
     // --- NATIVE QR CODE ---
@@ -216,18 +230,23 @@ impl EscPosBuilder {
         // GS ( k 0x03 0x00 0x31 0x51 0x30
         self.bytes.extend_from_slice(&[0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
         
-        self.feed(2); // Add some padding below it
+        self.feed(1); // Minimal feed to clear QR code from print head
     }
 
     // --- NATIVE LOGO PRINTING (GS v 0) ---
     pub fn logo(&mut self, img_path: &str, is_58mm: bool) -> Result<(), String> {
+        self.logo_enhanced(img_path, is_58mm, 1, 50)
+    }
+
+    pub fn logo_enhanced(&mut self, img_path: &str, is_58mm: bool, position: u8, width_percent: u8) -> Result<(), String> {
         let img = image::open(img_path).map_err(|e| e.to_string())?;
         
         // Max width: 58mm = 384px, 80mm = 512px
-        let max_width = if is_58mm { 384 } else { 512 };
-        
+        let paper_px_width = if is_58mm { 384 } else { 512 };
+        let target_width = (paper_px_width as f32 * (width_percent.clamp(10, 100) as f32 / 100.0)) as u32;
+
         // Resize while maintaining aspect ratio
-        let resized = img.resize(max_width, max_width * 2, FilterType::Nearest);
+        let resized = img.resize(target_width, target_width * 2, FilterType::Nearest);
         let grayscale = resized.to_luma8();
         let (width, height) = grayscale.dimensions();
         
@@ -238,7 +257,7 @@ impl EscPosBuilder {
         let y_l = (height % 256) as u8;
         let y_h = ((height / 256) % 256) as u8;
 
-        self.align(1); // Center logo
+        self.align(position);
         
         // GS v 0 (Raster bit image command: normal mode)
         self.bytes.extend_from_slice(&[0x1D, 0x76, 0x30, 0x00, x_l, x_h, y_l, y_h]);
@@ -264,7 +283,7 @@ impl EscPosBuilder {
             }
         }
         
-        self.feed(1); // Give it some breathing room after the image
+        // No trailing feed — caller controls spacing after the logo.
         self.align(0); // Reset to left
         Ok(())
     }

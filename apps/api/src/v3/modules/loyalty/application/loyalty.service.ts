@@ -82,7 +82,7 @@ export class LoyaltyService {
 
     // 2. Process Currency-based points (General rule)
     const currencyRule = program.rules.find(
-      (r) => r.ruleType === "POINTS_PER_CURRENCY",
+      r => r.ruleType === "POINTS_PER_CURRENCY",
     );
     if (currencyRule && currencyRule.currencyAmount) {
       const spendPoints =
@@ -96,7 +96,7 @@ export class LoyaltyService {
     // 3. Apply Tier Multiplier
     const customerBalance = transaction.customer.loyaltyPoints;
     const applicableTier = program.tiers
-      .filter((t) => customerBalance >= t.minPoints)
+      .filter(t => customerBalance >= t.minPoints)
       .sort((a, b) => b.minPoints - a.minPoints)[0];
 
     if (applicableTier) {
@@ -123,7 +123,7 @@ export class LoyaltyService {
 
     if (!program) return;
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       const customer = await tx.customer.update({
         where: { id: customerId },
         data: {
@@ -156,7 +156,7 @@ export class LoyaltyService {
         points,
         balanceAfter: customer.loyaltyPoints,
         description,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Loyalty] Failed to emit Windmill event:", err),
       );
 
@@ -185,7 +185,7 @@ export class LoyaltyService {
       throw new Error("Insufficient points");
     }
 
-    return await db.$transaction(async (tx) => {
+    return await db.$transaction(async tx => {
       // 1. Deduct points
       const updatedCustomer = await tx.customer.update({
         where: { id: customerId },
@@ -235,7 +235,7 @@ export class LoyaltyService {
         voucherCode: voucher.code,
         rewardName: reward.name,
         expiresAt: voucher.expiresAt.toISOString(),
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Loyalty] Failed to emit Windmill event:", err),
       );
 

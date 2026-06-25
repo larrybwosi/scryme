@@ -42,7 +42,7 @@ jobs:
       - name: Lint and Type Check
         run: pnpm turbo lint type-check
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          DATABASE_URL: postgresql://localhost:5432/postgres
 
       - name: Run API Tests
         run: pnpm --filter api test
@@ -343,6 +343,7 @@ jobs:
       - name: Generate .env file for build
         shell: bash
         run: |
+          echo "VITE_API_URL=${{ secrets.POS_API_URL || 'https://dealioerp.vercel.app' }}" > apps/pos/.env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> apps/pos/src-tauri/.env
           echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> apps/pos/src-tauri/.env
           echo "POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}" >> apps/pos/src-tauri/.env
@@ -353,9 +354,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_API_URL: ${{ secrets.POS_API_URL || 'https://dealioerp.vercel.app' }}
         with:
           tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "POS v${{ needs.set-version.outputs.version }}"
+          releaseName: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           # Let tauri-action handle latest.json generation and upload instead of
@@ -370,36 +372,29 @@ jobs:
           projectPath: apps/pos
 
       # tauri-action uploads latest.json as "latest.json" for retail and
-      # "latest-<variant>.json" for others. We still need to download and re-upload
-      # the merged cross-platform file in finalize-release, so we grab it here as
-      # an artifact to pass between jobs.
-      - name: Download latest.json from release and upload as artifact
+      # "latest-<variant>.json" for others. We still need to merge these per-platform
+      # files into a single cross-platform latest.json in finalize-release.
+      # To avoid race conditions and 'gh release download' failures, we grab the
+      # locally generated file directly from the build target.
+      - name: Prepare latest.json artifact
         if: matrix.variant != 'standalone'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VARIANT="${{ matrix.variant }}"
-          VERSION="${{ needs.set-version.outputs.version }}"
-          TAG="v$VERSION"
+          # Find the updater JSON. Tauri 2 puts it in the bundle directory.
+          # We search apps/pos/src-tauri/target for any latest.json
+          LOCAL_JSON=$(find apps/pos/src-tauri/target -name "latest.json" | head -n 1)
 
-          if [ "$VARIANT" = "retail" ]; then
-            ASSET_NAME="latest.json"
-          else
-            ASSET_NAME="latest-$VARIANT.json"
-          fi
-
-          # Retry up to 5 times — the release asset may not be immediately visible
-          for i in $(seq 1 5); do
-            gh release download "$TAG" --pattern "$ASSET_NAME" --output "latest-${VARIANT}-${{ matrix.target_group }}.json" && break
-            echo "Attempt $i failed, retrying in 10s..."
-            sleep 10
-          done
-
-          if [ ! -f "latest-${VARIANT}-${{ matrix.target_group }}.json" ]; then
-            echo "Failed to download $ASSET_NAME after 5 attempts"
+          if [ -z "$LOCAL_JSON" ]; then
+            echo "❌ Error: latest.json not found in target directory."
+            find apps/pos/src-tauri/target -maxdepth 5 || true
             exit 1
           fi
+
+          echo "Found latest.json at: $LOCAL_JSON"
+          cp "$LOCAL_JSON" "latest-${VARIANT}-${{ matrix.target_group }}.json"
 
       - name: Upload latest.json artifact
         if: matrix.variant != 'standalone'
@@ -479,9 +474,9 @@ jobs:
       - name: Inject environment variables and updater config
         shell: bash
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL || 'https://api.scryme.app/api/v2' }}
+          VITE_API_URL: ${{ secrets.BAKERY_API_URL || 'https://api.scryme.app/api/v2' }}
           BAKERY_UPDATE_URL: ${{ secrets.BAKERY_UPDATE_URL || 'https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}' }}
-          TAURI_PUBLIC_KEY: ${{ secrets.BAKERY_TAURI_PUBLIC_KEY || 'dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg==' }}
+          TAURI_PUBLIC_KEY: ${{ secrets.BAKERY_TAURI_PUBLIC_KEY || 'dW51cw==' }}
         run: |
           echo "VITE_API_URL=$VITE_API_URL" > apps/bakery/.env
           node -e "
@@ -499,9 +494,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.BAKERY_TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.BAKERY_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_API_URL: ${{ secrets.BAKERY_API_URL || 'https://api.scryme.app/api/v2' }}
         with:
           tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "Bakery v${{ needs.set-version.outputs.version }}"
+          releaseName: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: ${{ github.ref != 'refs/heads/main' }}
           projectPath: apps/bakery
@@ -537,7 +533,7 @@ jobs:
           push: true
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'mock-secret-for-build' }}
+          *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
             REPO_LOWER=${{ env.REPO_LOWER }}
             VERSION=${{ needs.set-version.outputs.version }}
 

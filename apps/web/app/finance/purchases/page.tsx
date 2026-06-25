@@ -27,8 +27,7 @@ export default async function PurchasesPage(props: {
         <PageHeader
           title="Procurement"
           subtitle="Purchase orders and supplier invoices"
-          icon={<ShoppingBag className="w-7 h-7" />}
-        >
+          icon={<ShoppingBag className="w-7 h-7" />}>
           <PurchaseDialog suppliers={suppliers} products={products}>
             <Button className="bg-[#34A853] hover:bg-[#2d9147]">
               <Plus className="w-4 h-4 mr-2" />

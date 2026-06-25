@@ -20,18 +20,18 @@ vi.mock("@repo/db", () => {
 });
 
 vi.mock("@react-pdf/renderer", async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     renderToStream: vi.fn().mockResolvedValue("mock-stream"),
   };
 });
 
-vi.mock("@repo/documents/v2/InvoiceTemplate", () => ({
+vi.mock("@repo/documents/templates/v2/InvoiceTemplate", () => ({
   InvoiceTemplate: () => null,
 }));
 
-vi.mock("@repo/documents/v2/ReceiptTemplate", () => ({
+vi.mock("@repo/documents/templates/v2/ReceiptTemplate", () => ({
   ReceiptTemplate: () => null,
 }));
 

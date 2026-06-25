@@ -196,19 +196,16 @@ export function AuditStockModal({
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}
-              className="space-y-6"
-            >
+              className="space-y-6">
               <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1">
                 <TabsTrigger
                   value="quantity"
-                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
                   Quantity Adjustment
                 </TabsTrigger>
                 <TabsTrigger
                   value="value"
-                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
                   Value Adjustment
                 </TabsTrigger>
               </TabsList>
@@ -219,12 +216,11 @@ export function AuditStockModal({
                   <select
                     className="w-full p-2 border rounded-md bg-white text-sm"
                     value={selectedLocation}
-                    onChange={(e) => setSelectedLocation(e.target.value)}
-                  >
+                    onChange={e => setSelectedLocation(e.target.value)}>
                     <option value="" disabled>
                       Select Location
                     </option>
-                    {locations.map((l) => (
+                    {locations.map(l => (
                       <option key={l.id} value={l.id}>
                         {l.name}
                       </option>
@@ -241,7 +237,7 @@ export function AuditStockModal({
                       <Input
                         type="number"
                         value={physicalCount}
-                        onChange={(e) => setPhysicalCount(e.target.value)}
+                        onChange={e => setPhysicalCount(e.target.value)}
                         className="pr-12"
                       />
                       <span className="absolute right-3 top-2.5 text-xs text-gray-400">
@@ -282,7 +278,7 @@ export function AuditStockModal({
                     Adjustment Reason
                   </Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {reasons.map((r) => (
+                    {reasons.map(r => (
                       <button
                         key={r.value}
                         onClick={() => setReason(r.value)}
@@ -291,8 +287,7 @@ export function AuditStockModal({
                           reason === r.value
                             ? "border-black bg-gray-50"
                             : "border-gray-200 hover:border-gray-300",
-                        )}
-                      >
+                        )}>
                         <div className="flex items-center gap-2">
                           <r.icon className="w-4 h-4" />
                           <span className="text-sm">{r.label}</span>
@@ -314,7 +309,7 @@ export function AuditStockModal({
                     placeholder="Evaluate if the damage is repairable or if the item needs to be written off."
                     className="min-h-[100px] resize-none"
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={e => setNotes(e.target.value)}
                   />
                 </div>
               </TabsContent>
@@ -327,7 +322,7 @@ export function AuditStockModal({
                   <div className="relative">
                     <Input
                       value={newValue}
-                      onChange={(e) => setNewValue(e.target.value)}
+                      onChange={e => setNewValue(e.target.value)}
                       className="pl-8"
                     />
                     <span className="absolute left-3 top-2.5 text-sm text-gray-400">
@@ -351,8 +346,7 @@ export function AuditStockModal({
                   <Button
                     className="bg-orange-500 hover:bg-orange-600 text-white min-w-[80px]"
                     onClick={handleSave}
-                    disabled={isSubmitting}
-                  >
+                    disabled={isSubmitting}>
                     {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>

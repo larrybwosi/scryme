@@ -247,6 +247,11 @@ export interface BakerySettings {
   autoApproveBatches?: boolean;
   lowStockAlerts?: boolean;
   timezone?: string;
+  scrymeReportEnabled?: boolean;
+  scrymeReportDay?: number;
+  scrymeReportTime?: string;
+  scrymeReportSections?: any;
+  scrymeReportChannel?: string | null;
   isEnabled?: boolean;
   defaultLocationId?: string | null;
 }

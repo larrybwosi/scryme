@@ -4,7 +4,7 @@ import { db } from "@repo/db";
 import { getServerAuth, auth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { MemberRole, MembershipStatus } from "@repo/db";
+import { MemberRole, MembershipStatus, Member, User } from "@repo/db";
 import * as argon2 from "argon2";
 import { randomBytes, randomInt } from "crypto";
 
@@ -19,7 +19,12 @@ export async function getStaffMembers() {
       organizationId: session.organizationId,
       deletedAt: null,
     },
-    include: {
+    select: {
+      id: true,
+      role: true,
+      membershipStatus: true,
+      createdAt: true,
+      banReason: true,
       user: {
         select: {
           id: true,
@@ -28,7 +33,12 @@ export async function getStaffMembers() {
           image: true,
         },
       },
-      customRoles: true,
+      customRoles: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -147,7 +157,9 @@ export async function updateMemberRole(memberId: string, role: MemberRole) {
   return { success: true };
 }
 
-export async function getStaffMemberDetail(memberId: string) {
+export async function getStaffMemberDetail(
+  memberId: string,
+): Promise<{ success: boolean; data?: any; error?: string; stats?: any }> {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
     return { success: false, error: "Unauthorized" };
@@ -166,7 +178,38 @@ export async function getStaffMemberDetail(memberId: string) {
       id: memberId,
       organizationId: session.organizationId,
     },
-    include: {
+    select: {
+      id: true,
+      organizationId: true,
+      role: true,
+      membershipStatus: true,
+      isActive: true,
+      cardId: true,
+      createdAt: true,
+      updatedAt: true,
+      phone: true,
+      email: true,
+      address: true,
+      age: true,
+      gender: true,
+      tags: true,
+      jobTitle: true,
+      employmentType: true,
+      joiningDate: true,
+      emergencyContactName: true,
+      emergencyContactPhone: true,
+      emergencyContactRelation: true,
+      managerId: true,
+      manager: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
       user: {
         select: {
           id: true,
@@ -176,20 +219,41 @@ export async function getStaffMemberDetail(memberId: string) {
           createdAt: true,
         },
       },
-      customRoles: true,
+      customRoles: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       attendanceLogs: {
         take: 10,
         orderBy: { checkInTime: "desc" },
-        include: {
-          checkInLocation: true,
-          checkOutLocation: true,
+        select: {
+          id: true,
+          checkInTime: true,
+          checkOutTime: true,
+          durationMinutes: true,
+          checkInLocation: {
+            select: { id: true, name: true },
+          },
+          checkOutLocation: {
+            select: { id: true, name: true },
+          },
         },
       },
       transactions: {
         take: 10,
         orderBy: { createdAt: "desc" },
-        include: {
-          location: true,
+        select: {
+          id: true,
+          number: true,
+          finalTotal: true,
+          currencyCode: true,
+          status: true,
+          createdAt: true,
+          location: {
+            select: { id: true, name: true },
+          },
         },
       },
     },
@@ -203,7 +267,7 @@ export async function getStaffMemberDetail(memberId: string) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const stats = await db.$transaction(async (tx) => {
+  const stats = await db.$transaction(async tx => {
     const totalSales = await tx.transaction.aggregate({
       where: {
         memberId: memberId,
@@ -233,9 +297,9 @@ export async function getStaffMemberDetail(memberId: string) {
     });
 
     return {
-      totalSalesValue: totalSales._sum.finalTotal || 0,
+      totalSalesValue: Number(totalSales._sum.finalTotal) || 0,
       totalSalesCount: totalSales._count.id || 0,
-      monthlySalesValue: monthlySales._sum.finalTotal || 0,
+      monthlySalesValue: Number(monthlySales._sum.finalTotal) || 0,
       monthlySalesCount: monthlySales._count.id || 0,
       attendanceCount,
       avgTransactionValue:
@@ -245,7 +309,7 @@ export async function getStaffMemberDetail(memberId: string) {
     };
   });
 
-  return { success: true, data: { ...member, stats } };
+  return { success: true, data: member, stats };
 }
 
 export async function updateMemberCustomization(
@@ -258,6 +322,14 @@ export async function updateMemberCustomization(
     age?: string;
     gender?: string;
     tags?: string;
+    image?: string;
+    jobTitle?: string;
+    employmentType?: any;
+    joiningDate?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    emergencyContactRelation?: string;
+    managerId?: string;
   },
 ) {
   const session = await getServerAuth();
@@ -277,6 +349,12 @@ export async function updateMemberCustomization(
     age: data.age,
     gender: data.gender,
     tags: data.tags,
+    jobTitle: data.jobTitle,
+    employmentType: data.employmentType === "" ? null : data.employmentType,
+    emergencyContactName: data.emergencyContactName,
+    emergencyContactPhone: data.emergencyContactPhone,
+    emergencyContactRelation: data.emergencyContactRelation,
+    managerId: data.managerId === "" ? null : data.managerId,
   };
 
   if (data.cardId !== undefined) {
@@ -291,15 +369,24 @@ export async function updateMemberCustomization(
   }
 
   try {
-    await db.member.update({
+    const member = await db.member.update({
       where: { id: memberId, organizationId: session.organizationId },
       data: updateData,
+      select: { userId: true },
     });
+
+    if (data.image) {
+      await db.user.update({
+        where: { id: member.userId },
+        data: { image: data.image },
+      });
+    }
 
     revalidatePath("/staff");
     revalidatePath(`/staff/${memberId}`);
     return { success: true };
   } catch (error: any) {
+    console.error("Error updating member customization:", error);
     if (error.code === "P2002") {
       return { success: false, error: "Card ID already in use" };
     }
@@ -365,7 +452,10 @@ export async function generateMemberCardId(memberId: string) {
   }
 }
 
-export async function resetMemberPassword(memberId: string, newPassword?: string) {
+export async function resetMemberPassword(
+  memberId: string,
+  newPassword?: string,
+) {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
     return { success: false, error: "Unauthorized" };
@@ -408,7 +498,10 @@ export async function resetMemberPassword(memberId: string, newPassword?: string
     return { success: true, password };
   } catch (error: any) {
     console.error("Error resetting password:", error);
-    return { success: false, error: error.message || "Failed to reset password" };
+    return {
+      success: false,
+      error: error.message || "Failed to reset password",
+    };
   }
 }
 
@@ -534,7 +627,7 @@ export async function updateMemberCustomRoles(
     where: { id: memberId, organizationId: session.organizationId },
     data: {
       customRoles: {
-        set: roleIds.map((id) => ({ id })),
+        set: roleIds.map(id => ({ id })),
       },
     },
   });

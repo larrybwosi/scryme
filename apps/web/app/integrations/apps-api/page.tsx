@@ -19,6 +19,10 @@ import {
   QrCode,
   Terminal,
   Download,
+  Code2,
+  Cpu,
+  History,
+  Settings2,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Breadcrumbs } from "../../../components/breadcrumbs";
@@ -140,7 +144,7 @@ function AppsApiContent() {
       setDeviceTokens(tokens);
       setRegistries(regs);
       setLocations(locs);
-      setNewDevice((prev) => {
+      setNewDevice(prev => {
         if (locs.length > 0 && prev.locationId === "default") {
           return { ...prev, locationId: locs[0].id };
         }
@@ -229,7 +233,7 @@ function AppsApiContent() {
   const tabs = [
     { id: "v3", label: "V3 API Clients", icon: Key },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
-    { id: "v2", label: "V2 (Legacy & POS)", icon: Monitor },
+    { id: "v2", label: "V2 & Devices", icon: Monitor },
   ];
 
   const availableEvents = [
@@ -240,48 +244,53 @@ function AppsApiContent() {
   ];
 
   return (
-    <>
+    <div className="space-y-8">
       <Breadcrumbs
         items={[
           { label: "Integrations", href: "/integrations" },
-          { label: "Apps & API" },
+          { label: "Developer Tools" },
         ]}
       />
 
-      <PageHeader
-        title="Apps & API Management"
-        subtitle="Manage your API credentials and integrations."
-        icon={<Shield className="w-7 h-7" />}
-      />
-
-      <div className="flex gap-4 border-b mt-8 mb-6 overflow-x-auto no-scrollbar">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap",
-              activeTab === tab.id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
-            )}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex justify-between items-end">
+        <PageHeader
+          title="Developer Tools"
+          subtitle="Manage your API credentials, webhooks, and device provisioning."
+          icon={<Terminal className="w-8 h-8 text-indigo-600" />}
+        />
+        <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl p-1.5 shadow-sm">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-lg transition-all",
+                activeTab === tab.id
+                  ? "bg-indigo-50 text-indigo-600 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50",
+              )}>
+              <tab.icon size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === "v3" && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold">V3 API Clients</h2>
-            <Dialog open={showV3Dialog} onOpenChange={(open) => {
-              setShowV3Dialog(open);
-              if (!open) setV3Result(null);
-            }}>
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-gray-900">V3 API Clients</h2>
+              <p className="text-sm text-gray-500">Modern OAuth2 clients for building robust integrations.</p>
+            </div>
+            <Dialog
+              open={showV3Dialog}
+              onOpenChange={open => {
+                setShowV3Dialog(open);
+                if (!open) setV3Result(null);
+              }}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 h-11 px-6 shadow-md">
                   <Plus size={18} />
                   Create Client
                 </Button>
@@ -300,42 +309,50 @@ function AppsApiContent() {
                       <Input
                         id="client-name"
                         value={newClientName}
-                        onChange={(e) => setNewClientName(e.target.value)}
+                        onChange={e => setNewClientName(e.target.value)}
                         placeholder="e.g., My Mobile App"
+                        className="h-11"
                       />
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4 py-4">
-                    <div className="p-3 bg-status-warning/10 text-status-warning rounded-lg text-xs border border-status-warning/20 font-medium">
-                      Important: Copy your Client Secret now. It will never be shown again.
+                    <div className="p-3 bg-amber-50 text-amber-700 rounded-lg text-xs border border-amber-200 font-medium">
+                      Important: Copy your Client Secret now. It will never be
+                      shown again.
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Client ID</Label>
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">
+                        Client ID
+                      </Label>
                       <div className="flex gap-2">
-                        <code className="flex-1 bg-muted p-2 rounded text-xs break-all">
+                        <code className="flex-1 bg-gray-50 p-3 rounded-lg text-xs break-all border font-mono">
                           {v3Result.clientId}
                         </code>
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => copyToClipboard(v3Result.clientId)}
-                        >
+                          className="h-11 w-11"
+                          onClick={() => copyToClipboard(v3Result.clientId)}>
                           <Copy size={14} />
                         </Button>
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Client Secret</Label>
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">
+                        Client Secret
+                      </Label>
                       <div className="flex gap-2">
-                        <code className="flex-1 bg-muted p-2 rounded text-xs break-all">
+                        <code className="flex-1 bg-gray-50 p-3 rounded-lg text-xs break-all border font-mono">
                           {v3Result.clientSecret}
                         </code>
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => copyToClipboard(v3Result.clientSecret)}
-                        >
+                          className="h-11 w-11"
+                          onClick={() =>
+                            copyToClipboard(v3Result.clientSecret)
+                          }>
                           <Copy size={14} />
                         </Button>
                       </div>
@@ -344,9 +361,19 @@ function AppsApiContent() {
                 )}
                 <DialogFooter>
                   {!v3Result ? (
-                    <Button onClick={handleCreateV3} disabled={!newClientName}>Create</Button>
+                    <Button onClick={handleCreateV3} disabled={!newClientName} className="bg-indigo-600 hover:bg-indigo-700">
+                      Create Client
+                    </Button>
                   ) : (
-                    <Button onClick={() => { setShowV3Dialog(false); setV3Result(null); }}>Done</Button>
+                    <Button
+                      onClick={() => {
+                        setShowV3Dialog(false);
+                        setV3Result(null);
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      I have saved the secret
+                    </Button>
                   )}
                 </DialogFooter>
               </DialogContent>
@@ -354,130 +381,158 @@ function AppsApiContent() {
           </div>
 
           <div className="grid gap-4">
-            {v3Clients.map((client) => (
-              <div
-                key={client.id}
-                className="bg-card p-6 rounded-xl border shadow-sm"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-lg">{client.name}</h3>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Key size={14} />
-                        Client ID:{" "}
-                        <code className="bg-muted px-1.5 py-0.5 rounded text-xs">
-                          {client.clientId}
-                        </code>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        Status:
-                        <Badge
-                          variant={client.isActive ? "default" : "destructive"}
-                          className={cn(
-                            "cursor-pointer",
-                            client.isActive ? "bg-status-success/10 text-status-success hover:bg-status-success/20 border-status-success/20" : ""
-                          )}
-                          onClick={() =>
-                            updateV3ApiClientAction(client.id, {
-                              isActive: !client.isActive,
-                            }).then(loadData)
-                          }
-                        >
-                          {client.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingV3Client(client)}
-                      title="Advanced Settings"
-                    >
-                      <Zap size={18} className="text-primary" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical size={18} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={async () => {
-                            const secret = await regenerateV3ClientSecretAction(
-                              client.id,
-                            );
-                            copyToClipboard(secret);
-                            toast.info("New secret copied to clipboard. It will not be shown again.");
-                          }}
-                        >
-                          <RefreshCw size={14} className="mr-2" />
-                          Regenerate Secret
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() =>
-                            deleteV3ApiClientAction(client.id).then(loadData)
-                          }
-                        >
-                          <Trash2 size={14} className="mr-2" />
-                          Delete Client
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+            {v3Clients.length === 0 ? (
+              <div className="bg-white p-20 rounded-3xl border border-dashed flex flex-col items-center text-center shadow-sm">
+                <div className="p-4 bg-indigo-50 rounded-2xl mb-4">
+                  <Key className="w-10 h-10 text-indigo-600" />
                 </div>
-
-                <div className="mt-6 pt-6 border-t flex flex-wrap gap-8">
-                  <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">
-                      Scopes
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {client.scopes.map((s: string) => (
-                        <Badge key={s} variant="secondary" className="font-medium">
-                          {s}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">
-                      CORS Origins
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {client.corsOrigins.length > 0 ? (
-                        client.corsOrigins.map((o: string) => (
-                          <Badge key={o} variant="outline" className="font-mono text-[10px]">
-                            {o}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground italic">None configured</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No API Clients</h3>
+                <p className="text-gray-500 max-w-sm mb-8">Create your first OAuth2 client to start building custom integrations with our V3 API.</p>
               </div>
-            ))}
+            ) : (
+              v3Clients.map(client => (
+                <div
+                  key={client.id}
+                  className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                          <Code2 size={20} />
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900">{client.name}</h3>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-6 text-sm">
+                        <span className="flex items-center gap-2 text-gray-500">
+                          <span className="font-semibold text-gray-400 text-[10px] uppercase">Client ID</span>
+                          <code className="bg-gray-50 px-2 py-1 rounded text-xs border font-mono">
+                            {client.clientId}
+                          </code>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-400 text-[10px] uppercase">Status</span>
+                          <Badge
+                            variant={client.isActive ? "default" : "destructive"}
+                            className={cn(
+                              "cursor-pointer px-3 py-0.5 border-none",
+                              client.isActive
+                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                : "",
+                            )}
+                            onClick={() =>
+                              updateV3ApiClientAction(client.id, {
+                                isActive: !client.isActive,
+                              }).then(loadData)
+                            }>
+                            {client.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
+                        onClick={() => setEditingV3Client(client)}
+                        title="Settings">
+                        <Settings2 size={20} />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-10 w-10">
+                            <MoreVertical size={20} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="py-2.5"
+                            onClick={async () => {
+                              const secret = await regenerateV3ClientSecretAction(
+                                client.id,
+                              );
+                              copyToClipboard(secret);
+                              toast.info(
+                                "New secret copied to clipboard. It will not be shown again.",
+                              );
+                            }}>
+                            <RefreshCw size={14} className="mr-2" />
+                            Regenerate Secret
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive py-2.5"
+                            onClick={() =>
+                              deleteV3ApiClientAction(client.id).then(loadData)
+                            }>
+                            <Trash2 size={14} className="mr-2" />
+                            Delete Client
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-gray-50 grid grid-cols-2 gap-10">
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
+                        Scopes & Permissions
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {client.scopes.map((s: string) => (
+                          <Badge
+                            key={s}
+                            variant="secondary"
+                            className="bg-gray-50 text-gray-600 border-none font-medium px-3">
+                            {s}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-3">
+                        CORS Allowed Origins
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {client.corsOrigins.length > 0 ? (
+                          client.corsOrigins.map((o: string) => (
+                            <Badge
+                              key={o}
+                              variant="outline"
+                              className="font-mono text-[10px] bg-gray-50/50">
+                              {o}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">
+                            No origins configured
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
       {activeTab === "v2" && (
-        <div className="space-y-8">
+        <div className="space-y-12">
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">V2 API Keys</h2>
-              <Dialog open={showV2Dialog} onOpenChange={(open) => {
-                setShowV2Dialog(open);
-                if (!open) setV2Result(null);
-              }}>
+            <div className="flex justify-between items-center mb-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-gray-900">V2 API Keys</h2>
+                <p className="text-sm text-gray-500">Legacy API keys for specialized integrations and POS access.</p>
+              </div>
+              <Dialog
+                open={showV2Dialog}
+                onOpenChange={open => {
+                  setShowV2Dialog(open);
+                  if (!open) setV2Result(null);
+                }}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 h-11 px-6">
                     <Plus size={18} />
                     Create Key
                   </Button>
@@ -496,27 +551,30 @@ function AppsApiContent() {
                         <Input
                           id="key-name"
                           value={newKeyName}
-                          onChange={(e) => setNewKeyName(e.target.value)}
+                          onChange={e => setNewKeyName(e.target.value)}
                           placeholder="e.g., Development Key"
+                          className="h-11"
                         />
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-4 py-4">
-                      <div className="p-3 bg-status-success/10 text-status-success rounded-lg text-xs border border-status-success/20 font-medium">
+                      <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg text-xs border border-emerald-200 font-medium">
                         Key created successfully.
                       </div>
                       <div className="grid gap-2">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Full API Key</Label>
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">
+                          Full API Key
+                        </Label>
                         <div className="flex gap-2">
-                          <code className="flex-1 bg-muted p-2 rounded text-xs break-all">
+                          <code className="flex-1 bg-gray-50 p-3 rounded-lg text-xs break-all border font-mono">
                             {v2Result.fullKey}
                           </code>
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => copyToClipboard(v2Result.fullKey)}
-                          >
+                            className="h-11 w-11"
+                            onClick={() => copyToClipboard(v2Result.fullKey)}>
                             <Copy size={14} />
                           </Button>
                         </div>
@@ -525,43 +583,59 @@ function AppsApiContent() {
                   )}
                   <DialogFooter>
                     {!v2Result ? (
-                      <Button onClick={handleCreateV2} disabled={!newKeyName}>Create</Button>
+                      <Button onClick={handleCreateV2} disabled={!newKeyName} className="bg-indigo-600 hover:bg-indigo-700">
+                        Create Key
+                      </Button>
                     ) : (
-                      <Button onClick={() => { setShowV2Dialog(false); setV2Result(null); }}>Done</Button>
+                      <Button
+                        onClick={() => {
+                          setShowV2Dialog(false);
+                          setV2Result(null);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        Done
+                      </Button>
                     )}
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="grid gap-4">
-              {v2Keys.map((key) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {v2Keys.length === 0 && (
+                <div className="col-span-full bg-white p-12 rounded-3xl border border-dashed flex flex-col items-center text-center">
+                  <p className="text-gray-400 text-sm">No V2 API keys found.</p>
+                </div>
+              )}
+              {v2Keys.map(key => (
                 <div
                   key={key.id}
-                  className="bg-card p-4 rounded-xl border flex justify-between items-center shadow-sm"
-                >
+                  className="bg-white p-6 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all group">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <Key size={20} />
+                    <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <Key size={22} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold">{key.name}</span>
-                        <Badge variant="outline" className="text-[10px] h-4">
+                        <span className="font-bold text-gray-900">{key.name}</span>
+                        <Badge variant="outline" className="text-[10px] px-2 h-5 font-bold uppercase tracking-tighter bg-gray-50">
                           {key.environment}
                         </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Prefix: <code className="bg-muted px-1 rounded">{key.keyPrefix}</code>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Prefix:{" "}
+                        <code className="bg-gray-50 px-1.5 py-0.5 rounded border text-[11px] font-mono">
+                          {key.keyPrefix}
+                        </code>
                       </div>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => deleteV2ApiKeyAction(key.id).then(loadData)}
-                  >
-                    <Trash2 size={16} />
+                    className="text-gray-400 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => deleteV2ApiKeyAction(key.id).then(loadData)}>
+                    <Trash2 size={18} />
                   </Button>
                 </div>
               ))}
@@ -569,19 +643,24 @@ function AppsApiContent() {
           </section>
 
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Device Provisioning (POS)</h2>
-              <Dialog open={showDeviceDialog} onOpenChange={(open) => {
-                setShowDeviceDialog(open);
-                if (!open) setDeviceTokenResult(null);
-              }}>
+            <div className="flex justify-between items-center mb-6">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-gray-900">Hardware & Devices</h2>
+                <p className="text-sm text-gray-500">Provision and manage POS terminals and kiosks.</p>
+              </div>
+              <Dialog
+                open={showDeviceDialog}
+                onOpenChange={open => {
+                  setShowDeviceDialog(open);
+                  if (!open) setDeviceTokenResult(null);
+                }}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 h-11 px-6 shadow-md">
                     <Plus size={18} />
                     Provision Device
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
                     <DialogTitle>Provision Device</DialogTitle>
                     <DialogDescription>
@@ -589,68 +668,88 @@ function AppsApiContent() {
                     </DialogDescription>
                   </DialogHeader>
                   {!deviceTokenResult ? (
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-5 py-4">
                       <div className="grid gap-2">
                         <Label htmlFor="device-name">Device Name</Label>
                         <Input
                           id="device-name"
                           value={newDevice.deviceName}
-                          onChange={(e) => setNewDevice({ ...newDevice, deviceName: e.target.value })}
+                          onChange={e =>
+                            setNewDevice({
+                              ...newDevice,
+                              deviceName: e.target.value,
+                            })
+                          }
                           placeholder="Front Desk Terminal"
+                          className="h-11"
                         />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="device-type">Device Type</Label>
-                        <Select
-                          value={newDevice.deviceType}
-                          onValueChange={(val) => {
-                            const deviceType = val as any;
-                            const permissions = deviceType === "BAKERY_TERMINAL"
-                              ? ["bakery:production", "bakery:recipes"]
-                              : ["pos:transactions", "pos:orders", "pos:inventory"];
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="device-type">Device Type</Label>
+                          <Select
+                            value={newDevice.deviceType}
+                            onValueChange={val => {
+                              const deviceType = val as any;
+                              const permissions =
+                                deviceType === "BAKERY_TERMINAL"
+                                  ? ["bakery:production", "bakery:recipes"]
+                                  : [
+                                      "pos:transactions",
+                                      "pos:orders",
+                                      "pos:inventory",
+                                    ];
 
-                            setNewDevice({ ...newDevice, deviceType, permissions });
-                          }}
-                        >
-                          <SelectTrigger id="device-type">
-                            <SelectValue placeholder="Select device type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="POS_TERMINAL">POS Terminal</SelectItem>
-                            <SelectItem value="MOBILE_POS">Mobile POS</SelectItem>
-                            <SelectItem value="KIOSK">Self-Service Kiosk</SelectItem>
-                            <SelectItem value="TABLET">Service Tablet</SelectItem>
-                            <SelectItem value="BAKERY_TERMINAL">Bakery Terminal</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="location-id">Location</Label>
-                        <Select
-                          value={newDevice.locationId}
-                          onValueChange={(val) => setNewDevice({ ...newDevice, locationId: val })}
-                        >
-                          <SelectTrigger id="location-id">
-                            <SelectValue placeholder="Select location" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {locations.map((loc) => (
-                              <SelectItem key={loc.id} value={loc.id}>
-                                {loc.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              setNewDevice({
+                                ...newDevice,
+                                deviceType,
+                                permissions,
+                              });
+                            }}>
+                            <SelectTrigger id="device-type" className="h-11">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="POS_TERMINAL">POS Terminal</SelectItem>
+                              <SelectItem value="MOBILE_POS">Mobile POS</SelectItem>
+                              <SelectItem value="KIOSK">Kiosk</SelectItem>
+                              <SelectItem value="TABLET">Tablet</SelectItem>
+                              <SelectItem value="BAKERY_TERMINAL">Bakery Terminal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="location-id">Location</Label>
+                          <Select
+                            value={newDevice.locationId}
+                            onValueChange={val =>
+                              setNewDevice({ ...newDevice, locationId: val })
+                            }>
+                            <SelectTrigger id="location-id" className="h-11">
+                              <SelectValue placeholder="Select location" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {locations.map(loc => (
+                                <SelectItem key={loc.id} value={loc.id}>
+                                  {loc.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                       <div className="grid gap-2">
                         <Label className="text-sm font-semibold">Environment</Label>
                         <Select
                           value={newDevice.environment}
-                          onValueChange={(val) => setNewDevice({ ...newDevice, environment: val as any })}
-                        >
-                          <SelectTrigger>
+                          onValueChange={val =>
+                            setNewDevice({
+                              ...newDevice,
+                              environment: val as any,
+                            })
+                          }>
+                          <SelectTrigger className="h-11">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -660,25 +759,35 @@ function AppsApiContent() {
                         </Select>
                       </div>
 
-                      <div className="grid gap-3">
-                        <Label className="text-sm font-semibold">Pre-assigned Permissions</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                          {["pos:transactions", "pos:orders", "pos:inventory", "pos:customers", "bakery:production", "bakery:recipes"].map((perm) => (
-                            <div key={perm} className="flex items-center space-x-2">
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase text-gray-400">Permissions</Label>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                          {[
+                            "pos:transactions",
+                            "pos:orders",
+                            "pos:inventory",
+                            "pos:customers",
+                            "bakery:production",
+                            "bakery:recipes",
+                          ].map(perm => (
+                            <div
+                              key={perm}
+                              className="flex items-center space-x-2">
                               <Checkbox
                                 id={`perm-${perm}`}
                                 checked={newDevice.permissions.includes(perm)}
-                                onCheckedChange={(checked) => {
+                                onCheckedChange={checked => {
                                   const permissions = checked
                                     ? [...newDevice.permissions, perm]
-                                    : newDevice.permissions.filter((p) => p !== perm);
+                                    : newDevice.permissions.filter(
+                                        p => p !== perm,
+                                      );
                                   setNewDevice({ ...newDevice, permissions });
                                 }}
                               />
                               <label
                                 htmlFor={`perm-${perm}`}
-                                className="text-[10px] font-bold uppercase text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                              >
+                                className="text-[10px] font-bold uppercase text-gray-600 cursor-pointer">
                                 {perm.replace(":", " ")}
                               </label>
                             </div>
@@ -687,152 +796,183 @@ function AppsApiContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-6 py-4">
-                      <div className="p-3 bg-status-success/10 text-status-success rounded-lg text-xs border border-status-success/20 font-medium text-center">
-                        Setup token generated successfully. Valid for 24 hours.
+                    <div className="space-y-8 py-4">
+                      <div className="p-4 bg-emerald-50 text-emerald-700 rounded-xl text-sm border border-emerald-100 font-semibold text-center">
+                        Setup token generated successfully.
                       </div>
 
-                      <div className="flex flex-col items-center gap-6">
-                        <div className="bg-white p-4 rounded-xl border-2 border-primary/20 shadow-sm">
+                      <div className="flex flex-col items-center gap-8">
+                        <div className="bg-white p-6 rounded-2xl border-4 border-indigo-50 shadow-xl">
                           <QRCodeSVG
                             value={deviceTokenResult.rawToken}
-                            size={180}
+                            size={200}
                             level="H"
                             includeMargin={false}
                           />
                         </div>
 
                         <div className="w-full space-y-4">
-                          <div className="text-center p-4 bg-muted rounded-xl border border-border relative group">
-                            <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                          <div className="text-center p-6 bg-gray-50 rounded-2xl border border-gray-100 relative group">
+                            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3">
                               Provisioning Token
                             </div>
-                            <div className="text-lg font-mono font-bold tracking-widest text-primary break-all px-4">
+                            <div className="text-2xl font-mono font-bold tracking-[0.2em] text-indigo-600 break-all px-4">
                               {deviceTokenResult.rawToken}
                             </div>
                             <Button
                               variant="secondary"
                               size="sm"
-                              className="mt-4 w-full gap-2"
-                              onClick={() => copyToClipboard(deviceTokenResult.rawToken)}
-                            >
+                              className="mt-6 w-full gap-2 h-10 font-bold"
+                              onClick={() =>
+                                copyToClipboard(deviceTokenResult.rawToken)
+                              }>
                               <Copy size={14} /> Copy Token
-                            </Button>
-                          </div>
-
-                          <div className="grid grid-cols-1 gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full gap-2 text-xs h-9"
-                              onClick={() => copyToClipboard(`curl -X POST "${process.env.NEXT_PUBLIC_API_URL}/v2/devices/provision" -H "Content-Type: application/json" -d '{"setupToken":"${deviceTokenResult.rawToken}"}'`)}
-                            >
-                              <Terminal size={14} /> Copy cURL Command
                             </Button>
                           </div>
                         </div>
                       </div>
 
-                      <p className="text-[10px] text-center text-muted-foreground italic">
-                        Scan the QR code on your mobile device or enter the token manually to provision.
+                      <p className="text-[11px] text-center text-gray-400 italic">
+                        Scan the QR code on your mobile device or enter the
+                        token manually to provision. Valid for 24 hours.
                       </p>
                     </div>
                   )}
                   <DialogFooter>
                     {!deviceTokenResult ? (
-                      <Button onClick={handleProvisionDevice} disabled={!newDevice.deviceName}>Generate Token</Button>
+                      <Button
+                        onClick={handleProvisionDevice}
+                        disabled={!newDevice.deviceName}
+                        className="bg-indigo-600 hover:bg-indigo-700 w-full"
+                      >
+                        Generate Token
+                      </Button>
                     ) : (
-                      <Button onClick={() => { setShowDeviceDialog(false); setDeviceTokenResult(null); }}>Done</Button>
+                      <Button
+                        onClick={() => {
+                          setShowDeviceDialog(false);
+                          setDeviceTokenResult(null);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 w-full"
+                      >
+                        Done
+                      </Button>
                     )}
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
 
-            <div className="bg-primary/5 p-6 rounded-xl border border-primary/10 mb-6 flex items-start gap-4">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Monitor size={20} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1 space-y-4">
+                <div className="bg-indigo-600 p-8 rounded-3xl text-white shadow-lg shadow-indigo-200">
+                  <div className="p-3 bg-white/10 w-fit rounded-xl mb-6">
+                    <Monitor size={28} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">Provisioning Guide</h3>
+                  <p className="text-sm text-indigo-100 leading-relaxed mb-6">
+                    Connect your POS hardware securely. Generate a one-time token,
+                    scan the QR code on your device, and start processing sales instantly.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-xs font-semibold bg-white/10 p-3 rounded-lg border border-white/10">
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</div>
+                      Generate Setup Token
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-semibold bg-white/10 p-3 rounded-lg border border-white/10">
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</div>
+                      Scan QR on Hardware
+                    </div>
+                    <div className="flex items-center gap-3 text-xs font-semibold bg-white/10 p-3 rounded-lg border border-white/10">
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">3</div>
+                      Device Syncs & Activates
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-primary mb-1">How it works</h3>
-                <p className="text-sm text-primary/80">
-                  Generate a setup token to provision a new POS device. The token
-                  is valid for 24 hours and can only be used once.
-                </p>
-              </div>
-            </div>
 
-            <div className="grid gap-4">
-              {registries.length === 0 && deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length === 0 && (
-                <div className="bg-card p-12 rounded-xl border border-dashed flex flex-col items-center justify-center text-center">
-                  <Monitor className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                  <p className="text-muted-foreground font-medium">No devices provisioned yet.</p>
-                </div>
-              )}
-              {deviceTokens
-                .filter((t) => !t.usedAt && !t.revokedAt)
-                .map((token) => (
-                  <div
-                    key={token.id}
-                    className="bg-status-warning/5 p-4 rounded-xl border border-status-warning/20 flex justify-between items-center shadow-sm"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-status-warning/10 flex items-center justify-center text-status-warning">
-                        <Lock size={20} />
+              <div className="lg:col-span-2 space-y-4">
+                {registries.length === 0 &&
+                  deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length === 0 && (
+                    <div className="bg-white h-[400px] rounded-3xl border border-dashed flex flex-col items-center justify-center text-center p-8">
+                      <div className="p-4 bg-gray-50 rounded-2xl mb-4">
+                        <Cpu className="w-10 h-10 text-gray-300" />
                       </div>
-                      <div>
-                        <div className="font-bold text-foreground">
-                          Pending Setup: {token.deviceName}
+                      <p className="text-gray-500 font-medium max-w-xs">
+                        No hardware devices connected to this organization yet.
+                      </p>
+                    </div>
+                  )}
+
+                {deviceTokens
+                  .filter(t => !t.usedAt && !t.revokedAt)
+                  .map(token => (
+                    <div
+                      key={token.id}
+                      className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100 flex justify-between items-center shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                          <Lock size={22} />
                         </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          Expires: {new Date(token.expiresAt).toLocaleString()}
+                        <div>
+                          <div className="font-bold text-gray-900">
+                            Pending Setup: {token.deviceName}
+                          </div>
+                          <div className="text-[11px] text-amber-600/70 mt-1 font-semibold">
+                            EXPIRES: {new Date(token.expiresAt).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-amber-600 hover:bg-amber-100 h-10 w-10"
+                        onClick={() => copyToClipboard(token.rawToken)}>
+                        <Copy size={18} />
+                      </Button>
+                    </div>
+                  ))}
+
+                <div className="grid gap-4">
+                  {registries.map(reg => (
+                    <div
+                      key={reg.id}
+                      className="bg-white p-6 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                          <Monitor size={22} />
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-900">{reg.deviceName}</div>
+                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span className="font-semibold text-[10px] uppercase tracking-wider">{reg.deviceType}</span>
+                            <span className="w-1 h-1 rounded-full bg-gray-300" />
+                            <span>{reg.location?.name || "Main Location"}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={reg.status === "ACTIVE" ? "default" : "secondary"}
+                          className={cn(
+                            "px-3 py-0.5 border-none",
+                            reg.status === "ACTIVE"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-gray-50 text-gray-500"
+                          )}>
+                          {reg.status}
+                        </Badge>
+                        <div className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-tighter flex items-center justify-end gap-1.5">
+                          <History size={10} />
+                          {reg.lastSeenAt
+                            ? new Date(reg.lastSeenAt).toLocaleString()
+                            : "Never Seen"}
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-status-warning hover:bg-status-warning/10"
-                      onClick={() => copyToClipboard(token.rawToken)}
-                    >
-                      <Copy size={16} />
-                    </Button>
-                  </div>
-                ))}
-              {registries.map((reg) => (
-                <div
-                  key={reg.id}
-                  className="bg-card p-4 rounded-xl border flex justify-between items-center shadow-sm"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                      <Monitor size={20} />
-                    </div>
-                    <div>
-                      <div className="font-bold">{reg.deviceName}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                        <span>{reg.deviceType}</span>
-                        <span className="w-1 h-1 rounded-full bg-border" />
-                        <span>{reg.location?.name || "Main Location"}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={reg.status === "ACTIVE" ? "default" : "secondary"}
-                      className={reg.status === "ACTIVE" ? "bg-status-success/10 text-status-success border-status-success/20" : ""}
-                    >
-                      {reg.status}
-                    </Badge>
-                    <div className="text-[10px] text-muted-foreground mt-1.5 font-medium uppercase tracking-tighter">
-                      Last seen:{" "}
-                      {reg.lastSeenAt
-                        ? new Date(reg.lastSeenAt).toLocaleString()
-                        : "Never"}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </section>
         </div>
@@ -841,29 +981,37 @@ function AppsApiContent() {
       {activeTab === "webhooks" && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold">Webhook Subscriptions</h2>
-            <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-gray-900">Webhook Subscriptions</h2>
+              <p className="text-sm text-gray-500">Receive real-time notifications when events happen in your organization.</p>
+            </div>
+            <Dialog
+              open={showWebhookDialog}
+              onOpenChange={setShowWebhookDialog}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 gap-2 h-11 px-6 shadow-md">
                   <Plus size={18} />
                   Add Webhook
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[450px]">
+              <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Add Webhook Subscription</DialogTitle>
                   <DialogDescription>
                     Configure a new endpoint to receive real-time notifications.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-5 py-4">
+                <div className="grid gap-6 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="webhook-name">Friendly Name</Label>
                     <Input
                       id="webhook-name"
                       value={newWebhook.name}
-                      onChange={(e) => setNewWebhook({ ...newWebhook, name: e.target.value })}
+                      onChange={e =>
+                        setNewWebhook({ ...newWebhook, name: e.target.value })
+                      }
                       placeholder="My Production Webhook"
+                      className="h-11"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -871,30 +1019,32 @@ function AppsApiContent() {
                     <Input
                       id="webhook-url"
                       value={newWebhook.url}
-                      onChange={(e) => setNewWebhook({ ...newWebhook, url: e.target.value })}
+                      onChange={e =>
+                        setNewWebhook({ ...newWebhook, url: e.target.value })
+                      }
                       placeholder="https://api.myapp.com/webhooks"
+                      className="h-11"
                     />
                   </div>
-                  <div className="grid gap-3">
-                    <Label className="text-sm font-semibold">Events to Subscribe</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {availableEvents.map((ev) => (
-                        <div key={ev} className="flex items-center space-x-2">
+                  <div className="space-y-4">
+                    <Label className="text-xs font-bold uppercase text-gray-400">Events to Subscribe</Label>
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                      {availableEvents.map(ev => (
+                        <div key={ev} className="flex items-center space-x-3">
                           <Checkbox
                             id={`event-${ev}`}
                             checked={newWebhook.events.includes(ev)}
-                            onCheckedChange={(checked) => {
+                            onCheckedChange={checked => {
                               const events = checked
                                 ? [...newWebhook.events, ev]
-                                : newWebhook.events.filter((e) => e !== ev);
+                                : newWebhook.events.filter(e => e !== ev);
                               setNewWebhook({ ...newWebhook, events });
                             }}
                           />
                           <label
                             htmlFor={`event-${ev}`}
-                            className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {ev}
+                            className="text-xs font-bold text-gray-600 uppercase cursor-pointer">
+                            {ev.replace(".", " ")}
                           </label>
                         </div>
                       ))}
@@ -902,45 +1052,54 @@ function AppsApiContent() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowWebhookDialog(false)}>Cancel</Button>
-                  <Button onClick={handleCreateWebhook} disabled={!newWebhook.url || newWebhook.events.length === 0}>
-                    Add Webhook
+                  <Button
+                    variant="outline"
+                    className="h-11"
+                    onClick={() => setShowWebhookDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateWebhook}
+                    disabled={!newWebhook.url || newWebhook.events.length === 0}
+                    className="bg-indigo-600 hover:bg-indigo-700 h-11"
+                  >
+                    Create Subscription
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
+
           {webhooks.length === 0 ? (
-            <div className="bg-muted/30 rounded-xl p-12 text-center border border-dashed">
-              <Webhook className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold">
-                No webhooks configured
-              </h3>
-              <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
-                Listen to real-time events from our API and trigger external workflows.
-              </p>
+            <div className="bg-white p-24 rounded-3xl border border-dashed flex flex-col items-center text-center shadow-sm">
+              <div className="p-4 bg-indigo-50 rounded-2xl mb-4">
+                <Webhook className="w-10 h-10 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No Webhooks</h3>
+              <p className="text-gray-500 max-w-sm">Listen to real-time events from our API and trigger external workflows in your own stack.</p>
             </div>
           ) : (
             <div className="grid gap-4">
-              {webhooks.map((wh) => (
+              {webhooks.map(wh => (
                 <div
                   key={wh.id}
-                  className="bg-card p-6 rounded-xl border shadow-sm flex justify-between items-center"
-                >
-                  <div className="space-y-3">
+                  className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center group hover:border-indigo-100 transition-all">
+                  <div className="space-y-4">
                     <div>
-                      <div className="font-bold text-lg">{wh.name || "Untitled Webhook"}</div>
-                      <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                        <Globe size={14} className="text-primary" /> {wh.url}
+                      <div className="font-bold text-lg text-gray-900">
+                        {wh.name || "Untitled Webhook"}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+                        <Globe size={14} className="text-indigo-400" />
+                        <code className="bg-gray-50 px-1.5 py-0.5 rounded border font-mono text-xs text-gray-700">{wh.url}</code>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {wh.events.map((e: string) => (
                         <Badge
                           key={e}
                           variant="secondary"
-                          className="bg-primary/5 text-primary border-primary/10 font-medium"
-                        >
+                          className="bg-indigo-50 text-indigo-600 border-none font-bold text-[10px] uppercase px-3">
                           {e}
                         </Badge>
                       ))}
@@ -949,12 +1108,11 @@ function AppsApiContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="text-gray-400 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() =>
                       deleteWebhookSubscriptionAction(wh.id).then(loadData)
-                    }
-                  >
-                    <Trash2 size={18} />
+                    }>
+                    <Trash2 size={20} />
                   </Button>
                 </div>
               ))}
@@ -964,41 +1122,44 @@ function AppsApiContent() {
       )}
 
       {/* --- SHEET --- */}
-
-      <Sheet open={!!editingV3Client} onOpenChange={(open) => !open && setEditingV3Client(null)}>
+      <Sheet
+        open={!!editingV3Client}
+        onOpenChange={open => !open && setEditingV3Client(null)}>
         <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>Client Settings</SheetTitle>
+          <SheetHeader className="pb-8">
+            <SheetTitle className="text-2xl font-bold">Client Advanced Settings</SheetTitle>
             <SheetDescription>
-              Modify advanced settings and permissions for {editingV3Client?.name}.
+              Modify security settings and permissions for{" "}
+              <strong>{editingV3Client?.name}</strong>.
             </SheetDescription>
           </SheetHeader>
           {editingV3Client && (
-            <div className="py-6 space-y-8">
+            <div className="py-6 space-y-10">
               <div className="space-y-4">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   Scopes & Permissions
                 </Label>
                 <div className="flex flex-wrap gap-2">
                   {["read", "write", "admin", "inventory", "orders"].map(
-                    (scope) => {
+                    scope => {
                       const isSelected = editingV3Client.scopes.includes(scope);
                       return (
                         <Badge
                           key={scope}
                           variant={isSelected ? "default" : "outline"}
                           className={cn(
-                            "cursor-pointer py-1.5 px-3 h-auto text-xs transition-all",
-                            isSelected ? "bg-primary" : "hover:bg-muted"
+                            "cursor-pointer py-2 px-4 h-auto text-xs font-bold transition-all border-none",
+                            isSelected ? "bg-indigo-600 text-white shadow-md" : "bg-gray-50 text-gray-500 hover:bg-gray-100",
                           )}
                           onClick={() => {
                             const scopes = isSelected
-                              ? editingV3Client.scopes.filter((s: string) => s !== scope)
+                              ? editingV3Client.scopes.filter(
+                                  (s: string) => s !== scope,
+                                )
                               : [...editingV3Client.scopes, scope];
                             setEditingV3Client({ ...editingV3Client, scopes });
-                          }}
-                        >
-                          {scope}
+                          }}>
+                          {scope.toUpperCase()}
                           {isSelected && <Check size={12} className="ml-1.5" />}
                         </Badge>
                       );
@@ -1008,67 +1169,75 @@ function AppsApiContent() {
               </div>
 
               <div className="space-y-4">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   CORS Origins
                 </Label>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Input
                     placeholder="e.g. https://myapp.com, http://localhost:3000"
                     value={editingV3Client.corsOrigins.join(", ")}
-                    onChange={(e) =>
+                    className="h-12"
+                    onChange={e =>
                       setEditingV3Client({
                         ...editingV3Client,
                         corsOrigins: e.target.value
                           .split(",")
-                          .map((s) => s.trim())
+                          .map(s => s.trim())
                           .filter(Boolean),
                       })
                     }
                   />
-                  <p className="text-[10px] text-muted-foreground">
-                    Enter a comma-separated list of allowed origins.
+                  <p className="text-[10px] text-gray-400 leading-relaxed">
+                    Comma-separated list of browser origins allowed to make authenticated requests.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border">
+              <div className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-gray-100">
                 <div className="space-y-0.5">
-                  <div className="font-bold text-sm">Active Status</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    Enable or disable all access for this client.
+                  <div className="font-bold text-sm text-gray-900">Active Status</div>
+                  <div className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">
+                    Access control toggle
                   </div>
                 </div>
                 <Switch
                   checked={editingV3Client.isActive}
-                  onCheckedChange={(checked) =>
-                    setEditingV3Client({ ...editingV3Client, isActive: checked })
+                  onCheckedChange={checked =>
+                    setEditingV3Client({
+                      ...editingV3Client,
+                      isActive: checked,
+                    })
                   }
                 />
               </div>
             </div>
           )}
-          <SheetFooter className="mt-8">
-            <Button variant="outline" className="flex-1" onClick={() => setEditingV3Client(null)}>
+          <SheetFooter className="mt-12 gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 h-12"
+              onClick={() => setEditingV3Client(null)}>
               Cancel
             </Button>
-            <Button className="flex-1" onClick={handleUpdateV3}>
+            <Button className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700" onClick={handleUpdateV3}>
               Save Changes
             </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
-    </>
+    </div>
   );
 }
 
 export default function AppsApiPage() {
   return (
-    <div className="p-8 max-w-[1400px] mx-auto min-h-screen">
-      <Suspense fallback={
-        <div className="flex items-center justify-center h-[50vh]">
-          <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
-      }>
+    <div className="p-8 max-w-[1400px] mx-auto min-h-screen bg-[#F9FAFB]">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-[50vh]">
+            <RefreshCw className="w-8 h-8 animate-spin text-indigo-600" />
+          </div>
+        }>
         <AppsApiContent />
       </Suspense>
     </div>

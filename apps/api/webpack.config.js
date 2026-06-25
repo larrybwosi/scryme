@@ -1,49 +1,111 @@
-const nodeExternals = require("webpack-node-externals");
 const path = require("path");
-const webpack = require("webpack");
+const nodeExternals = require("webpack-node-externals");
 
-module.exports = function (options) {
+const SRC_DIR = path.resolve(__dirname, "src");
+const EMPTY_MODULE = path.resolve(SRC_DIR, "lib/empty.ts");
+
+module.exports = function modifyWebpackConfig(options) {
   const isDev = options.mode === "development";
 
-  const forkTsPluginIndex = options.plugins.findIndex(
-    (p) => p.constructor.name === "ForkTsCheckerWebpackPlugin",
-  );
+  // 1. Optimize Type-Checking Process
+  if (options.plugins) {
+    const forkTsPluginIndex = options.plugins.findIndex(
+      p => p?.constructor?.name === "ForkTsCheckerWebpackPlugin",
+    );
 
-  if (forkTsPluginIndex !== -1) {
-    if (isDev) {
-      // Remove the plugin in dev mode to save memory and speed up build
-      options.plugins.splice(forkTsPluginIndex, 1);
-    } else {
-      // In production/build, keep it but ensure memory limit is sufficient
-      options.plugins[forkTsPluginIndex].options.typescript.memoryLimit = 4096;
+    if (forkTsPluginIndex !== -1) {
+      if (isDev) {
+        // Skip type-checking entirely in dev — let the IDE/tsc --watch handle it.
+        options.plugins.splice(forkTsPluginIndex, 1);
+      } else {
+        const plugin = options.plugins[forkTsPluginIndex];
+        if (plugin?.options?.typescript) {
+          plugin.options.typescript.memoryLimit = 4096;
+          plugin.options.async = false; // Fail fast in CI if type-checking fails
+        }
+      }
     }
+  }
+
+  // 2. Replace ts-loader with ultra-fast swc-loader
+  if (options.module && options.module.rules) {
+    options.module.rules = options.module.rules.map(rule => {
+      const isTsLoader =
+        rule.loader?.includes("ts-loader") ||
+        (Array.isArray(rule.use) &&
+          rule.use.some(u => (u.loader || u).includes("ts-loader")));
+
+      if (isTsLoader) {
+        return {
+          test: /\.tsx?$/,
+          exclude: /node_modules/,
+          use: {
+            loader: "swc-loader",
+            options: {
+              jsc: {
+                target: "es2022",
+                parser: {
+                  syntax: "typescript",
+                  decorators: true,
+                  dynamicImport: true,
+                },
+                transform: {
+                  legacyDecorator: true,
+                  decoratorMetadata: true, // Crucial for NestJS Dependency Injection
+                },
+                keepClassNames: true, // Crucial for NestJS controllers/entities naming
+              },
+            },
+          },
+        };
+      }
+      return rule;
+    });
   }
 
   return {
     ...options,
+
+    // 3. Persistent Filesystem Caching
+    cache: isDev
+      ? { type: "filesystem", buildDependencies: { config: [__filename] } }
+      : false, // Clean builds in CI/CD pipelines
+
+    // 4. Drop heavy source maps in production to save build memory
+    ...(isDev ? {} : { devtool: false }),
+
     externals: [
       {
-        "server-only":
-          "commonjs " + path.resolve(__dirname, "src/lib/empty.ts"),
+        "server-only": `commonjs ${EMPTY_MODULE}`,
       },
       nodeExternals({
         allowlist: [/^@repo/],
       }),
     ],
+
     resolve: {
       ...options.resolve,
-      alias: {
-        ...options.resolve.alias,
-        "@": path.resolve(__dirname, "src"),
-        "@repo/zitadel/server": path.resolve(
-          __dirname,
-          "src/zitadel/zitadel.service.ts",
-        ),
-        "@repo/zitadel": path.resolve(
-          __dirname,
-          "src/zitadel/zitadel.service.ts",
-        ),
+      extensionAlias: options.resolve?.extensionAlias || {
+        ".js": [".ts", ".js"],
       },
+      alias: {
+        ...options.resolve?.alias,
+        "@": SRC_DIR,
+      },
+      // 5. Restrict module scanning to slash I/O overhead
+      modules: [SRC_DIR, "node_modules"],
+    },
+
+    performance: {
+      hints: false,
+    },
+
+    // 6. Disable heavy frontend-centric chunk optimization for Node bundle
+    optimization: {
+      ...options.optimization,
+      splitChunks: false,
+      removeAvailableModules: false,
+      removeEmptyChunks: false,
     },
   };
 };
