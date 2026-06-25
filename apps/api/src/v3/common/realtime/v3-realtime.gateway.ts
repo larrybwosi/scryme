@@ -57,14 +57,15 @@ export class V3RealtimeGateway
     console.log(`V3 Client disconnected: ${client.id}`);
     const context = (client as any).v3Context;
     const clientId = context?.memberId || client.id;
+    const presenceChannels = (client as any).presenceChannels as Set<string>;
 
-    const presenceKeys = await this.redis.keys("realtime:presence:*");
-    for (const key of presenceKeys) {
-      const channel = key.replace("realtime:presence:", "");
-      await this.redis.leavePresence(channel, clientId);
-
-      const members = await this.redis.getPresence(channel);
-      this.server.to(channel).emit("presence:update", { channel, members });
+    if (presenceChannels) {
+      for (const channel of presenceChannels) {
+        await this.redis.leavePresence(channel, clientId);
+        const members = await this.redis.getPresence(channel);
+        this.server.to(channel).emit("presence:update", { channel, members });
+      }
+      presenceChannels.clear();
     }
   }
 
@@ -130,12 +131,39 @@ export class V3RealtimeGateway
     const clientId = context.memberId || client.id;
     await this.redis.enterPresence(data.channel, clientId, data.metadata);
 
+    // Track presence channel on client for cleanup on disconnect
+    if (!(client as any).presenceChannels) {
+      (client as any).presenceChannels = new Set<string>();
+    }
+    (client as any).presenceChannels.add(data.channel);
+
     const members = await this.redis.getPresence(data.channel);
     this.server
       .to(data.channel)
       .emit("presence:update", { channel: data.channel, members });
 
     return { event: "presence:entered", members };
+  }
+
+  @SubscribeMessage("presence:leave")
+  async handlePresenceLeave(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { channel: string },
+  ) {
+    const context = (client as any).v3Context;
+    const clientId = context?.memberId || client.id;
+    await this.redis.leavePresence(data.channel, clientId);
+
+    if ((client as any).presenceChannels) {
+      (client as any).presenceChannels.delete(data.channel);
+    }
+
+    const members = await this.redis.getPresence(data.channel);
+    this.server
+      .to(data.channel)
+      .emit("presence:update", { channel: data.channel, members });
+
+    return { event: "presence:left", members };
   }
 
   @SubscribeMessage("presence:get")
