@@ -227,8 +227,10 @@ export class WorkflowsService {
     });
 
     // Simulate background processing
-    setTimeout(async () => {
-      await (this.prisma.client as any).windmillExecution.update({
+    // NOTE: In production, this should be handled by a proper job queue like BullMQ
+    // to ensure reliability and prevent memory leaks/unhandled rejections.
+    setTimeout(() => {
+      (this.prisma.client as any).windmillExecution.update({
         where: { id: execution.id },
         data: {
           status: "COMPLETED",
@@ -239,8 +241,10 @@ export class WorkflowsService {
           },
           completedAt: new Date(),
         },
+      }).catch((err: any) => {
+        console.error(`Failed to update windmill execution ${execution.id}:`, err);
       });
-    }, 2000);
+    }, 2000).unref(); // unref() allows the process to exit even if the timer is active
 
     return execution;
   }
