@@ -46,6 +46,7 @@ pub struct Session {
 pub struct AuthState {
     // We wrap in Mutex to allow safe concurrent access
     pub device_config: Mutex<Option<DeviceConfig>>,
+    pub base_url_override: Mutex<Option<String>>,
     pub sessions: Mutex<std::collections::HashMap<String, Session>>, // member_id -> Session
     pub active_member_id: Mutex<Option<String>>,
     pub client: reqwest::Client,
@@ -72,6 +73,7 @@ impl AuthState {
 
         Self {
             device_config: Mutex::new(initial_config),
+            base_url_override: Mutex::new(None),
             sessions: Mutex::new(std::collections::HashMap::new()),
             active_member_id: Mutex::new(None),
             client,
@@ -169,19 +171,33 @@ impl AuthState {
         path: &str,
     ) -> Result<reqwest::RequestBuilder, String> {
         let (base_url, device_key) = {
+            let override_guard = self
+                .base_url_override
+                .lock()
+                .map_err(|_| "Failed to lock base url override")?;
+
             let config_guard = self
                 .device_config
                 .lock()
                 .map_err(|_| "Failed to lock device config")?;
 
-            match config_guard.as_ref() {
-                Some(config) => (config.base_url.clone(), Some(config.device_key.clone())),
-                None => {
-                    // Fallback for initial provisioning where we might not have a config yet
-                    let dev_url = if cfg!(debug_assertions) { "http://localhost:3002" } else { "https://dealioerp.vercel.app" };
-                    (dev_url.to_string(), None)
-                }
-            }
+            let url = if let Some(over) = override_guard.as_ref() {
+                over.clone()
+            } else if let Some(config) = config_guard.as_ref() {
+                config.base_url.clone()
+            } else {
+                // Fallback for initial provisioning where we might not have a config yet
+                let dev_url = if cfg!(debug_assertions) {
+                    "http://localhost:3002"
+                } else {
+                    "https://dealioerp.vercel.app"
+                };
+                dev_url.to_string()
+            };
+
+            let key = config_guard.as_ref().map(|c| c.device_key.clone());
+
+            (url, key)
         };
 
         let token = {
@@ -720,6 +736,39 @@ pub async fn get_ably_auth_token_command(
         .await
         .map_err(|e| format!("Invalid JSON: {}", e))?;
     Ok(data)
+}
+
+#[tauri::command]
+pub async fn update_base_url(state: State<'_, AuthState>, base_url: String) -> Result<(), String> {
+    {
+        let mut override_guard = state
+            .base_url_override
+            .lock()
+            .map_err(|_| "Lock error on override")?;
+        *override_guard = Some(base_url.clone());
+    }
+
+    // Also update device_config if it exists so it's persisted on next save
+    let config_to_save = {
+        let mut config_guard = state
+            .device_config
+            .lock()
+            .map_err(|_| "Lock error on config")?;
+        if let Some(config) = config_guard.as_mut() {
+            config.base_url = base_url;
+            Some(config.clone())
+        } else {
+            None
+        }
+    };
+
+    if let Some(config) = config_to_save {
+        AuthState::save_to_keyring_async(&config)
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
 }
 
 #[tauri::command]

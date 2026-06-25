@@ -432,6 +432,7 @@ pub fn run() {
             #[cfg(not(feature = "standalone"))]
             shift_manager::sync_shifts_command,
             auth_store::set_device_config,
+            auth_store::update_base_url,
             auth_store::login_member,
             auth_store::logout_member,
             auth_store::switch_active_member,

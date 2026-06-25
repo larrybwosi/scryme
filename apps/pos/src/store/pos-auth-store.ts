@@ -58,6 +58,7 @@ export type Member = {
 interface PosAuthState {
   isConfigured: boolean;
   apiUrl: string;
+  rawApiUrl: string;
   currentMember: Member | null;
   checkedInMembers: Member[];
   currentLocation: InventoryLocation | null;
@@ -84,6 +85,7 @@ interface PosAuthActions {
   resetAll: () => void;
   resetDevice: () => void;
   setApiUrl: (url: string) => void;
+  applyApiUrl: () => Promise<void>;
   completeSetup: (deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string | null) => void;
 
   // Async initialization
@@ -101,6 +103,7 @@ const STORAGE_KEY = 'pos-auth-storage-v3';
 const initialState: PosAuthState = {
   isConfigured: false,
   apiUrl: API_ENDPOINT_DEFAULT,
+  rawApiUrl: API_ENDPOINT_DEFAULT,
   currentMember: null,
   checkedInMembers: [],
   currentLocation: null,
@@ -195,7 +198,25 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       },
 
       setApiUrl: (url: string) => {
-        set({ apiUrl: url });
+        set({ rawApiUrl: url });
+      },
+
+      applyApiUrl: async () => {
+        const { rawApiUrl } = get();
+        // Sanitize URL: remove trailing /api/v2, /api/v3, and trailing slashes
+        const sanitizedUrl = rawApiUrl
+          .replace(/\/api\/v2\/?$/, '')
+          .replace(/\/api\/v3\/?$/, '')
+          .replace(/\/+$/, '');
+
+        set({ apiUrl: sanitizedUrl });
+
+        // Synchronize with Rust backend immediately
+        try {
+          await invoke('update_base_url', { baseUrl: sanitizedUrl });
+        } catch (err) {
+          console.error('Failed to update base URL in backend:', err);
+        }
       },
 
       resetAll: () => {
@@ -376,6 +397,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         // REMOVED deviceKey and memberToken from here for security
         isConfigured: state.isConfigured,
         apiUrl: state.apiUrl,
+        rawApiUrl: state.rawApiUrl,
         currentLocation: state.currentLocation,
         currentMember: state.currentMember,
         checkedInMembers: state.checkedInMembers,
