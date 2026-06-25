@@ -44,6 +44,13 @@ export interface DocumentItem {
 
 export type DocumentFormat = 'A4' | 'THERMAL';
 
+export interface CurrencySettings {
+  code: string;
+  symbol?: string;
+  locale?: string;
+  precision?: number;
+}
+
 export interface BaseDocumentData {
   id: string;
   number: string;
@@ -52,6 +59,7 @@ export interface BaseDocumentData {
   notes?: string;
   currency?: string;
   currencySymbol?: string;
+  currencySettings?: CurrencySettings;
   tags?: string[];
   locationName?: string;
   createdBy?: string;
@@ -167,10 +175,6 @@ export interface InvoiceData extends BaseDocumentData {
   gstRate?: number;
   isTaxInclusive?: boolean;
   currencyCode?: string;
-  currencySettings?: {
-    code: string;
-    locale: string;
-  };
   client?: any;
   company?: any;
   organization?: any;
