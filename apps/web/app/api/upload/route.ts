@@ -60,12 +60,16 @@ export async function POST(req: Request) {
 
     // 7. Return the structured response payload
     return NextResponse.json({
-      id: attachment.id,
-      fileName: attachment.fileName || "file",
-      fileUrl: attachment.fileUrl || "",
-      shortUrl: attachment.shortUrl || "",
-      mimeType: attachment.mimeType,
-      sizeBytes: attachment.sizeBytes || 0,
+      success: true,
+      data: {
+        id: attachment.id,
+        fileName: attachment.fileName || "file",
+        url: attachment.fileUrl || "",
+        fileUrl: attachment.fileUrl || "",
+        shortUrl: attachment.shortUrl || "",
+        mimeType: attachment.mimeType,
+        sizeBytes: attachment.sizeBytes || 0,
+      },
     });
   } catch (error: any) {
     console.error("Direct upload route error:", error);

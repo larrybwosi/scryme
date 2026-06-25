@@ -307,13 +307,15 @@ export function StaffSettings({
                     <Input
                       id="joiningDate"
                       type="date"
-                      className="pl-10"
+                      className="pl-10 opacity-70 cursor-not-allowed bg-gray-50"
                       value={form.joiningDate}
-                      onChange={e =>
-                        setForm({ ...form, joiningDate: e.target.value })
-                      }
+                      readOnly
+                      disabled
                     />
                   </div>
+                  <p className="text-[10px] text-gray-400">
+                    Joining date cannot be modified once set.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="manager">Reporting Manager</Label>
