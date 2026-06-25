@@ -151,6 +151,38 @@ services:
     networks:
       - scryme-network
 
+  bakery:
+    build:
+      context: .
+      dockerfile: apps/bakery/Dockerfile
+    image: scryme-bakery:latest
+    restart: always
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    ports:
+      - '3003:3003'
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - scryme-network
+
+  pos:
+    build:
+      context: .
+      dockerfile: apps/pos/Dockerfile
+    image: scryme-pos:latest
+    restart: always
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    ports:
+      - '3004:3004'
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - scryme-network
+
 volumes:
   postgres_data:
   rustfs_data:
