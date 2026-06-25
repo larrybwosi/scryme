@@ -12,7 +12,7 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
-import { MoreHorizontal, UserPlus, Trash2, ShieldCheck, CreditCard } from "lucide-react";
+import { MoreHorizontal, UserPlus, Trash2, ShieldCheck, CreditCard, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,21 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { removeDepartmentMember, updateDepartmentMember } from "../../../app/actions/department";
 import { toast } from "sonner";
 import { AddMemberToDeptSheet } from "./add-member-to-dept-sheet";
@@ -31,16 +46,22 @@ interface DepartmentMemberTableProps {
 
 export function DepartmentMemberTable({ departmentId, members }: DepartmentMemberTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<any>(null);
 
-  const handleRemoveMember = async (membershipId: string) => {
-    if (!confirm("Are you sure you want to remove this member from the department?")) return;
+  const handleRemoveMember = (membership: any) => {
+    setMemberToDelete(membership);
+  };
 
-    setLoading(membershipId);
-    const result = await removeDepartmentMember(membershipId);
+  const confirmDeleteMember = async () => {
+    if (!memberToDelete) return;
+
+    setLoading(memberToDelete.id);
+    const result = await removeDepartmentMember(memberToDelete.id);
     setLoading(null);
 
     if (result.success) {
       toast.success("Member removed from department");
+      setMemberToDelete(null);
     } else {
       toast.error(result.error || "Failed to remove member");
     }
@@ -146,11 +167,21 @@ export function DepartmentMemberTable({ departmentId, members }: DepartmentMembe
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal size={16} />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label="More actions"
+                          >
+                            <MoreHorizontal size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>More actions</TooltipContent>
+                    </Tooltip>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem className="flex items-center gap-2">
                         <ShieldCheck size={14} />
@@ -159,7 +190,7 @@ export function DepartmentMemberTable({ departmentId, members }: DepartmentMembe
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="flex items-center gap-2 text-red-600"
-                        onClick={() => handleRemoveMember(membership.id)}
+                        onClick={() => handleRemoveMember(membership)}
                         disabled={loading === membership.id}
                       >
                         <Trash2 size={14} />
@@ -173,6 +204,38 @@ export function DepartmentMemberTable({ departmentId, members }: DepartmentMembe
           )}
         </TableBody>
       </Table>
+
+      <AlertDialog open={!!memberToDelete} onOpenChange={(open) => !open && setMemberToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <strong>{memberToDelete?.member?.user?.name}</strong> from the department.
+              They will lose all department-specific permissions. This action can be undone by adding them back.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading === memberToDelete?.id}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteMember();
+              }}
+              disabled={loading === memberToDelete?.id}
+            >
+              {loading === memberToDelete?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                "Remove Member"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { deleteDepartment } from "../../app/actions/department";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 interface DeleteDepartmentDialogProps {
   departmentId: string;
@@ -72,7 +73,14 @@ export function DeleteDepartmentDialog({
             disabled={loading}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
-            {loading ? "Deleting..." : "Delete Department"}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete Department"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
