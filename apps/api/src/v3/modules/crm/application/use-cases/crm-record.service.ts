@@ -1,13 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CreateCrmRecordDto, UpdateCrmRecordDto } from '../dto/crm.dto';
-import { emitCrmRecordCreated, emitCrmRecordUpdated } from '@repo/windmill/server';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { CreateCrmRecordDto, UpdateCrmRecordDto } from "../dto/crm.dto";
+import {
+  emitCrmRecordCreated,
+  emitCrmRecordUpdated,
+} from "@repo/windmill/server";
 
 @Injectable()
 export class CrmRecordService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createRecord(organizationId: string, objectId: string, dto: CreateCrmRecordDto) {
+  async createRecord(
+    organizationId: string,
+    objectId: string,
+    dto: CreateCrmRecordDto,
+  ) {
     const record = await this.prisma.client.crmRecord.create({
       data: {
         organizationId,
@@ -20,20 +27,26 @@ export class CrmRecordService {
     // Emit Windmill event
     emitCrmRecordCreated(organizationId, {
       recordId: record.id,
-      entityType: 'CRM_RECORD', // or record.objectId if appropriate
+      entityType: "CRM_RECORD", // or record.objectId if appropriate
       name: (record.data as any)?.name || record.id,
-    }).catch(err => console.error('[CRM] Failed to emit Windmill event:', err));
+    }).catch((err) =>
+      console.error("[CRM] Failed to emit Windmill event:", err),
+    );
 
     return record;
   }
 
-  async updateRecord(organizationId: string, recordId: string, dto: UpdateCrmRecordDto) {
+  async updateRecord(
+    organizationId: string,
+    recordId: string,
+    dto: UpdateCrmRecordDto,
+  ) {
     const record = await this.prisma.client.crmRecord.findFirst({
       where: { id: recordId, organizationId },
     });
 
     if (!record) {
-      throw new NotFoundException('CRM Record not found');
+      throw new NotFoundException("CRM Record not found");
     }
 
     const updatedRecord = await this.prisma.client.crmRecord.update({
@@ -47,10 +60,12 @@ export class CrmRecordService {
     // Emit Windmill event
     emitCrmRecordUpdated(organizationId, {
       recordId: updatedRecord.id,
-      entityType: 'CRM_RECORD',
+      entityType: "CRM_RECORD",
       name: (updatedRecord.data as any)?.name || updatedRecord.id,
       changes: dto.data,
-    }).catch(err => console.error('[CRM] Failed to emit Windmill event:', err));
+    }).catch((err) =>
+      console.error("[CRM] Failed to emit Windmill event:", err),
+    );
 
     return updatedRecord;
   }
@@ -75,7 +90,7 @@ export class CrmRecordService {
     });
 
     if (!record) {
-      throw new NotFoundException('CRM Record not found');
+      throw new NotFoundException("CRM Record not found");
     }
 
     return record;

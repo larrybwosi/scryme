@@ -25,7 +25,7 @@ export function ImageUpload({
 
   const uploadFiles = useCallback(
     async (files: FileList | File[]) => {
-      const filesArray = Array.from(files).filter((file) =>
+      const filesArray = Array.from(files).filter(file =>
         file.type.startsWith("image/"),
       );
 
@@ -37,7 +37,7 @@ export function ImageUpload({
       setIsUploading(true);
 
       try {
-        const uploadPromises = filesArray.map(async (file) => {
+        const uploadPromises = filesArray.map(async file => {
           const formData = new FormData();
           formData.append("file", file);
 
@@ -129,24 +129,22 @@ export function ImageUpload({
   }, []);
 
   const removeImage = (url: string) => {
-    onChange(value.filter((u) => u !== url));
+    onChange(value.filter(u => u !== url));
   };
 
   return (
     <div className="space-y-4 w-full">
       <div className="grid grid-cols-3 gap-4">
-        {value.map((url) => (
+        {value.map(url => (
           <div
             key={url}
-            className="relative aspect-square rounded-md overflow-hidden border bg-gray-100 group"
-          >
+            className="relative aspect-square rounded-md overflow-hidden border bg-gray-100 group">
             <Image src={url} alt="Product" fill className="object-cover" />
             <button
               onClick={() => removeImage(url)}
               type="button"
               aria-label="Remove image"
-              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-[#34A853] focus-visible:ring-offset-2"
-            >
+              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full text-white opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-[#34A853] focus-visible:ring-offset-2">
               <X size={12} />
             </button>
           </div>
@@ -154,7 +152,7 @@ export function ImageUpload({
         {value.length < maxImages && (
           <div
             onDrop={onDrop}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={e => e.preventDefault()}
             onDragEnter={onDragEnter}
             onDragLeave={onDragLeave}
             onPaste={onPaste}
@@ -168,8 +166,7 @@ export function ImageUpload({
               isDragging && "border-[#34A853] bg-[#34A853]/5",
               isUploading && "opacity-50 cursor-not-allowed",
               disabled && "opacity-50 cursor-not-allowed pointer-events-none",
-            )}
-          >
+            )}>
             {isUploading ? (
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             ) : (

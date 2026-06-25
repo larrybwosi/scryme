@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { deleteSupplier } from "../../app/actions/supplier";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 interface DeleteSupplierModalProps {
   supplierId: string;
@@ -22,7 +23,12 @@ interface DeleteSupplierModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function DeleteSupplierModal({ supplierId, supplierName, isOpen, onOpenChange }: DeleteSupplierModalProps) {
+export function DeleteSupplierModal({
+  supplierId,
+  supplierName,
+  isOpen,
+  onOpenChange,
+}: DeleteSupplierModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
@@ -33,7 +39,9 @@ export function DeleteSupplierModal({ supplierId, supplierName, isOpen, onOpenCh
       toast.success("Supplier deleted successfully");
       router.push("/inventory/supplier");
     } catch (error) {
-      toast.error("Failed to delete supplier. Ensure they have no active products or purchases.");
+      toast.error(
+        "Failed to delete supplier. Ensure they have no active products or purchases.",
+      );
     } finally {
       setIsDeleting(false);
     }
@@ -45,20 +53,28 @@ export function DeleteSupplierModal({ supplierId, supplierName, isOpen, onOpenCh
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete <strong>{supplierName}</strong> and all associated data from our servers.
+            This action cannot be undone. This will permanently delete{" "}
+            <strong>{supplierName}</strong> and all associated data from our
+            servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               handleDelete();
             }}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            {isDeleting ? "Deleting..." : "Delete Supplier"}
+            className="bg-red-600 hover:bg-red-700 text-white">
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete Supplier"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

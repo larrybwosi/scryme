@@ -41,11 +41,15 @@ export async function getExpenses(params: {
   search?: string;
   status?: string;
   categoryId?: string;
+  locationId?: string;
+  startDate?: string;
+  endDate?: string;
 }): Promise<
   (Expense & {
     category: ExpenseCategory;
     member: Member & { user: User };
     supplier: Supplier | null;
+    location: any | null;
   })[]
 > {
   const { auth } = await checkPermission([
@@ -70,8 +74,19 @@ export async function getExpenses(params: {
     where.status = params.status as ExpenseStatus;
   }
 
-  if (params.categoryId) {
+  if (params.categoryId && params.categoryId !== "all") {
     where.categoryId = params.categoryId;
+  }
+
+  if (params.locationId && params.locationId !== "all") {
+    where.locationId = params.locationId;
+  }
+
+  if (params.startDate || params.endDate) {
+    where.expenseDate = {
+      ...(params.startDate && { gte: new Date(params.startDate) }),
+      ...(params.endDate && { lte: new Date(params.endDate) }),
+    };
   }
 
   return await db.expense.findMany({
@@ -84,10 +99,25 @@ export async function getExpenses(params: {
         },
       },
       supplier: true,
+      location: true,
     },
     orderBy: {
       expenseDate: "desc",
     },
+  });
+}
+
+export async function getInventoryLocations() {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ]);
+
+  return await db.inventoryLocation.findMany({
+    where: { organizationId: auth.organizationId, isActive: true },
+    orderBy: { name: "asc" },
   });
 }
 
@@ -114,7 +144,7 @@ export async function createExpense(data: {
   });
   const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
-  return await db.$transaction(async (tx) => {
+  return await db.$transaction(async tx => {
     const org = await tx.organization.findUnique({
       where: { id: auth.organizationId },
       select: { expenseApprovalThreshold: true },
@@ -281,7 +311,7 @@ export async function processRecurringExpenses() {
   });
 
   for (const recurring of dueRecurring) {
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async tx => {
       // Create the actual expense
       const count = await tx.expense.count({
         where: { organizationId: recurring.organizationId },

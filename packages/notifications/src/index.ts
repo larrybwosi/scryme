@@ -1,6 +1,7 @@
 import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
+import { ScrymeChatApiClient } from "@repo/scryme";
 
 // Register helpers for report construction
 Handlebars.registerHelper("table", function (data: any[], options: any) {
@@ -37,8 +38,17 @@ export class NotificationEngine {
       templateName,
       data,
       recipients,
-      channels = ["WEBHOOK"],
     } = options;
+
+    let { channels = ["WEBHOOK"] } = options;
+
+    // Enterprise: Standardize Scryme as primary channel if active
+    const scrymeConfig = await db.scrymeConfiguration.findUnique({
+      where: { organizationId },
+    });
+    if (scrymeConfig?.isActive && !channels.includes("SCRYME")) {
+      channels = ["SCRYME", ...channels];
+    }
 
     // 1. Fetch template
     const template = await db.notificationTemplate.findUnique({
@@ -142,8 +152,16 @@ export class NotificationEngine {
 
     try {
       for (const channel of dispatch.channels) {
-        if (channel === "WEBHOOK" || channel === "DISCORD") {
+        if (channel === "WEBHOOK") {
           await this.deliverWebhook(dispatch);
+        }
+        if (channel === "SCRYME") {
+          try {
+            await this.deliverScryme(dispatch);
+          } catch (err: any) {
+             console.error(`Failed to deliver to Scryme: ${err.message}`);
+             // Don't fail the whole dispatch if one channel fails
+          }
         }
         if (channel === "DISCORD") {
           await this.deliverDiscord(dispatch);
@@ -184,15 +202,22 @@ export class NotificationEngine {
       return;
     }
 
-    await axios.post(url, {
-      id: dispatch.id,
-      template: dispatch.templateId,
-      subject: dispatch.finalSubject,
-      content: dispatch.finalContent,
-      data: dispatch.data,
-      recipients: dispatch.recipientIds,
-      timestamp: new Date().toISOString(),
-    });
+    await axios.post(
+      url,
+      {
+        id: dispatch.id,
+        template: dispatch.templateId,
+        subject: dispatch.finalSubject,
+        content: dispatch.finalContent,
+        data: dispatch.data,
+        recipients: dispatch.recipientIds,
+        timestamp: new Date().toISOString(),
+      },
+      {
+        timeout: 10000,
+        maxContentLength: 1024 * 1024, // 1MB limit for response
+      },
+    );
   }
 
   private async deliverDiscord(dispatch: any) {
@@ -248,6 +273,8 @@ export class NotificationEngine {
           Authorization: `Bot ${botToken}`,
           "Content-Type": "application/json",
         },
+        timeout: 10000,
+        maxContentLength: 1024 * 1024, // 1MB limit for response
       },
     );
   }
@@ -272,6 +299,39 @@ export class NotificationEngine {
       subject: dispatch.finalSubject || "Notification",
       html: dispatch.finalContent,
     });
+  }
+
+  private async deliverScryme(dispatch: any) {
+    const config = await db.scrymeConfiguration.findUnique({
+      where: { organizationId: dispatch.organizationId },
+    });
+
+    if (!config || !config.isActive || !config.workspaceSlug) {
+      console.warn(
+        `Scryme Chat not configured or inactive for organization ${dispatch.organizationId}`,
+      );
+      return;
+    }
+
+    const scrymeClient = new ScrymeChatApiClient();
+
+    // Determine channel - default to 'notifications' if not provided in data
+    const channelSlug = dispatch.data?.scrymeChannel || "notifications";
+
+    let message: any = {
+      content: dispatch.finalContent,
+    };
+
+    // If template provides actions in data
+    if (dispatch.data?.scrymeActions) {
+      message.actions = dispatch.data.scrymeActions;
+    }
+
+    await scrymeClient.sendMessage(
+      config.workspaceSlug,
+      channelSlug,
+      message,
+    );
   }
 }
 

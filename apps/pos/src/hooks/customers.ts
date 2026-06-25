@@ -85,10 +85,17 @@ export const usePosCustomers = ({ search, enabled = true }: UsePosCustomersParam
 
 export const useCreateCustomer = () => {
   const queryClient = useQueryClient();
+  const { currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
 
   return useMutation<PosCustomer, Error, any>({
     mutationFn: async data => {
-      const res = await invoke<PosCustomer>('create_customer_command', { data });
+      const res = await invoke<PosCustomer>('create_customer_command', {
+        data: {
+          ...data,
+          memberId,
+        },
+      });
       return res;
     },
     onSuccess: () => {

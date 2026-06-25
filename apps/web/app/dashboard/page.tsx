@@ -19,7 +19,6 @@ export default async function DashboardPage(props: {
   const timeframe = searchParams.timeframe || "month";
 
   const auth = (await getServerAuth())!;
-  console.log(auth);
 
   const [data, organization] = await Promise.all([
     getDashboardData(timeframe),

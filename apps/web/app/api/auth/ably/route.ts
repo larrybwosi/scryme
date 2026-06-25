@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ably } from "@repo/shared/server";
+import { ably } from "@repo/shared/ably";
 import { getOrganizationContext } from "../../../actions/auth";
 
 export async function POST(req: NextRequest) {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     console.error("Ably auth error:", error);
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

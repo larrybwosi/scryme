@@ -2,6 +2,8 @@ model Organization {
   id           String   @id @default(cuid())
   name         String
   slug         String   @unique
+  taxId              String? // KRA PIN for Kenya
+  registrationNumber String?
   deletedAt    DateTime?
   version      Int      @default(0)
   logo         String?
@@ -136,6 +138,11 @@ model Organization {
   priceLists          PriceList[]
   pricingRules        PricingRule[]
   pricingBundles      PricingBundle[]
+
+  ledgerAccounts      LedgerAccount[]
+  journalEntries      JournalEntry[]
+  bankStatements      BankStatement[]
+  recurringBills      RecurringBill[]
   priceImportJobs     PriceImportJob[]
   priceChangeRequests PriceChangeRequest[]
   costCenters         CostCenter[]
@@ -143,6 +150,8 @@ model Organization {
   invoices          Invoice[]
   kraComplianceLogs KRAComplianceLog[]
   invoiceConfig     InvoiceConfig?
+  receiptConfig     ReceiptConfig?
+  waybillConfig     WaybillConfig?
   invoiceTemplates  InvoiceTemplate[]  @relation("OrgInvoiceTemplates")
   templateUsageLogs TemplateUsageLog[] @relation("OrgTemplateUsageLogs")
 
@@ -184,6 +193,13 @@ model Organization {
   // Windmill Integration
   windmillConfiguration WindmillConfiguration?
   windmillExecutions    WindmillExecution[]
+
+  // Scryme Integration
+  scrymeConfiguration ScrymeConfiguration?
+  scrymeMessages      ScrymeMessage[]
+
+  // Plane Integration
+  planeConfiguration PlaneConfiguration?
 
   reportAutomations ReportAutomation[]
   reportChannels    ReportChannel[]
@@ -252,6 +268,17 @@ model Member {
   age       String?
   gender    String?
   tags      String?
+
+  jobTitle               String?
+  employmentType         EmploymentType?
+  joiningDate            DateTime?
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+  emergencyContactRelation String?
+
+  managerId String?
+  manager   Member?  @relation("MemberManager", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates Member[] @relation("MemberManager")
 
   auditLogs    AuditLog[]
   transactions Transaction[]
@@ -322,6 +349,8 @@ model Member {
   // Budget Relations
   createdBudgets         Budget[]       @relation("BudgetCreator")
   generatedBudgetReports BudgetReport[] @relation("BudgetReportGenerator")
+  journalEntries         JournalEntry[]
+  recurringBills         RecurringBill[] @relation
   qualityIncidents       QualityIncident[] @relation("IncidentReporter")
   qcResults              QCResult[] @relation("QCPerformer")
 
@@ -395,6 +424,14 @@ enum MembershipStatus {
   PENDING_APPROVAL
   SUSPENDED
   REJECTED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  TEMPORARY
 }
 
 model AttendanceLog {
@@ -543,8 +580,10 @@ model OrganizationSettings {
   enableAutoCheckout Boolean @default(false)
   autoCheckoutTime   String? // Store as "HH:mm" in organization's local timezone (e.g., "17:00")
   enableBakerySystem     Boolean @default(false) // Add this line
-  enabledPlugins         Json    @default("[]")
-  defaultInvoiceTemplate String  @default("default")
+  enabledPlugins          Json    @default("[]")
+  defaultInvoiceTemplate  String  @default("default")
+  defaultReceiptTemplate  String  @default("default")
+  defaultWaybillTemplate  String  @default("default")
 
   // --- Expense Settings ---
   mileageRate            Decimal @default(0) @db.Decimal(19, 4)
@@ -595,6 +634,25 @@ model Department {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // --- Hierarchy ---
+  parentId       String?
+  parent         Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  subDepartments Department[] @relation("DepartmentHierarchy")
+
+  // --- External Entity Links ---
+  locationId     String?
+  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  costCenterId   String?
+  costCenter     CostCenter?        @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+
+  // --- Integration Tracking ---
+  scrymeChannelId String?
+  planeProjectId  String?
+
+  // --- Enterprise Logic ---
+  settings     Json? // Enterprise specific settings (notifications, thresholds, etc.)
+  customFields Json?
+
   headId                 String?
   head                   Member?                 @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
   departmentMembers      DepartmentMember[]
@@ -603,10 +661,11 @@ model Department {
   budgets                Budget[]                @relation("DepartmentBudgets")
   purchaseApprovalChains PurchaseApprovalChain[]
 
-  customFields Json?
-
   @@unique([organizationId, name])
   @@index([organizationId])
+  @@index([parentId])
+  @@index([locationId])
+  @@index([costCenterId])
   @@map("department")
 }
 

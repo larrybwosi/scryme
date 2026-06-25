@@ -8,7 +8,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { Banknote, History, RefreshCcw } from "lucide-react";
+import { Banknote, History, RefreshCcw, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 import { usePosStore } from "@/store/store";
@@ -17,17 +17,26 @@ import { useCashDrawer } from "@/hooks/use-cash-drawer";
 export default function PettyCashPage() {
   const { openPhysicalDrawer } = useCashDrawer();
   const { currentLocation } = useAuth();
+  const { currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
   const orgSlug = useAuthStore((state) => state.deviceConfig?.orgSlug);
   const currency = usePosStore((state) => state.settings.currency);
 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [funds, setFunds] = useState<any[]>([]);
   const [isLoadingFunds, setIsLoadingFunds] = useState(true);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
 
   useEffect(() => {
-    fetchFunds();
+    if (orgSlug) {
+      fetchFunds();
+      fetchTransactions();
+    }
   }, [orgSlug]);
 
   const fetchFunds = async () => {
@@ -46,6 +55,56 @@ export default function PettyCashPage() {
     }
   };
 
+  const fetchTransactions = async () => {
+    if (!orgSlug) return;
+    try {
+      setIsLoadingTransactions(true);
+      const response = await invoke<any>("authenticated_api_request", {
+        method: "GET",
+        path: `api/v3/${orgSlug}/pos/petty-cash/transactions`,
+        query: { limit: 10 },
+      });
+      setTransactions(response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch petty cash transactions:", error);
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!orgSlug) return;
+
+    try {
+      const { open } = await import("@tauri-apps/plugin-dialog");
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp"] }],
+      });
+
+      if (selected && typeof selected === "string") {
+        setIsUploading(true);
+        toast.info("Uploading receipt...");
+
+        const response = await invoke<any>("upload_file_command", {
+          filePath: selected,
+        });
+
+        if (response.url) {
+          setReceiptUrl(response.url);
+          toast.success("Receipt uploaded");
+        } else {
+          throw new Error("No URL returned from upload");
+        }
+      }
+    } catch (error) {
+      console.error("Upload failed", error);
+      toast.error("Failed to upload receipt");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || !description || !orgSlug) return;
@@ -56,6 +115,8 @@ export default function PettyCashPage() {
         amount: parseFloat(amount),
         description,
         paymentMethod: "CASH",
+        receiptUrl,
+        memberId,
       };
 
       await invoke("register_petty_cash_command", {
@@ -69,7 +130,9 @@ export default function PettyCashPage() {
       toast.success("Petty cash expense registered successfully");
       setAmount("");
       setDescription("");
+      setReceiptUrl(null);
       fetchFunds(); // Refresh balance
+      fetchTransactions(); // Refresh activity
     } catch (error: any) {
       console.error("Failed to register petty cash:", error);
       toast.error("Failed to register petty cash", {
@@ -130,7 +193,38 @@ export default function PettyCashPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <div className="space-y-2">
+                <Label>Receipt (Optional)</Label>
+                <div className="flex items-center gap-4">
+                  {receiptUrl ? (
+                    <div className="relative w-20 h-20 rounded border overflow-hidden group">
+                      <img src={receiptUrl} alt="Receipt" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setReceiptUrl(null)}
+                        className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-6 h-6 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-20 w-24 flex-col gap-1"
+                        disabled={isUploading}
+                        onClick={handleFileUpload}
+                      >
+                        {isUploading ? <Loader2 className="animate-spin h-6 w-6" /> : <Upload className="h-6 w-6" />}
+                        <span className="text-xs">Upload</span>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting || isUploading}>
                 {isSubmitting ? "Registering..." : "Register Expense"}
               </Button>
             </form>
@@ -164,9 +258,33 @@ export default function PettyCashPage() {
               <History className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-xs text-muted-foreground">
-                Register an expense to see it reflected in the dashboard reports.
-              </div>
+              {isLoadingTransactions ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-10 w-full animate-pulse bg-muted rounded" />
+                  ))}
+                </div>
+              ) : transactions.length > 0 ? (
+                <div className="space-y-4">
+                  {transactions.map((tx) => (
+                    <div key={tx.id} className="flex justify-between items-start border-b pb-2 last:border-0 last:pb-0">
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium leading-none">{tx.description}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {new Date(tx.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="text-xs font-bold whitespace-nowrap">
+                        {tx.type === "EXPENSE" ? "-" : "+"} {currency} {parseFloat(tx.amount).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">
+                  No recent activity found.
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

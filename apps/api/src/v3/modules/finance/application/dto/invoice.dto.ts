@@ -1,5 +1,13 @@
-import { IsString, IsOptional, IsDate, IsNumber, IsArray, ValidateNested, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsOptional,
+  IsDate,
+  IsNumber,
+  IsArray,
+  ValidateNested,
+  IsBoolean,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class InvoiceItemDto {
   @IsString() itemCode: string;
@@ -15,7 +23,10 @@ export class CreateInvoiceDto {
   @IsDate() @Type(() => Date) postingDate: Date;
   @IsDate() @IsOptional() @Type(() => Date) dueDate?: Date;
   @IsString() @IsOptional() templateId?: string;
-  @IsArray() @ValidateNested({ each: true }) @Type(() => InvoiceItemDto) items: InvoiceItemDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => InvoiceItemDto)
+  items: InvoiceItemDto[];
   @IsString() @IsOptional() kraPin?: string;
   @IsBoolean() @IsOptional() etrMode?: boolean;
 }

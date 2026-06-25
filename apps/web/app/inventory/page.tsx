@@ -1,16 +1,17 @@
-import React from 'react';
+import React from "react";
 import {
   getInventoryProducts,
   getInventoryLocations,
   getCategories,
-  getSuppliers
+  getSuppliers,
 } from "../actions/inventory";
 import { InventoryTable } from "../../components/inventory/inventory-table";
 import { InventoryFilters } from "../../components/inventory/inventory-filters";
 import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Filter, RotateCw, LayoutGrid } from "lucide-react";
+import { Plus, Filter, RotateCw, LayoutGrid, Download, Tag } from "lucide-react";
 import { ProductSheet } from "../../components/inventory/product-sheet";
+import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";
 
 export default async function InventoryPage({
@@ -37,6 +38,7 @@ export default async function InventoryPage({
       stockLevel: params.stockLevel as any,
       sortBy: params.sortBy,
       sortOrder: params.sortOrder,
+      groupByProduct: true,
     }),
     getInventoryLocations(),
     getCategories(),
@@ -50,6 +52,12 @@ export default async function InventoryPage({
           <h1 className="text-2xl font-bold text-[#1D1D1F]">Inventory</h1>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/inventory/pricelists">
+            <Button variant="outline" className="gap-2">
+              <Tag size={16} />
+              <span>Price Lists</span>
+            </Button>
+          </Link>
           <Link href="/inventory/categories">
             <Button variant="outline" className="gap-2">
               <LayoutGrid size={16} />
@@ -60,6 +68,12 @@ export default async function InventoryPage({
             <RotateCw size={16} />
             <span>Reorder</span>
           </Button>
+          <ProductImport>
+            <Button variant="outline" className="gap-2">
+              <Download size={16} />
+              <span>Import</span>
+            </Button>
+          </ProductImport>
           <ProductSheet categories={categories}>
             <Button className="gap-2">
               <Plus size={16} />
@@ -72,7 +86,9 @@ export default async function InventoryPage({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 border-b w-fit pb-1">
-            <button className="px-4 py-2 text-sm font-medium border-b-2 border-black -mb-[6px]">All product</button>
+            <button className="px-4 py-2 text-sm font-medium border-b-2 border-black -mb-[6px]">
+              All product
+            </button>
             <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 flex items-center gap-1">
               <Plus size={14} />
               View

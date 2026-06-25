@@ -291,6 +291,7 @@ model Supplier {
 
   products          ProductSupplier[]
   priceHistory      SupplierPriceHistory[]
+  recurringBills    RecurringBill[]
   customBadges      String[]
   purchases         Purchase[]
   reorderRules      ReorderRule[]
@@ -410,6 +411,7 @@ model InventoryLocation {
   storageUnits           StorageUnit[]
   checkedInMembers       Member[]
   checkInAttendanceLogs  AttendanceLog[] @relation("CheckInLocationLogs")
+  pettyCashFunds         PettyCashFund[]
   checkOutAttendanceLogs AttendanceLog[] @relation("CheckOutLocationLogs")
 
   defaultProducts           Product[]                  @relation("ProductDefaultLocation")
@@ -419,6 +421,7 @@ model InventoryLocation {
   stockValuations           StockValuation[]
   expenses                  Expense[]
   budgets                   Budget[]
+  departments               Department[]
   fromStockRequests         StockRequest[]             @relation("FromStockRequests")
   toStockRequests           StockRequest[]             @relation("ToStockRequests")
   fromStockTransfers        StockTransfer[]            @relation("FromLocation")

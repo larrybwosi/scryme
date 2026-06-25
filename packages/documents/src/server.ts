@@ -1,5 +1,13 @@
-import { InvoiceData } from './templates/invoice-templates';
-import { WaybillData, ReceiptData, TransactionAnalyticsExportData, StockReportData } from './types';
+import { InvoiceData } from './templates/v1/invoice-templates';
+import {
+  WaybillData,
+  ReceiptData,
+  TransactionAnalyticsExportData,
+  StockReportData,
+  DeliveryNoteData,
+  BrandingOptions,
+  CurrencySettings
+} from './types';
 import * as crypto from 'crypto';
 
 /**
@@ -19,32 +27,19 @@ export function generateVerificationHash(data: {
     .toUpperCase();
 }
 
-/**
- * Format address object or string to a string.
- */
-export function formatAddress(input: any): string {
-  if (!input) return '';
-  if (typeof input === 'string') return input;
+import {
+  resolveBranding,
+  resolveCurrencySettings,
+  formatCurrency,
+  formatAddress,
+} from "./utils";
 
-  const target = input.address && typeof input.address === 'object' ? input.address : input;
-  const data = typeof target === 'object' ? target : input;
-
-  if (!data || typeof data !== 'object') return String(input);
-
-  const parts = [
-    data.street,
-    data.street1,
-    data.street2,
-    data.line1,
-    data.city,
-    data.state,
-    data.zipCode,
-    data.postalCode,
-    data.country,
-  ].filter(Boolean);
-
-  return parts.length > 0 ? parts.join(', ') : '';
-}
+export {
+  resolveBranding,
+  resolveCurrencySettings,
+  formatCurrency,
+  formatAddress,
+};
 
 /**
  * Data Mappers to transform Prisma entities to Document data structures.
@@ -65,12 +60,15 @@ export const Mappers = {
     const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
     const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
 
+    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+
     return {
       id: fulfillment?.id || transaction.id,
+      number: transaction.number,
       orderNumber: transaction.number,
       date: fulfillment?.createdAt || transaction.createdAt || new Date(),
       qrCodeUrl,
-      logoUrl: transaction.organization?.logo,
+      branding,
       sender: {
         name: transaction.organization?.name || 'Sender',
         address: senderAddress,
@@ -94,36 +92,49 @@ export const Mappers = {
    * Maps a Transaction entity to ReceiptData.
    */
   toReceiptData(transaction: any): ReceiptData {
+    if (!transaction) throw new Error('Transaction is required for Receipt mapping');
+
+    const currencySettings = resolveCurrencySettings(transaction, transaction.organization);
+    const branding = resolveBranding(transaction.organization, transaction.organization?.receiptConfig);
+
     return {
+      id: transaction.id,
+      number: transaction.number,
       receiptNumber: transaction.number,
       orderNumber: transaction.number,
-      date: transaction.createdAt,
+      date: transaction.createdAt || new Date(),
+      tags: transaction.tags || [],
+      locationName: transaction.location?.name,
+      createdBy: transaction.member?.user?.name,
+      status: transaction.status,
       customer: {
         name: transaction.customer?.name || 'Walk-in Customer',
         email: transaction.customer?.email,
         phone: transaction.customer?.phone,
         address: formatAddress(transaction.customer?.addresses?.[0]),
       },
-      items: transaction.items.map((item: any) => ({
+      items: (transaction.items || []).map((item: any) => ({
         id: item.id,
-        description: `${item.productName} ${item.variantName || ''}`,
-        quantity: item.quantity,
-        unitPrice: Number(item.unitPrice),
-        totalPrice: Number(item.lineTotal || item.subtotal),
+        description: `${item.productName || 'Item'} ${item.variantName || ''}`,
+        quantity: Number(item.quantity || 0), qty: Number(item.quantity || 0),
+        unitPrice: Number(item.unitPrice || 0), price: Number(item.unitPrice || 0),
+        totalPrice: Number(item.lineTotal || item.subtotal || 0), total: Number(item.lineTotal || item.subtotal || 0),
         sku: item.sku,
+        itemName: item.productName || 'Item',
+        rate: Number(item.unitPrice || 0),
+        amount: Number(item.lineTotal || item.subtotal || 0),
       })),
-      subtotal: Number(transaction.subtotal),
-      tax: Number(transaction.taxTotal),
-      total: Number(transaction.finalTotal),
+      subtotal: Number(transaction.subtotal || 0),
+      tax: Number(transaction.taxTotal || 0),
+      total: Number(transaction.finalTotal || 0),
       discountTotal: Number(transaction.discountTotal || 0),
       paymentMethod: transaction.payments?.[0]?.method || 'CASH',
       amountReceived: transaction.payments?.[0]?.amountReceived ? Number(transaction.payments[0].amountReceived) : undefined,
       change: transaction.payments?.[0]?.change ? Number(transaction.payments[0].change) : undefined,
-      branding: {
-        companyName: transaction.organization?.name,
-        companyAddress: formatAddress(transaction.organization?.address),
-        logoUrl: transaction.organization?.logo,
-      },
+      currency: currencySettings.code,
+      currencySymbol: currencySettings.symbol,
+      currencySettings,
+      branding,
     };
   },
 
@@ -137,10 +148,10 @@ export const Mappers = {
     activeFiltersText?: string
   ): TransactionAnalyticsExportData {
     return {
-      organization: {
-        name: organization?.name || 'Organization',
-        logo: organization?.logo,
-      },
+      id: organization?.id || 'org',
+      number: 'ANALYTICS-' + new Date().getTime(),
+      date: new Date(),
+      branding: resolveBranding(organization),
       dateRangeText,
       activeFiltersText,
       transactions: transactions.map(t => ({
@@ -152,8 +163,8 @@ export const Mappers = {
         items: t.items.map((item: any) => ({
           productName: item.productName || item.variant?.product?.name,
           variantName: item.variantName || item.variant?.name,
-          quantity: item.quantity,
-          unitPrice: Number(item.unitPrice),
+          quantity: item.quantity, qty: item.quantity,
+          unitPrice: Number(item.unitPrice), price: Number(item.unitPrice),
           subtotal: Number(item.subtotal),
         })),
       })),
@@ -166,13 +177,12 @@ export const Mappers = {
   toStockReportData(report: any): StockReportData {
     const data = typeof report.data === 'string' ? JSON.parse(report.data) : report.data;
     return {
+      id: report.id,
+      number: 'STOCK-' + report.id,
+      date: report.createdAt,
+      branding: resolveBranding(report.organization),
       name: report.name,
-      date: new Date(report.createdAt).toLocaleString(),
       generatedBy: report.generatedBy?.user?.name || 'System',
-      organization: {
-        name: report.organization?.name || 'Organization',
-        logo: report.organization?.logo,
-      },
       items: (data?.items || []).map((item: any) => ({
         productName: item.name || item.productName,
         variantName: item.variantName || '',
@@ -187,38 +197,35 @@ export const Mappers = {
    * Maps a Transaction entity to InvoiceData.
    */
   toInvoiceData(transaction: any, options: { currencySymbolMap?: Record<string, string>, logoPath?: string } = {}): InvoiceData {
-    const defaultCurrency = transaction.organization?.settings?.defaultCurrency || 'USD';
-    const currencySymbol = options.currencySymbolMap?.[defaultCurrency] || defaultCurrency;
+    if (!transaction) throw new Error('Transaction is required for Invoice mapping');
 
-    const netTotal = Number(transaction.subtotal);
-    const totalTaxes = Number(transaction.taxTotal);
-    const grandTotal = Number(transaction.finalTotal);
+    const currencySettings = resolveCurrencySettings(transaction, transaction.organization);
+    const branding = resolveBranding(transaction.organization, transaction.organization?.invoiceConfig);
+
+    const netTotal = Number(transaction.subtotal || 0);
+    const totalTaxes = Number(transaction.taxTotal || 0);
+    const grandTotal = Number(transaction.finalTotal || 0);
     const discountTotal = Number(transaction.discountTotal || 0);
-    const amountPaid = transaction.payments?.reduce((acc: number, p: any) => acc + Number(p.amount), 0) || 0;
+    const amountPaid = transaction.payments?.reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0) || 0;
     const balanceDue = Math.max(0, grandTotal - amountPaid);
 
-    const items = transaction.items.map((item: any) => {
-      const quantity = Number(item.quantity);
-      const rate = Number(item.unitPrice);
-      const amount = Number(item.subtotal || item.lineTotal);
-      const description = `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`;
+    const items = (transaction.items || []).map((item: any) => {
+      const quantity = Number(item.quantity || 0);
+      const rate = Number(item.unitPrice || 0);
+      const amount = Number(item.subtotal || item.lineTotal || 0);
+      const description = `${item.productName || 'Item'}${item.variantName ? ` - ${item.variantName}` : ''}`;
 
       return {
-        // V1 fields
-        qty: quantity,
+        id: item.id,
         description,
-        price: rate,
-        amount,
-        // Alias for some templates
         quantity,
-        total: amount,
         unitPrice: rate,
-        // V2 fields
+        totalPrice: amount,
+        sku: item.sku || item.id,
         itemCode: item.sku || item.id,
-        itemName: item.productName,
+        itemName: item.productName || 'Item',
         rate,
-        // Other fields
-        itemDescription: description,
+        amount,
         details: '',
       };
     });
@@ -235,154 +242,109 @@ export const Mappers = {
       organizationName: transaction.organization?.name || 'Organization',
     });
 
-    const orgAddressObj = typeof transaction.organization?.address === 'string'
-      ? { street: transaction.organization.address }
-      : (transaction.organization?.address || {});
+    const config = transaction.organization?.invoiceConfig || {};
 
-    const companyData = {
-      name: transaction.organization?.name,
-      address: formatAddress(transaction.organization?.address),
-      city: orgAddressObj.city || '',
-      phone: transaction.organization?.phone,
-      email: transaction.organization?.email,
-      logo: transaction.organization?.logo,
-      logoUrl: transaction.organization?.logo,
-      website: transaction.organization?.website || '',
-      tagline: transaction.organization?.description || '',
-    };
+    let invoiceNumber = transaction.number;
+    if (config.invoiceNumberPrefix || config.invoiceNumberSuffix || config.invoiceNumberPadding) {
+      const seq = parseInt(transaction.number.replace(/\D/g, '')) || 0;
+      if (seq > 0) {
+        const prefix = config.invoiceNumberPrefix || '';
+        const suffix = config.invoiceNumberSuffix || '';
+        const padding = config.invoiceNumberPadding || 0;
+        invoiceNumber = `${prefix}${String(seq).padStart(padding, '0')}${suffix}`;
+      }
+    }
 
     const customerAddressObj = transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
-    const clientData = {
-      name: transaction.customer?.name || 'Walk-in Customer',
-      email: transaction.customer?.email || '',
-      address: customerAddressObj,
-      phone: transaction.customer?.phone,
-      company: transaction.customer?.company || '',
-    };
 
     const paymentTerms = 'Payment due upon receipt.';
-    const availableMethods = ['CASH', 'CREDIT_CARD', 'MOBILE_PAYMENT', 'BANK_TRANSFER'];
 
     return {
       id: transaction.id,
-      invoiceNumber: transaction.number,
-      invoiceNo: transaction.number,
-      number: transaction.number,
+      number: invoiceNumber,
+      invoiceNumber: invoiceNumber,
       date: formattedDate,
-      dateOfIssue: formattedDate,
       invoiceDate: formattedDate,
       dueDate: formattedDueDate,
       status: transaction.status || 'PAID',
+      tags: transaction.tags || [],
+      locationName: transaction.location?.name,
+      createdBy: transaction.member?.user?.name,
 
-      currencySymbol,
-      currency: defaultCurrency,
-      currencyCode: defaultCurrency,
-      currencySettings: {
-        code: defaultCurrency,
-        locale: 'en-US',
-      },
+      currencySymbol: currencySettings.symbol,
+      currency: currencySettings.code,
+      currencySettings,
 
-      customerName: clientData.name,
-      customerEmail: clientData.email,
-      customerAddress: formatAddress(clientData.address),
-      customerPhone: clientData.phone,
+      branding,
 
-      client: clientData,
-      invoiceTo: {
-        name: clientData.name,
-        address: formatAddress(clientData.address),
-        city: clientData.address?.city || '',
-        state: clientData.address?.state || '',
-        country: clientData.address?.country || '',
-        postalCode: clientData.address?.postalCode || clientData.address?.zipCode || '',
-        phone: clientData.phone,
-        email: clientData.email,
-      },
-      billTo: {
-        name: clientData.name,
-        address: formatAddress(clientData.address),
-        city: clientData.address?.city || '',
-        state: clientData.address?.state || '',
-        zipCode: clientData.address?.postalCode || clientData.address?.zipCode || '',
-        phone: clientData.phone,
-        email: clientData.email,
-      },
-      billingAddress: clientData.address,
-      shippingAddress: clientData.address,
-
-      company: companyData,
-      organization: {
-        ...companyData,
-        description: transaction.organization?.description,
-        primaryColor: transaction.organization?.primaryColor,
-      },
-      billFrom: {
-        name: companyData.name,
-        address: companyData.address,
-        phone: companyData.phone,
-        email: companyData.email,
-        city: companyData.city,
-        state: orgAddressObj.state || '',
-      },
-      organizationName: companyData.name,
-      organizationAddress: companyData.address,
-      organizationDescription: transaction.organization?.description || '',
-      companyName: companyData.name,
-      companyTagline: companyData.tagline,
-      companyContact: {
-        phone: companyData.phone || '',
-        fax: '',
-        email: companyData.email || '',
-      },
-      logo: companyData.logo,
-      logoUrl: companyData.logo,
-      website: companyData.website,
-      footerWebsite: companyData.website,
+      customerName: transaction.customer?.name || 'Walk-in Customer',
+      customerEmail: transaction.customer?.email || '',
+      customerAddress: formatAddress(customerAddressObj),
+      customerPhone: transaction.customer?.phone,
 
       items,
 
       subtotal: netTotal,
-      netTotal,
       tax: totalTaxes,
-      taxTotal: totalTaxes,
-      totalTaxes,
-      gstRate: netTotal > 0 ? (totalTaxes / netTotal) * 100 : 0,
-      taxRate: netTotal > 0 ? (totalTaxes / netTotal) * 100 : 0,
-      discount: discountTotal,
-      discountTotal,
-      shipping: Number(transaction.shippingTotal || 0),
-      shippingTotal: Number(transaction.shippingTotal || 0),
       total: grandTotal,
-      grandTotal,
+      discount: discountTotal,
+      shipping: Number(transaction.shippingTotal || 0),
       amountPaid,
       balanceDue,
 
-      payment: {
-        terms: paymentTerms,
-        availableMethods: availableMethods,
-        paymentTerms: paymentTerms,
-      },
-      paymentMethods: availableMethods.map(m => ({ methodName: m, details: [] })),
       paymentTerms: paymentTerms,
-      paymentInformation: availableMethods.join(', '),
       bankDetails: {
         accountNo: 'N/A',
         sortCode: 'N/A',
       },
-      installmentDetails: {
-        isInstallment: false,
-        totalAmountPaidSoFar: amountPaid,
-        balanceDue: balanceDue,
-      },
 
-      notes: transaction.notes,
-      terms: paymentTerms,
-      termsAndConditions: paymentTerms,
-      signature: {
-        name: '',
-        title: '',
-      },
+      notes: transaction.notes || config.defaultNotes,
+      termsAndConditions: config.defaultTerms,
+      footerText: config.footerText,
       verificationHash,
+    };
+  },
+
+  /**
+   * Maps a Transaction entity to DeliveryNoteData.
+   */
+  toDeliveryNoteData(transaction: any, fulfillment?: any): DeliveryNoteData {
+    const shippingAddressObj = fulfillment?.shippingAddress || transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
+    const recipientAddress = formatAddress(shippingAddressObj);
+    const recipientName = shippingAddressObj?.name || transaction.customer?.name || 'Guest Customer';
+    const recipientPhone = shippingAddressObj?.phone || transaction.customer?.phone;
+
+    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+
+    return {
+      id: fulfillment?.id || transaction.id,
+      number: `DN-${transaction.number}`,
+      orderNumber: transaction.number,
+      date: fulfillment?.createdAt || transaction.createdAt || new Date(),
+      branding,
+      customer: {
+        name: transaction.customer?.name || 'Walk-in Customer',
+        email: transaction.customer?.email,
+        phone: transaction.customer?.phone,
+      },
+      shippingAddress: recipientAddress,
+      items: transaction.items.map((item: any) => ({
+        id: item.id,
+        description: `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`,
+        quantity: item.quantity,
+        sku: item.sku,
+      })),
+      notes: fulfillment?.deliveryNotes || transaction.notes,
     };
   }
 };
+
+export { WaybillDocument } from './templates/v1/Waybill';
+export { DeliveryNoteDocument } from './templates/v1/DeliveryNote';
+export { InvoicePDF as SimpleInvoicePDF } from './templates/v1/InvoicePDF';
+export {
+  getInvoiceTemplate,
+  renderInvoiceTemplate,
+} from './templates/v1/invoice-templates';
+export { ReceiptTemplate as ReceiptTemplateV2 } from './templates/v2/ReceiptTemplate';
+export { DocumentGenerator } from './index';

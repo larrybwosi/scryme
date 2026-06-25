@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["api", "bakery", "crm", "web"]
+  targets = ["api", "bakery", "crm", "web", "pos"]
 }
 
 variable "REPO_LOWER" {
@@ -22,12 +22,25 @@ target "api" {
   context = "."
   dockerfile = "apps/api/Dockerfile"
   tags = [
-    "ghcr.io/${REPO_LOWER}/api:latest",
-    "ghcr.io/${REPO_LOWER}/api:${VERSION}"
+    "ghcr.io/${var.REPO_LOWER}/api:latest",
+    "ghcr.io/${var.REPO_LOWER}/api:${var.VERSION}"
   ]
   args = {
-    NEXT_PUBLIC_API_URL = "${NEXT_PUBLIC_API_URL}"
-    BETTER_AUTH_SECRET = "${BETTER_AUTH_SECRET}"
+    NEXT_PUBLIC_API_URL = "${var.NEXT_PUBLIC_API_URL}"
+    BETTER_AUTH_SECRET = "${var.BETTER_AUTH_SECRET}"
+  }
+}
+
+target "pos" {
+  context = "."
+  dockerfile = "apps/pos/Dockerfile"
+  tags = [
+    "ghcr.io/${var.REPO_LOWER}/pos:latest",
+    "ghcr.io/${var.REPO_LOWER}/pos:${var.VERSION}"
+  ]
+  args = {
+    NEXT_PUBLIC_API_URL = "${var.NEXT_PUBLIC_API_URL}"
+    BETTER_AUTH_SECRET = "${var.BETTER_AUTH_SECRET}"
   }
 }
 
@@ -35,12 +48,12 @@ target "bakery" {
   context = "."
   dockerfile = "apps/bakery/Dockerfile"
   tags = [
-    "ghcr.io/${REPO_LOWER}/bakery:latest",
-    "ghcr.io/${REPO_LOWER}/bakery:${VERSION}"
+    "ghcr.io/${var.REPO_LOWER}/bakery:latest",
+    "ghcr.io/${var.REPO_LOWER}/bakery:${var.VERSION}"
   ]
   args = {
-    NEXT_PUBLIC_API_URL = "${NEXT_PUBLIC_API_URL}"
-    BETTER_AUTH_SECRET = "${BETTER_AUTH_SECRET}"
+    NEXT_PUBLIC_API_URL = "${var.NEXT_PUBLIC_API_URL}"
+    BETTER_AUTH_SECRET = "${var.BETTER_AUTH_SECRET}"
   }
 }
 
@@ -48,12 +61,12 @@ target "crm" {
   context = "."
   dockerfile = "apps/crm/Dockerfile"
   tags = [
-    "ghcr.io/${REPO_LOWER}/crm:latest",
-    "ghcr.io/${REPO_LOWER}/crm:${VERSION}"
+    "ghcr.io/${var.REPO_LOWER}/crm:latest",
+    "ghcr.io/${var.REPO_LOWER}/crm:${var.VERSION}"
   ]
   args = {
-    NEXT_PUBLIC_API_URL = "${NEXT_PUBLIC_API_URL}"
-    BETTER_AUTH_SECRET = "${BETTER_AUTH_SECRET}"
+    NEXT_PUBLIC_API_URL = "${var.NEXT_PUBLIC_API_URL}"
+    BETTER_AUTH_SECRET = "${var.BETTER_AUTH_SECRET}"
   }
 }
 
@@ -61,11 +74,11 @@ target "web" {
   context = "."
   dockerfile = "apps/web/Dockerfile"
   tags = [
-    "ghcr.io/${REPO_LOWER}/web:latest",
-    "ghcr.io/${REPO_LOWER}/web:${VERSION}"
+    "ghcr.io/${var.REPO_LOWER}/web:latest",
+    "ghcr.io/${var.REPO_LOWER}/web:${var.VERSION}"
   ]
   args = {
-    NEXT_PUBLIC_API_URL = "${NEXT_PUBLIC_API_URL}"
-    BETTER_AUTH_SECRET = "${BETTER_AUTH_SECRET}"
+    NEXT_PUBLIC_API_URL = "${var.NEXT_PUBLIC_API_URL}"
+    BETTER_AUTH_SECRET = "${var.BETTER_AUTH_SECRET}"
   }
 }

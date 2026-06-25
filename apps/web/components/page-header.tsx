@@ -34,8 +34,7 @@ export function PageHeader({
     <Button
       asChild={!!action.href}
       onClick={action.onClick}
-      className="bg-[#4a9c6d] hover:bg-[#3d825b] text-white shadow-sm"
-    >
+      className="bg-[#4a9c6d] hover:bg-[#3d825b] text-white shadow-sm">
       {action.href ? (
         <Link href={action.href}>
           {action.icon || <Plus className="w-4 h-4" />}
@@ -65,8 +64,7 @@ export function PageHeader({
               <TooltipTrigger asChild>
                 <button
                   aria-label="Add to favorites"
-                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-                >
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
                   <Star className="w-5 h-5 text-muted-foreground hover:text-yellow-400 cursor-pointer transition-colors" />
                 </button>
               </TooltipTrigger>

@@ -10,9 +10,10 @@ import {
   ShoppingBag,
   MessageSquare,
   CalendarClock,
+  Activity,
 } from 'lucide-react';
 
-export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups';
+export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups' | 'activities';
 
 interface Tab {
   id: TabId;
@@ -22,6 +23,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { id: 'notes', label: 'Notes', icon: StickyNote },
+  { id: 'activities', label: 'Activities', icon: Activity },
   { id: 'deliveries', label: 'Deliveries', icon: Truck },
   { id: 'invoices', label: 'Invoices', icon: Receipt },
   { id: 'orders', label: 'Orders & Sales', icon: ShoppingBag },

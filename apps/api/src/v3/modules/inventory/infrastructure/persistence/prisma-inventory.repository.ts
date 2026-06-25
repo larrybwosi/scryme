@@ -1,14 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { IInventoryRepository } from '../../domain/repositories/inventory-repository.interface';
-import { InventoryItem } from '../../domain/entities/inventory-item.entity';
-import { PaginationQueryDto } from '@/v3/common/utils/pagination';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IInventoryRepository } from "../../domain/repositories/inventory-repository.interface";
+import { InventoryItem } from "../../domain/entities/inventory-item.entity";
+import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 
 @Injectable()
 export class PrismaInventoryRepository implements IInventoryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByOrganization(organizationId: string, pagination?: PaginationQueryDto): Promise<InventoryItem[]> {
+  async findByOrganization(
+    organizationId: string,
+    pagination?: PaginationQueryDto,
+  ): Promise<InventoryItem[]> {
     const items = await this.prisma.client.productVariantStock.findMany({
       where: { organizationId },
       take: pagination?.limit,
@@ -23,8 +26,15 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       },
     });
     return items.map(
-      i =>
-        new InventoryItem(i.id, i.variantId, i.locationId, i.availableStock.toNumber(), i.organizationId, i.lastUpdated)
+      (i) =>
+        new InventoryItem(
+          i.id,
+          i.variantId,
+          i.locationId,
+          i.availableStock.toNumber(),
+          i.organizationId,
+          i.lastUpdated,
+        ),
     );
   }
 
@@ -41,8 +51,15 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       },
     });
     return items.map(
-      i =>
-        new InventoryItem(i.id, i.variantId, i.locationId, i.availableStock.toNumber(), i.organizationId, i.lastUpdated)
+      (i) =>
+        new InventoryItem(
+          i.id,
+          i.variantId,
+          i.locationId,
+          i.availableStock.toNumber(),
+          i.organizationId,
+          i.lastUpdated,
+        ),
     );
   }
 
@@ -60,7 +77,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       i.locationId,
       i.availableStock.toNumber(),
       i.organizationId,
-      i.lastUpdated
+      i.lastUpdated,
     );
   }
 }

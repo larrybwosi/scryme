@@ -43,11 +43,13 @@ const unitSchema = z.object({
 
 type UnitFormValues = z.infer<typeof unitSchema>;
 
-interface UnitDialogProps {
+interface UnitDialogProps extends React.ComponentPropsWithoutRef<typeof DialogTrigger> {
   children?: React.ReactNode;
   locationId: string;
   zones?: any[];
   unit?: any;
+  variant?: any;
+  size?: any;
 }
 
 export function UnitDialog({
@@ -55,7 +57,20 @@ export function UnitDialog({
   locationId,
   zones = [],
   unit,
+  variant,
+  size,
+  ...props
 }: UnitDialogProps) {
+  // If we receive button-like props (variant, size), it means we are being used directly as a trigger
+  // In that case, we should render a Button
+  const trigger = variant ? (
+    <Button variant={variant} size={size} {...(props as any)}>
+      {children}
+    </Button>
+  ) : (
+    children
+  );
+
   const [open, setOpen] = useState(false);
 
   const form = useForm<UnitFormValues>({
@@ -93,7 +108,9 @@ export function UnitDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild {...props}>
+        {trigger}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -140,15 +157,14 @@ export function UnitDialog({
                     <FormLabel>Unit Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(StorageUnitType).map((type) => (
+                        {Object.values(StorageUnitType).map(type => (
                           <SelectItem key={type} value={type}>
                             {type.replace("_", " ")}
                           </SelectItem>
@@ -167,8 +183,7 @@ export function UnitDialog({
                     <FormLabel>Storage Zone</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value || undefined}
-                    >
+                      defaultValue={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="No zone (Standalone)" />
@@ -178,7 +193,7 @@ export function UnitDialog({
                         <SelectItem value="none">
                           No zone (Standalone)
                         </SelectItem>
-                        {zones.map((zone) => (
+                        {zones.map(zone => (
                           <SelectItem key={zone.id} value={zone.id}>
                             {zone.name}
                           </SelectItem>
@@ -213,15 +228,14 @@ export function UnitDialog({
                     <FormLabel>Unit</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(UnitType).map((unit) => (
+                        {Object.values(UnitType).map(unit => (
                           <SelectItem key={unit} value={unit}>
                             {unit}
                           </SelectItem>

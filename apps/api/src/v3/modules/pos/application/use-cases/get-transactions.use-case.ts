@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { V3ApiContext } from '@repo/shared/server';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { V3ApiContext } from "@repo/shared/api/v2/types/context";
 
 @Injectable()
 export class GetTransactionsUseCase {
@@ -14,7 +14,7 @@ export class GetTransactionsUseCase {
 
     // Contextual filtering
     if (locationId) where.locationId = locationId;
-    if (memberId && !ctx.permissions.includes('*')) {
+    if (memberId && !ctx.permissions.includes("*")) {
       where.memberId = memberId;
     }
 
@@ -28,8 +28,8 @@ export class GetTransactionsUseCase {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
-    const page = parseInt(query.page || '1', 10);
-    const limit = parseInt(query.limit || '50', 10);
+    const page = parseInt(query.page || "1", 10);
+    const limit = parseInt(query.limit || "50", 10);
     const skip = (page - 1) * limit;
 
     const [total, transactions] = await Promise.all([
@@ -38,7 +38,7 @@ export class GetTransactionsUseCase {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         // ⚡ Bolt Optimization: Use targeted select for relations to prevent over-fetching
         // of large JSON/Blob fields (like metadata, gatewayResponse, customFields) in lists.
         // Keeping top-level include for Transaction to ensure all scalar fields are present.

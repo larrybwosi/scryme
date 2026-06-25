@@ -1,7 +1,12 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import type { V2ApiContext } from '@repo/shared/server';
-import { paginate } from '../../v3/common/utils/pagination';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { paginate } from "../../v3/common/utils/pagination";
 
 @Injectable()
 export class ReviewsService {
@@ -18,19 +23,19 @@ export class ReviewsService {
       {
         organizationId,
         productId,
-        isVisible: true
+        isVisible: true,
       },
-      { createdAt: 'desc' },
+      { createdAt: "desc" },
       {
         include: {
           customer: {
             select: {
               id: true,
               name: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     );
 
     return {
@@ -44,7 +49,7 @@ export class ReviewsService {
 
   async createReview(ctx: V2ApiContext, productId: string, data: any) {
     const { organizationId, customerId } = ctx;
-    if (!customerId) throw new BadRequestException('Customer ID is required');
+    if (!customerId) throw new BadRequestException("Customer ID is required");
 
     const { rating, comment } = data;
 
@@ -61,22 +66,23 @@ export class ReviewsService {
           select: {
             id: true,
             name: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
   }
 
   async updateReview(ctx: V2ApiContext, reviewId: string, data: any) {
     const { customerId } = ctx;
-    if (!customerId) throw new BadRequestException('Customer ID is required');
+    if (!customerId) throw new BadRequestException("Customer ID is required");
 
     const review = await this.prisma.client.productReview.findUnique({
       where: { id: reviewId },
     });
 
-    if (!review) throw new NotFoundException('Review not found');
-    if (review.customerId !== customerId) throw new ForbiddenException('Not authorized to update this review');
+    if (!review) throw new NotFoundException("Review not found");
+    if (review.customerId !== customerId)
+      throw new ForbiddenException("Not authorized to update this review");
 
     const { rating, comment } = data;
 
@@ -91,19 +97,21 @@ export class ReviewsService {
 
   async deleteReview(ctx: V2ApiContext, reviewId: string) {
     const { customerId, permissions } = ctx;
-    if (!customerId) throw new BadRequestException('Customer ID is required');
+    if (!customerId) throw new BadRequestException("Customer ID is required");
 
     const review = await this.prisma.client.productReview.findUnique({
       where: { id: reviewId },
     });
 
-    if (!review) throw new NotFoundException('Review not found');
+    if (!review) throw new NotFoundException("Review not found");
 
     const isOwner = review.customerId === customerId;
-    const canManageAll = permissions.includes('*') || permissions.includes('product:manage:reviews');
+    const canManageAll =
+      permissions.includes("*") ||
+      permissions.includes("product:manage:reviews");
 
     if (!isOwner && !canManageAll) {
-      throw new ForbiddenException('Not authorized to delete this review');
+      throw new ForbiddenException("Not authorized to delete this review");
     }
 
     return this.prisma.client.productReview.delete({

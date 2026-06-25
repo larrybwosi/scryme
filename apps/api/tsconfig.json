@@ -22,7 +22,7 @@
     "strict": false,
     "types": ["node", "vitest/globals"],
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { V2ApiContext } from '@repo/shared';
+import { type V2ApiContext } from '@repo/shared/api/v2/types';
 
 @Injectable()
 export class SupplierService {

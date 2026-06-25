@@ -1,8 +1,8 @@
-import { Zap, Plus } from 'lucide-react';
-import { PageHeader } from '../../../components/page-header';
-import { getUtilityAccounts } from '../../actions/finance';
-import { UtilityDialog } from '../../../components/finance/utility-dialog';
-import { Button } from '@repo/ui/components/ui/button';
+import { Zap, Plus } from "lucide-react";
+import { PageHeader } from "../../../components/page-header";
+import { getUtilityAccounts } from "../../actions/finance";
+import { UtilityDialog } from "../../../components/finance/utility-dialog";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Table,
   TableBody,
@@ -21,8 +21,7 @@ export default async function UtilitiesPage() {
       <PageHeader
         title="Utility Management"
         subtitle="Track electricity, water, and other services"
-        icon={<Zap className="w-7 h-7" />}
-      >
+        icon={<Zap className="w-7 h-7" />}>
         <UtilityDialog>
           <Button className="bg-[#34A853] hover:bg-[#2d9147]">
             <Plus className="w-4 h-4 mr-2" />
@@ -46,15 +45,17 @@ export default async function UtilitiesPage() {
           <TableBody>
             {accounts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-8 text-gray-500">
                   No utility accounts found
                 </TableCell>
               </TableRow>
             ) : (
-              accounts.map((account) => (
+              accounts.map(account => (
                 <TableRow key={account.id}>
                   <TableCell className="font-medium">{account.name}</TableCell>
-                  <TableCell>{account.provider || 'N/A'}</TableCell>
+                  <TableCell>{account.provider || "N/A"}</TableCell>
                   <TableCell>{account.accountNumber}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{account.type}</Badge>
@@ -62,10 +63,17 @@ export default async function UtilitiesPage() {
                   <TableCell>{(account as any)._count.expenses}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <UtilityDialog mode="BILL" accountId={account.id} accountName={account.name}>
-                        <button className="text-sm text-[#34A853] font-medium">Record Bill</button>
+                      <UtilityDialog
+                        mode="BILL"
+                        accountId={account.id}
+                        accountName={account.name}>
+                        <button className="text-sm text-[#34A853] font-medium">
+                          Record Bill
+                        </button>
                       </UtilityDialog>
-                      <button className="text-sm text-gray-500 font-medium">History</button>
+                      <button className="text-sm text-gray-500 font-medium">
+                        History
+                      </button>
                     </div>
                   </TableCell>
                 </TableRow>

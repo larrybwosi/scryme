@@ -6,7 +6,8 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { type V2ApiContext, provisionDeviceV2 } from "@repo/shared/server";
+import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { provisionDeviceV2 } from "@repo/shared/lib/provisioning/v2";
 import { z } from "zod";
 
 const ProvisionSchema = z.object({
@@ -50,7 +51,7 @@ export class DevicesService {
       const message =
         err instanceof Error ? err.message : "Provisioning failed";
 
-      if (AUTH_ERRORS.some((e) => message.includes(e))) {
+      if (AUTH_ERRORS.some(e => message.includes(e))) {
         throw new UnauthorizedException(message);
       }
 

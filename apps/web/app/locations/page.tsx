@@ -14,7 +14,9 @@ export default async function LocationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#1D1D1F]">Locations</h1>
-          <p className="text-sm text-muted-foreground">Manage your branches, warehouses, and storage points.</p>
+          <p className="text-sm text-muted-foreground">
+            Manage your branches, warehouses, and storage points.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <LocationSheet locations={locations} members={members}>
@@ -30,26 +32,32 @@ export default async function LocationsPage() {
         <div className="bg-white p-4 rounded-xl border shadow-sm">
           <div className="flex items-center gap-3 text-blue-600 mb-2">
             <MapPin size={18} />
-            <span className="text-sm font-semibold uppercase tracking-wider">Total Locations</span>
+            <span className="text-sm font-semibold uppercase tracking-wider">
+              Total Locations
+            </span>
           </div>
           <div className="text-2xl font-bold">{locations.length}</div>
         </div>
         <div className="bg-white p-4 rounded-xl border shadow-sm">
           <div className="flex items-center gap-3 text-green-600 mb-2">
             <MapPin size={18} />
-            <span className="text-sm font-semibold uppercase tracking-wider">Active Branches</span>
+            <span className="text-sm font-semibold uppercase tracking-wider">
+              Active Branches
+            </span>
           </div>
           <div className="text-2xl font-bold">
-            {locations.filter(l => l.locationType === 'RETAIL_SHOP').length}
+            {locations.filter(l => l.locationType === "RETAIL_SHOP").length}
           </div>
         </div>
         <div className="bg-white p-4 rounded-xl border shadow-sm">
           <div className="flex items-center gap-3 text-orange-600 mb-2">
             <MapPin size={18} />
-            <span className="text-sm font-semibold uppercase tracking-wider">Warehouses</span>
+            <span className="text-sm font-semibold uppercase tracking-wider">
+              Warehouses
+            </span>
           </div>
           <div className="text-2xl font-bold">
-            {locations.filter(l => l.locationType === 'WAREHOUSE').length}
+            {locations.filter(l => l.locationType === "WAREHOUSE").length}
           </div>
         </div>
       </div>

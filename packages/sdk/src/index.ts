@@ -57,7 +57,7 @@ export const getSDK = (config: SDKConfig) => {
     auth: {
       getAuthStatus: () => sdk.client.get("/auth/status"),
       logout: () => sdk.client.post("/auth/logout"),
-      terminalLogin: (cardId: string, pin: string) => sdk.client.post("/members/login", { cardId, pin }),
+      terminalLogin: (cardId: string, pin: string, locationId?: string) => sdk.client.post("/members/login", { cardId, pin, locationId }),
     },
     catalog: {
       getProducts: (params?: any) => sdk.client.get("/catalog/products", { params }),

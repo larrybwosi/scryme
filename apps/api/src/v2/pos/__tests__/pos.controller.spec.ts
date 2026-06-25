@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PosController } from "../pos.controller";
 import { PosService } from "../pos.service";
 import { PosSaleService } from "../pos-sale.service";
-import { V2ApiContext } from "@repo/shared/server";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("PosController", () => {

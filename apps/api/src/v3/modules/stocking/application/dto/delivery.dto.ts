@@ -1,6 +1,16 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, IsEnum, IsDateString, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsBoolean,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 // fallow-ignore-next-line unused-exports
 export class DispatchAddressDto {
@@ -93,9 +103,9 @@ export class DispatchOrderDto {
 }
 
 export enum ReconciliationOutcome {
-  DELIVERED = 'DELIVERED',
-  FAILED = 'FAILED',
-  PARTIAL = 'PARTIAL',
+  DELIVERED = "DELIVERED",
+  FAILED = "FAILED",
+  PARTIAL = "PARTIAL",
 }
 
 export class ReconcilePodDto {

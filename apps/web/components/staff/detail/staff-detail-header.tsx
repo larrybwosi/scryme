@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { ArrowLeft, Mail, Calendar, Shield, MapPin } from "lucide-react";
@@ -17,7 +21,9 @@ export function StaffDetailHeader({ member }: { member: any }) {
             <ArrowLeft size={20} />
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold text-[#1D1D1F]">Staff Member Profile</h1>
+        <h1 className="text-2xl font-bold text-[#1D1D1F]">
+          Staff Member Profile
+        </h1>
       </div>
 
       <div className="bg-white p-6 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -25,7 +31,8 @@ export function StaffDetailHeader({ member }: { member: any }) {
           <Avatar className="h-24 w-24 border-4 border-white shadow-md">
             <AvatarImage src={member.user.image || ""} />
             <AvatarFallback className="bg-gray-100 text-gray-400 text-2xl font-bold">
-              {member.user.name?.charAt(0) || member.user.email.charAt(0).toUpperCase()}
+              {member.user.name?.charAt(0) ||
+                member.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-1">
@@ -38,10 +45,9 @@ export function StaffDetailHeader({ member }: { member: any }) {
                   member.membershipStatus === "ACTIVE"
                     ? "bg-green-100 text-green-700 hover:bg-green-100"
                     : member.membershipStatus === "SUSPENDED"
-                    ? "bg-red-100 text-red-700 hover:bg-red-100"
-                    : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-                }
-              >
+                      ? "bg-red-100 text-red-700 hover:bg-red-100"
+                      : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                }>
                 {member.membershipStatus}
               </Badge>
             </div>
@@ -67,7 +73,10 @@ export function StaffDetailHeader({ member }: { member: any }) {
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {member.customRoles.map((role: any) => (
-                <Badge key={role.id} variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100">
+                <Badge
+                  key={role.id}
+                  variant="secondary"
+                  className="bg-blue-50 text-blue-700 border-blue-100">
                   {role.name}
                 </Badge>
               ))}

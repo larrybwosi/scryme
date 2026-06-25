@@ -9,9 +9,47 @@ import {
   StockAdjustment,
   ProductVariant,
   Prisma,
+  SystemUnit,
+  OrganizationUnit,
+  ReorderRule,
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
+
+async function getDefaultPieceUnit(organizationId: string): Promise<{
+  systemUnitId?: string;
+  orgUnitId?: string;
+}> {
+  // 1. Check for OrganizationUnit "Piece"
+  const orgUnit = await db.organizationUnit.findFirst({
+    where: {
+      organizationId,
+      name: { equals: "Piece", mode: "insensitive" },
+      isActive: true,
+    },
+  });
+
+  if (orgUnit) {
+    return { orgUnitId: orgUnit.id };
+  }
+
+  // 2. Check for SystemUnit "Piece"
+  const systemUnit = await db.systemUnit.findFirst({
+    where: {
+      OR: [
+        { name: { equals: "Piece", mode: "insensitive" } },
+        { symbol: { equals: "pc", mode: "insensitive" } },
+      ],
+      isActive: true,
+    },
+  });
+
+  if (systemUnit) {
+    return { systemUnitId: systemUnit.id };
+  }
+
+  return {};
+}
 
 export async function getInventoryLocations(): Promise<
   { id: string; name: string; isDefault: boolean }[]
@@ -142,7 +180,9 @@ export async function createProduct(data: {
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+
+  return db.$transaction(async tx => {
     // 1. Create the Product
     const product = await tx.product.create({
       data: {
@@ -165,6 +205,22 @@ export async function createProduct(data: {
         buyingPrice: new Decimal(data.buyingPrice),
         retailPrice: new Decimal(data.retailPrice),
         attributes: {}, // Required by schema
+        baseUnitId: pieceUnit.systemUnitId,
+        baseOrgUnitId: pieceUnit.orgUnitId,
+        stockingUnitId: pieceUnit.systemUnitId,
+        stockingOrgUnitId: pieceUnit.orgUnitId,
+      },
+    });
+
+    // 2b. Create Default Selling Unit
+    await tx.variantSellingUnit.create({
+      data: {
+        variantId: variant.id,
+        systemUnitId: pieceUnit.systemUnitId,
+        orgUnitId: pieceUnit.orgUnitId,
+        retailPrice: new Decimal(data.retailPrice),
+        conversionMultiplier: new Decimal(1),
+        isActive: true,
       },
     });
 
@@ -269,12 +325,19 @@ export async function updateProduct(
     retailPrice?: number;
     imageUrls?: string[];
     tags?: string[];
+    type?: any;
+    brand?: string;
+    rating?: number;
+    isNew?: boolean;
+    isFeatured?: boolean;
+    lowStockThreshold?: number;
+    isActive?: boolean;
   },
 ): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     const product = await tx.product.update({
       where: { id, organizationId: context.organizationId },
       data: {
@@ -286,6 +349,13 @@ export async function updateProduct(
         detailedDescription: data.detailedDescription,
         imageUrls: data.imageUrls,
         tags: data.tags,
+        type: data.type,
+        brand: data.brand,
+        rating: data.rating,
+        isNew: data.isNew,
+        isFeatured: data.isFeatured,
+        lowStockThreshold: data.lowStockThreshold,
+        isActive: data.isActive,
       },
     });
 
@@ -308,6 +378,30 @@ export async function updateProduct(
               : undefined,
         },
       });
+    } else if (
+      data.buyingPrice !== undefined ||
+      data.retailPrice !== undefined
+    ) {
+      // If variant doesn't exist but pricing was provided, we might be in an inconsistent state
+      // but let's try to update the first variant anyway if possible.
+      const firstVariant = await tx.productVariant.findFirst({
+        where: { productId: id },
+      });
+      if (firstVariant) {
+        await tx.productVariant.update({
+          where: { id: firstVariant.id },
+          data: {
+            buyingPrice:
+              data.buyingPrice !== undefined
+                ? new Decimal(data.buyingPrice)
+                : undefined,
+            retailPrice:
+              data.retailPrice !== undefined
+                ? new Decimal(data.retailPrice)
+                : undefined,
+          },
+        });
+      }
     }
 
     revalidatePath("/inventory");
@@ -375,11 +469,33 @@ export async function getProduct(id: string): Promise<any> {
           variantStocks: true,
           priceListItems: true,
           pricingRules: true,
+          baseUnit: true,
+          baseOrgUnit: true,
+          stockingUnit: true,
+          stockingOrgUnit: true,
+          sellingUnits: {
+            include: {
+              systemUnit: true,
+              orgUnit: true,
+            },
+          },
+          reorderRules: {
+            include: {
+              location: true,
+              preferredSupplier: true,
+            },
+          },
         },
       },
       suppliers: {
         include: {
           supplier: true,
+        },
+      },
+      reorderRules: {
+        include: {
+          location: true,
+          preferredSupplier: true,
         },
       },
     },
@@ -399,6 +515,179 @@ export async function getCategories(): Promise<{ id: string; name: string }[]> {
       name: true,
     },
   });
+}
+
+export async function getSystemUnits(): Promise<SystemUnit[]> {
+  return db.systemUnit.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getOrganizationUnits(): Promise<OrganizationUnit[]> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) return [];
+
+  return db.organizationUnit.findMany({
+    where: {
+      organizationId: context.organizationId,
+      isActive: true,
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function updateVariantUnits(
+  variantId: string,
+  data: {
+    baseUnitId?: string | null;
+    baseOrgUnitId?: string | null;
+    stockingUnitId?: string | null;
+    stockingOrgUnitId?: string | null;
+    sellingUnits: Array<{
+      id?: string;
+      systemUnitId?: string | null;
+      orgUnitId?: string | null;
+      retailPrice?: number;
+      wholesalePrice?: number;
+      conversionMultiplier: number;
+      isActive: boolean;
+    }>;
+  },
+): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  return db.$transaction(async tx => {
+    // 1. Update Variant primary units
+    const variant = await tx.productVariant.update({
+      where: { id: variantId },
+      data: {
+        baseUnitId: data.baseUnitId,
+        baseOrgUnitId: data.baseOrgUnitId,
+        stockingUnitId: data.stockingUnitId,
+        stockingOrgUnitId: data.stockingOrgUnitId,
+      },
+    });
+
+    // 2. Manage Selling Units
+    // Delete units not in the list
+    const incomingIds = data.sellingUnits
+      .map(su => su.id)
+      .filter(Boolean) as string[];
+    await tx.variantSellingUnit.deleteMany({
+      where: {
+        variantId,
+        id: { notIn: incomingIds },
+      },
+    });
+
+    // Handle updates and creations
+    for (const su of data.sellingUnits) {
+      if (su.id) {
+        await tx.variantSellingUnit.update({
+          where: { id: su.id },
+          data: {
+            systemUnitId: su.systemUnitId,
+            orgUnitId: su.orgUnitId,
+            retailPrice: su.retailPrice ? new Decimal(su.retailPrice) : null,
+            wholesalePrice: su.wholesalePrice
+              ? new Decimal(su.wholesalePrice)
+              : null,
+            conversionMultiplier: new Decimal(su.conversionMultiplier),
+            isActive: su.isActive,
+          },
+        });
+      } else {
+        await tx.variantSellingUnit.create({
+          data: {
+            variantId,
+            systemUnitId: su.systemUnitId,
+            orgUnitId: su.orgUnitId,
+            retailPrice: su.retailPrice ? new Decimal(su.retailPrice) : null,
+            wholesalePrice: su.wholesalePrice
+              ? new Decimal(su.wholesalePrice)
+              : null,
+            conversionMultiplier: new Decimal(su.conversionMultiplier),
+            isActive: su.isActive,
+          },
+        });
+      }
+    }
+
+    revalidatePath(`/inventory/products/${variant.productId}`);
+    return variant;
+  });
+}
+
+export async function getReorderRules(
+  productId: string,
+): Promise<ReorderRule[]> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) return [];
+
+  return db.reorderRule.findMany({
+    where: {
+      productId,
+      organizationId: context.organizationId,
+    },
+    include: {
+      location: true,
+      preferredSupplier: true,
+    },
+  });
+}
+
+export async function updateReorderRule(data: {
+  id?: string;
+  productId: string;
+  variantId?: string | null;
+  locationId: string;
+  minQuantity: number;
+  maxQuantity: number;
+  reorderQuantity: number;
+  isActive: boolean;
+  autoGenerate: boolean;
+  preferredSupplierId?: string | null;
+}): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const ruleData = {
+    organizationId: context.organizationId,
+    productId: data.productId,
+    variantId: data.variantId,
+    locationId: data.locationId,
+    minQuantity: new Decimal(data.minQuantity),
+    maxQuantity: new Decimal(data.maxQuantity),
+    reorderQuantity: new Decimal(data.reorderQuantity),
+    isActive: data.isActive,
+    autoGenerate: data.autoGenerate,
+    preferredSupplierId: data.preferredSupplierId,
+  };
+
+  let rule;
+  if (data.id) {
+    rule = await db.reorderRule.update({
+      where: { id: data.id },
+      data: ruleData,
+    });
+  } else {
+    rule = await db.reorderRule.create({
+      data: ruleData,
+    });
+  }
+
+  revalidatePath(`/inventory/products/${data.productId}`);
+  return rule;
+}
+
+export async function generateProductSlug(name: string): Promise<string> {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export async function getSuppliers(): Promise<{ id: string; name: string }[]> {
@@ -425,6 +714,7 @@ export async function getInventoryProducts(params: {
   stockLevel?: "low" | "out" | "normal" | "all";
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  groupByProduct?: boolean;
 }): Promise<InventoryProduct[]> {
   const context = await getServerAuth();
   if (!context?.organizationId) return [];
@@ -437,6 +727,7 @@ export async function getInventoryProducts(params: {
     stockLevel,
     sortBy,
     sortOrder = "asc",
+    groupByProduct = false,
   } = params;
 
   // Build the where clause
@@ -490,43 +781,89 @@ export async function getInventoryProducts(params: {
     },
   });
 
-  // Flatten and filter by stock level if needed
-  let results = products.flatMap((product) =>
-    product.variants.map((variant) => {
-      const stocks = variant.variantStocks;
-      const currentStock = stocks.reduce(
+  let results: InventoryProduct[] = [];
+
+  if (groupByProduct) {
+    // Map to products and calculate aggregated values
+    results = products.map(product => {
+      const allVariantStocks = product.variants.flatMap(v => v.variantStocks);
+      const totalStock = allVariantStocks.reduce(
         (acc, s) => acc.plus(s.currentStock),
         new Decimal(0),
       );
-      const lowStockThreshold =
-        variant.reorderPoint || product.lowStockThreshold || 0;
+
+      const prices = product.variants.map(
+        v => Number(v.retailPrice) || Number(v.buyingPrice),
+      );
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+      const lowStockThreshold = product.lowStockThreshold || 0;
 
       let status: "High" | "Low" | "Out of Stock" | "Normal" = "Normal";
-      if (currentStock.isZero()) {
+      if (totalStock.isZero()) {
         status = "Out of Stock";
-      } else if (currentStock.lessThanOrEqualTo(lowStockThreshold)) {
+      } else if (totalStock.lessThanOrEqualTo(lowStockThreshold)) {
         status = "Low";
-      } else if (currentStock.greaterThan(lowStockThreshold * 2)) {
+      } else if (totalStock.greaterThan(lowStockThreshold * 2)) {
         status = "High";
       }
 
       return {
         id: product.id,
-        variantId: variant.id,
+        variantId: product.variants[0]?.id || "", // Fallback to first variant for actions
         name: product.name,
-        sku: variant.sku || product.sku,
+        sku: product.sku, // Base SKU of the product
         category: product.category.name,
         supplier: product.suppliers[0]?.supplier.name || "N/A",
-        currentStock: currentStock.toNumber(),
+        currentStock: totalStock.toNumber(),
         status,
-        unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
+        unitPrice: minPrice,
+        minPrice,
+        maxPrice,
         image: product.imageUrls[0],
       };
-    }),
-  );
+    });
+  } else {
+    // Flatten and filter by stock level if needed
+    results = products.flatMap(product =>
+      product.variants.map(variant => {
+        const stocks = variant.variantStocks;
+        const currentStock = stocks.reduce(
+          (acc, s) => acc.plus(s.currentStock),
+          new Decimal(0),
+        );
+        const lowStockThreshold =
+          variant.reorderPoint || product.lowStockThreshold || 0;
+
+        let status: "High" | "Low" | "Out of Stock" | "Normal" = "Normal";
+        if (currentStock.isZero()) {
+          status = "Out of Stock";
+        } else if (currentStock.lessThanOrEqualTo(lowStockThreshold)) {
+          status = "Low";
+        } else if (currentStock.greaterThan(lowStockThreshold * 2)) {
+          status = "High";
+        }
+
+        return {
+          id: product.id,
+          variantId: variant.id,
+          name: product.name,
+          variantName: variant.name,
+          sku: variant.sku || product.sku,
+          category: product.category.name,
+          supplier: product.suppliers[0]?.supplier.name || "N/A",
+          currentStock: currentStock.toNumber(),
+          status,
+          unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
+          image: product.imageUrls[0],
+        };
+      }),
+    );
+  }
 
   if (stockLevel && stockLevel !== "all") {
-    results = results.filter((r) => {
+    results = results.filter(r => {
       if (stockLevel === "low") return r.status === "Low";
       if (stockLevel === "out") return r.status === "Out of Stock";
       if (stockLevel === "normal")
@@ -594,7 +931,7 @@ export async function adjustStock(data: {
   if (isNaN(quantity) || quantity === 0) return null;
 
   // Start a transaction
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async tx => {
     // 1. Create Stock Adjustment
     const adjustment = await tx.stockAdjustment.create({
       data: {
@@ -756,7 +1093,9 @@ export async function createVariant(data: {
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
-  return db.$transaction(async (tx) => {
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+
+  return db.$transaction(async tx => {
     const variant = await tx.productVariant.create({
       data: {
         productId: data.productId,
@@ -765,6 +1104,22 @@ export async function createVariant(data: {
         buyingPrice: new Decimal(data.buyingPrice),
         retailPrice: new Decimal(data.retailPrice),
         attributes: {},
+        baseUnitId: pieceUnit.systemUnitId,
+        baseOrgUnitId: pieceUnit.orgUnitId,
+        stockingUnitId: pieceUnit.systemUnitId,
+        stockingOrgUnitId: pieceUnit.orgUnitId,
+      },
+    });
+
+    // Create Default Selling Unit
+    await tx.variantSellingUnit.create({
+      data: {
+        variantId: variant.id,
+        systemUnitId: pieceUnit.systemUnitId,
+        orgUnitId: pieceUnit.orgUnitId,
+        retailPrice: new Decimal(data.retailPrice),
+        conversionMultiplier: new Decimal(1),
+        isActive: true,
       },
     });
 
@@ -800,8 +1155,20 @@ export async function updateVariant(
   data: {
     name?: string;
     sku?: string;
+    barcode?: string;
     buyingPrice?: number;
     retailPrice?: number;
+    attributes?: any;
+    isActive?: boolean;
+    reorderPoint?: number;
+    reorderQty?: number;
+    pointsOnPurchase?: number;
+    loyaltyPointsOverride?: number;
+    defaultShelfLifeDays?: number;
+    requiresExpiryTracking?: boolean;
+    expiryWarningDays?: number;
+    requiresSerialNumber?: boolean;
+    tags?: string[];
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -812,6 +1179,7 @@ export async function updateVariant(
     data: {
       name: data.name,
       sku: data.sku,
+      barcode: data.barcode,
       buyingPrice:
         data.buyingPrice !== undefined
           ? new Decimal(data.buyingPrice)
@@ -820,6 +1188,17 @@ export async function updateVariant(
         data.retailPrice !== undefined
           ? new Decimal(data.retailPrice)
           : undefined,
+      attributes: data.attributes,
+      isActive: data.isActive,
+      reorderPoint: data.reorderPoint,
+      reorderQty: data.reorderQty,
+      pointsOnPurchase: data.pointsOnPurchase,
+      loyaltyPointsOverride: data.loyaltyPointsOverride,
+      defaultShelfLifeDays: data.defaultShelfLifeDays,
+      requiresExpiryTracking: data.requiresExpiryTracking,
+      expiryWarningDays: data.expiryWarningDays,
+      requiresSerialNumber: data.requiresSerialNumber,
+      tags: data.tags,
     },
   });
 
@@ -894,10 +1273,15 @@ export type InventoryProduct = {
   currentStock: number;
   status: "High" | "Low" | "Out of Stock" | "Normal";
   unitPrice: number;
+  minPrice?: number;
+  maxPrice?: number;
   image?: string;
+  variantName?: string;
 };
 
-export async function bulkDeleteVariants(variantIds: string[]): Promise<Prisma.BatchPayload> {
+export async function bulkDeleteVariants(
+  variantIds: string[],
+): Promise<Prisma.BatchPayload> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -912,7 +1296,10 @@ export async function bulkDeleteVariants(variantIds: string[]): Promise<Prisma.B
   return result;
 }
 
-export async function updateVariantStatus(variantIds: string[], isActive: boolean): Promise<Prisma.BatchPayload> {
+export async function updateVariantStatus(
+  variantIds: string[],
+  isActive: boolean,
+): Promise<Prisma.BatchPayload> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -958,4 +1345,411 @@ export async function getStockAdjustmentHistory(variantId: string): Promise<
     },
     take: 10,
   });
+}
+
+export type ProductVariantImportData = {
+  variantName: string;
+  sku: string;
+  buyingPrice: number;
+  retailPrice: number;
+  initialStock?: number;
+  barcode?: string;
+};
+
+export type ProductImportData = {
+  name: string;
+  sku?: string;
+  categoryName: string;
+  description?: string;
+  variants: ProductVariantImportData[];
+};
+
+export async function importProducts(
+  products: ProductImportData[],
+  strategy: "skip" | "replace",
+): Promise<{
+  success: number;
+  skipped: number;
+  replaced: number;
+  failed: number;
+  errors: string[];
+}> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
+
+  const results = {
+    success: 0,
+    skipped: 0,
+    replaced: 0,
+    failed: 0,
+    errors: [] as string[],
+  };
+
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+
+  // Pre-fetch all categories for the organization to optimize lookups
+  const existingCategories = await db.category.findMany({
+    where: { organizationId: context.organizationId },
+  });
+
+  const categoryMap = new Map(
+    existingCategories.map(c => [c.name.toLowerCase(), c.id]),
+  );
+
+  const defaultLocation =
+    (await db.inventoryLocation.findFirst({
+      where: {
+        organizationId: context.organizationId,
+        isDefault: true,
+      },
+    })) ||
+    (await db.inventoryLocation.findFirst({
+      where: { organizationId: context.organizationId },
+    }));
+
+  for (const productData of products) {
+    try {
+      await db.$transaction(async tx => {
+        // 1. Handle Category
+        const categoryName =
+          !productData.categoryName || productData.categoryName.trim() === ""
+            ? "Uncategorized"
+            : productData.categoryName;
+
+        let categoryId = categoryMap.get(categoryName.toLowerCase());
+        if (!categoryId) {
+          const newCategory = await tx.category.create({
+            data: {
+              name: categoryName,
+              organizationId: context.organizationId,
+              code: `${context.organizationId}-${categoryName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
+            },
+          });
+          categoryId = newCategory.id;
+          categoryMap.set(categoryName.toLowerCase(), categoryId);
+        }
+
+        // Determine base SKU if not provided
+        let baseSku = productData.sku;
+        if (!baseSku) {
+          baseSku = productData.variants[0]?.sku;
+        }
+        if (!baseSku || baseSku.trim() === "") {
+          const prefix = (productData.name || "PRD")
+            .substring(0, 3)
+            .toUpperCase()
+            .padEnd(3, "X");
+          const random = Math.floor(10000 + Math.random() * 90000);
+          baseSku = `${prefix}-${random}`;
+        }
+
+        // Check if product exists (using base SKU or by name in organization)
+        const foundProduct = await tx.product.findFirst({
+          where: {
+            OR: [{ sku: baseSku }, { name: productData.name }],
+            organizationId: context.organizationId,
+          },
+        });
+
+        let targetProduct;
+        if (foundProduct) {
+          if (strategy === "skip") {
+            results.skipped++;
+            return;
+          } else {
+            // Replace/Update strategy for product details
+            targetProduct = await tx.product.update({
+              where: { id: foundProduct.id },
+              data: {
+                name: productData.name,
+                description: productData.description,
+                categoryId: categoryId,
+              },
+            });
+            results.replaced++;
+          }
+        } else {
+          // Create New Product
+          targetProduct = await tx.product.create({
+            data: {
+              name: productData.name,
+              sku: baseSku,
+              slug: await generateProductSlug(productData.name + "-" + baseSku),
+              description: productData.description,
+              categoryId: categoryId,
+              organizationId: context.organizationId,
+              type: "FINISHED_GOOD",
+            },
+          });
+          results.success++;
+        }
+
+        // Process Variants
+        for (const variantData of productData.variants) {
+          let variantSku = variantData.sku;
+          if (!variantSku || variantSku.trim() === "") {
+            const random = Math.floor(1000 + Math.random() * 9000);
+            variantSku = `${baseSku}-${variantData.variantName.substring(0, 3).toUpperCase()}-${random}`;
+          }
+
+          const foundVariant = await tx.productVariant.findFirst({
+            where: {
+              sku: variantSku,
+              product: { organizationId: context.organizationId },
+            },
+          });
+
+          let targetVariant;
+          if (foundVariant) {
+            if (strategy === "replace") {
+              targetVariant = await tx.productVariant.update({
+                where: { id: foundVariant.id },
+                data: {
+                  productId: targetProduct.id,
+                  name: variantData.variantName,
+                  buyingPrice: new Decimal(variantData.buyingPrice),
+                  retailPrice: new Decimal(variantData.retailPrice),
+                  barcode: variantData.barcode,
+                  baseUnitId: foundVariant.baseUnitId || pieceUnit.systemUnitId,
+                  baseOrgUnitId:
+                    foundVariant.baseOrgUnitId || pieceUnit.orgUnitId,
+                  stockingUnitId:
+                    foundVariant.stockingUnitId || pieceUnit.systemUnitId,
+                  stockingOrgUnitId:
+                    foundVariant.stockingOrgUnitId || pieceUnit.orgUnitId,
+                },
+              });
+            } else {
+              // strategy === "skip", just use the found variant
+              targetVariant = foundVariant;
+            }
+          } else {
+            targetVariant = await tx.productVariant.create({
+              data: {
+                productId: targetProduct.id,
+                name: variantData.variantName,
+                sku: variantSku,
+                barcode: variantData.barcode,
+                buyingPrice: new Decimal(variantData.buyingPrice),
+                retailPrice: new Decimal(variantData.retailPrice),
+                attributes: {},
+                baseUnitId: pieceUnit.systemUnitId,
+                baseOrgUnitId: pieceUnit.orgUnitId,
+                stockingUnitId: pieceUnit.systemUnitId,
+                stockingOrgUnitId: pieceUnit.orgUnitId,
+              },
+            });
+          }
+
+          // Ensure at least one selling unit exists
+          const existingSellingUnits = await tx.variantSellingUnit.findMany({
+            where: { variantId: targetVariant.id },
+          });
+
+          if (existingSellingUnits.length === 0) {
+            await tx.variantSellingUnit.create({
+              data: {
+                variantId: targetVariant.id,
+                systemUnitId: pieceUnit.systemUnitId,
+                orgUnitId: pieceUnit.orgUnitId,
+                retailPrice: new Decimal(variantData.retailPrice),
+                conversionMultiplier: new Decimal(1),
+                isActive: true,
+              },
+            });
+          }
+
+          // Handle Initial Stock for variant
+          if (
+            variantData.initialStock &&
+            variantData.initialStock > 0 &&
+            defaultLocation
+          ) {
+            const existingStock = await tx.productVariantStock.findUnique({
+              where: {
+                variantId_locationId: {
+                  variantId: targetVariant.id,
+                  locationId: defaultLocation.id,
+                },
+              },
+            });
+
+            if (!existingStock || strategy === "replace") {
+              if (existingStock) {
+                await tx.productVariantStock.update({
+                  where: { id: existingStock.id },
+                  data: {
+                    currentStock: new Decimal(variantData.initialStock),
+                    availableStock: new Decimal(variantData.initialStock),
+                  },
+                });
+              } else {
+                await tx.productVariantStock.create({
+                  data: {
+                    productId: targetProduct.id,
+                    variantId: targetVariant.id,
+                    locationId: defaultLocation.id,
+                    currentStock: new Decimal(variantData.initialStock),
+                    availableStock: new Decimal(variantData.initialStock),
+                    organizationId: context.organizationId,
+                  },
+                });
+              }
+
+              const batch = await tx.stockBatch.create({
+                data: {
+                  organizationId: context.organizationId,
+                  variantId: targetVariant.id,
+                  locationId: defaultLocation.id,
+                  initialQuantity: new Decimal(variantData.initialStock),
+                  currentQuantity: new Decimal(variantData.initialStock),
+                  purchasePrice: new Decimal(variantData.buyingPrice),
+                  receivedDate: new Date(),
+                  batchNumber: `IMPORT-${targetVariant.sku}-${Date.now().toString().slice(-4)}`,
+                },
+              });
+
+              const adjustment = await tx.stockAdjustment.create({
+                data: {
+                  variantId: targetVariant.id,
+                  locationId: defaultLocation.id,
+                  memberId: context.memberId,
+                  quantity: new Decimal(variantData.initialStock),
+                  reason: "INITIAL_STOCK",
+                  notes: "Initial stock from CSV import",
+                  status: "APPROVED",
+                  organizationId: context.organizationId,
+                  stockBatchId: batch.id,
+                },
+              });
+
+              await tx.stockMovement.create({
+                data: {
+                  variantId: targetVariant.id,
+                  quantity: new Decimal(variantData.initialStock),
+                  toLocationId: defaultLocation.id,
+                  movementType: "INITIAL_STOCK",
+                  adjustmentId: adjustment.id,
+                  memberId: context.memberId,
+                  notes: "Initial stock from CSV import",
+                  organizationId: context.organizationId,
+                  stockBatchId: batch.id,
+                },
+              });
+            }
+          } else if (defaultLocation) {
+            // Ensure stock record exists even if 0
+            const existingStock = await tx.productVariantStock.findUnique({
+              where: {
+                variantId_locationId: {
+                  variantId: targetVariant.id,
+                  locationId: defaultLocation.id,
+                },
+              },
+            });
+            if (!existingStock) {
+              await tx.productVariantStock.create({
+                data: {
+                  productId: targetProduct.id,
+                  variantId: targetVariant.id,
+                  locationId: defaultLocation.id,
+                  currentStock: new Decimal(0),
+                  availableStock: new Decimal(0),
+                  organizationId: context.organizationId,
+                },
+              });
+            }
+          }
+        }
+      });
+    } catch (error: any) {
+      results.failed++;
+      results.errors.push(
+        `Failed to import ${productData.name}: ${error.message}`,
+      );
+    }
+  }
+
+  revalidatePath("/inventory");
+  return results;
+}
+
+export async function fixMissingUnits(): Promise<{
+  processed: number;
+  updated: number;
+}> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const pieceUnit = await getDefaultPieceUnit(context.organizationId);
+  if (!pieceUnit.systemUnitId && !pieceUnit.orgUnitId) {
+    throw new Error("Default Piece unit not found");
+  }
+
+  const variants = await db.productVariant.findMany({
+    where: {
+      product: { organizationId: context.organizationId },
+      OR: [
+        { baseUnitId: null, baseOrgUnitId: null },
+        { stockingUnitId: null, stockingOrgUnitId: null },
+        { sellingUnits: { none: {} } },
+      ],
+    },
+    include: {
+      sellingUnits: true,
+    },
+  });
+
+  let updatedCount = 0;
+
+  for (const variant of variants) {
+    await db.$transaction(async tx => {
+      const needsBaseUnit = !variant.baseUnitId && !variant.baseOrgUnitId;
+      const needsStockingUnit =
+        !variant.stockingUnitId && !variant.stockingOrgUnitId;
+      const needsSellingUnit = variant.sellingUnits.length === 0;
+
+      if (needsBaseUnit || needsStockingUnit) {
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data: {
+            baseUnitId: needsBaseUnit
+              ? pieceUnit.systemUnitId
+              : variant.baseUnitId,
+            baseOrgUnitId: needsBaseUnit
+              ? pieceUnit.orgUnitId
+              : variant.baseOrgUnitId,
+            stockingUnitId: needsStockingUnit
+              ? pieceUnit.systemUnitId
+              : variant.stockingUnitId,
+            stockingOrgUnitId: needsStockingUnit
+              ? pieceUnit.orgUnitId
+              : variant.stockingOrgUnitId,
+          },
+        });
+      }
+
+      if (needsSellingUnit) {
+        await tx.variantSellingUnit.create({
+          data: {
+            variantId: variant.id,
+            systemUnitId: pieceUnit.systemUnitId,
+            orgUnitId: pieceUnit.orgUnitId,
+            retailPrice: variant.retailPrice,
+            conversionMultiplier: new Decimal(1),
+            isActive: true,
+          },
+        });
+      }
+
+      updatedCount++;
+    });
+  }
+
+  revalidatePath("/inventory");
+  return {
+    processed: variants.length,
+    updated: updatedCount,
+  };
 }

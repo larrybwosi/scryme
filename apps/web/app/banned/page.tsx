@@ -60,8 +60,7 @@ const BannedPage = () => {
         <CardContent className="space-y-4">
           <Alert
             variant="destructive"
-            className="bg-destructive/5 border-destructive/20 text-destructive"
-          >
+            className="bg-destructive/5 border-destructive/20 text-destructive">
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>Suspension Active</AlertTitle>
             <AlertDescription className="text-xs mt-1">
@@ -82,15 +81,15 @@ const BannedPage = () => {
 
           <Alert
             variant="default"
-            className="bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900"
-          >
+            className="bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
             <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <AlertTitle className="text-blue-800 dark:text-blue-300">
               How to restore access?
             </AlertTitle>
             <AlertDescription className="text-blue-700/80 dark:text-blue-400/80 text-xs mt-1">
-              Please contact your system administrator or your organization&apos;s
-              owner to request a review of your account status.
+              Please contact your system administrator or your
+              organization&apos;s owner to request a review of your account
+              status.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -102,8 +101,7 @@ const BannedPage = () => {
           <Button
             variant="outline"
             className="w-full gap-2"
-            onClick={() => window.history.back()}
-          >
+            onClick={() => window.history.back()}>
             <ArrowLeft className="w-4 h-4" />
             Go Back
           </Button>
@@ -111,8 +109,7 @@ const BannedPage = () => {
           <Button
             variant="ghost"
             className="w-full gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
-            onClick={handleLogout}
-          >
+            onClick={handleLogout}>
             <LogOut className="w-4 h-4" />
             Sign Out
           </Button>

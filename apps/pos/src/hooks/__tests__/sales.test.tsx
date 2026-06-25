@@ -8,6 +8,7 @@ import React from 'react';
 vi.mock('@/store/pos-auth-store', () => ({
   useAuthStore: () => ({
     currentLocation: { id: 'loc_1' },
+    currentMember: { id: 'mem_1' },
   }),
 }));
 
@@ -27,13 +28,15 @@ describe('useProcessSale Hook', () => {
     mockInvoke.mockReset();
   });
 
-  it('should call process_sale_command and return success', async () => {
-    mockInvoke.mockImplementation(async (cmd, _args) => {
+  it('should call process_sale_command with memberId and return success', async () => {
+    mockInvoke.mockImplementation(async (cmd, args) => {
       if (cmd === 'process_sale_command') {
-        return {
-          success: true,
-          message: 'Sale Processed',
-        };
+        if (args.payload.memberId === 'mem_1') {
+          return {
+            success: true,
+            message: 'Sale Processed',
+          };
+        }
       }
     });
 
@@ -48,5 +51,10 @@ describe('useProcessSale Hook', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 });
     expect(result.current.data?.success).toBe(true);
+    expect(mockInvoke).toHaveBeenCalledWith('process_sale_command', expect.objectContaining({
+      payload: expect.objectContaining({
+        memberId: 'mem_1'
+      })
+    }));
   });
 });

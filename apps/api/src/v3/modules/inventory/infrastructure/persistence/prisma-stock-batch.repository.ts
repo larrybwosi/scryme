@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { IStockBatchRepository } from '../../domain/repositories/stock-batch-repository.interface';
-import { StockBatchEntity } from '../../domain/entities/stock-batch.entity';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { IStockBatchRepository } from "../../domain/repositories/stock-batch-repository.interface";
+import { StockBatchEntity } from "../../domain/entities/stock-batch.entity";
 
 @Injectable()
 export class PrismaStockBatchRepository implements IStockBatchRepository {
@@ -27,10 +27,14 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
       batch.isRecalled,
       batch.createdAt,
       batch.updatedAt,
-      batch.children?.map(c => this.mapToEntity(c)),
-      batch.supplier ? { name: batch.supplier.name, email: batch.supplier.email } : undefined,
-      batch.variant ? { name: batch.variant.name, sku: batch.variant.sku } : undefined,
-      batch.movements
+      batch.children?.map((c) => this.mapToEntity(c)),
+      batch.supplier
+        ? { name: batch.supplier.name, email: batch.supplier.email }
+        : undefined,
+      batch.variant
+        ? { name: batch.variant.name, sku: batch.variant.sku }
+        : undefined,
+      batch.movements,
     );
   }
 
@@ -38,19 +42,46 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     const batch = await this.prisma.client.stockBatch.findUnique({
       where: { id },
       include: {
-        supplier: true,
-        variant: true,
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        variant: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+          },
+        },
       },
     });
     return batch ? this.mapToEntity(batch) : null;
   }
 
-  async findByBatchNumber(batchNumber: string, organizationId: string): Promise<StockBatchEntity | null> {
+  async findByBatchNumber(
+    batchNumber: string,
+    organizationId: string,
+  ): Promise<StockBatchEntity | null> {
     const batch = await this.prisma.client.stockBatch.findFirst({
       where: { batchNumber, organizationId },
       include: {
-        supplier: true,
-        variant: true,
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        variant: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+          },
+        },
       },
     });
     return batch ? this.mapToEntity(batch) : null;
@@ -60,10 +91,10 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     // Recursive query for children is handled by Prisma include if we know depth,
     // or we can just fetch top level and user can drill down.
     // For enterprise, we might want a few levels.
+    // Optimization: Removed unused 'parent' include to save a join.
     const batch = await this.prisma.client.stockBatch.findUnique({
       where: { id },
       include: {
-        parent: true,
         children: {
           include: {
             children: true,
@@ -78,29 +109,48 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     const batch = await this.prisma.client.stockBatch.findUnique({
       where: { id },
       include: {
-        supplier: true,
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         variant: {
-          include: {
-            product: true,
+          select: {
+            id: true,
+            name: true,
+            sku: true,
           },
         },
         movements: {
           include: {
-            fromLocation: true,
-            toLocation: true,
+            fromLocation: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            toLocation: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
             member: {
               include: {
-                user: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
               },
             },
           },
           orderBy: {
-            movementDate: 'desc',
-          },
-        },
-        parent: {
-          include: {
-            supplier: true,
+            movementDate: "desc",
           },
         },
       },

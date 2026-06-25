@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Table,
@@ -23,7 +23,10 @@ interface ApprovalListProps {
 export function ApprovalList({ requests }: ApprovalListProps) {
   const [isPending, startTransition] = useTransition();
 
-  const handleDecision = (requestId: string, status: "APPROVED" | "REJECTED") => {
+  const handleDecision = (
+    requestId: string,
+    status: "APPROVED" | "REJECTED",
+  ) => {
     startTransition(async () => {
       try {
         await makeApprovalDecision({ requestId, status });
@@ -67,7 +70,7 @@ export function ApprovalList({ requests }: ApprovalListProps) {
               </TableCell>
             </TableRow>
           ) : (
-            requests.map((request) => (
+            requests.map(request => (
               <TableRow key={request.id}>
                 <TableCell>
                   {format(new Date(request.createdAt), "MMM d, yyyy")}
@@ -88,7 +91,9 @@ export function ApprovalList({ requests }: ApprovalListProps) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {getStatusIcon(request.status)}
-                    <span className="capitalize">{request.status.toLowerCase()}</span>
+                    <span className="capitalize">
+                      {request.status.toLowerCase()}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -99,16 +104,14 @@ export function ApprovalList({ requests }: ApprovalListProps) {
                         variant="outline"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => handleDecision(request.id, "REJECTED")}
-                        disabled={isPending}
-                      >
+                        disabled={isPending}>
                         Reject
                       </Button>
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 text-white"
                         onClick={() => handleDecision(request.id, "APPROVED")}
-                        disabled={isPending}
-                      >
+                        disabled={isPending}>
                         Approve
                       </Button>
                     </div>

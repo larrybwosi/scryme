@@ -51,8 +51,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-blue-50 text-blue-700 border-blue-200"
-          >
+            className="bg-blue-50 text-blue-700 border-blue-200">
             Pending Approval
           </Badge>
         );
@@ -60,8 +59,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-indigo-50 text-indigo-700 border-indigo-200"
-          >
+            className="bg-indigo-50 text-indigo-700 border-indigo-200">
             Approved
           </Badge>
         );
@@ -69,8 +67,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-amber-50 text-amber-700 border-amber-200"
-          >
+            className="bg-amber-50 text-amber-700 border-amber-200">
             Shipped
           </Badge>
         );
@@ -78,8 +75,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-orange-50 text-orange-700 border-orange-200"
-          >
+            className="bg-orange-50 text-orange-700 border-orange-200">
             In Transit
           </Badge>
         );
@@ -87,8 +83,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-green-50 text-green-700 border-green-200"
-          >
+            className="bg-green-50 text-green-700 border-green-200">
             Completed
           </Badge>
         );
@@ -134,8 +129,7 @@ export default async function TransferDetailsPage({
               <input type="hidden" name="status" value="APPROVED" />
               <Button
                 type="submit"
-                className="gap-2 bg-green-600 hover:bg-green-700"
-              >
+                className="gap-2 bg-green-600 hover:bg-green-700">
                 <CheckCircle2 size={16} />
                 Approve
               </Button>
@@ -148,8 +142,7 @@ export default async function TransferDetailsPage({
               <input type="hidden" name="status" value="SHIPPED" />
               <Button
                 type="submit"
-                className="gap-2 bg-amber-600 hover:bg-amber-700"
-              >
+                className="gap-2 bg-amber-600 hover:bg-amber-700">
                 <Truck size={16} />
                 Mark as Shipped
               </Button>
@@ -163,8 +156,7 @@ export default async function TransferDetailsPage({
               <input type="hidden" name="status" value="COMPLETED" />
               <Button
                 type="submit"
-                className="gap-2 bg-green-600 hover:bg-green-700"
-              >
+                className="gap-2 bg-green-600 hover:bg-green-700">
                 <PackageCheck size={16} />
                 Receive Stock
               </Button>
@@ -179,8 +171,7 @@ export default async function TransferDetailsPage({
               <Button
                 type="submit"
                 variant="outline"
-                className="gap-2 text-red-600 hover:text-red-700"
-              >
+                className="gap-2 text-red-600 hover:text-red-700">
                 <XCircle size={16} />
                 Reject
               </Button>
@@ -208,7 +199,7 @@ export default async function TransferDetailsPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(transfer.items as any[]).map((item) => (
+                  {(transfer.items as any[]).map(item => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <div className="font-medium">

@@ -126,7 +126,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         instructions: recipe.instructions || '',
         notes: recipe.notes || '',
         yieldQuantity: recipe.yieldQuantity,
-        systemUnitId: (recipe.yieldUnit as any)?.id || recipe.yieldUnit,
+        systemUnitId: recipe.systemUnitId,
+        orgUnitId: recipe.orgUnitId,
         producesVariantId: recipe.producesVariantId,
         prepTime: recipe.prepTime || 0,
         bakeTime: recipe.bakeTime || 0,
@@ -135,7 +136,9 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         ingredients: recipe.ingredients?.map(ing => ({
           ingredientVariantId: ing.ingredientVariantId,
           quantity: ing.quantity,
-          systemUnitId: (ing.unit as any)?.id || ing.unit,
+          systemUnitId: ing.systemUnitId,
+          orgUnitId: ing.orgUnitId,
+          preparationNotes: ing.preparationNotes,
         })) || [],
       });
     } else {

@@ -32,6 +32,7 @@ import {
   Check,
   AlertCircle,
   Package,
+  Plus,
   Tag,
   DollarSign,
   BarChart2,
@@ -42,6 +43,7 @@ import { ImageUpload } from "../image-upload";
 import { useDebounce } from "use-debounce";
 import slugify from "slugify";
 import { cn } from "@repo/ui/lib/utils";
+import Link from "next/link";
 
 interface ProductSheetProps {
   children?: React.ReactNode;
@@ -102,8 +104,7 @@ function FieldLabel({
   return (
     <Label
       htmlFor={htmlFor}
-      className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 uppercase tracking-widest"
-    >
+      className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 uppercase tracking-widest">
       {children}
       {checking ? (
         <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />
@@ -165,11 +166,11 @@ export function ProductSheet({
       if (!isManualSku && formData.name) {
         const prefix = formData.name.substring(0, 3).toUpperCase();
         const random = Math.floor(10000 + Math.random() * 90000);
-        setFormData((prev) => ({ ...prev, sku: `${prefix}-${random}` }));
+        setFormData(prev => ({ ...prev, sku: `${prefix}-${random}` }));
       }
       if (!isManualSlug && formData.name) {
         const slug = slugify(formData.name, { lower: true, strict: true });
-        setFormData((prev) => ({ ...prev, slug }));
+        setFormData(prev => ({ ...prev, slug }));
       }
     }
   }, [formData.name, isManualSku, isManualSlug, productId]);
@@ -287,8 +288,7 @@ export function ProductSheet({
         className={cn(
           "sm:max-w-[560px] p-0 overflow-hidden flex flex-col",
           "bg-white border-l border-zinc-200 shadow-2xl",
-        )}
-      >
+        )}>
         {/* ── Header Bar ── */}
         <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-zinc-100 bg-zinc-50/60">
           <div className="flex items-center gap-3">
@@ -324,8 +324,7 @@ export function ProductSheet({
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col flex-1 overflow-hidden"
-          >
+            className="flex flex-col flex-1 overflow-hidden">
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
               {/* ── Section 1: Basic Info ── */}
               <section>
@@ -337,7 +336,7 @@ export function ProductSheet({
                       id="product-name"
                       placeholder="e.g., Artisan Sourdough Bread"
                       value={formData.name}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFormData({ ...formData, name: e.target.value })
                       }
                       required
@@ -350,15 +349,14 @@ export function ProductSheet({
                       <FieldLabel
                         htmlFor="sku"
                         status={formData.sku ? uniqueness.sku : null}
-                        checking={isCheckingUniqueness}
-                      >
+                        checking={isCheckingUniqueness}>
                         SKU
                       </FieldLabel>
                       <Input
                         id="sku"
                         placeholder="e.g., BRD-00123"
                         value={formData.sku}
-                        onChange={(e) => {
+                        onChange={e => {
                           setIsManualSku(true);
                           setFormData({ ...formData, sku: e.target.value });
                         }}
@@ -381,15 +379,14 @@ export function ProductSheet({
                       <FieldLabel
                         htmlFor="slug"
                         status={formData.slug ? uniqueness.slug : null}
-                        checking={isCheckingUniqueness}
-                      >
+                        checking={isCheckingUniqueness}>
                         URL Slug
                       </FieldLabel>
                       <Input
                         id="slug"
                         placeholder="e.g., sourdough-bread"
                         value={formData.slug}
-                        onChange={(e) => {
+                        onChange={e => {
                           setIsManualSlug(true);
                           setFormData({ ...formData, slug: e.target.value });
                         }}
@@ -410,31 +407,42 @@ export function ProductSheet({
 
                   <FieldWrapper className="w-1/2 pr-2">
                     <FieldLabel htmlFor="category">Category</FieldLabel>
-                    <Select
-                      value={formData.categoryId}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, categoryId: value })
-                      }
-                      required
-                    >
-                      <SelectTrigger
-                        id="category"
-                        className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white"
-                      >
-                        <SelectValue placeholder="Select category…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem
-                            key={cat.id}
-                            value={cat.id}
-                            className="text-sm"
-                          >
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {categories.length === 0 ? (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
+                          No categories available
+                        </div>
+                        <Link
+                          href="/inventory/categories"
+                          className="text-[10px] text-zinc-500 hover:text-zinc-900 underline flex items-center gap-1 transition-colors">
+                          <Plus className="h-3 w-3" />
+                          Create categories first
+                        </Link>
+                      </div>
+                    ) : (
+                      <Select
+                        value={formData.categoryId}
+                        onValueChange={value =>
+                          setFormData({ ...formData, categoryId: value })
+                        }
+                        required>
+                        <SelectTrigger
+                          id="category"
+                          className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
+                          <SelectValue placeholder="Select category…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem
+                              key={cat.id}
+                              value={cat.id}
+                              className="text-sm">
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </FieldWrapper>
                 </div>
               </section>
@@ -461,7 +469,7 @@ export function ProductSheet({
                           min="0"
                           placeholder="0.00"
                           value={formData.buyingPrice || ""}
-                          onChange={(e) =>
+                          onChange={e =>
                             setFormData({
                               ...formData,
                               buyingPrice: parseFloat(e.target.value) || 0,
@@ -488,7 +496,7 @@ export function ProductSheet({
                           min="0"
                           placeholder="0.00"
                           value={formData.retailPrice || ""}
-                          onChange={(e) =>
+                          onChange={e =>
                             setFormData({
                               ...formData,
                               retailPrice: parseFloat(e.target.value) || 0,
@@ -511,8 +519,7 @@ export function ProductSheet({
                           : parseFloat(margin) >= 0
                             ? "bg-amber-50 border-amber-200 text-amber-700"
                             : "bg-red-50 border-red-200 text-red-700",
-                      )}
-                    >
+                      )}>
                       <BarChart2 className="h-3.5 w-3.5 shrink-0" />
                       <span>
                         Gross margin{" "}
@@ -531,7 +538,7 @@ export function ProductSheet({
                   {!productId && (
                     <FieldWrapper className="w-1/2 pr-2">
                       <FieldLabel htmlFor="initial-stock">
-                        Initial Stock
+                        Default Variant Stock
                       </FieldLabel>
                       <Input
                         id="initial-stock"
@@ -539,7 +546,7 @@ export function ProductSheet({
                         min="0"
                         placeholder="0"
                         value={formData.initialStock || ""}
-                        onChange={(e) =>
+                        onChange={e =>
                           setFormData({
                             ...formData,
                             initialStock: parseInt(e.target.value) || 0,
@@ -562,7 +569,7 @@ export function ProductSheet({
                 />
                 <ImageUpload
                   value={formData.imageUrls}
-                  onChange={(urls) =>
+                  onChange={urls =>
                     setFormData({ ...formData, imageUrls: urls })
                   }
                   maxImages={3}
@@ -595,16 +602,14 @@ export function ProductSheet({
                   size="sm"
                   onClick={() => setOpen(false)}
                   disabled={isSubmitting}
-                  className="h-8 text-[12px] border-zinc-200 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
-                >
+                  className="h-8 text-[12px] border-zinc-200 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors">
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isSubmitting || !uniqueness.sku || !uniqueness.slug}
-                  className="h-8 text-[12px] bg-zinc-900 hover:bg-zinc-800 text-white px-4 transition-colors disabled:opacity-50"
-                >
+                  className="h-8 text-[12px] bg-zinc-900 hover:bg-zinc-800 text-white px-4 transition-colors disabled:opacity-50">
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />

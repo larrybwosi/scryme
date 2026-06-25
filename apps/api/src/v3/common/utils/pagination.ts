@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsOptional, IsInt, Min, Max, IsString } from "class-validator";
+import { Type } from "class-transformer";
 
 export class PaginationQueryDto {
   @ApiProperty({ required: false, default: 0 })
@@ -48,7 +48,7 @@ export async function paginate<T>(
   repository: any,
   query: PaginationQueryDto,
   where: any = {},
-  orderBy: any = { createdAt: 'desc' },
+  orderBy: any = { createdAt: "desc" },
   options: { select?: any; include?: any } = {},
 ) {
   const { limit = 20, offset = 0, cursor } = query;
@@ -72,7 +72,8 @@ export async function paginate<T>(
     repository.count({ where }),
   ]);
 
-  const nextCursor = data.length === limit ? data[data.length - 1].id : undefined;
+  const nextCursor =
+    data.length === limit ? data[data.length - 1].id : undefined;
 
   return {
     data,

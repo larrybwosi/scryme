@@ -7,8 +7,8 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
-    "./v2/*": "./src/v2/*.tsx",
-    "./templates/*": "./src/templates/*.tsx"
+    "./templates/v1/*": "./src/templates/v1/*.tsx",
+    "./templates/v2/*": "./src/templates/v2/*.tsx"
   },
   "scripts": {
     "build": "tsc",
@@ -21,17 +21,14 @@
     "@react-pdf/renderer": "^4.2.1",
     "@repo/db": "workspace:*",
     "date-fns": "^4.1.0",
-    "react": "^19.2.6",
-    "@types/react": "^19.2.14"
+    "react": "^19.2.6"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@testing-library/react": "^16.2.0",
+    "@types/react": "^19.2.14",
     "@vitest/coverage-v8": "^3.0.7",
     "jsdom": "^26.0.0",
     "vitest": "^3.0.7"
-  },
-  "peerDependencies": {
-    "react": ">=16"
   }
 }

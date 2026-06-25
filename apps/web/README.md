@@ -32,15 +32,18 @@
 ### Steps
 
 1. **Install Dependencies** (from the monorepo root)
+
    ```bash
    pnpm install
    ```
 
 2. **Environment Variables**
    Create a `.env` file based on `.env.example`:
+
    ```bash
    cp .env.example .env
    ```
+
    Ensure `NEXT_PUBLIC_API_URL` points to your running Scryme API.
 
 3. **Run Development Server**
@@ -59,6 +62,7 @@
 The Web application is optimized for standalone Docker deployments.
 
 1. **Build the Image**
+
    ```bash
    docker build -t scryme-web -f apps/web/Dockerfile .
    ```

@@ -12,9 +12,20 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
 import { ShoppingCart, LogIn, LogOut, MapPin, Clock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 
-export function StaffActivity({ transactions, attendanceLogs }: { transactions: any[], attendanceLogs: any[] }) {
+export function StaffActivity({
+  transactions,
+  attendanceLogs,
+}: {
+  transactions: any[];
+  attendanceLogs: any[];
+}) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Recent Transactions */}
@@ -38,14 +49,18 @@ export function StaffActivity({ transactions, attendanceLogs }: { transactions: 
             <TableBody>
               {transactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-6 text-gray-500">
                     No transactions found.
                   </TableCell>
                 </TableRow>
               ) : (
-                transactions.map((tx) => (
+                transactions.map(tx => (
                   <TableRow key={tx.id}>
-                    <TableCell className="font-medium text-xs">{tx.number}</TableCell>
+                    <TableCell className="font-medium text-xs">
+                      {tx.number}
+                    </TableCell>
                     <TableCell className="text-xs">
                       {new Intl.NumberFormat("en-US", {
                         style: "currency",
@@ -79,10 +94,14 @@ export function StaffActivity({ transactions, attendanceLogs }: { transactions: 
         <CardContent>
           <div className="space-y-4">
             {attendanceLogs.length === 0 ? (
-              <p className="text-center py-6 text-gray-500 text-sm">No attendance logs found.</p>
+              <p className="text-center py-6 text-gray-500 text-sm">
+                No attendance logs found.
+              </p>
             ) : (
-              attendanceLogs.map((log) => (
-                <div key={log.id} className="flex items-start gap-4 p-3 rounded-xl border bg-gray-50/50">
+              attendanceLogs.map(log => (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-4 p-3 rounded-xl border bg-gray-50/50">
                   <div className="p-2 rounded-lg bg-white border shadow-sm">
                     <Clock size={16} className="text-gray-400" />
                   </div>
@@ -93,7 +112,8 @@ export function StaffActivity({ transactions, attendanceLogs }: { transactions: 
                       </span>
                       {log.durationMinutes && (
                         <Badge variant="secondary" className="text-[10px]">
-                          {Math.floor(log.durationMinutes / 60)}h {log.durationMinutes % 60}m
+                          {Math.floor(log.durationMinutes / 60)}h{" "}
+                          {log.durationMinutes % 60}m
                         </Badge>
                       )}
                     </div>
@@ -102,7 +122,9 @@ export function StaffActivity({ transactions, attendanceLogs }: { transactions: 
                         <span className="flex items-center gap-1 font-medium text-gray-700">
                           <LogIn size={10} /> Check-in
                         </span>
-                        <span>{format(new Date(log.checkInTime), "HH:mm")}</span>
+                        <span>
+                          {format(new Date(log.checkInTime), "HH:mm")}
+                        </span>
                         <span className="flex items-center gap-1 truncate">
                           <MapPin size={10} /> {log.checkInLocation.name}
                         </span>
@@ -111,9 +133,14 @@ export function StaffActivity({ transactions, attendanceLogs }: { transactions: 
                         <span className="flex items-center gap-1 font-medium text-gray-700">
                           <LogOut size={10} /> Check-out
                         </span>
-                        <span>{log.checkOutTime ? format(new Date(log.checkOutTime), "HH:mm") : "—"}</span>
+                        <span>
+                          {log.checkOutTime
+                            ? format(new Date(log.checkOutTime), "HH:mm")
+                            : "—"}
+                        </span>
                         <span className="flex items-center gap-1 truncate">
-                          <MapPin size={10} /> {log.checkOutLocation?.name || "—"}
+                          <MapPin size={10} />{" "}
+                          {log.checkOutLocation?.name || "—"}
                         </span>
                       </div>
                     </div>

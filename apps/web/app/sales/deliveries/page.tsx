@@ -1,9 +1,9 @@
-import { Truck } from 'lucide-react';
-import { PageHeader } from '../../../components/page-header';
-import { FilterBar } from '../../../components/filter-bar';
-import { getFulfillments } from '../../actions/sales';
-import { DeliveryTable } from '../../../components/sales/delivery-table';
-import { FulfillmentStatus } from '@repo/db/client';
+import { Truck } from "lucide-react";
+import { PageHeader } from "../../../components/page-header";
+import { FilterBar } from "../../../components/filter-bar";
+import { getFulfillments } from "../../actions/sales";
+import { DeliveryTable } from "../../../components/sales/delivery-table";
+import { FulfillmentStatus } from "@repo/db/client";
 
 export default async function DeliveriesPage(props: {
   searchParams: Promise<{

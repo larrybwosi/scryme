@@ -1,13 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { MpesaService } from '@repo/mpesa/server';
-import { V2ApiContext } from '@repo/shared/server';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { MpesaService } from "@repo/mpesa/server";
+import { V2ApiContext } from "@repo/shared/api/v2/types/context";
 
 @Injectable()
 export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mpesaService: MpesaService
+    private readonly mpesaService: MpesaService,
   ) {}
 
   async getPayments(ctx: V2ApiContext, query: any) {
@@ -22,11 +22,15 @@ export class PaymentsService {
           select: { number: true, customer: { select: { name: true } } },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
-  async validateMpesaPayment(ctx: V2ApiContext, transactionCode: string, saleId?: string) {
+  async validateMpesaPayment(
+    ctx: V2ApiContext,
+    transactionCode: string,
+    saleId?: string,
+  ) {
     const { organizationId, memberId } = ctx;
 
     // Use the injected service instance
@@ -46,7 +50,7 @@ export class PaymentsService {
         transaction: true,
       },
     });
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) throw new NotFoundException("Payment not found");
     return payment;
   }
 }

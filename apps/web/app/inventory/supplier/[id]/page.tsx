@@ -53,7 +53,7 @@ export default async function SupplierDetailsPage({
     <div className="flex flex-col min-h-screen bg-[#F8F9FB]">
       {/* ── Page Header ── */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-8 pt-6 pb-0">
+        <div className=" mx-auto px-8 pt-6 pb-0">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-400 uppercase tracking-widest mb-5">
             <Building2 size={13} />
@@ -161,8 +161,7 @@ export default async function SupplierDetailsPage({
             ].map((stat, i, arr) => (
               <div
                 key={stat.label}
-                className={`flex-1 pr-6 mr-6 ${i < arr.length - 1 ? "border-r border-gray-100" : ""}`}
-              >
+                className={`flex-1 pr-6 mr-6 ${i < arr.length - 1 ? "border-r border-gray-100" : ""}`}>
                 <div className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                   {stat.label}
                 </div>
@@ -181,7 +180,7 @@ export default async function SupplierDetailsPage({
         <Tabs defaultValue="catalog" className="flex-1 flex flex-col">
           {/* Tab bar */}
           <div className="bg-white border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-8">
+            <div className=" mx-auto px-8">
               <TabsList className="h-auto bg-transparent p-0 gap-0 rounded-none border-none flex">
                 {[
                   {
@@ -199,7 +198,7 @@ export default async function SupplierDetailsPage({
                     icon: <Info size={14} />,
                     label: "Company Details",
                   },
-                ].map((tab) => (
+                ].map(tab => (
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
@@ -209,8 +208,7 @@ export default async function SupplierDetailsPage({
                       data-[state=active]:text-blue-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-700 data-[state=active]:bg-transparent
                       hover:text-gray-900 hover:bg-gray-50
                       transition-colors
-                    "
-                  >
+                    ">
                     {tab.icon}
                     {tab.label}
                   </TabsTrigger>
@@ -220,12 +218,11 @@ export default async function SupplierDetailsPage({
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 max-w-7xl mx-auto w-full px-8 py-7">
+          <div className="flex-1  mx-auto w-full px-8 py-7">
             {/* ── Product Catalog ── */}
             <TabsContent
               value="catalog"
-              className="m-0 focus-visible:outline-none space-y-4"
-            >
+              className="m-0 focus-visible:outline-none space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-[#0F172A]">
@@ -245,8 +242,7 @@ export default async function SupplierDetailsPage({
             {/* ── Purchase Orders ── */}
             <TabsContent
               value="deliveries"
-              className="m-0 focus-visible:outline-none space-y-4"
-            >
+              className="m-0 focus-visible:outline-none space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-[#0F172A]">
@@ -263,8 +259,7 @@ export default async function SupplierDetailsPage({
             {/* ── Company Details ── */}
             <TabsContent
               value="info"
-              className="m-0 focus-visible:outline-none"
-            >
+              className="m-0 focus-visible:outline-none">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 {/* Left: General + Address */}
                 <div className="lg:col-span-2 space-y-5">
@@ -298,14 +293,13 @@ export default async function SupplierDetailsPage({
                           value: supplier.website,
                           isLink: true,
                         },
-                      ].map((f) => (
+                      ].map(f => (
                         <div key={f.label}>
                           <div className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                             {f.label}
                           </div>
                           <div
-                            className={`text-sm font-semibold ${f.isLink && f.value ? "text-blue-700 underline underline-offset-2" : "text-[#0F172A]"}`}
-                          >
+                            className={`text-sm font-semibold ${f.isLink && f.value ? "text-blue-700 underline underline-offset-2" : "text-[#0F172A]"}`}>
                             {f.value || "—"}
                           </div>
                         </div>
@@ -335,7 +329,7 @@ export default async function SupplierDetailsPage({
                         { label: "State / Province", value: supplier.state },
                         { label: "Country", value: supplier.country },
                         { label: "ZIP / Postal Code", value: supplier.zipCode },
-                      ].map((f) => (
+                      ].map(f => (
                         <div key={f.label}>
                           <div className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
                             {f.label}
@@ -366,8 +360,7 @@ export default async function SupplierDetailsPage({
                           value: (
                             <Badge
                               variant="outline"
-                              className="text-xs font-semibold px-2.5 py-0.5 bg-gray-50 border-gray-200"
-                            >
+                              className="text-xs font-semibold px-2.5 py-0.5 bg-gray-50 border-gray-200">
                               {supplier.currency || "KES"}
                             </Badge>
                           ),
@@ -385,11 +378,10 @@ export default async function SupplierDetailsPage({
                             </span>
                           ),
                         },
-                      ].map((row) => (
+                      ].map(row => (
                         <div
                           key={row.label}
-                          className="flex items-center justify-between px-6 py-3.5"
-                        >
+                          className="flex items-center justify-between px-6 py-3.5">
                           <span className="text-sm text-gray-500">
                             {row.label}
                           </span>
@@ -422,7 +414,7 @@ export default async function SupplierDetailsPage({
                           value: "96.2%",
                           pct: 96.2,
                         },
-                      ].map((metric) => (
+                      ].map(metric => (
                         <div key={metric.label}>
                           <div className="flex items-center justify-between text-sm mb-2">
                             <span className="text-gray-500">

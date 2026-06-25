@@ -21,6 +21,7 @@ model User {
   sessions             Session[]
   activeOrganizationId String?
   displayUsername      String?
+  scrymeUserId         String?
   apikeys              Apikey[]
   banner               String? // To store the URL of the profile banner image
   notificationPrefs    Json? // To store notification settings like { "mentions": true, "taskUpdates": false }

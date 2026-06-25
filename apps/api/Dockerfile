@@ -3,17 +3,18 @@
 # ---------------------------------------------------------
 FROM node:22-slim AS base
 
-# Prisma needs openssl, and ca-certificates. Slim needs more build tools than alpine for some native modules if they were used,
-# but for runtime it's generally fine.
+# Prisma needs openssl, and ca-certificates.
+# 💡 FIXED: Added wget here so the Stage 4 HEALTHCHECK actually works!
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm (aligned with version 10.33.0)
+# Install pnpm safely via npm (aligned with version 10.34.1)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN npm install -g pnpm@10.34.1
 
 # ---------------------------------------------------------
 # Stage 2: Pruner (Turborepo)
@@ -22,6 +23,9 @@ FROM base AS pruner
 WORKDIR /app
 RUN pnpm add -g turbo
 COPY . .
+# Remove potentially conflicting build artifacts from the host
+RUN rm -rf .turbo && rm -rf node_modules
+# Run prune
 RUN turbo prune api --docker
 
 # ---------------------------------------------------------
@@ -39,15 +43,13 @@ RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scrip
 
 # Copy full source code and turbo configuration
 COPY --from=pruner /app/out/full/ .
-COPY turbo.json turbo.json
 
 # Generate Prisma Client
-RUN npx turbo run generate
+RUN pnpm turbo run generate
 
 # Build the API and its internal workspace dependencies
-# Use serial execution and increased memory to prevent OOM during build
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npx turbo build --filter=api... --concurrency=1
+RUN pnpm turbo build --filter=api... --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -79,7 +81,7 @@ COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma ./prisma
 
 # Copy entrypoint script safely from the pruned context
-COPY --from=pruner --chown=nestjs:nodejs /app/apps/api/entrypoint.sh ./entrypoint.sh
+COPY --from=pruner /app/out/full/apps/api/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 USER nestjs

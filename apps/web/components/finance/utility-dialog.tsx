@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,10 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { createUtilityAccount, recordUtilityBill } from '../../app/actions/finance';
+import {
+  createUtilityAccount,
+  recordUtilityBill,
+} from "../../app/actions/finance";
 import { toast } from "sonner";
 import { UtilityType, PaymentMethod } from "@repo/db/client";
 import { Loader2 } from "lucide-react";
@@ -61,17 +64,22 @@ interface UtilityDialogProps {
   accountName?: string;
 }
 
-export function UtilityDialog({ children, mode = "CREATE", accountId, accountName }: UtilityDialogProps) {
+export function UtilityDialog({
+  children,
+  mode = "CREATE",
+  accountId,
+  accountName,
+}: UtilityDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const utilityForm = useForm<UtilityFormValues>({
     resolver: zodResolver(utilitySchema) as any,
     defaultValues: {
-      name: '',
-      provider: '',
-      accountNumber: '',
-      meterNumber: '',
+      name: "",
+      provider: "",
+      accountNumber: "",
+      meterNumber: "",
       type: UtilityType.ELECTRICITY,
     },
   });
@@ -80,10 +88,10 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
     resolver: zodResolver(billSchema) as any,
     defaultValues: {
       amount: 0,
-      billDate: new Date().toISOString().split('T')[0],
+      billDate: new Date().toISOString().split("T")[0],
       paymentMethod: PaymentMethod.CASH,
-      description: accountName ? `${accountName} Bill` : '',
-      notes: '',
+      description: accountName ? `${accountName} Bill` : "",
+      notes: "",
     },
   });
 
@@ -120,17 +128,21 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{mode === "CREATE" ? "Add Utility Account" : `Record Bill: ${accountName}`}</DialogTitle>
+          <DialogTitle>
+            {mode === "CREATE"
+              ? "Add Utility Account"
+              : `Record Bill: ${accountName}`}
+          </DialogTitle>
         </DialogHeader>
 
         {mode === "CREATE" ? (
           <Form {...utilityForm}>
-            <form onSubmit={utilityForm.handleSubmit(onUtilitySubmit)} className="space-y-4">
+            <form
+              onSubmit={utilityForm.handleSubmit(onUtilitySubmit)}
+              className="space-y-4">
               <FormField
                 control={utilityForm.control}
                 name="name"
@@ -191,16 +203,18 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Utility Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(UtilityType).map((type) => (
+                        {Object.values(UtilityType).map(type => (
                           <SelectItem key={type} value={type}>
-                            {type.replace('_', ' ')}
+                            {type.replace("_", " ")}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -210,8 +224,13 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
-                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button
+                  type="submit"
+                  className="w-full bg-[#34A853] hover:bg-[#2d9147]"
+                  disabled={isPending}>
+                  {isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Save Account
                 </Button>
               </DialogFooter>
@@ -219,7 +238,9 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
           </Form>
         ) : (
           <Form {...billForm}>
-            <form onSubmit={billForm.handleSubmit(onBillSubmit)} className="space-y-4">
+            <form
+              onSubmit={billForm.handleSubmit(onBillSubmit)}
+              className="space-y-4">
               <FormField
                 control={billForm.control}
                 name="description"
@@ -267,16 +288,18 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Payment Method</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select method" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.values(PaymentMethod).map((method) => (
+                        {Object.values(PaymentMethod).map(method => (
                           <SelectItem key={method} value={method}>
-                            {method.replace('_', ' ')}
+                            {method.replace("_", " ")}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -299,8 +322,13 @@ export function UtilityDialog({ children, mode = "CREATE", accountId, accountNam
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
-                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button
+                  type="submit"
+                  className="w-full bg-[#34A853] hover:bg-[#2d9147]"
+                  disabled={isPending}>
+                  {isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Record Bill
                 </Button>
               </DialogFooter>

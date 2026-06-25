@@ -11,7 +11,7 @@ import {
   Smartphone,
   Monitor,
   MapPin,
-  Clock
+  Clock,
 } from "lucide-react";
 import {
   Table,
@@ -42,7 +42,11 @@ import {
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { updateDevicePermissions, revokeDevice, deleteDevice } from "@/app/actions/devices";
+import {
+  updateDevicePermissions,
+  revokeDevice,
+  deleteDevice,
+} from "@/app/actions/devices";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -68,7 +72,9 @@ export function DeviceList({ devices }: { devices: any[] }) {
   const handleEditPermissions = (device: any) => {
     setSelectedDevice(device);
     setPermissions(device.apiKey.permissions || []);
-    setJsonPermissions(JSON.stringify(device.apiKey.permissions || [], null, 2));
+    setJsonPermissions(
+      JSON.stringify(device.apiKey.permissions || [], null, 2),
+    );
     setIsPermissionsOpen(true);
   };
 
@@ -90,7 +96,10 @@ export function DeviceList({ devices }: { devices: any[] }) {
           finalPermissions = permissions;
         }
 
-        await updateDevicePermissions(selectedDevice.apiKeyId, finalPermissions);
+        await updateDevicePermissions(
+          selectedDevice.apiKeyId,
+          finalPermissions,
+        );
         toast.success("Permissions updated successfully");
         setIsPermissionsOpen(false);
       } catch (error) {
@@ -101,7 +110,8 @@ export function DeviceList({ devices }: { devices: any[] }) {
   };
 
   const handleRevoke = (deviceId: string) => {
-    if (!confirm("Are you sure you want to revoke this device's access?")) return;
+    if (!confirm("Are you sure you want to revoke this device's access?"))
+      return;
     startTransition(async () => {
       try {
         await revokeDevice(deviceId);
@@ -113,7 +123,8 @@ export function DeviceList({ devices }: { devices: any[] }) {
   };
 
   const handleDelete = (deviceId: string) => {
-    if (!confirm("Are you sure you want to delete this device registry?")) return;
+    if (!confirm("Are you sure you want to delete this device registry?"))
+      return;
     startTransition(async () => {
       try {
         await deleteDevice(deviceId);
@@ -126,7 +137,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
 
   const togglePermission = (id: string) => {
     setPermissions(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id],
     );
   };
 
@@ -144,7 +155,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {devices.map((device) => (
+            {devices.map(device => (
               <TableRow key={device.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -156,8 +167,12 @@ export function DeviceList({ devices }: { devices: any[] }) {
                       )}
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">{device.deviceName}</div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider">{device.deviceType.replace("_", " ")}</div>
+                      <div className="font-medium text-slate-900">
+                        {device.deviceName}
+                      </div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wider">
+                        {device.deviceType.replace("_", " ")}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
@@ -169,12 +184,16 @@ export function DeviceList({ devices }: { devices: any[] }) {
                 </TableCell>
                 <TableCell>
                   {device.status === "ACTIVE" ? (
-                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       Active
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 gap-1">
+                    <Badge
+                      variant="outline"
+                      className="bg-slate-50 text-slate-600 border-slate-200 gap-1">
                       <Ban className="w-3 h-3" />
                       Inactive
                     </Badge>
@@ -185,7 +204,10 @@ export function DeviceList({ devices }: { devices: any[] }) {
                     <Clock className="w-3.5 h-3.5" />
                     <span className="text-sm">
                       {device.apiKey.lastUsedAt
-                        ? format(new Date(device.apiKey.lastUsedAt), "MMM d, h:mm a")
+                        ? format(
+                            new Date(device.apiKey.lastUsedAt),
+                            "MMM d, h:mm a",
+                          )
                         : "Never"}
                     </span>
                   </div>
@@ -199,22 +221,21 @@ export function DeviceList({ devices }: { devices: any[] }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleEditPermissions(device)}>
+                      <DropdownMenuItem
+                        onClick={() => handleEditPermissions(device)}>
                         <Shield className="mr-2 h-4 w-4" />
                         Edit Permissions
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-amber-600"
-                        onClick={() => handleRevoke(device.id)}
-                      >
+                        onClick={() => handleRevoke(device.id)}>
                         <Ban className="mr-2 h-4 w-4" />
                         Revoke Access
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => handleDelete(device.id)}
-                      >
+                        onClick={() => handleDelete(device.id)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Device
                       </DropdownMenuItem>
@@ -225,7 +246,9 @@ export function DeviceList({ devices }: { devices: any[] }) {
             ))}
             {devices.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-slate-500">
+                <TableCell
+                  colSpan={5}
+                  className="h-24 text-center text-slate-500">
                   No devices registered yet.
                 </TableCell>
               </TableRow>
@@ -239,7 +262,9 @@ export function DeviceList({ devices }: { devices: any[] }) {
           <DialogHeader>
             <DialogTitle>Edit Device Permissions</DialogTitle>
             <DialogDescription>
-              Configure what actions <strong>{selectedDevice?.deviceName}</strong> is authorized to perform.
+              Configure what actions{" "}
+              <strong>{selectedDevice?.deviceName}</strong> is authorized to
+              perform.
             </DialogDescription>
           </DialogHeader>
 
@@ -249,8 +274,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsJsonMode(!isJsonMode)}
-              >
+                onClick={() => setIsJsonMode(!isJsonMode)}>
                 {isJsonMode ? "Switch to List View" : "Switch to JSON Editor"}
               </Button>
             </div>
@@ -259,15 +283,20 @@ export function DeviceList({ devices }: { devices: any[] }) {
               <div className="space-y-2">
                 <Textarea
                   value={jsonPermissions}
-                  onChange={(e) => setJsonPermissions(e.target.value)}
+                  onChange={e => setJsonPermissions(e.target.value)}
                   className="font-mono text-sm h-64"
                 />
-                <p className="text-xs text-slate-500">Enter a valid JSON string array of permissions.</p>
+                <p className="text-xs text-slate-500">
+                  Enter a valid JSON string array of permissions.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
-                {PREDEFINED_PERMISSIONS.map((perm) => (
-                  <div key={perm.id} className="flex items-start space-x-3 space-y-0 border p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => togglePermission(perm.id)}>
+                {PREDEFINED_PERMISSIONS.map(perm => (
+                  <div
+                    key={perm.id}
+                    className="flex items-start space-x-3 space-y-0 border p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => togglePermission(perm.id)}>
                     <Checkbox
                       id={perm.id}
                       checked={permissions.includes(perm.id)}
@@ -276,11 +305,12 @@ export function DeviceList({ devices }: { devices: any[] }) {
                     <div className="grid gap-1.5 leading-none">
                       <label
                         htmlFor={perm.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
                         {perm.label}
                       </label>
-                      <code className="text-[10px] text-slate-500 bg-slate-100 px-1 rounded">{perm.id}</code>
+                      <code className="text-[10px] text-slate-500 bg-slate-100 px-1 rounded">
+                        {perm.id}
+                      </code>
                     </div>
                   </div>
                 ))}
@@ -289,7 +319,11 @@ export function DeviceList({ devices }: { devices: any[] }) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPermissionsOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsPermissionsOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleSavePermissions} disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes

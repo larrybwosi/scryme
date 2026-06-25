@@ -17,7 +17,7 @@ export interface CommunicationProvider {
   // Outbound
   sendMessage(
     integration: any,
-    message: { text: string; threadId?: string; channelId?: string }
+    message: { text: string; threadId?: string; channelId?: string },
   ): Promise<{ externalId: string; threadId?: string }>;
 
   // Inbound Parsing

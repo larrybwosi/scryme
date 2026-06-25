@@ -74,6 +74,24 @@ export class WindmillApiClient {
   }
 
   /**
+   * Cancel a running job.
+   */
+  async cancelJob(jobId: string, reason: string = "Canceled from Dealio"): Promise<void> {
+    await this.request(`/jobs/cancel/${jobId}`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  /**
+   * Get job logs.
+   */
+  async getJobLogs(jobId: string): Promise<string> {
+    const res = await this.request<{ logs: string }>(`/jobs/logs/${jobId}`);
+    return res.logs;
+  }
+
+  /**
    * Run a script asynchronously.
    */
   async runScript(path: string, args: any): Promise<string> {

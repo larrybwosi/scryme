@@ -19,11 +19,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash2, MapPin, ExternalLink } from "lucide-react";
-import { deleteLocation } from "../../app/actions/locations";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { toast } from "sonner";
 import Link from "next/link";
 import { LocationSheet } from "./location-sheet";
+import { DeleteLocationDialog } from "./delete-location-dialog";
 
 interface LocationTableProps {
   data: any[];
@@ -31,16 +42,7 @@ interface LocationTableProps {
 }
 
 export function LocationTable({ data, members }: LocationTableProps) {
-  async function onDelete(id: string) {
-    if (confirm("Are you sure you want to delete this location?")) {
-      try {
-        await deleteLocation(id);
-        toast.success("Location deleted successfully");
-      } catch (error: any) {
-        toast.error(error.message);
-      }
-    }
-  }
+  const [deletingLocation, setDeletingLocation] = React.useState<any>(null);
 
   return (
     <div className="rounded-md border bg-white">
@@ -59,22 +61,32 @@ export function LocationTable({ data, members }: LocationTableProps) {
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={7}
+                className="text-center py-8 text-muted-foreground">
                 No locations found.
               </TableCell>
             </TableRow>
           ) : (
-            data.map((location) => (
+            data.map(location => (
               <TableRow key={location.id}>
                 <TableCell>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-[#1D1D1F]">{location.name}</span>
+                      <span className="font-medium text-[#1D1D1F]">
+                        {location.name}
+                      </span>
                       {location.isDefault && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Default</Badge>
+                        <Badge
+                          variant="outline"
+                          className="bg-blue-50 text-blue-700 border-blue-200">
+                          Default
+                        </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">{location.code || "No code"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {location.code || "No code"}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -83,10 +95,16 @@ export function LocationTable({ data, members }: LocationTableProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {location.parentLocation?.name || <span className="text-muted-foreground text-xs">Root</span>}
+                  {location.parentLocation?.name || (
+                    <span className="text-muted-foreground text-xs">Root</span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  {location.manager?.user?.name || <span className="text-muted-foreground text-xs">Unassigned</span>}
+                  {location.manager?.user?.name || (
+                    <span className="text-muted-foreground text-xs">
+                      Unassigned
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1 text-xs">
@@ -95,27 +113,51 @@ export function LocationTable({ data, members }: LocationTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={location._count.variantStocks > 0 ? "text-green-600" : ""}>
+                  <Badge
+                    variant="outline"
+                    className={
+                      location._count.variantStocks > 0 ? "text-green-600" : ""
+                    }>
                     {location._count.variantStocks} SKUs
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Link href={`/locations/${location.id}`}>
-                      <Button variant="ghost" size="icon">
-                        <ExternalLink size={16} />
-                      </Button>
-                    </Link>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link href={`/locations/${location.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`View details for ${location.name}`}>
+                            <ExternalLink size={16} />
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>View Details</TooltipContent>
+                    </Tooltip>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Actions for ${location.name}`}>
+                              <MoreHorizontal size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>Actions</TooltipContent>
+                      </Tooltip>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <LocationSheet location={location} locations={data} members={members} isEdit>
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        <LocationSheet
+                          location={location}
+                          locations={data}
+                          members={members}
+                          isEdit>
+                          <DropdownMenuItem onSelect={e => e.preventDefault()}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Details
                           </DropdownMenuItem>
@@ -123,8 +165,7 @@ export function LocationTable({ data, members }: LocationTableProps) {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
-                          onClick={() => onDelete(location.id)}
-                        >
+                          onClick={() => setDeletingLocation(location)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Location
                         </DropdownMenuItem>
@@ -137,6 +178,15 @@ export function LocationTable({ data, members }: LocationTableProps) {
           )}
         </TableBody>
       </Table>
+
+      {deletingLocation && (
+        <DeleteLocationDialog
+          locationId={deletingLocation.id}
+          locationName={deletingLocation.name}
+          open={!!deletingLocation}
+          onOpenChange={open => !open && setDeletingLocation(null)}
+        />
+      )}
     </div>
   );
 }

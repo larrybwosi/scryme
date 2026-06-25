@@ -43,10 +43,16 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
   const isThermal = config.paperSize === '58mm' || config.paperSize === '80mm';
 
   // Compact font scale: small=7, medium=8, large=9
-  const base = config.fontSize === 'small' ? 7 : config.fontSize === 'medium' ? 8 : 9;
-  const pad = isThermal ? 8 : 24;
-  const bc = isThermal ? '#000' : '#d1d5db';
-  const bs = isThermal ? 'dashed' : 'solid';
+  const base = config.bodyFontSize || (config.fontSize === 'small' ? 7 : config.fontSize === 'medium' ? 8 : 9);
+  const titleSize = config.titleFontSize || base + (isThermal ? 3 : 5);
+  const headerSize = config.headerFontSize || base - 1;
+
+  const pad = config.padding !== undefined ? config.padding : isThermal ? 8 : 24;
+  const bc = config.primaryColor || (isThermal ? '#000' : '#d1d5db');
+  const sc = config.secondaryColor || '#666666';
+  const bs = config.dividerStyle || (isThermal ? 'dashed' : 'solid');
+
+  const template = config.template || 'standard';
 
   const styles = React.useMemo(
     () =>
@@ -56,15 +62,24 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           fontSize: base,
           padding: pad,
           backgroundColor: '#fff',
-          color: '#111',
+          color: config.primaryColor || '#111',
+          ...(config.showBorder && {
+            borderWidth: 2,
+            borderColor: config.borderColor || bc,
+          }),
         },
 
         // ── HEADER ──
         header: {
-          alignItems: 'center',
-          marginBottom: 6,
+          alignItems:
+            template === 'minimal'
+              ? 'flex-start'
+              : config.textAlignment === 'left'
+                ? 'flex-start'
+                : 'center',
+          marginBottom: template === 'modern' ? 12 : 6,
           paddingBottom: 5,
-          borderBottomWidth: 1,
+          borderBottomWidth: template === 'minimal' ? 0 : 1,
           borderBottomColor: bc,
           borderBottomStyle: bs,
         },
@@ -75,24 +90,30 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           marginBottom: 4,
         },
         bizName: {
-          fontSize: base + (isThermal ? 3 : 5),
+          fontSize: titleSize,
           fontWeight: 'bold',
-          textAlign: 'center',
-          textTransform: 'uppercase',
-          letterSpacing: 1.2,
+          textAlign:
+            template === 'minimal'
+              ? 'left'
+              : config.textAlignment === 'left'
+                ? 'left'
+                : 'center',
+          textTransform: template === 'modern' ? 'none' : 'uppercase',
+          letterSpacing: template === 'modern' ? 0.5 : 1.2,
           marginBottom: 1,
+          color: config.primaryColor || '#000',
         },
         slogan: {
-          fontSize: base - 1,
+          fontSize: headerSize,
           fontStyle: 'italic',
-          color: '#555',
-          textAlign: 'center',
+          color: sc,
+          textAlign: config.textAlignment === 'left' ? 'left' : 'center',
           marginBottom: 2,
         },
         contactLine: {
-          fontSize: base - 1,
-          color: isThermal ? '#000' : '#555',
-          textAlign: 'center',
+          fontSize: headerSize,
+          color: isThermal ? (config.primaryColor || '#000') : sc,
+          textAlign: config.textAlignment === 'left' ? 'left' : 'center',
           lineHeight: 1.3,
         },
         regRow: {
@@ -102,8 +123,8 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           marginTop: 1,
         },
         regItem: {
-          fontSize: base - 1,
-          color: '#666',
+          fontSize: headerSize,
+          color: sc,
           marginHorizontal: 3,
         },
 
@@ -126,9 +147,12 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           flexWrap: 'wrap',
           marginBottom: 5,
           paddingBottom: 5,
-          borderBottomWidth: 1,
+          borderBottomWidth: template === 'minimal' ? 0 : 1,
           borderBottomColor: bc,
           borderBottomStyle: bs,
+          backgroundColor: template === 'modern' ? '#f9fafb' : 'transparent',
+          padding: template === 'modern' ? 4 : 0,
+          borderRadius: template === 'modern' ? 4 : 0,
         },
         metaCell: {
           width: isThermal ? '100%' : '50%',
@@ -137,24 +161,31 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           paddingVertical: 1,
           paddingRight: isThermal ? 0 : 8,
         },
-        metaLabel: { fontSize: base - 1, color: '#777' },
-        metaValue: { fontSize: base - 1, fontWeight: 'bold' },
+        metaLabel: { fontSize: headerSize, color: sc },
+        metaValue: { fontSize: headerSize, fontWeight: 'bold' },
 
         // ── TABLE ──
         table: { marginBottom: 4 },
         tHead: {
           flexDirection: 'row',
-          borderBottomWidth: 1,
-          borderBottomColor: '#000',
-          borderBottomStyle: bs,
+          borderBottomWidth: template === 'minimal' ? 1 : 1,
+          borderBottomColor: config.primaryColor || '#000',
+          borderBottomStyle: template === 'minimal' ? 'solid' : bs,
           paddingBottom: 3,
           marginBottom: 2,
+          backgroundColor: template === 'modern' ? config.primaryColor || '#000' : 'transparent',
+          padding: template === 'modern' ? 2 : 0,
         },
         tHCell: {
-          fontSize: base - 1,
+          fontSize: headerSize,
           fontWeight: 'bold',
           textTransform: 'uppercase',
-          color: isThermal ? '#000' : '#444',
+          color:
+            template === 'modern'
+              ? '#fff'
+              : isThermal
+                ? config.primaryColor || '#000'
+                : sc,
         },
         tRow: {
           flexDirection: 'row',
@@ -167,16 +198,19 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
         colTotal: { width: '23%', textAlign: 'right' },
 
         itemName: { fontSize: base, fontWeight: 'bold', lineHeight: 1.2 },
-        itemVariant: { fontSize: base - 2, color: '#555', marginTop: 1 },
+        itemVariant: { fontSize: base - 2, color: sc, marginTop: 1 },
 
         // ── TOTALS ──
         totalsWrap: {
-          marginTop: 2,
+          marginTop: template === 'modern' ? 8 : 2,
           paddingTop: 4,
-          borderTopWidth: 1,
-          borderTopColor: '#000',
+          borderTopWidth: template === 'minimal' ? 1 : template === 'modern' ? 0 : 1,
+          borderTopColor: config.primaryColor || '#000',
           borderTopStyle: bs,
           alignItems: 'flex-end',
+          backgroundColor: template === 'modern' ? '#f9fafb' : 'transparent',
+          padding: template === 'modern' ? 6 : 0,
+          borderRadius: template === 'modern' ? 4 : 0,
         },
         totalRow: {
           flexDirection: 'row',
@@ -184,21 +218,36 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           width: isThermal ? '100%' : '48%',
           paddingVertical: 1,
         },
-        totalLabel: { fontSize: base, color: isThermal ? '#000' : '#555' },
+        totalLabel: { fontSize: base, color: isThermal ? (config.primaryColor || '#000') : sc },
         totalValue: { fontSize: base, fontWeight: 'bold' },
         grandRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           width: isThermal ? '100%' : '48%',
-          paddingVertical: 3,
+          paddingVertical: template === 'modern' ? 6 : 3,
           marginTop: 2,
-          borderTopWidth: 2,
-          borderTopColor: '#000',
-          borderBottomWidth: 2,
-          borderBottomColor: '#000',
+          borderTopWidth: template === 'modern' ? 0 : 2,
+          borderTopColor: config.primaryColor || '#000',
+          borderBottomWidth: template === 'modern' ? 0 : 2,
+          borderBottomColor: config.primaryColor || '#000',
+          ...(template === 'modern' && {
+            backgroundColor: config.primaryColor || '#000',
+            color: '#fff',
+            paddingHorizontal: 4,
+            borderRadius: 2,
+          }),
         },
-        grandLabel: { fontSize: base + 2, fontWeight: 'bold', textTransform: 'uppercase' },
-        grandValue: { fontSize: base + 2, fontWeight: 'bold' },
+        grandLabel: {
+          fontSize: base + 2,
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          color: template === 'modern' ? '#fff' : config.primaryColor || '#000',
+        },
+        grandValue: {
+          fontSize: base + 2,
+          fontWeight: 'bold',
+          color: template === 'modern' ? '#fff' : config.primaryColor || '#000',
+        },
         savingsRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
@@ -218,15 +267,15 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           marginBottom: 3,
         },
         footerLine: {
-          fontSize: base - 1,
+          fontSize: headerSize,
           textAlign: 'center',
-          color: isThermal ? '#000' : '#555',
+          color: isThermal ? (config.primaryColor || '#000') : sc,
           marginBottom: 2,
         },
         footerDisclaimer: {
           fontSize: base - 2,
           textAlign: 'center',
-          color: '#888',
+          color: sc,
           fontStyle: 'italic',
           marginTop: 3,
         },
@@ -236,9 +285,9 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           marginTop: 4,
         },
         loyaltyItem: {
-          fontSize: base - 1,
+          fontSize: headerSize,
           marginHorizontal: 5,
-          color: isThermal ? '#000' : '#555',
+          color: isThermal ? (config.primaryColor || '#000') : sc,
         },
         barcodeWrap: {
           alignItems: 'center',
@@ -255,8 +304,22 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           letterSpacing: 1.5,
           color: '#444',
         },
+        signatureWrap: {
+          marginTop: 16,
+          paddingTop: 12,
+          borderTopWidth: 1,
+          borderTopColor: bc,
+          borderTopStyle: 'solid',
+          width: '80%',
+          alignSelf: 'center',
+        },
+        signatureText: {
+          fontSize: base - 2,
+          textAlign: 'center',
+          color: sc,
+        },
       }),
-    [base, pad, bc, bs, isThermal, config.itemSpacing]
+    [base, pad, bc, bs, isThermal, config.itemSpacing, template, config.primaryColor, config.showBorder, config.borderColor, titleSize, headerSize, sc]
   );
 
   // ── PAGE SIZE ──
@@ -354,7 +417,16 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
           {config.showOrderNumber !== false && (
             <View style={styles.metaCell}>
               <Text style={styles.metaLabel}>Receipt No</Text>
-              <Text style={styles.metaValue}>{order.orderNumber}</Text>
+              <Text style={styles.metaValue}>
+                {config.orderNumberPrefix || ''}
+                {order.orderNumber}
+              </Text>
+            </View>
+          )}
+          {config.showTransactionId && (
+            <View style={styles.metaCell}>
+              <Text style={styles.metaLabel}>Trans ID</Text>
+              <Text style={styles.metaValue}>{order.id}</Text>
             </View>
           )}
           <View style={styles.metaCell}>
@@ -499,6 +571,12 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
 
           {config.showLegalDisclaimer && config.legalDisclaimerText && (
             <Text style={styles.footerDisclaimer}>{config.legalDisclaimerText}</Text>
+          )}
+
+          {config.showSignatureLine && (
+            <View style={styles.signatureWrap}>
+              <Text style={styles.signatureText}>{config.signatureLineText || 'Customer Signature'}</Text>
+            </View>
           )}
 
           <Text style={styles.footerDisclaimer}>Goods once sold are not returnable.</Text>

@@ -9,14 +9,18 @@ interface ProductVariant {
   sku?: string;
 }
 
-export function AuditProductFilter({ products }: { products: ProductVariant[] }) {
+export function AuditProductFilter({
+  products,
+}: {
+  products: ProductVariant[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const variantId = searchParams.get("variantId") || "";
 
-  const variants = products.map((p) => ({
+  const variants = products.map(p => ({
     id: p.variantId,
     name: "Default",
     productName: p.name,
@@ -27,7 +31,7 @@ export function AuditProductFilter({ products }: { products: ProductVariant[] })
     <ProductVariantSelect
       variants={variants}
       value={variantId}
-      onValueChange={(val) => {
+      onValueChange={val => {
         const params = new URLSearchParams(searchParams);
         if (val) {
           params.set("variantId", val);

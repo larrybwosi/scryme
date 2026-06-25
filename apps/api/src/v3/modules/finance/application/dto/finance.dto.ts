@@ -1,6 +1,15 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsEnum, IsArray, IsDateString, IsBoolean } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UtilityType, PaymentMethod } from '@repo/db';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsDateString,
+  IsBoolean,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { UtilityType, PaymentMethod } from "@repo/db";
 export { PaymentMethod };
 
 export class CreatePettyCashFundDto {

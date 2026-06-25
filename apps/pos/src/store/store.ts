@@ -196,8 +196,17 @@ export interface ReceiptConfig {
 
   // Advanced Branding (Enterprise)
   accentColor: string;
+  primaryColor: string;
+  secondaryColor: string;
   showTagline: boolean;
   tagline: string;
+
+  // Typography (Granular)
+  titleFontSize: number;
+  headerFontSize: number;
+  bodyFontSize: number;
+  padding: number;
+  dividerStyle: 'solid' | 'dashed' | 'dotted';
 
   // Compliance & Legal (High-Traffic/Enterprise)
   showVatNumber: boolean;
@@ -240,6 +249,10 @@ export interface ReceiptConfig {
   showOrderNumber: boolean;
   showTransactionId: boolean;
   orderNumberPrefix: string;
+
+  // Signature
+  showSignatureLine: boolean;
+  signatureLineText: string;
 }
 
 export interface KitchenTicketConfig {
@@ -400,6 +413,7 @@ export interface BusinessSettings {
   maxHeldOrders: number;
   heldOrderExpiryHours?: number;
   requireHoldReason: boolean;
+  forcedImmediateSyncThreshold: number;
 }
 
 export interface Customer {
@@ -684,8 +698,17 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
 
   // Advanced Branding (Enterprise)
   accentColor: '#2563eb',
+  primaryColor: '#000000',
+  secondaryColor: '#666666',
   showTagline: false,
   tagline: '',
+
+  // Typography (Granular)
+  titleFontSize: 14,
+  headerFontSize: 10,
+  bodyFontSize: 8,
+  padding: 8,
+  dividerStyle: 'dashed',
 
   // Compliance & Legal
   showVatNumber: false,
@@ -728,6 +751,10 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   showOrderNumber: true,
   showTransactionId: false,
   orderNumberPrefix: 'ORD-',
+
+  // Signature
+  showSignatureLine: false,
+  signatureLineText: 'Customer Signature',
 });
 
 export const getDefaultKitchenTicketConfig = (): KitchenTicketConfig => ({
@@ -938,6 +965,7 @@ export const usePosStore = create<PosStore>()(
         maxHeldOrders: 20,
         heldOrderExpiryHours: 24,
         requireHoldReason: false,
+        forcedImmediateSyncThreshold: 1000,
       },
       employees: [],
       notifications: [],
@@ -1220,6 +1248,7 @@ export const usePosStore = create<PosStore>()(
             shareShiftBetweenUsers: true,
             enableAutoShiftPrompt: false,
             enforceShiftForCashPayments: false,
+            forcedImmediateSyncThreshold: 1000,
           },
           employees: [],
           notifications: [],

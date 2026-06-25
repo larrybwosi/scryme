@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { env } from '@repo/env';
+import { Injectable, Logger } from "@nestjs/common";
+import { env } from "@repo/env";
 
 @Injectable()
 export class OpenObserveService {
@@ -15,7 +15,9 @@ export class OpenObserveService {
     );
 
     if (!this.isConfigured) {
-      this.logger.warn('OpenObserve is not configured. Logging to OpenObserve will be skipped.');
+      this.logger.warn(
+        "OpenObserve is not configured. Logging to OpenObserve will be skipped.",
+      );
     }
   }
 
@@ -26,9 +28,9 @@ export class OpenObserveService {
       const url = `${env.OPENOBSERVE_URL}/api/${env.OPENOBSERVE_ORG}/${env.OPENOBSERVE_STREAM}/_json`;
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Basic ${env.OPENOBSERVE_TOKEN}`,
         },
         body: JSON.stringify([
@@ -41,10 +43,12 @@ export class OpenObserveService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        this.logger.error(`Failed to send log to OpenObserve: ${response.statusText} - ${errorText}`);
+        this.logger.error(
+          `Failed to send log to OpenObserve: ${response.statusText} - ${errorText}`,
+        );
       }
     } catch (error) {
-      this.logger.error('Error sending log to OpenObserve', error);
+      this.logger.error("Error sending log to OpenObserve", error);
     }
   }
 
@@ -58,8 +62,8 @@ export class OpenObserveService {
     correlationId?: string;
   }) {
     await this.log({
-      type: 'AUTH_FAILURE',
-      severity: 'error',
+      type: "AUTH_FAILURE",
+      severity: "error",
       ...details,
     });
   }
@@ -76,21 +80,24 @@ export class OpenObserveService {
     correlationId?: string;
   }) {
     await this.log({
-      type: 'AUTH_SUCCESS',
-      severity: 'info',
+      type: "AUTH_SUCCESS",
+      severity: "info",
       ...details,
     });
   }
 
-  async logException(error: any, details: {
-    path: string;
-    method: string;
-    ip: string;
-    correlationId?: string;
-  }) {
+  async logException(
+    error: any,
+    details: {
+      path: string;
+      method: string;
+      ip: string;
+      correlationId?: string;
+    },
+  ) {
     await this.log({
-      type: 'UNHANDLED_EXCEPTION',
-      severity: 'error',
+      type: "UNHANDLED_EXCEPTION",
+      severity: "error",
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       ...details,

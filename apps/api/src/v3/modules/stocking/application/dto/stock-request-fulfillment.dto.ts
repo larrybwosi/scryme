@@ -1,8 +1,16 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, IsOptional, IsEnum } from 'class-validator';
-import { Type } from 'class-transformer';
-import { CreatePurchaseItemDto } from './purchase.dto';
-import { CreateTransferItemDto } from './transfer.dto';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { CreatePurchaseItemDto } from "./purchase.dto";
+import { CreateTransferItemDto } from "./transfer.dto";
 
 export class FulfillFromTransferDto {
   @ApiProperty()

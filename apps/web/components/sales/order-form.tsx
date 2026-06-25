@@ -19,6 +19,11 @@ import {
   Download,
   CheckCircle2,
   X,
+  Building2,
+  Truck,
+  Paperclip,
+  Loader2,
+  Upload,
 } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,7 +64,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { ProductVariantSelect } from "../product-variant-select";
-import { createOrderAction } from "@/app/actions/sales";
+import { createOrderAction, uploadFileAction } from "@/app/actions/sales";
 
 // ── Schema ─────────────────────────────────────────────────────────────────────
 
@@ -76,10 +81,16 @@ const itemSchema = z.object({
 
 const orderSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
+  businessAccountId: z.string().optional(),
   locationId: z.string().min(1, "Location is required"),
   type: z.enum(["SALES_ORDER", "QUOTE", "POS_SALE"]),
   expectedDeliveryDate: z.string().optional(),
   notes: z.string().optional(),
+  termsAndConditions: z.string().optional(),
+  shippingFee: z.number().nonnegative().default(0),
+  deliveryPartnerId: z.string().optional(),
+  shippingAddressId: z.string().optional(),
+  attachments: z.array(z.any()).optional(),
   items: z.array(itemSchema).min(1, "At least one item is required"),
 });
 
@@ -159,22 +170,19 @@ function SummaryRow({
       className={cn(
         "flex justify-between items-center",
         muted && "text-zinc-500",
-      )}
-    >
+      )}>
       <span
         className={cn(
           "text-sm",
           highlight ? "font-semibold text-zinc-900" : "",
-        )}
-      >
+        )}>
         {label}
       </span>
       <span
         className={cn(
           "text-sm tabular-nums",
           highlight ? "text-lg font-bold text-emerald-600" : "",
-        )}
-      >
+        )}>
         {value}
       </span>
     </div>
@@ -185,11 +193,15 @@ function SummaryRow({
 
 export function OrderForm({
   customers,
+  businessAccounts = [],
+  deliveryPartners = [],
   locations,
   variants,
   currency = "USD",
 }: {
   customers: any[];
+  businessAccounts?: any[];
+  deliveryPartners?: any[];
   locations: any[];
   variants: any[];
   currency?: string;
@@ -198,6 +210,7 @@ export function OrderForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     register,
@@ -227,6 +240,9 @@ export function OrderForm({
 
   const watchItems = watch("items") || [];
   const watchType = watch("type") as keyof typeof ORDER_TYPE_META;
+  const watchAttachments = watch("attachments") || [];
+
+  const watchShippingFee = watch("shippingFee") || 0;
 
   const subtotal = watchItems.reduce(
     (acc: number, item: any) => acc + (item.unitPrice * item.quantity || 0),
@@ -240,7 +256,35 @@ export function OrderForm({
     (acc: number, item: any) => acc + (item.discountAmount || 0),
     0,
   );
-  const finalTotal = subtotal + taxTotal - discountTotal;
+  const finalTotal = subtotal + taxTotal - discountTotal + watchShippingFee;
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await uploadFileAction(formData);
+      const currentAttachments = watch("attachments") || [];
+      setValue("attachments", [...currentAttachments, result]);
+      toast.success("File uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload file");
+      console.error(error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    const currentAttachments = watch("attachments") || [];
+    setValue(
+      "attachments",
+      currentAttachments.filter((_: any, i: number) => i !== index),
+    );
+  };
 
   const onSubmit = async (data: OrderFormValues) => {
     setIsSubmitting(true);
@@ -251,7 +295,11 @@ export function OrderForm({
         setShowSuccessModal(true);
         toast.success("Order created successfully");
       } else {
-        toast.error((result as any).error || (result as any).message || "Failed to create order");
+        toast.error(
+          (result as any).error ||
+            (result as any).message ||
+            "Failed to create order",
+        );
       }
     } catch (error) {
       console.error(error);
@@ -287,8 +335,7 @@ export function OrderForm({
                   className={cn(
                     "text-xs font-medium",
                     ORDER_TYPE_META[watchType]?.color,
-                  )}
-                >
+                  )}>
                   {ORDER_TYPE_META[watchType]?.label}
                 </Badge>
               )}
@@ -300,8 +347,7 @@ export function OrderForm({
                 variant="outline"
                 size="sm"
                 className="text-zinc-600"
-                onClick={() => router.back()}
-              >
+                onClick={() => router.back()}>
                 Cancel
               </Button>
               <Button
@@ -309,8 +355,7 @@ export function OrderForm({
                 type="submit"
                 size="sm"
                 className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2"
-                disabled={isSubmitting}
-              >
+                disabled={isSubmitting}>
                 <Save className="w-3.5 h-3.5" />
                 {isSubmitting ? "Creating..." : "Create Order"}
               </Button>
@@ -322,8 +367,7 @@ export function OrderForm({
         <form
           id="order-form"
           onSubmit={handleSubmit(onSubmit)}
-          className="w-full px-6 lg:px-10 py-8"
-        >
+          className="w-full px-6 lg:px-10 py-8">
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
             {/* ── LEFT COLUMN ── */}
             <div className="space-y-6">
@@ -349,13 +393,12 @@ export function OrderForm({
                         render={({ field }) => (
                           <Select
                             onValueChange={field.onChange}
-                            value={field.value}
-                          >
+                            value={field.value}>
                             <SelectTrigger className="bg-white">
                               <SelectValue placeholder="Select customer" />
                             </SelectTrigger>
                             <SelectContent>
-                              {customers.map((c) => (
+                              {customers.map(c => (
                                 <SelectItem key={c.id} value={c.id}>
                                   {c.name}
                                 </SelectItem>
@@ -380,13 +423,12 @@ export function OrderForm({
                         render={({ field }) => (
                           <Select
                             onValueChange={field.onChange}
-                            value={field.value}
-                          >
+                            value={field.value}>
                             <SelectTrigger className="bg-white">
                               <SelectValue placeholder="Select location" />
                             </SelectTrigger>
                             <SelectContent>
-                              {locations.map((l) => (
+                              {locations.map(l => (
                                 <SelectItem key={l.id} value={l.id}>
                                   {l.name}
                                 </SelectItem>
@@ -411,8 +453,7 @@ export function OrderForm({
                         render={({ field }) => (
                           <Select
                             value={field.value}
-                            onValueChange={field.onChange}
-                          >
+                            onValueChange={field.onChange}>
                             <SelectTrigger className="bg-white">
                               <SelectValue />
                             </SelectTrigger>
@@ -437,6 +478,108 @@ export function OrderForm({
                         type="date"
                         {...register("expectedDeliveryDate")}
                         className="bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <Separator className="my-6" />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {/* Business Account */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                        <Building2 className="w-3 h-3" /> Business Account (Enterprise)
+                      </Label>
+                      <Controller
+                        name="businessAccountId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}>
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Select business account" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {businessAccounts.map(b => (
+                                <SelectItem key={b.id} value={b.id}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    {/* Delivery Partner */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                        <Truck className="w-3 h-3" /> Delivery Partner
+                      </Label>
+                      <Controller
+                        name="deliveryPartnerId"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}>
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Select partner" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {deliveryPartners.map(p => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    {/* Shipping Address */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3" /> Shipping Address
+                      </Label>
+                      <Controller
+                        name="shippingAddressId"
+                        control={control}
+                        render={({ field }) => {
+                          const selectedCustomerId = watch("customerId");
+                          const selectedBusinessId = watch("businessAccountId");
+                          const customer = customers.find(c => c.id === selectedCustomerId);
+                          const business = businessAccounts.find(b => b.id === selectedBusinessId);
+                          const addresses = [
+                            ...(customer?.addresses || []),
+                            ...(business?.addresses || [])
+                          ];
+
+                          return (
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={!selectedCustomerId && !selectedBusinessId}>
+                              <SelectTrigger className="bg-white">
+                                <SelectValue placeholder="Select shipping address" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {addresses.map(a => (
+                                  <SelectItem key={a.id} value={a.id}>
+                                    {a.street1}, {a.city} ({a.label || "Address"})
+                                  </SelectItem>
+                                ))}
+                                {addresses.length === 0 && (
+                                  <SelectItem value="none" disabled>
+                                    No addresses found
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          );
+                        }}
                       />
                     </div>
                   </div>
@@ -475,8 +618,7 @@ export function OrderForm({
                               : i === 6
                                 ? "col-span-1"
                                 : "col-span-1",
-                        )}
-                      >
+                        )}>
                         {h}
                       </div>
                     ))}
@@ -494,8 +636,7 @@ export function OrderForm({
                       return (
                         <div
                           key={field.id}
-                          className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-zinc-200 transition-colors group"
-                        >
+                          className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-zinc-200 transition-colors group">
                           {/* Product */}
                           <div className="col-span-12 sm:col-span-4">
                             <Controller
@@ -505,10 +646,10 @@ export function OrderForm({
                                 <ProductVariantSelect
                                   variants={variants}
                                   value={variantField.value}
-                                  onValueChange={(val) => {
+                                  onValueChange={val => {
                                     variantField.onChange(val);
                                     const variant = variants.find(
-                                      (v) => v.id === val,
+                                      v => v.id === val,
                                     );
                                     if (variant) {
                                       setValue(
@@ -601,8 +742,7 @@ export function OrderForm({
                                   size="icon"
                                   className="h-8 w-8 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all"
                                   onClick={() => remove(index)}
-                                  disabled={fields.length === 1}
-                                >
+                                  disabled={fields.length === 1}>
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                               </TooltipTrigger>
@@ -628,30 +768,111 @@ export function OrderForm({
                         taxAmount: 0,
                         discountAmount: 0,
                       })
-                    }
-                  >
+                    }>
                     <Plus className="w-3.5 h-3.5 mr-2" />
                     Add Line Item
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Notes Card */}
+              {/* Notes & Terms Card */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="shadow-none border-zinc-200">
+                  <CardHeader className="pb-0">
+                    <SectionHeader
+                      icon={StickyNote}
+                      title="Internal Notes"
+                      description="Optional notes visible only to your team"
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      {...register("notes")}
+                      rows={4}
+                      placeholder="Add instructions, references, or delivery notes…"
+                      className="bg-white resize-none text-sm"
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-none border-zinc-200">
+                  <CardHeader className="pb-0">
+                    <SectionHeader
+                      icon={FileText}
+                      title="Billing Terms & Conditions"
+                      description="Terms visible to the customer (Enterprise)"
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      {...register("termsAndConditions")}
+                      rows={4}
+                      placeholder="Enter billing terms, payment deadlines, or legal conditions…"
+                      className="bg-white resize-none text-sm"
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Attachments Card */}
               <Card className="shadow-none border-zinc-200">
                 <CardHeader className="pb-0">
                   <SectionHeader
-                    icon={StickyNote}
-                    title="Internal Notes"
-                    description="Optional notes visible only to your team"
+                    icon={Paperclip}
+                    title="Order Attachments"
+                    description="Upload relevant documents, images, or POs (Enterprise)"
                   />
                 </CardHeader>
                 <CardContent>
-                  <Textarea
-                    {...register("notes")}
-                    rows={4}
-                    placeholder="Add instructions, references, or delivery notes…"
-                    className="bg-white resize-none text-sm"
-                  />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        className="w-full border-dashed"
+                        disabled={isUploading}
+                        onClick={() =>
+                          document.getElementById("order-file-upload")?.click()
+                        }>
+                        {isUploading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 mr-2" />
+                        )}
+                        {isUploading ? "Uploading..." : "Upload Attachment"}
+                      </Button>
+                      <input
+                        id="order-file-upload"
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </div>
+
+                    {watchAttachments.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {watchAttachments.map((file: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-2 bg-white border border-zinc-200 rounded-lg shadow-sm">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <Paperclip className="w-4 h-4 text-zinc-400 shrink-0" />
+                              <span className="text-xs truncate font-medium text-zinc-700">
+                                {file.fileName}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-zinc-400 hover:text-red-500"
+                              onClick={() => removeAttachment(idx)}>
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -692,6 +913,23 @@ export function OrderForm({
                       value={`− ${fmt(discountTotal, currency)}`}
                       muted
                     />
+                    <div className="pt-2">
+                      <Label className="text-[10px] font-bold uppercase text-zinc-400 mb-1.5 block">
+                        Transport / Shipping Fee
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          className="pl-7 h-9 text-sm font-semibold bg-white border-zinc-200"
+                          {...register("shippingFee", { valueAsNumber: true })}
+                        />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                          $
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   <Separator />
@@ -706,8 +944,7 @@ export function OrderForm({
                     form="order-form"
                     type="submit"
                     className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-2 gap-2 h-11"
-                    disabled={isSubmitting}
-                  >
+                    disabled={isSubmitting}>
                     <Save className="w-4 h-4" />
                     {isSubmitting ? "Creating Order…" : "Create Order"}
                   </Button>
@@ -767,15 +1004,13 @@ export function OrderForm({
               onClick={() => {
                 setShowSuccessModal(false);
                 router.push("/sales/transactions");
-              }}
-            >
+              }}>
               Close
             </Button>
             <Button
               type="button"
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-              onClick={handleDownloadInvoice}
-            >
+              onClick={handleDownloadInvoice}>
               <Download className="w-4 h-4" />
               Download Invoice
             </Button>

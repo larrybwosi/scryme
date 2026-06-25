@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip proxy processing for public routes and auth API
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 

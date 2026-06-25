@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useState, useTransition, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { createExpense } from '../../app/actions/finance';
+import { createExpense } from "../../app/actions/finance";
 import { toast } from "sonner";
 import { PaymentMethod, RecurrenceFrequency } from "@repo/db/client";
 import { Loader2 } from "lucide-react";
@@ -104,9 +104,7 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Expense</DialogTitle>
@@ -134,7 +132,12 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
                   <FormItem>
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,14 +163,16 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {categories.map(category => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
@@ -184,16 +189,18 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Payment Method</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select method" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.values(PaymentMethod).map((method) => (
+                      {Object.values(PaymentMethod).map(method => (
                         <SelectItem key={method} value={method}>
-                          {method.replace('_', ' ')}
+                          {method.replace("_", " ")}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -228,14 +235,16 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Frequency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select frequency" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.values(RecurrenceFrequency).map((freq) => (
+                          {Object.values(RecurrenceFrequency).map(freq => (
                             <SelectItem key={freq} value={freq}>
                               {freq}
                             </SelectItem>
@@ -291,7 +300,10 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
               )}
             />
             <DialogFooter>
-              <Button type="submit" className="w-full bg-[#34A853] hover:bg-[#2d9147]" disabled={isPending}>
+              <Button
+                type="submit"
+                className="w-full bg-[#34A853] hover:bg-[#2d9147]"
+                disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Expense
               </Button>

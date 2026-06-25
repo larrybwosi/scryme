@@ -7,11 +7,11 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { AuthService } from "../../auth/auth.service";
+import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
 import {
   validateDeviceKey,
   createMemberToken,
-  type V2ApiContext,
-} from "@repo/shared/server";
+} from "@repo/shared/api/v2/services/auth";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
@@ -56,24 +56,88 @@ export class BakeryService {
       take: 100,
     });
   }
+  /**
+   * Calculates production statistics for a given organization and date range.
+   * ⚡ Bolt: Optimized using database-level aggregation and grouping to avoid O(N) in-memory processing.
+   * This reduces memory usage and network overhead, especially for organizations with many batches.
+   */
+  async getProductionStats(organizationId: string, startDate: Date, endDate: Date) {
+    const where = {
+      organizationId,
+      completedAt: {
+        gte: startDate,
+        lte: endDate,
+      },
+      status: "COMPLETED" as any,
+    };
+
+    // Use Prisma's aggregate and groupBy for efficient database-level calculations
+    const [aggregation, groups] = await Promise.all([
+      this.prisma.client.batch.aggregate({
+        where,
+        _count: { _all: true },
+        _sum: { wasteQuantity: true },
+      }),
+      this.prisma.client.batch.groupBy({
+        where,
+        by: ["recipeId"],
+        _sum: {
+          actualQuantity: true,
+          wasteQuantity: true,
+        },
+      }),
+    ]);
+
+    const recipeIds = groups.map((g) => g.recipeId);
+
+    // Fetch only necessary recipe details for the recipes found in the batches
+    const recipes = await this.prisma.client.recipe.findMany({
+      where: { id: { in: recipeIds } },
+      select: {
+        id: true,
+        name: true,
+        systemUnit: { select: { symbol: true } },
+        orgUnit: { select: { symbol: true } },
+      },
+    });
+
+    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+
+    const recipeStats = groups.map((g) => {
+      const recipe = recipeMap.get(g.recipeId);
+      return {
+        name: recipe?.name || "Unknown",
+        quantity: Number(g._sum.actualQuantity || 0),
+        unit:
+          recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
+        waste: Number(g._sum.wasteQuantity || 0),
+      };
+    });
+
+    const topRecipes = [...recipeStats]
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
+    return {
+      totalBatches: aggregation._count._all,
+      totalWaste: Number(aggregation._sum.wasteQuantity || 0),
+      topRecipes,
+      recipeStats,
+    };
+  }
+
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    const [batches, recipes, bakers] = await Promise.all([
+    const [batches, recipes, bakers, stockItems, recipesList] = await Promise.all([
       this.prisma.client.batch.findMany({
         where: { organizationId },
-        take: 5,
+        take: 10,
         orderBy: { scheduledStartAt: "desc" },
-        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
-        select: {
-          id: true,
-          batchNumber: true,
-          status: true,
-          scheduledStartAt: true,
-          productionDate: true,
+        include: {
           recipe: { select: { id: true, name: true } },
           leadBaker: {
-            select: {
-              member: { select: { user: { select: { name: true } } } },
+            include: {
+              member: { include: { user: { select: { name: true } } } },
             },
           },
         },
@@ -82,67 +146,129 @@ export class BakeryService {
       this.prisma.client.bakeryBaker.count({
         where: { bakerySettings: { organizationId } },
       }),
+      this.prisma.client.productVariantStock.findMany({
+        where: {
+          organizationId,
+          variant: { product: { type: "RAW_MATERIAL" as any } },
+        },
+        include: {
+          variant: { include: { baseUnit: true, baseOrgUnit: true } },
+        },
+      }),
+      this.prisma.client.recipe.findMany({
+        where: { organizationId },
+        include: { category: true },
+      }),
     ]);
 
+    const lowStockIngredients = stockItems
+      .filter(s => Number(s.availableStock) <= Number(s.reorderPoint || 0))
+      .map(s => ({
+        id: s.id,
+        name: s.variant.name,
+        sku: s.variant.sku,
+        current: Number(s.availableStock),
+        reorder: Number(s.reorderPoint || 0),
+        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
+      }));
+
+    const recipesByCategory: Record<string, number> = {};
+    recipesList.forEach(r => {
+      const catName = r.category?.name || "Uncategorized";
+      recipesByCategory[catName] = (recipesByCategory[catName] || 0) + 1;
+    });
+
+    const totalInventoryValue = stockItems.reduce(
+      (acc, s) => acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
+      0,
+    );
+
     return {
-      recentBatches: batches,
+      recentBatches: batches.map(b => ({
+        ...b,
+        productionDate: b.scheduledStartAt,
+      })),
       recipesCount: recipes,
       bakersCount: bakers,
-      averageRecipeCost: 0,
-      recipesByCategory: {},
-      totalInventoryValue: 0,
+      averageRecipeCost: recipesList.length
+        ? recipesList.reduce((acc, r) => acc + Number(r.costPrice || 0), 0) / recipesList.length
+        : 0,
+      recipesByCategory,
+      totalInventoryValue,
+      lowStockIngredients,
+      stockData: stockItems.slice(0, 10).map(s => ({
+        id: s.id,
+        name: s.variant.name,
+        current: Number(s.availableStock),
+        reorder: Number(s.reorderPoint || 0),
+        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
+      })),
       summary: {
         totalBatches: batches.length,
         activeBatches: batches.filter((b: any) => b.status === "IN_PROGRESS")
           .length,
-        completedToday: batches.filter((b: any) => b.status === "COMPLETED")
-          .length,
-        lowStockItems: 0,
+        completedToday: batches.filter((b: any) => {
+            const today = new Date();
+            return b.status === "COMPLETED" &&
+                   b.completedAt &&
+                   b.completedAt.toDateString() === today.toDateString();
+        }).length,
+        lowStockItems: lowStockIngredients.length,
       },
     };
   }
 
   /**
    * List all ingredients (raw materials) for the bakery.
+   * Includes both RAW_MATERIAL products and products produced by recipes.
    */
   async getIngredients(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    return this.prisma.client.productVariant.findMany({
+    const variants = await this.prisma.client.productVariant.findMany({
       where: {
         product: {
           organizationId,
-          type: "RAW_MATERIAL" as any,
         },
+        OR: [
+          { product: { type: "RAW_MATERIAL" as any } },
+          { producedByRecipe: { isNot: null } },
+        ],
       },
-      select: {
-        id: true,
-        name: true,
-        sku: true,
-        buyingPrice: true,
-        reorderPoint: true,
-        reorderQty: true,
-        isActive: true,
-        tags: true,
+      include: {
         product: {
-          select: {
-            id: true,
-            name: true,
-            category: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+          include: {
+            category: true,
           },
         },
-        baseUnit: {
-          select: {
-            id: true,
-            name: true,
-            symbol: true,
-          },
-        },
+        baseUnit: true,
+        baseOrgUnit: true,
+        variantStocks: true,
       },
+    });
+
+    return variants.map(v => {
+      const currentStock = v.variantStocks.reduce(
+        (sum, s) => sum + Number(s.availableStock || 0),
+        0,
+      );
+      return {
+        id: v.id,
+        productId: v.productId,
+        name: v.name || v.product.name,
+        sku: v.sku,
+        unitPrice: Number(v.buyingPrice || 0),
+        currentStock,
+        reorderLevel: v.reorderPoint || 0,
+        maxStock: v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
+        unit: v.baseUnit || v.baseOrgUnit || { symbol: "" },
+        category: v.product.category,
+        tags: v.tags,
+        lastRestocked: v.updatedAt,
+        averageUsagePerWeek: 0,
+        totalUsed: 0,
+      };
     });
   }
 
@@ -385,19 +511,48 @@ export class BakeryService {
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const { ingredients, ...rest } = data;
+
     return this.prisma.client.recipe.create({
       data: {
-        ...data,
+        ...rest,
         organizationId,
+        ingredients: ingredients
+          ? {
+              create: ingredients.map((ing: any) => ({
+                ingredientVariantId: ing.ingredientVariantId,
+                quantity: ing.quantity,
+                systemUnitId: ing.systemUnitId,
+                orgUnitId: ing.orgUnitId,
+                preparationNotes: ing.preparationNotes,
+              })),
+            }
+          : undefined,
       },
     });
   }
 
   async updateRecipe(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    const { ingredients, ...rest } = data;
+
     return this.prisma.client.recipe.update({
       where: { id, organizationId },
-      data,
+      data: {
+        ...rest,
+        ingredients: ingredients
+          ? {
+              deleteMany: {},
+              create: ingredients.map((ing: any) => ({
+                ingredientVariantId: ing.ingredientVariantId,
+                quantity: ing.quantity,
+                systemUnitId: ing.systemUnitId,
+                orgUnitId: ing.orgUnitId,
+                preparationNotes: ing.preparationNotes,
+              })),
+            }
+          : undefined,
+      },
     });
   }
 
@@ -571,7 +726,7 @@ export class BakeryService {
     const waste = Number(wasteQuantity || 0);
     const netQuantity = Math.max(0, grossQuantity - waste);
 
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       // 1. Update batch status
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
@@ -747,13 +902,44 @@ export class BakeryService {
   }
 
   // Templates
+  /**
+   * List all production templates.
+   * ⚡ Bolt: Optimized query by pruning deep relations (Member/User) and adding required relations (schedules/assistantBakers).
+   * This reduces payload size significantly while ensuring the frontend has all required data in a single request.
+   */
   async getTemplates(ctx: V2ApiContext) {
     const { organizationId } = ctx;
     return this.prisma.client.template.findMany({
       where: { organizationId },
       include: {
         recipe: true,
-        leadBaker: { include: { member: { include: { user: true } } } },
+        schedules: true,
+        assistantBakers: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
+        leadBaker: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -849,12 +1035,30 @@ export class BakeryService {
     });
   }
 
+  /**
+   * List all bakers associated with the organization's bakery settings.
+   * ⚡ Bolt: Optimized query by pruning Member and User relations to only include display fields.
+   */
   async getBakers(ctx: V2ApiContext) {
     const { organizationId } = ctx;
     return this.prisma.client.bakeryBaker.findMany({
       where: { bakerySettings: { organizationId } },
-      include: {
-        member: { include: { user: true } },
+      select: {
+        id: true,
+        bakerySettingsId: true,
+        memberId: true,
+        specialties: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        member: {
+          select: {
+            id: true,
+            user: {
+              select: { id: true, name: true, email: true, image: true },
+            },
+          },
+        },
       },
     });
   }
@@ -1060,7 +1264,7 @@ export class BakeryService {
     const { organizationId, memberId } = ctx;
     const { transactionId, partnerId, driverId, notes } = data;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const transaction = await tx.transaction.findFirst({
         where: { id: transactionId, organizationId },
       });
@@ -1093,7 +1297,7 @@ export class BakeryService {
     const { organizationId, memberId } = ctx;
     const { fulfillmentId, status, notes } = data;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const fulfillment = await tx.fulfillment.findFirst({
         where: {
           id: fulfillmentId,
@@ -1131,6 +1335,113 @@ export class BakeryService {
     });
   }
 
+  async createIngredient(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
+    const {
+      name,
+      sku,
+      categoryId,
+      description,
+      buyingPrice,
+      reorderPoint,
+      baseUnitId,
+      baseOrgUnitId,
+      stockingUnitId,
+      stockingOrgUnitId,
+    } = data;
+
+    return this.prisma.client.$transaction(async tx => {
+      const product = await tx.product.create({
+        data: {
+          name,
+          description,
+          categoryId,
+          organizationId,
+          sku: sku || `RM-${Date.now()}`,
+          type: "RAW_MATERIAL" as any,
+          variants: {
+            create: [
+              {
+                name,
+                sku: sku || `RM-${Date.now()}-VAR`,
+                buyingPrice: buyingPrice || 0,
+                reorderPoint: reorderPoint || 0,
+                baseUnitId,
+                baseOrgUnitId,
+                stockingUnitId,
+                stockingOrgUnitId,
+                attributes: {},
+              },
+            ],
+          },
+        },
+        include: { variants: true },
+      });
+
+      return product;
+    });
+  }
+
+  async updateIngredient(ctx: V2ApiContext, id: string, data: any) {
+    const { organizationId } = ctx;
+    const {
+      name,
+      sku,
+      categoryId,
+      description,
+      buyingPrice,
+      reorderPoint,
+      baseUnitId,
+      baseOrgUnitId,
+      stockingUnitId,
+      stockingOrgUnitId,
+    } = data;
+
+    return this.prisma.client.$transaction(async tx => {
+      // Find the product first to get its variant
+      const product = await tx.product.findFirst({
+        where: { id, organizationId },
+        include: { variants: true },
+      });
+
+      if (!product) throw new NotFoundException("Ingredient not found");
+
+      const updatedProduct = await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          categoryId,
+        },
+      });
+
+      if (product.variants.length > 0) {
+        await tx.productVariant.update({
+          where: { id: product.variants[0].id },
+          data: {
+            name,
+            sku,
+            buyingPrice,
+            reorderPoint,
+            baseUnitId,
+            baseOrgUnitId,
+            stockingUnitId,
+            stockingOrgUnitId,
+          },
+        });
+      }
+
+      return updatedProduct;
+    });
+  }
+
+  async deleteIngredient(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+    return this.prisma.client.product.delete({
+      where: { id, organizationId },
+    });
+  }
+
   async receiveIngredients(ctx: V2ApiContext, data: any) {
     const { organizationId, memberId, locationId } = ctx;
     const { lines, receiptReference, receiptDate, notes } = data;
@@ -1138,7 +1449,7 @@ export class BakeryService {
     if (!locationId)
       throw new BadRequestException("Location ID required in context");
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const receipt = await tx.stockReceipt.create({
         data: {
           organization: { connect: { id: organizationId } },
@@ -1234,7 +1545,11 @@ export class BakeryService {
     try {
       const { data: release } = await axios.get(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
-        { headers },
+        {
+          headers,
+          timeout: 10000,
+          maxContentLength: 5 * 1024 * 1024, // 5MB limit for release metadata
+        },
       );
 
       // Tauri updater expects 204 if already on the latest version
@@ -1285,6 +1600,8 @@ export class BakeryService {
             const sigResponse = await axios.get(sigAsset.browser_download_url, {
               headers,
               responseType: "text",
+              timeout: 5000,
+              maxContentLength: 1024 * 1024, // 1MB limit for signature
             });
             signature = sigResponse.data.trim();
             break;

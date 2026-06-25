@@ -20,6 +20,7 @@ import { ReceiptPdfDocument } from '@/components/receipt-pdf';
 import { PDFKitchenTicket } from '@/components/receipts/pdf-kitchen-ticket';
 import { usePdfActions } from '@/hooks/use-pdf-actions';
 import { ReceiptPreviewWrapper } from '@/components/pos/receipt-preview-wrapper';
+import { ThermalReceiptPreview } from '@/components/pos/thermal-receipt-preview';
 import { getBusinessConfig } from '@/lib/business-configs';
 import {
   Download,
@@ -252,6 +253,7 @@ function KitchenTicketPreview({ order, config }: { order: any; config: KitchenTi
 
 const RECEIPT_TABS = [
   { value: 'branding', label: 'Branding', icon: Palette },
+  { value: 'style', label: 'Style', icon: Layout },
   { value: 'content', label: 'Content', icon: FileText },
   { value: 'compliance', label: 'Legal', icon: BadgeCheck },
   { value: 'print', label: 'Print', icon: Printer },
@@ -337,82 +339,6 @@ function ReceiptSettings({
               )}
             </Section>
 
-            <Section title="Layout & Typography" icon={Layout} description="Paper size and font preferences">
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                    Paper Size
-                  </Label>
-                  <Select value={config.paperSize} onValueChange={v => updateConfig('paperSize', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="80mm">80mm (Standard)</SelectItem>
-                      <SelectItem value="58mm">58mm (Compact)</SelectItem>
-                      <SelectItem value="Letter">Letter / A4</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                    Font Style
-                  </Label>
-                  <Select value={config.fontFamily} onValueChange={v => updateConfig('fontFamily', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monospace">Monospace</SelectItem>
-                      <SelectItem value="sans">Sans Serif</SelectItem>
-                      <SelectItem value="serif">Serif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                    Font Size
-                  </Label>
-                  <Select value={config.fontSize} onValueChange={v => updateConfig('fontSize', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                    Alignment
-                  </Label>
-                  <Select value={config.textAlignment} onValueChange={v => updateConfig('textAlignment', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="mt-3 space-y-1.5">
-                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                  Item Spacing — {config.itemSpacing || 0}px
-                </Label>
-                <Slider
-                  value={[config.itemSpacing || 0]}
-                  min={0}
-                  max={20}
-                  step={1}
-                  onValueChange={v => updateConfig('itemSpacing', v[0])}
-                />
-              </div>
-            </Section>
-
             <Section title="Business Contact" icon={Store} description="Contact information printed on receipt">
               <ToggleRow label="Address" checked={config.showAddress} onChange={v => updateConfig('showAddress', v)} />
               {config.showAddress && (
@@ -450,6 +376,227 @@ function ReceiptSettings({
           </>
         )}
 
+        {tab === 'style' && (
+          <>
+            <Section title="Layout & Dimensions" icon={Layout} description="Paper size and spacing control">
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Paper Size
+                  </Label>
+                  <Select value={config.paperSize} onValueChange={v => updateConfig('paperSize', v)}>
+                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="80mm">80mm (Standard)</SelectItem>
+                      <SelectItem value="58mm">58mm (Compact)</SelectItem>
+                      <SelectItem value="Letter">Letter / A4</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Alignment
+                  </Label>
+                  <Select value={config.textAlignment} onValueChange={v => updateConfig('textAlignment', v)}>
+                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="center">Center</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                  Page Padding — {config.padding || 0}px
+                </Label>
+                <Slider
+                  value={[config.padding || 0]}
+                  min={0}
+                  max={40}
+                  step={2}
+                  onValueChange={v => updateConfig('padding', v[0])}
+                />
+              </div>
+              <div className="mt-3 space-y-1.5">
+                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                  Item Spacing — {config.itemSpacing || 0}px
+                </Label>
+                <Slider
+                  value={[config.itemSpacing || 0]}
+                  min={0}
+                  max={20}
+                  step={1}
+                  onValueChange={v => updateConfig('itemSpacing', v[0])}
+                />
+              </div>
+            </Section>
+
+            <Section title="Typography" icon={FileText} description="Granular font size control">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                  Font Family
+                </Label>
+                <Select value={config.fontFamily} onValueChange={v => updateConfig('fontFamily', v)}>
+                  <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monospace">Monospace</SelectItem>
+                    <SelectItem value="sans">Sans Serif</SelectItem>
+                    <SelectItem value="serif">Serif</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Title — {config.titleFontSize}px
+                  </Label>
+                  <Slider
+                    value={[config.titleFontSize]}
+                    min={10}
+                    max={24}
+                    step={1}
+                    onValueChange={v => updateConfig('titleFontSize', v[0])}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Header — {config.headerFontSize}px
+                  </Label>
+                  <Slider
+                    value={[config.headerFontSize]}
+                    min={6}
+                    max={16}
+                    step={1}
+                    onValueChange={v => updateConfig('headerFontSize', v[0])}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Body — {config.bodyFontSize}px
+                  </Label>
+                  <Slider
+                    value={[config.bodyFontSize]}
+                    min={6}
+                    max={14}
+                    step={1}
+                    onValueChange={v => updateConfig('bodyFontSize', v[0])}
+                  />
+                </div>
+              </div>
+            </Section>
+
+            <Section title="Templates & Presets" icon={Layers} description="Overall visual style">
+              <div className="grid grid-cols-3 gap-2">
+                {['standard', 'modern', 'minimal'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => updateConfig('template', t)}
+                    className={cn(
+                      'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
+                      config.template === t
+                        ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
+                        : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                    )}
+                  >
+                    <div className="w-full aspect-[3/4] rounded-md bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center">
+                      <Layout className="w-5 h-5 opacity-20" />
+                    </div>
+                    <span className="text-[10px] font-medium capitalize">{t}</span>
+                  </button>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Colors & Borders" icon={Palette} description="Enterprise brand colors">
+              <ToggleRow
+                label="Show Outer Border"
+                checked={config.showBorder}
+                onChange={v => updateConfig('showBorder', v)}
+              />
+              {config.showBorder && (
+                <div className="mb-4 px-1">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Border Color
+                  </Label>
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      type="color"
+                      value={config.borderColor}
+                      onChange={e => updateConfig('borderColor', e.target.value)}
+                      className="w-8 h-8 rounded-md cursor-pointer border border-zinc-700 bg-zinc-900 overflow-hidden"
+                    />
+                    <Input
+                      value={config.borderColor}
+                      onChange={e => updateConfig('borderColor', e.target.value)}
+                      className="h-8 text-[11px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Primary Color
+                  </Label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={config.primaryColor}
+                      onChange={e => updateConfig('primaryColor', e.target.value)}
+                      className="w-8 h-8 rounded-md cursor-pointer border border-zinc-700 bg-zinc-900 overflow-hidden"
+                    />
+                    <Input
+                      value={config.primaryColor}
+                      onChange={e => updateConfig('primaryColor', e.target.value)}
+                      className="h-8 text-[11px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 font-mono"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Secondary Color
+                  </Label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={config.secondaryColor}
+                      onChange={e => updateConfig('secondaryColor', e.target.value)}
+                      className="w-8 h-8 rounded-md cursor-pointer border border-zinc-700 bg-zinc-900 overflow-hidden"
+                    />
+                    <Input
+                      value={config.secondaryColor}
+                      onChange={e => updateConfig('secondaryColor', e.target.value)}
+                      className="h-8 text-[11px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 space-y-1.5">
+                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                  Divider Style
+                </Label>
+                <Select value={config.dividerStyle} onValueChange={v => updateConfig('dividerStyle', v)}>
+                  <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="solid">Solid</SelectItem>
+                    <SelectItem value="dashed">Dashed</SelectItem>
+                    <SelectItem value="dotted">Dotted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </Section>
+          </>
+        )}
+
         {tab === 'content' && (
           <>
             <Section title="Order Information" icon={FileText} description="Transaction details visible on receipt">
@@ -457,6 +604,24 @@ function ReceiptSettings({
                 label="Order Number"
                 checked={config.showOrderNumber}
                 onChange={v => updateConfig('showOrderNumber', v)}
+              />
+              {config.showOrderNumber && (
+                <div className="mb-4 px-1">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Order Prefix
+                  </Label>
+                  <Input
+                    value={config.orderNumberPrefix}
+                    onChange={e => updateConfig('orderNumberPrefix', e.target.value)}
+                    placeholder="ORD-"
+                    className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 rounded-md"
+                  />
+                </div>
+              )}
+              <ToggleRow
+                label="Transaction ID"
+                checked={config.showTransactionId}
+                onChange={v => updateConfig('showTransactionId', v)}
               />
               <ToggleRow
                 label="Customer Name"
@@ -556,6 +721,26 @@ function ReceiptSettings({
 
         {tab === 'compliance' && (
           <>
+            <Section title="E-Signature" icon={BadgeCheck} description="Customer signature field">
+              <ToggleRow
+                label="Show Signature Line"
+                checked={config.showSignatureLine}
+                onChange={v => updateConfig('showSignatureLine', v)}
+              />
+              {config.showSignatureLine && (
+                <div className="mt-3 px-1">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Signature Label
+                  </Label>
+                  <Input
+                    value={config.signatureLineText}
+                    onChange={e => updateConfig('signatureLineText', e.target.value)}
+                    placeholder="Customer Signature"
+                    className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 rounded-md"
+                  />
+                </div>
+              )}
+            </Section>
             <Section title="Tax Registration" icon={Building2} description="Tax & VAT identification numbers">
               <ToggleRow
                 label="Tax Number"
@@ -1392,26 +1577,22 @@ export default function ReceiptSettingsPage() {
 
         {/* Floating toolbar */}
         <div className="absolute top-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/60 shadow-2xl rounded-full px-3 py-1.5">
-          {mode === 'kitchen' && (
-            <>
-              <button
-                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200"
-                onClick={() => setPreviewScale(p => [Math.max(50, p[0] - 10)])}
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-[11px] font-mono font-semibold tabular-nums w-10 text-center text-zinc-400">
-                {previewScale[0]}%
-              </span>
-              <button
-                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200"
-                onClick={() => setPreviewScale(p => [Math.min(150, p[0] + 10)])}
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-              </button>
-              <div className="w-px h-4 bg-zinc-700 mx-1" />
-            </>
-          )}
+          <button
+            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200"
+            onClick={() => setPreviewScale(p => [Math.max(50, p[0] - 10)])}
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-[11px] font-mono font-semibold tabular-nums w-10 text-center text-zinc-400">
+            {previewScale[0]}%
+          </span>
+          <button
+            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200"
+            onClick={() => setPreviewScale(p => [Math.min(150, p[0] + 10)])}
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-zinc-700 mx-1" />
           <button
             onClick={() => setPreviewBg(previewBg === 'dark' ? 'light' : 'dark')}
             className={cn(
@@ -1427,6 +1608,24 @@ export default function ReceiptSettingsPage() {
 
         {/* Action buttons */}
         <div className="absolute top-5 right-5 z-20 flex gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              const element = document.getElementById('preview-container');
+              if (element) {
+                const requestFullscreen =
+                  (element as any).requestFullscreen ||
+                  (element as any).webkitRequestFullscreen ||
+                  (element as any).mozRequestFullScreen ||
+                  (element as any).msRequestFullscreen;
+                if (requestFullscreen) requestFullscreen.call(element);
+              }
+            }}
+            className="h-8 w-8 p-0 bg-zinc-900/50 backdrop-blur hover:bg-zinc-800 text-zinc-400 rounded-lg"
+          >
+            <Layers className="w-4 h-4" />
+          </Button>
           <Button
             size="sm"
             disabled={isPrinting || isDownloading}
@@ -1502,24 +1701,47 @@ export default function ReceiptSettingsPage() {
 
         {/* Preview canvas */}
         <div
+          id="preview-container"
           className={cn(
             'flex-1 overflow-hidden flex flex-col items-center justify-center pt-20 pb-16 px-8',
             mode === 'receipt' ? 'h-full' : ''
           )}
         >
           {mode === 'receipt' ? (
-            <div className="w-full h-full max-w-[480px] shadow-[0_32px_80px_rgba(0,0,0,0.6)] rounded-xl overflow-hidden border border-white/5 relative ring-1 ring-inset ring-white/5">
-              <ReceiptPreviewWrapper
-                document={
-                  <ReceiptPdfDocument
+            <div
+              className="w-full h-full max-w-[480px] shadow-[0_32px_80px_rgba(0,0,0,0.6)] rounded-xl overflow-hidden border border-white/5 relative ring-1 ring-inset ring-white/5 transition-transform duration-300 ease-out"
+              style={{
+                transform: `scale(${previewScale[0] / 100})`,
+                transformOrigin: 'center center',
+              }}
+            >
+              {config.paperSize === 'Letter' ? (
+                <ReceiptPreviewWrapper
+                  document={
+                    <ReceiptPdfDocument
+                      order={sampleOrder}
+                      settings={{ ...settings, receiptConfig: config }}
+                      qrCodeUrl={qrCodeDataUrl}
+                      barcodeUrl={barcodeUrl}
+                      branchName="Main Branch"
+                    />
+                  }
+                />
+              ) : (
+                <div className="bg-white h-full w-full overflow-auto flex justify-center py-10 no-scrollbar">
+                  <ThermalReceiptPreview
                     order={sampleOrder}
-                    settings={{ ...settings, receiptConfig: config }}
-                    qrCodeUrl={qrCodeDataUrl}
-                    barcodeUrl={barcodeUrl}
+                    config={config}
+                    businessName={settings.businessName}
+                    businessSlogan={settings.businessSlogan}
+                    address={settings.address}
+                    phone={settings.phone}
+                    email={settings.email}
+                    website={settings.website}
                     branchName="Main Branch"
                   />
-                }
-              />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex-1 overflow-auto w-full flex justify-center">

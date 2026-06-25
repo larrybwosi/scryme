@@ -432,6 +432,7 @@ pub fn run() {
             #[cfg(not(feature = "standalone"))]
             shift_manager::sync_shifts_command,
             auth_store::set_device_config,
+            auth_store::update_base_url,
             auth_store::login_member,
             auth_store::logout_member,
             auth_store::switch_active_member,
@@ -465,6 +466,7 @@ pub fn run() {
             sales_store::initiate_mpesa_payment_command,
             sales_store::invalidate_sale_command,
             finance_store::register_petty_cash_command,
+            finance_store::upload_file_command,
             sales_store::set_sync_interval_command,
             auth_store::set_negative_stock_command,
             #[cfg(not(feature = "standalone"))]

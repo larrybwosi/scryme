@@ -1,10 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { RedisService } from '@/redis/redis.service';
-import { CreateInvitationDto, InvitationQueryDto, AcceptInvitationDto } from '../dto/invitation.dto';
-import { InvitationStatus, AuditLogAction, AuditEntityType } from '@repo/db';
-import { v4 as uuidv4 } from 'uuid';
-import { emitEvent } from '@repo/windmill/server';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "@/redis/redis.service";
+import {
+  CreateInvitationDto,
+  InvitationQueryDto,
+  AcceptInvitationDto,
+} from "../dto/invitation.dto";
+import { InvitationStatus, AuditLogAction, AuditEntityType } from "@repo/db";
+import { v4 as uuidv4 } from "uuid";
+import { emitEvent } from "@repo/windmill/server";
 
 @Injectable()
 export class InvitationUseCase {
@@ -19,7 +27,7 @@ export class InvitationUseCase {
 
     const where: any = { organizationId };
     if (status) where.status = status;
-    if (email) where.email = { contains: email, mode: 'insensitive' };
+    if (email) where.email = { contains: email, mode: "insensitive" };
 
     const [total, items] = await Promise.all([
       this.prisma.client.invitation.count({ where }),
@@ -27,7 +35,7 @@ export class InvitationUseCase {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
     ]);
 
@@ -37,23 +45,32 @@ export class InvitationUseCase {
     };
   }
 
-  async createInvitation(organizationId: string, dto: CreateInvitationDto, inviterId: string, inviterUserId: string) {
+  async createInvitation(
+    organizationId: string,
+    dto: CreateInvitationDto,
+    inviterId: string,
+    inviterUserId: string,
+  ) {
     const { email, role, expiresAt, ...otherData } = dto;
 
     // Check if already a member
     const existingMember = await this.prisma.client.member.findFirst({
       where: { organizationId, user: { email }, deletedAt: null },
     });
-    if (existingMember) throw new BadRequestException('User is already a member');
+    if (existingMember)
+      throw new BadRequestException("User is already a member");
 
     // Check if pending invitation exists
     const existingInvite = await this.prisma.client.invitation.findFirst({
       where: { organizationId, email, status: InvitationStatus.PENDING },
     });
-    if (existingInvite) throw new BadRequestException('Invitation already sent to this email');
+    if (existingInvite)
+      throw new BadRequestException("Invitation already sent to this email");
 
     const token = uuidv4();
-    const expiryDate = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
+    const expiryDate = expiresAt
+      ? new Date(expiresAt)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
 
     const invitation = await this.prisma.client.invitation.create({
       data: {
@@ -76,17 +93,19 @@ export class InvitationUseCase {
         entityType: AuditEntityType.MEMBER,
         entityId: invitation.id,
         description: `Sent invitation to ${email} with role ${role}`,
-      }
+      },
     });
 
     // Windmill Event for Email Sending
-    emitEvent(organizationId, 'member.invitation.created', {
+    emitEvent(organizationId, "member.invitation.created", {
       invitationId: invitation.id,
       email,
       role,
       token,
       expiresAt: invitation.expiresAt,
-    }).catch(err => console.error('[Windmill] InvitationCreated error:', err));
+    }).catch((err) =>
+      console.error("[Windmill] InvitationCreated error:", err),
+    );
 
     return invitation;
   }
@@ -96,7 +115,8 @@ export class InvitationUseCase {
       where: { id, organizationId, status: InvitationStatus.PENDING },
     });
 
-    if (!invitation) throw new NotFoundException('Pending invitation not found');
+    if (!invitation)
+      throw new NotFoundException("Pending invitation not found");
 
     const updated = await this.prisma.client.invitation.update({
       where: { id },
@@ -111,7 +131,7 @@ export class InvitationUseCase {
         entityType: AuditEntityType.MEMBER,
         entityId: updated.id,
         description: `Revoked invitation for ${invitation.email}`,
-      }
+      },
     });
 
     return updated;
@@ -120,11 +140,11 @@ export class InvitationUseCase {
   async acceptInvitation(dto: AcceptInvitationDto, userId: string) {
     const invitation = await this.prisma.client.invitation.findUnique({
       where: { token: dto.token },
-      include: { organization: true }
+      include: { organization: true },
     });
 
     if (!invitation || invitation.status !== InvitationStatus.PENDING) {
-      throw new BadRequestException('Invalid or expired invitation');
+      throw new BadRequestException("Invalid or expired invitation");
     }
 
     if (invitation.expiresAt < new Date()) {
@@ -132,7 +152,7 @@ export class InvitationUseCase {
         where: { id: invitation.id },
         data: { status: InvitationStatus.EXPIRED },
       });
-      throw new BadRequestException('Invitation has expired');
+      throw new BadRequestException("Invitation has expired");
     }
 
     // Logic to convert invitation to member
@@ -144,17 +164,28 @@ export class InvitationUseCase {
           userId: userId,
           role: invitation.role,
           isActive: true,
-          membershipStatus: 'ACTIVE',
-          departmentMemberships: (invitation.departmentIds && invitation.departmentIds.length > 0) ? {
-            create: invitation.departmentIds.map(dId => ({ departmentId: dId }))
-          } : undefined,
-          customRoles: (invitation.customRoleIds && invitation.customRoleIds.length > 0) ? {
-            connect: invitation.customRoleIds.map(id => ({ id }))
-          } : undefined,
-          roleGroups: (invitation.roleGroupIds && invitation.roleGroupIds.length > 0) ? {
-            connect: invitation.roleGroupIds.map(id => ({ id }))
-          } : undefined,
-        }
+          membershipStatus: "ACTIVE",
+          departmentMemberships:
+            invitation.departmentIds && invitation.departmentIds.length > 0
+              ? {
+                  create: invitation.departmentIds.map((dId) => ({
+                    departmentId: dId,
+                  })),
+                }
+              : undefined,
+          customRoles:
+            invitation.customRoleIds && invitation.customRoleIds.length > 0
+              ? {
+                  connect: invitation.customRoleIds.map((id) => ({ id })),
+                }
+              : undefined,
+          roleGroups:
+            invitation.roleGroupIds && invitation.roleGroupIds.length > 0
+              ? {
+                  connect: invitation.roleGroupIds.map((id) => ({ id })),
+                }
+              : undefined,
+        },
       });
 
       // Update invitation status
