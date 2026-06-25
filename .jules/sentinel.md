@@ -124,3 +124,8 @@
 - Always implement HMAC-SHA256 signature verification for any webhook or callback endpoint.
 - Use `crypto.timingSafeEqual` for signature comparisons to prevent timing attacks.
 - Enforce strict "fail-secure" behavior in production: reject requests if the verification secret is missing from the configuration.
+
+## 2026-06-25 - [Hardened Scryme Webhook Signature Verification]
+**Vulnerability:** The Scryme webhook handler used a standard string comparison (`!==`) to verify HMAC signatures, which is vulnerable to timing attacks. An attacker could potentially brute-force the signature by measuring response times.
+**Learning:** Even when using strong cryptographic hashes like SHA-256, the comparison of the resulting digests must also be cryptographically secure. Constant-time comparison is essential for all signature and token validations.
+**Prevention:** Always use `crypto.timingSafeEqual` for comparing signatures, tokens, or any sensitive cryptographic digests. Ensure that length checks are performed before the constant-time comparison to avoid Node.js runtime errors while maintaining security.
