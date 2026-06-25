@@ -38,6 +38,7 @@ export const useMpesaSearch = (query: string) => {
 export const useMpesaClaim = () => {
   const queryClient = useQueryClient();
   const { currentMember, apiUrl } = useAuthStore();
+  const memberId = currentMember?.id;
 
   return useMutation({
     mutationFn: async (params: {
@@ -46,7 +47,10 @@ export const useMpesaClaim = () => {
     }) => {
       const response = await axios.post(
         `${apiUrl}/api/v2/payments/mpesa/claim`,
-        params,
+        {
+          ...params,
+          memberId,
+        },
       );
       return response.data;
     },
@@ -63,12 +67,17 @@ export const useMpesaClaim = () => {
 };
 
 export const useMpesaVerifySafaricom = () => {
-  const { apiUrl } = useAuthStore();
+  const { apiUrl, currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
+
   return useMutation({
     mutationFn: async (params: { transactionCode: string }) => {
       const response = await axios.post(
         `${apiUrl}/api/v2/payments/mpesa/verify-safaricom`,
-        params,
+        {
+          ...params,
+          memberId,
+        },
       );
       return response.data;
     },
