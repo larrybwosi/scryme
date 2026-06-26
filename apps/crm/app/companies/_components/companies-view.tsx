@@ -12,6 +12,7 @@ import {
   ArrowUpDown,
   FileText,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
@@ -35,6 +36,21 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 const PAGE_SIZE = 10;
 
@@ -45,6 +61,8 @@ export function CompaniesView() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
 
   // Use SWR for data fetching
   const {
@@ -84,37 +102,34 @@ export function CompaniesView() {
   const endItem = Math.min(safeCurrentPage * PAGE_SIZE, filtered.length);
 
   const handleDelete = async (id: string) => {
-    if (
-      typeof window !== "undefined" &&
-      window.confirm("Are you sure you want to delete this company?")
-    ) {
-      try {
-        setDeletingId(id);
+    try {
+      setDeletingId(id);
 
-        // Optimistic update - remove from UI immediately
-        const updatedCompanies = companies.filter((c: any) => c.id !== id);
-        mutate(updatedCompanies, false);
+      // Optimistic update - remove from UI immediately
+      const updatedCompanies = companies.filter((c: any) => c.id !== id);
+      mutate(updatedCompanies, false);
 
-        // Perform actual deletion
-        await deleteCompany(id);
+      // Perform actual deletion
+      await deleteCompany(id);
 
-        toast.success("Company deleted successfully");
+      toast.success("Company deleted successfully");
 
-        // Revalidate to ensure data consistency
-        mutate();
+      // Revalidate to ensure data consistency
+      mutate();
 
-        // Adjust page if current page becomes empty
-        if (paged.length === 1 && page > 1) {
-          setPage(page - 1);
-        }
-      } catch (error) {
-        // Revert on error
-        mutate();
-        toast.error("Failed to delete company");
-        console.error("Failed to delete company", error);
-      } finally {
-        setDeletingId(null);
+      // Adjust page if current page becomes empty
+      if (paged.length === 1 && page > 1) {
+        setPage(page - 1);
       }
+    } catch (error) {
+      // Revert on error
+      mutate();
+      toast.error("Failed to delete company");
+      console.error("Failed to delete company", error);
+    } finally {
+      setDeletingId(null);
+      setIsDeleteDialogOpen(false);
+      setCompanyToDelete(null);
     }
   };
 
@@ -308,18 +323,27 @@ export function CompaniesView() {
                             </SheetContent>
                           </Sheet>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors"
-                                disabled={deletingId === company.id}
-                              >
-                                <MoreHorizontal size={14} />
-                              </button>
-                            </DropdownMenuTrigger>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                                    disabled={deletingId === company.id}
+                                    aria-label="More actions"
+                                  >
+                                    <MoreHorizontal size={14} />
+                                  </button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>More actions</TooltipContent>
+                            </Tooltip>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDelete(company.id)}
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setCompanyToDelete(company.id);
+                                  setIsDeleteDialogOpen(true);
+                                }}
                                 disabled={deletingId === company.id}
                               >
                                 {deletingId === company.id
@@ -342,28 +366,76 @@ export function CompaniesView() {
               Showing {startItem}–{endItem} of {filtered.length} companies
             </p>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safeCurrentPage === 1}
-                className="w-8 h-8"
-              >
-                <ChevronLeft size={14} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safeCurrentPage === totalPages}
-                className="w-8 h-8"
-              >
-                <ChevronRight size={14} />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={safeCurrentPage === 1}
+                    className="w-8 h-8"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft size={14} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Previous page</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safeCurrentPage === totalPages}
+                    className="w-8 h-8"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight size={14} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Next page</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              company and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCompanyToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              onClick={(e) => {
+                e.preventDefault();
+                if (companyToDelete) {
+                  handleDelete(companyToDelete);
+                }
+              }}
+              disabled={!!deletingId}
+            >
+              {deletingId ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

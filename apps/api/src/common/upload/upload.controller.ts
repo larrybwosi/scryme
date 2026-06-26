@@ -20,8 +20,8 @@ export class UploadController {
       throw new BadRequestException("No file provided");
     }
 
-    const organizationId = req.user?.organizationId;
-    const memberId = req.user?.memberId;
+    const organizationId = req.v2Context?.organizationId;
+    const memberId = req.v2Context?.memberId;
 
     if (!organizationId) {
       throw new BadRequestException("Organization context missing");

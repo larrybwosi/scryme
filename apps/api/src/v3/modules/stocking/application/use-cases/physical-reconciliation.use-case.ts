@@ -46,24 +46,35 @@ export class PhysicalReconciliationUseCase {
     dto: SubmitReconciliationDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
+      // ⚡ Bolt Optimization: Batch fetch all relevant stock records in a single query
+      // to eliminate N+1 database round-trips.
+      const variantIds = dto.items.map((i) => i.variantId);
+      const stocks = await tx.productVariantStock.findMany({
+        where: {
+          variantId: { in: variantIds },
+          locationId: dto.locationId,
+        },
+        select: {
+          variantId: true,
+          currentStock: true,
+          variant: {
+            select: { buyingPrice: true },
+          },
+        },
+      });
+
+      const stockMap = new Map(stocks.map((s) => [s.variantId, s]));
+
       let totalExpectedValue = 0;
       let totalActualValue = 0;
 
       const itemsToCreate = [];
 
       for (const item of dto.items) {
-        const stock = await tx.productVariantStock.findUnique({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: dto.locationId,
-            },
-          },
-          include: { variant: true },
-        });
+        const stock = stockMap.get(item.variantId);
 
         const expectedQty = Number(stock?.currentStock || 0);
-        const unitPrice = Number(stock?.variant.buyingPrice || 0);
+        const unitPrice = Number(stock?.variant?.buyingPrice || 0);
 
         const varianceQty = item.actualQuantity - expectedQty;
         const expectedValue = expectedQty * unitPrice;
