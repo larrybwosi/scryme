@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Query,
+  Req,
   Res,
   HttpStatus,
   Logger,
@@ -31,6 +32,7 @@ export class ShortUrlController {
   @AllowPublic()
   async handleShortUrl(
     @Param("shortCode") shortCode: string,
+    @Req() req: any,
     @Res() res: any,
     @Query("w") w?: string,
     @Query("h") h?: string,
@@ -59,7 +61,29 @@ export class ShortUrlController {
         return res.status(HttpStatus.NOT_FOUND).send("Link not found");
       }
 
-      const { organizationId, mimeType, id: attachmentId } = attachment;
+      const { organizationId, mimeType, id: attachmentId, isPublic } = attachment;
+
+      // 1. Check Authorization for private attachments
+      // We check organization settings for forced privacy or if the attachment itself is private
+      const orgSettingsCacheKey = `org_settings:${organizationId}`;
+      let orgSettings = await this.redis.get<any>(orgSettingsCacheKey);
+      if (!orgSettings) {
+        orgSettings = await this.prisma.client.organizationSettings.findUnique({
+          where: { organizationId },
+        });
+        if (orgSettings) {
+          await this.redis.setex(orgSettingsCacheKey, 3600, orgSettings);
+        }
+      }
+
+      const isPrivate = orgSettings?.forcePrivateAttachments || !isPublic;
+
+      if (isPrivate) {
+        const v2Context = req.v2Context;
+        if (!v2Context || v2Context.organizationId !== organizationId) {
+          return res.status(HttpStatus.UNAUTHORIZED).send("Unauthorized: Private document");
+        }
+      }
       const isImage = mimeType.startsWith("image/");
 
       if (isImage) {

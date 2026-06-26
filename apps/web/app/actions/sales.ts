@@ -312,6 +312,7 @@ export async function addPayment(
         ? {
             create: data.attachments.map(att => ({
               ...att,
+              isPublic: true,
               organizationId: auth.organizationId!,
               memberId: auth.memberId!,
             })),
@@ -472,6 +473,7 @@ export async function addAttachmentToPayment(
   const attachment = await db.attachment.create({
     data: {
       ...data,
+      isPublic: true,
       paymentId,
       organizationId: auth.organizationId!,
       memberId: auth.memberId!,
@@ -685,6 +687,7 @@ export async function reconcileFulfillment(
         attachments: data.attachments ? {
           create: data.attachments.map(att => ({
             ...att,
+            isPublic: true,
             organizationId: auth.organizationId!,
             memberId: auth.memberId!,
             transactionId: fulfillment.transactionId,
@@ -778,6 +781,7 @@ export async function uploadFileAction(formData: FormData) {
       shortCode,
       shortUrl,
       mimeType: file.type,
+      isPublic: true,
       sizeBytes: file.size,
       organizationId: auth.organizationId!,
       memberId: auth.memberId!,
@@ -817,6 +821,7 @@ export async function uploadFulfillmentAttachment(
   const attachment = await db.attachment.create({
     data: {
       ...data,
+      isPublic: true,
       fulfillmentId,
       transactionId: fulfillment.transactionId,
       organizationId: auth.organizationId!,

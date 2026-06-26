@@ -13,6 +13,7 @@ import { InvitationUseCase } from "./application/use-cases/invitation.use-case";
 import { RoleManagementUseCase } from "./application/use-cases/role-management.use-case";
 import { DepartmentUseCase } from "./application/use-cases/department.use-case";
 import { AttendanceUseCase } from "./application/use-cases/attendance.use-case";
+import { AttendanceScheduler } from "./application/services/attendance.scheduler";
 
 @Module({
   controllers: [
@@ -29,6 +30,7 @@ import { AttendanceUseCase } from "./application/use-cases/attendance.use-case";
     RoleManagementUseCase,
     DepartmentUseCase,
     AttendanceUseCase,
+    AttendanceScheduler,
   ],
   exports: [
     MemberUseCase,

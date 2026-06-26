@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsOptional, IsDateString } from "class-validator";
+import { IsString, IsOptional, IsDateString, IsBoolean } from "class-validator";
 import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
 
 export class AttendanceQueryDto extends PaginationQueryDto {
@@ -45,6 +45,11 @@ export class CheckOutDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isAutoCheckout?: boolean;
 }
 
 export class AttendanceLogResponseDto {

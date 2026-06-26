@@ -66,6 +66,18 @@ export class AttendanceController {
     );
   }
 
+  @Get("me/status")
+  @Permissions("attendance:read")
+  @ApiOperation({ summary: "Get status of the current member" })
+  async getMyStatus(@Request() req: any) {
+    const memberId = req.v3Context.memberId;
+    if (!memberId) throw new Error("Member context required");
+    return this.attendanceUseCase.getMemberStatus(
+      req.v3Context.organizationId,
+      memberId,
+    );
+  }
+
   @Get(":memberId/status")
   @Permissions("attendance:read")
   @ApiOperation({ summary: "Get status of a specific member" })

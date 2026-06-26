@@ -130,6 +130,7 @@ export class AttendanceUseCase {
           checkOutLocationId: dto.locationId || activeLog.checkInLocationId,
           durationMinutes,
           notes: dto.notes || activeLog.notes,
+          isAutoCheckout: dto.isAutoCheckout ?? false,
         },
       });
 
