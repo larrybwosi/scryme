@@ -712,12 +712,12 @@ export class BakeryService {
   }
 
   async completeBatch(ctx: V2ApiContext, id: string, data: any) {
-    const { organizationId } = ctx;
+    const organizationId = ctx.organizationId;
     const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
       data;
 
-    const batch = await this.prisma.client.batch.findUnique({
-      where: { id },
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id, organizationId },
       include: { recipe: { include: { producesVariant: true } } },
     });
 

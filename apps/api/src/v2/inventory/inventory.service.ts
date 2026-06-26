@@ -254,6 +254,7 @@ export class InventoryService {
         where: {
           variantId: variantId || undefined,
           locationId,
+          organizationId: data.organizationId,
         },
       });
 
