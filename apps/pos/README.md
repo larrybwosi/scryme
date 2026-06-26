@@ -78,6 +78,8 @@ Add these secrets to your GitHub repository settings under **Secrets and variabl
 | `POS_TAURI_SIGNING_PRIVATE_KEY` | The content of the generated `.key` file (private key). |
 | `POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The password used when generating the key (if any). |
 | `POS_TAURI_PUBLIC_KEY` | The public key string displayed after generation. |
+| `SENTRY_DSN` | The Sentry DSN for error tracking. |
+| `POSTHOG_API_KEY` | The PostHog API key for analytics. |
 
 > **Note**: These keys are specific to the POS application. The Bakery application uses its own set of keys prefixed with `BAKERY_` (e.g., `BAKERY_TAURI_PUBLIC_KEY`).
 
