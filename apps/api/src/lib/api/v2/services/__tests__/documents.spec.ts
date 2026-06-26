@@ -1,6 +1,5 @@
 import { getDocumentStream } from "../documents";
 import { prisma } from "@repo/db";
-import * as renderer from "@react-pdf/renderer";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@repo/db", () => {
@@ -19,7 +18,7 @@ vi.mock("@repo/db", () => {
   };
 });
 
-vi.mock("@react-pdf/renderer", async (importOriginal) => {
+vi.mock("@react-pdf/renderer", async importOriginal => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,
