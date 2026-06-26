@@ -1,0 +1,51 @@
+
+> api@4.0.0 dev
+> nest start --watch
+
+
+ Info  Webpack is building your sources...
+
+
+<--- Last few GCs --->
+
+[242592:0x891b000]   144758 ms: Mark-Compact 4039.1 (4134.4) -> 4025.8 (4137.2) MB, pooled: 0 MB, 3139.91 / 0.00 ms  (average mu = 0.102, current mu = 0.024) allocation failure; scavenge might not succeed
+[242592:0x891b000]   148343 ms: Mark-Compact 4041.9 (4137.4) -> 4028.7 (4140.2) MB, pooled: 0 MB, 3503.74 / 0.00 ms  (average mu = 0.062, current mu = 0.023) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xe42d60 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 2: 0x121ddd0 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 3: 0x121e0a7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 4: 0x144ba05  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 5: 0x144ba33  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 6: 0x1464b0a  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 7: 0x1467cd8  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+ 8: 0x1ccd051  [/home/jules/.nvm/versions/node/v22.22.1/bin/node]
+RpcExitError: Process 242592 exited [SIGABRT]
+Issues checking service aborted - probably out of memory. Check the `memoryLimit` option in the ForkTsCheckerWebpackPlugin configuration.
+If increasing the memory doesn't solve the issue, it's most probably a bug in the TypeScript.
+webpack 5.106.2 compiled [1m[32msuccessfully[39m[22m in 149145 ms
+❌ Invalid environment variables: {
+  DATABASE_URL: [ 'Invalid input: expected string, received undefined' ]
+}
+/app/apps/api/dist/main.js:244
+            throw new Error("Invalid environment variables");
+            ^
+
+Error: Invalid environment variables
+    at parseEnv (/app/apps/api/dist/main.js:244:19)
+    at Array.<anonymous> (/app/apps/api/dist/main.js:259:13)
+    at __webpack_require__ (/app/apps/api/dist/main.js:141195:41)
+    at /app/apps/api/dist/main.js:141348:67
+    at /app/apps/api/dist/main.js:141512:3
+    at Object.<anonymous> (/app/apps/api/dist/main.js:141514:12)
+    at Module._compile (node:internal/modules/cjs/loader:1705:14)
+    at Object..js (node:internal/modules/cjs/loader:1838:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+
+Node.js v22.22.1
