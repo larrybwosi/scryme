@@ -716,7 +716,7 @@ export class BakeryService {
     const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
       data;
 
-    const batch = await this.prisma.client.batch.findFirst({
+    const batch = await this.prisma.client.batch.findUnique({
       where: { id, organizationId },
       include: { recipe: { include: { producesVariant: true } } },
     });
