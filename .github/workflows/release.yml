@@ -89,27 +89,29 @@ jobs:
 
   # 2. Builds and Publishes POS to GitHub Releases (Matrix parallelization)
   publish-pos:
-    name: Publish POS (${{ matrix.target_group }} - ${{ matrix.variant }})
+    name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
     needs: [release-management, set-version]
     strategy:
       fail-fast: false
       matrix:
-        target_group: [desktop-windows, desktop-macos, desktop-linux, mobile]
-        variant: [internal, alpha, beta, production, enterprise]
+        os: [windows-latest, ubuntu-latest]
+        variant: [pharmacy, retail, standalone, supermarket, restaurant]
         include:
-          - target_group: desktop-windows
-            os: windows-latest
+          - os: windows-latest
             args: --target x86_64-pc-windows-msvc
-          - target_group: desktop-macos
-            os: macos-latest
-            args: --target x86_64-apple-darwin
-          - target_group: desktop-linux
-            os: ubuntu-latest
+          - os: ubuntu-latest
             args: --target x86_64-unknown-linux-gnu
-          - target_group: mobile
-            os: ubuntu-latest
-            args: ""
+          - variant: retail
+            features: retail
+          - variant: standalone
+            features: standalone
+          - variant: restaurant
+            features: restaurant
+          - variant: supermarket
+            features: supermarket
+          - variant: pharmacy
+            features: pharmacy
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -133,6 +135,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+          VITE_BUSINESS_MODE: ${{ matrix.variant }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
         with:
           projectPath: ./apps/pos
           tagName: v${{ needs.set-version.outputs.version }}
@@ -140,17 +145,22 @@ jobs:
           releaseBody: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.features }}
 
   # 3. Builds and Publishes Bakery App (Matrix parallelization)
   publish-bakery:
-    name: Publish Bakery App (${{ matrix.platform }})
-    runs-on: ubuntu-latest
+    name: Publish Bakery App (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     needs: [release-management, set-version]
     strategy:
       fail-fast: false
       matrix:
-        platform: [android, ios]
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            args: --target x86_64-pc-windows-msvc
+          - os: ubuntu-latest
+            args: --target x86_64-unknown-linux-gnu
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -168,22 +178,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build Bakery App Bundle
-        run: |
-          cd apps/bakery
-          pnpm build
-          zip -r bakery-${{ matrix.platform }}.zip dist/
-
-      - name: Upload to Release Artifacts
+      - name: Build and Publish Bakery App
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: v${{ needs.set-version.outputs.version }}
-        run: |
-          FINAL_NAME="bakery-${{ matrix.platform }}-${{ env.TAG }}.zip"
-          mv apps/bakery/bakery-${{ matrix.platform }}.zip "$FINAL_NAME"
-
-          gh release create "$TAG" --title "$TAG" --notes "Release $TAG" || true
-          gh release upload "$TAG" "$FINAL_NAME" --clobber
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+        with:
+          projectPath: ./apps/bakery
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "v${{ needs.set-version.outputs.version }}"
+          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
 
   # 4. Builds Docker Images (Runs in parallel with steps 2 & 3)
   docker-images:
