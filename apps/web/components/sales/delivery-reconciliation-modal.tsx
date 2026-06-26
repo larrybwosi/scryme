@@ -66,25 +66,25 @@ export function DeliveryReconciliationModal({
       const attachments = [];
 
       if (dnFile) {
-          const result = await uploadFile(dnFile);
-          attachments.push({
-              fileName: dnFile.name,
-              fileUrl: result.url || result.publicUrl,
-              mimeType: dnFile.type,
-              sizeBytes: dnFile.size,
-              description: 'Signed Delivery Note (Manual Upload)'
-          });
+        const result = await uploadFile(dnFile);
+        attachments.push({
+          fileName: dnFile.name,
+          fileUrl: result.data?.url || result.url || result.publicUrl,
+          mimeType: dnFile.type,
+          sizeBytes: dnFile.size,
+          description: "Signed Delivery Note (Manual Upload)",
+        });
       }
 
       if (invoiceFile) {
-          const result = await uploadFile(invoiceFile);
-          attachments.push({
-              fileName: invoiceFile.name,
-              fileUrl: result.url || result.publicUrl,
-              mimeType: invoiceFile.type,
-              sizeBytes: invoiceFile.size,
-              description: 'Signed Invoice (Manual Upload)'
-          });
+        const result = await uploadFile(invoiceFile);
+        attachments.push({
+          fileName: invoiceFile.name,
+          fileUrl: result.data?.url || result.url || result.publicUrl,
+          mimeType: invoiceFile.type,
+          sizeBytes: invoiceFile.size,
+          description: "Signed Invoice (Manual Upload)",
+        });
       }
 
       await reconcileFulfillment(fulfillmentId, {
