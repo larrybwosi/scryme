@@ -80,8 +80,11 @@ export class ShortUrlController {
 
       if (isPrivate) {
         const v2Context = req.v2Context;
+        // In production, we might want to be stricter, but for now, we allow access if the organization matches
         if (!v2Context || v2Context.organizationId !== organizationId) {
-          return res.status(HttpStatus.UNAUTHORIZED).send("Unauthorized: Private document");
+          return res
+            .status(HttpStatus.UNAUTHORIZED)
+            .send("Unauthorized: Private document");
         }
       }
       const isImage = mimeType.startsWith("image/");

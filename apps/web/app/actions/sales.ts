@@ -822,7 +822,7 @@ export async function uploadFileAction(formData: FormData) {
   return {
     id: attachment.id,
     fileName: attachment.fileName || "file",
-    fileUrl: attachment.fileUrl || "",
+    fileUrl: attachment.shortUrl || attachment.fileUrl || "",
     shortUrl: attachment.shortUrl || "",
     mimeType: attachment.mimeType,
     sizeBytes: attachment.sizeBytes || 0,
