@@ -47,6 +47,12 @@ describe("AttendanceScheduler", () => {
 
   it("should process auto-checkout for organizations at midnight", async () => {
     const orgId = "org-1";
+
+    // Mock active orgs search
+    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValueOnce([
+      { organizationId: orgId },
+    ] as any);
+
     vi.mocked(prisma.client.organization.findMany).mockResolvedValue([
       {
         id: orgId,
@@ -62,7 +68,8 @@ describe("AttendanceScheduler", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
 
-    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValue([
+    // Mock fetching active logs for the org
+    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValueOnce([
       { id: "log-1", memberId: "member-1" },
     ] as any);
 
@@ -77,9 +84,16 @@ describe("AttendanceScheduler", () => {
   });
 
   it("should not process auto-checkout if it's not the scheduled time", async () => {
+    const orgId = "org-1";
+
+    // Mock active orgs search
+    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValueOnce([
+      { organizationId: orgId },
+    ] as any);
+
     vi.mocked(prisma.client.organization.findMany).mockResolvedValue([
       {
-        id: "org-1",
+        id: orgId,
         settings: {
           enableAutoCheckout: false,
           autoCheckoutTime: null,
@@ -100,6 +114,12 @@ describe("AttendanceScheduler", () => {
 
   it("should use custom auto-checkout time if enabled", async () => {
     const orgId = "org-1";
+
+    // Mock active orgs search
+    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValueOnce([
+      { organizationId: orgId },
+    ] as any);
+
     vi.mocked(prisma.client.organization.findMany).mockResolvedValue([
       {
         id: orgId,
@@ -114,7 +134,8 @@ describe("AttendanceScheduler", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T17:00:00Z"));
 
-    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValue([
+    // Mock fetching active logs for the org
+    vi.mocked(prisma.client.attendanceLog.findMany).mockResolvedValueOnce([
       { id: "log-1", memberId: "member-1" },
     ] as any);
 

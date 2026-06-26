@@ -48,8 +48,10 @@ COPY --from=pruner /app/out/full/ .
 RUN pnpm turbo run generate
 
 # Build the API and its internal workspace dependencies
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN pnpm turbo build --filter=api... --concurrency=1
+# Use a smaller memory limit and increase concurrency if possible,
+# but keep it low to avoid over-consuming compute.
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+RUN pnpm turbo build --filter=api... --concurrency=2
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -59,7 +61,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
@@ -88,7 +90,7 @@ USER nestjs
 
 EXPOSE 4000
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/v2/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
