@@ -1,610 +1,228 @@
-name: Release
+name: Release and Publish
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: write
+  packages: write
   pull-requests: write
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  lint-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: "10.34.1"
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Turbo Cache
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-
-
-      - name: Lint and Type Check
-        run: pnpm turbo lint type-check
-        env:
-          DATABASE_URL: postgresql://localhost:5432/postgres
-
-      - name: Run API Tests
-        run: pnpm --filter api test
-
-      - name: Run POS Frontend Tests
-        run: pnpm --filter pos test:frontend
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-release-${{ hashFiles('.github/workflows/release.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-release-
-
-      - name: Install POS Backend dependencies (Linux)
-        run: |
-          sudo rm -f /etc/apt/apt.conf.d/docker-clean
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            libudev-dev \
-            libusb-1.0-0-dev \
-            libpcsclite-dev \
-            pkg-config \
-            patchelf
-
-      - name: Create POS dummy binaries
-        run: |
-          mkdir -p apps/pos/src-tauri/binaries
-          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
-          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
-          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
-          chmod +x apps/pos/src-tauri/binaries/*
-
-      - name: Run POS Backend Linting
-        run: pnpm --filter pos lint:backend
-
-      - name: Install cargo-tarpaulin
-        uses: taiki-e/install-action@cargo-tarpaulin
-
-      - name: Run POS Backend Tests with Coverage
-        run: |
-          cargo tarpaulin --ignore-tests --manifest-path apps/pos/src-tauri/Cargo.toml --out xml
-
-      - name: Cache Playwright Browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter pos exec playwright install --with-deps
-
-      - name: Run POS E2E tests
-        run: pnpm --filter pos test:e2e
-        env:
-          POSTHOG_API_KEY: mock
-          SENTRY_DSN: mock
-
+  # 1. Manages Changesets, bumps version tags on main, or falls back to traditional changeset publish
   release-management:
+    name: Release Management
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     outputs:
-      published: ${{ steps.auto-version.outputs.published == 'true' || steps.changesets.outputs.published == 'true' }}
+      published: ${{ steps.auto-version.outputs.published }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
-
-      - name: Use Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: "pnpm"
+          node-version: 20
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-      - name: Automatic Versioning (on main)
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Check for Changesets and Version/Publish
         id: auto-version
-        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CHANGESETS=$(find .changeset -name "*.md" | grep -v "README.md" | wc -l)
-          if [ "$CHANGESETS" -gt 0 ]; then
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-            chmod +x ./scripts/sync-tauri-version.sh
+          if [ -d ".changeset" ] && [ "$(ls -A .changeset/*.md 2>/dev/null)" ]; then
+            echo "Changesets found. Bumping versions..."
             pnpm version-packages
-            pnpm install --lockfile-only
 
-            VERSION=$(jq -r .version apps/pos/package.json)
-            TAG="v$VERSION"
+            NEW_VERSION=$(node -p "require('./apps/pos/package.json').version")
+            TAG="v$NEW_VERSION"
 
             git add .
-            git commit -m "chore: release $TAG [skip ci]"
-            git tag "$TAG"
+            git commit -m "chore(release): version packages $TAG [skip ci]"
+            git tag -a "$TAG" -m "Release $TAG"
             git push origin main --follow-tags
 
             echo "published=true" >> $GITHUB_OUTPUT
           else
+            echo "No changesets found. Proceeding with standard build."
             echo "published=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
+      - name: Publish to Changesets (if applicable)
         if: steps.auto-version.outputs.published != 'true'
         uses: changesets/action@v1
         with:
-          version: pnpm version-packages
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Quick helper to extract version for multi-platform app matrix
   set-version:
-    needs: [release-management]
-    if: needs.release-management.outputs.published == 'true'
+    name: Set Version Output
     runs-on: ubuntu-latest
+    needs: release-management
     outputs:
       version: ${{ steps.get-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-      - id: get-version
-        run: echo "version=$(jq -r .version apps/pos/package.json)" >> $GITHUB_OUTPUT
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
+      - name: Get version from package.json
+        id: get-version
+        run: |
+          VERSION=$(node -p "require('./apps/pos/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  # 2. Builds and Publishes POS to GitHub Releases (Matrix parallelization)
   publish-pos:
-    needs: [release-management, set-version]
-    if: needs.release-management.outputs.published == 'true'
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        target_group: [macos-arm, macos-x86, ubuntu, windows]
-        variant: [retail, standalone, restaurant, supermarket, pharmacy]
-        include:
-          - target_group: macos-arm
-            os: macos-latest
-            args: "--target aarch64-apple-darwin"
-          - target_group: macos-x86
-            os: macos-latest
-            args: "--target x86_64-apple-darwin"
-          - target_group: ubuntu
-            # ubuntu-22.04 intentional: lower glibc = wider distro compatibility.
-            # Do NOT change to ubuntu-latest / ubuntu-24.04.
-            os: ubuntu-22.04
-            args: ""
-          - target_group: windows
-            os: windows-latest
-            args: ""
+    name: Publish POS (${{ matrix.target_group }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-
-      - uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "./apps/pos/src-tauri -> target"
-
-      - name: Cache apt packages
-        if: matrix.os == 'ubuntu-22.04'
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-release-build-${{ hashFiles('.github/workflows/release.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-release-build-
-
-      - name: Install dependencies (Ubuntu only)
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          sudo rm -f /etc/apt/apt.conf.d/docker-clean
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libudev-dev \
-            libusb-1.0-0-dev \
-            libgtk-3-dev \
-            libpcsclite-dev \
-            pkg-config
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Create dummy binaries (macOS/Linux)
-        if: matrix.os != 'windows-latest'
-        run: |
-          mkdir -p apps/pos/src-tauri/binaries
-          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
-          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
-          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
-          chmod +x apps/pos/src-tauri/binaries/*
-
-      - name: Create dummy binaries (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path apps/pos/src-tauri/binaries
-          if (!(Test-Path "apps/pos/src-tauri/binaries/sumatrapdf-x86_64-pc-windows-msvc.exe")) {
-            New-Item -ItemType File -Path "apps/pos/src-tauri/binaries/sumatrapdf-x86_64-pc-windows-msvc.exe"
-          }
-          if (!(Test-Path "apps/pos/src-tauri/binaries/sumatrapdf-i686-pc-windows-msvc.exe")) {
-            New-Item -ItemType File -Path "apps/pos/src-tauri/binaries/sumatrapdf-i686-pc-windows-msvc.exe"
-          }
-
-      - name: Configure version and updater settings
-        shell: bash
-        run: |
-          FULL_VERSION="${{ needs.set-version.outputs.version }}"
-          BRANCH="${{ github.ref_name }}"
-          REPO="${{ github.repository }}"
-          VARIANT="${{ matrix.variant }}"
-          OS="${{ matrix.os }}"
-
-          if [ "$VARIANT" = "retail" ]; then
-            CONFIG_FILE="apps/pos/src-tauri/tauri.retail.conf.json"
-            UPDATER_NAME="latest"
-          else
-            CONFIG_FILE="apps/pos/src-tauri/tauri.$VARIANT.conf.json"
-            UPDATER_NAME="latest-$VARIANT"
-          fi
-
-          if [ "$BRANCH" = "main" ]; then
-            UPDATER_ENDPOINT="https://github.com/$REPO/releases/latest/download/$UPDATER_NAME.json"
-          else
-            UPDATER_ENDPOINT="https://github.com/$REPO/releases/download/${BRANCH}-latest/$UPDATER_NAME.json"
-          fi
-
-          # Windows/NSIS does not support semver pre-release labels (e.g. 1.2.3-beta.1).
-          # We strip the pre-release suffix entirely rather than trying to convert it,
-          # since NSIS doesn't use or display that segment anyway.
-          if [[ "$OS" == "windows-latest" && "$FULL_VERSION" == *"-"* ]]; then
-            TARGET_VERSION=$(echo "$FULL_VERSION" | cut -d'-' -f1)
-          else
-            TARGET_VERSION="$FULL_VERSION"
-          fi
-
-          # Patch the shared tauri.conf.json with the resolved version and public key
-          jq --arg v "$TARGET_VERSION" \
-             --arg pubkey "${{ secrets.POS_TAURI_PUBLIC_KEY }}" \
-             '.version = $v | .plugins.updater.pubkey = $pubkey' \
-             apps/pos/src-tauri/tauri.conf.json > tmp.json && mv tmp.json apps/pos/src-tauri/tauri.conf.json
-
-          # Patch the variant-specific config with updater endpoint and Windows bundle target
-          jq --arg v "$TARGET_VERSION" \
-             --arg e "$UPDATER_ENDPOINT" \
-             --arg var "$VARIANT" \
-             --arg os "$OS" \
-             --arg pubkey "${{ secrets.POS_TAURI_PUBLIC_KEY }}" \
-             '
-             .version = $v |
-             (if $var != "standalone" then
-               .plugins.updater.endpoints = [$e] |
-               .plugins.updater.pubkey = $pubkey
-             else . end) |
-             (if $os == "windows-latest" then .bundle.targets = ["nsis"] else . end)
-             ' "$CONFIG_FILE" > tmp.json && mv tmp.json "$CONFIG_FILE"
-
-      - name: Generate .env file for build
-        shell: bash
-        run: |
-          echo "VITE_API_URL=${{ secrets.POS_API_URL || 'https://dealioerp.vercel.app' }}" > apps/pos/.env
-          echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> apps/pos/src-tauri/.env
-          echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> apps/pos/src-tauri/.env
-          echo "POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}" >> apps/pos/src-tauri/.env
-
-      - name: Build and publish Tauri app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          VITE_API_URL: ${{ secrets.POS_API_URL || 'https://dealioerp.vercel.app' }}
-        with:
-          tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "Release v${{ needs.set-version.outputs.version }}"
-          releaseDraft: false
-          prerelease: ${{ github.ref != 'refs/heads/main' }}
-          # Let tauri-action handle latest.json generation and upload instead of
-          # manually finding and extracting it with `find`, which is fragile.
-          includeUpdaterJson: ${{ matrix.variant != 'standalone' }}
-          updaterJsonPreferNsis: true
-          args: >-
-            ${{ matrix.args }}
-            ${{ matrix.variant == 'retail'
-              && '--config src-tauri/tauri.retail.conf.json --features retail'
-              || format('--config src-tauri/tauri.{0}.conf.json --features {0}', matrix.variant) }}
-          projectPath: apps/pos
-
-      # tauri-action uploads latest.json as "latest.json" for retail and
-      # "latest-<variant>.json" for others. We still need to merge these per-platform
-      # files into a single cross-platform latest.json in finalize-release.
-      # To avoid race conditions and 'gh release download' failures, we grab the
-      # locally generated file directly from the build target.
-      - name: Prepare latest.json artifact
-        if: matrix.variant != 'standalone'
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VARIANT="${{ matrix.variant }}"
-          # Find the updater JSON. Tauri 2 puts it in the bundle directory.
-          # We search apps/pos/src-tauri/target for any latest.json
-          LOCAL_JSON=$(find apps/pos/src-tauri/target -name "latest.json" | head -n 1)
-
-          if [ -z "$LOCAL_JSON" ]; then
-            echo "❌ Error: latest.json not found in target directory."
-            find apps/pos/src-tauri/target -maxdepth 5 || true
-            exit 1
-          fi
-
-          echo "Found latest.json at: $LOCAL_JSON"
-          cp "$LOCAL_JSON" "latest-${VARIANT}-${{ matrix.target_group }}.json"
-
-      - name: Upload latest.json artifact
-        if: matrix.variant != 'standalone'
-        uses: actions/upload-artifact@v4
-        with:
-          name: latest-json-${{ matrix.variant }}-${{ matrix.target_group }}
-          path: latest-${{ matrix.variant }}-${{ matrix.target_group }}.json
-
-  publish-bakery:
     needs: [release-management, set-version]
-    if: needs.release-management.outputs.published == 'true'
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-22.04, windows-latest]
-    runs-on: ${{ matrix.platform }}
+        target_group: [desktop-windows, desktop-macos, desktop-linux, mobile]
+        variant: [internal, alpha, beta, production, enterprise]
+        include:
+          - target_group: desktop-windows
+            os: windows-latest
+            args: --target x86_64-pc-windows-msvc
+          - target_group: desktop-macos
+            os: macos-latest
+            args: --target x86_64-apple-darwin
+          - target_group: desktop-linux
+            os: ubuntu-latest
+            args: --target x86_64-unknown-linux-gnu
+          - target_group: mobile
+            os: ubuntu-latest
+            args: ""
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-
-      - uses: pnpm/action-setup@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: "pnpm"
+          node-version: 20
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
         with:
-          workspaces: "./apps/bakery/src-tauri -> target"
-
-      - name: Cache apt packages
-        if: matrix.platform == 'ubuntu-22.04'
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-release-bakery-${{ hashFiles('.github/workflows/release.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-release-bakery-
-
-      - name: Install dependencies (Ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo rm -f /etc/apt/apt.conf.d/docker-clean
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev
+          version: 9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm generate
-
-      - name: Build shared packages
-        run: |
-          pnpm --filter @repo/shared build
-          pnpm --filter @repo/sdk build
-
-      - name: Inject environment variables and updater config
-        shell: bash
-        env:
-          VITE_API_URL: ${{ secrets.BAKERY_API_URL || 'https://api.scryme.app/api/v2' }}
-          BAKERY_UPDATE_URL: ${{ secrets.BAKERY_UPDATE_URL || 'https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}' }}
-          TAURI_PUBLIC_KEY: ${{ secrets.BAKERY_TAURI_PUBLIC_KEY || 'dW51cw==' }}
-        run: |
-          echo "VITE_API_URL=$VITE_API_URL" > apps/bakery/.env
-          node -e "
-            const fs = require('fs');
-            const path = 'apps/bakery/src-tauri/tauri.conf.json';
-            const config = JSON.parse(fs.readFileSync(path, 'utf8'));
-            config.plugins.updater.endpoints = [process.env.BAKERY_UPDATE_URL];
-            config.plugins.updater.pubkey = process.env.TAURI_PUBLIC_KEY;
-            fs.writeFileSync(path, JSON.stringify(config, null, 2));
-          "
-
-      - name: Build and publish Tauri app
+      - name: Build and Publish POS App
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.BAKERY_TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.BAKERY_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          VITE_API_URL: ${{ secrets.BAKERY_API_URL || 'https://api.scryme.app/api/v2' }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
         with:
+          projectPath: ./apps/pos
           tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "Release v${{ needs.set-version.outputs.version }}"
+          releaseName: "v${{ needs.set-version.outputs.version }}"
+          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
-          prerelease: ${{ github.ref != 'refs/heads/main' }}
-          projectPath: apps/bakery
+          prerelease: false
+          args: ${{ matrix.args }}
 
-  docker-images:
-    needs: [release-management, set-version]
-    if: needs.release-management.outputs.published == 'true'
+  # 3. Builds and Publishes Bakery App (Matrix parallelization)
+  publish-bakery:
+    name: Publish Bakery App (${{ matrix.platform }})
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    needs: [release-management, set-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [android, ios]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: ${{ github.ref_name }}
+          node-version: 20
 
-      - name: Lowercase repository name
-        run: echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Log in to GHCR
+      - name: Build Bakery App Bundle
+        run: |
+          cd apps/bakery
+          pnpm build
+          zip -r bakery-${{ matrix.platform }}.zip dist/
+
+      - name: Upload to Release Artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.set-version.outputs.version }}
+        run: |
+          FINAL_NAME="bakery-${{ matrix.platform }}-${{ env.TAG }}.zip"
+          mv apps/bakery/bakery-${{ matrix.platform }}.zip "$FINAL_NAME"
+
+          gh release create "$TAG" --title "$TAG" --notes "Release $TAG" || true
+          gh release upload "$TAG" "$FINAL_NAME" --clobber
+
+  # 4. Builds Docker Images (Runs in parallel with steps 2 & 3)
+  docker-images:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [release-management] # Stripped 'set-version' out to run side-by-side with application builds
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Convert repository name to lowercase
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      - name: Get current version
+        id: get-version
+        run: |
+          VERSION=$(node -p "require('./apps/pos/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker images
         uses: docker/bake-action@v4
         with:
+          files: |
+            ./docker-bake.hcl
+          targets: pos,bakery # Docker Buildx Bake compiles both targets concurrently on the runner
           push: true
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-          *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+            *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
             REPO_LOWER=${{ env.REPO_LOWER }}
-            VERSION=${{ needs.set-version.outputs.version }}
-
-  finalize-release:
-    needs: [publish-pos, set-version]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        variant: [retail, restaurant, supermarket, pharmacy]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-
-      - name: Download all latest.json artifacts for ${{ matrix.variant }}
-        uses: actions/download-artifact@v4
-        with:
-          pattern: latest-json-${{ matrix.variant }}-*
-          merge-multiple: true
-
-      - name: Merge and fix latest.json for ${{ matrix.variant }}
-        shell: bash
-        run: |
-          VERSION="${{ needs.set-version.outputs.version }}"
-          REPO="${{ github.repository }}"
-          TAG="v$VERSION"
-          VARIANT="${{ matrix.variant }}"
-
-          if [ "$VARIANT" = "retail" ]; then
-            FINAL_NAME="latest.json"
-          else
-            FINAL_NAME="latest-$VARIANT.json"
-          fi
-
-          # Collect per-platform files for this variant
-          FILES=(latest-${VARIANT}-*.json)
-          if [ ${#FILES[@]} -eq 0 ]; then
-            echo "No artifacts found for variant: $VARIANT"
-            exit 1
-          fi
-
-          echo "Merging ${#FILES[@]} platform files for $VARIANT: ${FILES[*]}"
-
-          # Deep-merge all platform files into one.
-          # The .platforms object uses keys like "linux-x86_64", "darwin-aarch64",
-          # "windows-x86_64", and (with tauri-plugin-updater >= 2.10.0) also
-          # installer-qualified keys like "linux-x86_64-deb". The `*` operator in jq
-          # recursively merges objects, so all key formats are handled correctly.
-          jq -s 'reduce .[] as $item ({}; . * $item)' "${FILES[@]}" > "$FINAL_NAME"
-
-          # Rewrite asset URLs to point at the correct GitHub release tag.
-          # This handles both the legacy "linux-x86_64" key format and the newer
-          # "linux-x86_64-deb" format introduced in tauri-plugin-updater 2.10.0.
-          jq --arg repo "$REPO" --arg tag "$TAG" '
-            .platforms |= with_entries(
-              .value.url |= sub(".*/"; "https://github.com/\($repo)/releases/download/\($tag)/")
-            )
-          ' "$FINAL_NAME" > tmp.json && mv tmp.json "$FINAL_NAME"
-
-          echo "Final merged $FINAL_NAME:"
-          cat "$FINAL_NAME"
-
-      - name: Upload merged latest.json to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          VERSION="${{ needs.set-version.outputs.version }}"
-          TAG="v$VERSION"
-          VARIANT="${{ matrix.variant }}"
-          FINAL_NAME=$([ "$VARIANT" = "retail" ] && echo "latest.json" || echo "latest-$VARIANT.json")
-          gh release upload "$TAG" "$FINAL_NAME" --clobber
+            VERSION=${{ steps.get-version.outputs.version }}

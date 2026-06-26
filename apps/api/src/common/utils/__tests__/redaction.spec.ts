@@ -120,6 +120,22 @@ describe("redactSensitiveData", () => {
     expect(redacted.normal).toBe("value");
   });
 
+  it("should redact confirmation and webhook keys added by Sentinel", () => {
+    const data = {
+      pinHash: "hash123",
+      pin_hash: "hash456",
+      webhookSecret: "secret789",
+      webhook_secret: "secret012",
+      safe: "public",
+    };
+    const redacted = redactSensitiveData(data);
+    expect(redacted.pinHash).toBe("[REDACTED]");
+    expect(redacted.pin_hash).toBe("[REDACTED]");
+    expect(redacted.webhookSecret).toBe("[REDACTED]");
+    expect(redacted.webhook_secret).toBe("[REDACTED]");
+    expect(redacted.safe).toBe("public");
+  });
+
   it("should redact sensitive properties on Error objects", () => {
     const error = new Error("Database connection failed") as any;
     error.secret_key = "sensitive-db-key";
