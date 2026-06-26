@@ -48,6 +48,7 @@ describe("ShortUrlController", () => {
       organizationId: "org-1",
       mimeType: "application/pdf",
       fileName: "test.pdf",
+      isPublic: true,
     };
     mockRedis.get.mockResolvedValueOnce(mockAttachment); // Metadata cache
     mockRedis.get.mockResolvedValueOnce({
@@ -61,7 +62,7 @@ describe("ShortUrlController", () => {
       send: vi.fn(),
     };
 
-    await controller.handleShortUrl("short123", res as any);
+    await controller.handleShortUrl("short123", {} as any, res as any);
 
     expect(mockRedis.get).toHaveBeenCalledWith("attachment:short123");
     expect(mockRedis.get).toHaveBeenCalledWith("file_content:att-1");
@@ -76,6 +77,7 @@ describe("ShortUrlController", () => {
       organizationId: "org-1",
       mimeType: "application/pdf",
       fileName: "test.pdf",
+      isPublic: true,
     };
     mockRedis.get.mockResolvedValue(null);
     mockPrisma.client.attachment.findUnique.mockResolvedValue(mockAttachment);
@@ -86,7 +88,7 @@ describe("ShortUrlController", () => {
       send: vi.fn(),
     };
 
-    await controller.handleShortUrl("short123", res as any);
+    await controller.handleShortUrl("short123", {} as any, res as any);
 
     expect(mockRedis.get).toHaveBeenCalledWith("attachment:short123");
     expect(mockPrisma.client.attachment.findUnique).toHaveBeenCalledWith({
