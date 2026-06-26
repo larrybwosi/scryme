@@ -48,6 +48,8 @@ async function bootstrap() {
               ? "[REDACTED]"
               : undefined,
             authorization: headers.authorization ? "[REDACTED]" : undefined,
+            // Only add other headers if they are safe or explicitly needed for debugging
+            "x-correlation-id": headers["x-correlation-id"],
           },
           query: Object.keys(query || {}).length
             ? redactSensitiveData(query)

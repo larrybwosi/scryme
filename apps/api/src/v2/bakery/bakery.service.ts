@@ -16,6 +16,7 @@ import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
 import { env } from "@repo/env";
+import { Decimal } from "decimal.js";
 
 @Injectable()
 export class BakeryService {
@@ -711,12 +712,12 @@ export class BakeryService {
   }
 
   async completeBatch(ctx: V2ApiContext, id: string, data: any) {
-    const { organizationId } = ctx;
+    const organizationId = ctx.organizationId;
     const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
       data;
 
-    const batch = await this.prisma.client.batch.findUnique({
-      where: { id },
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id, organizationId },
       include: { recipe: { include: { producesVariant: true } } },
     });
 
@@ -743,65 +744,109 @@ export class BakeryService {
 
       // 2. Process Ingredient Consumptions
       if (ingredientConsumptions && ingredientConsumptions.length > 0) {
+        /**
+         * ⚡ Bolt: Performance Optimization (N+1 Query Elimination)
+         * We pre-fetch all stock batches in a single query and aggregate updates
+         * to minimize database roundtrips and improve transaction throughput.
+         */
+        const stockBatchIds = ingredientConsumptions.map((c: any) => c.stockBatchId);
+        const stockBatches = await tx.stockBatch.findMany({
+          where: { id: { in: stockBatchIds } },
+        });
+        const stockBatchMap = new Map(stockBatches.map((sb) => [sb.id, sb]));
+
+        const consumptionData = [];
+        const movementData = [];
+        const stockBatchUpdates = new Map<string, Decimal>();
+        const variantStockUpdates = new Map<
+          string,
+          { variantId: string; locationId: string; quantity: Decimal }
+        >();
+
+        // 2a. Aggregate and Validate Quantities
+        // We aggregate by stockBatchId first to ensure total consumption from a single batch
+        // doesn't exceed its available stock (intra-request validation).
         for (const consumption of ingredientConsumptions) {
-          const stockBatch = await tx.stockBatch.findUnique({
-            where: { id: consumption.stockBatchId },
-          });
+          const stockBatch = stockBatchMap.get(consumption.stockBatchId);
+          if (!stockBatch) {
+            throw new NotFoundException(`Stock batch ${consumption.stockBatchId} not found`);
+          }
 
-          if (!stockBatch)
-            throw new NotFoundException(
-              `Stock batch ${consumption.stockBatchId} not found`,
-            );
+          const qty = new Decimal(consumption.quantity);
+          const currentTotal = stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
+          const newTotal = currentTotal.add(qty);
 
-          // Assuming currentQuantity is a Prisma Decimal
-          if (stockBatch.currentQuantity.lt(consumption.quantity)) {
+          if (stockBatch.currentQuantity.lt(newTotal)) {
             throw new BadRequestException(
-              `Insufficient stock in batch ${stockBatch.batchNumber || stockBatch.id}`,
+              `Insufficient stock in batch ${stockBatch.batchNumber || stockBatch.id}. Requested: ${newTotal}, Available: ${stockBatch.currentQuantity}`,
             );
           }
 
-          await tx.batchIngredientConsumption.create({
-            data: {
-              batchId: id,
-              stockBatchId: consumption.stockBatchId,
-              quantity: consumption.quantity,
-              organizationId,
-            },
+          stockBatchUpdates.set(consumption.stockBatchId, newTotal);
+
+          consumptionData.push({
+            batchId: id,
+            stockBatchId: consumption.stockBatchId,
+            quantity: consumption.quantity,
+            organizationId,
           });
 
-          await tx.stockBatch.update({
-            where: { id: consumption.stockBatchId },
-            data: {
-              currentQuantity: { decrement: consumption.quantity },
-            },
+          movementData.push({
+            variantId: stockBatch.variantId,
+            stockBatchId: stockBatch.id,
+            fromLocationId: stockBatch.locationId,
+            quantity: consumption.quantity,
+            movementType: "PRODUCTION_OUT" as any,
+            memberId: ctx.memberId!,
+            organizationId,
+            notes: `Consumed in Batch ${batch.batchNumber}`,
           });
 
-          await tx.stockMovement.create({
-            data: {
-              variantId: stockBatch.variantId,
-              stockBatchId: stockBatch.id,
-              fromLocationId: stockBatch.locationId,
-              quantity: consumption.quantity,
-              movementType: "PRODUCTION_OUT" as any,
-              memberId: ctx.memberId!,
-              organizationId,
-              notes: `Consumed in Batch ${batch.batchNumber}`,
-            },
-          });
-
-          await tx.productVariantStock.update({
-            where: {
-              variantId_locationId: {
-                variantId: stockBatch.variantId,
-                locationId: stockBatch.locationId,
-              },
-            },
-            data: {
-              currentStock: { decrement: consumption.quantity },
-              availableStock: { decrement: consumption.quantity },
-            },
-          });
+          // Aggregate variant stock updates
+          const vsKey = `${stockBatch.variantId}_${stockBatch.locationId}`;
+          const currentVs = variantStockUpdates.get(vsKey) || {
+            variantId: stockBatch.variantId,
+            locationId: stockBatch.locationId,
+            quantity: new Decimal(0),
+          };
+          currentVs.quantity = currentVs.quantity.add(qty);
+          variantStockUpdates.set(vsKey, currentVs);
         }
+
+        // Batch inserts for consumption records and movements
+        await tx.batchIngredientConsumption.createMany({ data: consumptionData });
+        await tx.stockMovement.createMany({ data: movementData });
+
+        // Batch execute all aggregated stock updates concurrently
+        const updatePromises = [];
+
+        for (const [sbId, qty] of stockBatchUpdates.entries()) {
+          updatePromises.push(
+            tx.stockBatch.update({
+              where: { id: sbId },
+              data: { currentQuantity: { decrement: qty } },
+            }),
+          );
+        }
+
+        for (const vs of variantStockUpdates.values()) {
+          updatePromises.push(
+            tx.productVariantStock.update({
+              where: {
+                variantId_locationId: {
+                  variantId: vs.variantId,
+                  locationId: vs.locationId,
+                },
+              },
+              data: {
+                currentStock: { decrement: vs.quantity },
+                availableStock: { decrement: vs.quantity },
+              },
+            }),
+          );
+        }
+
+        await Promise.all(updatePromises);
       }
 
       // 3. Adjust stock for produced variant
