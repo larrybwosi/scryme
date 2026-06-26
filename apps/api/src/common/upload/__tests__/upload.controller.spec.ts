@@ -63,7 +63,7 @@ describe("UploadController", () => {
     };
     const req = {
       file: vi.fn().mockResolvedValue(mockFile),
-      user: { organizationId: "org-123", memberId: "mem-123" },
+      v2Context: { organizationId: "org-123", memberId: "mem-123" },
     };
     const res = {
       send: vi.fn().mockImplementation((data) => data),
