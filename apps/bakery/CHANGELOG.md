@@ -1,5 +1,11 @@
 # bakery
 
+## 7.1.0
+
+### Minor Changes
+
+- dab0c80: another
+
 ## 7.0.0
 
 ### Major Changes
