@@ -451,7 +451,7 @@ export function TransactionDetailsSheet({
                                       className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
                                       asChild>
                                       <a
-                                        href={att.fileUrl}
+                                        href={att.shortUrl || att.fileUrl}
                                         target="_blank"
                                         rel="noopener noreferrer">
                                         <ExternalLink className="w-4 h-4" />
@@ -463,7 +463,7 @@ export function TransactionDetailsSheet({
                                       className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
                                       asChild>
                                       <a
-                                        href={att.fileUrl}
+                                        href={att.shortUrl || att.fileUrl}
                                         download={att.fileName}>
                                         <Download className="w-4 h-4" />
                                       </a>
@@ -599,7 +599,7 @@ export function TransactionDetailsSheet({
                               {payment.attachments.map((att: any) => (
                                 <a
                                   key={att.id}
-                                  href={att.fileUrl}
+                                  href={att.shortUrl || att.fileUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">

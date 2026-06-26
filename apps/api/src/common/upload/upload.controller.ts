@@ -47,6 +47,7 @@ export class UploadController {
         shortCode,
         shortUrl,
         mimeType: data.mimetype,
+        isPublic: true, // Defaulting to public for now, as per requirement "Public but obfuscated links by default"
         organizationId,
         memberId: memberId || "system",
       },
