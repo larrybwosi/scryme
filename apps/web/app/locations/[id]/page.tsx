@@ -207,25 +207,25 @@ export default async function LocationDetailPage({
         <div className="lg:col-span-2">
           <Tabs defaultValue={tab || "hierarchy"} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-6">
-              <Link href={`/locations/${id}?tab=hierarchy`} passHref legacyBehavior>
+              <Link href={`/locations/${id}?tab=hierarchy`} passHref>
                 <TabsTrigger value="hierarchy" className="gap-2 w-full">
                   <Layers size={16} />
                   Hierarchy
                 </TabsTrigger>
               </Link>
-              <Link href={`/locations/${id}?tab=stock`} passHref legacyBehavior>
+              <Link href={`/locations/${id}?tab=stock`} passHref>
                 <TabsTrigger value="stock" className="gap-2 w-full">
                   <Database size={16} />
                   Stock
                 </TabsTrigger>
               </Link>
-              <Link href={`/locations/${id}?tab=storage`} passHref legacyBehavior>
+              <Link href={`/locations/${id}?tab=storage`} passHref>
                 <TabsTrigger value="storage" className="gap-2 w-full">
                   <Box size={16} />
                   Storage
                 </TabsTrigger>
               </Link>
-              <Link href={`/locations/${id}?tab=management`} passHref legacyBehavior>
+              <Link href={`/locations/${id}?tab=management`} passHref>
                 <TabsTrigger value="management" className="gap-2 w-full">
                   <Settings size={16} />
                   Enterprise

@@ -262,7 +262,6 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_suppliers }}" == "true" ]; then FILTER="$FILTER --filter=@repo/suppliers..."; fi
             if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
             if [ "${{ needs.filter.outputs.pkg_windmill }}" == "true" ]; then FILTER="$FILTER --filter=@repo/windmill..."; fi
-            if [ "${{ needs.filter.outputs.pkg_zitadel }}" == "true" ]; then FILTER="$FILTER --filter=@repo/zitadel..."; fi
 
             if [ -n "$FILTER" ]; then
               echo "Running lint and type-check for changed packages..."
