@@ -20,7 +20,7 @@ const PaymentSplitSchema = z.object({
   amountReceived: z.number().nonnegative().optional(),
   change: z.number().nonnegative().optional(),
   reference: z.string().optional().nullable(),
-  meta: z.record(z.any()).optional().nullable(),
+  meta: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 export const ProcessSaleInputSchema = z.object({
