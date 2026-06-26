@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { authClient, useSession } from '../lib/auth-client';
+import { getCurrentMember } from '../app/actions/auth';
 import {
   LayoutDashboard,
   Users,
@@ -209,7 +211,33 @@ function CollapsibleGroup({
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [member, setMember] = useState<any>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    getCurrentMember().then(setMember);
+  }, []);
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push('/login');
+        },
+      },
+    });
+  };
+
+  const userInitials = session?.user?.name
+    ? session.user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2)
+    : 'U';
 
   return (
     <aside
@@ -258,34 +286,6 @@ export function Sidebar() {
         >
           <PanelLeftOpen size={14} />
         </button>
-      )}
-
-      {/* Workspace Switcher */}
-      {!isCollapsed && (
-        <div className="px-3 py-2.5 border-b border-sidebar-border flex-shrink-0">
-          <button className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md hover:bg-white/5 transition-colors text-left group/ws">
-            <div className="w-6 h-6 rounded-[5px] bg-primary/20 flex items-center justify-center text-primary font-bold text-[10px] flex-shrink-0">
-              SC
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold text-sidebar-foreground/90 truncate leading-none">
-                Scryme Corp
-              </div>
-              <div className="text-[10px] text-sidebar-foreground/40 mt-0.5 leading-none">
-                Enterprise
-              </div>
-            </div>
-            <ChevronRight size={12} className="text-sidebar-foreground/30 flex-shrink-0 group-hover/ws:text-sidebar-foreground/60 transition-colors" />
-          </button>
-        </div>
-      )}
-
-      {isCollapsed && (
-        <div className="flex justify-center py-2.5 border-b border-sidebar-border flex-shrink-0">
-          <div className="w-6 h-6 rounded-[5px] bg-primary/20 flex items-center justify-center text-primary font-bold text-[10px]">
-            SC
-          </div>
-        </div>
       )}
 
       {/* Search shortcut */}
@@ -350,19 +350,20 @@ export function Sidebar() {
         )}
       >
         <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-[11px] flex-shrink-0 ring-2 ring-primary/20">
-          MR
+          {userInitials}
         </div>
         {!isCollapsed && (
           <>
             <div className="flex-1 min-w-0">
               <div className="text-[12px] font-semibold text-sidebar-foreground/85 truncate leading-none">
-                Marcus Reid
+                {session?.user?.name || 'User'}
               </div>
               <div className="text-[10.5px] text-sidebar-foreground/40 mt-0.5 leading-none truncate">
-                Account Manager
+                {member?.jobTitle || (member?.role === 'OWNER' ? 'Owner' : 'Member')}
               </div>
             </div>
             <button
+              onClick={handleLogout}
               className="p-1 rounded-md hover:bg-white/8 transition-colors"
               aria-label="Log out"
             >
