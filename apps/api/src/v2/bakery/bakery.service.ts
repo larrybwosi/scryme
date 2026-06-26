@@ -483,9 +483,11 @@ export class BakeryService {
 
   async updateRecipe(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizationId: _, ...updateData } = data;
     return this.prisma.client.recipe.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -576,9 +578,11 @@ export class BakeryService {
 
   async updateBatch(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizationId: _, ...updateData } = data;
     return this.prisma.client.batch.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -815,9 +819,11 @@ export class BakeryService {
 
   async updateTemplate(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizationId: _, ...updateData } = data;
     return this.prisma.client.template.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -851,9 +857,11 @@ export class BakeryService {
 
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizationId: _, ...updateData } = data;
     return this.prisma.client.bakeryCategory.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -888,9 +896,11 @@ export class BakeryService {
 
   async updateSettings(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizationId: _, ...updateData } = data;
     return this.prisma.client.bakerySettings.update({
       where: { organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1070,9 +1080,11 @@ export class BakeryService {
 
   async updatePartner(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizationId: _, ...updateData } = data;
     return this.prisma.client.deliveryPartner.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1232,7 +1244,11 @@ export class BakeryService {
     try {
       const { data: release } = await axios.get(
         `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
-        { headers },
+        {
+          headers,
+          timeout: 10000,
+          maxContentLength: 1048576, // 1MB
+        },
       );
 
       // Tauri updater expects 204 if already on the latest version
@@ -1283,6 +1299,8 @@ export class BakeryService {
             const sigResponse = await axios.get(sigAsset.browser_download_url, {
               headers,
               responseType: "text",
+              timeout: 10000,
+              maxContentLength: 1048576, // 1MB
             });
             signature = sigResponse.data.trim();
             break;

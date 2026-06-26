@@ -17,6 +17,9 @@ describe('BakeryService', () => {
         delete: vi.fn(),
         findFirst: vi.fn(),
       },
+      recipe: {
+        update: vi.fn(),
+      },
       productVariant: {
         create: vi.fn(),
         update: vi.fn(),
@@ -135,6 +138,21 @@ describe('BakeryService', () => {
         data,
       });
       expect(result.specialties).toContain('bread');
+    });
+
+    it('should strip organizationId from update data', async () => {
+      const ctx = { organizationId: 'org-1' } as any;
+      const id = 'recipe-1';
+      const data = { name: 'New Recipe', organizationId: 'malicious-org' };
+
+      mockPrisma.client.recipe.update.mockResolvedValue({ id });
+
+      await service.updateRecipe(ctx, id, data);
+
+      expect(mockPrisma.client.recipe.update).toHaveBeenCalledWith({
+        where: { id, organizationId: 'org-1' },
+        data: { name: 'New Recipe' },
+      });
     });
 
     it('should throw NotFoundException if baker does not belong to the organization', async () => {
