@@ -34,7 +34,7 @@ describe("BakeryService.completeBatch", () => {
   const mockPrisma = {
     client: {
       batch: {
-        findFirst: vi.fn(),
+        findUnique: vi.fn(),
       },
       $transaction: vi.fn((cb) => cb(mockTx)),
     },
@@ -83,7 +83,7 @@ describe("BakeryService.completeBatch", () => {
       { id: "sb-2", variantId: "v-2", locationId: "loc-1", currentQuantity: new Decimal(30) },
     ];
 
-    mockPrisma.client.batch.findFirst.mockResolvedValue(mockBatch);
+    mockPrisma.client.batch.findUnique.mockResolvedValue(mockBatch);
     mockTx.stockBatch.findMany.mockResolvedValue(mockStockBatches);
     mockTx.batch.update.mockResolvedValue({ ...mockBatch, status: "COMPLETED" });
     mockTx.stockBatch.create.mockResolvedValue({ id: "sb-new" });
@@ -91,8 +91,8 @@ describe("BakeryService.completeBatch", () => {
     await service.completeBatch(ctx, batchId, data);
 
     // Verify batch fetch
-    expect(mockPrisma.client.batch.findFirst).toHaveBeenCalledWith({
-      where: { id: batchId, organizationId: ctx.organizationId },
+    expect(mockPrisma.client.batch.findUnique).toHaveBeenCalledWith({
+      where: { id: batchId, organizationId: "org-1" },
       include: expect.anything(),
     });
 
@@ -146,7 +146,7 @@ describe("BakeryService.completeBatch", () => {
       { id: "sb-1", currentQuantity: new Decimal(20) }, // 20 < 25
     ];
 
-    mockPrisma.client.batch.findFirst.mockResolvedValue(mockBatch);
+    mockPrisma.client.batch.findUnique.mockResolvedValue(mockBatch);
     mockTx.stockBatch.findMany.mockResolvedValue(mockStockBatches);
 
     await expect(service.completeBatch(ctx, "b1", data)).rejects.toThrow(BadRequestException);

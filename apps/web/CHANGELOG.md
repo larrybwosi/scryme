@@ -1,5 +1,15 @@
 # web
 
+## 4.0.0
+
+### Major Changes
+
+- ea41a10: nothing much
+
+### Minor Changes
+
+- 64a83d2: nothing much
+
 ## 3.0.0
 
 ### Major Changes
