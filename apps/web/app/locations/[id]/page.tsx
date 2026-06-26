@@ -2,6 +2,7 @@ import React from "react";
 import {
   getLocation,
   getLocations,
+  getLocationStock,
   getMembersForSelect,
 } from "../../actions/locations";
 import { notFound } from "next/navigation";
@@ -39,48 +40,35 @@ import { db } from "@repo/db";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    search?: string;
+    page?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+    tab?: string;
+  }>;
 }
 
-export default async function LocationDetailPage({ params }: PageProps) {
+export default async function LocationDetailPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { id } = await params;
+  const { search, page, sortBy, sortOrder, tab } = await searchParams;
+
   const location = await getLocation(id);
   const allLocations = await getLocations();
   const members = await getMembersForSelect();
 
-  // Fetch all variants with their stock for this location
-  const allVariants = await db.productVariant.findMany({
-    where: {
-      product: {
-        organizationId: location?.organizationId,
-      },
-      isActive: true,
-    },
-    include: {
-      product: {
-        select: {
-          name: true,
-        },
-      },
-      variantStocks: {
-        where: {
-          locationId: id,
-        },
-      },
-    },
-    orderBy: {
-      product: {
-        name: "asc",
-      },
-    },
+  // Fetch paginated variants with their stock for this location
+  const { data: formattedStock, total: stockTotal } = await getLocationStock({
+    locationId: id,
+    search,
+    page: page ? parseInt(page) : 1,
+    pageSize: 50,
+    sortBy,
+    sortOrder,
   });
-
-  const formattedStock = allVariants.map(v => ({
-    variantId: v.id,
-    name: v.product.name,
-    variantName: v.name,
-    sku: v.sku,
-    currentStock: v.variantStocks[0]?.currentStock.toNumber() || 0,
-  }));
 
   if (!location) {
     notFound();
@@ -217,24 +205,32 @@ export default async function LocationDetailPage({ params }: PageProps) {
 
         {/* Right Column: Hierarchy & Storage */}
         <div className="lg:col-span-2">
-          <Tabs defaultValue="hierarchy" className="w-full">
+          <Tabs defaultValue={tab || "hierarchy"} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-6">
-              <TabsTrigger value="hierarchy" className="gap-2">
-                <Layers size={16} />
-                Hierarchy
-              </TabsTrigger>
-              <TabsTrigger value="stock" className="gap-2">
-                <Database size={16} />
-                Stock
-              </TabsTrigger>
-              <TabsTrigger value="storage" className="gap-2">
-                <Box size={16} />
-                Storage
-              </TabsTrigger>
-              <TabsTrigger value="management" className="gap-2">
-                <Settings size={16} />
-                Enterprise
-              </TabsTrigger>
+              <Link href={`/locations/${id}?tab=hierarchy`} passHref legacyBehavior>
+                <TabsTrigger value="hierarchy" className="gap-2 w-full">
+                  <Layers size={16} />
+                  Hierarchy
+                </TabsTrigger>
+              </Link>
+              <Link href={`/locations/${id}?tab=stock`} passHref legacyBehavior>
+                <TabsTrigger value="stock" className="gap-2 w-full">
+                  <Database size={16} />
+                  Stock
+                </TabsTrigger>
+              </Link>
+              <Link href={`/locations/${id}?tab=storage`} passHref legacyBehavior>
+                <TabsTrigger value="storage" className="gap-2 w-full">
+                  <Box size={16} />
+                  Storage
+                </TabsTrigger>
+              </Link>
+              <Link href={`/locations/${id}?tab=management`} passHref legacyBehavior>
+                <TabsTrigger value="management" className="gap-2 w-full">
+                  <Settings size={16} />
+                  Enterprise
+                </TabsTrigger>
+              </Link>
             </TabsList>
 
             <TabsContent value="hierarchy" className="space-y-6">
@@ -306,6 +302,7 @@ export default async function LocationDetailPage({ params }: PageProps) {
                   <LocationStockTable
                     locationId={location.id}
                     initialData={formattedStock}
+                    totalCount={stockTotal}
                   />
                 </CardContent>
               </Card>
