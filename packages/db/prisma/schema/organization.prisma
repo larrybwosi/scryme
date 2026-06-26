@@ -584,6 +584,7 @@ model OrganizationSettings {
   defaultInvoiceTemplate  String  @default("default")
   defaultReceiptTemplate  String  @default("default")
   defaultWaybillTemplate  String  @default("default")
+  forcePrivateAttachments Boolean @default(false)
 
   // --- Expense Settings ---
   mileageRate            Decimal @default(0) @db.Decimal(19, 4)
