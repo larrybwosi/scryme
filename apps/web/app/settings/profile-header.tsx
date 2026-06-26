@@ -25,6 +25,7 @@ export function OrganizationProfileHeader({
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  console.log("logo", logo, "banner", banner);
 
   const handleUpload = async (file: File, type: "logo" | "banner") => {
     if (!file.type.startsWith("image/")) {
@@ -75,6 +76,7 @@ export function OrganizationProfileHeader({
             src={banner}
             alt="Organization Banner"
             fill
+            unoptimized
             className="object-cover"
           />
         ) : (
@@ -118,6 +120,7 @@ export function OrganizationProfileHeader({
                 src={logo}
                 alt="Organization Logo"
                 fill
+                unoptimized
                 className="object-cover"
               />
             ) : (
