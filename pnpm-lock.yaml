@@ -1600,6 +1600,9 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      '@types/sharp':
+        specifier: ^0.32.0
+        version: 0.32.0
       jest:
         specifier: ^30.2.0
         version: 30.4.2(@types/node@20.19.41)
@@ -6521,6 +6524,10 @@ packages:
 
   '@types/semver@7.7.1':
     resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
+
+  '@types/sharp@0.32.0':
+    resolution: {integrity: sha512-OOi3kL+FZDnPhVzsfD37J88FNeZh6gQsGcLc95NbeURRGvmSjeXiDcyWzF2o3yh/gQAUn2uhh/e+CPCa5nwAxw==}
+    deprecated: This is a stub types definition. sharp provides its own type definitions, so you do not need this installed.
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -18388,6 +18395,10 @@ snapshots:
       '@types/node': 20.19.41
 
   '@types/semver@7.7.1': {}
+
+  '@types/sharp@0.32.0':
+    dependencies:
+      sharp: 0.35.2
 
   '@types/stack-utils@2.0.3': {}
 
