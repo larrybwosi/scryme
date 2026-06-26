@@ -1,9 +1,9 @@
 ---
 "api": minor
+"crm": minor
 "pos": minor
 "web": minor
 "bakery": minor
-"crm": minor
 ---
 
-another
+nothing much
