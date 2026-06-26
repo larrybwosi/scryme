@@ -35,6 +35,7 @@ import StandaloneSetup from './pages/standalone-setup';
 import BarcodePrintingPage from './pages/barcode-printing-page';
 import LogsPage from './pages/logs-page';
 import { AutoShiftModal } from './components/shift/auto-shift-modal';
+import { IdleTimer } from './components/auth/idle-timer';
 
 // Layout wrapper component that uses AppLayout
 const LayoutWrapper = () => {
@@ -84,6 +85,7 @@ const AppRoutes = () => {
     console.log('Rendering SupermarketPOS', { isAuthenticated, currentMember });
     return (
       <>
+        <IdleTimer />
         <AutoShiftModal />
         <Routes>
           <Route index path="/" element={<SupermarketPOS />} />
@@ -106,6 +108,7 @@ const AppRoutes = () => {
 
   return (
     <>
+    <IdleTimer />
     <AutoShiftModal />
     <Routes>
       {/* Routes with AppLayout wrapper */}

@@ -60,6 +60,7 @@
     "bullmq": "^5.79.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
+    "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "decimal.js": "^10.6.0",
     "fastify": "^5.8.5",
