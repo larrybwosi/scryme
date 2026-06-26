@@ -24,3 +24,7 @@
 ## 2025-06-21 - [Standardized Department Management UX]
 **Learning:** Department management components were lagging behind the standardized UX patterns used in other modules (like Locations), specifically relying on native `confirm()` and lacking accessibility features (Tooltips/aria-labels) for action buttons.
 **Action:** Always replace native `confirm()` with themed `AlertDialog` and ensure icon-only buttons in tables have both `Tooltip` and `aria-label`. Include loading states in all destructive action confirmations.
+
+## 2025-06-22 - [CRM Module Standardization & Async Deletion UX]
+**Learning:** Native `window.confirm` in the CRM module created a disjointed experience compared to other apps in the monorepo. Lack of loading states during optimistic deletion could lead to race conditions or user confusion if the background request failed after the UI element was hidden.
+**Action:** Standardize destructive actions with themed `AlertDialog`. Ensure `Loader2` feedback is present in the confirmation button and that state cleanups (closing dialog, resetting selection) occur in `finally` blocks to handle both success and error paths gracefully. Always wrap icon-only pagination and action triggers in `Tooltip` with `aria-label`.
