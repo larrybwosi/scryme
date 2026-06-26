@@ -132,18 +132,19 @@ export function LeadsView() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
-      <div className="px-8 pt-7 pb-6">
-        <div className="flex items-start justify-between">
+      {/* Page Header */}
+      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[22px] font-bold text-foreground">Leads</h1>
-            <p className="text-[13px] text-muted-foreground mt-0.5">
-              Track and qualify potential customers before they enter your CRM.
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Leads</h1>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {leads.length} lead{leads.length !== 1 ? 's' : ''} &bull; {leads.filter((l: any) => l.data.status === 'new').length} new
             </p>
           </div>
           <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <SheetTrigger asChild>
-              <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-primary/90 transition-colors">
-                <Plus size={15} />
+              <button className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-[12.5px] font-semibold hover:bg-primary/90 transition-colors h-8">
+                <Plus size={13} />
                 Add Lead
               </button>
             </SheetTrigger>
@@ -156,7 +157,7 @@ export function LeadsView() {
           </Sheet>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
             title="Total Leads"
             value={leads.length}
@@ -166,12 +167,20 @@ export function LeadsView() {
             iconBg="bg-primary/10"
           />
           <StatCard
-            title="New Leads"
+            title="New"
             value={leads.filter((l: any) => l.data.status === 'new').length}
             sub="Awaiting contact"
             icon={UserPlus}
             iconColor="text-blue-600"
-            iconBg="bg-blue-50"
+            iconBg="bg-blue-50 dark:bg-blue-950/30"
+          />
+          <StatCard
+            title="Qualified"
+            value={leads.filter((l: any) => l.data.status === 'qualified').length}
+            sub="Converted to customer"
+            icon={UserPlus}
+            iconColor="text-green-600"
+            iconBg="bg-green-50 dark:bg-green-950/30"
           />
         </div>
       </div>
