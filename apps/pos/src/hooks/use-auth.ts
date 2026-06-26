@@ -176,7 +176,7 @@ export const useSessionActivityListener = () => {
     const interval = setInterval(checkSession, 5 * 60 * 1000); // Every 5 minutes
 
     return () => clearInterval(interval);
-  }, [currentMember, clearMemberSession]);
+  }, [currentMember, deviceConfig, clearMemberSession]);
 
   // Throttled function to prevent too many state updates.
   // It will only fire once every 5 seconds max, even if the user is typing furiously.
