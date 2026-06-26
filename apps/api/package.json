@@ -49,7 +49,6 @@
     "@repo/shared": "workspace:*",
     "@repo/suppliers": "workspace:*",
     "@repo/windmill": "workspace:*",
-    "@repo/zitadel": "workspace:*",
     "@types/react": "19.2.14",
     "@upstash/redis": "^1.38.0",
     "ably": "^2.23.0",
