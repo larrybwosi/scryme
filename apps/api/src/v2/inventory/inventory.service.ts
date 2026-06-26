@@ -250,13 +250,12 @@ export class InventoryService {
 
         await tx.productVariantStock.create({
           data: {
-            organization: { connect: { id: organizationId } },
-            product: { connect: { id: productId } },
-            variant: { connect: { id: variantId } },
-            location: { connect: { id: locationId } },
+            organizationId,
+            productId,
+            variantId,
+            locationId,
             availableStock: quantity,
             currentStock: quantity,
-            organizationId, // Explicitly set organizationId
           },
         });
       }
