@@ -1,8 +1,5 @@
 import { prisma as db } from "@repo/db";
-import { Mappers } from "@repo/documents/server";
-import { renderToStream } from "@react-pdf/renderer";
-import React from "react";
-import QRCode from "qrcode";
+import { Mappers, generateQRCode, DocumentGenerator } from "@repo/documents";
 
 export async function generateDocument(type: string, data: any): Promise<any> {
   return Buffer.from([]);
@@ -45,7 +42,7 @@ export async function getDocumentStream(
     throw new Error("Transaction not found");
   }
 
-  let DocumentComponent: React.ComponentType<any>;
+  let DocumentComponent: any;
   let data: any;
   let filename: string;
   let qrCode: string = "";
@@ -63,7 +60,7 @@ export async function getDocumentStream(
 
       try {
         // Generate QR code for invoice number (or verification URL if available)
-        qrCode = await QRCode.toDataURL(transaction.number);
+        qrCode = await generateQRCode(transaction.number);
       } catch (err) {
         console.error("Failed to generate QR code", err);
       }
@@ -78,13 +75,13 @@ export async function getDocumentStream(
       throw new Error(`Document type ${type} not supported yet`);
   }
 
-  const stream = await renderToStream(
-    React.createElement(DocumentComponent, {
+  const stream = (await DocumentGenerator.renderToStream(
+    DocumentGenerator.createElement(DocumentComponent, {
       data,
       qrCode,
       settings: transaction.organization?.settings,
     }),
-  );
+  )) as NodeJS.ReadableStream;
 
   return {
     stream,

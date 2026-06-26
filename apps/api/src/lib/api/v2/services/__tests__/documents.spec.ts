@@ -18,11 +18,16 @@ vi.mock("@repo/db", () => {
   };
 });
 
-vi.mock("@react-pdf/renderer", async importOriginal => {
+vi.mock("@repo/documents", async importOriginal => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,
-    renderToStream: vi.fn().mockResolvedValue("mock-stream"),
+    DocumentGenerator: {
+      ...actual.DocumentGenerator,
+      renderToStream: vi.fn().mockResolvedValue("mock-stream"),
+      createElement: vi.fn().mockReturnValue({}),
+    },
+    generateQRCode: vi.fn().mockResolvedValue("mock-qrcode"),
   };
 });
 

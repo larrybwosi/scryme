@@ -47,7 +47,8 @@
     "./actions/organization/mpesa-trigger": "./src/actions/organization/mpesa-trigger.service.ts",
     "./actions/api-management": "./src/actions/api-management/index.ts",
     "./actions/finance/approvals": "./src/actions/finance/approvals.ts",
-    "./types/action-response": "./src/types/action-response.ts"
+    "./types/action-response": "./src/types/action-response.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -84,6 +85,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "server-only": "0.0.1",
+    "sharp": "^0.35.2",
     "socket.io-client": "^4.8.3",
     "sonner": "latest",
     "tailwind-merge": "^3.5.0",

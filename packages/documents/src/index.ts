@@ -32,6 +32,7 @@ import { createElement, ReactElement } from "react";
 
 export * from "./types";
 export * from "./registry";
+export * from "./server";
 
 // V1 Templates
 export * from "./templates/v1/invoice";
