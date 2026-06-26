@@ -24,6 +24,7 @@ export function useAuth() {
   // Get state and actions directly from the Zustand store using individual selectors
   const currentMember = useAuthStore(state => state.currentMember);
   const currentLocation = useAuthStore(state => state.currentLocation);
+  const deviceConfig = useAuthStore(state => state.deviceConfig);
   const isRestoredSession = useAuthStore(state => state.isRestoredSession);
   const setMemberSession = useAuthStore(state => state.setMemberSession);
   const clearMemberSession = useAuthStore(state => state.clearMemberSession);
@@ -146,18 +147,19 @@ export function useAuth() {
 export const useSessionActivityListener = () => {
   const refreshSession = useAuthStore(state => state.refreshSession);
   const currentMember = useAuthStore(state => state.currentMember);
+  const deviceConfig = useAuthStore(state => state.deviceConfig);
   const clearMemberSession = useAuthStore(state => state.clearMemberSession);
 
   // Periodic session check (refresh mechanism)
   useEffect(() => {
-    if (!currentMember) return;
+    if (!currentMember || !deviceConfig?.orgSlug) return;
 
     const checkSession = async () => {
       try {
         // We can use authenticated_api_request to ping and verify token
         const response = await invoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: 'members/attendance/me/status',
+          path: `api/v3/${deviceConfig.orgSlug}/members/attendance/me/status`,
         });
 
         if (!response.success || !response.data?.isCheckedIn) {
