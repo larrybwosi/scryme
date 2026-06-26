@@ -14,12 +14,22 @@ export class AttendanceScheduler {
     private readonly attendanceUseCase: AttendanceUseCase,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async handleAutoCheckout() {
     this.logger.log("Checking for members to auto-checkout...");
 
-    // 1. Get all organizations with their settings
+    // 1. Get all organizations that have active check-ins
+    const activeOrgIds = await this.prisma.client.attendanceLog.findMany({
+      where: { checkOutTime: null },
+      distinct: ["organizationId"],
+      select: { organizationId: true },
+    });
+
+    if (!activeOrgIds || activeOrgIds.length === 0) return;
+
+    // 2. Get settings only for these organizations
     const orgs = await this.prisma.client.organization.findMany({
+      where: { id: { in: activeOrgIds.map(o => o.organizationId) } },
       select: {
         id: true,
         settings: {
@@ -45,12 +55,14 @@ export class AttendanceScheduler {
 
         // If auto-checkout is NOT explicitly enabled, we only auto-checkout at midnight
         if (!settings?.enableAutoCheckout) {
-          if (currentTimeStr === "00:00") {
+          // Check if we are within 5 minutes of midnight
+          if (currentTimeStr >= "00:00" && currentTimeStr < "00:05") {
             shouldCheckout = true;
           }
         } else {
           // If enabled, we checkout at the configured time
-          if (currentTimeStr === autoCheckoutTime) {
+          // Check if we are within 5 minutes of the configured time
+          if (currentTimeStr >= autoCheckoutTime && currentTimeStr < this.addMinutes(autoCheckoutTime, 5)) {
             shouldCheckout = true;
           }
         }
@@ -64,6 +76,13 @@ export class AttendanceScheduler {
         );
       }
     }
+  }
+
+  private addMinutes(timeStr: string, mins: number): string {
+    const [h, m] = timeStr.split(":").map(Number);
+    const date = new Date();
+    date.setHours(h, m + mins);
+    return format(date, "HH:mm");
   }
 
   private async processAutoCheckoutForOrg(organizationId: string) {

@@ -18,6 +18,7 @@ describe('useSessionActivityListener', () => {
   it('should clear session if me/status returns not checked in', async () => {
     const member = { id: 'm1', name: 'Member 1' } as any;
     useAuthStore.getState().setMemberSession(member);
+    useAuthStore.setState({ deviceConfig: { orgSlug: 'test-org' } as any });
 
     vi.mocked(invoke).mockResolvedValue({ success: true, data: { isCheckedIn: false } });
 
@@ -34,6 +35,7 @@ describe('useSessionActivityListener', () => {
   it('should keep session if me/status returns checked in', async () => {
     const member = { id: 'm1', name: 'Member 1' } as any;
     useAuthStore.getState().setMemberSession(member);
+    useAuthStore.setState({ deviceConfig: { orgSlug: 'test-org' } as any });
 
     vi.mocked(invoke).mockResolvedValue({ success: true, data: { isCheckedIn: true } });
 

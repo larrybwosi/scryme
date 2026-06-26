@@ -117,13 +117,31 @@ export async function getTransactionById(id: string) {
       organizationId: auth.organizationId,
     },
     include: {
-      customer: true,
-      location: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+        },
+      },
+      location: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       items: {
         include: {
           variant: {
             include: {
-              product: true,
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                },
+              },
             },
           },
         },
@@ -136,12 +154,25 @@ export async function getTransactionById(id: string) {
       fulfillments: {
         include: {
           items: true,
-          driver: true,
+          driver: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       },
       member: {
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
         },
       },
       attachments: {
