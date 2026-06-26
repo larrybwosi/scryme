@@ -1,4 +1,4 @@
-import sharp, { FormatEnum } from "sharp";
+import sharp, { type FormatEnum, type OutputInfo } from "sharp";
 
 export async function optimizeImage(
   imageBuffer: Buffer,
@@ -8,7 +8,7 @@ export async function optimizeImage(
     quality?: number;
     format?: keyof FormatEnum;
   } = {},
-): Promise<{ data: Buffer; info: sharp.OutputInfo }> {
+): Promise<{ data: Buffer; info: OutputInfo }> {
   let transformer = sharp(imageBuffer, { failOn: "none" });
 
   if (options.width || options.height) {
