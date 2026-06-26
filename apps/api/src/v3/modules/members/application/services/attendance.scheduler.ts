@@ -25,7 +25,7 @@ export class AttendanceScheduler {
       select: { organizationId: true },
     });
 
-    if (activeOrgIds.length === 0) return;
+    if (!activeOrgIds || activeOrgIds.length === 0) return;
 
     // 2. Get settings only for these organizations
     const orgs = await this.prisma.client.organization.findMany({
