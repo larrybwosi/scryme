@@ -69,7 +69,7 @@ export function LocationStockTable({
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
-  }, [debouncedSearch]);
+  }, [debouncedSearch, pathname, router, searchParams]);
 
   const handleStockChange = (variantId: string, value: string) => {
     if (value === "") {

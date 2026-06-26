@@ -92,7 +92,7 @@ describe("BakeryService.completeBatch", () => {
 
     // Verify batch fetch
     expect(mockPrisma.client.batch.findUnique).toHaveBeenCalledWith({
-      where: { id: batchId },
+      where: { id: batchId, organizationId: "org-1" },
       include: expect.anything(),
     });
 
