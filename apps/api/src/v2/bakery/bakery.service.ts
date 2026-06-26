@@ -711,12 +711,12 @@ export class BakeryService {
   }
 
   async completeBatch(ctx: V2ApiContext, id: string, data: any) {
-    const { organizationId } = ctx;
+    const organizationId = ctx.organizationId;
     const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
       data;
 
-    const batch = await this.prisma.client.batch.findUnique({
-      where: { id },
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id, organizationId },
       include: { recipe: { include: { producesVariant: true } } },
     });
 
@@ -744,8 +744,8 @@ export class BakeryService {
       // 2. Process Ingredient Consumptions
       if (ingredientConsumptions && ingredientConsumptions.length > 0) {
         for (const consumption of ingredientConsumptions) {
-          const stockBatch = await tx.stockBatch.findUnique({
-            where: { id: consumption.stockBatchId },
+          const stockBatch = await tx.stockBatch.findFirst({
+            where: { id: consumption.stockBatchId, organizationId },
           });
 
           if (!stockBatch)
