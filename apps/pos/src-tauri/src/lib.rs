@@ -1,7 +1,5 @@
 #[cfg(not(debug_assertions))]
 use better_posthog::events::capture;
-#[cfg(not(debug_assertions))]
-use dotenvy_macro::dotenv;
 use log::error;
 pub mod escpos_builder;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
@@ -99,13 +97,13 @@ pub fn run() {
 
     #[cfg(not(debug_assertions))]
     let _posthog_guard = better_posthog::init(better_posthog::ClientOptions {
-        api_key: Some(dotenv!("POSTHOG_API_KEY").into()),
+        api_key: Some(env!("POSTHOG_API_KEY").into()),
         ..Default::default()
     });
 
     #[cfg(not(debug_assertions))]
     let client = sentry::init((
-        dotenv!("SENTRY_DSN"),
+        env!("SENTRY_DSN"),
         sentry::ClientOptions {
             release: sentry::release_name!(),
             auto_session_tracking: true,
