@@ -146,6 +146,35 @@ export function useAuth() {
 export const useSessionActivityListener = () => {
   const refreshSession = useAuthStore(state => state.refreshSession);
   const currentMember = useAuthStore(state => state.currentMember);
+  const clearMemberSession = useAuthStore(state => state.clearMemberSession);
+
+  // Periodic session check (refresh mechanism)
+  useEffect(() => {
+    if (!currentMember) return;
+
+    const checkSession = async () => {
+      try {
+        // We can use authenticated_api_request to ping and verify token
+        const response = await invoke<any>('authenticated_api_request', {
+          method: 'GET',
+          path: 'members/attendance/me/status',
+        });
+
+        if (!response.success || !response.data?.isCheckedIn) {
+          console.warn('Session invalid or expired, clearing session');
+          clearMemberSession();
+        }
+      } catch (error) {
+        console.error('Failed to verify session:', error);
+        // If it's a network error, we might not want to log out immediately,
+        // but if it's a 401/403, we should. Rust backend handles status codes.
+      }
+    };
+
+    const interval = setInterval(checkSession, 5 * 60 * 1000); // Every 5 minutes
+
+    return () => clearInterval(interval);
+  }, [currentMember, clearMemberSession]);
 
   // Throttled function to prevent too many state updates.
   // It will only fire once every 5 seconds max, even if the user is typing furiously.
