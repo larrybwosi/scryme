@@ -5,6 +5,7 @@ model Attachment {
   shortCode   String?  @unique
   shortUrl    String?
   mimeType    String   // e.g., "image/jpeg", "application/pdf", "text/markdown"
+  isPublic    Boolean  @default(true)
   sizeBytes   Int?
   description String?
   content     String?  @db.Text // New field for markdown content
