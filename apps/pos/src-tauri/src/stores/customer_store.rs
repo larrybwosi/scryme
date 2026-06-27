@@ -286,10 +286,10 @@ pub async fn run_sync(
         .timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS))
         .build().map_err(|e| anyhow::anyhow!(e))?;
 
-    let mut query_params = vec![("limit", "1000".to_string())];
-    if let Some(token) = &last_sync {
-        query_params.push(("lastSync", token.clone()));
-    }
+    let mut query_params = vec![("limit", "2000".to_string())];
+
+    // We want a full sync to ensure local copy is up to date with API
+    // lastSync is removed to force a full refresh of active customers
 
     let response = client.get(&target_url).query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
 
@@ -303,6 +303,9 @@ pub async fn run_sync(
     let incoming_count = res_body.data.len();
     let mut tx = pool.begin().await.map_err(|e| anyhow::anyhow!(e))?;
 
+    // Clear local customers before full sync if it's a full sync
+    sqlx::query("DELETE FROM customers").execute(&mut *tx).await.map_err(|e| anyhow::anyhow!(e))?;
+
     for customer in res_body.data {
         let search_text = build_search_text(&customer);
         let encrypted_payload = encrypt_payload(&customer).await?;
@@ -310,12 +313,6 @@ pub async fn run_sync(
         let query = r#"
             INSERT INTO customers (id, name, phone, email, search_text, payload)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-            ON CONFLICT(id) DO UPDATE SET
-                name = excluded.name,
-                phone = excluded.phone,
-                email = excluded.email,
-                search_text = excluded.search_text,
-                payload = excluded.payload
         "#;
 
         sqlx::query(query)
@@ -468,6 +465,90 @@ pub async fn create_customer_cloud(
         .bind(&new_customer.email)
         .bind(search_text)
         .bind(encrypted_payload)
+        .execute(&pool)
+        .await.map_err(|e| anyhow::anyhow!(e))?;
+
+    Ok(new_customer)
+}
+
+pub async fn update_customer(
+    app: AppHandle,
+    _state: &CustomerState,
+    auth_state: &AuthState,
+    id: String,
+    payload: serde_json::Value,
+) -> Result<PosCustomer> {
+    if cfg!(feature = "standalone") {
+        let new_customer: PosCustomer = serde_json::from_value(payload)?;
+        let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
+        let search_text = build_search_text(&new_customer);
+        let encrypted_payload = encrypt_payload(&new_customer).await?;
+
+        sqlx::query("UPDATE customers SET name = ?1, phone = ?2, email = ?3, search_text = ?4, payload = ?5 WHERE id = ?6")
+            .bind(&new_customer.name)
+            .bind(&new_customer.phone)
+            .bind(&new_customer.email)
+            .bind(search_text)
+            .bind(encrypted_payload)
+            .bind(&id)
+            .execute(&pool)
+            .await.map_err(|e| anyhow::anyhow!(e))?;
+
+        return Ok(new_customer);
+    }
+
+    update_customer_cloud(app, _state, auth_state, id, payload).await
+}
+
+pub async fn update_customer_cloud(
+    app: AppHandle,
+    _state: &CustomerState,
+    auth_state: &AuthState,
+    id: String,
+    payload: serde_json::Value,
+) -> Result<PosCustomer> {
+    let (base_url, device_key) = {
+        let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
+        let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
+        (config.base_url.clone(), config.device_key.clone())
+    };
+
+    let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
+
+    let target_url = format!("{}/{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS, id);
+
+    let mut headers = HeaderMap::new();
+    headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| anyhow::anyhow!(e))?);
+    if let Some(token) = member_token {
+        headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token).map_err(|e| anyhow::anyhow!(e))?);
+    }
+
+    let client = reqwest::Client::builder().default_headers(headers).build().map_err(|e| anyhow::anyhow!(e))?;
+    let response = client.patch(&target_url).json(&payload).send().await.map_err(|e| anyhow::anyhow!(e))?;
+
+    if !response.status().is_success() {
+        return Err(anyhow::anyhow!("Server error: {}", response.status()));
+    }
+
+    let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
+    let new_customer: PosCustomer = if raw_val.get("data").is_some() {
+        serde_json::from_value(raw_val["data"].clone()).map_err(|e| anyhow::anyhow!(e))?
+    } else {
+        serde_json::from_value(raw_val).map_err(|e| anyhow::anyhow!(e))?
+    };
+
+    // Save to DB
+    let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
+    let search_text = build_search_text(&new_customer);
+    let encrypted_payload = encrypt_payload(&new_customer).await?;
+
+    sqlx::query("UPDATE customers SET name = ?1, phone = ?2, email = ?3, search_text = ?4, payload = ?5 WHERE id = ?6")
+        .bind(&new_customer.name)
+        .bind(&new_customer.phone)
+        .bind(&new_customer.email)
+        .bind(search_text)
+        .bind(encrypted_payload)
+        .bind(&id)
         .execute(&pool)
         .await.map_err(|e| anyhow::anyhow!(e))?;
 

@@ -29,6 +29,19 @@ pub async fn create_customer_command(
 }
 
 #[tauri::command]
+pub async fn update_customer_command(
+    app: AppHandle,
+    state: State<'_, CustomerState>,
+    auth_state: State<'_, AuthState>,
+    id: String,
+    data: serde_json::Value,
+) -> Result<models::PosCustomer, String> {
+    customer_store::update_customer(app, &state, &auth_state, id, data)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn search_customers_command(
     app: AppHandle,
     state: State<'_, CustomerState>,
