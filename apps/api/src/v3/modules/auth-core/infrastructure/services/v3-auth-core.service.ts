@@ -85,6 +85,15 @@ export class V3AuthCoreService {
     memberId: string,
   ) {
     payload.memberId = memberId;
+
+    const member = await this.prisma.client.member.findUnique({
+      where: { id: memberId },
+      select: { userId: true },
+    });
+    if (member) {
+      payload.userId = member.userId;
+    }
+
     payload.type = "v3_hybrid";
     const registry = await this.prisma.client.deviceRegistry.findFirst({
       where: { apiKeyId: clientId },

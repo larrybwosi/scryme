@@ -276,6 +276,7 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="OWNER">Owner</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
                 <SelectItem value="MANAGER">Manager</SelectItem>
                 <SelectItem value="EMPLOYEE">Employee</SelectItem>
