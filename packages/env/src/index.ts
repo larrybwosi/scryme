@@ -22,7 +22,7 @@ const serverSchema = z.object({
   PORT: z.coerce.number().default(3001),
 
   // Auth
-  BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
+  BETTER_AUTH_SECRET: z.string().min(1).optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -37,7 +37,7 @@ const serverSchema = z.object({
   USE_IOREDIS_IN_PROD: z.coerce.boolean().default(false),
 
   // API
-  JWT_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
+  JWT_SECRET: z.string().min(1).optional(),
   INTERNAL_ADMIN_SECRET: z.string().optional(),
   APP_VERSION: z.string().default("1.0.0"),
 
