@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { Printer, Download, Check, Loader2, Receipt, ArrowRight, CreditCard, Wallet, Tag } from 'lucide-react';
+import { Printer, Download, Check, Loader2, ArrowRight, CreditCard, Wallet, Tag } from 'lucide-react';
 import QRCode from 'qrcode';
-import bwipjs from '@bwip-js/browser';
 
 // UI Components
 import { Dialog, DialogContent } from '@repo/ui/components/ui/dialog';
@@ -18,7 +17,6 @@ import { usePdfActions } from '@/hooks/use-pdf-actions';
 import { usePrinter } from '@/hooks/use-printer';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ReceiptPreviewWrapper } from './pos/receipt-preview-wrapper';
 
 // --- Types ---
 interface ReceiptDialogProps {
@@ -307,21 +305,25 @@ export function ReceiptDialog({ open, onOpenChange, completedOrder, onClose }: R
 
   // Generate Barcode for PDF
   useEffect(() => {
-    if (formattedOrder && receiptConfig?.showBarcode) {
-      try {
-        const canvas = document.createElement('canvas');
-        bwipjs.toCanvas(canvas, {
-          bcid: 'code128',
-          text: formattedOrder.orderNumber,
-          scale: 3,
-          height: 10,
-          includetext: false,
-        });
-        setBarcodeUrl(canvas.toDataURL('image/png'));
-      } catch (e) {
-        console.error('Barcode generation failed', e);
+    const generateBarcode = async () => {
+      if (formattedOrder && receiptConfig?.showBarcode) {
+        try {
+          const bwipjs = await import('@bwip-js/browser');
+          const canvas = document.createElement('canvas');
+          bwipjs.toCanvas(canvas, {
+            bcid: 'code128',
+            text: formattedOrder.orderNumber,
+            scale: 3,
+            height: 10,
+            includetext: false,
+          });
+          setBarcodeUrl(canvas.toDataURL('image/png'));
+        } catch (e) {
+          console.error('Barcode generation failed', e);
+        }
       }
-    }
+    };
+    generateBarcode();
   }, [formattedOrder, receiptConfig]);
 
   // Document Instance

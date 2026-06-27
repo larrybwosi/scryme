@@ -24,7 +24,6 @@ export function useAuth() {
   // Get state and actions directly from the Zustand store using individual selectors
   const currentMember = useAuthStore(state => state.currentMember);
   const currentLocation = useAuthStore(state => state.currentLocation);
-  const deviceConfig = useAuthStore(state => state.deviceConfig);
   const isRestoredSession = useAuthStore(state => state.isRestoredSession);
   const setMemberSession = useAuthStore(state => state.setMemberSession);
   const clearMemberSession = useAuthStore(state => state.clearMemberSession);
