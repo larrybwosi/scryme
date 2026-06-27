@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { pdf } from '@react-pdf/renderer';
 import { toast } from 'sonner';
 import { isTauri } from '@tauri-apps/api/core';
 import { usePrinter } from '@/hooks/use-printer';
@@ -49,7 +50,6 @@ export function usePdfActions() {
         }
 
         // Path B: Silent PDF Printing (Backend-driven)
-        const { pdf } = await import('@react-pdf/renderer');
         const blob = await pdf(docInstance).toBlob();
         const arrayBuffer = await blob.arrayBuffer();
         const pdfBytes = Array.from(new Uint8Array(arrayBuffer));
@@ -70,7 +70,6 @@ export function usePdfActions() {
       }
 
       // Web Fallback: Use a hidden iframe to print without popups
-      const { pdf } = await import('@react-pdf/renderer');
       const blob = await pdf(docInstance).toBlob();
       const url = URL.createObjectURL(blob);
       const iframe = document.createElement('iframe');
@@ -128,7 +127,6 @@ export function usePdfActions() {
     const loadingToastId = toast.loading('Generating PDF...');
 
     try {
-      const { pdf } = await import('@react-pdf/renderer');
       const blob = await pdf(docInstance).toBlob();
       const fileName = `${fileNamePrefix}_${Date.now()}.pdf`;
       await processFileDownload(blob, fileName, loadingToastId);

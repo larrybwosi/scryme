@@ -11,8 +11,8 @@ import { Download, Printer, ShoppingBag, Truck, UtensilsCrossed, ChefHat } from 
 import { cn } from '@/lib/utils';
 import { usePosStore } from '@/store/store';
 
-import { PDFReceipt, PDFKitchenTicket } from '@/components/receipts/lazy-pdf';
-import { Suspense } from 'react';
+import { PDFReceipt } from '@/components/receipts/pdf-receipt';
+import { PDFKitchenTicket } from '@/components/receipts/pdf-kitchen-ticket';
 import QRCode from 'qrcode';
 import { format } from 'date-fns';
 import { usePdfActions } from '@/hooks/use-pdf-actions';
@@ -78,16 +78,14 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
 
   const onPrintReceipt = () => {
     handlePrint(
-      <Suspense fallback={null}>
-        <PDFReceipt
-          order={order}
-          businessName={settings.businessName}
-          currency={settings.currency}
-          taxRate={settings.taxRate}
-          receiptConfig={settings.receiptConfig}
-          qrCodeDataUrl={qrCodeDataUrl}
-        />
-      </Suspense>,
+      <PDFReceipt
+        order={order}
+        businessName={settings.businessName}
+        currency={settings.currency}
+        taxRate={settings.taxRate}
+        receiptConfig={settings.receiptConfig}
+        qrCodeDataUrl={qrCodeDataUrl}
+      />,
       `receipt-${order.orderNumber}`,
       order,
       'receipt'
@@ -96,25 +94,21 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
 
   const onDownloadReceipt = () => {
     handleDownload(
-      <Suspense fallback={null}>
-        <PDFReceipt
-          order={order}
-          businessName={settings.businessName}
-          currency={settings.currency}
-          taxRate={settings.taxRate}
-          receiptConfig={settings.receiptConfig}
-          qrCodeDataUrl={qrCodeDataUrl}
-        />
-      </Suspense>,
+      <PDFReceipt
+        order={order}
+        businessName={settings.businessName}
+        currency={settings.currency}
+        taxRate={settings.taxRate}
+        receiptConfig={settings.receiptConfig}
+        qrCodeDataUrl={qrCodeDataUrl}
+      />,
       `receipt-${order.orderNumber}`
     );
   };
 
   const onDownloadKitchenTicket = () => {
     handleDownload(
-      <Suspense fallback={null}>
-        <PDFKitchenTicket order={order} businessName={settings.businessName} />
-      </Suspense>,
+      <PDFKitchenTicket order={order} businessName={settings.businessName} />,
       `ticket-${order.orderNumber}`
     );
   };

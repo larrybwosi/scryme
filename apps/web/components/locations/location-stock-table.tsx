@@ -152,7 +152,7 @@ export function LocationStockTable({
       search: debouncedSearch || null,
       page: debouncedSearch ? "1" : null,
     });
-  }, [debouncedSearch]); // Only depend on debouncedSearch, not searchParams
+  }, [debouncedSearch, currentSearch, updateURL]); // Only depend on debouncedSearch, not searchParams
 
   const handleStockChange = useCallback((variantId: string, value: string) => {
     if (value === "") {

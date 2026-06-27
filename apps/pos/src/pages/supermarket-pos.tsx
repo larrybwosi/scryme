@@ -26,6 +26,8 @@ import { usePosProducts } from '@/hooks/products';
 import { useScanner } from '@/hooks/use-scanner';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
+import PaymentModal from '@/components/pos/payment-dialog';
+import { ReceiptDialog } from '@/components/receipt-dialog';
 import { useProcessSale, PaymentMethod, PaymentStatus } from '@/hooks/sales';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useCashDrawer } from '@/hooks/use-cash-drawer';
@@ -42,13 +44,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@repo/ui/components/ui/alert-dialog';
+import { SettingsDialog } from '@/components/settings-dialog';
 import { useNavigate } from 'react-router';
-import { lazy, Suspense } from 'react';
-
-const SettingsDialog = lazy(() => import('@/components/settings-dialog').then(m => ({ default: m.SettingsDialog })));
-const PaymentModal = lazy(() => import('@/components/pos/payment-dialog'));
-const ReceiptDialog = lazy(() => import('@/components/receipt-dialog').then(m => ({ default: m.ReceiptDialog })));
-
 import {
   Sheet,
   SheetContent,
@@ -705,30 +702,24 @@ export function SupermarketPOS() {
       </main>
 
       {/* Dialogs */}
-      <Suspense fallback={null}>
-        {paymentDialogOpen && (
-          <PaymentModal
-            isOpen={paymentDialogOpen}
-            onClose={() => setPaymentDialogOpen(false)}
-            cartItems={(currentOrder?.items ?? []).map(i => ({ ...i, price: i.selectedUnit?.price || 0 })) as any}
-            subtotal={total}
-            discount={0}
-            customer={null}
-            orderType="Takeaway"
-            tableNumber=""
-            onPaymentComplete={handlePaymentComplete}
-          />
-        )}
+      <PaymentModal
+        isOpen={paymentDialogOpen}
+        onClose={() => setPaymentDialogOpen(false)}
+        cartItems={(currentOrder?.items ?? []).map(i => ({ ...i, price: i.selectedUnit?.price || 0 })) as any}
+        subtotal={total}
+        discount={0}
+        customer={null}
+        orderType="Takeaway"
+        tableNumber=""
+        onPaymentComplete={handlePaymentComplete}
+      />
 
-        {receiptDialogOpen && (
-          <ReceiptDialog
-            open={receiptDialogOpen}
-            onOpenChange={setReceiptDialogOpen}
-            completedOrder={lastCompletedOrder}
-            onClose={() => setReceiptDialogOpen(false)}
-          />
-        )}
-      </Suspense>
+      <ReceiptDialog
+        open={receiptDialogOpen}
+        onOpenChange={setReceiptDialogOpen}
+        completedOrder={lastCompletedOrder}
+        onClose={() => setReceiptDialogOpen(false)}
+      />
 
       <AlertDialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
         <AlertDialogContent>
@@ -747,11 +738,7 @@ export function SupermarketPOS() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Suspense fallback={null}>
-        {showSettingsDialog && (
-          <SettingsDialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog} />
-        )}
-      </Suspense>
+      <SettingsDialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog} />
 
       <AlertDialog open={!!unknownBarcode} onOpenChange={(open) => !open && setUnknownBarcode(null)}>
         <AlertDialogContent>

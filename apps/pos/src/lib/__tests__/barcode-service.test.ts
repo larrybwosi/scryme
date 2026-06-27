@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BarcodeService } from '../barcode-service';
-
-const mockToCanvas = vi.fn();
+import bwipjs from 'bwip-js';
 
 // Mock bwip-js
 vi.mock('bwip-js', () => ({
-  toCanvas: mockToCanvas,
   default: {
-    toCanvas: mockToCanvas
+    toCanvas: vi.fn()
   }
 }));
 
@@ -31,7 +29,7 @@ describe('BarcodeService', () => {
   it('should generate a barcode', async () => {
     const result = await BarcodeService.generate('12345678', 'code128');
 
-    expect(mockToCanvas).toHaveBeenCalled();
+    expect(bwipjs.toCanvas).toHaveBeenCalled();
     expect(result).toBe('data:image/png;base64,mock-barcode');
   });
 

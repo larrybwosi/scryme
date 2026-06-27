@@ -25,62 +25,43 @@ export class ProcessSaleUseCase {
       throw new UnauthorizedException("Member session required for POS sales");
     }
 
-    const { transaction, total } = await this.prisma.client.$transaction(
-      async (tx: any) => {
-        const variants = await this.getV(tx, dto.items);
-        const items = this.prepI(dto.items, variants, orgId);
-        const sub = items.reduce((s: number, i: any) => s + i.lineTotal, 0);
-        const cId = await this.getC(tx, orgId, dto.customerPhone);
-        const disc = await this.vDisc(tx, dto.loyaltyVoucherCode, cId, sub);
-        const total = sub - (dto.discountAmount || 0) - disc;
+    return await this.prisma.client.$transaction(async (tx: any) => {
+      const variants = await this.getV(tx, dto.items);
+      const items = this.prepI(dto.items, variants, orgId);
+      const sub = items.reduce((s: number, i: any) => s + i.lineTotal, 0);
+      const cId = await this.getC(tx, orgId, dto.customerPhone);
+      const disc = await this.vDisc(tx, dto.loyaltyVoucherCode, cId, sub);
+      const total = sub - (dto.discountAmount || 0) - disc;
 
-        const t = await tx.transaction.create({
-          data: {
-            number: `V3-POS-${Date.now()}`,
-            type: "POS_SALE",
-            status: "COMPLETED",
-            paymentStatus: "PAID",
-            organizationId: orgId,
-            memberId: mId,
-            locationId: locId,
-            customerId: cId,
-            subtotal: sub,
-            discountTotal: dto.discountAmount || 0,
-            taxTotal: 0,
-            finalTotal: total,
-            baseCurrencyTotal: total,
-            currencyCode: "KES",
-            notes: dto.notes,
-            items: { create: items },
-            loyaltyVouchers: dto.loyaltyVoucherCode
-              ? { connect: { code: dto.loyaltyVoucherCode } }
-              : undefined,
-          },
-          select: { id: true, number: true, customerId: true },
-        });
+      const t = await tx.transaction.create({
+        data: {
+          number: `V3-POS-${Date.now()}`,
+          type: "POS_SALE",
+          status: "COMPLETED",
+          paymentStatus: "PAID",
+          organizationId: orgId,
+          memberId: mId,
+          locationId: locId,
+          customerId: cId,
+          subtotal: sub,
+          discountTotal: dto.discountAmount || 0,
+          taxTotal: 0,
+          finalTotal: total,
+          baseCurrencyTotal: total,
+          currencyCode: "KES",
+          notes: dto.notes,
+          items: { create: items },
+          loyaltyVouchers: dto.loyaltyVoucherCode
+            ? { connect: { code: dto.loyaltyVoucherCode } }
+            : undefined,
+        },
+        select: { id: true, number: true },
+      });
 
-        await this.stock(tx, orgId, locId, mId, dto.items, t.id, t.number);
-
-        return { transaction: t, total, customerId: cId };
-      },
-    );
-
-    const complianceData = await this.handlePostSale(
-      orgId,
-      transaction.id,
-      transaction.number,
-      transaction.customerId || undefined,
-    ).catch((err) => {
-      console.error("Post-sale compliance handling failed:", err.message);
-      return null;
+      await this.stock(tx, orgId, locId, mId, dto.items, t.id, t.number);
+      this.done(orgId, t.id, t.number, cId);
+      return { ...t, finalTotal: total, status: "COMPLETED" };
     });
-
-    return {
-      ...transaction,
-      finalTotal: total,
-      status: "COMPLETED",
-      complianceData,
-    };
   }
 
   private async getV(tx: any, items: any[]) {
@@ -205,13 +186,7 @@ export class ProcessSaleUseCase {
     ]);
   }
 
-  private async handlePostSale(
-    orgId: string,
-    tId: string,
-    tNo: string,
-    cId?: string,
-  ) {
-    // 1. Handle Loyalty (Async)
+  private done(orgId: string, tId: string, tNo: string, cId?: string) {
     this.loyaltyService
       .calculatePointsForTransaction(tId)
       .then((p) => {
@@ -219,25 +194,6 @@ export class ProcessSaleUseCase {
           this.loyaltyService.awardPoints(cId, p, orgId, `Points ${tNo}`, tId);
       })
       .catch(() => {});
-
-    // 2. Check for Tax Integration
-    const org = await this.prisma.client.organization.findUnique({
-      where: { id: orgId },
-      include: { settings: true },
-    });
-
-    const isTaxEnabled =
-      org?.settings?.taxIntegrationEnabled && org?.settings?.country === "Kenya";
-
-    // 3. Create & Finalize Invoice
-    // FinalizeInvoice will handle KRA compliance internally if enabled
-    const invoice = await this.invoiceUseCase.createInvoiceFromOrder(
-      orgId,
-      tId,
-    );
-
-    const result = await this.invoiceUseCase.finalizeInvoice(orgId, invoice.id);
-
-    return result.complianceData || null;
+    this.invoiceUseCase.createInvoiceFromOrder(orgId, tId).catch(() => {});
   }
 }

@@ -65,10 +65,7 @@ import { env } from "@repo/env";
       {
         path: "v2",
         module: V2Module,
-        children: [
-          ...V2_SUB_MODULES.map(m => ({ path: "/", module: m })),
-          { path: "/", module: UploadModule },
-        ],
+        children: V2_SUB_MODULES.map(m => ({ path: "/", module: m })),
       },
       {
         path: "v3",

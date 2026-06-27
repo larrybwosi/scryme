@@ -16,8 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@repo/ui/components/ui/button';
 import { Slider } from '@repo/ui/components/ui/slider';
 import { Badge } from '@repo/ui/components/ui/badge';
-import { ReceiptPdfDocument, PDFKitchenTicket } from '@/components/receipts/lazy-pdf';
-import { Suspense } from 'react';
+import { ReceiptPdfDocument } from '@/components/receipt-pdf';
+import { PDFKitchenTicket } from '@/components/receipts/pdf-kitchen-ticket';
 import { usePdfActions } from '@/hooks/use-pdf-actions';
 import { ReceiptPreviewWrapper } from '@/components/pos/receipt-preview-wrapper';
 import { ThermalReceiptPreview } from '@/components/pos/thermal-receipt-preview';
@@ -50,6 +50,7 @@ import {
   Layers,
 } from 'lucide-react';
 import QRCode from 'qrcode';
+import bwipjs from '@bwip-js/browser';
 import { cn } from '@/lib/utils';
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
@@ -1462,27 +1463,23 @@ export default function ReceiptSettingsPage() {
   }, [config.showQrCode]);
 
   useEffect(() => {
-    const generateBarcode = async () => {
-      if (config.showBarcode) {
-        try {
-          const bwipjs = await import('@bwip-js/browser');
-          const canvas = document.createElement('canvas');
-          bwipjs.toCanvas(canvas, {
-            bcid: 'code128',
-            text: sampleOrder.orderNumber,
-            scale: 3,
-            height: 10,
-            includetext: false,
-          });
-          setBarcodeUrl(canvas.toDataURL('image/png'));
-        } catch (e) {
-          console.error('Barcode generation failed', e);
-        }
-      } else {
-        setBarcodeUrl('');
+    if (config.showBarcode) {
+      try {
+        const canvas = document.createElement('canvas');
+        bwipjs.toCanvas(canvas, {
+          bcid: 'code128',
+          text: sampleOrder.orderNumber,
+          scale: 3,
+          height: 10,
+          includetext: false,
+        });
+        setBarcodeUrl(canvas.toDataURL('image/png'));
+      } catch (e) {
+        console.error('Barcode generation failed', e);
       }
-    };
-    generateBarcode();
+    } else {
+      setBarcodeUrl('');
+    }
   }, [config.showBarcode, sampleOrder.orderNumber]);
 
   return (
@@ -1635,27 +1632,23 @@ export default function ReceiptSettingsPage() {
             onClick={() =>
               mode === 'receipt'
                 ? handlePrint(
-                    <Suspense fallback={null}>
-                      <ReceiptPdfDocument
-                        order={sampleOrder}
-                        settings={{ ...settings, receiptConfig: config }}
-                        qrCodeUrl={qrCodeDataUrl}
-                        barcodeUrl={barcodeUrl}
-                        branchName="Main Branch"
-                      />
-                    </Suspense>,
+                    <ReceiptPdfDocument
+                      order={sampleOrder}
+                      settings={{ ...settings, receiptConfig: config }}
+                      qrCodeUrl={qrCodeDataUrl}
+                      barcodeUrl={barcodeUrl}
+                      branchName="Main Branch"
+                    />,
                     'receipt-test',
                     sampleOrder,
                     'receipt'
                   )
                 : handlePrint(
-                    <Suspense fallback={null}>
-                      <PDFKitchenTicket
-                        order={{ ...sampleOrder }}
-                        businessName={settings.businessName}
-                        kitchenTicketConfig={kConfig}
-                      />
-                    </Suspense>,
+                    <PDFKitchenTicket
+                      order={{ ...sampleOrder }}
+                      businessName={settings.businessName}
+                      kitchenTicketConfig={kConfig}
+                    />,
                     'kitchen-ticket-test',
                     sampleOrder,
                     'kitchen'
@@ -1673,25 +1666,21 @@ export default function ReceiptSettingsPage() {
             onClick={() =>
               mode === 'receipt'
                 ? handleDownload(
-                    <Suspense fallback={null}>
-                      <ReceiptPdfDocument
-                        order={sampleOrder}
-                        settings={{ ...settings, receiptConfig: config }}
-                        qrCodeUrl={qrCodeDataUrl}
-                        barcodeUrl={barcodeUrl}
-                        branchName="Main Branch"
-                      />
-                    </Suspense>,
+                    <ReceiptPdfDocument
+                      order={sampleOrder}
+                      settings={{ ...settings, receiptConfig: config }}
+                      qrCodeUrl={qrCodeDataUrl}
+                      barcodeUrl={barcodeUrl}
+                      branchName="Main Branch"
+                    />,
                     'receipt-test'
                   )
                 : handleDownload(
-                    <Suspense fallback={null}>
-                      <PDFKitchenTicket
-                        order={{ ...sampleOrder }}
-                        businessName={settings.businessName}
-                        kitchenTicketConfig={kConfig}
-                      />
-                    </Suspense>,
+                    <PDFKitchenTicket
+                      order={{ ...sampleOrder }}
+                      businessName={settings.businessName}
+                      kitchenTicketConfig={kConfig}
+                    />,
                     'kitchen-ticket-test'
                   )
             }
@@ -1744,11 +1733,11 @@ export default function ReceiptSettingsPage() {
                     order={sampleOrder}
                     config={config}
                     businessName={settings.businessName}
-                    businessSlogan={settings.receiptConfig.tagline}
-                    address={settings.receiptConfig.address}
-                    phone={settings.receiptConfig.phone}
-                    email={settings.receiptConfig.email}
-                    website={settings.receiptConfig.website}
+                    businessSlogan={settings.businessSlogan}
+                    address={settings.address}
+                    phone={settings.phone}
+                    email={settings.email}
+                    website={settings.website}
                     branchName="Main Branch"
                   />
                 </div>

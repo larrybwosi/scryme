@@ -47,5 +47,5 @@ pub mod routes {
     pub const DELIVERY_RECONCILE: &str = "api/v2/pos/deliveries/reconcile-pod";
 
     // --- Upload ---
-    pub const UPLOAD: &str = "api/v2/upload";
+    pub const UPLOAD: &str = "api/v3/upload";
 }

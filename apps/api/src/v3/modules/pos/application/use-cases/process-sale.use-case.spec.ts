@@ -26,7 +26,6 @@ describe("ProcessSaleUseCase", () => {
         productVariantStock: { update: vi.fn() },
         stockMovement: { createMany: vi.fn() },
         loyaltyVoucher: { findUnique: vi.fn(), update: vi.fn() },
-        organization: { findUnique: vi.fn() },
       },
     };
 
@@ -42,12 +41,7 @@ describe("ProcessSaleUseCase", () => {
         },
         {
           provide: InvoiceUseCase,
-          useValue: {
-            createInvoiceFromOrder: vi.fn().mockResolvedValue({ id: "inv1" }),
-            getInvoiceById: vi.fn().mockResolvedValue({ id: "inv1" }),
-            handleKRACompliance: vi.fn().mockResolvedValue({}),
-            finalizeInvoice: vi.fn().mockResolvedValue({ complianceData: {} }),
-          },
+          useValue: { createInvoiceFromOrder: vi.fn().mockResolvedValue({}) },
         },
       ],
     }).compile();
@@ -91,11 +85,6 @@ describe("ProcessSaleUseCase", () => {
     prisma.client.transaction.create.mockResolvedValue({
       id: "t1",
       number: "T1",
-    });
-
-    prisma.client.organization.findUnique.mockResolvedValue({
-      id: "org_1",
-      settings: { taxIntegrationEnabled: false },
     });
 
     await useCase.execute(ctx, dto);

@@ -1,3 +1,5 @@
+import bwipjs from 'bwip-js';
+
 /**
  * Supported barcode formats for enterprise use.
  */
@@ -39,7 +41,6 @@ export const BarcodeService = {
     }
 
     try {
-      const bwipjs = await import('bwip-js');
       // Map simplified formats to bwip-js BCIDs
       const bcidMap: Record<string, string> = {
         code128: 'code128',

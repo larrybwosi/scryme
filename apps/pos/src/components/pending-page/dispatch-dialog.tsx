@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import * as z from 'zod/v3';
 import { Loader2, CalendarIcon } from 'lucide-react';
 import { useDispatchOrderMutation } from '@/hooks/deliveries';
 import { format, isToday, startOfDay } from 'date-fns';

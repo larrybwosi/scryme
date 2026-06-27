@@ -16,7 +16,7 @@ export async function getDocumentStream(
   filename: string;
   contentType: string;
 }> {
-  const transaction = await db.transaction.findFirst({
+  const transaction: any = await db.transaction.findFirst({
     where: {
       id,
       organizationId: orgId,
@@ -31,7 +31,7 @@ export async function getDocumentStream(
       finalTotal: true,
       discountTotal: true,
       shippingTotal: true,
-      dueDate: true,
+      expiresAt: true,
       status: true,
       tags: true,
       currencyCode: true,
@@ -157,7 +157,7 @@ export async function getDocumentStream(
       const selectedTemplate =
         template || transaction.organization?.settings?.defaultInvoiceTemplate;
       DocumentComponent = getInvoiceTemplate(selectedTemplate);
-      data = Mappers.toInvoiceData(transaction);
+      data = Mappers.toInvoiceData({ ...transaction, dueDate: transaction.expiresAt });
       filename = `Invoice_${transaction.number}.pdf`;
 
       try {

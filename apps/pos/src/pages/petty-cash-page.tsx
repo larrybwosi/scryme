@@ -45,7 +45,7 @@ export default function PettyCashPage() {
       setIsLoadingFunds(true);
       const response = await invoke<any>("authenticated_api_request", {
         method: "GET",
-        path: `api/v2/pos/petty-cash/funds`,
+        path: `api/v3/${orgSlug}/pos/petty-cash/funds`,
       });
       setFunds(response.data || []);
     } catch (error) {
@@ -61,7 +61,7 @@ export default function PettyCashPage() {
       setIsLoadingTransactions(true);
       const response = await invoke<any>("authenticated_api_request", {
         method: "GET",
-        path: `api/v2/pos/petty-cash/transactions`,
+        path: `api/v3/${orgSlug}/pos/petty-cash/transactions`,
         query: { limit: 10 },
       });
       setTransactions(response.data || []);

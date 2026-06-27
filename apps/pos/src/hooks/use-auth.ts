@@ -24,6 +24,7 @@ export function useAuth() {
   // Get state and actions directly from the Zustand store using individual selectors
   const currentMember = useAuthStore(state => state.currentMember);
   const currentLocation = useAuthStore(state => state.currentLocation);
+  const deviceConfig = useAuthStore(state => state.deviceConfig);
   const isRestoredSession = useAuthStore(state => state.isRestoredSession);
   const setMemberSession = useAuthStore(state => state.setMemberSession);
   const clearMemberSession = useAuthStore(state => state.clearMemberSession);
@@ -158,7 +159,7 @@ export const useSessionActivityListener = () => {
         // We can use authenticated_api_request to ping and verify token
         const response = await invoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: `api/v2/members/attendance/me/status`,
+          path: `api/v3/${deviceConfig.orgSlug}/members/attendance/me/status`,
         });
 
         // The API returns { success: true, data: { isCheckedIn: true, ... } }

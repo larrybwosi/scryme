@@ -7,7 +7,6 @@ import {
   Delete,
   Param,
   Query,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { MembersService } from "./members.service";
@@ -90,12 +89,5 @@ export class MembersController {
       body.pin,
       body.locationId,
     );
-  }
-
-  @Get("attendance/me/status")
-  @ApiOperation({ summary: "Get status of the current member" })
-  async getMyStatus(@v2Context() ctx: V2ApiContext) {
-    if (!ctx.memberId) throw new UnauthorizedException("Member context required");
-    return this.membersService.getMemberStatus(ctx, ctx.memberId);
   }
 }
