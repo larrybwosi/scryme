@@ -134,6 +134,7 @@ model Transaction {
   metadata   Json?
 
   @@unique([organizationId, number])
+  @@unique([id, organizationId])
   @@index([organizationId, status])
   @@index([organizationId, type])
   @@index([customerId])

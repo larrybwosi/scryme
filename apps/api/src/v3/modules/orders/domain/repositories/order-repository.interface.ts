@@ -3,7 +3,7 @@ import { PaginationQueryDto, PaginatedResponse } from '@/v3/common/utils/paginat
 
 export interface IOrderRepository {
   findByOrganization(organizationId: string, paginationQuery: PaginationQueryDto): Promise<PaginatedResponse<Order>>;
-  findById(id: string): Promise<Order | null>;
+  findById(id: string, organizationId?: string): Promise<Order | null>;
   save(order: Order): Promise<Order>;
   create(orderData: any): Promise<Order>;
 }

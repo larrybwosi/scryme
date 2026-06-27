@@ -17,8 +17,8 @@ export class UpdateOrderStatusUseCase {
     private readonly invoiceUseCase: InvoiceUseCase,
   ) {}
 
-  async execute(orderId: string, status: string) {
-    const order = await this.orderRepository.findById(orderId);
+  async execute(organizationId: string, orderId: string, status: string) {
+    const order = await this.orderRepository.findById(orderId, organizationId);
     if (!order) {
       throw new NotFoundException('Order not found');
     }
