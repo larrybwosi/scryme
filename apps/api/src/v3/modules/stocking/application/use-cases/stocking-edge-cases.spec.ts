@@ -126,7 +126,7 @@ describe("Stocking Edge Cases", () => {
     });
 
     mockTx.stockBatch.findMany.mockResolvedValue([
-      { id: "batch-1", currentQuantity: 10 },
+      { id: "batch-1", variantId: "v1", currentQuantity: 10 },
     ]);
 
     mockTx.stockTransfer.update.mockResolvedValue({
@@ -181,7 +181,7 @@ describe("Stocking Edge Cases", () => {
     });
 
     mockTx.stockBatch.findMany.mockResolvedValue([
-      { id: "batch-1", currentQuantity: 2 }, // Only 2 available in batch
+      { id: "batch-1", variantId: "v1", currentQuantity: 2 }, // Only 2 available in batch
     ]);
 
     const shipDto = {
