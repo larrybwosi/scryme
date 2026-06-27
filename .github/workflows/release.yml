@@ -151,6 +151,8 @@ jobs:
           VITE_BUSINESS_MODE: ${{ matrix.variant }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: ./apps/pos
           tagName: v${{ needs.set-version.outputs.version }}
