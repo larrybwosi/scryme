@@ -357,6 +357,52 @@ export class InvoiceUseCase {
     const invoice = await this.prisma.client.invoice.findUnique({
       where: { id: invoiceId },
       include: {
+        transaction: {
+          include: {
+            attachments: true,
+          },
+        },
+        organization: true,
+      },
+    });
+
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    // If it's linked to a transaction, check if an up-to-date invoice attachment exists
+    if (invoice.transactionId) {
+      const referenceDate = invoice.transaction?.updatedAt
+        ? new Date(invoice.transaction.updatedAt)
+        : new Date(invoice.updatedAt);
+
+      const existingDoc = invoice.transaction?.attachments?.find(
+        a =>
+          a.description === "Invoice" &&
+          new Date(a.uploadedAt) >= referenceDate,
+      );
+
+      if (existingDoc?.fileUrl) {
+        const { storageService } = await import("@repo/shared/storage");
+        return await storageService.getDownloadStream(existingDoc.fileUrl);
+      }
+
+      // Generate and save if it's linked to a transaction but no valid attachment exists
+      const { documentService: sharedDocService } = await import(
+        "@repo/shared/lib/services/document"
+      );
+      const attachment = await sharedDocService.generateAndSaveInvoice(
+        invoice.transactionId,
+        invoice.organizationId,
+        null,
+      );
+
+      const { storageService } = await import("@repo/shared/storage");
+      return await storageService.getDownloadStream(attachment.fileUrl!);
+    }
+
+    // Standalone invoices fallback (not linked to a transaction)
+    const standaloneInvoice = await this.prisma.client.invoice.findUnique({
+      where: { id: invoiceId },
+      include: {
         items: true,
         organization: {
           include: {
@@ -367,17 +413,16 @@ export class InvoiceUseCase {
         template: true,
       },
     });
-    if (!invoice) throw new NotFoundException("Invoice not found");
 
     const invoiceData = Mappers.toInvoiceData(
       {
-        ...invoice,
-        number: invoice.id.substring(0, 8).toUpperCase(),
-        subtotal: invoice.netTotal,
-        taxTotal: invoice.totalTaxes,
-        finalTotal: invoice.grandTotal,
-        createdAt: invoice.postingDate,
-        payments: [{ amount: invoice.amountPaid }],
+        ...standaloneInvoice,
+        number: standaloneInvoice.id.substring(0, 8).toUpperCase(),
+        subtotal: standaloneInvoice.netTotal,
+        taxTotal: standaloneInvoice.totalTaxes,
+        finalTotal: standaloneInvoice.grandTotal,
+        createdAt: standaloneInvoice.postingDate,
+        payments: [{ amount: standaloneInvoice.amountPaid }],
       },
       {},
     );
@@ -388,34 +433,34 @@ export class InvoiceUseCase {
   async getReceiptDownloadStream(transactionId: string) {
     const transaction = await this.prisma.client.transaction.findUnique({
       where: { id: transactionId },
-      include: {
-        items: true,
-        customer: {
-          include: {
-            addresses: true,
-          },
-        },
-        organization: {
-          include: {
-            settings: true,
-            receiptConfig: true,
-          },
-        },
-        payments: true,
-        location: true,
-        member: {
-          include: {
-            user: true,
-          },
-        },
-      },
+      include: { attachments: true },
     });
 
     if (!transaction) throw new NotFoundException("Transaction not found");
 
-    const receiptData = Mappers.toReceiptData(transaction);
+    const existingDoc = transaction.attachments?.find(
+      a =>
+        a.description === "Receipt" &&
+        new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+    );
 
-    return this.documentService.generateReceiptPDF(receiptData);
+    if (existingDoc?.fileUrl) {
+      const { storageService } = await import("@repo/shared/storage");
+      return await storageService.getDownloadStream(existingDoc.fileUrl);
+    }
+
+    // Generate and save
+    const { documentService: sharedDocService } = await import(
+      "@repo/shared/lib/services/document"
+    );
+    const attachment = await sharedDocService.generateAndSaveReceipt(
+      transactionId,
+      transaction.organizationId,
+      null,
+    );
+
+    const { storageService } = await import("@repo/shared/storage");
+    return await storageService.getDownloadStream(attachment.fileUrl!);
   }
 
   async getTemplates(organizationId: string) {

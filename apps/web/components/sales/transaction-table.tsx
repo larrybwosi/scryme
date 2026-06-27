@@ -31,6 +31,8 @@ import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 import { TransactionDetailsSheet } from "./transaction-details-sheet";
 import { ManageDeliveryModal } from "./manage-delivery-modal";
+import { generateDocumentAction } from "../../app/actions/sales";
+import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -38,6 +40,7 @@ interface Transaction {
   id: string;
   number: string;
   createdAt: string;
+  updatedAt: string;
   type: string;
   customer?: { name: string; email?: string } | null;
   location?: { name: string } | null;
@@ -46,6 +49,7 @@ interface Transaction {
   currencyCode?: string;
   status: string;
   paymentStatus: string;
+  attachments?: any[];
   _count?: { items?: number };
 }
 
@@ -121,6 +125,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   );
   const [manageDeliveryTrx, setManageDeliveryTrx] =
     useState<Transaction | null>(null);
+  const [isGeneratingDoc, setIsGeneratingDoc] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const selectAllRef = useRef<HTMLInputElement>(null);
@@ -171,6 +176,18 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   };
 
   const clearSelection = () => setSelectedIds(new Set());
+
+  const handleGenerateDocument = async (trxId: string, type: "invoice" | "receipt") => {
+    setIsGeneratingDoc(`${trxId}-${type}`);
+    try {
+      await generateDocumentAction(trxId, type);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`);
+    } catch (error) {
+      toast.error(`Failed to generate ${type}`);
+    } finally {
+      setIsGeneratingDoc(null);
+    }
+  };
 
   return (
     <>
@@ -376,22 +393,77 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               <Truck className="mr-2 h-4 w-4" /> Manage delivery
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <a
-                                href={`/api/sales/documents/${trx.id}?type=invoice`}
-                                download>
-                                <FileText className="mr-2 h-4 w-4" /> Generate
-                                invoice
-                              </a>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <a
-                                href={`/api/sales/documents/${trx.id}?type=receipt`}
-                                download>
-                                <Download className="mr-2 h-4 w-4" /> Download
-                                receipt
-                              </a>
-                            </DropdownMenuItem>
+                            {(() => {
+                              const invoice = trx.attachments?.find(
+                                a =>
+                                  a.description === "Invoice" &&
+                                  new Date(a.uploadedAt) >=
+                                    new Date(trx.updatedAt),
+                              );
+                              const isGenerating =
+                                isGeneratingDoc === `${trx.id}-invoice`;
+
+                              return invoice ? (
+                                <DropdownMenuItem asChild>
+                                  <a
+                                    href={invoice.shortUrl || invoice.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    <FileText className="mr-2 h-4 w-4" />{" "}
+                                    Download invoice
+                                  </a>
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleGenerateDocument(trx.id, "invoice")
+                                  }
+                                  disabled={isGenerating}>
+                                  {isGenerating ? (
+                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent" />
+                                  ) : (
+                                    <FileText className="mr-2 h-4 w-4" />
+                                  )}
+                                  Generate invoice
+                                </DropdownMenuItem>
+                              );
+                            })()}
+
+                            {(() => {
+                              const receipt = trx.attachments?.find(
+                                a =>
+                                  a.description === "Receipt" &&
+                                  new Date(a.uploadedAt) >=
+                                    new Date(trx.updatedAt),
+                              );
+                              const isGenerating =
+                                isGeneratingDoc === `${trx.id}-receipt`;
+
+                              return receipt ? (
+                                <DropdownMenuItem asChild>
+                                  <a
+                                    href={receipt.shortUrl || receipt.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer">
+                                    <Download className="mr-2 h-4 w-4" />{" "}
+                                    Download receipt
+                                  </a>
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleGenerateDocument(trx.id, "receipt")
+                                  }
+                                  disabled={isGenerating}>
+                                  {isGenerating ? (
+                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-zinc-500 border-t-transparent" />
+                                  ) : (
+                                    <Download className="mr-2 h-4 w-4" />
+                                  )}
+                                  Generate receipt
+                                </DropdownMenuItem>
+                              );
+                            })()}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-red-600 focus:bg-red-50 focus:text-red-600">
                               <Trash2 className="mr-2 h-4 w-4" /> Cancel order
