@@ -93,6 +93,7 @@ export async function getTransactions(params: {
           user: true,
         },
       },
+      attachments: true,
       _count: {
         select: { items: true },
       },
@@ -399,6 +400,24 @@ export async function generateDocumentAction(
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
+  const transaction = await db.transaction.findUnique({
+    where: { id: transactionId, organizationId: auth.organizationId },
+    include: { attachments: true },
+  });
+
+  if (!transaction) throw new Error("Transaction not found");
+
+  // Check if an up-to-date document already exists
+  const existingDoc = transaction.attachments?.find(
+    a =>
+      a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
+      new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+  );
+
+  if (existingDoc) {
+    return { success: true, alreadyExists: true };
+  }
+
   const { documentService } = await import(
     "@repo/shared/lib/services/document"
   );
@@ -417,6 +436,7 @@ export async function generateDocumentAction(
     );
   }
 
+  revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${transactionId}`);
   return { success: true };
 }
