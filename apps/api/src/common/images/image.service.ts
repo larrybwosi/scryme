@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { storageService } from "@repo/shared/storage";
-import sharp, { FormatEnum } from "sharp";
+import { optimizeImage } from "@repo/shared/server";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
 import crypto from "crypto";
@@ -79,36 +79,17 @@ export class ImageService {
         contentType = response.headers["content-type"] as string;
       }
 
-      const format = (options.format || "webp") as keyof FormatEnum;
+      const format = (options.format || "webp") as any;
       const quality = options.quality || 75;
 
-      let transformer = sharp(imageBuffer, { failOn: "none" });
-
-      if (options.width || options.height) {
-        transformer = transformer.resize({
-          width: options.width,
-          height: options.height,
-          fit: "cover",
-          withoutEnlargement: true,
-        });
-      }
-
-      if (format === "webp") {
-        transformer = transformer.webp({ quality, effort: 4 });
-      } else if (format === "jpeg" || (format as string) === "jpg") {
-        transformer = transformer.jpeg({ quality, mozjpeg: true });
-      } else if (format === "png") {
-        transformer = transformer.png({ quality, compressionLevel: 8 });
-      }
-
-      const { data, info } = await transformer.toBuffer({
-        resolveWithObject: true,
+      const { data, info } = await optimizeImage(imageBuffer, {
+        width: options.width,
+        height: options.height,
+        quality,
+        format,
       });
 
       const resultContentType = `image/${info.format}`;
-
-      // Explicitly clear imageBuffer to help GC if it's large
-      (imageBuffer as any) = null;
 
       // Cache the optimized image data and its content type separately
       // Using buffer for data to avoid base64 overhead

@@ -11,16 +11,17 @@ export enum MpesaFlowType {
 
 const PaymentSplitSchema = z.object({
   method: z.nativeEnum(PaymentMethod),
-  amount: z.number().nonnegative('Payment amount cannot be negative'),
+  amount: z.number().positive('Payment amount must be positive'),
   mpesaPhoneNumber: z
     .string()
+    .regex(kenyanPhoneRegex, 'Invalid Kenyan Phone Number')
+    .transform((val) => val.replace(/^\+/, '').replace(/^0/, '254'))
     .optional()
     .nullable(),
   mpesaFlowType: z.nativeEnum(MpesaFlowType).optional().default(MpesaFlowType.STK_PUSH),
   amountReceived: z.number().nonnegative().optional(),
   change: z.number().nonnegative().optional(),
-  reference: z.string().optional().nullable(),
-  meta: z.record(z.string(), z.any()).optional().nullable(),
+  reference: z.string().optional(),
 });
 
 export const ProcessSaleInputSchema = z.object({
@@ -28,13 +29,9 @@ export const ProcessSaleInputSchema = z.object({
       .array(
         z.object({
             productId: z.string().optional().nullable(),
-            productName: z.string().optional().nullable(),
             variantId: z.string().min(1, 'Variant ID cannot be empty'),
-            variantName: z.string().optional().nullable(),
             quantity: z.number().int('Quantity must be a whole number').positive('Quantity must be greater than zero'),
             sellingUnitId: z.string().optional().nullable(),
-            sellingUnitName: z.string().optional().nullable(),
-            unitPrice: z.number().optional().nullable(),
         })
       )
       .min(1, 'At least one cart item is required'),
@@ -46,6 +43,8 @@ export const ProcessSaleInputSchema = z.object({
     payments: z.array(PaymentSplitSchema).min(1, 'At least one payment method is required'),
     mpesaPhoneNumber: z
       .string()
+      .regex(kenyanPhoneRegex, 'Invalid Kenyan Phone Number')
+      .transform(val => val.replace(/^\+/, '').replace(/^0/, '254'))
       .optional()
       .nullable(),
     amountReceived: z.number().nonnegative('Amount received cannot be negative').optional(),
@@ -54,8 +53,6 @@ export const ProcessSaleInputSchema = z.object({
     cashDrawerId: z.string().optional().nullable(),
     notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional().nullable(),
     mpesaType: z.nativeEnum(MpesaFlowType).optional().nullable(),
-    paymentMethod: z.nativeEnum(PaymentMethod).optional().nullable(),
-    paymentStatus: z.nativeEnum(PaymentStatus).optional().nullable(),
     enableStockTracking: z.boolean(),
     taxIntegrationEnabled: z.boolean().optional(),
     forceTaxOverride: z.boolean().optional(),
@@ -63,13 +60,7 @@ export const ProcessSaleInputSchema = z.object({
     taxIds: z.array(z.string().min(1, 'Tax ID cannot be empty')).optional(),
     voucherCode: z.string().optional().nullable(),
     pointsToRedeem: z.number().nonnegative().optional().default(0),
-    saleDate: z.union([z.date(), z.string().datetime()]).optional(),
-    forcedImmediateSyncThreshold: z.number().optional(),
-    total: z.number().optional(),
-    accountRef: z.string().optional().nullable(),
-    cashierName: z.string().optional().nullable(),
-    prescriptionId: z.string().optional().nullable(),
-    doctorName: z.string().optional().nullable(),
+    saleDate: z.date().max(new Date(), 'Sale date cannot be in the future').optional(),
 });
 
 export type ProcessSaleInput = z.infer<typeof ProcessSaleInputSchema>;
