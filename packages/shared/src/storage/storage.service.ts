@@ -102,6 +102,17 @@ export class StorageService implements StorageProvider {
       "Multipart uploads are not supported by the current storage provider",
     );
   }
+
+  async getDownloadStream(url: string) {
+    if (this.provider.getDownloadStream) {
+      return this.provider.getDownloadStream(url);
+    }
+
+    // Default implementation using axios for providers that don't implement it natively
+    const axios = (await import("axios")).default;
+    const response = await axios.get(url, { responseType: "stream" });
+    return response.data;
+  }
 }
 
 export const storageService = new StorageService();
