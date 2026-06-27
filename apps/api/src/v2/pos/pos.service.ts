@@ -72,7 +72,12 @@ export class PosService {
 
   async checkIn(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(CheckInSchema, body);
-    const { cardId, locationId, pin } = validated;
+    const { cardId, pin } = validated;
+    const locationId = validated.locationId || ctx.locationId;
+
+    if (!locationId) {
+      throw new BadRequestException("Location ID is required");
+    }
 
     const organizationId = ctx.organizationId;
     const rateLimitKey = `pin_attempts:${organizationId}:${cardId}`;
@@ -1310,7 +1315,7 @@ export class PosService {
           amount: amountDecimal,
           expenseNumber,
           status,
-          memberId: memberId || validated.memberId || "system",
+          memberId: memberId || "system",
           organizationId,
           categoryId: category.id,
           expenseDate: new Date(),
@@ -1319,7 +1324,7 @@ export class PosService {
           receiptUrl: validated.receiptUrl,
           ...(status === ExpenseStatus.APPROVED
             ? {
-                approverId: memberId || validated.memberId || "system",
+                approverId: memberId || "system",
                 approvalDate: new Date(),
               }
             : {}),
@@ -1345,7 +1350,7 @@ export class PosService {
             type: PettyCashTransactionType.EXPENSE,
             amount: amountDecimal,
             description: validated.description,
-            memberId: memberId || validated.memberId || "system",
+            memberId: memberId || "system",
           },
         });
       }
