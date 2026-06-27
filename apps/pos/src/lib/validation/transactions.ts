@@ -1,4 +1,4 @@
-import { z } from 'zod/v3';
+import { z } from 'zod';
 import { FulfillmentType, PaymentMethod, PaymentStatus, TransactionType } from '@/hooks/sales';
 
 export enum TransactionStatus {

@@ -224,4 +224,21 @@ export class MembersService {
       restoredSession: !!activeLog,
     };
   }
+
+  async getMemberStatus(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+    const member = await this.prisma.client.member.findFirst({
+      where: { id, organizationId },
+      select: {
+        id: true,
+        status: true,
+        isCheckedIn: true,
+        lastCheckInTime: true,
+        currentCheckInLocationId: true,
+      },
+    });
+
+    if (!member) throw new NotFoundException("Member not found");
+    return member;
+  }
 }

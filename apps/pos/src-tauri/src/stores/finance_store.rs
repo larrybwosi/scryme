@@ -147,10 +147,10 @@ pub async fn upload_file_command(
 
 async fn push_petty_cash(
     auth_state: &AuthState,
-    org_slug: &str,
+    _org_slug: &str,
     payload: &serde_json::Value,
 ) -> Result<serde_json::Value> {
-    let path = format!("api/v3/{}/pos/petty-cash", org_slug);
+    let path = "api/v2/pos/petty-cash";
     let req = auth_state
         .build_request(reqwest::Method::POST, &path)
         .map_err(|e| anyhow::anyhow!(e))?

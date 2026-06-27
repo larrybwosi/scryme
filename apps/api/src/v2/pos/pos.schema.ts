@@ -109,3 +109,12 @@ export const ShiftSyncSchema = z.object({
   closing_cash_details: z.any().optional(),
   closing_operator_id: z.string().optional().nullable(),
 });
+
+export const RegisterPettyCashSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive(),
+  paymentMethod: z.string().min(1),
+  pettyCashFundId: z.string().optional(),
+  receiptUrl: z.string().optional(),
+  memberId: z.string().optional(),
+});

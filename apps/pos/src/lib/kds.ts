@@ -159,7 +159,7 @@ export function connectToHub(url: string) {
 
     // Send initial status/heartbeat
     const role = localStorage.getItem('DEVICE_ROLE');
-    const user = JSON.parse(localStorage.getItem('pos-auth-storage-v3') || '{}').state?.currentMember;
+    const user = JSON.parse(localStorage.getItem('pos-auth-storage-v2') || '{}').state?.currentMember;
 
     socket?.send(JSON.stringify({
       type: 'DeviceStatus',
