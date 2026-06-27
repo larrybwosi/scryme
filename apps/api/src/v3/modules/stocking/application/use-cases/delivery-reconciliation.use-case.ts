@@ -36,9 +36,29 @@ export class DeliveryReconciliationUseCase {
           },
         },
       },
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
+      // to avoid over-fetching large JSON fields (like metadata and customFields) in lists.
       include: {
-        customer: true,
-        items: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            company: true,
+          },
+        },
+        items: {
+          select: {
+            id: true,
+            productName: true,
+            variantName: true,
+            sku: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+          },
+        },
       },
       take: pagination.limit,
       skip: pagination.offset,
@@ -53,11 +73,32 @@ export class DeliveryReconciliationUseCase {
         },
         status: FulfillmentStatus.SHIPPED,
       },
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
+      // to avoid over-fetching large JSON fields in nested relations.
       include: {
         transaction: {
-          include: { customer: true },
+          select: {
+            id: true,
+            number: true,
+            status: true,
+            finalTotal: true,
+            currencyCode: true,
+            createdAt: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
         },
-        items: true,
+        items: {
+          select: {
+            id: true,
+            quantity: true,
+            transactionItemId: true,
+          },
+        },
       },
       take: pagination.limit,
       skip: pagination.offset,
