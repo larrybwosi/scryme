@@ -140,9 +140,11 @@ export class InventoryService {
     });
     if (!stock) throw new NotFoundException("Inventory item not found");
 
+    const { organizationId: _orgId, ...cleanData } = data;
+
     return this.prisma.client.productVariantStock.update({
-      where: { id },
-      data: { ...data, organizationId },
+      where: { id, organizationId },
+      data: { ...cleanData, organizationId },
     });
   }
 
@@ -154,7 +156,7 @@ export class InventoryService {
     if (!stock) throw new NotFoundException("Inventory item not found");
 
     return this.prisma.client.productVariantStock.delete({
-      where: { id },
+      where: { id, organizationId },
     });
   }
 
@@ -195,18 +197,19 @@ export class InventoryService {
   ) {
     const { organizationId } = ctx;
     const adjustment = await this.prisma.client.stockAdjustment.findFirst({
-      where: { id: adjustmentId, organizationId },
+      where: { id: adjustmentId, organizationId, variantId: inventoryId },
     });
     if (!adjustment) throw new NotFoundException("Adjustment not found");
 
     return this.prisma.client.stockAdjustment.update({
-      where: { id: adjustmentId },
+      where: { id: adjustmentId, organizationId },
       data: { status: "APPROVED" as any },
     });
   }
 
   async adjustStock(data: any) {
     const {
+      organizationId,
       productId,
       variantId,
       locationId,
@@ -220,6 +223,7 @@ export class InventoryService {
       // 1. Find or create the stock record
       const stockRecord = await tx.productVariantStock.findFirst({
         where: {
+          organizationId,
           variantId: variantId || undefined,
           locationId,
         },
@@ -232,7 +236,7 @@ export class InventoryService {
 
       if (stockRecord) {
         await tx.productVariantStock.update({
-          where: { id: stockRecord.id },
+          where: { id: stockRecord.id, organizationId },
           data: {
             availableStock: { increment: quantity },
             currentStock: { increment: quantity },
@@ -246,10 +250,10 @@ export class InventoryService {
 
         await tx.productVariantStock.create({
           data: {
-            organization: { connect: { id: data.organizationId } },
-            product: { connect: { id: productId } },
-            variant: { connect: { id: variantId } },
-            location: { connect: { id: locationId } },
+            organizationId,
+            productId,
+            variantId,
+            locationId,
             availableStock: quantity,
             currentStock: quantity,
           },
@@ -259,7 +263,7 @@ export class InventoryService {
       // 2. Log the movement
       const movement = await tx.stockMovement.create({
         data: {
-          organizationId: data.organizationId,
+          organizationId,
 
           variantId,
           fromLocationId: quantity < 0 ? locationId : null,
@@ -310,9 +314,10 @@ export class InventoryService {
 
   async updateLocation(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+    const { organizationId: _orgId, ...cleanData } = data;
     return this.prisma.client.inventoryLocation.update({
       where: { id, organizationId },
-      data,
+      data: cleanData,
     });
   }
 
