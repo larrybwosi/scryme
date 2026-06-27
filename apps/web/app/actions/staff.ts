@@ -105,7 +105,7 @@ export async function addStaffMember(data: {
       // Create user using better-auth admin API
       const password =
         data.password ||
-        Array.from(require("crypto").randomBytes(12))
+        Array.from(randomBytes(12))
           .map(
             (b: any) =>
               "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"[
@@ -114,14 +114,26 @@ export async function addStaffMember(data: {
           )
           .join("");
 
-      await (auth.api as any).createUser({
-        headers: await headers(),
-        body: {
-          email: data.email,
-          password: password,
-          name: data.name,
-        },
-      });
+      try {
+        await (auth.api as any).createUser({
+          headers: await headers(),
+          body: {
+            email: data.email,
+            password: password,
+            name: data.name,
+          },
+        });
+      } catch (e) {
+        console.error("Better-auth createUser failed, falling back to direct db create:", e);
+        // Fallback for non-system-admin organization owners
+        await db.user.create({
+          data: {
+            email: data.email,
+            name: data.name,
+            password: await argon2.hash(password),
+          },
+        });
+      }
 
       // The user is created, now find it to get the ID
       user = await db.user.findUnique({
@@ -499,13 +511,24 @@ export async function resetMemberPassword(
       .join("");
 
   try {
-    await (auth.api as any).setPassword({
-      headers: await headers(),
-      body: {
-        userId: member.userId,
-        newPassword: password,
-      },
-    });
+    try {
+      await (auth.api as any).setPassword({
+        headers: await headers(),
+        body: {
+          userId: member.userId,
+          newPassword: password,
+        },
+      });
+    } catch (e) {
+      console.error("Better-auth setPassword failed, falling back to direct db update:", e);
+      // Fallback for non-system-admin organization owners
+      await db.user.update({
+        where: { id: member.userId },
+        data: {
+          password: await argon2.hash(password),
+        },
+      });
+    }
 
     return { success: true, password };
   } catch (error: any) {

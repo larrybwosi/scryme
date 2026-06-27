@@ -1,0 +1,75 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@5.0.0 dev /app/apps/web
+> next dev
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 642ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+○ Compiling proxy ...
+
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:271:11)
+    at module evaluation (../../packages/env/src/index.ts:278:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0l_z11c._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_07keiqb._.js:1098:30)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_07keiqb._.js:1163:30)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/packages_auth_src_07keiqb._.js:1448:30)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0uwfvb7._.js:5:30)
+  269 |       parsed.error.flatten().fieldErrors,
+  270 |     );
+> 271 |     throw new Error("Invalid environment variables");
+      |           ^
+  272 |   }
+  273 |
+  274 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+ GET /staff 404 in 3.9s (next.js: -257308µs, proxy.ts: 3.9s, application-code: 279ms)
+[browser] Uncaught Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:271:11)
+    at module evaluation (../../packages/env/src/index.ts:278:20)
+    at <unknown> (../../packages/db/src/client.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/packages_db_src_client_ts_0l_z11c._.js:5:30)
+    at <unknown> (../../packages/auth/src/index.ts:2:1)
+    at module evaluation (../../packages/auth/src/approvals/index.ts:167:1)
+    at <unknown> (../../packages/auth/src/auth.ts:2:1)
+    at module evaluation (../../packages/auth/src/index.ts:23:1)
+    at <unknown> (../../packages/auth/src/server.ts:2:1)
+    at module evaluation (../../packages/auth/src/logic/has-member-permission.ts:56:1)
+    at <unknown> (proxy.ts:3:1)
+    at module evaluation (.next/dev/server/chunks/apps_web_proxy_ts_0uwfvb7._.js:5:30)
+  269 |       parsed.error.flatten().fieldErrors,
+  270 |     );
+> 271 |     throw new Error("Invalid environment variables");
+      |           ^
+  272 |   }
+  273 |
+  274 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+○ Compiling /_not-found/page ...
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at parseEnv (../../packages/env/src/index.ts:271:11)
+    at module evaluation (../../packages/env/src/index.ts:278:20)
+    at module evaluation (lib/auth-client.ts:3:1)
+    at module evaluation (components/sidebar.tsx:6:1)
+    at module evaluation (components/sidebar-wrapper.tsx:4:1)
+  269 |       parsed.error.flatten().fieldErrors,
+  270 |     );
+> 271 |     throw new Error("Invalid environment variables");
+      |           ^
+  272 |   }
+  273 |
+  274 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> & {
+  digest: '430745173'
+}
