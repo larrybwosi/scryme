@@ -9,6 +9,7 @@ import {
   CurrencySettings
 } from './types';
 import * as crypto from 'crypto';
+import QRCode from 'qrcode';
 
 /**
  * Generates a verification hash for an invoice.
@@ -40,6 +41,13 @@ export {
   formatCurrency,
   formatAddress,
 };
+
+/**
+ * Generates a QR code as a data URL.
+ */
+export async function generateQRCode(text: string): Promise<string> {
+  return QRCode.toDataURL(text);
+}
 
 /**
  * Data Mappers to transform Prisma entities to Document data structures.

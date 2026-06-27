@@ -402,7 +402,7 @@ export async function processSale(
         const newTransactionNumber =
           saleNumber ||
           `SALE-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-        const transactionDate = saleDate ? new Date(saleDate) : new Date();
+        const transactionDate = saleDate || new Date();
 
         // Transaction is considered "Complete" operationally if full payment is received
         // or if you allow credit (but for POS_SALE, usually requires payment)
