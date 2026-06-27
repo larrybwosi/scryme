@@ -81,6 +81,12 @@ module.exports = function modifyWebpackConfig(options) {
       nodeExternals({
         allowlist: [/^@repo/],
       }),
+      // Native or heavy dependencies moved to shared packages
+      // should be marked as external to avoid Webpack bundling issues.
+      "sharp",
+      "qrcode",
+      "@react-pdf/renderer",
+      "react",
     ],
 
     resolve: {

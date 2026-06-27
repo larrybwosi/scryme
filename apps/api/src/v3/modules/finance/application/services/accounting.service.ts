@@ -107,7 +107,17 @@ export class AccountingService {
   async postSaleToLedger(transactionId: string) {
     const transaction = await this.prisma.client.transaction.findUnique({
       where: { id: transactionId },
-      // ⚡ Bolt Optimization: Removed 'items: true' as they are not used in this ledger logic.
+      // ⚡ Bolt Optimization: Use targeted select for transaction data
+      // to reduce database payload and memory pressure.
+      select: {
+        id: true,
+        number: true,
+        organizationId: true,
+        memberId: true,
+        subtotal: true,
+        taxTotal: true,
+        finalTotal: true,
+      },
     });
 
     if (!transaction) return;
@@ -115,7 +125,18 @@ export class AccountingService {
     const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId: transaction.organizationId,
-        subType: { in: [AccountSubType.ACCOUNTS_RECEIVABLE, AccountSubType.REVENUE, AccountSubType.TAX_PAYABLE] },
+        subType: {
+          in: [
+            AccountSubType.ACCOUNTS_RECEIVABLE,
+            AccountSubType.REVENUE,
+            AccountSubType.TAX_PAYABLE,
+          ],
+        },
+      },
+      // ⚡ Bolt Optimization: Select only required fields for account resolution.
+      select: {
+        id: true,
+        subType: true,
       },
     });
 
@@ -150,7 +171,17 @@ export class AccountingService {
   async postPurchaseToLedger(purchaseId: string) {
     const purchase = await this.prisma.client.purchase.findUnique({
       where: { id: purchaseId },
-      // ⚡ Bolt Optimization: Removed 'items: true' as they are not used in this ledger logic.
+      // ⚡ Bolt Optimization: Use targeted select for purchase data
+      // to reduce database payload and memory pressure.
+      select: {
+        id: true,
+        purchaseNumber: true,
+        organizationId: true,
+        memberId: true,
+        status: true,
+        totalAmount: true,
+        totalTaxAmount: true,
+      },
     });
 
     if (!purchase || purchase.status !== "APPROVED") return;
@@ -158,7 +189,18 @@ export class AccountingService {
     const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId: purchase.organizationId,
-        subType: { in: [AccountSubType.ACCOUNTS_PAYABLE, AccountSubType.INVENTORY, AccountSubType.TAX_PAYABLE] },
+        subType: {
+          in: [
+            AccountSubType.ACCOUNTS_PAYABLE,
+            AccountSubType.INVENTORY,
+            AccountSubType.TAX_PAYABLE,
+          ],
+        },
+      },
+      // ⚡ Bolt Optimization: Select only required fields for account resolution.
+      select: {
+        id: true,
+        subType: true,
       },
     });
 

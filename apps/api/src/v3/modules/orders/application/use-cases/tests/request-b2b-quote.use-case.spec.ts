@@ -48,7 +48,10 @@ describe("RequestB2BQuoteUseCase", () => {
         { provide: PrismaService, useValue: mockPrisma },
         {
           provide: PricingResolverService,
-          useValue: { resolveVariantPrice: vi.fn() },
+          useValue: {
+            resolveVariantPrice: vi.fn(),
+            resolveBatchVariantPrices: vi.fn(),
+          },
         },
         { provide: WebhookService, useValue: mockWebhookService },
         { provide: ApiRealtimeService, useValue: mockRealtimeService },
@@ -107,9 +110,9 @@ describe("RequestB2BQuoteUseCase", () => {
       },
     ]);
 
-    vi.mocked(pricingResolver.resolveVariantPrice).mockResolvedValue({
-      unitPrice: 20,
-    });
+    vi.mocked(pricingResolver.resolveBatchVariantPrices).mockResolvedValue(
+      new Map([["v1", { unitPrice: 20 }]]),
+    );
     mockPrisma.client.transaction.create.mockResolvedValue({ id: "q1" });
 
     await useCase.execute("org1", {
@@ -119,9 +122,11 @@ describe("RequestB2BQuoteUseCase", () => {
       ],
     });
 
-    expect(pricingResolver.resolveVariantPrice).toHaveBeenCalledWith(
+    expect(pricingResolver.resolveBatchVariantPrices).toHaveBeenCalledWith(
       expect.objectContaining({
-        quantity: 10,
+        items: expect.arrayContaining([
+          expect.objectContaining({ variantId: "v1", quantity: 10 }),
+        ]),
       }),
     );
   });
