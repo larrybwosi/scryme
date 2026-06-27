@@ -1,5 +1,21 @@
 # bakery
 
+## 8.0.0
+
+### Major Changes
+
+- 20512d3: nothing
+
+### Minor Changes
+
+- 20512d3: nothing much
+
+## 7.1.0
+
+### Minor Changes
+
+- dab0c80: another
+
 ## 7.0.0
 
 ### Major Changes
