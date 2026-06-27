@@ -453,6 +453,7 @@ export async function createOrder(
             payments: true,
             fulfillments: true,
             customer: true,
+            location: { select: { name: true } },
           },
         });
 

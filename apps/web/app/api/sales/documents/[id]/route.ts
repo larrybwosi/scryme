@@ -45,12 +45,11 @@ export async function GET(
           shippingAddress: {
             select: {
               id: true,
-              name: true,
-              phone: true,
-              street: true,
+              street1: true,
+              street2: true,
               city: true,
               state: true,
-              zipCode: true,
+              postalCode: true,
               country: true,
             },
           },
@@ -58,7 +57,11 @@ export async function GET(
             select: {
               member: {
                 select: {
-                  name: true,
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
                 },
               },
             },
@@ -74,10 +77,11 @@ export async function GET(
           addresses: {
             select: {
               id: true,
-              street: true,
+              street1: true,
+              street2: true,
               city: true,
               state: true,
-              zipCode: true,
+              postalCode: true,
               country: true,
               isDefault: true,
             },
@@ -122,8 +126,6 @@ export async function GET(
               companyAddress: true,
               companyPhone: true,
               companyEmail: true,
-              companyWebsite: true,
-              companyTagline: true,
               primaryColor: true,
               showPoweredBy: true,
               watermarkText: true,
@@ -137,7 +139,7 @@ export async function GET(
           id: true,
           name: true,
           address: true,
-          phone: true,
+          contact: true,
         },
       },
       payments: {

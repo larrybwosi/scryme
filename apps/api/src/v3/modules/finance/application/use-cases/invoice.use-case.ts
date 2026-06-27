@@ -452,7 +452,6 @@ export class InvoiceUseCase {
                 companyPhone: true,
                 companyEmail: true,
                 companyWebsite: true,
-                companyTagline: true,
                 primaryColor: true,
                 showPoweredBy: true,
                 watermarkText: true,
