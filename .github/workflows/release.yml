@@ -136,7 +136,8 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libglib2.0-dev
+            libglib2.0-dev \
+            libudev-dev
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -197,7 +198,8 @@ jobs:
             libappindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libglib2.0-dev
+            libglib2.0-dev \
+            libudev-dev
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -249,6 +251,9 @@ jobs:
 
       - name: Build and push Docker images
         uses: docker/bake-action@v7
+        env:
+          REPO_LOWER: ${{ steps.repo-lower.outputs.repo_lower }}
+          VERSION: ${{ steps.get-version.outputs.version }}
         with:
           files: |
             ./docker-bake.hcl
@@ -257,5 +262,3 @@ jobs:
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
-            REPO_LOWER=${{ steps.repo-lower.outputs.repo_lower }}
-            VERSION=${{ steps.get-version.outputs.version }}

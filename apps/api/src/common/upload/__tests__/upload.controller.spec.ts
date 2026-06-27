@@ -72,7 +72,8 @@ describe("UploadController", () => {
     await controller.uploadFile(req as any, res as any);
     expect(res.send).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: expect.any(String),
+        url: "http://api.test.com/s/short",
+        shortUrl: "http://api.test.com/s/short",
       }),
     );
     expect(storageService.upload).toHaveBeenCalledWith(

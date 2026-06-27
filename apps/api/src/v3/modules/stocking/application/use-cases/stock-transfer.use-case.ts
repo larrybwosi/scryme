@@ -91,38 +91,55 @@ export class StockTransferUseCase {
         );
       }
 
-      for (const item of transfer.items) {
-        const stock = await tx.productVariantStock.findUnique({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: transfer.fromLocationId,
-            },
-          },
-        });
+      // ⚡ Bolt Optimization: Batch fetch stock records to eliminate N+1 queries.
+      const variantIds = transfer.items.map((i) => i.variantId);
+      const stocks = await tx.productVariantStock.findMany({
+        where: {
+          variantId: { in: variantIds },
+          locationId: transfer.fromLocationId,
+        },
+      });
 
-        if (
-          !stock ||
-          Number(stock.availableStock) < Number(item.requestedQuantity)
-        ) {
+      const stockMap = new Map(stocks.map((s) => [s.variantId, s]));
+
+      // Aggregate requested quantities per variant to handle potential duplicate variant lines correctly.
+      const aggregatedRequested = new Map<string, number>();
+      for (const item of transfer.items) {
+        const current = aggregatedRequested.get(item.variantId) || 0;
+        aggregatedRequested.set(
+          item.variantId,
+          current + Number(item.requestedQuantity),
+        );
+      }
+
+      // Validate all items before performing any updates.
+      for (const [variantId, totalRequested] of aggregatedRequested.entries()) {
+        const stock = stockMap.get(variantId);
+
+        if (!stock || Number(stock.availableStock) < totalRequested) {
           throw new BadRequestException(
-            `Insufficient available stock for variant ${item.variantId} at source location`,
+            `Insufficient available stock for variant ${variantId} at source location`,
           );
         }
-
-        await tx.productVariantStock.update({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: transfer.fromLocationId,
-            },
-          },
-          data: {
-            reservedStock: { increment: item.requestedQuantity },
-            availableStock: { decrement: item.requestedQuantity },
-          },
-        });
       }
+
+      // Perform updates (using Promise.all for concurrent updates within the transaction).
+      await Promise.all(
+        transfer.items.map((item) =>
+          tx.productVariantStock.update({
+            where: {
+              variantId_locationId: {
+                variantId: item.variantId,
+                locationId: transfer.fromLocationId,
+              },
+            },
+            data: {
+              reservedStock: { increment: item.requestedQuantity },
+              availableStock: { decrement: item.requestedQuantity },
+            },
+          }),
+        ),
+      );
 
       return tx.stockTransfer.update({
         where: { id: transferId },
@@ -153,6 +170,24 @@ export class StockTransferUseCase {
         );
       }
 
+      // ⚡ Bolt Optimization: Batch fetch all relevant batches to eliminate N+1 queries.
+      const variantIds = transfer.items.map((i) => i.variantId);
+      const allBatches = await tx.stockBatch.findMany({
+        where: {
+          variantId: { in: variantIds },
+          locationId: transfer.fromLocationId,
+          currentQuantity: { gt: 0 },
+        },
+        orderBy: { receivedDate: "asc" },
+      });
+
+      const batchesByVariant = new Map<string, typeof allBatches>();
+      for (const batch of allBatches) {
+        const variantBatches = batchesByVariant.get(batch.variantId) || [];
+        variantBatches.push(batch);
+        batchesByVariant.set(batch.variantId, variantBatches);
+      }
+
       for (const itemDto of dto.items) {
         const item = transfer.items.find(
           (i) => i.id === itemDto.transferItemId,
@@ -176,15 +211,10 @@ export class StockTransferUseCase {
         });
 
         let remainingToDeduct = itemDto.shippedQuantity;
-        const batches = await tx.stockBatch.findMany({
-          where: {
-            variantId: item.variantId,
-            locationId: transfer.fromLocationId,
-            currentQuantity: { gt: 0 },
-            id: itemDto.stockBatchId || undefined,
-          },
-          orderBy: { receivedDate: "asc" },
-        });
+        const availableBatches = batchesByVariant.get(item.variantId) || [];
+        const batches = itemDto.stockBatchId
+          ? availableBatches.filter((b) => b.id === itemDto.stockBatchId)
+          : availableBatches;
 
         for (const batch of batches) {
           if (remainingToDeduct <= 0) break;
@@ -197,6 +227,9 @@ export class StockTransferUseCase {
             where: { id: batch.id },
             data: { currentQuantity: { decrement: deduction } },
           });
+
+          // Update local copy to handle multiple lines for the same variant in one shipment correctly
+          (batch as any).currentQuantity = Number(batch.currentQuantity) - deduction;
 
           await this.inventoryMovementService.recordMovement(tx, {
             organizationId,

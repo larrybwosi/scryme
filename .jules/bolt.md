@@ -35,3 +35,10 @@
 ## 2026-06-24 - [N+1 Query Optimization in Order Creation]
 **Learning:** Batching database lookups for related entities (e.g., variants in an order) using Prisma's `findMany` with the `in` operator and a local `Map` is a highly effective way to eliminate N+1 query bottlenecks during complex write operations.
 **Action:** Always check for asynchronous mappings that perform database lookups inside loops and replace them with pre-fetched batch queries to reduce database roundtrips from O(N) to O(1).
+
+## 2026-06-25 - [Prisma OR Filter Safety with Undefined IDs]
+**Learning:** In Prisma, using an `undefined` value in a relation filter like `{ customers: { some: { id: customerId } } }` inside an `OR` clause can lead to unexpected results or matching all records if the `OR` branch is not explicitly excluded. Dynamic construction of the `OR` array is the safest way to handle optional filters.
+**Action:** Always build `OR` or `AND` filter arrays dynamically based on the presence of optional parameters to avoid incorrect matches or "match-all" behavior when IDs are missing.
+## 2026-06-25 - [Batch Pre-fetching with In-Memory State Sync]
+**Learning:** When replacing N+1 queries with batch pre-fetching in a loop where the database is updated (e.g., decrementing stock), the local in-memory state must be manually synchronized. If multiple lines in the same request affect the same entity (like the same `stockBatch`), failure to update the local object leads to stale data being used for availability validations in subsequent loop iterations, potentially causing over-allocation.
+**Action:** Always manually update local pre-fetched objects after issuing database updates for that entity within the same execution flow.
