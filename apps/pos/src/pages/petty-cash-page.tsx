@@ -17,8 +17,6 @@ import { useCashDrawer } from "@/hooks/use-cash-drawer";
 export default function PettyCashPage() {
   const { openPhysicalDrawer } = useCashDrawer();
   const { currentLocation } = useAuth();
-  const { currentMember } = useAuthStore();
-  const memberId = currentMember?.id;
   const orgSlug = useAuthStore((state) => state.deviceConfig?.orgSlug);
   const currency = usePosStore((state) => state.settings.currency);
 
@@ -116,7 +114,6 @@ export default function PettyCashPage() {
         description,
         paymentMethod: "CASH",
         receiptUrl,
-        memberId,
       };
 
       await invoke("register_petty_cash_command", {

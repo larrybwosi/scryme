@@ -9,7 +9,6 @@ import { Label } from '@repo/ui/components/ui/label';
 import { Lock, User, AlertCircle, Loader2, Zap, ShieldCheck, Activity, Globe, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/providers/auth-context';
-import { LocationSelect } from '@/components/common/location-select';
 import { Separator } from '@repo/ui/components/ui/separator';
 import { isOfflineMode } from '@/lib/sdk';
 
@@ -20,7 +19,6 @@ export default function LoginPage() {
 
   const [cardId, setCardId] = useState('');
   const [pin, setPin] = useState('');
-  const [locationId, setLocationId] = useState<string>('');
   const [showPin, setShowPin] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -32,17 +30,12 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!locationId && !isLocalMode) {
-      toast.error('Please select a production location');
-      return;
-    }
-
     setIsLoggingIn(true);
     try {
       if (isLocalMode) {
         await loginLocal(localEmail, localPassword);
       } else {
-        await login({ cardId, pin, locationId });
+        await login({ cardId, pin });
       }
       toast.success('Authenticated successfully');
       navigate(from, { replace: true });
@@ -145,15 +138,6 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="location" className="text-sm font-medium text-gray-700">Production Location</Label>
-                    <LocationSelect
-                      value={locationId}
-                      onValueChange={setLocationId}
-                      placeholder="Select kitchen location"
-                    />
-                  </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="card-id" className="text-sm font-medium text-gray-700">Baker ID</Label>
                     <div className="relative">
