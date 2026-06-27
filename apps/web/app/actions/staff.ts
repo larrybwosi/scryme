@@ -8,6 +8,36 @@ import { MemberRole, MembershipStatus, Member, User } from "@repo/db";
 import * as argon2 from "argon2";
 import { randomBytes, randomInt } from "crypto";
 
+async function checkStaffManagementPermission(session: any) {
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const memberRole = session.role as MemberRole;
+  const isOwner = memberRole === "OWNER";
+  const isAdmin = memberRole === "ADMIN";
+
+  if (!isOwner && !isAdmin) {
+    return { success: false, error: "Forbidden: Insufficient permissions" };
+  }
+
+  if (isAdmin) {
+    const settings = await db.organizationSettings.findUnique({
+      where: { organizationId: session.organizationId },
+      select: { adminsCanManageStaff: true },
+    });
+
+    if (!settings?.adminsCanManageStaff) {
+      return {
+        success: false,
+        error: "Forbidden: Admin staff management is disabled",
+      };
+    }
+  }
+
+  return { success: true };
+}
+
 export async function getStaffMembers() {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
@@ -59,11 +89,8 @@ export async function addStaffMember(data: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Only admins/owners can add staff
-  const userRole = (session.user as any).role;
-  if (userRole !== "ADMIN" && userRole !== "OWNER") {
-    return { success: false, error: "Forbidden: Only admins can manage staff" };
-  }
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
 
   try {
     // Check if user exists
@@ -71,7 +98,10 @@ export async function addStaffMember(data: {
       where: { email: data.email },
     });
 
+    let isNewUser = false;
+
     if (!user) {
+      isNewUser = true;
       // Create user using better-auth admin API
       const password =
         data.password ||
@@ -132,7 +162,10 @@ export async function addStaffMember(data: {
     });
 
     revalidatePath("/staff");
-    return { success: true };
+    return {
+      success: true,
+      isNewUser
+    };
   } catch (error: any) {
     console.error("Error adding staff member:", error);
     return {
@@ -337,11 +370,8 @@ export async function updateMemberCustomization(
     return { success: false, error: "Unauthorized" };
   }
 
-  // Only admins/owners can update customization
-  const isAdmin = ["ADMIN", "OWNER"].includes(session.role as string);
-  if (!isAdmin) {
-    return { success: false, error: "Forbidden: Only admins can manage staff" };
-  }
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
 
   const updateData: any = {
     phone: data.phone,
@@ -394,22 +424,16 @@ export async function updateMemberCustomization(
   }
 }
 
-export async function generateMemberPin(memberId: string) {
+export async function generateMemberPin(memberId: string): Promise<any> {
   const session = await getServerAuth();
-  if (!session || !session.organizationId) {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  const isAdmin = ["ADMIN", "OWNER"].includes(session.role as string);
-  if (!isAdmin) {
-    return { success: false, error: "Forbidden" };
-  }
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
 
   const pin = randomInt(100000, 999999).toString();
   const pinHash = await argon2.hash(pin);
 
   await db.member.update({
-    where: { id: memberId, organizationId: session.organizationId },
+    where: { id: memberId, organizationId: session!.organizationId },
     data: { pinHash },
   });
 
@@ -417,22 +441,16 @@ export async function generateMemberPin(memberId: string) {
   return { success: true, pin };
 }
 
-export async function generateMemberCardId(memberId: string) {
+export async function generateMemberCardId(memberId: string): Promise<any> {
   const session = await getServerAuth();
-  if (!session || !session.organizationId) {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  const isAdmin = ["ADMIN", "OWNER"].includes(session.role as string);
-  if (!isAdmin) {
-    return { success: false, error: "Forbidden" };
-  }
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
 
   const cardId = randomBytes(4).toString("hex").toUpperCase();
 
   try {
     await db.member.update({
-      where: { id: memberId, organizationId: session.organizationId },
+      where: { id: memberId, organizationId: session!.organizationId },
       data: { cardId },
     });
 
@@ -443,7 +461,7 @@ export async function generateMemberCardId(memberId: string) {
       // Retry once if collision
       const newCardId = randomBytes(4).toString("hex").toUpperCase();
       await db.member.update({
-        where: { id: memberId, organizationId: session.organizationId },
+        where: { id: memberId, organizationId: session!.organizationId },
         data: { cardId: newCardId },
       });
       return { success: true, cardId: newCardId };
@@ -455,19 +473,13 @@ export async function generateMemberCardId(memberId: string) {
 export async function resetMemberPassword(
   memberId: string,
   newPassword?: string,
-) {
+): Promise<any> {
   const session = await getServerAuth();
-  if (!session || !session.organizationId) {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  const isAdmin = ["ADMIN", "OWNER"].includes(session.role as string);
-  if (!isAdmin) {
-    return { success: false, error: "Forbidden" };
-  }
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
 
   const member = await db.member.findUnique({
-    where: { id: memberId, organizationId: session.organizationId },
+    where: { id: memberId, organizationId: session!.organizationId },
     select: { userId: true },
   });
 
