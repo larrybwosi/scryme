@@ -402,6 +402,7 @@ pub fn run() {
             customer_manager::search_customers_command,
             customer_manager::get_customers_by_ids_command,
             customer_manager::create_customer_command,
+            customer_manager::update_customer_command,
             sale_manager::process_sale_command,
             #[cfg(not(feature = "standalone"))]
             sale_manager::sync_sales_command,
