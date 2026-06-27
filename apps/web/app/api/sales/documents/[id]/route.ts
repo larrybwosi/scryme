@@ -108,9 +108,7 @@ export async function GET(
           address: true,
           phone: true,
           email: true,
-          website: true,
           description: true,
-          primaryColor: true,
           settings: {
             select: {
               defaultCurrency: true,
@@ -126,10 +124,6 @@ export async function GET(
               companyAddress: true,
               companyPhone: true,
               companyEmail: true,
-              primaryColor: true,
-              showPoweredBy: true,
-              watermarkText: true,
-              customFields: true,
             },
           },
         },

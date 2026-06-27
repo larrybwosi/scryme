@@ -434,9 +434,7 @@ export class InvoiceUseCase {
             address: true,
             phone: true,
             email: true,
-            website: true,
             description: true,
-            primaryColor: true,
             settings: {
               select: {
                 defaultCurrency: true,
@@ -451,11 +449,6 @@ export class InvoiceUseCase {
                 companyAddress: true,
                 companyPhone: true,
                 companyEmail: true,
-                companyWebsite: true,
-                primaryColor: true,
-                showPoweredBy: true,
-                watermarkText: true,
-                customFields: true,
                 invoiceNumberPrefix: true,
                 invoiceNumberSuffix: true,
                 invoiceNumberPadding: true,
