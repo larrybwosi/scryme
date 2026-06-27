@@ -412,11 +412,18 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         if (!state?.sessionUpdatedAt) return;
 
         const now = Date.now();
+        // Session expires after 1 hour of inactivity.
         const isExpired = now - state.sessionUpdatedAt > ONE_HOUR_MS;
 
         if (isExpired) {
-          console.log('Session expired. Clearing member data.');
-          state.sessionUpdatedAt = null;
+          console.log('Session expired upon rehydration. Clearing member data.');
+          if (state.currentMember) {
+            state.currentMember = null;
+            state.isRestoredSession = false;
+            state.sessionUpdatedAt = null;
+            // Note: We don't clear all checkedInMembers here to allow easy re-login,
+            // but we clear the active session.
+          }
         }
       },
     }
