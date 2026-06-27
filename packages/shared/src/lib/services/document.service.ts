@@ -97,23 +97,25 @@ export class DocumentService {
 
     // 4. Send OTP to customer if they have contact info
     if (transaction.customer?.email) {
-        try {
-            await notificationEngine.notify({
-                organizationId,
-                templateName: "DELIVERY_OTP",
-                data: {
-                    otp,
-                    customerName: transaction.customer.name,
-                    orderNumber: transaction.number,
-                },
-                recipients: {
-                    userIds: (transaction.customer as any).userId ? [(transaction.customer as any).userId] : []
-                },
-                channels: ["EMAIL"]
-            });
-        } catch (e) {
-            console.error("Failed to send OTP email:", e);
-        }
+      try {
+        await notificationEngine.notify({
+          organizationId,
+          templateName: "DELIVERY_OTP",
+          data: {
+            otp,
+            customerName: transaction.customer.name,
+            orderNumber: transaction.number,
+          },
+          recipients: {
+            userIds: (transaction.customer as any).userId
+              ? [(transaction.customer as any).userId]
+              : [],
+          },
+          channels: ["EMAIL"],
+        });
+      } catch (e) {
+        console.error("Failed to send OTP email:", e);
+      }
     }
 
     return { otp };
@@ -279,8 +281,8 @@ export class DocumentService {
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
     const chunks: any[] = [];
     return new Promise((resolve, reject) => {
-      stream.on("data", chunk => chunks.push(chunk));
-      stream.on("error", err => reject(err));
+      stream.on("data", (chunk) => chunks.push(chunk));
+      stream.on("error", (err) => reject(err));
       stream.on("end", () => resolve(Buffer.concat(chunks)));
     });
   }

@@ -162,7 +162,15 @@ services:
     networks:
       - scryme-prod-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3100/ready",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -179,8 +187,8 @@ services:
 
   # --- AUTHENTICATION (ZITADEL) ---
   zitadel-setup:
-    image: zitadel/zitadel:latest
-    command: 'setup'
+    image: ghcr.io/zitadel/zitadel:latest
+    command: "setup"
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -195,9 +203,9 @@ services:
       - scryme-prod-network
 
   zitadel:
-    image: zitadel/zitadel:latest
+    image: ghcr.io/zitadel/zitadel:latest
     restart: always
-    command: 'start-noprint'
+    command: "start-noprint"
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -217,6 +225,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.zitadel.rule=Host(`${ZITADEL_DOMAIN:-auth.scryme.local}`)"
       - "traefik.http.services.zitadel.loadbalancer.server.port=8080"
+      - "traefik.http.services.zitadel.loadbalancer.server.scheme=h2c"
 
   # --- AUTOMATION (WINDMILL) ---
   windmill-server:
@@ -276,6 +285,8 @@ services:
       rabbitmq:
         condition: service_healthy
       traefik:
+        condition: service_started
+      zitadel:
         condition: service_started
     networks:
       - scryme-prod-network
