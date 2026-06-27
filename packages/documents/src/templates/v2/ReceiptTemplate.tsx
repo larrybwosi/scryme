@@ -342,8 +342,8 @@ const fmt = (n: number, currency = "") =>
 export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
   const branding = data.branding;
   const logoUrl = branding?.logoUrl;
-  const orgName = branding?.companyName || "Our Company";
-  const orgAddress = branding?.companyAddress;
+  const orgName = String(branding?.companyName || "Our Company");
+  const orgAddress = branding?.companyAddress ? String(branding.companyAddress) : undefined;
   const currencySettings = data.currencySettings || {
     code: data.currency || "USD",
     symbol: data.currencySymbol || "$",
@@ -351,6 +351,10 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
   };
 
   const fmt = (val: number) => formatCurrency(val, currencySettings);
+
+  const displayDate = data.date instanceof Date
+    ? data.date.toLocaleDateString()
+    : String(data.date || '');
 
   return (
     <Document>
@@ -376,7 +380,7 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           </View>
           <View>
             <Text style={s.docTitle}>Payment Receipt</Text>
-            <Text style={s.receiptNum}>#{data.receiptNumber}</Text>
+            <Text style={s.receiptNum}>#{String(data.receiptNumber || 'N/A')}</Text>
           </View>
         </View>
 
@@ -388,15 +392,15 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           {/* Customer block */}
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Billed to</Text>
-            <Text style={s.metaValue}>{data.customer?.name || 'Walk-in Customer'}</Text>
+            <Text style={s.metaValue}>{String(data.customer?.name || 'Walk-in Customer')}</Text>
             {data.customer?.email && (
-              <Text style={s.metaSub}>{data.customer.email}</Text>
+              <Text style={s.metaSub}>{String(data.customer.email)}</Text>
             )}
             {data.customer?.phone && (
-              <Text style={s.metaSub}>{data.customer.phone}</Text>
+              <Text style={s.metaSub}>{String(data.customer.phone)}</Text>
             )}
             <View style={s.paidBadge}>
-              <Text style={s.paidBadgeText}>✓ {data.status || 'Paid'}</Text>
+              <Text style={s.paidBadgeText}>✓ {String(data.status || 'Paid')}</Text>
             </View>
           </View>
 
@@ -404,20 +408,20 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           <View style={[s.metaBlock, { alignItems: "flex-end" }]}>
             <Text style={s.metaLabel}>Transaction details</Text>
             <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
-              <MetaField label="Date" value={String(data.date)} />
-              <MetaField label="Payment method" value={data.paymentMethod || "N/A"} />
+              <MetaField label="Date" value={displayDate} />
+              <MetaField label="Payment method" value={String(data.paymentMethod || "N/A")} />
             </View>
             <View style={{ alignItems: 'flex-end', marginTop: 10 }}>
               {data.locationName && (
                 <View style={{ flexDirection: 'row', marginBottom: 2 }}>
                   <Text style={s.metaLabel}>Location: </Text>
-                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.locationName}</Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>{String(data.locationName)}</Text>
                 </View>
               )}
               {data.createdBy && (
                 <View style={{ flexDirection: 'row', marginBottom: 2 }}>
                   <Text style={s.metaLabel}>Cashier: </Text>
-                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.createdBy}</Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>{String(data.createdBy)}</Text>
                 </View>
               )}
               {data.tags && data.tags.length > 0 && (
@@ -522,8 +526,8 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           <View style={s.footerRight}>
             <Text style={s.footerMeta}>
               <Text style={s.footerBoldMeta}>{orgName}</Text>
-              {"\n"}Receipt #{data.receiptNumber}
-              {"\n"}Issued {String(data.date)}
+              {"\n"}Receipt #{String(data.receiptNumber || 'N/A')}
+              {"\n"}Issued {displayDate}
             </Text>
           </View>
         </View>
@@ -535,11 +539,15 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
 export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
   const branding = data.branding;
   const logoUrl = branding?.logoUrl;
-  const orgName = branding?.companyName || "Our Company";
-  const orgAddress = branding?.companyAddress;
+  const orgName = String(branding?.companyName || "Our Company");
+  const orgAddress = branding?.companyAddress ? String(branding.companyAddress) : undefined;
   const currencySettings = data.currencySettings || { code: data.currency || 'USD', symbol: data.currencySymbol || '$', locale: 'en-US' };
 
   const fmt = (val: number) => formatCurrency(val, currencySettings);
+
+  const displayDate = data.date instanceof Date
+    ? data.date.toLocaleDateString()
+    : String(data.date || '');
 
   return (
     <Page size="A4" style={s.page}>
@@ -562,7 +570,7 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
         </View>
         <View>
           <Text style={s.docTitle}>Payment Receipt</Text>
-          <Text style={s.receiptNum}>#{data.receiptNumber}</Text>
+          <Text style={s.receiptNum}>#{String(data.receiptNumber || 'N/A')}</Text>
         </View>
       </View>
 
@@ -574,15 +582,15 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
         {/* Customer block */}
         <View style={s.metaBlock}>
           <Text style={s.metaLabel}>Billed to</Text>
-          <Text style={s.metaValue}>{data.customer.name}</Text>
-          {data.customer.email && (
-            <Text style={s.metaSub}>{data.customer.email}</Text>
+          <Text style={s.metaValue}>{String(data.customer?.name || 'Walk-in Customer')}</Text>
+          {data.customer?.email && (
+            <Text style={s.metaSub}>{String(data.customer.email)}</Text>
           )}
-          {data.customer.phone && (
-            <Text style={s.metaSub}>{data.customer.phone}</Text>
+          {data.customer?.phone && (
+            <Text style={s.metaSub}>{String(data.customer.phone)}</Text>
           )}
           <View style={s.paidBadge}>
-            <Text style={s.paidBadgeText}>✓ Paid</Text>
+            <Text style={s.paidBadgeText}>✓ {String(data.status || 'Paid')}</Text>
           </View>
         </View>
 
@@ -590,12 +598,12 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
         <View style={[s.metaBlock, { alignItems: "flex-end" }]}>
           <Text style={s.metaLabel}>Transaction details</Text>
           <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
-            <MetaField label="Date" value={String(data.date)} />
+            <MetaField label="Date" value={displayDate} />
             <MetaField
               label="Payment method"
-              value={data.paymentMethod || "N/A"}
+              value={String(data.paymentMethod || "N/A")}
             />
-            <MetaField label="Transaction ID" value={data.id} />
+            <MetaField label="Transaction ID" value={String(data.id || 'N/A')} />
           </View>
         </View>
       </View>
@@ -690,8 +698,8 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
         <View style={s.footerRight}>
           <Text style={s.footerMeta}>
             <Text style={s.footerBoldMeta}>{orgName}</Text>
-            {"\n"}Receipt #{data.receiptNumber}
-            {"\n"}Issued {String(data.date)}
+            {"\n"}Receipt #{String(data.receiptNumber || 'N/A')}
+            {"\n"}Issued {displayDate}
           </Text>
         </View>
       </View>

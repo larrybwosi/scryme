@@ -235,10 +235,12 @@ export class DocumentService {
         organization: {
           include: {
             settings: true,
+            receiptConfig: true,
           },
         },
         location: true,
         payments: true,
+        member: { include: { user: { select: { name: true } } } },
       },
     });
 

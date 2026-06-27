@@ -110,10 +110,10 @@ export const Mappers = {
       number: transaction.number,
       receiptNumber: transaction.number,
       orderNumber: transaction.number,
-      date: transaction.createdAt || new Date(),
+      date: transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
       tags: transaction.tags || [],
       locationName: transaction.location?.name,
-      createdBy: transaction.member?.user?.name,
+      createdBy: transaction.member?.user?.name || transaction.member?.name,
       status: transaction.status,
       customer: {
         name: transaction.customer?.name || 'Walk-in Customer',
