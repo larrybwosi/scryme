@@ -535,7 +535,7 @@ export class BakeryService {
 
   async updateRecipe(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    const { ingredients, ...rest } = data;
+    const { ingredients, organizationId: _, id: __, ...rest } = data;
 
     return this.prisma.client.recipe.update({
       where: { id, organizationId },
@@ -687,9 +687,13 @@ export class BakeryService {
 
   async updateBatch(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+
+    // Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     return this.prisma.client.batch.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1001,9 +1005,13 @@ export class BakeryService {
 
   async updateTemplate(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+
+    // Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     return this.prisma.client.template.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1037,9 +1045,13 @@ export class BakeryService {
 
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+
+    // Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     return this.prisma.client.bakeryCategory.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1074,9 +1086,13 @@ export class BakeryService {
 
   async updateSettings(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     return this.prisma.client.bakerySettings.update({
       where: { organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1125,9 +1141,18 @@ export class BakeryService {
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
+    // Strip organizationId and id from data to prevent mass assignment
+    const {
+      organizationId: _,
+      id: __,
+      bakerySettingsId: ___,
+      memberId: ____,
+      ...updateData
+    } = data;
+
     return this.prisma.client.bakeryBaker.update({
       where: { id },
-      data,
+      data: updateData,
     });
   }
 
@@ -1274,9 +1299,13 @@ export class BakeryService {
 
   async updatePartner(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+
+    // Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     return this.prisma.client.deliveryPartner.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
   }
 
@@ -1452,7 +1481,7 @@ export class BakeryService {
       if (!product) throw new NotFoundException("Ingredient not found");
 
       const updatedProduct = await tx.product.update({
-        where: { id },
+        where: { id, organizationId },
         data: {
           name,
           description,
