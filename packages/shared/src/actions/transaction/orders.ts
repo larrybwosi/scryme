@@ -473,6 +473,8 @@ export async function createOrder(
           status: result.status,
           finalTotal: result.finalTotal,
           customerName: result.customer?.name || "Walk-in Customer",
+          locationName: result.location?.name,
+          itemCount: result.items?.length || 0,
           createdAt: result.createdAt,
         })
         .catch((err) =>

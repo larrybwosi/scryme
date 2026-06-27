@@ -45,9 +45,9 @@ export function RealtimeTransactionWrapper({
           // The table expects things like trx.customer.name, trx._count.items
           const formattedTrx = {
             ...newTrx,
-            customer: { name: newTrx.customerName },
-            _count: { items: 0 }, // We don't have item count in the payload
-            location: { name: "..." },
+            customer: { name: newTrx.customerName || "Walk-in Customer" },
+            _count: { items: newTrx.itemCount || 0 },
+            location: { name: newTrx.locationName || "..." },
           };
 
           return [formattedTrx, ...prev];

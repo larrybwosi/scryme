@@ -24,23 +24,166 @@ export class DocumentService {
   }) {
     const { transactionId, fulfillmentId, organizationId, memberId } = params;
 
-    // 1. Fetch transaction with full details
+    // 1. Fetch transaction with targeted details
     const transaction = await db.transaction.findUnique({
       where: { id: transactionId, organizationId },
-      include: {
-        items: true,
-        customer: { include: { addresses: true } },
-        organization: {
-          include: {
-            settings: true,
-            invoiceConfig: true,
+      select: {
+        id: true,
+        number: true,
+        createdAt: true,
+        notes: true,
+        subtotal: true,
+        taxTotal: true,
+        finalTotal: true,
+        discountTotal: true,
+        shippingTotal: true,
+        dueDate: true,
+        status: true,
+        tags: true,
+        currencyCode: true,
+        items: {
+          select: {
+            id: true,
+            productName: true,
+            variantName: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+            subtotal: true,
+            sku: true,
           },
         },
-        location: true,
-        payments: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            addresses: {
+              select: {
+                id: true,
+                street: true,
+                city: true,
+                state: true,
+                zipCode: true,
+                country: true,
+                isDefault: true,
+              },
+            },
+          },
+        },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+            address: true,
+            phone: true,
+            email: true,
+            website: true,
+            description: true,
+            primaryColor: true,
+            settings: {
+              select: {
+                defaultCurrency: true,
+                defaultTimezone: true,
+                defaultInvoiceTemplate: true,
+              },
+            },
+            invoiceConfig: {
+              select: {
+                showLogo: true,
+                logoUrl: true,
+                companyName: true,
+                companyAddress: true,
+                companyPhone: true,
+                companyEmail: true,
+                companyWebsite: true,
+                companyTagline: true,
+                primaryColor: true,
+                showPoweredBy: true,
+                watermarkText: true,
+                customFields: true,
+                invoiceNumberPrefix: true,
+                invoiceNumberSuffix: true,
+                invoiceNumberPadding: true,
+                defaultNotes: true,
+                defaultTerms: true,
+                footerText: true,
+              },
+            },
+            waybillConfig: {
+              select: {
+                showLogo: true,
+                logoUrl: true,
+                companyName: true,
+                companyAddress: true,
+                companyPhone: true,
+                companyEmail: true,
+                companyWebsite: true,
+                companyTagline: true,
+                primaryColor: true,
+                showPoweredBy: true,
+                watermarkText: true,
+                customFields: true,
+              },
+            },
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+          },
+        },
+        member: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        payments: {
+          select: {
+            id: true,
+            method: true,
+            amount: true,
+            amountReceived: true,
+            change: true,
+          },
+        },
         fulfillments: {
           where: { id: fulfillmentId },
-          include: { shippingAddress: true },
+          select: {
+            id: true,
+            createdAt: true,
+            deliveryNotes: true,
+            shippingAddress: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+                street: true,
+                city: true,
+                state: true,
+                zipCode: true,
+                country: true,
+              },
+            },
+            driver: {
+              select: {
+                member: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
         },
       },
     });
@@ -145,17 +288,119 @@ export class DocumentService {
 
     const transaction = await db.transaction.findUnique({
       where: { id: transactionId, organizationId },
-      include: {
-        items: true,
-        customer: { include: { addresses: true } },
-        organization: {
-          include: {
-            settings: true,
-            invoiceConfig: true,
+      select: {
+        id: true,
+        number: true,
+        createdAt: true,
+        notes: true,
+        subtotal: true,
+        taxTotal: true,
+        finalTotal: true,
+        discountTotal: true,
+        shippingTotal: true,
+        dueDate: true,
+        status: true,
+        tags: true,
+        currencyCode: true,
+        items: {
+          select: {
+            id: true,
+            productName: true,
+            variantName: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+            subtotal: true,
+            sku: true,
           },
         },
-        location: true,
-        payments: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            addresses: {
+              select: {
+                id: true,
+                street: true,
+                city: true,
+                state: true,
+                zipCode: true,
+                country: true,
+                isDefault: true,
+              },
+            },
+          },
+        },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+            address: true,
+            phone: true,
+            email: true,
+            website: true,
+            description: true,
+            primaryColor: true,
+            settings: {
+              select: {
+                defaultCurrency: true,
+                defaultTimezone: true,
+                defaultInvoiceTemplate: true,
+              },
+            },
+            invoiceConfig: {
+              select: {
+                showLogo: true,
+                logoUrl: true,
+                companyName: true,
+                companyAddress: true,
+                companyPhone: true,
+                companyEmail: true,
+                companyWebsite: true,
+                companyTagline: true,
+                primaryColor: true,
+                showPoweredBy: true,
+                watermarkText: true,
+                customFields: true,
+                invoiceNumberPrefix: true,
+                invoiceNumberSuffix: true,
+                invoiceNumberPadding: true,
+                defaultNotes: true,
+                defaultTerms: true,
+                footerText: true,
+              },
+            },
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+          },
+        },
+        member: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        payments: {
+          select: {
+            id: true,
+            method: true,
+            amount: true,
+            amountReceived: true,
+            change: true,
+          },
+        },
       },
     });
 
@@ -229,16 +474,112 @@ export class DocumentService {
 
     const transaction = await db.transaction.findUnique({
       where: { id: transactionId, organizationId },
-      include: {
-        items: true,
-        customer: { include: { addresses: true } },
-        organization: {
-          include: {
-            settings: true,
+      select: {
+        id: true,
+        number: true,
+        createdAt: true,
+        notes: true,
+        subtotal: true,
+        taxTotal: true,
+        finalTotal: true,
+        discountTotal: true,
+        shippingTotal: true,
+        dueDate: true,
+        status: true,
+        tags: true,
+        currencyCode: true,
+        items: {
+          select: {
+            id: true,
+            productName: true,
+            variantName: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+            subtotal: true,
+            sku: true,
           },
         },
-        location: true,
-        payments: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            addresses: {
+              select: {
+                id: true,
+                street: true,
+                city: true,
+                state: true,
+                zipCode: true,
+                country: true,
+                isDefault: true,
+              },
+            },
+          },
+        },
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+            address: true,
+            phone: true,
+            email: true,
+            website: true,
+            description: true,
+            primaryColor: true,
+            settings: {
+              select: {
+                defaultCurrency: true,
+                defaultTimezone: true,
+              },
+            },
+            receiptConfig: {
+              select: {
+                showLogo: true,
+                logoUrl: true,
+                companyName: true,
+                companyAddress: true,
+                companyPhone: true,
+                companyEmail: true,
+                companyWebsite: true,
+                companyTagline: true,
+                primaryColor: true,
+                showPoweredBy: true,
+                watermarkText: true,
+                customFields: true,
+              },
+            },
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+          },
+        },
+        member: {
+          select: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        payments: {
+          select: {
+            id: true,
+            method: true,
+            amount: true,
+            amountReceived: true,
+            change: true,
+          },
+        },
       },
     });
 

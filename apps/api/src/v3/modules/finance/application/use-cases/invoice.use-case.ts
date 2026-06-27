@@ -402,15 +402,79 @@ export class InvoiceUseCase {
     // Standalone invoices fallback (not linked to a transaction)
     const standaloneInvoice = await this.prisma.client.invoice.findUnique({
       where: { id: invoiceId },
-      include: {
-        items: true,
-        organization: {
-          include: {
-            settings: true,
-            invoiceConfig: true,
+      select: {
+        id: true,
+        customerName: true,
+        customerEmail: true,
+        customerAddress: true,
+        postingDate: true,
+        dueDate: true,
+        netTotal: true,
+        totalTaxes: true,
+        grandTotal: true,
+        amountPaid: true,
+        balanceDue: true,
+        status: true,
+        notes: true,
+        items: {
+          select: {
+            id: true,
+            itemCode: true,
+            itemName: true,
+            quantity: true,
+            rate: true,
+            amount: true,
           },
         },
-        template: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            logo: true,
+            address: true,
+            phone: true,
+            email: true,
+            website: true,
+            description: true,
+            primaryColor: true,
+            settings: {
+              select: {
+                defaultCurrency: true,
+                defaultTimezone: true,
+              },
+            },
+            invoiceConfig: {
+              select: {
+                showLogo: true,
+                logoUrl: true,
+                companyName: true,
+                companyAddress: true,
+                companyPhone: true,
+                companyEmail: true,
+                companyWebsite: true,
+                companyTagline: true,
+                primaryColor: true,
+                showPoweredBy: true,
+                watermarkText: true,
+                customFields: true,
+                invoiceNumberPrefix: true,
+                invoiceNumberSuffix: true,
+                invoiceNumberPadding: true,
+                defaultNotes: true,
+                defaultTerms: true,
+                footerText: true,
+              },
+            },
+          },
+        },
+        template: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+            templateData: true,
+          },
+        },
       },
     });
 

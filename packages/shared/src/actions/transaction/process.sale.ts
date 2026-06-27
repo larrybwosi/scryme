@@ -731,6 +731,8 @@ export async function processSale(
         status: result.status,
         finalTotal: result.finalTotal,
         customerName: completeTransaction?.customer?.name || "Walk-in Customer",
+        locationName: completeTransaction?.location?.name,
+        itemCount: completeTransaction?.items?.length || 0,
         createdAt: result.createdAt,
       })
       .catch((err) => console.error("Failed to publish real-time update:", err));

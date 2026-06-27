@@ -21,20 +21,135 @@ export async function getDocumentStream(
       id,
       organizationId: orgId,
     },
-    include: {
-      organization: {
-        include: {
-          settings: true,
+    select: {
+      id: true,
+      number: true,
+      createdAt: true,
+      notes: true,
+      subtotal: true,
+      taxTotal: true,
+      finalTotal: true,
+      discountTotal: true,
+      shippingTotal: true,
+      dueDate: true,
+      status: true,
+      tags: true,
+      currencyCode: true,
+      items: {
+        select: {
+          id: true,
+          productName: true,
+          variantName: true,
+          quantity: true,
+          unitPrice: true,
+          lineTotal: true,
+          subtotal: true,
+          sku: true,
         },
       },
       customer: {
-        include: {
-          addresses: true,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          addresses: {
+            select: {
+              id: true,
+              street: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              country: true,
+              isDefault: true,
+            },
+          },
         },
       },
-      items: true,
-      payments: true,
-      location: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          logo: true,
+          address: true,
+          phone: true,
+          email: true,
+          website: true,
+          description: true,
+          primaryColor: true,
+          settings: {
+            select: {
+              defaultCurrency: true,
+              defaultTimezone: true,
+              defaultInvoiceTemplate: true,
+            },
+          },
+          invoiceConfig: {
+            select: {
+              showLogo: true,
+              logoUrl: true,
+              companyName: true,
+              companyAddress: true,
+              companyPhone: true,
+              companyEmail: true,
+              companyWebsite: true,
+              companyTagline: true,
+              primaryColor: true,
+              showPoweredBy: true,
+              watermarkText: true,
+              customFields: true,
+              invoiceNumberPrefix: true,
+              invoiceNumberSuffix: true,
+              invoiceNumberPadding: true,
+              defaultNotes: true,
+              defaultTerms: true,
+              footerText: true,
+            },
+          },
+          receiptConfig: {
+            select: {
+              showLogo: true,
+              logoUrl: true,
+              companyName: true,
+              companyAddress: true,
+              companyPhone: true,
+              companyEmail: true,
+              companyWebsite: true,
+              companyTagline: true,
+              primaryColor: true,
+              showPoweredBy: true,
+              watermarkText: true,
+              customFields: true,
+            },
+          },
+        },
+      },
+      location: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          phone: true,
+        },
+      },
+      member: {
+        select: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      payments: {
+        select: {
+          id: true,
+          method: true,
+          amount: true,
+          amountReceived: true,
+          change: true,
+        },
+      },
     },
   });
 

@@ -70,8 +70,8 @@ export class RealtimeGateway
     const context = (client as any).v2Context;
     if (!context) return false;
 
-    // organization:[id]:[type]
-    if (channel.startsWith("organization:")) {
+    // organization:[id]:[type] or org:[id]:[type]
+    if (channel.startsWith("organization:") || channel.startsWith("org:")) {
       const orgId = channel.split(":")[1];
       return orgId === context.organizationId;
     }

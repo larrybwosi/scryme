@@ -85,7 +85,7 @@ export class V3RealtimeGateway
       return !!order && order.organizationId === context.organizationId;
     }
 
-    if (channel.startsWith("inventory:")) {
+    if (channel.startsWith("inventory:") || channel.startsWith("org:")) {
       const orgId = channel.split(":")[1];
       return orgId === context.organizationId;
     }

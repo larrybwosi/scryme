@@ -26,24 +26,129 @@ export async function GET(
       id,
       organizationId: auth.organizationId,
     },
-    include: {
-      attachments: true,
+    select: {
+      id: true,
+      number: true,
+      updatedAt: true,
+      attachments: {
+        select: {
+          description: true,
+          uploadedAt: true,
+          fileUrl: true,
+        },
+      },
       fulfillments: {
-        include: { shippingAddress: true },
+        select: {
+          id: true,
+          createdAt: true,
+          deliveryNotes: true,
+          shippingAddress: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              street: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              country: true,
+            },
+          },
+          driver: {
+            select: {
+              member: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
       },
       customer: {
-        include: {
-          addresses: true,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          addresses: {
+            select: {
+              id: true,
+              street: true,
+              city: true,
+              state: true,
+              zipCode: true,
+              country: true,
+              isDefault: true,
+            },
+          },
         },
       },
-      items: true,
+      items: {
+        select: {
+          id: true,
+          productName: true,
+          variantName: true,
+          quantity: true,
+          unitPrice: true,
+          lineTotal: true,
+          subtotal: true,
+          sku: true,
+        },
+      },
       organization: {
-        include: {
-          settings: true,
+        select: {
+          id: true,
+          name: true,
+          logo: true,
+          address: true,
+          phone: true,
+          email: true,
+          website: true,
+          description: true,
+          primaryColor: true,
+          settings: {
+            select: {
+              defaultCurrency: true,
+              defaultTimezone: true,
+              defaultInvoiceTemplate: true,
+            },
+          },
+          waybillConfig: {
+            select: {
+              showLogo: true,
+              logoUrl: true,
+              companyName: true,
+              companyAddress: true,
+              companyPhone: true,
+              companyEmail: true,
+              companyWebsite: true,
+              companyTagline: true,
+              primaryColor: true,
+              showPoweredBy: true,
+              watermarkText: true,
+              customFields: true,
+            },
+          },
         },
       },
-      location: true,
-      payments: true,
+      location: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          phone: true,
+        },
+      },
+      payments: {
+        select: {
+          id: true,
+          method: true,
+          amount: true,
+          amountReceived: true,
+          change: true,
+        },
+      },
     },
   });
 
