@@ -3,7 +3,7 @@ export const API_ENDPOINT_DEFAULT = import.meta.env.VITE_API_URL || (import.meta
 export const getApiEndpoint = () => {
   if (typeof window === 'undefined') return API_ENDPOINT_DEFAULT;
   try {
-    const storage = localStorage.getItem('pos-auth-storage-v3');
+    const storage = localStorage.getItem('pos-auth-storage-v2');
     if (storage) {
       const parsed = JSON.parse(storage);
       return parsed.state?.apiUrl || API_ENDPOINT_DEFAULT;

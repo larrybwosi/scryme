@@ -98,7 +98,7 @@ interface PosAuthActions {
 }
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const STORAGE_KEY = 'pos-auth-storage-v3';
+const STORAGE_KEY = 'pos-auth-storage-v2';
 
 const initialState: PosAuthState = {
   isConfigured: false,
@@ -203,10 +203,9 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
       applyApiUrl: async () => {
         const { rawApiUrl } = get();
-        // Sanitize URL: remove trailing /api/v2, /api/v3, and trailing slashes
+        // Sanitize URL: remove trailing /api/v2 and trailing slashes
         const sanitizedUrl = rawApiUrl
           .replace(/\/api\/v2\/?$/, '')
-          .replace(/\/api\/v3\/?$/, '')
           .replace(/\/+$/, '');
 
         set({ apiUrl: sanitizedUrl });
