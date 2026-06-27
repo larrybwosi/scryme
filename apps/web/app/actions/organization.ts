@@ -83,6 +83,7 @@ export async function updateOrganizationSettings(data: {
   country?: string;
   lowStockThreshold?: number;
   negativeStock?: boolean;
+  adminsCanManageStaff?: boolean;
 }): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
