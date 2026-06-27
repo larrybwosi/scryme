@@ -35,12 +35,13 @@ import {
   CreateStockTransferSchema,
   RecordPaymentSchema,
   ShiftSyncSchema,
+  RegisterPettyCashSchema,
 } from "./pos.schema";
 import { Decimal } from "decimal.js";
 import { RedisService } from "@/redis/redis.service";
 import { InventoryService } from "../inventory/inventory.service";
 import { PosCustomerService } from "./pos-customer.service";
-import { Prisma } from "@repo/db";
+import { Prisma, ExpenseStatus, PettyCashTransactionType } from "@repo/db";
 
 @Injectable()
 export class PosService {
@@ -1209,5 +1210,191 @@ export class PosService {
     });
 
     return { success: true, data: transfer };
+  }
+
+  async registerPettyCash(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(RegisterPettyCashSchema, body);
+    const { organizationId, memberId, locationId } = ctx;
+
+    // 1. Ensure "Petty Cash" category exists
+    let category = await this.prisma.client.expenseCategory.findFirst({
+      where: {
+        organizationId,
+        name: { equals: "Petty Cash", mode: "insensitive" },
+      },
+    });
+
+    if (!category) {
+      category = await this.prisma.client.expenseCategory.create({
+        data: {
+          name: "Petty Cash",
+          organizationId,
+          isActive: true,
+        },
+      });
+    }
+
+    // 2. Identify the petty cash fund
+    let fundId = validated.pettyCashFundId;
+    if (!fundId) {
+      let fund = null;
+      if (locationId) {
+        fund = await this.prisma.client.pettyCashFund.findFirst({
+          where: { organizationId, locationId, isActive: true },
+        });
+      }
+
+      if (!fund) {
+        fund = await this.prisma.client.pettyCashFund.findFirst({
+          where: { organizationId, isActive: true },
+        });
+      }
+      fundId = fund?.id;
+    }
+
+    if (!fundId) {
+      throw new NotFoundException("No active petty cash fund found.");
+    }
+
+    // 3. Determine status and create expense
+    const org = await this.prisma.client.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        expenseApprovalThreshold: true,
+        expenseReceiptThreshold: true,
+        pettyCashAutoApproveThreshold: true,
+      },
+    });
+
+    if (!org) throw new NotFoundException("Organization not found");
+
+    const amountDecimal = new Prisma.Decimal(validated.amount);
+
+    if (
+      org.expenseReceiptThreshold &&
+      amountDecimal.gte(new Prisma.Decimal(org.expenseReceiptThreshold.toString())) &&
+      !validated.receiptUrl
+    ) {
+      throw new BadRequestException(
+        `Receipt is required for expenses above ${org.expenseReceiptThreshold}`,
+      );
+    }
+
+    let status: ExpenseStatus = ExpenseStatus.APPROVED;
+    if (org.pettyCashAutoApproveThreshold) {
+      if (
+        amountDecimal.gt(
+          new Prisma.Decimal(org.pettyCashAutoApproveThreshold.toString()),
+        )
+      ) {
+        status = ExpenseStatus.PENDING;
+      }
+    } else if (
+      org.expenseApprovalThreshold &&
+      amountDecimal.gte(
+        new Prisma.Decimal(org.expenseApprovalThreshold.toString()),
+      )
+    ) {
+      status = ExpenseStatus.PENDING;
+    }
+
+    const count = await this.prisma.client.expense.count({
+      where: { organizationId },
+    });
+    const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
+
+    return await this.prisma.client.$transaction(async tx => {
+      const expense = await tx.expense.create({
+        data: {
+          description: validated.description,
+          amount: amountDecimal,
+          expenseNumber,
+          status,
+          memberId: memberId || validated.memberId || "system",
+          organizationId,
+          categoryId: category.id,
+          expenseDate: new Date(),
+          locationId: locationId || undefined,
+          pettyCashFundId: fundId,
+          receiptUrl: validated.receiptUrl,
+          ...(status === ExpenseStatus.APPROVED
+            ? {
+                approverId: memberId || validated.memberId || "system",
+                approvalDate: new Date(),
+              }
+            : {}),
+        } as any,
+      });
+
+      if (status === ExpenseStatus.APPROVED) {
+        const fund = await tx.pettyCashFund.findFirst({
+          where: { id: fundId, organizationId },
+        });
+        if (!fund) throw new NotFoundException("Petty cash fund not found");
+        if (fund.amount.lessThan(amountDecimal))
+          throw new BadRequestException("Insufficient funds in petty cash");
+
+        await tx.pettyCashFund.update({
+          where: { id: fundId },
+          data: { amount: { decrement: amountDecimal } },
+        });
+
+        await tx.pettyCashTransaction.create({
+          data: {
+            fundId,
+            type: PettyCashTransactionType.EXPENSE,
+            amount: amountDecimal,
+            description: validated.description,
+            memberId: memberId || validated.memberId || "system",
+          },
+        });
+      }
+
+      return expense;
+    });
+  }
+
+  async getPettyCashFunds(ctx: V2ApiContext) {
+    const { organizationId, locationId } = ctx;
+
+    let funds = [];
+    if (locationId) {
+      funds = await this.prisma.client.pettyCashFund.findMany({
+        where: { organizationId, locationId, isActive: true },
+      });
+    }
+
+    if (funds.length === 0) {
+      funds = await this.prisma.client.pettyCashFund.findMany({
+        where: { organizationId, isActive: true },
+      });
+    }
+
+    return funds;
+  }
+
+  async getPettyCashTransactions(ctx: V2ApiContext, limit = 10) {
+    const { organizationId, locationId } = ctx;
+
+    const where: any = {
+      fund: { organizationId },
+    };
+
+    if (locationId) {
+      where.fund.locationId = locationId;
+    }
+
+    return this.prisma.client.pettyCashTransaction.findMany({
+      where,
+      include: {
+        member: {
+          include: {
+            user: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
   }
 }
