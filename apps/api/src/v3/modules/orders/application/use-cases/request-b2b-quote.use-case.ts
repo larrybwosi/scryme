@@ -101,6 +101,22 @@ export class RequestB2BQuoteUseCase {
 
     const itemsData = [];
 
+    // ⚡ Bolt Optimization: Use batched pricing resolution to prevent N+1 database queries.
+    // This resolves all variant prices in a single set of optimized queries.
+    const resolvedPrices = await this.pricingResolver.resolveBatchVariantPrices(
+      {
+        items: Array.from(aggregatedItems.entries()).map(
+          ([variantId, quantity]) => ({
+            variantId,
+            quantity,
+          }),
+        ),
+        organizationId,
+        customerId: dto.customerId,
+        businessAccountId: dto.businessAccountId,
+      },
+    );
+
     for (const [variantId, totalQuantity] of aggregatedItems) {
       const variant = variants.find(v => v.id === variantId)!;
       const stock = variant.variantStocks[0];
@@ -112,13 +128,8 @@ export class RequestB2BQuoteUseCase {
       }
 
       // 3. Resolve Pricing
-      const { unitPrice } = await this.pricingResolver.resolveVariantPrice({
-        variantId: variantId,
-        organizationId,
-        customerId: dto.customerId,
-        businessAccountId: dto.businessAccountId,
-        quantity: totalQuantity,
-      });
+      const resolvedPrice = resolvedPrices.get(variantId);
+      const unitPrice = resolvedPrice?.unitPrice || 0;
 
       const subtotal = unitPrice * totalQuantity;
 
