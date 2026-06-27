@@ -309,15 +309,20 @@ export class InvoiceUseCase {
 
   async finalizeInvoice(organizationId: string, invoiceId: string) {
     const invoice = await this.getInvoiceById(organizationId, invoiceId);
-    await this.handleKRACompliance(organizationId, invoice);
+    const complianceData = await this.handleKRACompliance(
+      organizationId,
+      invoice,
+    );
 
-    return await this.prisma.client.invoice.update({
+    const updatedInvoice = await this.prisma.client.invoice.update({
       where: { id: invoiceId },
       data: { status: "UNPAID" },
     });
+
+    return { ...updatedInvoice, complianceData };
   }
 
-  private async handleKRACompliance(organizationId: string, invoice: any) {
+  async handleKRACompliance(organizationId: string, invoice: any) {
     const org = await this.prisma.client.organization.findUnique({
       where: { id: organizationId },
       include: { settings: true },
@@ -328,29 +333,34 @@ export class InvoiceUseCase {
       org?.settings?.country === "Kenya"
     ) {
       try {
-        await navariService.generateETRInvoice(organizationId, {
+        const result = await navariService.generateETRInvoice(organizationId, {
           invoiceId: invoice.id,
-          customer: invoice.customer,
-          kraPin: invoice.kraPin,
-          netTotal: invoice.netTotal,
-          totalTaxes: invoice.totalTaxes,
-          grandTotal: invoice.grandTotal,
-          etrMode: invoice.etrMode,
-          items: invoice.items.map(i => ({
-            description: i.itemName,
-            quantity: i.quantity,
-            price: i.rate,
-            amount: i.amount,
+          customer: String(invoice.customerName || "Walk-in Customer"),
+          kraPin: String(invoice.kraPin || "A000000000X"),
+          netTotal: Number(invoice.netTotal || 0),
+          totalTaxes: Number(invoice.totalTaxes || 0),
+          grandTotal: Number(invoice.grandTotal || 0),
+          etrMode: Boolean(invoice.etrMode),
+          items: (invoice.items || []).map((i: any) => ({
+            description: String(i.itemName || "Item"),
+            quantity: Number(i.quantity || 0),
+            price: Number(i.rate || 0),
+            amount: Number(i.amount || 0),
           })),
         });
+
         await this.prisma.client.invoice.update({
           where: { id: invoice.id },
           data: { kraCompliant: true },
         });
+
+        return result;
       } catch (error) {
         console.error("Navari ETR Generation failed:", error.message);
+        return { error: error.message, status: "FAILED" };
       }
     }
+    return null;
   }
 
   async getDownloadStreamDirect(invoiceId: string) {
@@ -433,7 +443,19 @@ export class InvoiceUseCase {
   async getReceiptDownloadStream(transactionId: string) {
     const transaction = await this.prisma.client.transaction.findUnique({
       where: { id: transactionId },
-      include: { attachments: true },
+      include: {
+        attachments: true,
+        member: { include: { user: { select: { name: true } } } },
+        location: true,
+        customer: { include: { addresses: true } },
+        payments: true,
+        organization: {
+          include: {
+            settings: true,
+            receiptConfig: true,
+          },
+        },
+      },
     });
 
     if (!transaction) throw new NotFoundException("Transaction not found");
