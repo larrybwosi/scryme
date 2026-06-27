@@ -1,3 +1,3 @@
-export * from './customer.service';
-export * from './loyalty.service';
-export * from './pos.service';
+export * from "./customer.service";
+export * from "./loyalty.service";
+export * from "./pos.service";

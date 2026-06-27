@@ -27,7 +27,7 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
       batch.isRecalled,
       batch.createdAt,
       batch.updatedAt,
-      batch.children?.map((c) => this.mapToEntity(c)),
+      batch.children?.map(c => this.mapToEntity(c)),
       batch.supplier
         ? { name: batch.supplier.name, email: batch.supplier.email }
         : undefined,

@@ -57,9 +57,9 @@ export class HealthController {
       const systemCheck = this.checkSystem();
 
       const checks = [dbCheck, systemCheck];
-      const overallStatus = checks.some((c) => c.status === "unhealthy")
+      const overallStatus = checks.some(c => c.status === "unhealthy")
         ? "unhealthy"
-        : checks.some((c) => c.status === "degraded")
+        : checks.some(c => c.status === "degraded")
           ? "degraded"
           : "healthy";
 

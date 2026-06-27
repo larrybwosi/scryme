@@ -37,28 +37,36 @@ import {
 import { updateLocation } from "../../app/actions/locations";
 
 const managementSchema = z.object({
-  capacity: z.object({
-    total: z.number().min(0).optional(),
-    unit: z.string().optional(),
-    lowThreshold: z.number().min(0).optional(),
-    highThreshold: z.number().min(0).optional(),
-  }).optional(),
-  settings: z.object({
-    isProductionSite: z.boolean().default(false),
-    allowDirectSales: z.boolean().default(true),
-    requiresQC: z.boolean().default(false),
-    restrictedAccess: z.boolean().default(false),
-    operatingHours: z.string().optional(),
-  }).default({
-    isProductionSite: false,
-    allowDirectSales: true,
-    requiresQC: false,
-    restrictedAccess: false,
-  }),
-  customFields: z.array(z.object({
-    key: z.string().min(1, "Key is required"),
-    value: z.string().min(1, "Value is required"),
-  })).optional(),
+  capacity: z
+    .object({
+      total: z.number().min(0).optional(),
+      unit: z.string().optional(),
+      lowThreshold: z.number().min(0).optional(),
+      highThreshold: z.number().min(0).optional(),
+    })
+    .optional(),
+  settings: z
+    .object({
+      isProductionSite: z.boolean().default(false),
+      allowDirectSales: z.boolean().default(true),
+      requiresQC: z.boolean().default(false),
+      restrictedAccess: z.boolean().default(false),
+      operatingHours: z.string().optional(),
+    })
+    .default({
+      isProductionSite: false,
+      allowDirectSales: true,
+      requiresQC: false,
+      restrictedAccess: false,
+    }),
+  customFields: z
+    .array(
+      z.object({
+        key: z.string().min(1, "Key is required"),
+        value: z.string().min(1, "Value is required"),
+      }),
+    )
+    .optional(),
 });
 
 type ManagementFormValues = z.infer<typeof managementSchema>;
@@ -67,7 +75,9 @@ interface LocationManagementTabProps {
   location: any;
 }
 
-export function LocationManagementTab({ location }: LocationManagementTabProps) {
+export function LocationManagementTab({
+  location,
+}: LocationManagementTabProps) {
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<ManagementFormValues>({
@@ -88,7 +98,10 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
       },
       customFields: Array.isArray(location?.customFields)
         ? location.customFields
-        : Object.entries(location?.customFields || {}).map(([key, value]) => ({ key, value: String(value) })),
+        : Object.entries(location?.customFields || {}).map(([key, value]) => ({
+            key,
+            value: String(value),
+          })),
     },
   });
 
@@ -125,7 +138,8 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
               <CardTitle>Operational Configuration</CardTitle>
             </div>
             <CardDescription>
-              Define how this location functions within your enterprise operations.
+              Define how this location functions within your enterprise
+              operations.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
@@ -192,7 +206,7 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
                 name="settings.operatingHours"
                 render={({ field }) => (
@@ -232,7 +246,9 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
                       <Input
                         type="number"
                         {...field}
-                        onChange={e => field.onChange(e.target.valueAsNumber || 0)}
+                        onChange={e =>
+                          field.onChange(e.target.valueAsNumber || 0)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -264,10 +280,14 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
                       <Input
                         type="number"
                         {...field}
-                        onChange={e => field.onChange(e.target.valueAsNumber || 0)}
+                        onChange={e =>
+                          field.onChange(e.target.valueAsNumber || 0)
+                        }
                       />
                     </FormControl>
-                    <FormDescription>Alert when occupancy drops below this.</FormDescription>
+                    <FormDescription>
+                      Alert when occupancy drops below this.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -282,10 +302,14 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
                       <Input
                         type="number"
                         {...field}
-                        onChange={e => field.onChange(e.target.valueAsNumber || 0)}
+                        onChange={e =>
+                          field.onChange(e.target.valueAsNumber || 0)
+                        }
                       />
                     </FormControl>
-                    <FormDescription>Alert when occupancy exceeds this.</FormDescription>
+                    <FormDescription>
+                      Alert when occupancy exceeds this.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -375,7 +399,8 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
                   <div className="space-y-0.5">
                     <FormLabel>Strict Access Control</FormLabel>
                     <FormDescription>
-                      Only assigned members can perform transactions or check-ins.
+                      Only assigned members can perform transactions or
+                      check-ins.
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -391,7 +416,10 @@ export function LocationManagementTab({ location }: LocationManagementTabProps) 
         </Card>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" disabled={isPending} className="px-8 bg-blue-600 hover:bg-blue-700">
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="px-8 bg-blue-600 hover:bg-blue-700">
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

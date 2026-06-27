@@ -9,8 +9,10 @@ export async function main(
   fromLocation: string,
   toLocation: string,
   priority: string,
-  items: any[]
+  items: any[],
 ) {
-  console.log(`[StockTransfer] Created: ${transferNumber} from ${fromLocation} to ${toLocation}`);
+  console.log(
+    `[StockTransfer] Created: ${transferNumber} from ${fromLocation} to ${toLocation}`,
+  );
   return { success: true };
 }

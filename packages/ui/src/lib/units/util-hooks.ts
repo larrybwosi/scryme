@@ -1,5 +1,5 @@
-import { useMemo, useCallback, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useCallback, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   UnitConverter,
   ProductVariantUnitHelper,
@@ -19,24 +19,28 @@ import {
   type SystemUnit,
   type OrganizationUnit,
   type AnyUnit,
-} from './utilities';
-import axios from 'axios';
+} from "./utilities";
+import axios from "axios";
 
 // ============================================================================
 // QUERY KEYS
 // ============================================================================
 
 const queryKeys = {
-  systemConversions: () => ['system-conversions'],
-  orgConversions: (orgId: string) => ['org-conversions', orgId],
-  productConversions: (orgId: string) => ['product-conversions', orgId],
-  unitConverter: (orgId: string) => ['unit-converter', orgId],
-  variantUnits: (variantId: string) => ['variant-units', variantId],
-  variantSellingUnits: (variantId: string) => ['variant-selling-units', variantId],
-  systemUnits: (filters?: { type?: UnitType; category?: string }) => ['systemUnits', filters] as const,
+  systemConversions: () => ["system-conversions"],
+  orgConversions: (orgId: string) => ["org-conversions", orgId],
+  productConversions: (orgId: string) => ["product-conversions", orgId],
+  unitConverter: (orgId: string) => ["unit-converter", orgId],
+  variantUnits: (variantId: string) => ["variant-units", variantId],
+  variantSellingUnits: (variantId: string) => [
+    "variant-selling-units",
+    variantId,
+  ],
+  systemUnits: (filters?: { type?: UnitType; category?: string }) =>
+    ["systemUnits", filters] as const,
   organizationUnits: (organizationId: string, filters?: { type?: UnitType }) =>
-    ['organizationUnits', organizationId, filters] as const,
-  sellingUnits: (variantId: string) => ['sellingUnits', variantId] as const,
+    ["organizationUnits", organizationId, filters] as const,
+  sellingUnits: (variantId: string) => ["sellingUnits", variantId] as const,
 } as const;
 
 // ============================================================================
@@ -45,26 +49,29 @@ const queryKeys = {
 
 const api = {
   fetchSystemConversions: async () => {
-    const response = await fetch('/api/units/system-conversions');
-    if (!response.ok) throw new Error('Failed to fetch system conversions');
+    const response = await fetch("/api/units/system-conversions");
+    if (!response.ok) throw new Error("Failed to fetch system conversions");
     return response.json();
   },
 
   fetchOrgConversions: async (orgId: string) => {
     const response = await fetch(`/api/units/org-conversions?orgId=${orgId}`);
-    if (!response.ok) throw new Error('Failed to fetch organization conversions');
+    if (!response.ok)
+      throw new Error("Failed to fetch organization conversions");
     return response.json();
   },
 
   fetchProductConversions: async (orgId: string) => {
-    const response = await fetch(`/api/units/product-conversions?orgId=${orgId}`);
-    if (!response.ok) throw new Error('Failed to fetch product conversions');
+    const response = await fetch(
+      `/api/units/product-conversions?orgId=${orgId}`,
+    );
+    if (!response.ok) throw new Error("Failed to fetch product conversions");
     return response.json();
   },
 
   fetchVariantUnits: async (variantId: string) => {
     const response = await fetch(`/api/variants/${variantId}/units`);
-    if (!response.ok) throw new Error('Failed to fetch variant units');
+    if (!response.ok) throw new Error("Failed to fetch variant units");
     return response.json();
   },
 } as const;
@@ -131,8 +138,17 @@ export function useUnitConverter(organizationId?: string | null) {
 /**
  * Optimized hook for converting between units with caching
  */
-export function useUnitConversion(fromUnitId: string, toUnitId: string, productId?: string, organizationId?: string | null) {
-  const { converter, loading, error: loadError } = useUnitConverter(organizationId);
+export function useUnitConversion(
+  fromUnitId: string,
+  toUnitId: string,
+  productId?: string,
+  organizationId?: string | null,
+) {
+  const {
+    converter,
+    loading,
+    error: loadError,
+  } = useUnitConverter(organizationId);
 
   // Cache conversion results for better performance
   const convert = useCallback(
@@ -140,7 +156,7 @@ export function useUnitConversion(fromUnitId: string, toUnitId: string, productI
       if (!converter) return null;
       return converter.convert(value, fromUnitId, toUnitId, productId);
     },
-    [converter, fromUnitId, toUnitId, productId]
+    [converter, fromUnitId, toUnitId, productId],
   );
 
   return {
@@ -164,20 +180,24 @@ export function useProductVariantUnits(variantId: string) {
     enabled: !!variantId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
-    select: data => ({
+    select: (data) => ({
       variant: data.variant as ProductVariantUnit,
       sellingUnits: (data.sellingUnits || []) as VariantSellingUnit[],
     }),
   });
 
   const baseUnit = useMemo(
-    () => (data?.variant ? ProductVariantUnitHelper.getBaseUnit(data.variant) : null),
-    [data?.variant]
+    () =>
+      data?.variant ? ProductVariantUnitHelper.getBaseUnit(data.variant) : null,
+    [data?.variant],
   );
 
   const stockingUnit = useMemo(
-    () => (data?.variant ? ProductVariantUnitHelper.getStockingUnit(data.variant) : null),
-    [data?.variant]
+    () =>
+      data?.variant
+        ? ProductVariantUnitHelper.getStockingUnit(data.variant)
+        : null,
+    [data?.variant],
   );
 
   return {
@@ -193,25 +213,42 @@ export function useProductVariantUnits(variantId: string) {
 /**
  * Optimized hook for calculating prices with memoization
  */
-export function usePriceCalculation(variantId?: string, organizationId?: string | null) {
-  const { variant, sellingUnits, baseUnit, loading: unitsLoading } = useProductVariantUnits(variantId || '');
-  const { converter, loading: converterLoading } = useUnitConverter(organizationId);
+export function usePriceCalculation(
+  variantId?: string,
+  organizationId?: string | null,
+) {
+  const {
+    variant,
+    sellingUnits,
+    baseUnit,
+    loading: unitsLoading,
+  } = useProductVariantUnits(variantId || "");
+  const { converter, loading: converterLoading } =
+    useUnitConverter(organizationId);
 
   const calculatePrice = useCallback(
-    (quantity: number, sellingUnitId: string, priceType: 'retail' | 'wholesale' = 'retail'): number | null => {
-      const sellingUnit = sellingUnits.find(u => u.id === sellingUnitId);
+    (
+      quantity: number,
+      sellingUnitId: string,
+      priceType: "retail" | "wholesale" = "retail",
+    ): number | null => {
+      const sellingUnit = sellingUnits.find((u) => u.id === sellingUnitId);
       if (!sellingUnit) return null;
 
       return PriceCalculator.calculatePrice(quantity, sellingUnit, priceType);
     },
-    [sellingUnits]
+    [sellingUnits],
   );
 
   const calculatePriceFromBase = useCallback(
-    (baseQuantity: number, sellingUnitId: string, priceType: 'retail' | 'wholesale' = 'retail'): number | null => {
+    (
+      baseQuantity: number,
+      sellingUnitId: string,
+      priceType: "retail" | "wholesale" = "retail",
+    ): number | null => {
       if (!converter || !baseUnit) return null;
 
-      const sellingUnit = sellingUnits.find(u => u.id === sellingUnitId);
+      const sellingUnit = sellingUnits.find((u) => u.id === sellingUnitId);
       if (!sellingUnit) return null;
 
       return PriceCalculator.calculatePriceFromBase(
@@ -220,19 +257,26 @@ export function usePriceCalculation(variantId?: string, organizationId?: string 
         sellingUnit,
         converter,
         variantId,
-        priceType
+        priceType,
       );
     },
-    [converter, baseUnit, sellingUnits, variantId]
+    [converter, baseUnit, sellingUnits, variantId],
   );
 
   const getBestPrice = useCallback(
-    (baseQuantity: number, priceType: 'retail' | 'wholesale' = 'retail') => {
+    (baseQuantity: number, priceType: "retail" | "wholesale" = "retail") => {
       if (!converter || !baseUnit) return null;
 
-      return PriceCalculator.getBestPrice(baseQuantity, baseUnit.id, sellingUnits, converter, variantId, priceType);
+      return PriceCalculator.getBestPrice(
+        baseQuantity,
+        baseUnit.id,
+        sellingUnits,
+        converter,
+        variantId,
+        priceType,
+      );
     },
-    [converter, baseUnit, sellingUnits, variantId]
+    [converter, baseUnit, sellingUnits, variantId],
   );
 
   // New function specifically for recipe ingredient cost calculation
@@ -241,14 +285,14 @@ export function usePriceCalculation(variantId?: string, organizationId?: string 
       ingredientVariantId: string,
       quantity: number,
       unitId: string,
-      priceType: 'retail' | 'wholesale' = 'retail'
+      priceType: "retail" | "wholesale" = "retail",
     ): number | null => {
       if (!ingredientVariantId || !quantity || !unitId) return null;
 
       // For recipe ingredients, we typically want wholesale prices
       return calculatePrice(quantity, unitId, priceType);
     },
-    [calculatePrice]
+    [calculatePrice],
   );
 
   return {
@@ -264,12 +308,24 @@ export function usePriceCalculation(variantId?: string, organizationId?: string 
 /**
  * Optimized hook for inventory calculations
  */
-export function useInventoryCalculations(variantId: string, organizationId?: string | null) {
-  const { variant, sellingUnits, baseUnit, loading: unitsLoading } = useProductVariantUnits(variantId);
-  const { converter, loading: converterLoading } = useUnitConverter(organizationId);
+export function useInventoryCalculations(
+  variantId: string,
+  organizationId?: string | null,
+) {
+  const {
+    variant,
+    sellingUnits,
+    baseUnit,
+    loading: unitsLoading,
+  } = useProductVariantUnits(variantId);
+  const { converter, loading: converterLoading } =
+    useUnitConverter(organizationId);
 
   const calculateInventoryValue = useCallback(
-    (stockLevel: number, priceType: 'retail' | 'wholesale' = 'wholesale'): number | null => {
+    (
+      stockLevel: number,
+      priceType: "retail" | "wholesale" = "wholesale",
+    ): number | null => {
       if (!converter || !baseUnit) return null;
 
       return InventoryCalculator.calculateInventoryValue(
@@ -278,19 +334,28 @@ export function useInventoryCalculations(variantId: string, organizationId?: str
         sellingUnits,
         converter,
         variantId,
-        priceType
+        priceType,
       );
     },
-    [converter, baseUnit, sellingUnits, variantId]
+    [converter, baseUnit, sellingUnits, variantId],
   );
 
-  const needsReorder = useCallback((currentStock: number, reorderPoint: number): boolean => {
-    return InventoryCalculator.needsReorder(currentStock, reorderPoint);
-  }, []);
+  const needsReorder = useCallback(
+    (currentStock: number, reorderPoint: number): boolean => {
+      return InventoryCalculator.needsReorder(currentStock, reorderPoint);
+    },
+    [],
+  );
 
-  const calculateStockCoverage = useCallback((currentStock: number, averageDailyUsage: number): number => {
-    return InventoryCalculator.calculateStockCoverage(currentStock, averageDailyUsage);
-  }, []);
+  const calculateStockCoverage = useCallback(
+    (currentStock: number, averageDailyUsage: number): number => {
+      return InventoryCalculator.calculateStockCoverage(
+        currentStock,
+        averageDailyUsage,
+      );
+    },
+    [],
+  );
 
   return {
     calculateInventoryValue,
@@ -309,11 +374,11 @@ export function useUpdateVariantUnits(variantId: string) {
   return useMutation({
     mutationFn: async (updatedData: Partial<ProductVariantUnit>) => {
       const response = await fetch(`/api/variants/${variantId}/units`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedData),
       });
-      if (!response.ok) throw new Error('Failed to update variant units');
+      if (!response.ok) throw new Error("Failed to update variant units");
       return response.json();
     },
     onSuccess: () => {
@@ -351,13 +416,12 @@ export function usePrefetchUnitConversions(organizationId?: string | null) {
   }, [queryClient, organizationId]);
 }
 
-
 // ============================================================================
 // API CLIENT
 // ============================================================================
 
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: "/api",
 });
 
 // ============================================================================
@@ -377,13 +441,18 @@ export function useSystemUnits(options?: {
   enabled?: boolean;
 }) {
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: queryKeys.systemUnits({ type: options?.type, category: options?.category }),
+    queryKey: queryKeys.systemUnits({
+      type: options?.type,
+      category: options?.category,
+    }),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (options?.type) params.set('type', options.type);
-      if (options?.category) params.set('category', options.category);
+      if (options?.type) params.set("type", options.type);
+      if (options?.category) params.set("category", options.category);
 
-      const response = await apiClient.get<SystemUnit[]>(`/units/system?${params.toString()}`);
+      const response = await apiClient.get<SystemUnit[]>(
+        `/units/system?${params.toString()}`,
+      );
       return response.data;
     },
     enabled: options?.enabled !== false,
@@ -393,7 +462,11 @@ export function useSystemUnits(options?: {
   return {
     units: data || [],
     loading: isLoading,
-    error: error ? (error instanceof Error ? error.message : 'Unknown error') : null,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : "Unknown error"
+      : null,
     isFetching,
   };
 }
@@ -406,18 +479,22 @@ export function useOrganizationUnits(
   options?: {
     type?: UnitType;
     enabled?: boolean;
-  }
+  },
 ) {
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: queryKeys.organizationUnits(organizationId, { type: options?.type }),
+    queryKey: queryKeys.organizationUnits(organizationId, {
+      type: options?.type,
+    }),
     queryFn: async () => {
       const response = await apiClient.get<OrganizationUnit[]>(
-        `/units/organization?orgId=${organizationId}`
+        `/units/organization?orgId=${organizationId}`,
       );
 
       let filtered = response.data;
       if (options?.type) {
-        filtered = filtered.filter((u: OrganizationUnit) => u.type === options.type);
+        filtered = filtered.filter(
+          (u: OrganizationUnit) => u.type === options.type,
+        );
       }
 
       return filtered;
@@ -429,7 +506,11 @@ export function useOrganizationUnits(
   return {
     units: data || [],
     loading: isLoading,
-    error: error ? (error instanceof Error ? error.message : 'Unknown error') : null,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : "Unknown error"
+      : null,
     isFetching,
   };
 }
@@ -442,17 +523,26 @@ export function useAllUnits(
   options?: {
     type?: UnitType;
     enabled?: boolean;
-  }
+  },
 ) {
-  const { units: systemUnits, loading: systemLoading, error: systemError } =
-    useSystemUnits({ type: options?.type, enabled: options?.enabled });
+  const {
+    units: systemUnits,
+    loading: systemLoading,
+    error: systemError,
+  } = useSystemUnits({ type: options?.type, enabled: options?.enabled });
 
-  const { units: orgUnits, loading: orgLoading, error: orgError } =
-    useOrganizationUnits(organizationId, { type: options?.type, enabled: options?.enabled });
+  const {
+    units: orgUnits,
+    loading: orgLoading,
+    error: orgError,
+  } = useOrganizationUnits(organizationId, {
+    type: options?.type,
+    enabled: options?.enabled,
+  });
 
   const allUnits = useMemo<AnyUnit[]>(
     () => [...systemUnits, ...orgUnits],
-    [systemUnits, orgUnits]
+    [systemUnits, orgUnits],
   );
 
   const loading = systemLoading || orgLoading;
@@ -474,13 +564,15 @@ export function useUnitSelection(options?: {
   required?: boolean;
   onChange?: (unitId: string | null) => void;
 }) {
-  const [value, setValue] = useState<string | null>(options?.initialValue || null);
+  const [value, setValue] = useState<string | null>(
+    options?.initialValue || null,
+  );
   const [touched, setTouched] = useState(false);
 
   const error = useMemo(() => {
     if (!touched) return null;
     if (options?.required && !value) {
-      return 'Unit is required';
+      return "Unit is required";
     }
     return null;
   }, [value, touched, options?.required]);
@@ -491,7 +583,7 @@ export function useUnitSelection(options?: {
       setTouched(true);
       options?.onChange?.(newValue);
     },
-    [options]
+    [options],
   );
 
   const reset = useCallback(() => {
@@ -525,7 +617,7 @@ export function useMultiUnitSelection(options?: {
     if (!touched) return null;
 
     if (options?.minSelections && values.length < options.minSelections) {
-      return `Select at least ${options.minSelections} unit${options.minSelections > 1 ? 's' : ''}`;
+      return `Select at least ${options.minSelections} unit${options.minSelections > 1 ? "s" : ""}`;
     }
 
     if (options?.maxSelections && values.length > options.maxSelections) {
@@ -541,7 +633,7 @@ export function useMultiUnitSelection(options?: {
       setTouched(true);
       options?.onChange?.(newValues);
     },
-    [options]
+    [options],
   );
 
   const addUnit = useCallback(
@@ -551,15 +643,15 @@ export function useMultiUnitSelection(options?: {
         handleChange(newValues);
       }
     },
-    [values, handleChange]
+    [values, handleChange],
   );
 
   const removeUnit = useCallback(
     (unitId: string) => {
-      const newValues = values.filter(id => id !== unitId);
+      const newValues = values.filter((id) => id !== unitId);
       handleChange(newValues);
     },
-    [values, handleChange]
+    [values, handleChange],
   );
 
   const toggleUnit = useCallback(
@@ -570,7 +662,7 @@ export function useMultiUnitSelection(options?: {
         addUnit(unitId);
       }
     },
-    [values, addUnit, removeUnit]
+    [values, addUnit, removeUnit],
   );
 
   const reset = useCallback(() => {
@@ -626,15 +718,21 @@ export function useVariantUnits(variantId: string) {
       stockingUnitId?: string | null;
       stockingOrgUnitId?: string | null;
     }) => {
-      const response = await apiClient.post(`/variants/${variantId}/update-units`, updates);
+      const response = await apiClient.post(
+        `/variants/${variantId}/update-units`,
+        updates,
+      );
       return response.data;
     },
     onSuccess: (data) => {
       // Update the cache with the new data
-      queryClient.setQueryData(queryKeys.variantUnits(variantId), (old: VariantUnitsData) => ({
-        ...old,
-        variant: { ...old.variant, ...data },
-      }));
+      queryClient.setQueryData(
+        queryKeys.variantUnits(variantId),
+        (old: VariantUnitsData) => ({
+          ...old,
+          variant: { ...old.variant, ...data },
+        }),
+      );
     },
   });
 
@@ -643,7 +741,7 @@ export function useVariantUnits(variantId: string) {
     const baseOrgUnitId = data?.variant.baseOrgUnitId;
     return {
       id: baseUnitId || baseOrgUnitId,
-      type: baseUnitId ? ('system' as const) : ('org' as const),
+      type: baseUnitId ? ("system" as const) : ("org" as const),
     };
   }, [data?.variant.baseUnitId, data?.variant.baseOrgUnitId]);
 
@@ -652,7 +750,7 @@ export function useVariantUnits(variantId: string) {
     const stockingOrgUnitId = data?.variant.stockingOrgUnitId;
     return {
       id: stockingUnitId || stockingOrgUnitId,
-      type: stockingUnitId ? ('system' as const) : ('org' as const),
+      type: stockingUnitId ? ("system" as const) : ("org" as const),
     };
   }, [data?.variant.stockingUnitId, data?.variant.stockingOrgUnitId]);
 
@@ -664,11 +762,11 @@ export function useVariantUnits(variantId: string) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : "Unknown error",
         };
       }
     },
-    [updateUnitsMutation]
+    [updateUnitsMutation],
   );
 
   return {
@@ -679,7 +777,11 @@ export function useVariantUnits(variantId: string) {
     baseUnit,
     stockingUnit,
     loading: isLoading,
-    error: error ? (error instanceof Error ? error.message : 'Unknown error') : null,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : "Unknown error"
+      : null,
     updateUnits,
     isUpdating: updateUnitsMutation.isPending,
   };
@@ -708,28 +810,39 @@ export function useSellingUnits(variantId: string) {
       wholesalePrice?: number | null;
       conversionMultiplier?: number | null;
     }) => {
-      const response = await apiClient.post(`/variants/${variantId}/selling-units`, createData);
+      const response = await apiClient.post(
+        `/variants/${variantId}/selling-units`,
+        createData,
+      );
       return response.data;
     },
     onSuccess: (newUnit) => {
-      queryClient.setQueryData(queryKeys.sellingUnits(variantId), (old: any[] = []) => [
-        ...old,
-        newUnit,
-      ]);
+      queryClient.setQueryData(
+        queryKeys.sellingUnits(variantId),
+        (old: any[] = []) => [...old, newUnit],
+      );
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ unitId, updates }: { unitId: string; updates: any }) => {
+    mutationFn: async ({
+      unitId,
+      updates,
+    }: {
+      unitId: string;
+      updates: any;
+    }) => {
       const response = await apiClient.patch(
         `/variants/${variantId}/selling-units/${unitId}`,
-        updates
+        updates,
       );
       return response.data;
     },
     onSuccess: (updatedUnit) => {
-      queryClient.setQueryData(queryKeys.sellingUnits(variantId), (old: any[] = []) =>
-        old.map(unit => (unit.id === updatedUnit.id ? updatedUnit : unit))
+      queryClient.setQueryData(
+        queryKeys.sellingUnits(variantId),
+        (old: any[] = []) =>
+          old.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit)),
       );
     },
   });
@@ -740,8 +853,9 @@ export function useSellingUnits(variantId: string) {
       return unitId;
     },
     onSuccess: (deletedUnitId) => {
-      queryClient.setQueryData(queryKeys.sellingUnits(variantId), (old: any[] = []) =>
-        old.filter(unit => unit.id !== deletedUnitId)
+      queryClient.setQueryData(
+        queryKeys.sellingUnits(variantId),
+        (old: any[] = []) => old.filter((unit) => unit.id !== deletedUnitId),
       );
     },
   });
@@ -754,11 +868,11 @@ export function useSellingUnits(variantId: string) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : "Unknown error",
         };
       }
     },
-    [createMutation]
+    [createMutation],
   );
 
   const updateSellingUnit = useCallback(
@@ -769,11 +883,11 @@ export function useSellingUnits(variantId: string) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : "Unknown error",
         };
       }
     },
-    [updateMutation]
+    [updateMutation],
   );
 
   const deleteSellingUnit = useCallback(
@@ -784,17 +898,21 @@ export function useSellingUnits(variantId: string) {
       } catch (err) {
         return {
           success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? err.message : "Unknown error",
         };
       }
     },
-    [deleteMutation]
+    [deleteMutation],
   );
 
   return {
     sellingUnits: data || [],
     loading: isLoading,
-    error: error ? (error instanceof Error ? error.message : 'Unknown error') : null,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : "Unknown error"
+      : null,
     refetch,
     createSellingUnit,
     updateSellingUnit,
@@ -812,7 +930,7 @@ export function useSellingUnits(variantId: string) {
 /**
  * Hook to filter units by search query
  */
-export function useUnitSearch(units: AnyUnit[], initialQuery = '') {
+export function useUnitSearch(units: AnyUnit[], initialQuery = "") {
   const [query, setQuery] = useState(initialQuery);
 
   const filteredUnits = useMemo(() => {
@@ -820,11 +938,11 @@ export function useUnitSearch(units: AnyUnit[], initialQuery = '') {
 
     const searchLower = query.toLowerCase();
     return units.filter(
-      unit =>
+      (unit) =>
         unit.name.toLowerCase().includes(searchLower) ||
         unit.symbol.toLowerCase().includes(searchLower) ||
         unit.abbreviation?.toLowerCase().includes(searchLower) ||
-        unit.description?.toLowerCase().includes(searchLower)
+        unit.description?.toLowerCase().includes(searchLower),
     );
   }, [units, query]);
 
@@ -844,7 +962,7 @@ export function useGroupedUnits(units: AnyUnit[]) {
   const grouped = useMemo(() => {
     const groups: Record<string, AnyUnit[]> = {};
 
-    units.forEach(unit => {
+    units.forEach((unit) => {
       if (!groups[unit.type]) {
         groups[unit.type] = [];
       }
@@ -852,7 +970,7 @@ export function useGroupedUnits(units: AnyUnit[]) {
     });
 
     // Sort units within each group by name
-    Object.keys(groups).forEach(type => {
+    Object.keys(groups).forEach((type) => {
       groups[type].sort((a, b) => a.name.localeCompare(b.name));
     });
 
@@ -872,7 +990,7 @@ export function usePaginatedUnits(
   options?: {
     pageSize?: number;
     initialPage?: number;
-  }
+  },
 ) {
   const pageSize = options?.pageSize || 10;
   const [currentPage, setCurrentPage] = useState(options?.initialPage || 1);
@@ -883,7 +1001,7 @@ export function usePaginatedUnits(
 
   const paginatedUnits = useMemo(
     () => units.slice(startIndex, endIndex),
-    [units, startIndex, endIndex]
+    [units, startIndex, endIndex],
   );
 
   const goToPage = useCallback(
@@ -892,7 +1010,7 @@ export function usePaginatedUnits(
         setCurrentPage(page);
       }
     },
-    [totalPages]
+    [totalPages],
   );
 
   const nextPage = useCallback(() => {
@@ -924,13 +1042,10 @@ export function usePaginatedUnits(
 /**
  * Hook to get unit by ID
  */
-export function useUnitById(
-  unitId: string | null,
-  units: AnyUnit[]
-) {
+export function useUnitById(unitId: string | null, units: AnyUnit[]) {
   return useMemo(
-    () => units.find(u => u.id === unitId) || null,
-    [unitId, units]
+    () => units.find((u) => u.id === unitId) || null,
+    [unitId, units],
   );
 }
 
@@ -940,7 +1055,7 @@ export function useUnitById(
 export function useUnitCompatibility(
   unitId1: string | null,
   unitId2: string | null,
-  units: AnyUnit[]
+  units: AnyUnit[],
 ) {
   const unit1 = useUnitById(unitId1, units);
   const unit2 = useUnitById(unitId2, units);

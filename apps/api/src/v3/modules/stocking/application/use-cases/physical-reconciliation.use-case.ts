@@ -31,7 +31,7 @@ export class PhysicalReconciliationUseCase {
       },
     });
 
-    return stock.map((s) => ({
+    return stock.map(s => ({
       variantId: s.variantId,
       sku: s.variant.sku,
       name: s.variant.name,
@@ -45,10 +45,10 @@ export class PhysicalReconciliationUseCase {
     memberId: string,
     dto: SubmitReconciliationDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // ⚡ Bolt Optimization: Batch fetch all relevant stock records in a single query
       // to eliminate N+1 database round-trips.
-      const variantIds = dto.items.map((i) => i.variantId);
+      const variantIds = dto.items.map(i => i.variantId);
       const stocks = await tx.productVariantStock.findMany({
         where: {
           variantId: { in: variantIds },
@@ -63,7 +63,7 @@ export class PhysicalReconciliationUseCase {
         },
       });
 
-      const stockMap = new Map(stocks.map((s) => [s.variantId, s]));
+      const stockMap = new Map(stocks.map(s => [s.variantId, s]));
 
       let totalExpectedValue = 0;
       let totalActualValue = 0;
@@ -123,7 +123,7 @@ export class PhysicalReconciliationUseCase {
     memberId: string,
     reconciliationId: string,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const reconciliation = await tx.stockReconciliation.findUnique({
         where: { id: reconciliationId, organizationId },
         include: { items: true },

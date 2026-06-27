@@ -134,9 +134,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       setMemberSession: (member: Member, isRestored = false) => {
         set(state => {
           const alreadyCheckedIn = state.checkedInMembers.find(m => m.id === member.id);
-          const newCheckedInMembers = alreadyCheckedIn
-            ? state.checkedInMembers
-            : [...state.checkedInMembers, member];
+          const newCheckedInMembers = alreadyCheckedIn ? state.checkedInMembers : [...state.checkedInMembers, member];
 
           return {
             currentMember: member,

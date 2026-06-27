@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Progress } from '@repo/ui/components/ui/progress';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Supplier } from '../types';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Progress } from "@repo/ui/components/ui/progress";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Supplier } from "../types";
 import {
   Truck,
   ShieldCheck,
@@ -13,27 +19,29 @@ import {
   AlertTriangle,
   CheckCircle2,
   TrendingUp,
-  Star
-} from 'lucide-react';
+  Star,
+} from "lucide-react";
 
 interface PerformanceScorecardProps {
   supplier: Supplier;
 }
 
-export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supplier }) => {
+export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({
+  supplier,
+}) => {
   const p = supplier.performance;
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.9) return 'bg-green-500';
-    if (score >= 0.7) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 0.9) return "bg-green-500";
+    if (score >= 0.7) return "bg-yellow-500";
+    return "bg-red-500";
   };
 
   const getRatingStars = (rating: number) => {
     return Array.from({ length: 5 }).map((_, i) => (
       <Star
         key={i}
-        className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+        className={`h-4 w-4 ${i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
       />
     ));
   };
@@ -47,17 +55,23 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(p.qualityScore * 100).toFixed(1)}%</div>
+            <div className="text-2xl font-bold">
+              {(p.qualityScore * 100).toFixed(1)}%
+            </div>
             <Progress value={p.qualityScore * 100} className="h-2 mt-2" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">On-Time Delivery</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              On-Time Delivery
+            </CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(p.onTimeDelivery * 100).toFixed(1)}%</div>
+            <div className="text-2xl font-bold">
+              {(p.onTimeDelivery * 100).toFixed(1)}%
+            </div>
             <Progress value={p.onTimeDelivery * 100} className="h-2 mt-2" />
           </CardContent>
         </Card>
@@ -67,13 +81,17 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(p.responseTime * 100).toFixed(1)}%</div>
+            <div className="text-2xl font-bold">
+              {(p.responseTime * 100).toFixed(1)}%
+            </div>
             <Progress value={p.responseTime * 100} className="h-2 mt-2" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Aggregate Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Aggregate Rating
+            </CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -81,7 +99,9 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
               <div className="text-2xl font-bold">{p.rating.toFixed(1)}</div>
               <div className="flex ml-2">{getRatingStars(p.rating)}</div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Based on {p.totalOrders} orders</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Based on {p.totalOrders} orders
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -90,7 +110,9 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Reliability Analysis</CardTitle>
-            <CardDescription>Historical performance over the last 12 months</CardDescription>
+            <CardDescription>
+              Historical performance over the last 12 months
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -120,18 +142,32 @@ export const PerformanceScorecard: React.FC<PerformanceScorecardProps> = ({ supp
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Risk Assessment</CardTitle>
-            <CardDescription>Supplier stability and compliance monitoring</CardDescription>
+            <CardDescription>
+              Supplier stability and compliance monitoring
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
               <div className="flex items-center gap-3">
-                <AlertTriangle className={supplier.riskLevel === 'high' ? 'text-red-500' : 'text-yellow-500'} />
+                <AlertTriangle
+                  className={
+                    supplier.riskLevel === "high"
+                      ? "text-red-500"
+                      : "text-yellow-500"
+                  }
+                />
                 <div>
-                  <div className="text-sm font-medium capitalize">{supplier.riskLevel} Risk Level</div>
-                  <div className="text-xs text-muted-foreground">Updated 3 days ago</div>
+                  <div className="text-sm font-medium capitalize">
+                    {supplier.riskLevel} Risk Level
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Updated 3 days ago
+                  </div>
                 </div>
               </div>
-              <Badge variant={supplier.riskLevel === 'low' ? 'default' : 'outline'}>
+              <Badge
+                variant={supplier.riskLevel === "low" ? "default" : "outline"}
+              >
                 {supplier.riskLevel?.toUpperCase()}
               </Badge>
             </div>

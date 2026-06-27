@@ -27,12 +27,12 @@ const { mockPrisma } = vi.hoisted(() => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-    $transaction: vi.fn((cb) => cb(mockPrisma)),
+    $transaction: vi.fn(cb => cb(mockPrisma)),
   },
 }));
 
 // Mock @repo/db before imports that use it
-vi.mock("@repo/db", async (importOriginal) => {
+vi.mock("@repo/db", async importOriginal => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,

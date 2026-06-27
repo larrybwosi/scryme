@@ -1,8 +1,5 @@
 import { db as prisma } from "@repo/db";
-import {
-  PaymentStatus,
-  Prisma,
-} from "@repo/db";
+import { PaymentStatus, Prisma } from "@repo/db";
 import { z } from "zod";
 
 // --- No change to create schema ---

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 export enum AddressType {
-  BILLING = "BILLING",
-  SHIPPING = "SHIPPING",
-  BOTH = "BOTH"
+  BILLING = 'BILLING',
+  SHIPPING = 'SHIPPING',
+  BOTH = 'BOTH',
 }
 
 // --- Address Schema ---
@@ -69,16 +69,14 @@ export const CustomerFormSchema = z
   })
   .strict();
 
-
 export type CustomerFormValues = z.infer<typeof CustomerFormSchema>;
 export type AddressFormValues = z.infer<typeof AddressFormSchema>;
 
 export const LoyaltyAdjustmentSchema = z.object({
-  customerId: z.cuid("Invalid customer ID."),
+  customerId: z.cuid('Invalid customer ID.'),
   pointsChange: z.coerce // Coerce input string/number to number
-    .number({ error: "Points change must be a number." })
-    .int("Points must be a whole number.")
-    .refine((val) => val !== 0, "Points change cannot be zero."),
-  notes: z.string().max(500, "Notes cannot exceed 500 characters.").optional(),
+    .number({ error: 'Points change must be a number.' })
+    .int('Points must be a whole number.')
+    .refine(val => val !== 0, 'Points change cannot be zero.'),
+  notes: z.string().max(500, 'Notes cannot exceed 500 characters.').optional(),
 });
-

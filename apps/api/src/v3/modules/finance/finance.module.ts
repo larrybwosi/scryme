@@ -18,11 +18,7 @@ import { AccountingService } from "./application/services/accounting.service";
 import { FinancialReportingService } from "./application/services/financial-reporting.service";
 
 @Module({
-  imports: [
-    V3CommonModule,
-    PrismaModule,
-    DocumentModule,
-  ],
+  imports: [V3CommonModule, PrismaModule, DocumentModule],
   controllers: [
     ExpenseController,
     PettyCashController,

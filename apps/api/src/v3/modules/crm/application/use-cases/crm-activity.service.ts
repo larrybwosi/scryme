@@ -53,14 +53,14 @@ export class CrmActivityService {
 
     // Merge and sort by date
     const timeline = [
-      ...notes.map((n) => ({
+      ...notes.map(n => ({
         id: n.id,
         type: "NOTE",
         content: n.content,
         timestamp: n.timelineDate,
         createdBy: n.createdBy,
       })),
-      ...activities.map((a) => ({
+      ...activities.map(a => ({
         id: a.id,
         type: a.type,
         description: a.description,

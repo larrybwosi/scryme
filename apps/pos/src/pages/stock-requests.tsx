@@ -380,7 +380,7 @@ export default function StockRequestCreate() {
         documents: attachedFiles.map(f => f.path || f.name),
       };
       await invoke('submit_stock_request', { payload });
-      posthog.capture("stock_request_initiated");
+      posthog.capture('stock_request_initiated');
       toast.success('Stock request submitted successfully');
       setItems([]);
       setNotes('');
@@ -517,9 +517,7 @@ export default function StockRequestCreate() {
                     </Label>
                     <Select value={fromBranch} onValueChange={setFromBranch} disabled={isSubmitting}>
                       <SelectTrigger className="h-10 text-sm border-slate-200 dark:border-slate-700 focus:ring-slate-900 dark:focus:ring-slate-50 dark:bg-background">
-                        <SelectValue
-                          placeholder={isLoadingLocations ? 'Loading locations…' : 'Select source branch'}
-                        />
+                        <SelectValue placeholder={isLoadingLocations ? 'Loading locations…' : 'Select source branch'} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableSources.map(loc => (
@@ -856,9 +854,7 @@ export default function StockRequestCreate() {
                 {!isFormReady && (
                   <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2.5 border border-amber-100 dark:border-amber-900/50 select-none">
                     <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                    <span>
-                      {!fromBranch ? 'Select a source to continue.' : 'Add at least one product to submit.'}
-                    </span>
+                    <span>{!fromBranch ? 'Select a source to continue.' : 'Add at least one product to submit.'}</span>
                   </div>
                 )}
 

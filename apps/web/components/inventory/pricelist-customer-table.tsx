@@ -16,15 +16,12 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
+import { MoreHorizontal, Trash2, User, Mail, Phone, Plus } from "lucide-react";
 import {
-  MoreHorizontal,
-  Trash2,
-  User,
-  Mail,
-  Phone,
-  Plus,
-} from "lucide-react";
-import { removeCustomerFromPriceList, assignCustomersToPriceList, getCustomers } from "../../app/actions/pricing";
+  removeCustomerFromPriceList,
+  assignCustomersToPriceList,
+  getCustomers,
+} from "../../app/actions/pricing";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -41,7 +38,10 @@ interface PriceListCustomerTableProps {
   customers: any[];
 }
 
-export function PriceListCustomerTable({ priceListId, customers }: PriceListCustomerTableProps) {
+export function PriceListCustomerTable({
+  priceListId,
+  customers,
+}: PriceListCustomerTableProps) {
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [availableCustomers, setAvailableCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
@@ -63,7 +63,9 @@ export function PriceListCustomerTable({ priceListId, customers }: PriceListCust
     try {
       const allCustomers = await getCustomers();
       // Filter out customers already in the price list
-      const filtered = allCustomers.filter(c => !customers.some(existing => existing.id === c.id));
+      const filtered = allCustomers.filter(
+        c => !customers.some(existing => existing.id === c.id),
+      );
       setAvailableCustomers(filtered);
     } catch (error) {
       toast.error("Failed to load customers");
@@ -87,9 +89,10 @@ export function PriceListCustomerTable({ priceListId, customers }: PriceListCust
     }
   };
 
-  const filteredAvailable = availableCustomers.filter(c =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAvailable = availableCustomers.filter(
+    c =>
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -114,7 +117,9 @@ export function PriceListCustomerTable({ priceListId, customers }: PriceListCust
           <TableBody>
             {customers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-gray-500">
+                <TableCell
+                  colSpan={4}
+                  className="h-24 text-center text-gray-500">
                   No customers explicitly assigned to this price list.
                 </TableCell>
               </TableRow>
@@ -195,11 +200,15 @@ export function PriceListCustomerTable({ priceListId, customers }: PriceListCust
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell className="text-center py-8">Loading...</TableCell>
+                      <TableCell className="text-center py-8">
+                        Loading...
+                      </TableCell>
                     </TableRow>
                   ) : filteredAvailable.length === 0 ? (
                     <TableRow>
-                      <TableCell className="text-center py-8 text-gray-500">No customers found</TableCell>
+                      <TableCell className="text-center py-8 text-gray-500">
+                        No customers found
+                      </TableCell>
                     </TableRow>
                   ) : (
                     filteredAvailable.map(customer => (
@@ -207,19 +216,30 @@ export function PriceListCustomerTable({ priceListId, customers }: PriceListCust
                         <TableCell className="w-[40px]">
                           <Checkbox
                             checked={selectedCustomerIds.includes(customer.id)}
-                            onCheckedChange={(checked) => {
+                            onCheckedChange={checked => {
                               if (checked) {
-                                setSelectedCustomerIds(prev => [...prev, customer.id]);
+                                setSelectedCustomerIds(prev => [
+                                  ...prev,
+                                  customer.id,
+                                ]);
                               } else {
-                                setSelectedCustomerIds(prev => prev.filter(id => id !== customer.id));
+                                setSelectedCustomerIds(prev =>
+                                  prev.filter(id => id !== customer.id),
+                                );
                               }
                             }}
                           />
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{customer.name}</span>
-                            <span className="text-xs text-gray-500">{customer.email || customer.phone || "No contact info"}</span>
+                            <span className="text-sm font-medium">
+                              {customer.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {customer.email ||
+                                customer.phone ||
+                                "No contact info"}
+                            </span>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -229,12 +249,16 @@ export function PriceListCustomerTable({ priceListId, customers }: PriceListCust
               </Table>
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => setIsAddCustomerOpen(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddCustomerOpen(false)}>
+                Cancel
+              </Button>
               <Button
                 onClick={handleAddCustomers}
-                disabled={loading || selectedCustomerIds.length === 0}
-              >
-                Add {selectedCustomerIds.length} Customer{selectedCustomerIds.length !== 1 ? 's' : ''}
+                disabled={loading || selectedCustomerIds.length === 0}>
+                Add {selectedCustomerIds.length} Customer
+                {selectedCustomerIds.length !== 1 ? "s" : ""}
               </Button>
             </div>
           </div>

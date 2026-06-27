@@ -40,8 +40,8 @@ export const LabelService = {
         items,
         config: {
           ...config,
-          printerName: config.printerName || 'default'
-        }
+          printerName: config.printerName || 'default',
+        },
       });
     } catch (err) {
       console.error('[LabelService] Print failed:', err);
@@ -60,5 +60,5 @@ export const LabelService = {
       console.error('[LabelService] Failed to fetch printers:', err);
       return [];
     }
-  }
+  },
 };

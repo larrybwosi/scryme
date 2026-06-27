@@ -31,20 +31,26 @@ export class RealtimeGateway
         client.handshake.headers.authorization?.split(" ")[1];
 
       if (!token) {
-        console.warn(`V2 WS connection rejected: Missing token for client ${client.id}`);
+        console.warn(
+          `V2 WS connection rejected: Missing token for client ${client.id}`,
+        );
         client.disconnect();
         return;
       }
 
       const payload = await verifyMemberToken(token);
       if (!payload) {
-        console.warn(`V2 WS connection rejected: Invalid token for client ${client.id}`);
+        console.warn(
+          `V2 WS connection rejected: Invalid token for client ${client.id}`,
+        );
         client.disconnect();
         return;
       }
 
       (client as any).v2Context = payload;
-      console.log(`V2 Client connected: ${client.id} (Org: ${payload.organizationId})`);
+      console.log(
+        `V2 Client connected: ${client.id} (Org: ${payload.organizationId})`,
+      );
     } catch (error: any) {
       console.error("V2 WS Connection error:", error.message);
       client.disconnect();

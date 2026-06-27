@@ -1,5 +1,5 @@
-import { Realtime } from 'ably';
-import { RealtimeProvider, PresenceMember } from './types';
+import { Realtime } from "ably";
+import { RealtimeProvider, PresenceMember } from "./types";
 
 export class AblyRealtimeProvider implements RealtimeProvider {
   private _ably: Realtime | null = null;
@@ -28,15 +28,22 @@ export class AblyRealtimeProvider implements RealtimeProvider {
     // but Ably 2.x returns a Promise<PresenceMessage[]> for Realtime.
     const messages = await (ably.channels.get(channel).presence.get() as any);
     return (Array.isArray(messages) ? messages : []).map((m: any) => ({
-      clientId: m.clientId || 'unknown',
+      clientId: m.clientId || "unknown",
       timestamp: m.timestamp,
-      data: m.data
+      data: m.data,
     }));
   }
 
-  async enterPresence(channel: string, clientId: string, data?: any): Promise<void> {
+  async enterPresence(
+    channel: string,
+    clientId: string,
+    data?: any,
+  ): Promise<void> {
     const ably = this.getAbly();
-    await (ably.channels.get(channel).presence as any).enterClient(clientId, data);
+    await (ably.channels.get(channel).presence as any).enterClient(
+      clientId,
+      data,
+    );
   }
 
   async leavePresence(channel: string, clientId: string): Promise<void> {
@@ -47,6 +54,6 @@ export class AblyRealtimeProvider implements RealtimeProvider {
   async getHistory(channel: string, limit: number = 100): Promise<any[]> {
     const ably = this.getAbly();
     const result = await ably.channels.get(channel).history({ limit });
-    return result.items.map(m => m.data);
+    return result.items.map((m) => m.data);
   }
 }

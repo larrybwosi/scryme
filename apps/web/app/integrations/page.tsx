@@ -49,7 +49,8 @@ const INTEGRATIONS = [
   {
     id: "developer-tools",
     title: "Developer Tools",
-    description: "API Clients, Webhooks, and Device provisioning for developers.",
+    description:
+      "API Clients, Webhooks, and Device provisioning for developers.",
     icon: <Terminal className="w-8 h-8 text-indigo-600" />,
     href: "/integrations/apps-api",
     category: "Infrastructure",
@@ -58,7 +59,8 @@ const INTEGRATIONS = [
   {
     id: "windmill",
     title: "Windmill",
-    description: "Headless automation engine for complex workflows and scripts.",
+    description:
+      "Headless automation engine for complex workflows and scripts.",
     icon: <Zap className="w-8 h-8 text-yellow-500" />,
     category: "Automation",
     isExternal: true,
@@ -66,7 +68,8 @@ const INTEGRATIONS = [
   {
     id: "huly",
     title: "Huly",
-    description: "Enterprise project management and team collaboration platform.",
+    description:
+      "Enterprise project management and team collaboration platform.",
     icon: <Layout className="w-8 h-8 text-blue-600" />,
     category: "Management",
     isExternal: true,
@@ -74,7 +77,8 @@ const INTEGRATIONS = [
   {
     id: "zitadel",
     title: "Zitadel",
-    description: "Identity management and authentication for your applications.",
+    description:
+      "Identity management and authentication for your applications.",
     icon: <Shield className="w-8 h-8 text-orange-500" />,
     category: "Security",
     isExternal: true,
@@ -168,7 +172,12 @@ export default function IntegrationsPage() {
               <Label>Windmill Base URL</Label>
               <Input
                 value={configValues.windmillBaseUrl || ""}
-                onChange={(e) => setConfigValues({ ...configValues, windmillBaseUrl: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    windmillBaseUrl: e.target.value,
+                  })
+                }
                 placeholder="https://windmill.internal"
               />
             </div>
@@ -177,7 +186,12 @@ export default function IntegrationsPage() {
               <Input
                 type="password"
                 value={configValues.windmillApiKey || ""}
-                onChange={(e) => setConfigValues({ ...configValues, windmillApiKey: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    windmillApiKey: e.target.value,
+                  })
+                }
                 placeholder="••••••••••••••••"
               />
             </div>
@@ -186,7 +200,12 @@ export default function IntegrationsPage() {
               <Input
                 type="password"
                 value={configValues.webhookSecret || ""}
-                onChange={(e) => setConfigValues({ ...configValues, webhookSecret: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    webhookSecret: e.target.value,
+                  })
+                }
                 placeholder="Optional"
               />
             </div>
@@ -199,7 +218,12 @@ export default function IntegrationsPage() {
               <Label>Workspace Slug</Label>
               <Input
                 value={configValues.workspaceSlug || ""}
-                onChange={(e) => setConfigValues({ ...configValues, workspaceSlug: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    workspaceSlug: e.target.value,
+                  })
+                }
                 placeholder="my-workspace"
               />
             </div>
@@ -207,7 +231,12 @@ export default function IntegrationsPage() {
               <Label>Workspace URL</Label>
               <Input
                 value={configValues.workspaceUrl || ""}
-                onChange={(e) => setConfigValues({ ...configValues, workspaceUrl: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    workspaceUrl: e.target.value,
+                  })
+                }
                 placeholder="https://huly.app"
               />
             </div>
@@ -216,7 +245,9 @@ export default function IntegrationsPage() {
               <Input
                 type="password"
                 value={configValues.apiKey || ""}
-                onChange={(e) => setConfigValues({ ...configValues, apiKey: e.target.value })}
+                onChange={e =>
+                  setConfigValues({ ...configValues, apiKey: e.target.value })
+                }
                 placeholder="••••••••••••••••"
               />
             </div>
@@ -229,7 +260,12 @@ export default function IntegrationsPage() {
               <Label>Zitadel Org ID</Label>
               <Input
                 value={configValues.zitadelOrgId || ""}
-                onChange={(e) => setConfigValues({ ...configValues, zitadelOrgId: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    zitadelOrgId: e.target.value,
+                  })
+                }
                 placeholder="123456789"
               />
             </div>
@@ -237,14 +273,24 @@ export default function IntegrationsPage() {
               <Label>Project ID</Label>
               <Input
                 value={configValues.zitadelProjectId || ""}
-                onChange={(e) => setConfigValues({ ...configValues, zitadelProjectId: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    zitadelProjectId: e.target.value,
+                  })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label>App ID (OIDC)</Label>
               <Input
                 value={configValues.zitadelAppId || ""}
-                onChange={(e) => setConfigValues({ ...configValues, zitadelAppId: e.target.value })}
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    zitadelAppId: e.target.value,
+                  })
+                }
               />
             </div>
           </div>
@@ -256,8 +302,11 @@ export default function IntegrationsPage() {
               <Label>Workspace ID</Label>
               <Input
                 value={configValues.workspaceId || ""}
-                onChange={(e) =>
-                  setConfigValues({ ...configValues, workspaceId: e.target.value })
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    workspaceId: e.target.value,
+                  })
                 }
               />
             </div>
@@ -265,8 +314,11 @@ export default function IntegrationsPage() {
               <Label>Workspace Slug</Label>
               <Input
                 value={configValues.workspaceSlug || ""}
-                onChange={(e) =>
-                  setConfigValues({ ...configValues, workspaceSlug: e.target.value })
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    workspaceSlug: e.target.value,
+                  })
                 }
               />
             </div>
@@ -275,8 +327,11 @@ export default function IntegrationsPage() {
               <Input
                 type="password"
                 value={configValues.accessToken || ""}
-                onChange={(e) =>
-                  setConfigValues({ ...configValues, accessToken: e.target.value })
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    accessToken: e.target.value,
+                  })
                 }
                 placeholder="••••••••••••••••"
               />
@@ -286,8 +341,11 @@ export default function IntegrationsPage() {
               <Input
                 type="password"
                 value={configValues.refreshToken || ""}
-                onChange={(e) =>
-                  setConfigValues({ ...configValues, refreshToken: e.target.value })
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    refreshToken: e.target.value,
+                  })
                 }
                 placeholder="••••••••••••••••"
               />
@@ -301,8 +359,11 @@ export default function IntegrationsPage() {
               <Label>Workspace ID</Label>
               <Input
                 value={configValues.workspaceId || ""}
-                onChange={(e) =>
-                  setConfigValues({ ...configValues, workspaceId: e.target.value })
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    workspaceId: e.target.value,
+                  })
                 }
               />
             </div>
@@ -310,8 +371,11 @@ export default function IntegrationsPage() {
               <Label>Workspace Slug</Label>
               <Input
                 value={configValues.workspaceSlug || ""}
-                onChange={(e) =>
-                  setConfigValues({ ...configValues, workspaceSlug: e.target.value })
+                onChange={e =>
+                  setConfigValues({
+                    ...configValues,
+                    workspaceSlug: e.target.value,
+                  })
                 }
               />
             </div>
@@ -339,17 +403,21 @@ export default function IntegrationsPage() {
         />
         <div className="bg-white px-4 py-2 rounded-lg border border-gray-100 flex items-center gap-4 shadow-sm">
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-bold text-gray-400 uppercase">Status</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase">
+              Status
+            </span>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-semibold text-gray-700">All Systems Operational</span>
+              <span className="text-xs font-semibold text-gray-700">
+                All Systems Operational
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {INTEGRATIONS.map((integration) => {
+        {INTEGRATIONS.map(integration => {
           const isConnected = statuses[integration.id]?.connected;
           const statusLabel = isConnected ? "Connected" : "Not Configured";
 
@@ -358,9 +426,8 @@ export default function IntegrationsPage() {
               onClick={() => handleOpenConfig(integration)}
               className={cn(
                 "group relative bg-white rounded-2xl border border-gray-100 p-8 shadow-sm transition-all hover:shadow-xl hover:border-primary/20 cursor-pointer flex flex-col h-full",
-                !integration.isExternal && "hover:border-indigo-200"
-              )}
-            >
+                !integration.isExternal && "hover:border-indigo-200",
+              )}>
               <div className="flex justify-between items-start mb-6">
                 <div className="p-4 bg-gray-50 rounded-2xl group-hover:bg-primary/5 transition-colors">
                   {integration.icon}
@@ -372,9 +439,8 @@ export default function IntegrationsPage() {
                       "px-3 py-1 text-[10px] font-bold uppercase tracking-wider border-none",
                       isConnected
                         ? "bg-green-50 text-green-700"
-                        : "bg-gray-50 text-gray-400"
-                    )}
-                  >
+                        : "bg-gray-50 text-gray-400",
+                    )}>
                     {isConnected ? (
                       <span className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-3 h-3" /> {statusLabel}
@@ -413,7 +479,10 @@ export default function IntegrationsPage() {
 
           if (!integration.isExternal && integration.href) {
             return (
-              <Link key={integration.id} href={integration.href} className="block h-full">
+              <Link
+                key={integration.id}
+                href={integration.href}
+                className="block h-full">
                 {content}
               </Link>
             );
@@ -423,16 +492,21 @@ export default function IntegrationsPage() {
         })}
       </div>
 
-      <Sheet open={!!selectedIntegration} onOpenChange={(open) => !open && setSelectedIntegration(null)}>
+      <Sheet
+        open={!!selectedIntegration}
+        onOpenChange={open => !open && setSelectedIntegration(null)}>
         <SheetContent className="sm:max-w-md">
           <SheetHeader className="pb-8">
             <div className="p-4 bg-gray-50 rounded-2xl w-fit mb-4">
               {selectedIntegration?.icon}
             </div>
-            <SheetTitle className="text-2xl font-bold">{selectedIntegration?.title} Configuration</SheetTitle>
+            <SheetTitle className="text-2xl font-bold">
+              {selectedIntegration?.title} Configuration
+            </SheetTitle>
             <SheetDescription>
-              Configure the connection settings for {selectedIntegration?.title}.
-              These settings are used to authenticate and sync data with your workspace.
+              Configure the connection settings for {selectedIntegration?.title}
+              . These settings are used to authenticate and sync data with your
+              workspace.
             </SheetDescription>
           </SheetHeader>
 
@@ -441,10 +515,16 @@ export default function IntegrationsPage() {
           {renderConfigForm()}
 
           <SheetFooter className="mt-10 gap-3">
-            <Button variant="outline" className="flex-1 h-12" onClick={() => setSelectedIntegration(null)}>
+            <Button
+              variant="outline"
+              className="flex-1 h-12"
+              onClick={() => setSelectedIntegration(null)}>
               Cancel
             </Button>
-            <Button className="flex-1 h-12 gap-2" onClick={handleSaveConfig} disabled={isSaving}>
+            <Button
+              className="flex-1 h-12 gap-2"
+              onClick={handleSaveConfig}
+              disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Configuration"}
               <CheckCircle2 className="w-4 h-4" />
             </Button>

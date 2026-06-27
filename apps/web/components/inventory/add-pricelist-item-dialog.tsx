@@ -39,7 +39,9 @@ export function AddPriceListItemDialog({
 }: AddItemDialogProps) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());
+  const [selectedVariants, setSelectedVariants] = useState<Set<string>>(
+    new Set(),
+  );
 
   const [pricingConfig, setPricingConfig] = useState<{
     method: PricingMethod;
@@ -53,9 +55,10 @@ export function AddPriceListItemDialog({
     basePrice: 0,
   });
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.sku.toLowerCase().includes(search.toLowerCase())
+  const filteredProducts = products.filter(
+    p =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.sku.toLowerCase().includes(search.toLowerCase()),
   );
 
   const toggleVariant = (variantId: string) => {
@@ -76,14 +79,24 @@ export function AddPriceListItemDialog({
     try {
       const items = Array.from(selectedVariants).map(vId => {
         // Find variant to get its retail price if needed
-        const variant = products.flatMap(p => p.variants).find(v => v.id === vId);
+        const variant = products
+          .flatMap(p => p.variants)
+          .find(v => v.id === vId);
         return {
           variantId: vId,
           method: pricingConfig.method,
-          percentageValue: pricingConfig.method !== PricingMethod.FIXED ? pricingConfig.percentageValue : null,
-          price: pricingConfig.method === PricingMethod.FIXED
-            ? pricingConfig.basePrice
-            : calculatePrice(Number(variant?.buyingPrice || 0), pricingConfig.method, pricingConfig.percentageValue),
+          percentageValue:
+            pricingConfig.method !== PricingMethod.FIXED
+              ? pricingConfig.percentageValue
+              : null,
+          price:
+            pricingConfig.method === PricingMethod.FIXED
+              ? pricingConfig.basePrice
+              : calculatePrice(
+                  Number(variant?.buyingPrice || 0),
+                  pricingConfig.method,
+                  pricingConfig.percentageValue,
+                ),
           minQuantity: pricingConfig.minQuantity,
         };
       });
@@ -99,7 +112,11 @@ export function AddPriceListItemDialog({
     }
   };
 
-  const calculatePrice = (cost: number, method: PricingMethod, value: number) => {
+  const calculatePrice = (
+    cost: number,
+    method: PricingMethod,
+    value: number,
+  ) => {
     if (method === PricingMethod.COST_MARKUP) return cost * (1 + value / 100);
     if (method === PricingMethod.COST_MARGIN) return cost / (1 - value / 100);
     return value;
@@ -111,7 +128,8 @@ export function AddPriceListItemDialog({
         <SheetHeader>
           <SheetTitle>Add Items to Price List</SheetTitle>
           <SheetDescription>
-            Select products and variants to add to this price list with specific pricing logic.
+            Select products and variants to add to this price list with specific
+            pricing logic.
           </SheetDescription>
         </SheetHeader>
 
@@ -130,17 +148,29 @@ export function AddPriceListItemDialog({
             <div className="flex-1 overflow-y-auto space-y-2 pr-2">
               {filteredProducts.map(product => (
                 <div key={product.id} className="space-y-1">
-                  <div className="text-xs font-semibold text-gray-500 uppercase px-2">{product.name}</div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase px-2">
+                    {product.name}
+                  </div>
                   {product.variants.map((variant: any) => (
                     <div
                       key={variant.id}
-                      className={`flex items-center justify-between p-2 rounded-md cursor-pointer border ${selectedVariants.has(variant.id) ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'}`}
+                      className={`flex items-center justify-between p-2 rounded-md cursor-pointer border ${selectedVariants.has(variant.id) ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"}`}
                       onClick={() => toggleVariant(variant.id)}>
                       <div className="flex items-center gap-2">
-                        <Checkbox checked={selectedVariants.has(variant.id)} onCheckedChange={() => toggleVariant(variant.id)} />
+                        <Checkbox
+                          checked={selectedVariants.has(variant.id)}
+                          onCheckedChange={() => toggleVariant(variant.id)}
+                        />
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{variant.name === "Default" ? product.name : variant.name}</span>
-                          <span className="text-[10px] text-gray-500">{variant.sku} • Cost: ${variant.buyingPrice.toString()}</span>
+                          <span className="text-sm font-medium">
+                            {variant.name === "Default"
+                              ? product.name
+                              : variant.name}
+                          </span>
+                          <span className="text-[10px] text-gray-500">
+                            {variant.sku} • Cost: $
+                            {variant.buyingPrice.toString()}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -157,14 +187,25 @@ export function AddPriceListItemDialog({
               <Label>Method</Label>
               <Select
                 value={pricingConfig.method as any}
-                onValueChange={(v: any) => setPricingConfig({ ...pricingConfig, method: v as PricingMethod })}>
+                onValueChange={(v: any) =>
+                  setPricingConfig({
+                    ...pricingConfig,
+                    method: v as PricingMethod,
+                  })
+                }>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={PricingMethod.FIXED as string}>Fixed Price</SelectItem>
-                  <SelectItem value={PricingMethod.COST_MARKUP as string}>Cost Markup (%)</SelectItem>
-                  <SelectItem value={PricingMethod.COST_MARGIN as string}>Target Margin (%)</SelectItem>
+                  <SelectItem value={PricingMethod.FIXED as string}>
+                    Fixed Price
+                  </SelectItem>
+                  <SelectItem value={PricingMethod.COST_MARKUP as string}>
+                    Cost Markup (%)
+                  </SelectItem>
+                  <SelectItem value={PricingMethod.COST_MARGIN as string}>
+                    Target Margin (%)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -175,16 +216,30 @@ export function AddPriceListItemDialog({
                 <Input
                   type="number"
                   value={pricingConfig.basePrice}
-                  onChange={e => setPricingConfig({ ...pricingConfig, basePrice: parseFloat(e.target.value) || 0 })}
+                  onChange={e =>
+                    setPricingConfig({
+                      ...pricingConfig,
+                      basePrice: parseFloat(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
             ) : (
               <div className="space-y-2">
-                <Label>{pricingConfig.method === PricingMethod.COST_MARKUP ? "Markup %" : "Margin %"}</Label>
+                <Label>
+                  {pricingConfig.method === PricingMethod.COST_MARKUP
+                    ? "Markup %"
+                    : "Margin %"}
+                </Label>
                 <Input
                   type="number"
                   value={pricingConfig.percentageValue}
-                  onChange={e => setPricingConfig({ ...pricingConfig, percentageValue: parseFloat(e.target.value) || 0 })}
+                  onChange={e =>
+                    setPricingConfig({
+                      ...pricingConfig,
+                      percentageValue: parseFloat(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
             )}
@@ -194,14 +249,26 @@ export function AddPriceListItemDialog({
               <Input
                 type="number"
                 value={pricingConfig.minQuantity}
-                onChange={e => setPricingConfig({ ...pricingConfig, minQuantity: parseInt(e.target.value) || 1 })}
+                onChange={e =>
+                  setPricingConfig({
+                    ...pricingConfig,
+                    minQuantity: parseInt(e.target.value) || 1,
+                  })
+                }
               />
-              <p className="text-[10px] text-gray-500">Use for tiered/volume pricing.</p>
+              <p className="text-[10px] text-gray-500">
+                Use for tiered/volume pricing.
+              </p>
             </div>
 
             <div className="pt-4 border-t">
-              <div className="text-xs text-gray-500 mb-2">{selectedVariants.size} products selected</div>
-              <Button className="w-full" onClick={handleSubmit} disabled={loading || selectedVariants.size === 0}>
+              <div className="text-xs text-gray-500 mb-2">
+                {selectedVariants.size} products selected
+              </div>
+              <Button
+                className="w-full"
+                onClick={handleSubmit}
+                disabled={loading || selectedVariants.size === 0}>
                 {loading ? "Adding..." : "Add to Price List"}
               </Button>
             </div>

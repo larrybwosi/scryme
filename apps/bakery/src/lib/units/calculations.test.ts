@@ -1,14 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   calculateLineQuantity,
   calculateLineUnitCost,
   calculateLineTotal,
-  calculateGrandTotal
-} from './calculations';
+  calculateGrandTotal,
+} from "./calculations";
 
-describe('Bakery Unit Conversion Logic', () => {
-  describe('calculateLineQuantity', () => {
-    it('should calculate quantity correctly for containers', () => {
+describe("Bakery Unit Conversion Logic", () => {
+  describe("calculateLineQuantity", () => {
+    it("should calculate quantity correctly for containers", () => {
       const line = {
         useContainer: true,
         numContainers: 10,
@@ -17,7 +17,7 @@ describe('Bakery Unit Conversion Logic', () => {
       expect(calculateLineQuantity(line)).toBe(250);
     });
 
-    it('should return base quantity when not using containers', () => {
+    it("should return base quantity when not using containers", () => {
       const line = {
         useContainer: false,
         quantity: 100,
@@ -25,14 +25,14 @@ describe('Bakery Unit Conversion Logic', () => {
       expect(calculateLineQuantity(line)).toBe(100);
     });
 
-    it('should handle missing values with defaults', () => {
+    it("should handle missing values with defaults", () => {
       expect(calculateLineQuantity({ useContainer: true })).toBe(0);
       expect(calculateLineQuantity({})).toBe(0);
     });
   });
 
-  describe('calculateLineUnitCost', () => {
-    it('should calculate unit cost correctly for containers', () => {
+  describe("calculateLineUnitCost", () => {
+    it("should calculate unit cost correctly for containers", () => {
       const line = {
         useContainer: true,
         pricePerContainer: 50,
@@ -41,7 +41,7 @@ describe('Bakery Unit Conversion Logic', () => {
       expect(calculateLineUnitCost(line)).toBe(2);
     });
 
-    it('should return base unit cost when not using containers', () => {
+    it("should return base unit cost when not using containers", () => {
       const line = {
         useContainer: false,
         unitCost: 1.5,
@@ -49,7 +49,7 @@ describe('Bakery Unit Conversion Logic', () => {
       expect(calculateLineUnitCost(line)).toBe(1.5);
     });
 
-    it('should handle zero units per container to avoid division by zero', () => {
+    it("should handle zero units per container to avoid division by zero", () => {
       const line = {
         useContainer: true,
         pricePerContainer: 50,
@@ -59,8 +59,8 @@ describe('Bakery Unit Conversion Logic', () => {
     });
   });
 
-  describe('calculateLineTotal', () => {
-    it('should calculate total correctly for containers', () => {
+  describe("calculateLineTotal", () => {
+    it("should calculate total correctly for containers", () => {
       const line = {
         useContainer: true,
         numContainers: 10,
@@ -69,7 +69,7 @@ describe('Bakery Unit Conversion Logic', () => {
       expect(calculateLineTotal(line)).toBe(500);
     });
 
-    it('should calculate total correctly for base units', () => {
+    it("should calculate total correctly for base units", () => {
       const line = {
         useContainer: false,
         quantity: 10,
@@ -79,8 +79,8 @@ describe('Bakery Unit Conversion Logic', () => {
     });
   });
 
-  describe('calculateGrandTotal', () => {
-    it('should sum up multiple lines correctly', () => {
+  describe("calculateGrandTotal", () => {
+    it("should sum up multiple lines correctly", () => {
       const lines = [
         { useContainer: true, numContainers: 2, pricePerContainer: 100 },
         { useContainer: false, quantity: 50, unitCost: 2 },
@@ -88,7 +88,7 @@ describe('Bakery Unit Conversion Logic', () => {
       expect(calculateGrandTotal(lines)).toBe(300);
     });
 
-    it('should return 0 for empty or null lines', () => {
+    it("should return 0 for empty or null lines", () => {
       expect(calculateGrandTotal([])).toBe(0);
       expect(calculateGrandTotal(null as any)).toBe(0);
     });

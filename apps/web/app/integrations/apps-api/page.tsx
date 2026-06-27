@@ -280,8 +280,12 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-xl font-bold text-gray-900">V3 API Clients</h2>
-              <p className="text-sm text-gray-500">Modern OAuth2 clients for building robust integrations.</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                V3 API Clients
+              </h2>
+              <p className="text-sm text-gray-500">
+                Modern OAuth2 clients for building robust integrations.
+              </p>
             </div>
             <Dialog
               open={showV3Dialog}
@@ -361,7 +365,10 @@ function AppsApiContent() {
                 )}
                 <DialogFooter>
                   {!v3Result ? (
-                    <Button onClick={handleCreateV3} disabled={!newClientName} className="bg-indigo-600 hover:bg-indigo-700">
+                    <Button
+                      onClick={handleCreateV3}
+                      disabled={!newClientName}
+                      className="bg-indigo-600 hover:bg-indigo-700">
                       Create Client
                     </Button>
                   ) : (
@@ -370,8 +377,7 @@ function AppsApiContent() {
                         setShowV3Dialog(false);
                         setV3Result(null);
                       }}
-                      className="bg-indigo-600 hover:bg-indigo-700"
-                    >
+                      className="bg-indigo-600 hover:bg-indigo-700">
                       I have saved the secret
                     </Button>
                   )}
@@ -386,8 +392,13 @@ function AppsApiContent() {
                 <div className="p-4 bg-indigo-50 rounded-2xl mb-4">
                   <Key className="w-10 h-10 text-indigo-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No API Clients</h3>
-                <p className="text-gray-500 max-w-sm mb-8">Create your first OAuth2 client to start building custom integrations with our V3 API.</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  No API Clients
+                </h3>
+                <p className="text-gray-500 max-w-sm mb-8">
+                  Create your first OAuth2 client to start building custom
+                  integrations with our V3 API.
+                </p>
               </div>
             ) : (
               v3Clients.map(client => (
@@ -400,19 +411,27 @@ function AppsApiContent() {
                         <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                           <Code2 size={20} />
                         </div>
-                        <h3 className="font-bold text-lg text-gray-900">{client.name}</h3>
+                        <h3 className="font-bold text-lg text-gray-900">
+                          {client.name}
+                        </h3>
                       </div>
                       <div className="flex flex-wrap items-center gap-6 text-sm">
                         <span className="flex items-center gap-2 text-gray-500">
-                          <span className="font-semibold text-gray-400 text-[10px] uppercase">Client ID</span>
+                          <span className="font-semibold text-gray-400 text-[10px] uppercase">
+                            Client ID
+                          </span>
                           <code className="bg-gray-50 px-2 py-1 rounded text-xs border font-mono">
                             {client.clientId}
                           </code>
                         </span>
                         <span className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-400 text-[10px] uppercase">Status</span>
+                          <span className="font-semibold text-gray-400 text-[10px] uppercase">
+                            Status
+                          </span>
                           <Badge
-                            variant={client.isActive ? "default" : "destructive"}
+                            variant={
+                              client.isActive ? "default" : "destructive"
+                            }
                             className={cn(
                               "cursor-pointer px-3 py-0.5 border-none",
                               client.isActive
@@ -440,7 +459,10 @@ function AppsApiContent() {
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-10 w-10">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10">
                             <MoreVertical size={20} />
                           </Button>
                         </DropdownMenuTrigger>
@@ -448,9 +470,8 @@ function AppsApiContent() {
                           <DropdownMenuItem
                             className="py-2.5"
                             onClick={async () => {
-                              const secret = await regenerateV3ClientSecretAction(
-                                client.id,
-                              );
+                              const secret =
+                                await regenerateV3ClientSecretAction(client.id);
                               copyToClipboard(secret);
                               toast.info(
                                 "New secret copied to clipboard. It will not be shown again.",
@@ -523,7 +544,9 @@ function AppsApiContent() {
             <div className="flex justify-between items-center mb-6">
               <div className="space-y-1">
                 <h2 className="text-xl font-bold text-gray-900">V2 API Keys</h2>
-                <p className="text-sm text-gray-500">Legacy API keys for specialized integrations and POS access.</p>
+                <p className="text-sm text-gray-500">
+                  Legacy API keys for specialized integrations and POS access.
+                </p>
               </div>
               <Dialog
                 open={showV2Dialog}
@@ -583,7 +606,10 @@ function AppsApiContent() {
                   )}
                   <DialogFooter>
                     {!v2Result ? (
-                      <Button onClick={handleCreateV2} disabled={!newKeyName} className="bg-indigo-600 hover:bg-indigo-700">
+                      <Button
+                        onClick={handleCreateV2}
+                        disabled={!newKeyName}
+                        className="bg-indigo-600 hover:bg-indigo-700">
                         Create Key
                       </Button>
                     ) : (
@@ -592,8 +618,7 @@ function AppsApiContent() {
                           setShowV2Dialog(false);
                           setV2Result(null);
                         }}
-                        className="bg-indigo-600 hover:bg-indigo-700"
-                      >
+                        className="bg-indigo-600 hover:bg-indigo-700">
                         Done
                       </Button>
                     )}
@@ -617,8 +642,12 @@ function AppsApiContent() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{key.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-2 h-5 font-bold uppercase tracking-tighter bg-gray-50">
+                        <span className="font-bold text-gray-900">
+                          {key.name}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-2 h-5 font-bold uppercase tracking-tighter bg-gray-50">
                           {key.environment}
                         </Badge>
                       </div>
@@ -645,8 +674,12 @@ function AppsApiContent() {
           <section>
             <div className="flex justify-between items-center mb-6">
               <div className="space-y-1">
-                <h2 className="text-xl font-bold text-gray-900">Hardware & Devices</h2>
-                <p className="text-sm text-gray-500">Provision and manage POS terminals and kiosks.</p>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Hardware & Devices
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Provision and manage POS terminals and kiosks.
+                </p>
               </div>
               <Dialog
                 open={showDeviceDialog}
@@ -710,11 +743,17 @@ function AppsApiContent() {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="POS_TERMINAL">POS Terminal</SelectItem>
-                              <SelectItem value="MOBILE_POS">Mobile POS</SelectItem>
+                              <SelectItem value="POS_TERMINAL">
+                                POS Terminal
+                              </SelectItem>
+                              <SelectItem value="MOBILE_POS">
+                                Mobile POS
+                              </SelectItem>
                               <SelectItem value="KIOSK">Kiosk</SelectItem>
                               <SelectItem value="TABLET">Tablet</SelectItem>
-                              <SelectItem value="BAKERY_TERMINAL">Bakery Terminal</SelectItem>
+                              <SelectItem value="BAKERY_TERMINAL">
+                                Bakery Terminal
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -740,7 +779,9 @@ function AppsApiContent() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label className="text-sm font-semibold">Environment</Label>
+                        <Label className="text-sm font-semibold">
+                          Environment
+                        </Label>
                         <Select
                           value={newDevice.environment}
                           onValueChange={val =>
@@ -753,14 +794,18 @@ function AppsApiContent() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="LIVE">Production (Live)</SelectItem>
+                            <SelectItem value="LIVE">
+                              Production (Live)
+                            </SelectItem>
                             <SelectItem value="TEST">Sandbox (Test)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-3">
-                        <Label className="text-xs font-bold uppercase text-gray-400">Permissions</Label>
+                        <Label className="text-xs font-bold uppercase text-gray-400">
+                          Permissions
+                        </Label>
                         <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
                           {[
                             "pos:transactions",
@@ -843,8 +888,7 @@ function AppsApiContent() {
                       <Button
                         onClick={handleProvisionDevice}
                         disabled={!newDevice.deviceName}
-                        className="bg-indigo-600 hover:bg-indigo-700 w-full"
-                      >
+                        className="bg-indigo-600 hover:bg-indigo-700 w-full">
                         Generate Token
                       </Button>
                     ) : (
@@ -853,8 +897,7 @@ function AppsApiContent() {
                           setShowDeviceDialog(false);
                           setDeviceTokenResult(null);
                         }}
-                        className="bg-indigo-600 hover:bg-indigo-700 w-full"
-                      >
+                        className="bg-indigo-600 hover:bg-indigo-700 w-full">
                         Done
                       </Button>
                     )}
@@ -871,20 +914,27 @@ function AppsApiContent() {
                   </div>
                   <h3 className="text-xl font-bold mb-3">Provisioning Guide</h3>
                   <p className="text-sm text-indigo-100 leading-relaxed mb-6">
-                    Connect your POS hardware securely. Generate a one-time token,
-                    scan the QR code on your device, and start processing sales instantly.
+                    Connect your POS hardware securely. Generate a one-time
+                    token, scan the QR code on your device, and start processing
+                    sales instantly.
                   </p>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-xs font-semibold bg-white/10 p-3 rounded-lg border border-white/10">
-                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</div>
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                        1
+                      </div>
                       Generate Setup Token
                     </div>
                     <div className="flex items-center gap-3 text-xs font-semibold bg-white/10 p-3 rounded-lg border border-white/10">
-                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</div>
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                        2
+                      </div>
                       Scan QR on Hardware
                     </div>
                     <div className="flex items-center gap-3 text-xs font-semibold bg-white/10 p-3 rounded-lg border border-white/10">
-                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">3</div>
+                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                        3
+                      </div>
                       Device Syncs & Activates
                     </div>
                   </div>
@@ -893,7 +943,8 @@ function AppsApiContent() {
 
               <div className="lg:col-span-2 space-y-4">
                 {registries.length === 0 &&
-                  deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length === 0 && (
+                  deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length ===
+                    0 && (
                     <div className="bg-white h-[400px] rounded-3xl border border-dashed flex flex-col items-center justify-center text-center p-8">
                       <div className="p-4 bg-gray-50 rounded-2xl mb-4">
                         <Cpu className="w-10 h-10 text-gray-300" />
@@ -919,7 +970,8 @@ function AppsApiContent() {
                             Pending Setup: {token.deviceName}
                           </div>
                           <div className="text-[11px] text-amber-600/70 mt-1 font-semibold">
-                            EXPIRES: {new Date(token.expiresAt).toLocaleString()}
+                            EXPIRES:{" "}
+                            {new Date(token.expiresAt).toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -943,9 +995,13 @@ function AppsApiContent() {
                           <Monitor size={22} />
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900">{reg.deviceName}</div>
+                          <div className="font-bold text-gray-900">
+                            {reg.deviceName}
+                          </div>
                           <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                            <span className="font-semibold text-[10px] uppercase tracking-wider">{reg.deviceType}</span>
+                            <span className="font-semibold text-[10px] uppercase tracking-wider">
+                              {reg.deviceType}
+                            </span>
                             <span className="w-1 h-1 rounded-full bg-gray-300" />
                             <span>{reg.location?.name || "Main Location"}</span>
                           </div>
@@ -953,12 +1009,14 @@ function AppsApiContent() {
                       </div>
                       <div className="text-right">
                         <Badge
-                          variant={reg.status === "ACTIVE" ? "default" : "secondary"}
+                          variant={
+                            reg.status === "ACTIVE" ? "default" : "secondary"
+                          }
                           className={cn(
                             "px-3 py-0.5 border-none",
                             reg.status === "ACTIVE"
                               ? "bg-emerald-50 text-emerald-700"
-                              : "bg-gray-50 text-gray-500"
+                              : "bg-gray-50 text-gray-500",
                           )}>
                           {reg.status}
                         </Badge>
@@ -982,8 +1040,13 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-xl font-bold text-gray-900">Webhook Subscriptions</h2>
-              <p className="text-sm text-gray-500">Receive real-time notifications when events happen in your organization.</p>
+              <h2 className="text-xl font-bold text-gray-900">
+                Webhook Subscriptions
+              </h2>
+              <p className="text-sm text-gray-500">
+                Receive real-time notifications when events happen in your
+                organization.
+              </p>
             </div>
             <Dialog
               open={showWebhookDialog}
@@ -1027,7 +1090,9 @@ function AppsApiContent() {
                     />
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-xs font-bold uppercase text-gray-400">Events to Subscribe</Label>
+                    <Label className="text-xs font-bold uppercase text-gray-400">
+                      Events to Subscribe
+                    </Label>
                     <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
                       {availableEvents.map(ev => (
                         <div key={ev} className="flex items-center space-x-3">
@@ -1061,8 +1126,7 @@ function AppsApiContent() {
                   <Button
                     onClick={handleCreateWebhook}
                     disabled={!newWebhook.url || newWebhook.events.length === 0}
-                    className="bg-indigo-600 hover:bg-indigo-700 h-11"
-                  >
+                    className="bg-indigo-600 hover:bg-indigo-700 h-11">
                     Create Subscription
                   </Button>
                 </DialogFooter>
@@ -1075,8 +1139,13 @@ function AppsApiContent() {
               <div className="p-4 bg-indigo-50 rounded-2xl mb-4">
                 <Webhook className="w-10 h-10 text-indigo-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No Webhooks</h3>
-              <p className="text-gray-500 max-w-sm">Listen to real-time events from our API and trigger external workflows in your own stack.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                No Webhooks
+              </h3>
+              <p className="text-gray-500 max-w-sm">
+                Listen to real-time events from our API and trigger external
+                workflows in your own stack.
+              </p>
             </div>
           ) : (
             <div className="grid gap-4">
@@ -1091,7 +1160,9 @@ function AppsApiContent() {
                       </div>
                       <div className="text-sm text-gray-500 mt-1 flex items-center gap-2">
                         <Globe size={14} className="text-indigo-400" />
-                        <code className="bg-gray-50 px-1.5 py-0.5 rounded border font-mono text-xs text-gray-700">{wh.url}</code>
+                        <code className="bg-gray-50 px-1.5 py-0.5 rounded border font-mono text-xs text-gray-700">
+                          {wh.url}
+                        </code>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1127,7 +1198,9 @@ function AppsApiContent() {
         onOpenChange={open => !open && setEditingV3Client(null)}>
         <SheetContent className="sm:max-w-md">
           <SheetHeader className="pb-8">
-            <SheetTitle className="text-2xl font-bold">Client Advanced Settings</SheetTitle>
+            <SheetTitle className="text-2xl font-bold">
+              Client Advanced Settings
+            </SheetTitle>
             <SheetDescription>
               Modify security settings and permissions for{" "}
               <strong>{editingV3Client?.name}</strong>.
@@ -1149,7 +1222,9 @@ function AppsApiContent() {
                           variant={isSelected ? "default" : "outline"}
                           className={cn(
                             "cursor-pointer py-2 px-4 h-auto text-xs font-bold transition-all border-none",
-                            isSelected ? "bg-indigo-600 text-white shadow-md" : "bg-gray-50 text-gray-500 hover:bg-gray-100",
+                            isSelected
+                              ? "bg-indigo-600 text-white shadow-md"
+                              : "bg-gray-50 text-gray-500 hover:bg-gray-100",
                           )}
                           onClick={() => {
                             const scopes = isSelected
@@ -1188,14 +1263,17 @@ function AppsApiContent() {
                     }
                   />
                   <p className="text-[10px] text-gray-400 leading-relaxed">
-                    Comma-separated list of browser origins allowed to make authenticated requests.
+                    Comma-separated list of browser origins allowed to make
+                    authenticated requests.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl border border-gray-100">
                 <div className="space-y-0.5">
-                  <div className="font-bold text-sm text-gray-900">Active Status</div>
+                  <div className="font-bold text-sm text-gray-900">
+                    Active Status
+                  </div>
                   <div className="text-[10px] text-gray-400 uppercase font-bold tracking-tight">
                     Access control toggle
                   </div>
@@ -1219,7 +1297,9 @@ function AppsApiContent() {
               onClick={() => setEditingV3Client(null)}>
               Cancel
             </Button>
-            <Button className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700" onClick={handleUpdateV3}>
+            <Button
+              className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700"
+              onClick={handleUpdateV3}>
               Save Changes
             </Button>
           </SheetFooter>

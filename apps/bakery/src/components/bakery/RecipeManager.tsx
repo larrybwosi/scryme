@@ -1,10 +1,16 @@
-import { useState, useMemo } from 'react';
-import { useRecipes, useDeleteRecipe } from '@/hooks/bakery';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@repo/ui/components/ui/card';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { useState, useMemo } from "react";
+import { useRecipes, useDeleteRecipe } from "@/hooks/bakery";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@repo/ui/components/ui/card";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import {
   Search,
   Plus,
@@ -24,19 +30,26 @@ import {
   ArrowUpDown,
   MoreVertical,
   Layers,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { Recipe } from '@/types/bakery';
-import { cn, useFormattedCurrency } from '@/lib/utils';
-import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
-import { Separator } from '@repo/ui/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import CreateEditRecipeDialog from './RecipeForm';
-import { ViewRecipe } from './ViewRecipe';
+} from "lucide-react";
+import { toast } from "sonner";
+import { Recipe } from "@/types/bakery";
+import { cn, useFormattedCurrency } from "@/lib/utils";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import { Separator } from "@repo/ui/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import CreateEditRecipeDialog from "./RecipeForm";
+import { ViewRecipe } from "./ViewRecipe";
 
 export default function RecipeManager() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -49,19 +62,19 @@ export default function RecipeManager() {
 
   const filteredRecipes = useMemo(() => {
     return recipes.filter(
-      r =>
+      (r) =>
         r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
+        r.category?.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [recipes, searchTerm]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this formula?')) {
+    if (window.confirm("Are you sure you want to delete this formula?")) {
       try {
         await deleteRecipeMutation.mutateAsync(id);
-        toast.success('Formula deleted successfully');
+        toast.success("Formula deleted successfully");
       } catch (err) {
-        toast.error('Failed to delete formula');
+        toast.error("Failed to delete formula");
       }
     }
   };
@@ -80,7 +93,9 @@ export default function RecipeManager() {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load production formulas. Please try again.</AlertDescription>
+        <AlertDescription>
+          Failed to load production formulas. Please try again.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -94,13 +109,17 @@ export default function RecipeManager() {
             <Input
               placeholder="Search master formulas or classifications..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-11 border-border/50 bg-background/50 focus-visible:ring-primary/10 transition-all rounded-lg"
               disabled={isLoading}
             />
           </div>
 
-          <Button variant="outline" size="icon" className="h-11 w-11 border-border/50 bg-background/50 rounded-lg">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 border-border/50 bg-background/50 rounded-lg"
+          >
             <Filter className="h-4 w-4 text-muted-foreground/60" />
           </Button>
         </div>
@@ -109,10 +128,10 @@ export default function RecipeManager() {
           <Button
             variant="outline"
             className="h-10 gap-2 text-xs border-border/60 font-medium"
-            onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
+            onClick={() => setViewMode(viewMode === "grid" ? "table" : "grid")}
           >
             <Layers className="h-4 w-4" />
-            {viewMode === 'grid' ? 'Table View' : 'Grid View'}
+            {viewMode === "grid" ? "Table View" : "Grid View"}
           </Button>
 
           <Button
@@ -125,7 +144,11 @@ export default function RecipeManager() {
         </div>
       </div>
 
-      <CreateEditRecipeDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} mode="create" />
+      <CreateEditRecipeDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        mode="create"
+      />
       {editingRecipe && (
         <CreateEditRecipeDialog
           open={isEditDialogOpen}
@@ -135,10 +158,14 @@ export default function RecipeManager() {
         />
       )}
       {selectedRecipe && (
-        <ViewRecipe open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen} recipe={selectedRecipe} />
+        <ViewRecipe
+          open={isViewDialogOpen}
+          onOpenChange={setIsViewDialogOpen}
+          recipe={selectedRecipe}
+        />
       )}
 
-      {viewMode === 'table' ? (
+      {viewMode === "table" ? (
         <div className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-md overflow-hidden shadow-sm">
           <Table>
             <TableHeader className="bg-muted/10">
@@ -170,13 +197,18 @@ export default function RecipeManager() {
                       </TableCell>
                     </TableRow>
                   ))
-                : filteredRecipes.map(recipe => (
-                    <TableRow key={recipe.id} className="group hover:bg-muted/10 transition-all border-border/20">
+                : filteredRecipes.map((recipe) => (
+                    <TableRow
+                      key={recipe.id}
+                      className="group hover:bg-muted/10 transition-all border-border/20"
+                    >
                       <TableCell className="py-5 px-8">
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-foreground/90 text-[14px] tracking-tight">{recipe.name}</span>
+                          <span className="font-bold text-foreground/90 text-[14px] tracking-tight">
+                            {recipe.name}
+                          </span>
                           <span className="text-[11px] text-muted-foreground/70 font-medium line-clamp-1 max-w-[300px]">
-                            {recipe.description || 'No description provided'}
+                            {recipe.description || "No description provided"}
                           </span>
                         </div>
                       </TableCell>
@@ -185,16 +217,18 @@ export default function RecipeManager() {
                           variant="secondary"
                           className="text-[9px] bg-background text-muted-foreground/80 font-bold uppercase tracking-widest border border-border/40 px-2 py-0.5 rounded-full"
                         >
-                          {recipe.category?.name || 'Unclassified'}
+                          {recipe.category?.name || "Unclassified"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold tabular-nums text-[14px] text-foreground/80">
                         {formatCurrency(recipe.totalCost || 0)}
                       </TableCell>
                       <TableCell className="text-right font-bold text-[14px] text-foreground/80">
-                        {recipe.yieldQuantity}{' '}
+                        {recipe.yieldQuantity}{" "}
                         <span className="text-[10px] text-muted-foreground/40 font-medium ml-0.5 uppercase tracking-tighter">
-                          {typeof recipe.yieldUnit === 'string' ? recipe.yieldUnit : (recipe.yieldUnit as any)?.symbol}
+                          {typeof recipe.yieldUnit === "string"
+                            ? recipe.yieldUnit
+                            : (recipe.yieldUnit as any)?.symbol}
                         </span>
                       </TableCell>
                       <TableCell className="text-center font-medium text-xs text-muted-foreground/70">
@@ -239,8 +273,14 @@ export default function RecipeManager() {
           {!isLoading && filteredRecipes.length === 0 && (
             <div className="py-20 text-center">
               <UtensilsCrossed className="h-10 w-10 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="text-sm font-bold text-muted-foreground">No formulas found in directory</p>
-              <Button variant="link" className="text-xs mt-1" onClick={() => setSearchTerm('')}>
+              <p className="text-sm font-bold text-muted-foreground">
+                No formulas found in directory
+              </p>
+              <Button
+                variant="link"
+                className="text-xs mt-1"
+                onClick={() => setSearchTerm("")}
+              >
                 Clear search
               </Button>
             </div>
@@ -256,7 +296,7 @@ export default function RecipeManager() {
                   </CardContent>
                 </Card>
               ))
-            : filteredRecipes.map(recipe => (
+            : filteredRecipes.map((recipe) => (
                 <Card
                   key={recipe.id}
                   className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 border-border/50 bg-card/50 backdrop-blur-sm"
@@ -270,7 +310,7 @@ export default function RecipeManager() {
                         variant="outline"
                         className="text-[9px] uppercase tracking-widest font-black border-none bg-muted px-1.5 py-0.5"
                       >
-                        {recipe.category?.name || 'GEN'}
+                        {recipe.category?.name || "GEN"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground font-bold">
@@ -278,7 +318,8 @@ export default function RecipeManager() {
                         <Clock className="h-3 w-3" /> {recipe.totalTime || 0}m
                       </span>
                       <span className="flex items-center gap-1">
-                        <Scaling className="h-3 w-3" /> Yield: {recipe.yieldQuantity}
+                        <Scaling className="h-3 w-3" /> Yield:{" "}
+                        {recipe.yieldQuantity}
                       </span>
                     </div>
                   </CardHeader>
@@ -292,7 +333,7 @@ export default function RecipeManager() {
                       </span>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-1">
-                      {recipe.tags?.slice(0, 3).map(tag => (
+                      {recipe.tags?.slice(0, 3).map((tag) => (
                         <Badge
                           key={tag}
                           variant="secondary"
@@ -304,10 +345,20 @@ export default function RecipeManager() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/10 p-2 flex justify-end gap-1 border-t border-border/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewRecipe(recipe)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleViewRecipe(recipe)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(recipe)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleEdit(recipe)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button

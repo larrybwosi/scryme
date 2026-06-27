@@ -11,7 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import { getLedgerAccounts, initializeCOA } from "../../../actions/accounting";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { toast } from "sonner";
@@ -84,21 +89,26 @@ export function COAClient() {
               ) : accounts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8">
-                    No accounts found. Initialize the standard Chart of Accounts to get started.
+                    No accounts found. Initialize the standard Chart of Accounts
+                    to get started.
                   </TableCell>
                 </TableRow>
               ) : (
-                accounts.map((account) => (
+                accounts.map(account => (
                   <TableRow key={account.id}>
                     <TableCell className="font-mono">{account.code}</TableCell>
-                    <TableCell className="font-medium">{account.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {account.name}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{account.type}</Badge>
                     </TableCell>
                     <TableCell>{account.subType.replace(/_/g, " ")}</TableCell>
                     <TableCell>
                       {account.isActive ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
+                        <Badge className="bg-green-100 text-green-800 border-green-200">
+                          Active
+                        </Badge>
                       ) : (
                         <Badge variant="secondary">Inactive</Badge>
                       )}

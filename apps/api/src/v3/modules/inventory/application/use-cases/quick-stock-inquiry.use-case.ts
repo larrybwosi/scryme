@@ -43,8 +43,8 @@ export class QuickStockInquiryUseCase {
       },
     });
 
-    return variantIds.map((variantId) => {
-      const stock = stocks.find((s) => s.variantId === variantId);
+    return variantIds.map(variantId => {
+      const stock = stocks.find(s => s.variantId === variantId);
       return {
         variantId,
         sku: stock?.variant.sku || "N/A",

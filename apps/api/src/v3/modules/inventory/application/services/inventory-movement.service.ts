@@ -60,7 +60,7 @@ export class InventoryMovementService {
         notes,
         serialNumbers: serialNumbers
           ? {
-              connect: serialNumbers.map((sn) => ({
+              connect: serialNumbers.map(sn => ({
                 organizationId_serialNumber: {
                   organizationId,
                   serialNumber: sn,

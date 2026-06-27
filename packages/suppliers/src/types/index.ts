@@ -1,4 +1,4 @@
-import type { Prisma } from '@repo/db';
+import type { Prisma } from "@repo/db";
 
 export type SupplierRecord = Prisma.SupplierGetPayload<{
   include: {
@@ -38,8 +38,8 @@ export interface SupplierUI {
   id: string;
   name: string;
   code: string;
-  type: 'manufacturer' | 'distributor' | 'wholesaler' | 'service_provider';
-  status: 'active' | 'inactive' | 'pending' | 'suspended' | 'on_hold';
+  type: "manufacturer" | "distributor" | "wholesaler" | "service_provider";
+  status: "active" | "inactive" | "pending" | "suspended" | "on_hold";
   contact: {
     primaryContact: string;
     phone: string;
@@ -72,7 +72,7 @@ export interface SupplierUI {
   deliveryLocations: string[];
   categories: string[];
   customBadges?: string[];
-  riskLevel?: 'low' | 'medium' | 'high';
+  riskLevel?: "low" | "medium" | "high";
   lastOrderDate?: string;
   products: Array<{
     id: string;
@@ -138,7 +138,7 @@ export interface Delivery {
   supplierName: string;
   totalAmount: number;
   items: DeliveryItem[];
-  type: 'PO' | 'RECEIPT';
+  type: "PO" | "RECEIPT";
   approvalStatus?: string;
 }
 

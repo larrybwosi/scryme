@@ -32,10 +32,12 @@ describe('BarcodeScannerDialog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (usePosStore as any).mockImplementation((selector: any) => selector({
-      products: mockProducts,
-      addItemToOrder: mockAddItemToOrder,
-    }));
+    (usePosStore as any).mockImplementation((selector: any) =>
+      selector({
+        products: mockProducts,
+        addItemToOrder: mockAddItemToOrder,
+      })
+    );
   });
 
   it('renders correctly when open', () => {

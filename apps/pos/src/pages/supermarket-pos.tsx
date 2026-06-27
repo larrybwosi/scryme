@@ -21,7 +21,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
- import { shiftService } from '@/lib/shift-service';
+import { shiftService } from '@/lib/shift-service';
 import { usePosProducts } from '@/hooks/products';
 import { useScanner } from '@/hooks/use-scanner';
 import { toast } from 'sonner';
@@ -46,13 +46,7 @@ import {
 } from '@repo/ui/components/ui/alert-dialog';
 import { SettingsDialog } from '@/components/settings-dialog';
 import { useNavigate } from 'react-router';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@repo/ui/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
 import { Virtuoso } from 'react-virtuoso';
 
 export function SupermarketPOS() {
@@ -63,7 +57,11 @@ export function SupermarketPOS() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [lastCompletedOrder, setLastCompletedOrder] = useState<any>(null);
-  const [lastAddedItemId, setLastAddedItemId] = useState<{ productId: string, variantId: string, unitId: string } | null>(null);
+  const [lastAddedItemId, setLastAddedItemId] = useState<{
+    productId: string;
+    variantId: string;
+    unitId: string;
+  } | null>(null);
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
 
   const navigate = useNavigate();
@@ -75,13 +73,7 @@ export function SupermarketPOS() {
   const { mutateAsync: createSale, isPending: isProcessingSale } = useProcessSale();
   const { openPhysicalDrawer } = useCashDrawer();
   const locationId = useAuthStore(state => state.currentLocation?.id);
-  const {
-    startScanner,
-    stopScanner,
-    isConnected,
-    lastScanned,
-    clearLastScanned,
-  } = useScanner();
+  const { startScanner, stopScanner, isConnected, lastScanned, clearLastScanned } = useScanner();
 
   // Trigger pricing sync
   usePosPricingSync();
@@ -189,7 +181,7 @@ export function SupermarketPOS() {
       setLastAddedItemId({
         productId: product.productId,
         variantId: variant.variantId,
-        unitId: unitToAdd.unitId
+        unitId: unitToAdd.unitId,
       });
 
       toast.success('Added to Cart', {
@@ -209,28 +201,34 @@ export function SupermarketPOS() {
     return () => stopScanner();
   }, [settings.enableBarcodeScanner, startScanner, stopScanner]);
 
-  const subTotal = (currentOrder?.items ?? []).reduce((sum, item) => sum + (item.selectedUnit?.price || 0) * item.quantity, 0);
+  const subTotal = (currentOrder?.items ?? []).reduce(
+    (sum, item) => sum + (item.selectedUnit?.price || 0) * item.quantity,
+    0
+  );
   const taxAmount = subTotal * (taxRate / 100);
   const total = subTotal + taxAmount;
 
-  const handlePaymentComplete = useCallback((completedOrder: any) => {
-    setLastCompletedOrder(completedOrder);
-    setPaymentDialogOpen(false);
-    setReceiptDialogOpen(true);
-    resetOrder();
-  }, [resetOrder]);
+  const handlePaymentComplete = useCallback(
+    (completedOrder: any) => {
+      setLastCompletedOrder(completedOrder);
+      setPaymentDialogOpen(false);
+      setReceiptDialogOpen(true);
+      resetOrder();
+    },
+    [resetOrder]
+  );
 
   const handleQuickPayExactCash = useCallback(async () => {
     if (currentOrder.items.length === 0 || isProcessingSale) return;
 
     if (settings.enforceShiftForCashPayments && import.meta.env.MODE !== 'standalone') {
-        const shift = await shiftService.getShiftStatus();
-        if (!shift) {
-            toast.error('No Active Shift', {
-                description: 'You must open a shift before processing cash payments.',
-            });
-            return;
-        }
+      const shift = await shiftService.getShiftStatus();
+      if (!shift) {
+        toast.error('No Active Shift', {
+          description: 'You must open a shift before processing cash payments.',
+        });
+        return;
+      }
     }
 
     const saleNumber = `SALE-${Date.now().toString().slice(-6)}`;
@@ -300,84 +298,107 @@ export function SupermarketPOS() {
         description: err.message || 'Unknown error occurred',
       });
     }
-  }, [currentOrder, isProcessingSale, locationId, total, subTotal, taxAmount, createSale, settings, openPhysicalDrawer, handlePaymentComplete]);
+  }, [
+    currentOrder,
+    isProcessingSale,
+    locationId,
+    total,
+    subTotal,
+    taxAmount,
+    createSale,
+    settings,
+    openPhysicalDrawer,
+    handlePaymentComplete,
+  ]);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // F1 or / to focus search
-    if (e.key === 'F1' || (e.key === '/' && document.activeElement !== searchInputRef.current)) {
-      e.preventDefault();
-      searchInputRef.current?.focus();
-    }
-
-    // F2 to pay
-    if (e.key === 'F2') {
-      e.preventDefault();
-      if (currentOrder.items.length > 0) {
-        setPaymentDialogOpen(true);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // F1 or / to focus search
+      if (e.key === 'F1' || (e.key === '/' && document.activeElement !== searchInputRef.current)) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
       }
-    }
 
-    // F3 to clear cart
-    if (e.key === 'F3') {
-      e.preventDefault();
-      resetOrder();
-    }
-
-    // F4 to hold sale
-    if (e.key === 'F4') {
-      e.preventDefault();
-      if (currentOrder.items.length > 0) {
-        holdCurrentOrder('Quick Hold');
-        toast.info('Sale Held');
-      }
-    }
-
-    // F5 to Quick Pay Exact Cash
-    if (e.key === 'F5') {
-      e.preventDefault();
-      handleQuickPayExactCash();
-    }
-
-    // F6 to show held orders
-    if (e.key === 'F6') {
-      e.preventDefault();
-      setShowHeldOrders(true);
-    }
-
-    // Esc to clear search or close dialogs
-    if (e.key === 'Escape') {
-      setInputValue('');
-    }
-
-    // + and - for quantity of last added item
-    if (lastAddedItemId) {
-      const lastItem = currentOrder.items.find(i =>
-        i.productId === lastAddedItemId.productId &&
-        i.variantId === lastAddedItemId.variantId &&
-        i.selectedUnit?.unitId === lastAddedItemId.unitId
-      );
-
-      if (lastItem) {
-        if (e.key === '+' || e.key === '=') {
-          e.preventDefault();
-          updateItemInOrder({ ...lastItem, quantity: lastItem.quantity + 1 });
+      // F2 to pay
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (currentOrder.items.length > 0) {
+          setPaymentDialogOpen(true);
         }
-        if (e.key === '-' || e.key === '_') {
-          e.preventDefault();
-          if (lastItem.quantity > 1) {
-            updateItemInOrder({ ...lastItem, quantity: lastItem.quantity - 1 });
+      }
+
+      // F3 to clear cart
+      if (e.key === 'F3') {
+        e.preventDefault();
+        resetOrder();
+      }
+
+      // F4 to hold sale
+      if (e.key === 'F4') {
+        e.preventDefault();
+        if (currentOrder.items.length > 0) {
+          holdCurrentOrder('Quick Hold');
+          toast.info('Sale Held');
+        }
+      }
+
+      // F5 to Quick Pay Exact Cash
+      if (e.key === 'F5') {
+        e.preventDefault();
+        handleQuickPayExactCash();
+      }
+
+      // F6 to show held orders
+      if (e.key === 'F6') {
+        e.preventDefault();
+        setShowHeldOrders(true);
+      }
+
+      // Esc to clear search or close dialogs
+      if (e.key === 'Escape') {
+        setInputValue('');
+      }
+
+      // + and - for quantity of last added item
+      if (lastAddedItemId) {
+        const lastItem = currentOrder.items.find(
+          i =>
+            i.productId === lastAddedItemId.productId &&
+            i.variantId === lastAddedItemId.variantId &&
+            i.selectedUnit?.unitId === lastAddedItemId.unitId
+        );
+
+        if (lastItem) {
+          if (e.key === '+' || e.key === '=') {
+            e.preventDefault();
+            updateItemInOrder({ ...lastItem, quantity: lastItem.quantity + 1 });
+          }
+          if (e.key === '-' || e.key === '_') {
+            e.preventDefault();
+            if (lastItem.quantity > 1) {
+              updateItemInOrder({ ...lastItem, quantity: lastItem.quantity - 1 });
+            }
           }
         }
       }
-    }
 
-    // Delete to remove last added item
-    if (e.key === 'Delete' && lastAddedItemId) {
-      e.preventDefault();
-      removeItemFromOrder(lastAddedItemId.productId, lastAddedItemId.variantId, lastAddedItemId.unitId);
-      setLastAddedItemId(null);
-    }
-  }, [currentOrder.items, lastAddedItemId, updateItemInOrder, removeItemFromOrder, resetOrder, holdCurrentOrder, handleQuickPayExactCash]);
+      // Delete to remove last added item
+      if (e.key === 'Delete' && lastAddedItemId) {
+        e.preventDefault();
+        removeItemFromOrder(lastAddedItemId.productId, lastAddedItemId.variantId, lastAddedItemId.unitId);
+        setLastAddedItemId(null);
+      }
+    },
+    [
+      currentOrder.items,
+      lastAddedItemId,
+      updateItemInOrder,
+      removeItemFromOrder,
+      resetOrder,
+      holdCurrentOrder,
+      handleQuickPayExactCash,
+    ]
+  );
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -402,12 +423,7 @@ export function SupermarketPOS() {
 
         <div className="flex items-center gap-3">
           {import.meta.env.MODE !== 'standalone' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 font-bold"
-              onClick={() => setShowHeldOrders(true)}
-            >
+            <Button variant="outline" size="sm" className="gap-2 font-bold" onClick={() => setShowHeldOrders(true)}>
               <Clock className="w-4 h-4" />
               Held Sales
               {heldOrders.length > 0 && (
@@ -418,19 +434,28 @@ export function SupermarketPOS() {
             </Button>
           )}
 
-          <div className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border",
-            isConnected ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border',
+              isConnected
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
+            )}
+          >
             {isConnected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-            {isConnected ? "Scanner Active" : "Scanner Offline"}
+            {isConnected ? 'Scanner Active' : 'Scanner Offline'}
           </div>
 
           <Button variant="ghost" size="icon" onClick={() => setShowSettingsDialog(true)}>
             <SettingsIcon className="w-5 h-5" />
           </Button>
 
-          <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => setShowCheckoutDialog(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:bg-destructive/10"
+            onClick={() => setShowCheckoutDialog(true)}
+          >
             <LogOut className="w-5 h-5" />
           </Button>
         </div>
@@ -456,70 +481,71 @@ export function SupermarketPOS() {
               </div>
             ) : (
               (currentOrder?.items ?? []).map((item, idx) => {
-                const isLastAdded = lastAddedItemId?.productId === item.productId &&
-                                    lastAddedItemId?.variantId === item.variantId &&
-                                    lastAddedItemId?.unitId === item.selectedUnit?.unitId;
+                const isLastAdded =
+                  lastAddedItemId?.productId === item.productId &&
+                  lastAddedItemId?.variantId === item.variantId &&
+                  lastAddedItemId?.unitId === item.selectedUnit?.unitId;
 
                 return (
-                <div
-                  key={idx}
-                  className={cn(
-                    "flex gap-3 p-3 rounded-xl border bg-white dark:bg-zinc-800 shadow-sm transition-all animate-in fade-in slide-in-from-left-2",
-                    isLastAdded && "ring-2 ring-primary border-primary bg-primary/5"
-                  )}
-                >
-                  <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-700 overflow-hidden border shrink-0">
-                    {item.imageUrl ? (
-                      <img src={convertFileSrc(item.imageUrl)} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-300">
-                        <Package className="w-8 h-8" />
-                      </div>
+                  <div
+                    key={idx}
+                    className={cn(
+                      'flex gap-3 p-3 rounded-xl border bg-white dark:bg-zinc-800 shadow-sm transition-all animate-in fade-in slide-in-from-left-2',
+                      isLastAdded && 'ring-2 ring-primary border-primary bg-primary/5'
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-sm truncate">{item.productName}</h4>
-                        <p className="text-[10px] text-muted-foreground truncate">{item.variantName}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-base">{(item.selectedUnit?.price || 0).toLocaleString()}</p>
-                      </div>
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-700 overflow-hidden border shrink-0">
+                      {item.imageUrl ? (
+                        <img src={convertFileSrc(item.imageUrl)} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-zinc-300">
+                          <Package className="w-8 h-8" />
+                        </div>
+                      )}
                     </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-700 p-1 rounded-lg">
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-sm truncate">{item.productName}</h4>
+                          <p className="text-[10px] text-muted-foreground truncate">{item.variantName}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-base">{(item.selectedUnit?.price || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-700 p-1 rounded-lg">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-md"
+                            onClick={() => updateItemInOrder({ ...item, quantity: Math.max(1, item.quantity - 1) })}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <span className="w-10 text-center font-bold">{item.quantity}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-md"
+                            onClick={() => updateItemInOrder({ ...item, quantity: item.quantity + 1 })}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-md"
-                          onClick={() => updateItemInOrder({ ...item, quantity: Math.max(1, item.quantity - 1) })}
+                          className="text-destructive h-8 w-8"
+                          onClick={() => removeItemFromOrder(item.productId, item.variantId, item.selectedUnit?.unitId)}
                         >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                        <span className="w-10 text-center font-bold">{item.quantity}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-md"
-                          onClick={() => updateItemInOrder({ ...item, quantity: item.quantity + 1 })}
-                        >
-                          <Plus className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive h-8 w-8"
-                        onClick={() => removeItemFromOrder(item.productId, item.variantId, item.selectedUnit?.unitId)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })
             )}
           </div>
 
@@ -527,11 +553,15 @@ export function SupermarketPOS() {
             <div className="space-y-2">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
-                <span className="font-medium text-foreground">{subTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="font-medium text-foreground">
+                  {subTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Tax ({taxRate}%)</span>
-                <span className="font-medium text-foreground">{taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="font-medium text-foreground">
+                  {taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
               </div>
               <div className="pt-2 border-t flex justify-between items-end bg-primary/5 -mx-6 px-6 py-4">
                 <span className="font-black text-2xl uppercase tracking-tighter">Total</span>
@@ -553,7 +583,9 @@ export function SupermarketPOS() {
                   onClick={resetOrder}
                   disabled={(currentOrder?.items ?? []).length === 0}
                 >
-                  Clear Sale<br/><span className="text-[10px] opacity-70">(F3)</span>
+                  Clear Sale
+                  <br />
+                  <span className="text-[10px] opacity-70">(F3)</span>
                 </Button>
                 {import.meta.env.MODE !== 'standalone' && (
                   <Button
@@ -566,7 +598,9 @@ export function SupermarketPOS() {
                     }}
                     disabled={(currentOrder?.items ?? []).length === 0}
                   >
-                    Hold Sale<br/><span className="text-[10px] opacity-70">(F4)</span>
+                    Hold Sale
+                    <br />
+                    <span className="text-[10px] opacity-70">(F4)</span>
                   </Button>
                 )}
               </div>
@@ -579,7 +613,9 @@ export function SupermarketPOS() {
                     disabled={(currentOrder?.items ?? []).length === 0 || isProcessingSale}
                     onClick={handleQuickPayExactCash}
                   >
-                    Exact Cash<br/><span className="text-[10px] opacity-70">(F5)</span>
+                    Exact Cash
+                    <br />
+                    <span className="text-[10px] opacity-70">(F5)</span>
                   </Button>
                 )}
                 <Button
@@ -620,8 +656,8 @@ export function SupermarketPOS() {
 
           <div className="flex-1 overflow-hidden flex flex-col">
             <h3 className="font-bold mb-4 flex items-center gap-2">
-               <Package className="w-4 h-4 text-primary" />
-               Manual Lookup
+              <Package className="w-4 h-4 text-primary" />
+              Manual Lookup
             </h3>
 
             <div className="flex-1 overflow-hidden">
@@ -639,18 +675,23 @@ export function SupermarketPOS() {
                           const variant = p.variants?.[0];
                           const unit = p.sellableUnits?.find((u: any) => u.isBaseUnit) || p.sellableUnits?.[0];
                           if (variant && unit) {
-                            addItemToOrder({
-                              ...p,
-                              variantId: variant.variantId,
-                              variantName: variant.variantName,
-                              name: p.productName,
-                              variants: p.variants?.map((v: any) => ({ ...v, name: v.variantName || v.name })),
-                            }, variant.variantId, { ...unit, originalRetailPrice: unit.price }, 1);
+                            addItemToOrder(
+                              {
+                                ...p,
+                                variantId: variant.variantId,
+                                variantName: variant.variantName,
+                                name: p.productName,
+                                variants: p.variants?.map((v: any) => ({ ...v, name: v.variantName || v.name })),
+                              },
+                              variant.variantId,
+                              { ...unit, originalRetailPrice: unit.price },
+                              1
+                            );
 
                             setLastAddedItemId({
                               productId: p.productId,
                               variantId: variant.variantId,
-                              unitId: unit.unitId
+                              unitId: unit.unitId,
                             });
 
                             setInputValue('');
@@ -663,17 +704,21 @@ export function SupermarketPOS() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-xs truncate">{p.productName}</p>
-                          <p className="text-[9px] text-muted-foreground uppercase tracking-tight">{p.category || 'No Category'}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-tight">
+                            {p.category || 'No Category'}
+                          </p>
                         </div>
-                        <p className="font-black text-sm text-primary">{(p.sellableUnits?.[0]?.price || 0).toLocaleString()}</p>
+                        <p className="font-black text-sm text-primary">
+                          {(p.sellableUnits?.[0]?.price || 0).toLocaleString()}
+                        </p>
                       </button>
                     </div>
                   )}
                 />
               ) : (
-                 <div className="h-full flex flex-col items-center justify-center opacity-30 italic text-sm">
-                   {inputValue ? "No products found matching your search" : "Start typing to search products"}
-                 </div>
+                <div className="h-full flex flex-col items-center justify-center opacity-30 italic text-sm">
+                  {inputValue ? 'No products found matching your search' : 'Start typing to search products'}
+                </div>
               )}
             </div>
           </div>
@@ -682,20 +727,20 @@ export function SupermarketPOS() {
           <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
             <h4 className="text-xs font-bold uppercase tracking-widest text-primary mb-2">POS Status</h4>
             <div className="space-y-1.5">
-               <div className="flex justify-between text-[11px]">
-                  <span className="text-muted-foreground">Location:</span>
-                  <span className="font-semibold">Main Branch</span>
-               </div>
-               <div className="flex justify-between text-[11px]">
-                  <span className="text-muted-foreground">Session Started:</span>
-                  <span className="font-semibold">{new Date().toLocaleTimeString()}</span>
-               </div>
-               <div className="flex justify-between text-[11px]">
-                  <span className="text-muted-foreground">Printer:</span>
-                  <span className="font-semibold text-green-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-2.5 h-2.5" /> Ready
-                  </span>
-               </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">Location:</span>
+                <span className="font-semibold">Main Branch</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">Session Started:</span>
+                <span className="font-semibold">{new Date().toLocaleTimeString()}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">Printer:</span>
+                <span className="font-semibold text-green-600 flex items-center gap-1">
+                  <CheckCircle2 className="w-2.5 h-2.5" /> Ready
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -740,25 +785,28 @@ export function SupermarketPOS() {
 
       <SettingsDialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog} />
 
-      <AlertDialog open={!!unknownBarcode} onOpenChange={(open) => !open && setUnknownBarcode(null)}>
+      <AlertDialog open={!!unknownBarcode} onOpenChange={open => !open && setUnknownBarcode(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Unknown Barcode</AlertDialogTitle>
             <AlertDialogDescription>
-              Barcode <span className="font-mono font-bold">{unknownBarcode}</span> was not found in the system. Would you like to register a new product for it?
+              Barcode <span className="font-mono font-bold">{unknownBarcode}</span> was not found in the system. Would
+              you like to register a new product for it?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              const barcode = unknownBarcode;
-              setUnknownBarcode(null);
-              navigate('/product-management');
-              // Give it some time to navigate and mount
-              setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('barcode-scanned-for-registration', { detail: { barcode } }));
-              }, 500);
-            }}>
+            <AlertDialogAction
+              onClick={() => {
+                const barcode = unknownBarcode;
+                setUnknownBarcode(null);
+                navigate('/product-management');
+                // Give it some time to navigate and mount
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('barcode-scanned-for-registration', { detail: { barcode } }));
+                }, 500);
+              }}
+            >
               Register Product
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -769,9 +817,7 @@ export function SupermarketPOS() {
         <SheetContent side="right" className="w-[400px] sm:w-[540px]">
           <SheetHeader>
             <SheetTitle>Held Sales</SheetTitle>
-            <SheetDescription>
-              Retrieve or manage sales that were put on hold.
-            </SheetDescription>
+            <SheetDescription>Retrieve or manage sales that were put on hold.</SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-4">
             {(heldOrders ?? []).length === 0 ? (
@@ -780,7 +826,7 @@ export function SupermarketPOS() {
                 <p>No held sales found</p>
               </div>
             ) : (
-              (heldOrders ?? []).map((order) => (
+              (heldOrders ?? []).map(order => (
                 <div key={order.id} className="p-4 border rounded-xl space-y-3 bg-zinc-50 dark:bg-zinc-900">
                   <div className="flex justify-between items-start">
                     <div>
@@ -789,9 +835,7 @@ export function SupermarketPOS() {
                         {new Date(order.heldAt).toLocaleTimeString()} • {order.items.length} items
                       </p>
                     </div>
-                    <p className="font-black text-xl text-primary">
-                      {order.estimatedTotal.toLocaleString()}
-                    </p>
+                    <p className="font-black text-xl text-primary">{order.estimatedTotal.toLocaleString()}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button

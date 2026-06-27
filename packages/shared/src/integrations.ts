@@ -5,7 +5,7 @@
 
 export interface IntegrationStatus {
   isActive: boolean;
-  health: 'HEALTHY' | 'DEGRADED' | 'DISCONNECTED' | 'UNKNOWN';
+  health: "HEALTHY" | "DEGRADED" | "DISCONNECTED" | "UNKNOWN";
   lastSyncAt?: Date | string | null;
   error?: string | null;
 }

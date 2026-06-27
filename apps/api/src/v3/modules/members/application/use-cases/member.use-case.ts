@@ -111,7 +111,7 @@ export class MemberUseCase {
     ]);
 
     return {
-      items: members.map((m) => this.mapToResponse(m)),
+      items: members.map(m => this.mapToResponse(m)),
       meta: {
         total,
         page,
@@ -227,7 +227,7 @@ export class MemberUseCase {
       ...otherData
     } = dto;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       let user = await tx.user.findUnique({
         where: { email },
       });
@@ -278,19 +278,19 @@ export class MemberUseCase {
           phone,
           departmentMemberships: departmentIds
             ? {
-                create: departmentIds.map((dId) => ({
+                create: departmentIds.map(dId => ({
                   departmentId: dId,
                 })),
               }
             : undefined,
           customRoles: customRoleIds
             ? {
-                connect: customRoleIds.map((id) => ({ id })),
+                connect: customRoleIds.map(id => ({ id })),
               }
             : undefined,
           roleGroups: roleGroupIds
             ? {
-                connect: roleGroupIds.map((id) => ({ id })),
+                connect: roleGroupIds.map(id => ({ id })),
               }
             : undefined,
         },
@@ -338,7 +338,7 @@ export class MemberUseCase {
         name,
         email,
         role: finalRole,
-      }).catch((err) => console.error("[Windmill] MemberCreated error:", err));
+      }).catch(err => console.error("[Windmill] MemberCreated error:", err));
 
       return member;
     });
@@ -371,19 +371,19 @@ export class MemberUseCase {
         departmentMemberships: departmentIds
           ? {
               deleteMany: {},
-              create: departmentIds.map((dId) => ({
+              create: departmentIds.map(dId => ({
                 departmentId: dId,
               })),
             }
           : undefined,
         customRoles: customRoleIds
           ? {
-              set: customRoleIds.map((id) => ({ id })),
+              set: customRoleIds.map(id => ({ id })),
             }
           : undefined,
         roleGroups: roleGroupIds
           ? {
-              set: roleGroupIds.map((id) => ({ id })),
+              set: roleGroupIds.map(id => ({ id })),
             }
           : undefined,
       },
@@ -413,7 +413,7 @@ export class MemberUseCase {
         email: currentMember.user.email,
         previousRole: currentMember.role,
         newRole: dto.role,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Windmill] MemberRoleChanged error:", err),
       );
     }
@@ -422,7 +422,7 @@ export class MemberUseCase {
       emitEvent(organizationId, "member.deactivated", {
         memberId: member.id,
         name: currentMember.user.name,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Windmill] MemberDeactivated error:", err),
       );
     }
@@ -451,7 +451,7 @@ export class MemberUseCase {
     emitEvent(organizationId, "member.deleted", {
       memberId: member.id,
       name: member.user.name,
-    }).catch((err) => console.error("[Windmill] MemberDeleted error:", err));
+    }).catch(err => console.error("[Windmill] MemberDeleted error:", err));
 
     return member;
   }
@@ -562,7 +562,7 @@ export class MemberUseCase {
     let attendanceLogId = activeLog?.id;
 
     if (!activeLog) {
-      await this.prisma.client.$transaction(async (tx) => {
+      await this.prisma.client.$transaction(async tx => {
         const log = await tx.attendanceLog.create({
           data: {
             organizationId,

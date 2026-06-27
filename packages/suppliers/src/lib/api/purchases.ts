@@ -5,12 +5,12 @@ export const useCreatePurchase = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
-      const response = await axios.post('/api/purchases', data);
+      const response = await axios.post("/api/purchases", data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchases'] });
-      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      queryClient.invalidateQueries({ queryKey: ["purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["deliveries"] });
     },
   });
 };

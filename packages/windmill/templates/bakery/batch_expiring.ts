@@ -8,8 +8,10 @@ export async function main(
   batchNumber: string,
   recipeName: string,
   expiresAt: string,
-  daysRemaining: number
+  daysRemaining: number,
 ) {
-  console.log(`[BatchExpiring] ${batchNumber} (${recipeName}) expires in ${daysRemaining} days.`);
+  console.log(
+    `[BatchExpiring] ${batchNumber} (${recipeName}) expires in ${daysRemaining} days.`,
+  );
   return { success: true };
 }

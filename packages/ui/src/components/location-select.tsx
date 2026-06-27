@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Check, ChevronsUpDown, MapPin, Loader2, LogOut } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { Button } from './ui/button';
+import * as React from "react";
+import { Check, ChevronsUpDown, MapPin, Loader2, LogOut } from "lucide-react";
+import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
 import {
   Command,
   CommandEmpty,
@@ -12,9 +12,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { useMemo, useState } from 'react';
+} from "./ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { useMemo, useState } from "react";
 
 // --- Types ---
 
@@ -54,7 +54,7 @@ interface LocationSelectProps {
 export const LocationSelect: React.FC<LocationSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a location...',
+  placeholder = "Select a location...",
   disabled = false,
   required = false,
   excludeLocation,
@@ -68,12 +68,14 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
   // Filter out excluded locations
   const filteredLocations = useMemo(() => {
     if (!locations) return [];
-    return excludeLocation ? locations.filter(loc => loc.id !== excludeLocation) : locations;
+    return excludeLocation
+      ? locations.filter((loc) => loc.id !== excludeLocation)
+      : locations;
   }, [locations, excludeLocation]);
 
   // Find the currently selected location object for display
   const selectedLocation = useMemo(() => {
-    return filteredLocations.find(loc => loc.id === value);
+    return filteredLocations.find((loc) => loc.id === value);
   }, [filteredLocations, value]);
 
   // Helper to format address
@@ -82,16 +84,20 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
       const { city, state, country } = location.address;
       // Shorter address format for the dropdown list to save space
       const parts = [city, state, country].filter(Boolean);
-      return parts.join(', ');
+      return parts.join(", ");
     }
     const parts = [location.city, location.country].filter(Boolean);
-    return parts.join(', ');
+    return parts.join(", ");
   };
 
   // --- Loading State ---
   if (isLoading) {
     return (
-      <Button variant="outline" disabled className="w-full justify-between cursor-not-allowed opacity-70">
+      <Button
+        variant="outline"
+        disabled
+        className="w-full justify-between cursor-not-allowed opacity-70"
+      >
         <span className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading locations...
@@ -122,8 +128,8 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
           aria-expanded={open}
           disabled={disabled || filteredLocations.length === 0}
           className={cn(
-            'w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground',
-            !value && 'text-muted-foreground'
+            "w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground",
+            !value && "text-muted-foreground",
           )}
         >
           {selectedLocation ? (
@@ -147,7 +153,7 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
             <CommandEmpty>No location found.</CommandEmpty>
 
             <CommandGroup heading="Available Locations">
-              {filteredLocations.map(location => (
+              {filteredLocations.map((location) => (
                 <CommandItem
                   key={location.id}
                   value={location.name} // Used for search filtering
@@ -159,8 +165,12 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
                 >
                   <div className="flex flex-col w-full">
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-medium text-foreground">{location.name}</span>
-                      {value === location.id && <Check className="h-4 w-4 text-primary" />}
+                      <span className="font-medium text-foreground">
+                        {location.name}
+                      </span>
+                      {value === location.id && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
                     </div>
                     <span className="text-xs text-muted-foreground truncate max-w-60">
                       {formatAddress(location)}

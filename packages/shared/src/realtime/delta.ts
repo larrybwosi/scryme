@@ -9,7 +9,12 @@ export interface Delta {
 }
 
 export function createDelta(oldData: any, newData: any): Delta | null {
-  if (typeof oldData !== 'object' || oldData === null || typeof newData !== 'object' || newData === null) {
+  if (
+    typeof oldData !== "object" ||
+    oldData === null ||
+    typeof newData !== "object" ||
+    newData === null
+  ) {
     return null;
   }
 
@@ -41,7 +46,7 @@ export function createDelta(oldData: any, newData: any): Delta | null {
 }
 
 export function applyDelta(oldData: any, delta: Delta): any {
-  if (!delta || typeof oldData !== 'object' || oldData === null) {
+  if (!delta || typeof oldData !== "object" || oldData === null) {
     return oldData;
   }
 

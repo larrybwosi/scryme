@@ -1,9 +1,15 @@
-import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
-import { AlertCircle, Users } from 'lucide-react';
-import { useListSuppliers } from '../lib/api/suppliers';
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import { AlertCircle, Users } from "lucide-react";
+import { useListSuppliers } from "../lib/api/suppliers";
 
 interface Supplier {
   id: string;
@@ -32,11 +38,15 @@ interface SupplierSelectProps {
 export const SupplierSelect: React.FC<SupplierSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a supplier',
+  placeholder = "Select a supplier",
   disabled = false,
   required = false,
 }) => {
-  const { data: suppliers, isLoading: loadingSuppliers, error } = useListSuppliers();
+  const {
+    data: suppliers,
+    isLoading: loadingSuppliers,
+    error,
+  } = useListSuppliers();
 
   if (loadingSuppliers) {
     return (
@@ -51,7 +61,9 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load suppliers. Please try again later.</AlertDescription>
+        <AlertDescription>
+          Failed to load suppliers. Please try again later.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -61,9 +73,9 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
   const formatContactInfo = (supplier: Supplier): string => {
     if (supplier.contactInfo) {
       const { email, phone } = supplier.contactInfo;
-      return [email, phone].filter(Boolean).join(' • ');
+      return [email, phone].filter(Boolean).join(" • ");
     }
-    return '';
+    return "";
   };
 
   return (
@@ -82,7 +94,9 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
             <div className="flex flex-col">
               <span className="font-medium">{supplier.name}</span>
               {supplier.contactInfo && (
-                <span className="text-sm text-muted-foreground">{formatContactInfo(supplier)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {formatContactInfo(supplier)}
+                </span>
               )}
             </div>
           </SelectItem>

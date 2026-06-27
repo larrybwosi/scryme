@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   MessageSquare,
   Phone,
@@ -11,13 +11,13 @@ import {
   Plus,
   X,
   Clock,
-} from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { EmptyState } from '@/components/ui/empty-state';
-import type { CustomerWithRelations } from '@/lib/types';
-import { createActivity } from '@/app/actions/activities';
-import { toast } from 'sonner';
-import { formatDate } from '@/lib/utils';
+} from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import type { CustomerWithRelations } from "@/lib/types";
+import { createActivity } from "@/app/actions/activities";
+import { toast } from "sonner";
+import { formatDate } from "@/lib/utils";
 
 interface ConversationsTabProps {
   customer: CustomerWithRelations;
@@ -25,10 +25,14 @@ interface ConversationsTabProps {
 
 function channelIcon(channel: string) {
   switch (channel) {
-    case 'PHONE': return Phone;
-    case 'EMAIL': return Mail;
-    case 'VIDEO': return Video;
-    default: return MessageSquare;
+    case "PHONE":
+      return Phone;
+    case "EMAIL":
+      return Mail;
+    case "VIDEO":
+      return Video;
+    default:
+      return MessageSquare;
   }
 }
 
@@ -37,12 +41,18 @@ function ConversationCard({ convo }: { convo: any }) {
   const Icon = channelIcon(convo.type);
 
   // Extract direction and duration from metadata if available
-  const metadata = convo.metadata as any || {};
-  const direction = metadata.direction || 'Outbound';
+  const metadata = (convo.metadata as any) || {};
+  const direction = metadata.direction || "Outbound";
   const duration = metadata.duration;
 
-  const authorName = convo.member?.user?.name || convo.member?.email || 'System';
-  const initials = authorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+  const authorName =
+    convo.member?.user?.name || convo.member?.email || "System";
+  const initials = authorName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -58,10 +68,12 @@ function ConversationCard({ convo }: { convo: any }) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[13.5px] font-semibold text-foreground">{convo.type}</span>
+            <span className="text-[13.5px] font-semibold text-foreground">
+              {convo.type}
+            </span>
             <StatusBadge status={convo.type} size="sm" />
             <span className="flex items-center gap-0.5 text-[10.5px] font-medium text-muted-foreground">
-              {direction === 'Inbound' ? (
+              {direction === "Inbound" ? (
                 <ArrowDownLeft size={11} className="text-status-success" />
               ) : (
                 <ArrowUpRight size={11} className="text-blue-500" />
@@ -69,7 +81,9 @@ function ConversationCard({ convo }: { convo: any }) {
               {direction}
             </span>
           </div>
-          <p className="text-[12px] text-muted-foreground mt-0.5 line-clamp-2">{convo.description}</p>
+          <p className="text-[12px] text-muted-foreground mt-0.5 line-clamp-2">
+            {convo.description}
+          </p>
         </div>
 
         {/* Meta */}
@@ -80,7 +94,9 @@ function ConversationCard({ convo }: { convo: any }) {
           {duration && (
             <div className="flex items-center gap-1 justify-end mt-0.5">
               <Clock size={10} className="text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">{duration}</span>
+              <span className="text-[11px] text-muted-foreground">
+                {duration}
+              </span>
             </div>
           )}
         </div>
@@ -93,10 +109,15 @@ function ConversationCard({ convo }: { convo: any }) {
               {initials}
             </div>
             <span className="text-[11.5px] text-muted-foreground">
-              Logged by <span className="font-semibold text-foreground">{authorName}</span>
+              Logged by{" "}
+              <span className="font-semibold text-foreground">
+                {authorName}
+              </span>
             </span>
           </div>
-          <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">{convo.description}</p>
+          <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">
+            {convo.description}
+          </p>
         </div>
       )}
     </div>
@@ -104,22 +125,22 @@ function ConversationCard({ convo }: { convo: any }) {
 }
 
 const CHANNELS = [
-  { label: 'Phone', value: 'PHONE' },
-  { label: 'Email', value: 'EMAIL' },
-  { label: 'In-Person', value: 'IN_PERSON' },
-  { label: 'Chat', value: 'CHAT' },
-  { label: 'Video Call', value: 'VIDEO' },
+  { label: "Phone", value: "PHONE" },
+  { label: "Email", value: "EMAIL" },
+  { label: "In-Person", value: "IN_PERSON" },
+  { label: "Chat", value: "CHAT" },
+  { label: "Video Call", value: "VIDEO" },
 ];
-const DIRECTIONS = ['Inbound', 'Outbound'];
+const DIRECTIONS = ["Inbound", "Outbound"];
 
 export function ConversationsTab({ customer }: ConversationsTabProps) {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    type: 'PHONE',
-    description: '',
-    direction: 'Outbound',
-    duration: '',
+    type: "PHONE",
+    description: "",
+    direction: "Outbound",
+    duration: "",
   });
 
   const activities = customer.crmRecord?.activities || [];
@@ -129,21 +150,29 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
 
     setLoading(true);
     try {
-      await createActivity({
-        type: form.type,
-        description: form.description.trim(),
-        recordId: customer.crmRecordId,
-        metadata: {
-          direction: form.direction,
-          duration: form.duration,
-        }
-      }, customer.organizationId);
+      await createActivity(
+        {
+          type: form.type,
+          description: form.description.trim(),
+          recordId: customer.crmRecordId,
+          metadata: {
+            direction: form.direction,
+            duration: form.duration,
+          },
+        },
+        customer.organizationId,
+      );
 
-      toast.success('Conversation logged successfully');
-      setForm({ type: 'PHONE', description: '', direction: 'Outbound', duration: '' });
+      toast.success("Conversation logged successfully");
+      setForm({
+        type: "PHONE",
+        description: "",
+        direction: "Outbound",
+        duration: "",
+      });
       setShowForm(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to log conversation');
+      toast.error(error.message || "Failed to log conversation");
     } finally {
       setLoading(false);
     }
@@ -154,7 +183,9 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-[15px] font-bold text-foreground">Conversations</h3>
+          <h3 className="text-[15px] font-bold text-foreground">
+            Conversations
+          </h3>
           <p className="text-[12px] text-muted-foreground mt-0.5">
             {activities.length} logged interactions
           </p>
@@ -164,49 +195,75 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
           className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
-          {showForm ? 'Cancel' : 'Log Conversation'}
+          {showForm ? "Cancel" : "Log Conversation"}
         </button>
       </div>
 
       {/* Add form */}
       {showForm && (
         <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">Log Conversation</h4>
+          <h4 className="text-[13px] font-bold text-foreground mb-4">
+            Log Conversation
+          </h4>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Channel</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Channel
+              </label>
               <select
                 value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, type: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
-                {CHANNELS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                {CHANNELS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Direction</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Direction
+              </label>
               <select
                 value={form.direction}
-                onChange={(e) => setForm((f) => ({ ...f, direction: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, direction: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
-                {DIRECTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
+                {DIRECTIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Duration</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Duration
+              </label>
               <input
                 value={form.duration}
-                onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, duration: e.target.value }))
+                }
                 placeholder="e.g. 25 min"
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Summary *</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Summary *
+              </label>
               <textarea
                 value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
                 placeholder="Summarise what was discussed…"
                 rows={4}
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors resize-none"
@@ -219,7 +276,7 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
               disabled={loading || !form.description.trim()}
               className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Saving...' : 'Save Conversation'}
+              {loading ? "Saving..." : "Save Conversation"}
             </button>
           </div>
         </div>
@@ -227,10 +284,16 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
 
       {/* List */}
       {activities.length === 0 ? (
-        <EmptyState icon={MessageSquare} title="No conversations logged" description="Log your first interaction with this customer to build a communication history." />
+        <EmptyState
+          icon={MessageSquare}
+          title="No conversations logged"
+          description="Log your first interaction with this customer to build a communication history."
+        />
       ) : (
         <div className="flex flex-col gap-3">
-          {activities.map((c) => <ConversationCard key={c.id} convo={c} />)}
+          {activities.map((c) => (
+            <ConversationCard key={c.id} convo={c} />
+          ))}
         </div>
       )}
     </div>

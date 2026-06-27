@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,15 +13,15 @@ import {
   type DragOverEvent as DragOver,
   type DragEndEvent as DragEnd,
   defaultDropAnimationSideEffects,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { KanbanColumn } from './kanban-column';
-import { KanbanCard } from './kanban-card';
+} from "@dnd-kit/sortable";
+import { KanbanColumn } from "./kanban-column";
+import { KanbanCard } from "./kanban-card";
 
 interface KanbanBoardProps {
   deals: any[];
@@ -29,12 +29,12 @@ interface KanbanBoardProps {
 }
 
 const STAGES = [
-  { id: 'discovery', title: 'Discovery' },
-  { id: 'qualification', title: 'Qualification' },
-  { id: 'proposal', title: 'Proposal' },
-  { id: 'negotiation', title: 'Negotiation' },
-  { id: 'closed_won', title: 'Closed Won' },
-  { id: 'closed_lost', title: 'Closed Lost' },
+  { id: "discovery", title: "Discovery" },
+  { id: "qualification", title: "Qualification" },
+  { id: "proposal", title: "Proposal" },
+  { id: "negotiation", title: "Negotiation" },
+  { id: "closed_won", title: "Closed Won" },
+  { id: "closed_lost", title: "Closed Lost" },
 ];
 
 export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
@@ -48,14 +48,14 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const dealsByStage = useMemo(() => {
     const map: Record<string, any[]> = {};
-    STAGES.forEach(stage => map[stage.id] = []);
-    deals.forEach(deal => {
-      const stage = deal.data.stage || 'discovery';
+    STAGES.forEach((stage) => (map[stage.id] = []));
+    deals.forEach((deal) => {
+      const stage = deal.data.stage || "discovery";
       if (map[stage]) {
         map[stage].push(deal);
       }
@@ -65,7 +65,7 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
 
   const activeDeal = useMemo(
     () => deals.find((d) => d.id === activeId),
-    [activeId, deals]
+    [activeId, deals],
   );
 
   const handleDragStart = (event: DragStart) => {
@@ -82,20 +82,20 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
     const overId = over.id as string;
 
     // If dropped over a column or a card in a different column
-    const deal = deals.find(d => d.id === activeId);
+    const deal = deals.find((d) => d.id === activeId);
     if (!deal) return;
 
     let newStage = overId;
-    if (!STAGES.find(s => s.id === overId)) {
-        // Dropped over a card, get its stage
-        const overDeal = deals.find(d => d.id === overId);
-        if (overDeal) {
-            newStage = overDeal.data.stage;
-        }
+    if (!STAGES.find((s) => s.id === overId)) {
+      // Dropped over a card, get its stage
+      const overDeal = deals.find((d) => d.id === overId);
+      if (overDeal) {
+        newStage = overDeal.data.stage;
+      }
     }
 
     if (deal.data.stage !== newStage) {
-        await onDealUpdate(activeId, { stage: newStage });
+      await onDealUpdate(activeId, { stage: newStage });
     }
   };
 
@@ -115,7 +115,7 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
             count={dealsByStage[stage.id].length}
           >
             <SortableContext
-              items={dealsByStage[stage.id].map(d => d.id)}
+              items={dealsByStage[stage.id].map((d) => d.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="flex flex-col gap-3">

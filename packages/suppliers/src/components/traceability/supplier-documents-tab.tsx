@@ -1,18 +1,32 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { FileText, Calendar, ExternalLink, AlertTriangle } from 'lucide-react';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Button } from '@repo/ui/components/ui/button';
-import { formatDate } from '../../lib/utils';
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { FileText, Calendar, ExternalLink, AlertTriangle } from "lucide-react";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
+import { formatDate } from "../../lib/utils";
 
 interface SupplierDocumentsTabProps {
   documents: any[];
 }
 
-export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ documents }) => {
+export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({
+  documents,
+}) => {
   const isExpired = (date: string) => new Date(date) < new Date();
   const isExpiringSoon = (date: string) => {
     const expiry = new Date(date);
@@ -51,16 +65,32 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ docu
                   <TableCell>
                     {doc.expiryDate ? (
                       <div className="flex items-center gap-2">
-                        <span className={isExpired(doc.expiryDate) ? 'text-red-600 font-bold' : ''}>
+                        <span
+                          className={
+                            isExpired(doc.expiryDate)
+                              ? "text-red-600 font-bold"
+                              : ""
+                          }
+                        >
                           {formatDate(doc.expiryDate)}
                         </span>
-                        {isExpired(doc.expiryDate) && <AlertTriangle className="h-3 w-3 text-red-600" />}
-                        {isExpiringSoon(doc.expiryDate) && <AlertTriangle className="h-3 w-3 text-amber-500" />}
+                        {isExpired(doc.expiryDate) && (
+                          <AlertTriangle className="h-3 w-3 text-red-600" />
+                        )}
+                        {isExpiringSoon(doc.expiryDate) && (
+                          <AlertTriangle className="h-3 w-3 text-amber-500" />
+                        )}
                       </div>
-                    ) : 'No Expiry'}
+                    ) : (
+                      "No Expiry"
+                    )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={doc.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                    <Badge
+                      variant={
+                        doc.status === "ACTIVE" ? "default" : "secondary"
+                      }
+                    >
                       {doc.status}
                     </Badge>
                   </TableCell>

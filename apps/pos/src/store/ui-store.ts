@@ -12,14 +12,14 @@ interface UiState {
   setPrescriptionDialogOpen: (open: boolean) => void;
 }
 
-export const useUiStore = create<UiState>((set) => ({
+export const useUiStore = create<UiState>(set => ({
   paymentDialogOpen: false,
   shortcutsHelpDialogOpen: false,
   holdOrderDialogOpen: false,
   prescriptionDialogOpen: false,
 
-  setPaymentDialogOpen: (open) => set({ paymentDialogOpen: open }),
-  setShortcutsHelpDialogOpen: (open) => set({ shortcutsHelpDialogOpen: open }),
-  setHoldOrderDialogOpen: (open) => set({ holdOrderDialogOpen: open }),
-  setPrescriptionDialogOpen: (open) => set({ prescriptionDialogOpen: open }),
+  setPaymentDialogOpen: open => set({ paymentDialogOpen: open }),
+  setShortcutsHelpDialogOpen: open => set({ shortcutsHelpDialogOpen: open }),
+  setHoldOrderDialogOpen: open => set({ holdOrderDialogOpen: open }),
+  setPrescriptionDialogOpen: open => set({ prescriptionDialogOpen: open }),
 }));

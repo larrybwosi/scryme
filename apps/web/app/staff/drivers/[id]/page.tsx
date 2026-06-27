@@ -9,8 +9,19 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { Truck, Activity, Settings, LayoutDashboard, History } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Truck,
+  Activity,
+  Settings,
+  LayoutDashboard,
+  History,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 
 export default async function DriverDetailPage({
   params,
@@ -36,7 +47,9 @@ export default async function DriverDetailPage({
 
   // Basic stats
   const totalDeliveries = driver.fulfillments.length;
-  const completedDeliveries = driver.fulfillments.filter((f: any) => f.status === "DELIVERED").length;
+  const completedDeliveries = driver.fulfillments.filter(
+    (f: any) => f.status === "DELIVERED",
+  ).length;
 
   return (
     <div className="flex flex-col gap-8 p-8 bg-gray-50/50 min-h-screen">
@@ -45,7 +58,9 @@ export default async function DriverDetailPage({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Total Deliveries</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Total Deliveries
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalDeliveries}</div>
@@ -53,28 +68,41 @@ export default async function DriverDetailPage({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Completed
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{completedDeliveries}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Success Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {totalDeliveries > 0 ? Math.round((completedDeliveries / totalDeliveries) * 100) : 0}%
+            <div className="text-2xl font-bold text-green-600">
+              {completedDeliveries}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Member Linked</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Success Rate
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-medium">{driver.memberId ? "Yes" : "Independent"}</div>
+            <div className="text-2xl font-bold">
+              {totalDeliveries > 0
+                ? Math.round((completedDeliveries / totalDeliveries) * 100)
+                : 0}
+              %
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Member Linked
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm font-medium">
+              {driver.memberId ? "Yes" : "Independent"}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -106,19 +134,19 @@ export default async function DriverDetailPage({
         </TabsContent>
 
         <TabsContent value="history" className="outline-none">
-           <Card>
-             <CardContent className="py-10 text-center text-gray-500">
-               Activity logging for drivers coming soon.
-             </CardContent>
-           </Card>
+          <Card>
+            <CardContent className="py-10 text-center text-gray-500">
+              Activity logging for drivers coming soon.
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="settings" className="outline-none">
-           <Card>
-             <CardContent className="py-10 text-center text-gray-500">
-               Driver settings and vehicle assignment coming soon.
-             </CardContent>
-           </Card>
+          <Card>
+            <CardContent className="py-10 text-center text-gray-500">
+              Driver settings and vehicle assignment coming soon.
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 "use client";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,14 +8,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 
 // Types
-type InvoiceStatus = 'pending' | 'paid' | 'overdue';
+type InvoiceStatus = "pending" | "paid" | "overdue";
 
 interface Invoice {
   id: string;
@@ -43,13 +49,17 @@ interface AddInvoiceDialogProps {
   onAddInvoice: (invoice: Invoice) => void;
 }
 
-export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoiceDialogProps) {
+export function AddInvoiceDialog({
+  open,
+  onOpenChange,
+  onAddInvoice,
+}: AddInvoiceDialogProps) {
   const [newInvoice, setNewInvoice] = useState<NewInvoiceForm>({
-    number: '',
-    date: '',
-    dueDate: '',
-    amount: '',
-    status: 'pending',
+    number: "",
+    date: "",
+    dueDate: "",
+    amount: "",
+    status: "pending",
   });
 
   const handleAdd = (): void => {
@@ -62,17 +72,17 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
         amount: parseFloat(newInvoice.amount),
         status: newInvoice.status,
         items: [],
-        notes: '',
+        notes: "",
         invoiceUrl: `https://example.com/invoices/${newInvoice.number}.pdf`,
       });
 
       // Reset form
       setNewInvoice({
-        number: '',
-        date: '',
-        dueDate: '',
-        amount: '',
-        status: 'pending',
+        number: "",
+        date: "",
+        dueDate: "",
+        amount: "",
+        status: "pending",
       });
       onOpenChange(false);
     }
@@ -80,11 +90,11 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
 
   const handleCancel = (): void => {
     setNewInvoice({
-      number: '',
-      date: '',
-      dueDate: '',
-      amount: '',
-      status: 'pending',
+      number: "",
+      date: "",
+      dueDate: "",
+      amount: "",
+      status: "pending",
     });
     onOpenChange(false);
   };
@@ -101,7 +111,9 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
             <Label>Invoice Number</Label>
             <Input
               value={newInvoice.number}
-              onChange={e => setNewInvoice({ ...newInvoice, number: e.target.value })}
+              onChange={(e) =>
+                setNewInvoice({ ...newInvoice, number: e.target.value })
+              }
               placeholder="INV-2024-004"
             />
           </div>
@@ -110,7 +122,9 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
             <Input
               type="date"
               value={newInvoice.date}
-              onChange={e => setNewInvoice({ ...newInvoice, date: e.target.value })}
+              onChange={(e) =>
+                setNewInvoice({ ...newInvoice, date: e.target.value })
+              }
             />
           </div>
           <div>
@@ -118,7 +132,9 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
             <Input
               type="date"
               value={newInvoice.dueDate}
-              onChange={e => setNewInvoice({ ...newInvoice, dueDate: e.target.value })}
+              onChange={(e) =>
+                setNewInvoice({ ...newInvoice, dueDate: e.target.value })
+              }
             />
           </div>
           <div>
@@ -126,7 +142,9 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
             <Input
               type="number"
               value={newInvoice.amount}
-              onChange={e => setNewInvoice({ ...newInvoice, amount: e.target.value })}
+              onChange={(e) =>
+                setNewInvoice({ ...newInvoice, amount: e.target.value })
+              }
               placeholder="0.00"
             />
           </div>
@@ -134,7 +152,9 @@ export function AddInvoiceDialog({ open, onOpenChange, onAddInvoice }: AddInvoic
             <Label>Status</Label>
             <Select
               value={newInvoice.status}
-              onValueChange={(val: InvoiceStatus) => setNewInvoice({ ...newInvoice, status: val })}
+              onValueChange={(val: InvoiceStatus) =>
+                setNewInvoice({ ...newInvoice, status: val })
+              }
             >
               <SelectTrigger>
                 <SelectValue />

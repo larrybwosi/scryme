@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@repo/ui/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@repo/ui/components/ui/dialog';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
@@ -18,7 +12,7 @@ import { ArrowRightCircle, DollarSign, Lock, LayoutGrid } from 'lucide-react';
 import {
   CashDenominationCounter,
   DEFAULT_DENOMINATIONS,
-  CashDenomination
+  CashDenomination,
 } from '@/components/cash-denomination-counter';
 
 export const AutoShiftModal: React.FC = () => {
@@ -33,24 +27,21 @@ export const AutoShiftModal: React.FC = () => {
   const [denominations, setDenominations] = useState<CashDenomination[]>(DEFAULT_DENOMINATIONS);
   const [useDetails, setUseDetails] = useState(false);
 
-  const denomTotal = useMemo(() =>
-    denominations.reduce((acc, curr) => acc + curr.value * curr.count, 0),
-  [denominations]);
+  const denomTotal = useMemo(
+    () => denominations.reduce((acc, curr) => acc + curr.value * curr.count, 0),
+    [denominations]
+  );
 
   useEffect(() => {
     const checkShiftStatus = async () => {
-      if (
-        isAuthenticated &&
-        settings.enableAutoShiftPrompt &&
-        import.meta.env.MODE !== 'standalone'
-      ) {
+      if (isAuthenticated && settings.enableAutoShiftPrompt && import.meta.env.MODE !== 'standalone') {
         try {
           const shift = await shiftService.getShiftStatus();
           if (!shift) {
             setIsOpen(true);
           }
         } catch (err) {
-          console.error("Failed to check shift status for auto-prompt:", err);
+          console.error('Failed to check shift status for auto-prompt:', err);
         }
       }
     };
@@ -64,17 +55,12 @@ export const AutoShiftModal: React.FC = () => {
 
     const openingAmount = useDetails ? denomTotal : Number(amount);
     if (isNaN(openingAmount) || openingAmount < 0) {
-        return toast.error('Please enter a valid amount');
+      return toast.error('Please enter a valid amount');
     }
 
     setLoading(true);
     try {
-      await shiftService.openShift(
-        currentMember.cardId,
-        pin,
-        openingAmount,
-        useDetails ? denominations : null
-      );
+      await shiftService.openShift(currentMember.cardId, pin, openingAmount, useDetails ? denominations : null);
 
       await openPhysicalDrawer();
       toast.success('Shift Opened Successfully');
@@ -92,11 +78,14 @@ export const AutoShiftModal: React.FC = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(val) => {
+    <Dialog
+      open={isOpen}
+      onOpenChange={val => {
         // Prevent closing the modal without opening a shift if it's forced
         // But usually it's better to allow closing and just prompt again on next check/refresh
         setIsOpen(val);
-    }}>
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center space-x-2">
@@ -111,68 +100,62 @@ export const AutoShiftModal: React.FC = () => {
         <div className="space-y-6 py-4">
           {/* Operator Info */}
           <div className="p-3 bg-muted/50 rounded-lg border border-border flex items-center justify-between">
-             <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <LayoutGrid className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                    <div className="text-[10px] uppercase font-bold text-muted-foreground">Operator</div>
-                    <div className="text-sm font-medium">{currentMember?.name || 'Unknown'}</div>
-                </div>
-             </div>
-             <div className="text-right">
-                <div className="text-[10px] uppercase font-bold text-muted-foreground">Card ID</div>
-                <div className="text-xs font-mono">{currentMember?.cardId || 'None'}</div>
-             </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <LayoutGrid className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground">Operator</div>
+                <div className="text-sm font-medium">{currentMember?.name || 'Unknown'}</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground">Card ID</div>
+              <div className="text-xs font-mono">{currentMember?.cardId || 'None'}</div>
+            </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="auto-pin-input" className="text-xs uppercase text-muted-foreground">Confirm Your PIN</Label>
+            <Label htmlFor="auto-pin-input" className="text-xs uppercase text-muted-foreground">
+              Confirm Your PIN
+            </Label>
             <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
                 id="auto-pin-input"
                 type="password"
                 value={pin}
                 onChange={e => setPin(e.target.value)}
                 placeholder="Enter PIN"
                 className="pl-10 bg-background"
-                />
+              />
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <Label className="text-sm font-bold">Opening Float</Label>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setUseDetails(!useDetails)}
-                    className="text-primary h-8"
-                >
-                    {useDetails ? "Simple Amount" : "Cash Counter"}
-                </Button>
+              <Label className="text-sm font-bold">Opening Float</Label>
+              <Button variant="ghost" size="sm" onClick={() => setUseDetails(!useDetails)} className="text-primary h-8">
+                {useDetails ? 'Simple Amount' : 'Cash Counter'}
+              </Button>
             </div>
 
             {useDetails ? (
-                <div className="p-4 border rounded-lg bg-muted/30 max-h-[300px] overflow-y-auto no-scrollbar">
-                        <CashDenominationCounter
-                        denominations={denominations}
-                        onChange={setDenominations}
-                    />
-                </div>
+              <div className="p-4 border rounded-lg bg-muted/30 max-h-[300px] overflow-y-auto no-scrollbar">
+                <CashDenominationCounter denominations={denominations} onChange={setDenominations} />
+              </div>
             ) : (
-                <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                        type="number"
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
-                        className="pl-10 text-xl h-12"
-                        placeholder="0.00"
-                        autoFocus
-                    />
-                </div>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  className="pl-10 text-xl h-12"
+                  placeholder="0.00"
+                  autoFocus
+                />
+              </div>
             )}
           </div>
 

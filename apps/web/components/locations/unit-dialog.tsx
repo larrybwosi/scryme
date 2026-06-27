@@ -43,7 +43,9 @@ const unitSchema = z.object({
 
 type UnitFormValues = z.infer<typeof unitSchema>;
 
-interface UnitDialogProps extends React.ComponentPropsWithoutRef<typeof DialogTrigger> {
+interface UnitDialogProps extends React.ComponentPropsWithoutRef<
+  typeof DialogTrigger
+> {
   children?: React.ReactNode;
   locationId: string;
   zones?: any[];

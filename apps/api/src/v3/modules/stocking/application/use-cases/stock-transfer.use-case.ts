@@ -32,7 +32,7 @@ export class StockTransferUseCase {
   ) {
     const transferNumber = `TR-${Date.now()}`;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.create({
         data: {
           organizationId,
@@ -44,7 +44,7 @@ export class StockTransferUseCase {
           priority: dto.priority,
           notes: dto.notes,
           items: {
-            create: dto.items.map((item) => ({
+            create: dto.items.map(item => ({
               variantId: item.variantId,
               requestedQuantity: item.requestedQuantity,
               unitCost: 0,
@@ -65,11 +65,11 @@ export class StockTransferUseCase {
         fromLocation: transfer.fromLocation.name,
         toLocation: transfer.toLocation.name,
         priority: transfer.priority,
-        items: transfer.items.map((i) => ({
+        items: transfer.items.map(i => ({
           variantName: `${i.variant.product.name} ${i.variant.name || ""}`,
           quantity: Number(i.requestedQuantity),
         })),
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[v3 StockTransfer] Failed to emit created event:", err),
       );
 
@@ -78,7 +78,7 @@ export class StockTransferUseCase {
   }
 
   async approve(organizationId: string, memberId: string, transferId: string) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
         where: { id: transferId, organizationId },
         include: { items: true },
@@ -140,7 +140,7 @@ export class StockTransferUseCase {
     transferId: string,
     dto: ShipTransferDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
         where: { id: transferId, organizationId },
         include: { items: { include: { variant: true } } },
@@ -154,9 +154,7 @@ export class StockTransferUseCase {
       }
 
       for (const itemDto of dto.items) {
-        const item = transfer.items.find(
-          (i) => i.id === itemDto.transferItemId,
-        );
+        const item = transfer.items.find(i => i.id === itemDto.transferItemId);
         if (!item)
           throw new NotFoundException(
             `Item ${itemDto.transferItemId} not found`,
@@ -247,7 +245,7 @@ export class StockTransferUseCase {
         shippedAt: updatedTransfer.shippedDate!.toISOString(),
         carrier: updatedTransfer.carrier || undefined,
         trackingNumber: updatedTransfer.trackingNumber || undefined,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[v3 StockTransfer] Failed to emit shipped event:", err),
       );
 
@@ -261,7 +259,7 @@ export class StockTransferUseCase {
     transferId: string,
     dto: ReceiveTransferDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const transfer = await tx.stockTransfer.findUnique({
         where: { id: transferId, organizationId },
         include: { items: { include: { variant: true } } },
@@ -276,9 +274,7 @@ export class StockTransferUseCase {
       }
 
       for (const itemDto of dto.items) {
-        const item = transfer.items.find(
-          (i) => i.id === itemDto.transferItemId,
-        );
+        const item = transfer.items.find(i => i.id === itemDto.transferItemId);
         if (!item)
           throw new NotFoundException(
             `Item ${itemDto.transferItemId} not found`,
@@ -354,7 +350,7 @@ export class StockTransferUseCase {
         transferNumber: completedTransfer.transferNumber,
         receivedAt: completedTransfer.receivedDate!.toISOString(),
         receivedBy: completedTransfer.receivedBy?.user.name || "Unknown",
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[v3 StockTransfer] Failed to emit received event:", err),
       );
 

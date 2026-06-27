@@ -9,8 +9,10 @@ export async function main(
   customerName: string,
   amountDue: number,
   currency: string,
-  dueSince: string
+  dueSince: string,
 ) {
-  console.log(`[InvoiceOverdue] Invoice ${invoiceNumber} for ${customerName} is overdue.`);
+  console.log(
+    `[InvoiceOverdue] Invoice ${invoiceNumber} for ${customerName} is overdue.`,
+  );
   return { success: true };
 }

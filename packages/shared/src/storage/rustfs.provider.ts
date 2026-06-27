@@ -48,7 +48,10 @@ export class RustfsStorageProvider implements StorageProvider {
     try {
       await client.send(new HeadBucketCommand({ Bucket: bucketName }));
     } catch (error: any) {
-      if (error.name === "NotFound" || error.$metadata?.httpStatusCode === 404) {
+      if (
+        error.name === "NotFound" ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
         await client.send(new CreateBucketCommand({ Bucket: bucketName }));
       } else {
         throw error;

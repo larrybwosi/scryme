@@ -36,7 +36,7 @@ describe("BakeryService.completeBatch", () => {
       batch: {
         findUnique: vi.fn(),
       },
-      $transaction: vi.fn((cb) => cb(mockTx)),
+      $transaction: vi.fn(cb => cb(mockTx)),
     },
   };
 
@@ -56,7 +56,11 @@ describe("BakeryService.completeBatch", () => {
   });
 
   it("should complete batch and process ingredient consumptions in batch", async () => {
-    const ctx: any = { organizationId: "org-1", memberId: "mem-1", locationId: "loc-1" };
+    const ctx: any = {
+      organizationId: "org-1",
+      memberId: "mem-1",
+      locationId: "loc-1",
+    };
     const batchId = "batch-1";
     const data = {
       actualQuantity: 100,
@@ -79,13 +83,26 @@ describe("BakeryService.completeBatch", () => {
     };
 
     const mockStockBatches = [
-      { id: "sb-1", variantId: "v-1", locationId: "loc-1", currentQuantity: new Decimal(20) },
-      { id: "sb-2", variantId: "v-2", locationId: "loc-1", currentQuantity: new Decimal(30) },
+      {
+        id: "sb-1",
+        variantId: "v-1",
+        locationId: "loc-1",
+        currentQuantity: new Decimal(20),
+      },
+      {
+        id: "sb-2",
+        variantId: "v-2",
+        locationId: "loc-1",
+        currentQuantity: new Decimal(30),
+      },
     ];
 
     mockPrisma.client.batch.findUnique.mockResolvedValue(mockBatch);
     mockTx.stockBatch.findMany.mockResolvedValue(mockStockBatches);
-    mockTx.batch.update.mockResolvedValue({ ...mockBatch, status: "COMPLETED" });
+    mockTx.batch.update.mockResolvedValue({
+      ...mockBatch,
+      status: "COMPLETED",
+    });
     mockTx.stockBatch.create.mockResolvedValue({ id: "sb-new" });
 
     await service.completeBatch(ctx, batchId, data);
@@ -149,6 +166,8 @@ describe("BakeryService.completeBatch", () => {
     mockPrisma.client.batch.findUnique.mockResolvedValue(mockBatch);
     mockTx.stockBatch.findMany.mockResolvedValue(mockStockBatches);
 
-    await expect(service.completeBatch(ctx, "b1", data)).rejects.toThrow(BadRequestException);
+    await expect(service.completeBatch(ctx, "b1", data)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });

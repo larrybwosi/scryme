@@ -22,8 +22,8 @@ describe('usePosStore - Order Item Updates', () => {
           { unitId: 'u1', unitName: 'Unit 1', price: 10, conversion: 1, isBaseUnit: true },
           { unitId: 'u2', unitName: 'Unit 2', price: 18, conversion: 2, isBaseUnit: false },
         ],
-        variants: [{ variantId: 'v1', name: 'Variant 1' }]
-      }
+        variants: [{ variantId: 'v1', name: 'Variant 1' }],
+      },
     ] as any);
   });
 
@@ -58,7 +58,7 @@ describe('usePosStore - Order Item Updates', () => {
     usePosStore.getState().updateItemInOrder({
       ...itemToEdit,
       selectedUnit: unit2,
-      originalUnitId: unit1.unitId
+      originalUnitId: unit1.unitId,
     } as any);
 
     const finalItems = usePosStore.getState().currentOrder.items;
@@ -83,7 +83,7 @@ describe('usePosStore - Order Item Updates', () => {
       ...itemToEdit,
       selectedUnit: unit2,
       price: unit2.price, // Manual update like in component
-      originalUnitId: unit1.unitId
+      originalUnitId: unit1.unitId,
     } as any);
 
     const finalItems = usePosStore.getState().currentOrder.items;
@@ -117,7 +117,7 @@ describe('usePosStore - Order Item Updates', () => {
     usePosStore.getState().updateItemInOrder({
       ...itemToEdit,
       selectedUnit: unit2,
-      originalUnitId: unit1.unitId
+      originalUnitId: unit1.unitId,
     } as any);
 
     const finalItems = usePosStore.getState().currentOrder.items;

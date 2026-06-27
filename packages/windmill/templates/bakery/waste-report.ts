@@ -18,27 +18,34 @@ export async function main(
     // but for now we'll assume a generic SMTP or similar if provided,
     // or just use a mock fetch if we had an internal mailer.
     // In Windmill, it's better to use the 'email' resource type.
-  }
+  },
 ) {
-  console.log(`Generating waste & yield report for organization: ${data.organizationId}`);
+  console.log(
+    `Generating waste & yield report for organization: ${data.organizationId}`,
+  );
 
-  const response = await fetch(`${env.DEALIO_API_URL}/api/bakery/reports/revenue`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${env.DEALIO_API_KEY}`,
-      'x-organization-id': data.organizationId
-    }
-  });
+  const response = await fetch(
+    `${env.DEALIO_API_URL}/api/bakery/reports/revenue`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${env.DEALIO_API_KEY}`,
+        "x-organization-id": data.organizationId,
+      },
+    },
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to fetch report data: ${response.status} ${errorText}`);
+    throw new Error(
+      `Failed to fetch report data: ${response.status} ${errorText}`,
+    );
   }
 
   const reportData = await response.json();
   const { summary } = reportData;
 
-  console.log('Report Data summary:', summary);
+  console.log("Report Data summary:", summary);
 
   const message = `📈 *Bakery Daily Production & Waste Report*
 *Total Batches:* ${summary.totalBatches}
@@ -48,18 +55,18 @@ export async function main(
   // Slack
   if (env.SLACK_WEBHOOK_URL) {
     await fetch(env.SLACK_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: message })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: message }),
     });
   }
 
   // Discord
   if (env.DISCORD_WEBHOOK_URL) {
     await fetch(env.DISCORD_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: message.replace(/\*/g, '**') })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: message.replace(/\*/g, "**") }),
     });
   }
 
@@ -72,6 +79,6 @@ export async function main(
   return {
     success: true,
     summary,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }

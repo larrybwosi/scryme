@@ -234,7 +234,9 @@ export function LocationStockTable({
                     : item.currentStock;
 
                 return (
-                  <TableRow key={item.variantId} className="hover:bg-gray-50/50">
+                  <TableRow
+                    key={item.variantId}
+                    className="hover:bg-gray-50/50">
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-medium text-sm text-[#1D1D1F]">

@@ -368,9 +368,8 @@ export async function addPayment(
   });
 
   // Generation of invoice and receipt on payment
-  const { documentService } = await import(
-    "@repo/shared/lib/services/document"
-  );
+  const { documentService } =
+    await import("@repo/shared/lib/services/document");
   try {
     await Promise.all([
       documentService.generateAndSaveInvoice(
@@ -399,9 +398,8 @@ export async function generateDocumentAction(
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  const { documentService } = await import(
-    "@repo/shared/lib/services/document"
-  );
+  const { documentService } =
+    await import("@repo/shared/lib/services/document");
 
   if (type === "invoice") {
     await documentService.generateAndSaveInvoice(
@@ -543,13 +541,16 @@ export async function createFulfillment(data: {
   revalidatePath("/sales/deliveries");
 
   // Background generation of proof documents
-   const { documentService } = await import('@repo/shared/lib/services/document');
-  documentService.generateAndAttachProofDocuments({
+  const { documentService } =
+    await import("@repo/shared/lib/services/document");
+  documentService
+    .generateAndAttachProofDocuments({
       transactionId: fulfillment.transactionId,
       fulfillmentId: fulfillment.id,
       organizationId: auth.organizationId!,
       memberId: auth.memberId!,
-  }).catch(err => console.error('Failed to generate proof documents:', err));
+    })
+    .catch(err => console.error("Failed to generate proof documents:", err));
 
   return fulfillment;
 }
@@ -570,7 +571,8 @@ export async function createOrderAction(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   if (data.type === "POS_SALE") {
-    const { processSale } = await import("@repo/shared/actions/transaction/process-sale");
+    const { processSale } =
+      await import("@repo/shared/actions/transaction/process-sale");
 
     // Transform OrderForm data to ProcessSaleInput
     const saleData = {
@@ -616,8 +618,10 @@ export async function createOrderAction(data: {
   }
 
   // Import shared logic for QUOTE and SALES_ORDER
-  const { createOrder } = await import("@repo/shared/actions/transaction/orders");
-  const { OrderTransactionStatus } = await import("@repo/shared/lib/validations/order");
+  const { createOrder } =
+    await import("@repo/shared/actions/transaction/orders");
+  const { OrderTransactionStatus } =
+    await import("@repo/shared/lib/validations/order");
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,
@@ -689,24 +693,34 @@ export async function reconcileFulfillment(
     notes?: string;
     receivedBy?: string;
     otp?: string;
-    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
+    attachments?: {
+      fileName: string;
+      fileUrl: string;
+      mimeType: string;
+      sizeBytes?: number;
+      description?: string;
+    }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const fulfillment = await db.fulfillment.findUnique({
     where: { id },
-    include: { attachments: true }
+    include: { attachments: true },
   });
 
   if (!fulfillment) throw new Error("Fulfillment not found");
 
   // If OTP is provided, verify it
-  if (data.otp && fulfillment.confirmationToken && data.otp !== fulfillment.confirmationToken) {
+  if (
+    data.otp &&
+    fulfillment.confirmationToken &&
+    data.otp !== fulfillment.confirmationToken
+  ) {
     throw new Error("Invalid verification code");
   }
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     const updatedFulfillment = await tx.fulfillment.update({
       where: { id },
       data: {
@@ -715,22 +729,24 @@ export async function reconcileFulfillment(
         deliveryNotes: data.notes,
         status: "DELIVERED", // Mark as delivered once OTP is verified
         deliveredAt: new Date(),
-        attachments: data.attachments ? {
-          create: data.attachments.map(att => ({
-            ...att,
-            isPublic: true,
-            organizationId: auth.organizationId!,
-            memberId: auth.memberId!,
-            transactionId: fulfillment.transactionId,
-          }))
-        } : undefined,
+        attachments: data.attachments
+          ? {
+              create: data.attachments.map(att => ({
+                ...att,
+                isPublic: true,
+                organizationId: auth.organizationId!,
+                memberId: auth.memberId!,
+                transactionId: fulfillment.transactionId,
+              })),
+            }
+          : undefined,
       },
     });
 
     // Update Transaction status to DELIVERED as well
     await tx.transaction.update({
       where: { id: fulfillment.transactionId },
-      data: { status: "DELIVERED" }
+      data: { status: "DELIVERED" },
     });
 
     return updatedFulfillment;
@@ -746,12 +762,12 @@ export async function approveFulfillment(id: string) {
 
   const fulfillment = await db.fulfillment.findUnique({
     where: { id },
-    include: { transaction: true }
+    include: { transaction: true },
   });
 
   if (!fulfillment) throw new Error("Fulfillment not found");
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async tx => {
     const updatedFulfillment = await tx.fulfillment.update({
       where: { id },
       data: {
@@ -787,9 +803,8 @@ export async function uploadFileAction(formData: FormData) {
   const file = formData.get("file") as File;
   if (!file) throw new Error("No file provided");
 
-  const { storageService, StorageCoreService } = await import(
-    "@repo/shared/storage"
-  );
+  const { storageService, StorageCoreService } =
+    await import("@repo/shared/storage");
   const { v7: uuidv7 } = await import("uuid");
 
   const fileName = StorageCoreService.generateStorageFileName(
@@ -839,12 +854,12 @@ export async function uploadFulfillmentAttachment(
     description?: string;
     shortCode?: string;
     shortUrl?: string;
-  }
+  },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   const fulfillment = await db.fulfillment.findUnique({
-    where: { id: fulfillmentId }
+    where: { id: fulfillmentId },
   });
 
   if (!fulfillment) throw new Error("Fulfillment not found");

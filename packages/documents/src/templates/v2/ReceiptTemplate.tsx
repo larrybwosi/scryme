@@ -356,7 +356,14 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
     <Document>
       <Page size="A4" style={s.page}>
         {/* ── Header Band ── */}
-        <View style={[s.headerBand, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
+        <View
+          style={[
+            s.headerBand,
+            branding?.primaryColor
+              ? { backgroundColor: branding.primaryColor }
+              : {},
+          ]}
+        >
           <View>
             {logoUrl && (
               <Image
@@ -370,9 +377,7 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
               />
             )}
             <Text style={s.orgName}>{orgName}</Text>
-            {orgAddress && (
-              <Text style={s.orgAddress}>{orgAddress}</Text>
-            )}
+            {orgAddress && <Text style={s.orgAddress}>{orgAddress}</Text>}
           </View>
           <View>
             <Text style={s.docTitle}>Payment Receipt</Text>
@@ -381,14 +386,23 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
         </View>
 
         {/* ── Teal accent rule ── */}
-        <View style={[s.accentRule, branding?.primaryColor ? { backgroundColor: branding.primaryColor, opacity: 0.8 } : {}]} />
+        <View
+          style={[
+            s.accentRule,
+            branding?.primaryColor
+              ? { backgroundColor: branding.primaryColor, opacity: 0.8 }
+              : {},
+          ]}
+        />
 
         {/* ── Meta Row ── */}
         <View style={s.metaRow}>
           {/* Customer block */}
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Billed to</Text>
-            <Text style={s.metaValue}>{data.customer?.name || 'Walk-in Customer'}</Text>
+            <Text style={s.metaValue}>
+              {data.customer?.name || "Walk-in Customer"}
+            </Text>
             {data.customer?.email && (
               <Text style={s.metaSub}>{data.customer.email}</Text>
             )}
@@ -396,7 +410,7 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
               <Text style={s.metaSub}>{data.customer.phone}</Text>
             )}
             <View style={s.paidBadge}>
-              <Text style={s.paidBadgeText}>✓ {data.status || 'Paid'}</Text>
+              <Text style={s.paidBadgeText}>✓ {data.status || "Paid"}</Text>
             </View>
           </View>
 
@@ -405,26 +419,58 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
             <Text style={s.metaLabel}>Transaction details</Text>
             <View style={[s.detailGrid, { justifyContent: "flex-end" }]}>
               <MetaField label="Date" value={String(data.date)} />
-              <MetaField label="Payment method" value={data.paymentMethod || "N/A"} />
+              <MetaField
+                label="Payment method"
+                value={data.paymentMethod || "N/A"}
+              />
             </View>
-            <View style={{ alignItems: 'flex-end', marginTop: 10 }}>
+            <View style={{ alignItems: "flex-end", marginTop: 10 }}>
               {data.locationName && (
-                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                <View style={{ flexDirection: "row", marginBottom: 2 }}>
                   <Text style={s.metaLabel}>Location: </Text>
-                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.locationName}</Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>
+                    {data.locationName}
+                  </Text>
                 </View>
               )}
               {data.createdBy && (
-                <View style={{ flexDirection: 'row', marginBottom: 2 }}>
+                <View style={{ flexDirection: "row", marginBottom: 2 }}>
                   <Text style={s.metaLabel}>Cashier: </Text>
-                  <Text style={[s.metaValue, { fontSize: 8 }]}>{data.createdBy}</Text>
+                  <Text style={[s.metaValue, { fontSize: 8 }]}>
+                    {data.createdBy}
+                  </Text>
                 </View>
               )}
               {data.tags && data.tags.length > 0 && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', marginTop: 4 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                    marginTop: 4,
+                  }}
+                >
                   {data.tags.map((tag, i) => (
-                    <View key={i} style={{ backgroundColor: T.surface, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 2, marginLeft: 4, marginBottom: 2 }}>
-                      <Text style={{ fontSize: 7, color: T.inkMid, fontFamily: T.fontBold }}>{tag.toUpperCase()}</Text>
+                    <View
+                      key={i}
+                      style={{
+                        backgroundColor: T.surface,
+                        paddingHorizontal: 4,
+                        paddingVertical: 2,
+                        borderRadius: 2,
+                        marginLeft: 4,
+                        marginBottom: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 7,
+                          color: T.inkMid,
+                          fontFamily: T.fontBold,
+                        }}
+                      >
+                        {tag.toUpperCase()}
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -454,10 +500,16 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
 
         {(data.items || []).map((item, i) => (
           <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-            <Text style={s.cellDesc}>{item.itemName || item.description || 'Item'}</Text>
+            <Text style={s.cellDesc}>
+              {item.itemName || item.description || "Item"}
+            </Text>
             <Text style={s.cellQty}>{item.quantity || 0}</Text>
-            <Text style={s.cellRate}>{fmt(item.rate || item.unitPrice || 0)}</Text>
-            <Text style={s.cellAmt}>{fmt(item.amount || item.totalPrice || 0)}</Text>
+            <Text style={s.cellRate}>
+              {fmt(item.rate || item.unitPrice || 0)}
+            </Text>
+            <Text style={s.cellAmt}>
+              {fmt(item.amount || item.totalPrice || 0)}
+            </Text>
           </View>
         ))}
 
@@ -472,7 +524,14 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
             {(data.discountTotal || 0) > 0 && (
               <View style={s.totalsRow}>
                 <Text style={s.totalsLabel}>Discount</Text>
-                <Text style={[s.discountValue, branding?.primaryColor ? { color: branding.primaryColor } : {}]}>
+                <Text
+                  style={[
+                    s.discountValue,
+                    branding?.primaryColor
+                      ? { color: branding.primaryColor }
+                      : {},
+                  ]}
+                >
                   − {fmt(data.discountTotal || 0)}
                 </Text>
               </View>
@@ -483,26 +542,27 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
               <Text style={s.totalsValue}>{fmt(data.tax)}</Text>
             </View>
 
-            <View style={[s.grandTotalBar, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
+            <View
+              style={[
+                s.grandTotalBar,
+                branding?.primaryColor
+                  ? { backgroundColor: branding.primaryColor }
+                  : {},
+              ]}
+            >
               <Text style={s.grandTotalLabel}>Amount paid</Text>
-              <Text style={s.grandTotalValue}>
-                {fmt(data.total)}
-              </Text>
+              <Text style={s.grandTotalValue}>{fmt(data.total)}</Text>
             </View>
 
             {data.amountReceived !== undefined && (
               <View style={s.cashSection}>
                 <View style={s.cashRow}>
                   <Text style={s.totalsLabel}>Cash received</Text>
-                  <Text style={s.totalsValue}>
-                    {fmt(data.amountReceived)}
-                  </Text>
+                  <Text style={s.totalsValue}>{fmt(data.amountReceived)}</Text>
                 </View>
                 <View style={s.cashRow}>
                   <Text style={s.totalsLabel}>Change returned</Text>
-                  <Text style={s.totalsValue}>
-                    {fmt(data.change ?? 0)}
-                  </Text>
+                  <Text style={s.totalsValue}>{fmt(data.change ?? 0)}</Text>
                 </View>
               </View>
             )}
@@ -514,8 +574,7 @@ export const ReceiptTemplate = ({ data }: { data: ReceiptPDFData }) => {
           <View style={s.footerLeft}>
             <Text style={s.thankYou}>Thank you for your business.</Text>
             <Text style={s.footerSub}>
-              This is an official payment receipt issued by{" "}
-              {orgName}.{"\n"}
+              This is an official payment receipt issued by {orgName}.{"\n"}
               Please retain this document for your records.
             </Text>
           </View>
@@ -537,14 +596,25 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
   const logoUrl = branding?.logoUrl;
   const orgName = branding?.companyName || "Our Company";
   const orgAddress = branding?.companyAddress;
-  const currencySettings = data.currencySettings || { code: data.currency || 'USD', symbol: data.currencySymbol || '$', locale: 'en-US' };
+  const currencySettings = data.currencySettings || {
+    code: data.currency || "USD",
+    symbol: data.currencySymbol || "$",
+    locale: "en-US",
+  };
 
   const fmt = (val: number) => formatCurrency(val, currencySettings);
 
   return (
     <Page size="A4" style={s.page}>
       {/* ── Header Band ── */}
-      <View style={[s.headerBand, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
+      <View
+        style={[
+          s.headerBand,
+          branding?.primaryColor
+            ? { backgroundColor: branding.primaryColor }
+            : {},
+        ]}
+      >
         <View>
           {logoUrl && (
             <Image
@@ -567,7 +637,14 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
       </View>
 
       {/* ── Teal accent rule ── */}
-      <View style={[s.accentRule, branding?.primaryColor ? { backgroundColor: branding.primaryColor, opacity: 0.8 } : {}]} />
+      <View
+        style={[
+          s.accentRule,
+          branding?.primaryColor
+            ? { backgroundColor: branding.primaryColor, opacity: 0.8 }
+            : {},
+        ]}
+      />
 
       {/* ── Meta Row ── */}
       <View style={s.metaRow}>
@@ -643,7 +720,14 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
           {(data.discountTotal || 0) > 0 && (
             <View style={s.totalsRow}>
               <Text style={s.totalsLabel}>Discount</Text>
-              <Text style={[s.discountValue, branding?.primaryColor ? { color: branding.primaryColor } : {}]}>
+              <Text
+                style={[
+                  s.discountValue,
+                  branding?.primaryColor
+                    ? { color: branding.primaryColor }
+                    : {},
+                ]}
+              >
                 − {fmt(data.discountTotal || 0)}
               </Text>
             </View>
@@ -654,7 +738,14 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
             <Text style={s.totalsValue}>{fmt(data.tax)}</Text>
           </View>
 
-          <View style={[s.grandTotalBar, branding?.primaryColor ? { backgroundColor: branding.primaryColor } : {}]}>
+          <View
+            style={[
+              s.grandTotalBar,
+              branding?.primaryColor
+                ? { backgroundColor: branding.primaryColor }
+                : {},
+            ]}
+          >
             <Text style={s.grandTotalLabel}>Amount paid</Text>
             <Text style={s.grandTotalValue}>{fmt(data.total)}</Text>
           </View>
@@ -663,15 +754,11 @@ export const ReceiptTemplatePDF = ({ data }: { data: ReceiptPDFData }) => {
             <View style={s.cashSection}>
               <View style={s.cashRow}>
                 <Text style={s.totalsLabel}>Cash received</Text>
-                <Text style={s.totalsValue}>
-                  {fmt(data.amountReceived)}
-                </Text>
+                <Text style={s.totalsValue}>{fmt(data.amountReceived)}</Text>
               </View>
               <View style={s.cashRow}>
                 <Text style={s.totalsLabel}>Change returned</Text>
-                <Text style={s.totalsValue}>
-                  {fmt(data.change ?? 0)}
-                </Text>
+                <Text style={s.totalsValue}>{fmt(data.change ?? 0)}</Text>
               </View>
             </View>
           )}

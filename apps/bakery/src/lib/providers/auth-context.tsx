@@ -1,9 +1,15 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import sdk, { isTauri, isOfflineMode } from '@/lib/sdk';
-import { tauriInvoke } from '@/lib/tauri-bridge';
-import { toast } from 'sonner';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import sdk, { isTauri, isOfflineMode } from "@/lib/sdk";
+import { tauriInvoke } from "@/lib/tauri-bridge";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -17,7 +23,11 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (credentials: { cardId: string; pin: string; locationId?: string }) => Promise<void>;
+  login: (credentials: {
+    cardId: string;
+    pin: string;
+    locationId?: string;
+  }) => Promise<void>;
   loginLocal: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   sso: () => Promise<void>;
@@ -36,7 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       if (isTauri()) {
-        const provisionedKey = await tauriInvoke<string | null>('get_provisioned_api_key').catch(() => null);
+        const provisionedKey = await tauriInvoke<string | null>(
+          "get_provisioned_api_key",
+        ).catch(() => null);
         if (provisionedKey) {
           setHasDeviceKey(true);
           sdk.setApiKey(provisionedKey);
@@ -44,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (isOfflineMode()) {
-        const savedUser = localStorage.getItem('bakery_user');
+        const savedUser = localStorage.getItem("bakery_user");
         if (savedUser) {
           setUser(JSON.parse(savedUser));
         }
@@ -53,25 +65,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setHasDeviceKey(status.hasDeviceKey);
 
         if (status.hasMemberToken) {
-           const memberToken = localStorage.getItem('bakery_member_token');
-           if (memberToken) {
-             sdk.setMemberToken(memberToken);
-             // In a real app, we might want to fetch the actual user profile here
-             const savedUser = localStorage.getItem('bakery_user');
-             if (savedUser) {
-               setUser(JSON.parse(savedUser));
-             } else {
-               setUser({
-                 id: 'remote-user',
-                 name: 'Remote Baker',
-                 email: 'remote@bakery.com'
-               });
-             }
-           }
+          const memberToken = localStorage.getItem("bakery_member_token");
+          if (memberToken) {
+            sdk.setMemberToken(memberToken);
+            // In a real app, we might want to fetch the actual user profile here
+            const savedUser = localStorage.getItem("bakery_user");
+            if (savedUser) {
+              setUser(JSON.parse(savedUser));
+            } else {
+              setUser({
+                id: "remote-user",
+                name: "Remote Baker",
+                email: "remote@bakery.com",
+              });
+            }
+          }
         }
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error("Auth check failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -82,22 +94,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleUnauthorized = () => {
       setUser(null);
-      localStorage.removeItem('bakery_user');
-      localStorage.removeItem('bakery_member_token');
+      localStorage.removeItem("bakery_user");
+      localStorage.removeItem("bakery_member_token");
     };
 
-    window.addEventListener('bakery-unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('bakery-unauthorized', handleUnauthorized);
+    window.addEventListener("bakery-unauthorized", handleUnauthorized);
+    return () =>
+      window.removeEventListener("bakery-unauthorized", handleUnauthorized);
   }, []);
 
-  const login = async (credentials: { cardId: string; pin: string; locationId?: string }) => {
+  const login = async (credentials: {
+    cardId: string;
+    pin: string;
+    locationId?: string;
+  }) => {
     setIsLoading(true);
     try {
-      const response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
+      const response = await sdk.auth.terminalLogin(
+        credentials.cardId,
+        credentials.pin,
+        credentials.locationId,
+      );
 
       if (response.token) {
         sdk.setMemberToken(response.token);
-        localStorage.setItem('bakery_member_token', response.token);
+        localStorage.setItem("bakery_member_token", response.token);
       }
 
       const userObj = {
@@ -109,9 +130,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(userObj);
-      localStorage.setItem('bakery_user', JSON.stringify(userObj));
+      localStorage.setItem("bakery_user", JSON.stringify(userObj));
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      throw new Error(error.response?.data?.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -120,12 +141,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginLocal = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const result = await tauriInvoke<User>('login_local', { email, password });
+      const result = await tauriInvoke<User>("login_local", {
+        email,
+        password,
+      });
       setUser(result);
-      localStorage.setItem('bakery_user', JSON.stringify(result));
-      sessionStorage.setItem('bakery_local_authenticated', 'true');
+      localStorage.setItem("bakery_user", JSON.stringify(result));
+      sessionStorage.setItem("bakery_local_authenticated", "true");
     } catch (error: any) {
-      throw new Error(error || 'Local login failed');
+      throw new Error(error || "Local login failed");
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await sdk.bakery.sso();
       if (response.token) {
         sdk.setMemberToken(response.token);
-        localStorage.setItem('bakery_member_token', response.token);
+        localStorage.setItem("bakery_member_token", response.token);
       }
 
       const userObj = {
@@ -149,9 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(userObj);
-      localStorage.setItem('bakery_user', JSON.stringify(userObj));
+      localStorage.setItem("bakery_user", JSON.stringify(userObj));
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'SSO failed');
+      throw new Error(error.response?.data?.message || "SSO failed");
     } finally {
       setIsLoading(false);
     }
@@ -164,9 +188,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await sdk.bakery.logout().catch(() => {});
       }
       setUser(null);
-      localStorage.removeItem('bakery_user');
-      localStorage.removeItem('bakery_member_token');
-      sessionStorage.removeItem('bakery_local_authenticated');
+      localStorage.removeItem("bakery_user");
+      localStorage.removeItem("bakery_member_token");
+      sessionStorage.removeItem("bakery_local_authenticated");
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

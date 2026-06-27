@@ -10,7 +10,7 @@ vi.mock("src/prisma/prisma.service", () => {
     PrismaService: vi.fn().mockImplementation(() => ({
       client: {
         $transaction: vi.fn(
-          async (cb) =>
+          async cb =>
             await cb({
               stockBatch: {
                 findUnique: vi.fn(),
@@ -52,7 +52,7 @@ describe("UnpackBatchUseCase", () => {
     };
     prisma = {
       client: {
-        $transaction: vi.fn(async (cb) => await cb(mockTx)),
+        $transaction: vi.fn(async cb => await cb(mockTx)),
       },
     };
     inventoryMovementService = {
@@ -136,7 +136,7 @@ describe("UnpackBatchUseCase", () => {
 
   it("should handle damages during unpacking", async () => {
     mockTx.stockBatch.findUnique.mockResolvedValue(mockBulkBatch);
-    mockTx.stockBatch.create.mockImplementation(async (params) => {
+    mockTx.stockBatch.create.mockImplementation(async params => {
       if (params.data.batchNumber.startsWith("DAMAGED"))
         return { id: "damaged-batch" };
       return { id: "base-batch-1" };

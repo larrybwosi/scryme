@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 type ShortcutHandler = (e: KeyboardEvent) => void;
 
@@ -14,22 +14,22 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig) {
       // Don't trigger shortcuts if user is typing in an input/textarea
       const target = event.target as HTMLElement;
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
         target.isContentEditable
       ) {
         // Allow escape even in inputs
-        if (event.key !== 'Escape') {
+        if (event.key !== "Escape") {
           return;
         }
       }
 
       // Format key string: e.g., "ctrl+s", "alt+n", or just "n"
       let key = event.key.toLowerCase();
-      if (event.shiftKey && key !== 'shift') key = 'shift+' + key;
-      if (event.altKey && key !== 'alt') key = 'alt+' + key;
-      if (event.ctrlKey && key !== 'control') key = 'ctrl+' + key;
-      if (event.metaKey && key !== 'meta') key = 'meta+' + key;
+      if (event.shiftKey && key !== "shift") key = "shift+" + key;
+      if (event.altKey && key !== "alt") key = "alt+" + key;
+      if (event.ctrlKey && key !== "control") key = "ctrl+" + key;
+      if (event.metaKey && key !== "meta") key = "meta+" + key;
 
       if (shortcuts[key]) {
         event.preventDefault();
@@ -41,7 +41,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [shortcuts]);
 }

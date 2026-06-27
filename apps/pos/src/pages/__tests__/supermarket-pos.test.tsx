@@ -4,7 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock dependencies
 vi.mock('@tauri-apps/api/core', () => ({
-  convertFileSrc: vi.fn((path) => path),
+  convertFileSrc: vi.fn(path => path),
   invoke: vi.fn(),
 }));
 
@@ -16,9 +16,9 @@ vi.mock('@/hooks/products', () => ({
         productName: 'Milk',
         category: 'Dairy',
         sellableUnits: [{ unitId: 'u1', unitName: 'Litre', price: 100, isBaseUnit: true }],
-        variants: [{ variantId: 'v1', variantName: 'Whole Milk', stock: 10 }]
-      }
-    ]
+        variants: [{ variantId: 'v1', variantName: 'Whole Milk', stock: 10 }],
+      },
+    ],
   }),
 }));
 

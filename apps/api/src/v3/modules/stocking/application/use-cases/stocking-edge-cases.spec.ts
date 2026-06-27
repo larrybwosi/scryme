@@ -88,7 +88,7 @@ describe("Stocking Edge Cases", () => {
 
     prisma = {
       client: {
-        $transaction: vi.fn(async (callback) => await callback(mockTx)),
+        $transaction: vi.fn(async callback => await callback(mockTx)),
         stockRequest: mockTx.stockRequest,
         stockTransfer: mockTx.stockTransfer,
         purchase: mockTx.purchase,

@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
-import { Skeleton } from './ui/skeleton';
+} from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
 
 interface TaxRate {
   id: string;
@@ -28,7 +28,7 @@ interface TaxRateSelectProps {
 export function TaxRateSelect({
   value,
   onValueChange,
-  placeholder = 'Select tax rate',
+  placeholder = "Select tax rate",
   disabled,
   taxRates,
   isLoading = false,

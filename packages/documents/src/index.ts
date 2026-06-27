@@ -51,7 +51,11 @@ export {
   type InvoiceData as GenericInvoiceData,
   type InvoiceTemplateType,
 } from "./templates/v1/invoice-templates";
-export { getMockInvoiceData, getMockReceiptData, getMockWaybillData } from "./mock-data";
+export {
+  getMockInvoiceData,
+  getMockReceiptData,
+  getMockWaybillData,
+} from "./mock-data";
 export { InvoicePDF as SimpleInvoicePDF } from "./templates/v1/InvoicePDF";
 export { InvoicePDF as Temp2InvoicePDF } from "./templates/v1/invoice.temp2";
 export {

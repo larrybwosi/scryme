@@ -51,12 +51,7 @@ export const usePrinter = () => {
     }
   };
 
-  const printDocument = async (
-    type: PrinterJobType,
-    order: any,
-    settings: any,
-    branchName?: string
-  ) => {
+  const printDocument = async (type: PrinterJobType, order: any, settings: any, branchName?: string) => {
     // Note: We don't need to look up printerId manually here anymore,
     // because the backend 'print_job' does that lookup based on the 'type' (job_type).
 
@@ -71,7 +66,7 @@ export const usePrinter = () => {
         jobType: type,
         order,
         settings,
-        branchName
+        branchName,
       });
 
       console.log('Print Job Success:', result);
@@ -108,7 +103,7 @@ export const usePrinter = () => {
       }
 
       store.updatePrintJob(jobId, { status: 'success' });
-      posthog.capture("receipt_printed", { job_type: type });
+      posthog.capture('receipt_printed', { job_type: type });
       return { success: true, jobId };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

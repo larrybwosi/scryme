@@ -11,7 +11,7 @@ export interface V2ApiContext {
   apiKeyId?: string;
   zitadelUserId?: string;
   customerId?: string;
-  authType: 'device' | 'member' | 'zitadel' | 'oauth' | 'hybrid';
+  authType: "device" | "member" | "zitadel" | "oauth" | "hybrid";
   permissions: string[];
   scopes: string[];
   jwtPayload?: any;

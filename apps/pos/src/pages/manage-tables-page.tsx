@@ -6,11 +6,41 @@ import { Card, CardContent, CardHeader, CardDescription } from '@repo/ui/compone
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@repo/ui/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@repo/ui/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@repo/ui/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@repo/ui/components/ui/dropdown-menu';
 import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Plus, Edit2, Trash2, Users, MapPin, CheckCircle2, Clock, Ban, Search, MoreHorizontal, LayoutGrid, SlidersHorizontal, History as HistoryIcon, UserCircle, AlertCircle } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Users,
+  MapPin,
+  CheckCircle2,
+  Clock,
+  Ban,
+  Search,
+  MoreHorizontal,
+  LayoutGrid,
+  SlidersHorizontal,
+  History as HistoryIcon,
+  UserCircle,
+  AlertCircle,
+} from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
@@ -47,10 +77,11 @@ export default function ManageTablesPage() {
   const filteredTables = tables.filter(table => {
     const sectionMatch = filterSection === 'all' || table.section === filterSection;
     const statusMatch = filterStatus === 'all' || table.status === filterStatus;
-    const searchMatch = !searchQuery || 
+    const searchMatch =
+      !searchQuery ||
       table.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (table.notes && table.notes.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
     return sectionMatch && statusMatch && searchMatch;
   });
 
@@ -99,11 +130,32 @@ export default function ManageTablesPage() {
   const getStatusConfig = (status: Table['status']) => {
     switch (status) {
       case 'available':
-        return { icon: CheckCircle2, label: 'Available', color: 'text-emerald-600', bg: 'bg-emerald-500/10', border: 'border-emerald-500', bar: 'bg-emerald-500' };
+        return {
+          icon: CheckCircle2,
+          label: 'Available',
+          color: 'text-emerald-600',
+          bg: 'bg-emerald-500/10',
+          border: 'border-emerald-500',
+          bar: 'bg-emerald-500',
+        };
       case 'occupied':
-        return { icon: Ban, label: 'Occupied', color: 'text-rose-600', bg: 'bg-rose-500/10', border: 'border-rose-500', bar: 'bg-rose-500' };
+        return {
+          icon: Ban,
+          label: 'Occupied',
+          color: 'text-rose-600',
+          bg: 'bg-rose-500/10',
+          border: 'border-rose-500',
+          bar: 'bg-rose-500',
+        };
       case 'reserved':
-        return { icon: Clock, label: 'Reserved', color: 'text-amber-600', bg: 'bg-amber-500/10', border: 'border-amber-500', bar: 'bg-amber-500' };
+        return {
+          icon: Clock,
+          label: 'Reserved',
+          color: 'text-amber-600',
+          bg: 'bg-amber-500/10',
+          border: 'border-amber-500',
+          bar: 'bg-amber-500',
+        };
     }
   };
 
@@ -134,13 +186,18 @@ export default function ManageTablesPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Floor Management</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Monitor availability, organize sections, and manage table configurations.</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Monitor availability, organize sections, and manage table configurations.
+          </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={open => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="shadow-sm font-medium">
               <Plus className="w-4 h-4 mr-2" />
@@ -157,7 +214,12 @@ export default function ManageTablesPage() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <Label htmlFor="number" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Identifier *</Label>
+                  <Label
+                    htmlFor="number"
+                    className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                  >
+                    Identifier *
+                  </Label>
                   <Input
                     id="number"
                     placeholder="e.g., T-01, VIP-A"
@@ -168,7 +230,12 @@ export default function ManageTablesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="capacity" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Capacity *</Label>
+                  <Label
+                    htmlFor="capacity"
+                    className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                  >
+                    Capacity *
+                  </Label>
                   <div className="relative">
                     <Users className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -185,7 +252,9 @@ export default function ManageTablesPage() {
 
               <div className="grid grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Floor Section</Label>
+                  <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Floor Section
+                  </Label>
                   <Select
                     value={formData.section}
                     onValueChange={value => setFormData({ ...formData, section: value })}
@@ -204,7 +273,9 @@ export default function ManageTablesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Initial Status</Label>
+                  <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Initial Status
+                  </Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value: Table['status']) => setFormData({ ...formData, status: value })}
@@ -222,7 +293,9 @@ export default function ManageTablesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Operational Notes</Label>
+                <Label htmlFor="notes" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Operational Notes
+                </Label>
                 <Textarea
                   id="notes"
                   placeholder="E.g., Window seat, requires high chair..."
@@ -275,10 +348,10 @@ export default function ManageTablesPage() {
       <div className="flex flex-col sm:flex-row gap-3 bg-card p-2 rounded-lg border border-border/40 shadow-sm items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search table number or notes..." 
+          <Input
+            placeholder="Search table number or notes..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-9 border-none bg-transparent shadow-none focus-visible:ring-0 w-full"
           />
         </div>
@@ -324,10 +397,13 @@ export default function ManageTablesPage() {
             const StatusIcon = config.icon;
 
             return (
-              <Card key={table.id} className="relative group overflow-hidden border border-border/40 shadow-sm hover:shadow-md hover:border-border transition-all duration-200 bg-card">
+              <Card
+                key={table.id}
+                className="relative group overflow-hidden border border-border/40 shadow-sm hover:shadow-md hover:border-border transition-all duration-200 bg-card"
+              >
                 {/* Status Indicator Line */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${config.bar}`} />
-                
+
                 <CardHeader className="p-4 pb-3 flex flex-row items-start justify-between space-y-0 pl-5">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -343,12 +419,18 @@ export default function ManageTablesPage() {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1 text-muted-foreground hover:text-foreground">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 -mr-2 -mt-1 text-muted-foreground hover:text-foreground"
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel className="text-xs uppercase text-muted-foreground tracking-wider">Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-xs uppercase text-muted-foreground tracking-wider">
+                        Actions
+                      </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleEdit(table)} className="cursor-pointer">
                         <Edit2 className="w-4 h-4 mr-2 text-muted-foreground" /> Edit Configuration
@@ -357,31 +439,44 @@ export default function ManageTablesPage() {
                         <HistoryIcon className="w-4 h-4 mr-2 text-muted-foreground" /> View History
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDelete(table.id)} className="text-destructive focus:text-destructive cursor-pointer">
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(table.id)}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                      >
                         <Trash2 className="w-4 h-4 mr-2" /> Delete Table
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </CardHeader>
-                
+
                 <CardContent className="p-4 pt-0 pl-5 flex flex-col gap-3">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <Users className="w-4 h-4 opacity-70" />
                       <span>{table.capacity} Seats</span>
                     </div>
-                    
+
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className={`h-6 px-2 text-xs font-medium border ${config.bg} ${config.color} ${config.border} hover:${config.bg} hover:opacity-80 transition-opacity`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-6 px-2 text-xs font-medium border ${config.bg} ${config.color} ${config.border} hover:${config.bg} hover:opacity-80 transition-opacity`}
+                        >
                           <StatusIcon className="w-3 h-3 mr-1.5" />
                           {config.label}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setTableStatus(table.id, 'available')}>Set Available</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTableStatus(table.id, 'occupied')}>Set Occupied</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTableStatus(table.id, 'reserved')}>Set Reserved</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTableStatus(table.id, 'available')}>
+                          Set Available
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTableStatus(table.id, 'occupied')}>
+                          Set Occupied
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTableStatus(table.id, 'reserved')}>
+                          Set Reserved
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -401,7 +496,9 @@ export default function ManageTablesPage() {
                             <Clock className="w-3.5 h-3.5" />
                             Elapsed
                           </span>
-                          <span className="font-medium text-foreground">{formatDistanceToNow(parseISO(table.occupiedAt))}</span>
+                          <span className="font-medium text-foreground">
+                            {formatDistanceToNow(parseISO(table.occupiedAt))}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -410,9 +507,7 @@ export default function ManageTablesPage() {
                   {table.notes && (
                     <div className="flex items-start gap-1.5 mt-1">
                       <AlertCircle className="w-3.5 h-3.5 text-muted-foreground mt-0.5 shrink-0" />
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {table.notes}
-                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{table.notes}</p>
                     </div>
                   )}
                 </CardContent>
@@ -428,16 +523,19 @@ export default function ManageTablesPage() {
           </div>
           <h3 className="text-xl font-semibold mb-2 text-foreground">No tables found</h3>
           <p className="text-sm text-muted-foreground mb-6 max-w-md">
-            {searchQuery || filterSection !== 'all' || filterStatus !== 'all' 
+            {searchQuery || filterSection !== 'all' || filterStatus !== 'all'
               ? "We couldn't find any tables matching your current filters. Try adjusting your search parameters."
-              : "Your floor plan is currently empty. Configure your first table to start managing occupancy."}
+              : 'Your floor plan is currently empty. Configure your first table to start managing occupancy.'}
           </p>
           {searchQuery || filterSection !== 'all' || filterStatus !== 'all' ? (
-            <Button variant="outline" onClick={() => {
-              setSearchQuery('');
-              setFilterSection('all');
-              setFilterStatus('all');
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery('');
+                setFilterSection('all');
+                setFilterStatus('all');
+              }}
+            >
               Clear Filters
             </Button>
           ) : (
@@ -467,11 +565,11 @@ export default function ManageTablesPage() {
               </div>
             ) : tableHistory.length > 0 ? (
               <div className="relative border-l border-border ml-3 space-y-6 pb-4">
-                {tableHistory.map((entry) => (
+                {tableHistory.map(entry => (
                   <div key={entry.id} className="relative pl-6">
                     {/* Timeline Node */}
                     <div className="absolute -left-1.5 top-1 w-3 h-3 rounded-full border-2 border-background bg-muted-foreground" />
-                    
+
                     <div className="flex flex-col space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold text-foreground">
@@ -481,7 +579,7 @@ export default function ManageTablesPage() {
                           {entry.durationMinutes} min
                         </Badge>
                       </div>
-                      
+
                       <div className="bg-muted/30 border border-border/50 rounded-lg p-3 space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center text-muted-foreground">

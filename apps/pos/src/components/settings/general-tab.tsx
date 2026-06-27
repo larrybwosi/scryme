@@ -464,74 +464,77 @@ export default function GeneralSettings({
         {/* Financial Settings */}
         {import.meta.env.MODE !== 'standalone' && (
           <Card className="border-muted/60 shadow-sm">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Wallet className="h-5 w-5 text-blue-600" />
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Wallet className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold">Financial Settings</CardTitle>
+                  <CardDescription>Configure currency and tax regulations.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg font-semibold">Financial Settings</CardTitle>
-                <CardDescription>Configure currency and tax regulations.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <Separator className="mb-6" />
-          <CardContent>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2.5">
-                <Label htmlFor="currency" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Operating Currency
-                </Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger id="currency" className="bg-muted/30 focus:bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">
-                      <span className="font-mono text-muted-foreground mr-2">USD</span> US Dollar
-                    </SelectItem>
-                    <SelectItem value="EUR">
-                      <span className="font-mono text-muted-foreground mr-2">EUR</span> Euro
-                    </SelectItem>
-                    <SelectItem value="GBP">
-                      <span className="font-mono text-muted-foreground mr-2">GBP</span> British Pound
-                    </SelectItem>
-                    <SelectItem value="JPY">
-                      <span className="font-mono text-muted-foreground mr-2">JPY</span> Japanese Yen
-                    </SelectItem>
-                    <SelectItem value="IDR">
-                      <span className="font-mono text-muted-foreground mr-2">IDR</span> Indonesian Rupiah
-                    </SelectItem>
-                    <SelectItem value="KSH">
-                      <span className="font-mono text-muted-foreground mr-2">KSH</span> Kenyan Shilling
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2.5">
-                <div className="flex justify-between">
+            </CardHeader>
+            <Separator className="mb-6" />
+            <CardContent>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2.5">
                   <Label
-                    htmlFor="taxRate"
+                    htmlFor="currency"
                     className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
                   >
-                    {currentConfig.taxSettings.taxLabel}
+                    Operating Currency
                   </Label>
-                  <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Inclusive</span>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger id="currency" className="bg-muted/30 focus:bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">
+                        <span className="font-mono text-muted-foreground mr-2">USD</span> US Dollar
+                      </SelectItem>
+                      <SelectItem value="EUR">
+                        <span className="font-mono text-muted-foreground mr-2">EUR</span> Euro
+                      </SelectItem>
+                      <SelectItem value="GBP">
+                        <span className="font-mono text-muted-foreground mr-2">GBP</span> British Pound
+                      </SelectItem>
+                      <SelectItem value="JPY">
+                        <span className="font-mono text-muted-foreground mr-2">JPY</span> Japanese Yen
+                      </SelectItem>
+                      <SelectItem value="IDR">
+                        <span className="font-mono text-muted-foreground mr-2">IDR</span> Indonesian Rupiah
+                      </SelectItem>
+                      <SelectItem value="KSH">
+                        <span className="font-mono text-muted-foreground mr-2">KSH</span> Kenyan Shilling
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="relative">
-                  <Percent className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="taxRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={taxRate}
-                    onChange={e => setTaxRate(e.target.value)}
-                    className="pl-9 bg-muted/30 focus:bg-background"
-                    placeholder="0.00"
-                  />
+
+                <div className="space-y-2.5">
+                  <div className="flex justify-between">
+                    <Label
+                      htmlFor="taxRate"
+                      className="text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                    >
+                      {currentConfig.taxSettings.taxLabel}
+                    </Label>
+                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Inclusive</span>
+                  </div>
+                  <div className="relative">
+                    <Percent className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="taxRate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={taxRate}
+                      onChange={e => setTaxRate(e.target.value)}
+                      className="pl-9 bg-muted/30 focus:bg-background"
+                      placeholder="0.00"
+                    />
                   </div>
                 </div>
               </div>

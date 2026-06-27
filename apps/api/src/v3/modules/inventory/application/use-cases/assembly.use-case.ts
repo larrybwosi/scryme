@@ -31,7 +31,7 @@ export class AssemblyUseCase {
         quantity: data.quantity,
         status: "PLANNED",
         items: {
-          create: data.items.map((item) => ({
+          create: data.items.map(item => ({
             variantId: item.variantId,
             quantity: item.quantity,
             stockBatchId: item.stockBatchId,
@@ -50,7 +50,7 @@ export class AssemblyUseCase {
     assemblyId: string,
     locationId: string,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const assembly = await tx.assembly.findUnique({
         where: { id: assemblyId, organizationId },
         include: { items: true },

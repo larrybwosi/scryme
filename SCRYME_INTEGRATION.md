@@ -11,20 +11,22 @@ To ensure security, all incoming webhooks from Scryme Chat to Dealio's API (`/v2
 **Content:** Hexadecimal representation of the HMAC of the raw JSON body.
 
 ### Example Implementation (Scryme API side)
+
 ```javascript
-const crypto = require('crypto');
+const crypto = require("crypto");
 
 function signPayload(payload, secret) {
   return crypto
-    .createHmac('sha256', secret)
+    .createHmac("sha256", secret)
     .update(JSON.stringify(payload))
-    .digest('hex');
+    .digest("hex");
 }
 ```
 
 ## 2. Webhook Payload Structures
 
 ### Interactive Message Action (`message.action`)
+
 Sent when a user clicks a button in Scryme Chat.
 
 ```json
@@ -58,6 +60,7 @@ Organizations are provisioned with a workspace slug format: `org-{organization_s
 **Auth:** OAuth2 Client Credentials (v2)
 
 ### M2M Endpoints
+
 - `POST /api/v2/m2m/workspaces`: Create workspace
 - `GET /api/v2/m2m/workspaces/:slug`: Get workspace
 - `POST /api/v2/m2m/workspaces/:slug/channels/:channel/messages`: Send message
@@ -65,11 +68,11 @@ Organizations are provisioned with a workspace slug format: `org-{organization_s
 
 ## 4. Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `SCRYME_CHAT_API_URL` | Base URL for Scryme API |
-| `SCRYME_CHAT_CLIENT_ID` | Global M2M Client ID |
-| `SCRYME_CHAT_CLIENT_SECRET` | Global M2M Client Secret |
-| `SCRYME_WEBHOOK_SECRET` | Secret used to sign/verify webhooks |
+| Variable                      | Description                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| `SCRYME_CHAT_API_URL`         | Base URL for Scryme API                                                       |
+| `SCRYME_CHAT_CLIENT_ID`       | Global M2M Client ID                                                          |
+| `SCRYME_CHAT_CLIENT_SECRET`   | Global M2M Client Secret                                                      |
+| `SCRYME_WEBHOOK_SECRET`       | Secret used to sign/verify webhooks                                           |
 | `SCRYME_ACTION_WORKFLOW_PATH` | Windmill path for action handling (default: `f/dealio/scryme_action_handler`) |
-| `PUBLIC_API_URL` | Used for auto-registering the webhook on startup |
+| `PUBLIC_API_URL`              | Used for auto-registering the webhook on startup                              |

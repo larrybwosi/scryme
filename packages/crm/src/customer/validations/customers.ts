@@ -1,5 +1,11 @@
-import { AddressType, CustomerCreationType, Address, Customer, Transaction } from '@repo/db/client';
-import { z } from 'zod';
+import {
+  AddressType,
+  CustomerCreationType,
+  Address,
+  Customer,
+  Transaction,
+} from "@repo/db/client";
+import { z } from "zod";
 
 // --- Address Schema ---
 export const AddressFormSchema = z.object({
@@ -8,9 +14,9 @@ export const AddressFormSchema = z.object({
   type: z.nativeEnum(AddressType).optional().default(AddressType.BOTH),
 
   // Required Fields
-  street1: z.string().min(1, 'Street address is required.'),
-  city: z.string().min(1, 'City is required.'),
-  country: z.string().min(1, 'Country is required.'),
+  street1: z.string().min(1, "Street address is required."),
+  city: z.string().min(1, "City is required."),
+  country: z.string().min(1, "Country is required."),
 
   // Optional Fields
   street2: z.string().optional(),
@@ -28,13 +34,21 @@ export const CustomerFormSchema = z
   .object({
     // Core Fields
     id: z.string().cuid().optional(),
-    name: z.string().min(1, 'Customer name cannot be empty.'),
-    email: z.string().email('Please enter a valid email address.').optional().or(z.literal('')),
+    name: z.string().min(1, "Customer name cannot be empty."),
+    email: z
+      .string()
+      .email("Please enter a valid email address.")
+      .optional()
+      .or(z.literal("")),
     phone: z.string().optional().nullable(),
 
     notes: z.string().optional(),
     company: z.string().optional(),
-    avatar: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
+    avatar: z
+      .string()
+      .url("Please enter a valid URL.")
+      .optional()
+      .or(z.literal("")),
 
     // Additional Details
     gender: z.string().optional(),
@@ -45,7 +59,10 @@ export const CustomerFormSchema = z
     // System & Relational Fields
     isActive: z.boolean().optional().default(true),
     loyaltyTierId: z.string().cuid().optional(),
-    creationType: z.nativeEnum(CustomerCreationType).optional().default(CustomerCreationType.MEMBER_CREATED),
+    creationType: z
+      .nativeEnum(CustomerCreationType)
+      .optional()
+      .default(CustomerCreationType.MEMBER_CREATED),
 
     // Delivery & Meta
     deliveryNotes: z.string().optional(),
@@ -63,17 +80,20 @@ export type CustomerFormValues = z.infer<typeof CustomerFormSchema>;
 export type AddressFormValues = z.infer<typeof AddressFormSchema>;
 
 export const LoyaltyAdjustmentSchema = z.object({
-  customerId: z.string().cuid('Invalid customer ID.'),
+  customerId: z.string().cuid("Invalid customer ID."),
   pointsChange: z.coerce
-    .number({ invalid_type_error: 'Points change must be a number.' })
-    .int('Points must be a whole number.')
-    .refine(val => val !== 0, 'Points change cannot be zero.'),
-  notes: z.string().max(500, 'Notes cannot exceed 500 characters.').optional(),
+    .number({ invalid_type_error: "Points change must be a number." })
+    .int("Points must be a whole number.")
+    .refine((val) => val !== 0, "Points change cannot be zero."),
+  notes: z.string().max(500, "Notes cannot exceed 500 characters.").optional(),
 });
 
 // Define the return type based on the query structure
 export type CustomerWithDetails = Customer & {
-  transactions: Pick<Transaction, 'id' | 'number' | 'createdAt' | 'finalTotal' | 'status'>[];
+  transactions: Pick<
+    Transaction,
+    "id" | "number" | "createdAt" | "finalTotal" | "status"
+  >[];
   addresses: Address[];
   createdBy: {
     user: {

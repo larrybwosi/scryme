@@ -7,8 +7,10 @@ export async function main(
   reportType: string,
   period: string,
   generatedBy: string,
-  downloadUrl?: string
+  downloadUrl?: string,
 ) {
-  console.log(`[ReportAudit] ${reportType} generated for ${period} by ${generatedBy}`);
+  console.log(
+    `[ReportAudit] ${reportType} generated for ${period} by ${generatedBy}`,
+  );
   return { success: true };
 }

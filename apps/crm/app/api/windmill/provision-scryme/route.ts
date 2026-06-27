@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
-import { db } from '@repo/db';
-import { getServerAuth } from '@repo/auth/server';
-import { WindmillTemplateService } from '@repo/windmill/server';
-import { ScrymeChatApiClient } from '@repo/scryme';
-import { PlaneApiClient } from '@repo/plane';
+import { NextResponse } from "next/server";
+import { db } from "@repo/db";
+import { getServerAuth } from "@repo/auth/server";
+import { WindmillTemplateService } from "@repo/windmill/server";
+import { ScrymeChatApiClient } from "@repo/scryme";
+import { PlaneApiClient } from "@repo/plane";
 
 export async function POST() {
   const auth = await getServerAuth();
   if (!auth?.organizationId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const org = await db.organization.findUnique({
@@ -16,7 +16,10 @@ export async function POST() {
   });
 
   if (!org) {
-    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    return NextResponse.json(
+      { error: "Organization not found" },
+      { status: 404 },
+    );
   }
 
   try {
@@ -24,11 +27,14 @@ export async function POST() {
     await WindmillTemplateService.provisionAndDeploy(
       org.id,
       org.name,
-      org.slug
+      org.slug,
     );
 
     // Provision Scryme independently
-    if (process.env.SCRYME_CHAT_CLIENT_ID && process.env.SCRYME_CHAT_CLIENT_SECRET) {
+    if (
+      process.env.SCRYME_CHAT_CLIENT_ID &&
+      process.env.SCRYME_CHAT_CLIENT_SECRET
+    ) {
       const scrymeClient = new ScrymeChatApiClient();
       const workspaceSlug = `org-${org.slug}`.toLowerCase();
 
@@ -79,7 +85,10 @@ export async function POST() {
           },
         });
       } catch (planeError: any) {
-        console.error('Failed to provision Plane workspace:', planeError.message);
+        console.error(
+          "Failed to provision Plane workspace:",
+          planeError.message,
+        );
         // We don't fail the whole request if Plane fails, but we log it
       }
     }

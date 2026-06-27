@@ -108,7 +108,7 @@ export function redactSensitiveData(
     if (data.length > 100) {
       return `[Array of ${data.length} items]`;
     }
-    return data.map((item) =>
+    return data.map(item =>
       redactSensitiveData(item, sensitiveKeys, depth + 1, maxDepth),
     );
   }

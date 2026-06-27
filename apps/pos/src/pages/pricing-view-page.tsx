@@ -515,7 +515,6 @@ export default function PricingViewPage() {
               )}
             </div>
           </TabsContent>
-
         </Tabs>
       </div>
     </div>

@@ -1,18 +1,24 @@
-'use client';
+"use client";
 
-import type React from 'react';
+import type React from "react";
 
-import { useState, useEffect } from 'react';
-import { useNavigate as useRouter } from 'react-router';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
-import { Separator } from '@repo/ui/components/ui/separator';
-import { Eye, EyeOff, Lock, Mail, User, Utensils } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate as useRouter } from "react-router";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import { Separator } from "@repo/ui/components/ui/separator";
+import { Eye, EyeOff, Lock, Mail, User, Utensils } from "lucide-react";
 // // import Image from 'next/image';
-import { signIn } from '@/lib/auth/authClient';
+import { signIn } from "@/lib/auth/authClient";
 
 // Google icon component
 const GoogleIcon = ({ className }: { className?: string }) => (
@@ -37,48 +43,56 @@ const GoogleIcon = ({ className }: { className?: string }) => (
 );
 
 export function BakeryLoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      const { data, error } = await signIn.email({ email, password, callbackURL: '/' });
+      const { data, error } = await signIn.email({
+        email,
+        password,
+        callbackURL: "/",
+      });
 
       if (error) {
-        setError(error.message || 'Login failed. Please check your credentials.');
+        setError(
+          error.message || "Login failed. Please check your credentials.",
+        );
         return;
       }
 
       if (data) {
         // Successful login - redirect to bakery dashboard
-        console.log('Login successful:', data);
-        navigate('/');
+        console.log("Login successful:", data);
+        navigate("/");
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || "Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
-    setError('');
+  const handleSocialLogin = async (provider: "google" | "github") => {
+    setError("");
     setSocialLoading(provider);
 
     try {
       const { error } = await signIn.social({ provider });
 
       if (error) {
-        setError(error.message || `${provider} login failed. Please try again.`);
+        setError(
+          error.message || `${provider} login failed. Please try again.`,
+        );
         return;
       }
 
@@ -108,16 +122,26 @@ export function BakeryLoginPage() {
         {/* Logo/Brand section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-32 h-32 bg-white rounded-2xl shadow-lg mb-4 border-primary/20 overflow-hidden">
-            <img src="/logo.jpeg" alt="Scryme Bakery Logo" className="w-full h-full object-cover" />
+            <img
+              src="/logo.jpeg"
+              alt="Scryme Bakery Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-primary mb-2">Scryme Bakery</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            Scryme Bakery
+          </h1>
           <p className="text-primary/70">Fresh breads & pastries daily</p>
         </div>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="space-y-2 text-center pb-6">
-            <CardTitle className="text-2xl font-bold text-gray-900">Welcome back, Baker</CardTitle>
-            <CardDescription className="text-gray-600">Sign in to manage your bakery operations</CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Welcome back, Baker
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Sign in to manage your bakery operations
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
@@ -127,10 +151,10 @@ export function BakeryLoginPage() {
                 type="button"
                 variant="outline"
                 className="w-full h-11 border-amber-200 hover:bg-amber-50 transition-colors"
-                onClick={() => handleSocialLogin('google')}
+                onClick={() => handleSocialLogin("google")}
                 disabled={socialLoading !== null || isLoading}
               >
-                {socialLoading === 'google' ? (
+                {socialLoading === "google" ? (
                   <div className="w-4 h-4 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin mr-2" />
                 ) : (
                   <GoogleIcon className="w-5 h-5 mr-2" />
@@ -142,10 +166,10 @@ export function BakeryLoginPage() {
                 type="button"
                 variant="outline"
                 className="w-full h-11 border-amber-200 hover:bg-amber-50 transition-colors"
-                onClick={() => handleSocialLogin('github')}
+                onClick={() => handleSocialLogin("github")}
                 disabled={socialLoading !== null || isLoading}
               >
-                {socialLoading === 'github' ? (
+                {socialLoading === "github" ? (
                   <div className="w-4 h-4 border-2 border-amber-300 border-t-gray-900 rounded-full animate-spin mr-2" />
                 ) : (
                   <User className="w-5 h-5 mr-2" />
@@ -160,20 +184,30 @@ export function BakeryLoginPage() {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or sign in with email</span>
+                <span className="bg-white px-2 text-gray-500">
+                  Or sign in with email
+                </span>
               </div>
             </div>
 
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-800">{error}</AlertDescription>
+                <Alert
+                  variant="destructive"
+                  className="border-red-200 bg-red-50"
+                >
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Baker Email
                 </Label>
                 <div className="relative">
@@ -183,7 +217,7 @@ export function BakeryLoginPage() {
                     type="email"
                     placeholder="baker@artisanbake.com"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-11 border-amber-200 focus:border-amber-500 focus:ring-amber-500"
                     required
                     disabled={isLoading || socialLoading !== null}
@@ -193,7 +227,10 @@ export function BakeryLoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="password"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Password
                   </Label>
                   <button
@@ -209,10 +246,10 @@ export function BakeryLoginPage() {
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-amber-400" />
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your secret recipe"
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 h-11 border-amber-200 focus:border-amber-500 focus:ring-amber-500"
                     required
                     disabled={isLoading || socialLoading !== null}
@@ -223,7 +260,11 @@ export function BakeryLoginPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-600 transition-colors disabled:text-amber-300 disabled:cursor-not-allowed"
                     disabled={isLoading || socialLoading !== null}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -239,7 +280,7 @@ export function BakeryLoginPage() {
                     Baking your access...
                   </>
                 ) : (
-                  'Sign In to Kitchen'
+                  "Sign In to Kitchen"
                 )}
               </Button>
             </form>
@@ -247,7 +288,7 @@ export function BakeryLoginPage() {
             {/* Sign up and application links */}
             <div className="text-center pt-4 border-t border-amber-100 space-y-3">
               <p className="text-sm text-gray-600">
-                New to Scryme Bakery?{' '}
+                New to Scryme Bakery?{" "}
                 <button
                   type="button"
                   className="font-medium text-amber-600 hover:text-amber-500 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
@@ -258,7 +299,7 @@ export function BakeryLoginPage() {
                 </button>
               </p>
               <p className="text-xs text-gray-500">
-                Want to become a baker?{' '}
+                Want to become a baker?{" "}
                 <button
                   type="button"
                   className="font-medium text-orange-600 hover:text-orange-500 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
@@ -275,8 +316,14 @@ export function BakeryLoginPage() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-xs text-gray-500">
-            By signing in, you agree to our <button className="underline hover:text-gray-700">Baker Agreement</button>{' '}
-            and <button className="underline hover:text-gray-700">Kitchen Policies</button>
+            By signing in, you agree to our{" "}
+            <button className="underline hover:text-gray-700">
+              Baker Agreement
+            </button>{" "}
+            and{" "}
+            <button className="underline hover:text-gray-700">
+              Kitchen Policies
+            </button>
           </p>
         </div>
       </div>

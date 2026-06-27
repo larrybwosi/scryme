@@ -1,6 +1,6 @@
-import React from 'react';
-import { ProductCard } from './product-card';
-import { cn } from '../../lib/utils';
+import React from "react";
+import { ProductCard } from "./product-card";
+import { cn } from "../../lib/utils";
 
 interface ProductGridProps {
   products: any[];
@@ -13,11 +13,16 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   products,
   onAddToCart,
   loading,
-  className
+  className,
 }) => {
   if (loading) {
     return (
-      <div className={cn("grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4", className)}>
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+          className,
+        )}
+      >
         {[...Array(8)].map((_, i) => (
           <div key={i} className="animate-pulse rounded-lg border bg-card p-4">
             <div className="aspect-square rounded-md bg-muted" />
@@ -30,7 +35,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className={cn("grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4", className)}>
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+        className,
+      )}
+    >
       {products.map((product) => (
         <ProductCard
           key={product.id}

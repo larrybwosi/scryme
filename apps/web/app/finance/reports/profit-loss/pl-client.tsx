@@ -2,8 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getProfitLoss } from "../../../actions/accounting";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
 import { formatCurrency } from "../../../../lib/utils";
 import { DateRangePicker } from "@repo/ui/components/date-range-picker";
 import { addMonths, startOfMonth, endOfMonth } from "date-fns";
@@ -19,7 +31,10 @@ export function PLClient() {
   const loadReport = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getProfitLoss(dateRange.from.toISOString(), dateRange.to.toISOString());
+      const data = await getProfitLoss(
+        dateRange.from.toISOString(),
+        dateRange.to.toISOString(),
+      );
       setReport(data);
     } catch (error) {
       console.error(error);
@@ -52,12 +67,16 @@ export function PLClient() {
                 {report?.revenue.map((item: any) => (
                   <TableRow key={item.code}>
                     <TableCell>{item.name}</TableCell>
-                    <TableCell className="text-right">{item.balance.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      {item.balance.toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-muted/50">
                   <TableCell>Total Revenue</TableCell>
-                  <TableCell className="text-right">{report?.totalRevenue.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">
+                    {report?.totalRevenue.toLocaleString()}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -74,19 +93,26 @@ export function PLClient() {
                 {report?.expenses.map((item: any) => (
                   <TableRow key={item.code}>
                     <TableCell>{item.name}</TableCell>
-                    <TableCell className="text-right">{item.balance.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      {item.balance.toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-muted/50">
                   <TableCell>Total Expenses</TableCell>
-                  <TableCell className="text-right">({report?.totalExpenses.toLocaleString()})</TableCell>
+                  <TableCell className="text-right">
+                    ({report?.totalExpenses.toLocaleString()})
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        <Card className={report?.netProfit >= 0 ? "border-green-500" : "border-red-500"}>
+        <Card
+          className={
+            report?.netProfit >= 0 ? "border-green-500" : "border-red-500"
+          }>
           <CardHeader>
             <CardTitle className="flex justify-between">
               <span>Net Profit / (Loss)</span>

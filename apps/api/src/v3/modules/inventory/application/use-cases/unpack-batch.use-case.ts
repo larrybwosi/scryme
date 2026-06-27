@@ -26,7 +26,7 @@ export class UnpackBatchUseCase {
   ) {}
 
   async execute(organizationId: string, memberId: string, dto: UnpackBatchDto) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Find the bulk batch
       const bulkBatch = await tx.stockBatch.findUnique({
         where: { id: dto.batchId, organizationId },

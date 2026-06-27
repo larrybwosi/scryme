@@ -24,7 +24,10 @@ import {
   TrendingDown,
   DollarSign,
 } from "lucide-react";
-import { removePriceListItem, addPriceListItems } from "../../app/actions/pricing";
+import {
+  removePriceListItem,
+  addPriceListItems,
+} from "../../app/actions/pricing";
 import { toast } from "sonner";
 import { PricingMethod } from "@repo/db/client";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -34,7 +37,10 @@ interface PriceListItemTableProps {
   items: any[];
 }
 
-export function PriceListItemTable({ priceListId, items }: PriceListItemTableProps) {
+export function PriceListItemTable({
+  priceListId,
+  items,
+}: PriceListItemTableProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(0);
 
@@ -49,14 +55,18 @@ export function PriceListItemTable({ priceListId, items }: PriceListItemTablePro
 
   const handleUpdatePrice = async (item: any, newPrice: number) => {
     try {
-      await addPriceListItems(priceListId, [{
-        variantId: item.variantId,
-        sellingUnitId: item.sellingUnitId,
-        method: item.method,
-        percentageValue: item.percentageValue ? Number(item.percentageValue) : null,
-        price: newPrice,
-        minQuantity: item.minQuantity,
-      }]);
+      await addPriceListItems(priceListId, [
+        {
+          variantId: item.variantId,
+          sellingUnitId: item.sellingUnitId,
+          method: item.method,
+          percentageValue: item.percentageValue
+            ? Number(item.percentageValue)
+            : null,
+          price: newPrice,
+          minQuantity: item.minQuantity,
+        },
+      ]);
       toast.success("Price updated");
       setEditingId(null);
     } catch (error: any) {
@@ -66,9 +76,12 @@ export function PriceListItemTable({ priceListId, items }: PriceListItemTablePro
 
   const getMethodIcon = (method: PricingMethod) => {
     switch (method) {
-      case PricingMethod.COST_MARKUP: return <TrendingUp size={14} className="text-orange-500" />;
-      case PricingMethod.COST_MARGIN: return <TrendingDown size={14} className="text-blue-500" />;
-      default: return <DollarSign size={14} className="text-green-500" />;
+      case PricingMethod.COST_MARKUP:
+        return <TrendingUp size={14} className="text-orange-500" />;
+      case PricingMethod.COST_MARGIN:
+        return <TrendingDown size={14} className="text-blue-500" />;
+      default:
+        return <DollarSign size={14} className="text-green-500" />;
     }
   };
 
@@ -101,13 +114,18 @@ export function PriceListItemTable({ priceListId, items }: PriceListItemTablePro
                       {item.variant.product.name}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {item.variant.name !== "Default" ? item.variant.name : item.variant.sku}
+                      {item.variant.name !== "Default"
+                        ? item.variant.name
+                        : item.variant.sku}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <span className="text-xs text-gray-600">
-                    {item.sellingUnit ? (item.sellingUnit.systemUnit?.name || item.sellingUnit.orgUnit?.name) : "Base Unit"}
+                    {item.sellingUnit
+                      ? item.sellingUnit.systemUnit?.name ||
+                        item.sellingUnit.orgUnit?.name
+                      : "Base Unit"}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -132,8 +150,9 @@ export function PriceListItemTable({ priceListId, items }: PriceListItemTablePro
                         value={editValue}
                         onChange={e => setEditValue(parseFloat(e.target.value))}
                         onKeyDown={e => {
-                          if (e.key === 'Enter') handleUpdatePrice(item, editValue);
-                          if (e.key === 'Escape') setEditingId(null);
+                          if (e.key === "Enter")
+                            handleUpdatePrice(item, editValue);
+                          if (e.key === "Escape") setEditingId(null);
                         }}
                         autoFocus
                       />
@@ -157,10 +176,11 @@ export function PriceListItemTable({ priceListId, items }: PriceListItemTablePro
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setEditingId(item.id);
-                        setEditValue(Number(item.price));
-                      }}>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditingId(item.id);
+                          setEditValue(Number(item.price));
+                        }}>
                         Edit Price
                       </DropdownMenuItem>
                       <DropdownMenuItem

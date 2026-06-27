@@ -221,17 +221,15 @@ export async function addProductToSupplier(data: {
   return ps;
 }
 
-export async function addVariantsToSupplier(
-  data: {
-    supplierId: string;
-    productId: string;
-    variants: Array<{
-      variantId: string;
-      costPrice: number;
-      supplierSku?: string;
-    }>;
-  },
-): Promise<any> {
+export async function addVariantsToSupplier(data: {
+  supplierId: string;
+  productId: string;
+  variants: Array<{
+    variantId: string;
+    costPrice: number;
+    supplierSku?: string;
+  }>;
+}): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) {
     throw new Error("Unauthorized");

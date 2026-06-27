@@ -29,9 +29,7 @@ export class CrmRecordService {
       recordId: record.id,
       entityType: "CRM_RECORD", // or record.objectId if appropriate
       name: (record.data as any)?.name || record.id,
-    }).catch((err) =>
-      console.error("[CRM] Failed to emit Windmill event:", err),
-    );
+    }).catch(err => console.error("[CRM] Failed to emit Windmill event:", err));
 
     return record;
   }
@@ -63,9 +61,7 @@ export class CrmRecordService {
       entityType: "CRM_RECORD",
       name: (updatedRecord.data as any)?.name || updatedRecord.id,
       changes: dto.data,
-    }).catch((err) =>
-      console.error("[CRM] Failed to emit Windmill event:", err),
-    );
+    }).catch(err => console.error("[CRM] Failed to emit Windmill event:", err));
 
     return updatedRecord;
   }

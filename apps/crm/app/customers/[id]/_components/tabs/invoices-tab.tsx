@@ -1,14 +1,22 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Receipt, Download, ChevronDown, ChevronUp, Plus, X, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { EmptyState } from '@/components/ui/empty-state';
-import { createInvoiceAction } from '@/app/actions/invoices';
-import { toast } from 'sonner';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import type { CustomerWithRelations } from '@/lib/types';
+import React, { useState } from "react";
+import {
+  Receipt,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  X,
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { createInvoiceAction } from "@/app/actions/invoices";
+import { toast } from "sonner";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import type { CustomerWithRelations } from "@/lib/types";
 
 interface InvoicesTabProps {
   customer: CustomerWithRelations;
@@ -17,18 +25,18 @@ interface InvoicesTabProps {
 function InvoiceRow({ invoice }: { invoice: any }) {
   const [expanded, setExpanded] = useState(false);
   const balance = invoice.balanceDue;
-  const isOverdue = invoice.status === 'OVERDUE';
+  const isOverdue = invoice.status === "OVERDUE";
 
   const downloadInvoice = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.scryme.app';
-    window.open(`${apiUrl}/public-invoices/${invoice.id}/download`, '_blank');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.app";
+    window.open(`${apiUrl}/public-invoices/${invoice.id}/download`, "_blank");
   };
 
   return (
     <div
       className={cn(
-        'bg-card border rounded-xl overflow-hidden',
-        isOverdue ? 'border-destructive/30' : 'border-border'
+        "bg-card border rounded-xl overflow-hidden",
+        isOverdue ? "border-destructive/30" : "border-border",
       )}
     >
       <button
@@ -38,8 +46,8 @@ function InvoiceRow({ invoice }: { invoice: any }) {
         {/* Icon */}
         <div
           className={cn(
-            'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-            isOverdue ? 'bg-destructive/10' : 'bg-primary/10'
+            "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+            isOverdue ? "bg-destructive/10" : "bg-primary/10",
           )}
         >
           {isOverdue ? (
@@ -58,14 +66,16 @@ function InvoiceRow({ invoice }: { invoice: any }) {
             <StatusBadge status={invoice.status} size="sm" />
           </div>
           <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
-            {invoice.items.map((i: any) => i.itemName).join(', ')}
+            {invoice.items.map((i: any) => i.itemName).join(", ")}
           </p>
         </div>
 
         {/* Amount */}
         <div className="text-right flex-shrink-0">
-          <p className="text-[13.5px] font-bold text-foreground">{formatCurrency(invoice.grandTotal)}</p>
-          {balance > 0 && invoice.status !== 'VOID' && (
+          <p className="text-[13.5px] font-bold text-foreground">
+            {formatCurrency(invoice.grandTotal)}
+          </p>
+          {balance > 0 && invoice.status !== "VOID" && (
             <p className="text-[11px] text-destructive font-medium">
               {formatCurrency(balance)} due
             </p>
@@ -93,7 +103,14 @@ function InvoiceRow({ invoice }: { invoice: any }) {
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Due Date
               </p>
-              <p className={cn('text-[12.5px]', isOverdue ? 'text-destructive font-semibold' : 'text-foreground')}>
+              <p
+                className={cn(
+                  "text-[12.5px]",
+                  isOverdue
+                    ? "text-destructive font-semibold"
+                    : "text-foreground",
+                )}
+              >
                 {formatDate(invoice.dueDate)}
               </p>
             </div>
@@ -101,13 +118,17 @@ function InvoiceRow({ invoice }: { invoice: any }) {
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Net Total
               </p>
-              <p className="text-[12.5px] text-foreground">{formatCurrency(invoice.netTotal)}</p>
+              <p className="text-[12.5px] text-foreground">
+                {formatCurrency(invoice.netTotal)}
+              </p>
             </div>
             <div>
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Tax
               </p>
-              <p className="text-[12.5px] text-foreground">{formatCurrency(invoice.totalTaxes)}</p>
+              <p className="text-[12.5px] text-foreground">
+                {formatCurrency(invoice.totalTaxes)}
+              </p>
             </div>
             <div>
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
@@ -121,7 +142,12 @@ function InvoiceRow({ invoice }: { invoice: any }) {
               <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                 Balance Due
               </p>
-              <p className={cn('text-[12.5px] font-bold', balance > 0 ? 'text-destructive' : 'text-status-success')}>
+              <p
+                className={cn(
+                  "text-[12.5px] font-bold",
+                  balance > 0 ? "text-destructive" : "text-status-success",
+                )}
+              >
                 {formatCurrency(balance)}
               </p>
             </div>
@@ -141,28 +167,32 @@ function InvoiceRow({ invoice }: { invoice: any }) {
   );
 }
 
-const INVOICE_STATUSES = ['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'VOID'];
+const INVOICE_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "VOID"];
 
 export function InvoicesTab({ customer }: InvoicesTabProps) {
   const [showForm, setShowForm] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<string>("All");
   const [form, setForm] = useState({
-    itemName: '',
-    amount: '',
-    postingDate: new Date().toISOString().split('T')[0],
-    dueDate: '',
-    status: 'DRAFT',
+    itemName: "",
+    amount: "",
+    postingDate: new Date().toISOString().split("T")[0],
+    dueDate: "",
+    status: "DRAFT",
   });
   const [loading, setLoading] = useState(false);
 
   const invoices = customer.invoices;
 
   const filtered =
-    filterStatus === 'All' ? invoices : invoices.filter((inv: any) => inv.status === filterStatus);
+    filterStatus === "All"
+      ? invoices
+      : invoices.filter((inv: any) => inv.status === filterStatus);
 
-  const overdueCount = invoices.filter((inv: any) => inv.status === 'OVERDUE').length;
+  const overdueCount = invoices.filter(
+    (inv: any) => inv.status === "OVERDUE",
+  ).length;
   const totalOpen = invoices
-    .filter((inv: any) => inv.status !== 'PAID' && inv.status !== 'VOID')
+    .filter((inv: any) => inv.status !== "PAID" && inv.status !== "VOID")
     .reduce((sum: number, inv: any) => sum + inv.balanceDue, 0);
 
   const handleAdd = async () => {
@@ -178,22 +208,28 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
       status: form.status,
       items: [
         {
-          itemCode: 'GENERIC',
+          itemCode: "GENERIC",
           itemName: form.itemName.trim(),
           quantity: 1,
           rate: amount,
           amount: amount,
-        }
-      ]
+        },
+      ],
     });
     setLoading(false);
 
     if (result.success) {
-      toast.success('Invoice created successfully');
-      setForm({ itemName: '', amount: '', postingDate: new Date().toISOString().split('T')[0], dueDate: '', status: 'DRAFT' });
+      toast.success("Invoice created successfully");
+      setForm({
+        itemName: "",
+        amount: "",
+        postingDate: new Date().toISOString().split("T")[0],
+        dueDate: "",
+        status: "DRAFT",
+      });
       setShowForm(false);
     } else {
-      toast.error(result.error || 'Failed to create invoice');
+      toast.error(result.error || "Failed to create invoice");
     }
   };
 
@@ -204,10 +240,18 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
         <div>
           <h3 className="text-[15px] font-bold text-foreground">Invoices</h3>
           <p className="text-[12px] text-muted-foreground mt-0.5">
-            {invoices.length} invoices &middot;{' '}
-            <span className="text-destructive font-medium">{overdueCount} overdue</span>
+            {invoices.length} invoices &middot;{" "}
+            <span className="text-destructive font-medium">
+              {overdueCount} overdue
+            </span>
             {totalOpen > 0 && (
-              <> &middot; <span className="font-medium">{formatCurrency(totalOpen)} outstanding</span></>
+              <>
+                {" "}
+                &middot;{" "}
+                <span className="font-medium">
+                  {formatCurrency(totalOpen)} outstanding
+                </span>
+              </>
             )}
           </p>
         </div>
@@ -216,14 +260,16 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
           className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
-          {showForm ? 'Cancel' : 'New Invoice'}
+          {showForm ? "Cancel" : "New Invoice"}
         </button>
       </div>
 
       {/* Add form */}
       {showForm && (
         <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">New Invoice</h4>
+          <h4 className="text-[13px] font-bold text-foreground mb-4">
+            New Invoice
+          </h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
@@ -231,7 +277,9 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               </label>
               <input
                 value={form.itemName}
-                onChange={(e) => setForm((f) => ({ ...f, itemName: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, itemName: e.target.value }))
+                }
                 placeholder="e.g. 3x Product A, Setup Fee"
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
@@ -243,7 +291,9 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               <input
                 type="number"
                 value={form.amount}
-                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, amount: e.target.value }))
+                }
                 placeholder="0.00"
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
@@ -254,11 +304,15 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               </label>
               <select
                 value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, status: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
                 {INVOICE_STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
@@ -269,7 +323,9 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               <input
                 type="date"
                 value={form.postingDate}
-                onChange={(e) => setForm((f) => ({ ...f, postingDate: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, postingDate: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
             </div>
@@ -280,7 +336,9 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               <input
                 type="date"
                 value={form.dueDate}
-                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, dueDate: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
             </div>
@@ -288,10 +346,15 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
           <div className="flex justify-end mt-4">
             <button
               onClick={handleAdd}
-              disabled={loading || !form.itemName.trim() || !form.postingDate || !form.amount}
+              disabled={
+                loading ||
+                !form.itemName.trim() ||
+                !form.postingDate ||
+                !form.amount
+              }
               className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Creating...' : 'Create Invoice'}
+              {loading ? "Creating..." : "Create Invoice"}
             </button>
           </div>
         </div>
@@ -299,7 +362,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {['All', ...INVOICE_STATUSES].map((s) => {
+        {["All", ...INVOICE_STATUSES].map((s) => {
           const isActive = filterStatus === s;
           return (
             <button
@@ -307,8 +370,8 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
               onClick={() => setFilterStatus(s)}
               className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
                 isActive
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+                  ? "bg-primary text-white border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground"
               }`}
             >
               {s}
@@ -323,8 +386,8 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
           icon={Receipt}
           title="No invoices found"
           description={
-            filterStatus === 'All'
-              ? 'No invoices have been created for this customer.'
+            filterStatus === "All"
+              ? "No invoices have been created for this customer."
               : `No invoices with status "${filterStatus}".`
           }
         />

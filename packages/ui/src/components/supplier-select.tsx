@@ -1,8 +1,14 @@
-import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Skeleton } from './ui/skeleton';
-import { Alert, AlertDescription } from './ui/alert';
-import { AlertCircle, Users } from 'lucide-react';
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
+import { Alert, AlertDescription } from "./ui/alert";
+import { AlertCircle, Users } from "lucide-react";
 
 interface Supplier {
   id: string;
@@ -34,7 +40,7 @@ interface SupplierSelectProps {
 export const SupplierSelect: React.FC<SupplierSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a supplier',
+  placeholder = "Select a supplier",
   disabled = false,
   required = false,
   suppliers,
@@ -54,7 +60,9 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load suppliers. Please try again later.</AlertDescription>
+        <AlertDescription>
+          Failed to load suppliers. Please try again later.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -72,9 +80,9 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
   const formatContactInfo = (supplier: Supplier): string => {
     if (supplier.contactInfo) {
       const { email, phone } = supplier.contactInfo;
-      return [email, phone].filter(Boolean).join(' • ');
+      return [email, phone].filter(Boolean).join(" • ");
     }
-    return '';
+    return "";
   };
 
   return (
@@ -88,12 +96,14 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {suppliers.map(supplier => (
+        {suppliers.map((supplier) => (
           <SelectItem key={supplier.id} value={supplier.id}>
             <div className="flex flex-col">
               <span className="font-medium">{supplier.name}</span>
               {supplier.contactInfo && (
-                <span className="text-sm text-muted-foreground">{formatContactInfo(supplier)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {formatContactInfo(supplier)}
+                </span>
               )}
             </div>
           </SelectItem>

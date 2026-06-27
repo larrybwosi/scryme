@@ -34,8 +34,16 @@ import {
   CardDescription,
 } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
-import { getDashboardStats, getRecentActivity, getSalesData } from "../../actions/dashboard";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
+import {
+  getDashboardStats,
+  getRecentActivity,
+  getSalesData,
+} from "../../actions/dashboard";
 import { formatDistanceToNow } from "date-fns";
 
 export function DashboardView() {
@@ -43,17 +51,17 @@ export function DashboardView() {
 
   const { data: stats, isLoading: statsLoading } = useSWR(
     organizationId ? ["dashboard-stats", organizationId] : null,
-    () => getDashboardStats(organizationId!)
+    () => getDashboardStats(organizationId!),
   );
 
   const { data: activity, isLoading: activityLoading } = useSWR(
     organizationId ? ["dashboard-activity", organizationId] : null,
-    () => getRecentActivity(organizationId!)
+    () => getRecentActivity(organizationId!),
   );
 
   const { data: salesData, isLoading: salesLoading } = useSWR(
     organizationId ? ["dashboard-sales", organizationId] : null,
-    () => getSalesData(organizationId!)
+    () => getSalesData(organizationId!),
   );
 
   return (
@@ -61,9 +69,12 @@ export function DashboardView() {
       <div className="px-8 pt-7 pb-6">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Dashboard
+            </h1>
             <p className="text-[13px] text-muted-foreground mt-0.5">
-              Welcome back! Here&apos;s what&apos;s happening with your business today.
+              Welcome back! Here&apos;s what&apos;s happening with your business
+              today.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -117,7 +128,9 @@ export function DashboardView() {
           <Card className="lg:col-span-2 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-8">
               <div className="space-y-1">
-                <CardTitle className="text-base font-semibold">Sales Overview</CardTitle>
+                <CardTitle className="text-base font-semibold">
+                  Sales Overview
+                </CardTitle>
                 <CardDescription className="text-xs">
                   Monthly sales performance and trends
                 </CardDescription>
@@ -131,23 +144,47 @@ export function DashboardView() {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={salesData || []}>
                     <defs>
-                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      <linearGradient
+                        id="colorSales"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="hsl(var(--primary))"
+                          stopOpacity={0.1}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="hsl(var(--primary))"
+                          stopOpacity={0}
+                        />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="hsl(var(--border))"
+                    />
                     <XAxis
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                      tick={{
+                        fontSize: 12,
+                        fill: "hsl(var(--muted-foreground))",
+                      }}
                       dy={10}
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                      tick={{
+                        fontSize: 12,
+                        fill: "hsl(var(--muted-foreground))",
+                      }}
                       tickFormatter={(value: number) => `$${value}`}
                     />
                     <Tooltip
@@ -176,7 +213,9 @@ export function DashboardView() {
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-6">
               <div className="space-y-1">
-                <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+                <CardTitle className="text-base font-semibold">
+                  Recent Activity
+                </CardTitle>
                 <CardDescription className="text-xs">
                   Latest updates from your CRM
                 </CardDescription>
@@ -185,16 +224,24 @@ export function DashboardView() {
             <CardContent>
               <div className="space-y-6">
                 {activityLoading ? (
-                  <div className="text-center py-4 text-sm text-muted-foreground">Loading activity...</div>
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    Loading activity...
+                  </div>
                 ) : activity?.length === 0 ? (
-                  <div className="text-center py-4 text-sm text-muted-foreground">No recent activity</div>
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    No recent activity
+                  </div>
                 ) : (
                   activity?.map((act: any, i: number) => (
                     <div key={i} className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs",
-                        act.type === 'customer' ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
-                      )}>
+                      <div
+                        className={cn(
+                          "w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs",
+                          act.type === "customer"
+                            ? "bg-emerald-100 text-emerald-600"
+                            : "bg-blue-100 text-blue-600",
+                        )}
+                      >
                         {act.initials}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -206,13 +253,18 @@ export function DashboardView() {
                         </p>
                       </div>
                       <div className="text-[11px] text-muted-foreground whitespace-nowrap">
-                        {formatDistanceToNow(new Date(act.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(act.createdAt), {
+                          addSuffix: true,
+                        })}
                       </div>
                     </div>
                   ))
                 )}
               </div>
-              <Button variant="ghost" className="w-full mt-6 text-[13px] text-primary hover:text-primary/80 h-9">
+              <Button
+                variant="ghost"
+                className="w-full mt-6 text-[13px] text-primary hover:text-primary/80 h-9"
+              >
                 View All Activity
               </Button>
             </CardContent>

@@ -1,9 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Zap, Shield, Globe, Key, RefreshCw, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import React, { useState, useEffect } from "react";
+import {
+  Zap,
+  Shield,
+  Globe,
+  Key,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+} from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -19,10 +28,10 @@ export function WindmillConfig() {
   const [provisioning, setProvisioning] = useState(false);
 
   // Form state
-  const [baseUrl, setBaseUrl] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [webhookSecret, setWebhookSecret] = useState('');
-  const [environment, setEnvironment] = useState('production');
+  const [baseUrl, setBaseUrl] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [environment, setEnvironment] = useState("production");
 
   useEffect(() => {
     fetchConfig();
@@ -31,17 +40,17 @@ export function WindmillConfig() {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/windmill/config');
+      const res = await fetch("/api/windmill/config");
       const data = await res.json();
 
       if (data.configured) {
         setConfig(data);
-        setBaseUrl(data.windmillBaseUrl || '');
-        setEnvironment(data.environment || 'production');
+        setBaseUrl(data.windmillBaseUrl || "");
+        setEnvironment(data.environment || "production");
         // API Key and Webhook Secret are masked on GET
       }
     } catch (err) {
-      console.error('Failed to fetch Windmill config:', err);
+      console.error("Failed to fetch Windmill config:", err);
     } finally {
       setLoading(false);
     }
@@ -54,9 +63,9 @@ export function WindmillConfig() {
     setSuccess(null);
 
     try {
-      const res = await fetch('/api/windmill/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/windmill/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           windmillBaseUrl: baseUrl,
           windmillApiKey: apiKey,
@@ -68,12 +77,12 @@ export function WindmillConfig() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to save configuration');
+        throw new Error(data.error || "Failed to save configuration");
       }
 
-      setSuccess('Configuration saved successfully');
-      setApiKey(''); // Clear sensitive fields
-      setWebhookSecret('');
+      setSuccess("Configuration saved successfully");
+      setApiKey(""); // Clear sensitive fields
+      setWebhookSecret("");
       fetchConfig();
     } catch (err: any) {
       setError(err.message);
@@ -88,17 +97,19 @@ export function WindmillConfig() {
     setSuccess(null);
 
     try {
-      const res = await fetch('/api/windmill/provision-scryme', {
-        method: 'POST',
+      const res = await fetch("/api/windmill/provision-scryme", {
+        method: "POST",
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to provision Scryme Chat workspace');
+        throw new Error(
+          data.error || "Failed to provision Scryme Chat workspace",
+        );
       }
 
-      setSuccess('Scryme Chat workspace provisioned successfully');
+      setSuccess("Scryme Chat workspace provisioned successfully");
       fetchConfig();
     } catch (err: any) {
       setError(err.message);
@@ -175,7 +186,9 @@ export function WindmillConfig() {
                       type="password"
                       value={webhookSecret}
                       onChange={(e) => setWebhookSecret(e.target.value)}
-                      placeholder={config?.webhookSecretMasked || "••••••••••••••••"}
+                      placeholder={
+                        config?.webhookSecretMasked || "••••••••••••••••"
+                      }
                       className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 outline-none transition-all"
                       required={!config?.configured}
                     />
@@ -183,7 +196,7 @@ export function WindmillConfig() {
                 </div>
 
                 <div className="space-y-2">
-                   <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                  <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
                     Environment
                   </label>
                   <select
@@ -219,7 +232,9 @@ export function WindmillConfig() {
                   className="flex items-center gap-2 rounded-lg bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving && <RefreshCw className="h-4 w-4 animate-spin" />}
-                  {config?.configured ? 'Update Configuration' : 'Connect Windmill'}
+                  {config?.configured
+                    ? "Update Configuration"
+                    : "Connect Windmill"}
                 </button>
               </div>
             </div>
@@ -229,11 +244,13 @@ export function WindmillConfig() {
         {/* Right Column: Status & Info */}
         <div className="space-y-6">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-            <h3 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Status</h3>
+            <h3 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider">
+              Status
+            </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-500">Connection</span>
-                {config?.healthStatus === 'healthy' ? (
+                {config?.healthStatus === "healthy" ? (
                   <Badge variant="success">Healthy</Badge>
                 ) : config?.configured ? (
                   <Badge variant="warning">Degraded</Badge>
@@ -244,7 +261,9 @@ export function WindmillConfig() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-500">Last Checked</span>
                 <span className="text-xs text-zinc-300">
-                  {config?.lastHealthCheck ? new Date(config.lastHealthCheck).toLocaleString() : 'Never'}
+                  {config?.lastHealthCheck
+                    ? new Date(config.lastHealthCheck).toLocaleString()
+                    : "Never"}
                 </span>
               </div>
               {config?.healthMessage && (
@@ -266,22 +285,33 @@ export function WindmillConfig() {
                 {config.scrymeChatWorkspaceId ? (
                   <>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-medium text-zinc-500 uppercase">Workspace ID</p>
-                      <p className="text-sm text-zinc-300 font-mono">{config.scrymeChatWorkspaceId}</p>
+                      <p className="text-[10px] font-medium text-zinc-500 uppercase">
+                        Workspace ID
+                      </p>
+                      <p className="text-sm text-zinc-300 font-mono">
+                        {config.scrymeChatWorkspaceId}
+                      </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] font-medium text-zinc-500 uppercase">Slug</p>
-                      <p className="text-sm text-zinc-300 font-mono">{config.scrymeChatWorkspaceSlug}</p>
+                      <p className="text-[10px] font-medium text-zinc-500 uppercase">
+                        Slug
+                      </p>
+                      <p className="text-sm text-zinc-300 font-mono">
+                        {config.scrymeChatWorkspaceSlug}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 pt-2">
                       <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      <span className="text-xs text-emerald-400 font-medium">Provisioned</span>
+                      <span className="text-xs text-emerald-400 font-medium">
+                        Provisioned
+                      </span>
                     </div>
                   </>
                 ) : (
                   <>
                     <p className="text-xs text-zinc-500 leading-relaxed">
-                      Provision a dedicated Scryme Chat workspace for your organization's communications.
+                      Provision a dedicated Scryme Chat workspace for your
+                      organization's communications.
                     </p>
                     <button
                       onClick={handleProvisionScryme}
@@ -302,22 +332,25 @@ export function WindmillConfig() {
           )}
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-             <h3 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider">About Windmill</h3>
-             <p className="text-xs leading-relaxed text-zinc-500">
-               Windmill is an open-source developer platform to turn scripts into workflows and internal apps.
-               Dealio uses Windmill to orchestrate complex event-driven business logic.
-             </p>
-             <div className="mt-4">
-               <a
+            <h3 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider">
+              About Windmill
+            </h3>
+            <p className="text-xs leading-relaxed text-zinc-500">
+              Windmill is an open-source developer platform to turn scripts into
+              workflows and internal apps. Dealio uses Windmill to orchestrate
+              complex event-driven business logic.
+            </p>
+            <div className="mt-4">
+              <a
                 href="https://windmill.dev"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors"
-               >
-                 View Documentation
-                 <ExternalLink className="h-3 w-3" />
-               </a>
-             </div>
+              >
+                View Documentation
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -325,15 +358,26 @@ export function WindmillConfig() {
   );
 }
 
-function Badge({ children, variant = 'secondary' }: { children: React.ReactNode, variant?: 'success' | 'warning' | 'secondary' }) {
+function Badge({
+  children,
+  variant = "secondary",
+}: {
+  children: React.ReactNode;
+  variant?: "success" | "warning" | "secondary";
+}) {
   const variants = {
-    success: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-    warning: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
-    secondary: 'border-zinc-700 bg-zinc-800 text-zinc-400',
+    success: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+    warning: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+    secondary: "border-zinc-700 bg-zinc-800 text-zinc-400",
   };
 
   return (
-    <span className={cn('rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight', variants[variant])}>
+    <span
+      className={cn(
+        "rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight",
+        variants[variant],
+      )}
+    >
       {children}
     </span>
   );

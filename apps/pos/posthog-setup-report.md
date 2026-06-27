@@ -3,18 +3,18 @@
 
 The wizard has completed a deep integration of PostHog analytics into the Dealio Desktop POS application. PostHog was initialized in `src/main.tsx` with `posthog-js` and the `@posthog/react` `PostHogProvider` wrapper. The API key and host are read from environment variables (`VITE_PUBLIC_POSTHOG_KEY` / `VITE_PUBLIC_POSTHOG_HOST`) stored in `.env`. Ten business-critical events were instrumented across 7 files, replacing the previously commented-out Aptabase `trackEvent` calls. User identification via `posthog.identify()` is performed on staff check-in, and `posthog.reset()` is called on check-out and device reset to cleanly separate sessions. React error boundary exceptions are now forwarded to PostHog via `posthog.captureException()`.
 
-| Event | Description | File |
-|---|---|---|
-| `user_checked_in` | Staff member logs in to the POS terminal | `src/hooks/use-auth.ts` |
-| `user_checked_out` | Staff member logs out from the POS terminal | `src/hooks/use-auth.ts` |
-| `sale_completed` | A sale is successfully processed, with total, payment method, items count | `src/components/pos/payment-dialog.tsx` |
-| `product_added_to_cart` | A product is added via barcode scan on the POS page | `src/pages/pos.tsx` |
-| `pricing_mode_changed` | User switches between retail and wholesale pricing | `src/pages/pos.tsx` |
-| `product_category_selected` | User filters products by a specific category | `src/pages/pos.tsx` |
-| `device_reset` | User confirms a full device reset on the check-in page | `src/pages/checkin.tsx` |
-| `order_created` | A new sales order is created from the create-order page | `src/pages/create-order.tsx` |
-| `stock_delivery_accepted` | A stock delivery or transfer shipment is accepted | `src/pages/stock-acceptance.tsx` |
-| `order_held` | Cashier puts the current order on hold | `src/components/hold-order-dialog.tsx` |
+| Event                       | Description                                                               | File                                    |
+| --------------------------- | ------------------------------------------------------------------------- | --------------------------------------- |
+| `user_checked_in`           | Staff member logs in to the POS terminal                                  | `src/hooks/use-auth.ts`                 |
+| `user_checked_out`          | Staff member logs out from the POS terminal                               | `src/hooks/use-auth.ts`                 |
+| `sale_completed`            | A sale is successfully processed, with total, payment method, items count | `src/components/pos/payment-dialog.tsx` |
+| `product_added_to_cart`     | A product is added via barcode scan on the POS page                       | `src/pages/pos.tsx`                     |
+| `pricing_mode_changed`      | User switches between retail and wholesale pricing                        | `src/pages/pos.tsx`                     |
+| `product_category_selected` | User filters products by a specific category                              | `src/pages/pos.tsx`                     |
+| `device_reset`              | User confirms a full device reset on the check-in page                    | `src/pages/checkin.tsx`                 |
+| `order_created`             | A new sales order is created from the create-order page                   | `src/pages/create-order.tsx`            |
+| `stock_delivery_accepted`   | A stock delivery or transfer shipment is accepted                         | `src/pages/stock-acceptance.tsx`        |
+| `order_held`                | Cashier puts the current order on hold                                    | `src/components/hold-order-dialog.tsx`  |
 
 ## Next steps
 

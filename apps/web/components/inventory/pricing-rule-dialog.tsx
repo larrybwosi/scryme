@@ -63,8 +63,10 @@ export function PricingRuleDialog({
         priceListId,
         name: formData.name,
         description: formData.description,
-        variantId: formData.targetType === "product" ? formData.variantId : null,
-        categoryId: formData.targetType === "category" ? formData.categoryId : null,
+        variantId:
+          formData.targetType === "product" ? formData.variantId : null,
+        categoryId:
+          formData.targetType === "category" ? formData.categoryId : null,
         discountType: formData.discountType,
         discountValue: formData.discountValue,
         priority: formData.priority,
@@ -121,7 +123,9 @@ export function PricingRuleDialog({
             <Textarea
               id="rule-desc"
               value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              onChange={e =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="Describe when this rule applies"
             />
           </div>
@@ -130,7 +134,9 @@ export function PricingRuleDialog({
             <Label>Apply To</Label>
             <Select
               value={formData.targetType}
-              onValueChange={(v: any) => setFormData({ ...formData, targetType: v })}>
+              onValueChange={(v: any) =>
+                setFormData({ ...formData, targetType: v })
+              }>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -147,13 +153,17 @@ export function PricingRuleDialog({
               <Label>Select Category</Label>
               <Select
                 value={formData.categoryId || ""}
-                onValueChange={v => setFormData({ ...formData, categoryId: v })}>
+                onValueChange={v =>
+                  setFormData({ ...formData, categoryId: v })
+                }>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a category" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -170,9 +180,14 @@ export function PricingRuleDialog({
                   <SelectValue placeholder="Choose a product" />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.flatMap(p => p.variants).map((v: any) => (
-                    <SelectItem key={v.id} value={v.id}>{v.name === "Default" ? v.product.name : v.name} ({v.sku})</SelectItem>
-                  ))}
+                  {products
+                    .flatMap(p => p.variants)
+                    .map((v: any) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        {v.name === "Default" ? v.product.name : v.name} (
+                        {v.sku})
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -183,14 +198,22 @@ export function PricingRuleDialog({
               <Label>Discount Type</Label>
               <Select
                 value={formData.discountType}
-                onValueChange={(v: any) => setFormData({ ...formData, discountType: v })}>
+                onValueChange={(v: any) =>
+                  setFormData({ ...formData, discountType: v })
+                }>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={DiscountType.PERCENTAGE}>Percentage (%)</SelectItem>
-                  <SelectItem value={DiscountType.FIXED_AMOUNT}>Fixed Amount ($)</SelectItem>
-                  <SelectItem value={DiscountType.FIXED_PRICE}>Fixed Price Override ($)</SelectItem>
+                  <SelectItem value={DiscountType.PERCENTAGE}>
+                    Percentage (%)
+                  </SelectItem>
+                  <SelectItem value={DiscountType.FIXED_AMOUNT}>
+                    Fixed Amount ($)
+                  </SelectItem>
+                  <SelectItem value={DiscountType.FIXED_PRICE}>
+                    Fixed Price Override ($)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,7 +222,12 @@ export function PricingRuleDialog({
               <Input
                 type="number"
                 value={formData.discountValue}
-                onChange={e => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    discountValue: parseFloat(e.target.value) || 0,
+                  })
+                }
               />
             </div>
           </div>
@@ -211,14 +239,21 @@ export function PricingRuleDialog({
                 id="rule-priority"
                 type="number"
                 value={formData.priority}
-                onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    priority: parseInt(e.target.value) || 0,
+                  })
+                }
               />
             </div>
             <div className="flex items-center space-x-2 pt-8">
               <Checkbox
                 id="stackable"
                 checked={formData.stackable}
-                onCheckedChange={checked => setFormData({ ...formData, stackable: !!checked })}
+                onCheckedChange={checked =>
+                  setFormData({ ...formData, stackable: !!checked })
+                }
               />
               <Label htmlFor="stackable" className="font-normal cursor-pointer">
                 Stackable

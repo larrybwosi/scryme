@@ -70,7 +70,10 @@ export class PosSaleService {
             Math.abs(Number(p.amount) - Number(payment.amount)) < 0.01,
         );
 
-        const flowType = mpesaInput?.mpesaFlowType || mpesaInput?.meta?.mpesaType || "STK_PUSH";
+        const flowType =
+          mpesaInput?.mpesaFlowType ||
+          mpesaInput?.meta?.mpesaType ||
+          "STK_PUSH";
 
         if (flowType === "STK_PUSH") {
           try {

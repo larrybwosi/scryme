@@ -1,7 +1,13 @@
-import React from 'react';
-import { Page, Text, View, Document } from '@react-pdf/renderer';
-import { commonStyles as styles } from './document-styles';
-import { PDFHeader, PDFFooter, PDFTable, PDFTableRow, PDFTableCell } from './PDFComponents';
+import React from "react";
+import { Page, Text, View, Document } from "@react-pdf/renderer";
+import { commonStyles as styles } from "./document-styles";
+import {
+  PDFHeader,
+  PDFFooter,
+  PDFTable,
+  PDFTableRow,
+  PDFTableCell,
+} from "./PDFComponents";
 
 export interface StockTransferListPDFData {
   organizationName: string;
@@ -16,7 +22,11 @@ export interface StockTransferListPDFData {
   }>;
 }
 
-export const StockTransferListTemplate = ({ data }: { data: StockTransferListPDFData }) => (
+export const StockTransferListTemplate = ({
+  data,
+}: {
+  data: StockTransferListPDFData;
+}) => (
   <Document>
     <Page size="A4" style={styles.page} orientation="landscape">
       <PDFHeader
@@ -29,12 +39,24 @@ export const StockTransferListTemplate = ({ data }: { data: StockTransferListPDF
       <View style={styles.section}>
         <PDFTable>
           <PDFTableRow>
-            <PDFTableCell width="15%" isHeader>Transfer #</PDFTableCell>
-            <PDFTableCell width="20%" isHeader>From Location</PDFTableCell>
-            <PDFTableCell width="20%" isHeader>To Location</PDFTableCell>
-            <PDFTableCell width="15%" isHeader>Date</PDFTableCell>
-            <PDFTableCell width="15%" isHeader>Requested By</PDFTableCell>
-            <PDFTableCell width="15%" isHeader>Status</PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Transfer #
+            </PDFTableCell>
+            <PDFTableCell width="20%" isHeader>
+              From Location
+            </PDFTableCell>
+            <PDFTableCell width="20%" isHeader>
+              To Location
+            </PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Date
+            </PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Requested By
+            </PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Status
+            </PDFTableCell>
           </PDFTableRow>
           {data.transfers.map((trf, i) => (
             <PDFTableRow key={i}>
@@ -49,7 +71,10 @@ export const StockTransferListTemplate = ({ data }: { data: StockTransferListPDF
         </PDFTable>
       </View>
 
-      <PDFFooter orgName={data.organizationName} docType="Stock Transfers List" />
+      <PDFFooter
+        orgName={data.organizationName}
+        docType="Stock Transfers List"
+      />
     </Page>
   </Document>
 );

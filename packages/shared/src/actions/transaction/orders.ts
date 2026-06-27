@@ -214,8 +214,7 @@ export async function createOrder(
 
         // 4. --- Process Items (Pricing & Stock) ---
         let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: any[] =
-          [];
+        const transactionItemsCreateData: any[] = [];
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
@@ -246,8 +245,7 @@ export async function createOrder(
           transactionSubTotal = transactionSubTotal.add(lineSubtotal);
 
           // B. Stock Allocation using Service
-          const allocationsCreateData: any[] =
-            [];
+          const allocationsCreateData: any[] = [];
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
 
           const selectedSellingUnit = item.sellingUnitId
@@ -802,8 +800,7 @@ export async function confirmOrder(
 
         const stockUpdates: Prisma.PrismaPromise<any>[] = [];
         const stockAdjustments: any[] = [];
-        const allocationCreations: any[] =
-          [];
+        const allocationCreations: any[] = [];
         for (const [variantId, totalBaseNeeded] of Array.from(
           baseQuantitiesToCommit.entries(),
         )) {

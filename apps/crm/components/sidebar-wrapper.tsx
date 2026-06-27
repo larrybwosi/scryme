@@ -1,9 +1,14 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { Sidebar } from './sidebar';
+import { usePathname } from "next/navigation";
+import { Sidebar } from "./sidebar";
 
-const AUTH_ROUTES = ['/login', '/sign-up', '/forgot-password', '/reset-password'];
+const AUTH_ROUTES = [
+  "/login",
+  "/sign-up",
+  "/forgot-password",
+  "/reset-password",
+];
 
 export function SidebarWrapper() {
   const pathname = usePathname();

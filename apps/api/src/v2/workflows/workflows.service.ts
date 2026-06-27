@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, forwardRef, Inject } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  forwardRef,
+  Inject,
+} from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { StockMovementReportService } from "../../v3/modules/inventory/application/services/stock-movement-report.service";
@@ -89,7 +94,8 @@ export class WorkflowsService {
             items: { type: "string" },
             title: "Report Recipients",
             format: "members",
-            description: "Selected members will receive the weekly report in Scryme Chat.",
+            description:
+              "Selected members will receive the weekly report in Scryme Chat.",
           },
           scheduleDay: {
             type: "number",
@@ -125,8 +131,10 @@ export class WorkflowsService {
     });
 
     // Simulated: if config exists and has an API key, we consider it "active" for the org
-    return this.mockScripts.map((script) => {
-      const provisioned = provisionedWorkflows.find((w) => w.path === script.path);
+    return this.mockScripts.map(script => {
+      const provisioned = provisionedWorkflows.find(
+        w => w.path === script.path,
+      );
       return {
         ...script,
         isProvisioned: !!provisioned,
@@ -174,7 +182,7 @@ export class WorkflowsService {
         organizationId: ctx.organizationId,
         configId: config.id,
         path: path,
-        name: this.mockScripts.find((s) => s.path === path)?.name || path,
+        name: this.mockScripts.find(s => s.path === path)?.name || path,
         settings: settings,
         isActive: settings.enabled !== false,
       },
@@ -186,7 +194,7 @@ export class WorkflowsService {
       // Trigger in background
       this.stockReportService
         .generateAndSendReport(ctx.organizationId, recipients, 7)
-        .catch((err) =>
+        .catch(err =>
           console.error("Failed to trigger immediate stock report:", err),
         );
     }
@@ -230,20 +238,25 @@ export class WorkflowsService {
     // NOTE: In production, this should be handled by a proper job queue like BullMQ
     // to ensure reliability and prevent memory leaks/unhandled rejections.
     setTimeout(() => {
-      (this.prisma.client as any).windmillExecution.update({
-        where: { id: execution.id },
-        data: {
-          status: "COMPLETED",
-          result: {
-            success: true,
-            triggeredAt: new Date().toISOString(),
-            inputs,
+      (this.prisma.client as any).windmillExecution
+        .update({
+          where: { id: execution.id },
+          data: {
+            status: "COMPLETED",
+            result: {
+              success: true,
+              triggeredAt: new Date().toISOString(),
+              inputs,
+            },
+            completedAt: new Date(),
           },
-          completedAt: new Date(),
-        },
-      }).catch((err: any) => {
-        console.error(`Failed to update windmill execution ${execution.id}:`, err);
-      });
+        })
+        .catch((err: any) => {
+          console.error(
+            `Failed to update windmill execution ${execution.id}:`,
+            err,
+          );
+        });
     }, 2000).unref(); // unref() allows the process to exit even if the timer is active
 
     return execution;

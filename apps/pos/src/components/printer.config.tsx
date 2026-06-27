@@ -1,4 +1,14 @@
-import { Printer, RefreshCcw, Settings2, FileText, Receipt, ChefHat, ReceiptText, Truck, GlassWater } from 'lucide-react';
+import {
+  Printer,
+  RefreshCcw,
+  Settings2,
+  FileText,
+  Receipt,
+  ChefHat,
+  ReceiptText,
+  Truck,
+  GlassWater,
+} from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
@@ -19,7 +29,7 @@ export default function PrinterSettings() {
     loading,
     printDocument,
     autoPrintInvoice,
-    setAutoPrintInvoice
+    setAutoPrintInvoice,
   } = usePrinter();
 
   const settings = usePosStore(state => state.settings);
@@ -263,12 +273,11 @@ export default function PrinterSettings() {
                     <FileText className="h-4 w-4 text-blue-600" />
                     <Label className="text-sm font-semibold">Auto-Print Invoices</Label>
                   </div>
-                  <p className="text-xs text-muted-foreground">Automatically print A4 invoice after creating an order</p>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically print A4 invoice after creating an order
+                  </p>
                 </div>
-                <Switch
-                  checked={autoPrintInvoice}
-                  onCheckedChange={val => setAutoPrintInvoice(val)}
-                />
+                <Switch checked={autoPrintInvoice} onCheckedChange={val => setAutoPrintInvoice(val)} />
               </div>
             </div>
           </div>

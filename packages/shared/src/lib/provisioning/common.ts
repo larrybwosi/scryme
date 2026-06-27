@@ -11,7 +11,7 @@ export async function createDeviceSetupTokenCore(
     permissions?: string[];
     allowedIps?: string[];
     environment?: string;
-  }
+  },
 ) {
   const jti = crypto.randomUUID();
   const rawToken = crypto.randomBytes(32).toString("hex");
@@ -39,7 +39,7 @@ export async function createDeviceSetupTokenCore(
 export async function getDeviceSetupTokensCore(
   prisma: any,
   organizationId: string,
-  filters?: { includeUsed?: boolean; includeExpired?: boolean }
+  filters?: { includeUsed?: boolean; includeExpired?: boolean },
 ) {
   const where: any = { organizationId };
 
@@ -57,7 +57,7 @@ export async function getDeviceSetupTokensCore(
       location: { select: { name: true } },
       createdBy: { select: { user: { select: { name: true } } } },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   return tokens.map((t: any) => ({
@@ -75,18 +75,28 @@ export async function getDeviceSetupTokensCore(
     createdAt: t.createdAt,
     createdBy: t.createdBy?.user?.name,
     redeemedApiKeyId: t.redeemedApiKeyId,
-    status: t.revokedAt ? 'revoked' : t.usedAt ? 'used' : t.expiresAt < new Date() ? 'expired' : 'pending',
+    status: t.revokedAt
+      ? "revoked"
+      : t.usedAt
+        ? "used"
+        : t.expiresAt < new Date()
+          ? "expired"
+          : "pending",
   }));
 }
 
-export async function revokeSetupTokenCore(prisma: any, organizationId: string, tokenId: string) {
+export async function revokeSetupTokenCore(
+  prisma: any,
+  organizationId: string,
+  tokenId: string,
+) {
   const p = prisma.client || prisma;
   const token = await p.deviceSetupToken.findFirst({
     where: { id: tokenId, organizationId },
   });
 
   if (!token) {
-    throw new Error('Setup token not found');
+    throw new Error("Setup token not found");
   }
 
   return p.deviceSetupToken.update({

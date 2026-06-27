@@ -181,11 +181,12 @@ export const useSessionActivityListener = () => {
   // Throttled function to prevent too many state updates.
   // It will only fire once every 5 seconds max, even if the user is typing furiously.
   const handleActivity = useMemo(
-    () => throttle(() => {
-      if (currentMember) {
-        refreshSession();
-      }
-    }, 5000),
+    () =>
+      throttle(() => {
+        if (currentMember) {
+          refreshSession();
+        }
+      }, 5000),
     [currentMember, refreshSession]
   );
 

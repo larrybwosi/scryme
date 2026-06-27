@@ -1,9 +1,21 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader } from '@repo/ui/components/ui/card';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
+import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 
 export function SupplierLoadingState() {
   return (
@@ -143,7 +155,10 @@ export function SupplierLoadingState() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="border border-border rounded-lg p-4">
+                  <div
+                    key={index}
+                    className="border border-border rounded-lg p-4"
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <Skeleton className="h-5 w-40 bg-muted" />
                       <Skeleton className="h-6 w-20 bg-muted" />
@@ -173,12 +188,18 @@ export function SupplierLoadingState() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="border border-border rounded-lg p-4">
+                    <div
+                      key={index}
+                      className="border border-border rounded-lg p-4"
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <Skeleton className="h-5 w-32 bg-muted" />
                         <div className="flex items-center gap-1">
                           {Array.from({ length: 5 }).map((_, starIndex) => (
-                            <Skeleton key={starIndex} className="h-3 w-3 bg-muted" />
+                            <Skeleton
+                              key={starIndex}
+                              className="h-3 w-3 bg-muted"
+                            />
                           ))}
                           <Skeleton className="h-4 w-8 bg-muted ml-1" />
                         </div>

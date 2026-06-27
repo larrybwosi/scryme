@@ -1,3 +1,3 @@
-import 'server-only';
-export * from './customer';
-export * from './pos';
+import "server-only";
+export * from "./customer";
+export * from "./pos";

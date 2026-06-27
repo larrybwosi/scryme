@@ -1,6 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../../../prisma/prisma.service";
-import { AccountType, AccountSubType, JournalSource, JournalStatus } from "@repo/db";
+import {
+  AccountType,
+  AccountSubType,
+  JournalSource,
+  JournalStatus,
+} from "@repo/db";
 
 @Injectable()
 export class AccountingService {
@@ -9,24 +14,75 @@ export class AccountingService {
   async initializeChartOfAccounts(organizationId: string) {
     const standardAccounts = [
       // ASSETS
-      { name: "Cash", code: "1000", type: AccountType.ASSET, subType: AccountSubType.CASH },
-      { name: "Bank", code: "1010", type: AccountType.ASSET, subType: AccountSubType.BANK },
-      { name: "Accounts Receivable", code: "1200", type: AccountType.ASSET, subType: AccountSubType.ACCOUNTS_RECEIVABLE },
-      { name: "Inventory", code: "1300", type: AccountType.ASSET, subType: AccountSubType.INVENTORY },
+      {
+        name: "Cash",
+        code: "1000",
+        type: AccountType.ASSET,
+        subType: AccountSubType.CASH,
+      },
+      {
+        name: "Bank",
+        code: "1010",
+        type: AccountType.ASSET,
+        subType: AccountSubType.BANK,
+      },
+      {
+        name: "Accounts Receivable",
+        code: "1200",
+        type: AccountType.ASSET,
+        subType: AccountSubType.ACCOUNTS_RECEIVABLE,
+      },
+      {
+        name: "Inventory",
+        code: "1300",
+        type: AccountType.ASSET,
+        subType: AccountSubType.INVENTORY,
+      },
 
       // LIABILITIES
-      { name: "Accounts Payable", code: "2000", type: AccountType.LIABILITY, subType: AccountSubType.ACCOUNTS_PAYABLE },
-      { name: "VAT Payable", code: "2200", type: AccountType.LIABILITY, subType: AccountSubType.TAX_PAYABLE },
+      {
+        name: "Accounts Payable",
+        code: "2000",
+        type: AccountType.LIABILITY,
+        subType: AccountSubType.ACCOUNTS_PAYABLE,
+      },
+      {
+        name: "VAT Payable",
+        code: "2200",
+        type: AccountType.LIABILITY,
+        subType: AccountSubType.TAX_PAYABLE,
+      },
 
       // EQUITY
-      { name: "Retained Earnings", code: "3000", type: AccountType.EQUITY, subType: AccountSubType.RETAINED_EARNINGS, isSystem: true },
+      {
+        name: "Retained Earnings",
+        code: "3000",
+        type: AccountType.EQUITY,
+        subType: AccountSubType.RETAINED_EARNINGS,
+        isSystem: true,
+      },
 
       // REVENUE
-      { name: "Sales Revenue", code: "4000", type: AccountType.REVENUE, subType: AccountSubType.REVENUE },
+      {
+        name: "Sales Revenue",
+        code: "4000",
+        type: AccountType.REVENUE,
+        subType: AccountSubType.REVENUE,
+      },
 
       // EXPENSES
-      { name: "Cost of Goods Sold", code: "5000", type: AccountType.EXPENSE, subType: AccountSubType.COST_OF_GOODS_SOLD },
-      { name: "Operating Expenses", code: "6000", type: AccountType.EXPENSE, subType: AccountSubType.OPERATING_EXPENSE },
+      {
+        name: "Cost of Goods Sold",
+        code: "5000",
+        type: AccountType.EXPENSE,
+        subType: AccountSubType.COST_OF_GOODS_SOLD,
+      },
+      {
+        name: "Operating Expenses",
+        code: "6000",
+        type: AccountType.EXPENSE,
+        subType: AccountSubType.OPERATING_EXPENSE,
+      },
     ];
 
     for (const account of standardAccounts) {
@@ -54,14 +110,24 @@ export class AccountingService {
     sourceType?: JournalSource;
     sourceId?: string;
     entryDate?: Date;
-    lines: { ledgerAccountId: string; debit: number; credit: number; description?: string }[];
+    lines: {
+      ledgerAccountId: string;
+      debit: number;
+      credit: number;
+      description?: string;
+    }[];
   }) {
     // Validate that debits == credits
     const totalDebit = params.lines.reduce((sum, line) => sum + line.debit, 0);
-    const totalCredit = params.lines.reduce((sum, line) => sum + line.credit, 0);
+    const totalCredit = params.lines.reduce(
+      (sum, line) => sum + line.credit,
+      0,
+    );
 
     if (Math.abs(totalDebit - totalCredit) > 0.0001) {
-      throw new Error("Journal entry must be balanced (Debits must equal Credits)");
+      throw new Error(
+        "Journal entry must be balanced (Debits must equal Credits)",
+      );
     }
 
     return this.prisma.client.journalEntry.create({
@@ -95,11 +161,11 @@ export class AccountingService {
       select: { id: true },
     });
     if (!member) {
-        const anyMember = await this.prisma.client.member.findFirst({
-            where: { organizationId },
-            select: { id: true }
-        });
-        return anyMember?.id || "";
+      const anyMember = await this.prisma.client.member.findFirst({
+        where: { organizationId },
+        select: { id: true },
+      });
+      return anyMember?.id || "";
     }
     return member.id;
   }
@@ -115,26 +181,52 @@ export class AccountingService {
     const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId: transaction.organizationId,
-        subType: { in: [AccountSubType.ACCOUNTS_RECEIVABLE, AccountSubType.REVENUE, AccountSubType.TAX_PAYABLE] },
+        subType: {
+          in: [
+            AccountSubType.ACCOUNTS_RECEIVABLE,
+            AccountSubType.REVENUE,
+            AccountSubType.TAX_PAYABLE,
+          ],
+        },
       },
     });
 
-    const arAccount = accounts.find(a => a.subType === AccountSubType.ACCOUNTS_RECEIVABLE);
-    const revenueAccount = accounts.find(a => a.subType === AccountSubType.REVENUE);
-    const taxAccount = accounts.find(a => a.subType === AccountSubType.TAX_PAYABLE);
+    const arAccount = accounts.find(
+      a => a.subType === AccountSubType.ACCOUNTS_RECEIVABLE,
+    );
+    const revenueAccount = accounts.find(
+      a => a.subType === AccountSubType.REVENUE,
+    );
+    const taxAccount = accounts.find(
+      a => a.subType === AccountSubType.TAX_PAYABLE,
+    );
 
     if (!arAccount || !revenueAccount) return;
 
     const lines = [
-      { ledgerAccountId: arAccount.id, debit: Number(transaction.finalTotal), credit: 0 },
-      { ledgerAccountId: revenueAccount.id, debit: 0, credit: Number(transaction.subtotal) },
+      {
+        ledgerAccountId: arAccount.id,
+        debit: Number(transaction.finalTotal),
+        credit: 0,
+      },
+      {
+        ledgerAccountId: revenueAccount.id,
+        debit: 0,
+        credit: Number(transaction.subtotal),
+      },
     ];
 
     if (taxAccount && Number(transaction.taxTotal) > 0) {
-      lines.push({ ledgerAccountId: taxAccount.id, debit: 0, credit: Number(transaction.taxTotal) });
+      lines.push({
+        ledgerAccountId: taxAccount.id,
+        debit: 0,
+        credit: Number(transaction.taxTotal),
+      });
     }
 
-    const memberId = transaction.memberId || (await this.getSystemMemberId(transaction.organizationId));
+    const memberId =
+      transaction.memberId ||
+      (await this.getSystemMemberId(transaction.organizationId));
 
     return this.createJournalEntry({
       organizationId: transaction.organizationId,
@@ -158,13 +250,25 @@ export class AccountingService {
     const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId: purchase.organizationId,
-        subType: { in: [AccountSubType.ACCOUNTS_PAYABLE, AccountSubType.INVENTORY, AccountSubType.TAX_PAYABLE] },
+        subType: {
+          in: [
+            AccountSubType.ACCOUNTS_PAYABLE,
+            AccountSubType.INVENTORY,
+            AccountSubType.TAX_PAYABLE,
+          ],
+        },
       },
     });
 
-    const apAccount = accounts.find(a => a.subType === AccountSubType.ACCOUNTS_PAYABLE);
-    const inventoryAccount = accounts.find(a => a.subType === AccountSubType.INVENTORY);
-    const taxAccount = accounts.find(a => a.subType === AccountSubType.TAX_PAYABLE);
+    const apAccount = accounts.find(
+      a => a.subType === AccountSubType.ACCOUNTS_PAYABLE,
+    );
+    const inventoryAccount = accounts.find(
+      a => a.subType === AccountSubType.INVENTORY,
+    );
+    const taxAccount = accounts.find(
+      a => a.subType === AccountSubType.TAX_PAYABLE,
+    );
 
     if (!apAccount || !inventoryAccount) return;
 
@@ -173,14 +277,24 @@ export class AccountingService {
 
     const lines = [
       { ledgerAccountId: inventoryAccount.id, debit: netAmount, credit: 0 },
-      { ledgerAccountId: apAccount.id, debit: 0, credit: Number(purchase.totalAmount) },
+      {
+        ledgerAccountId: apAccount.id,
+        debit: 0,
+        credit: Number(purchase.totalAmount),
+      },
     ];
 
     if (taxAccount && taxAmount > 0) {
-      lines.push({ ledgerAccountId: taxAccount.id, debit: taxAmount, credit: 0 });
+      lines.push({
+        ledgerAccountId: taxAccount.id,
+        debit: taxAmount,
+        credit: 0,
+      });
     }
 
-    const memberId = purchase.memberId || (await this.getSystemMemberId(purchase.organizationId));
+    const memberId =
+      purchase.memberId ||
+      (await this.getSystemMemberId(purchase.organizationId));
 
     return this.createJournalEntry({
       organizationId: purchase.organizationId,
@@ -220,7 +334,13 @@ export class AccountingService {
     const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId: expense.organizationId,
-        subType: { in: [AccountSubType.CASH, AccountSubType.OPERATING_EXPENSE, AccountSubType.TAX_PAYABLE] },
+        subType: {
+          in: [
+            AccountSubType.CASH,
+            AccountSubType.OPERATING_EXPENSE,
+            AccountSubType.TAX_PAYABLE,
+          ],
+        },
       },
     });
 
@@ -229,7 +349,9 @@ export class AccountingService {
       : accounts.find(a => a.subType === AccountSubType.OPERATING_EXPENSE);
 
     const cashAccount = accounts.find(a => a.subType === AccountSubType.CASH);
-    const taxAccount = accounts.find(a => a.subType === AccountSubType.TAX_PAYABLE);
+    const taxAccount = accounts.find(
+      a => a.subType === AccountSubType.TAX_PAYABLE,
+    );
 
     if (!expenseAccount || !cashAccount) return;
 
@@ -238,11 +360,19 @@ export class AccountingService {
 
     const lines = [
       { ledgerAccountId: expenseAccount.id, debit: netAmount, credit: 0 },
-      { ledgerAccountId: cashAccount.id, debit: 0, credit: Number(expense.amount) },
+      {
+        ledgerAccountId: cashAccount.id,
+        debit: 0,
+        credit: Number(expense.amount),
+      },
     ];
 
     if (taxAccount && taxAmount > 0) {
-      lines.push({ ledgerAccountId: taxAccount.id, debit: taxAmount, credit: 0 });
+      lines.push({
+        ledgerAccountId: taxAccount.id,
+        debit: taxAmount,
+        credit: 0,
+      });
     }
 
     return this.createJournalEntry({
@@ -297,7 +427,7 @@ export class AccountingService {
       const key = lineAmount.toFixed(2);
       const possibleMatches = candidatesByAmount.get(key) || [];
 
-      const matchIndex = possibleMatches.findIndex((c) => {
+      const matchIndex = possibleMatches.findIndex(c => {
         const dateDiff = Math.abs(
           new Date(line.transactionDate).getTime() -
             new Date(c.journalEntry.entryDate).getTime(),

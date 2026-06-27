@@ -34,14 +34,23 @@ export class StockMovementReportScheduler {
         if (scheduleDay === today) {
           const recipients = settings.recipients || [];
           if (recipients.length > 0) {
-            this.logger.log(`Triggering scheduled report for org ${workflow.organizationId}`);
+            this.logger.log(
+              `Triggering scheduled report for org ${workflow.organizationId}`,
+            );
             // Fire and forget so one failing report doesn't block others
-            this.stockReportService.generateAndSendReport(workflow.organizationId, recipients, 7)
-              .catch(err => this.logger.error(`Error in scheduled report for org ${workflow.organizationId}: ${err.message}`));
+            this.stockReportService
+              .generateAndSendReport(workflow.organizationId, recipients, 7)
+              .catch(err =>
+                this.logger.error(
+                  `Error in scheduled report for org ${workflow.organizationId}: ${err.message}`,
+                ),
+              );
           }
         }
       } catch (error) {
-        this.logger.error(`Failed to process scheduled report for workflow ${workflow.id}: ${error.message}`);
+        this.logger.error(
+          `Failed to process scheduled report for workflow ${workflow.id}: ${error.message}`,
+        );
       }
     }
   }

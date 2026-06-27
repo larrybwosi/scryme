@@ -8,7 +8,7 @@ import {
   ReturnStatus,
   ReturnReason,
   ReturnItemStatus,
-} from '@repo/db';
+} from "@repo/db";
 
 // --- Types ---
 
@@ -33,7 +33,7 @@ export type ReconcileParams = {
   fulfilmentId: string;
   organizationId: string;
   reconciledBy: string; // Member ID
-  outcome: 'DELIVERED' | 'FAILED';
+  outcome: "DELIVERED" | "FAILED";
   proofUrl?: string; // We expect URL to be handled by caller if they use shared
   receivedBy?: string;
   failureReason?: string;
@@ -41,9 +41,20 @@ export type ReconcileParams = {
 
 // --- Shared Functions ---
 
-export async function performDeliveryDispatch(prisma: PrismaClient, data: DispatchParams) {
-  const { transactionId, organizationId, driverId, deliveryAddress, estimatedTime, deliveryFee, memberId, notes } =
-    data;
+export async function performDeliveryDispatch(
+  prisma: PrismaClient,
+  data: DispatchParams,
+) {
+  const {
+    transactionId,
+    organizationId,
+    driverId,
+    deliveryAddress,
+    estimatedTime,
+    deliveryFee,
+    memberId,
+    notes,
+  } = data;
 
   return await (prisma as any).$transaction(async (tx: any) => {
     // 1. Fetch Transaction with Product Conversions
@@ -65,8 +76,9 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
       },
     });
 
-    if (!transaction) throw new Error('TRANSACTION_NOT_FOUND');
-    if (transaction.status === TransactionStatus.DISPATCHED) throw new Error('ALREADY_DISPATCHED');
+    if (!transaction) throw new Error("TRANSACTION_NOT_FOUND");
+    if (transaction.status === TransactionStatus.DISPATCHED)
+      throw new Error("ALREADY_DISPATCHED");
 
     // 2. Stock Reduction Logic
     for (const item of transaction.items) {
@@ -80,10 +92,13 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
       // If units differ, convert
       if (sellingUnitId && baseUnitId && sellingUnitId !== baseUnitId) {
         const conversion = item.variant.product.unitConversions.find(
-          (c: any) => c.fromUnitId === sellingUnitId && c.toUnitId === baseUnitId
+          (c: any) =>
+            c.fromUnitId === sellingUnitId && c.toUnitId === baseUnitId,
         );
         if (conversion) {
-          qtyToDeduct = Number(item.quantity) * Number(conversion.factor) + Number(conversion.offset);
+          qtyToDeduct =
+            Number(item.quantity) * Number(conversion.factor) +
+            Number(conversion.offset);
         }
       }
 
@@ -93,7 +108,7 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
           locationId: transaction.locationId,
           currentQuantity: { gt: 0 },
         },
-        orderBy: [{ expiryDate: 'asc' }, { receivedDate: 'asc' }],
+        orderBy: [{ expiryDate: "asc" }, { receivedDate: "asc" }],
       });
 
       let remaining = qtyToDeduct;
@@ -115,7 +130,7 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
             variantId: item.variantId,
             fromLocationId: transaction.locationId,
             quantity: deduction,
-            movementType: 'SALE',
+            movementType: "SALE",
             referenceId: transaction.id,
             memberId,
             notes: `Dispatch Order #${transaction.number}`,
@@ -127,12 +142,17 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
       }
 
       if (remaining > 0) {
-        throw new Error(`INSUFFICIENT_STOCK: Item ${item.variant.sku} needs ${qtyToDeduct} base units.`);
+        throw new Error(
+          `INSUFFICIENT_STOCK: Item ${item.variant.sku} needs ${qtyToDeduct} base units.`,
+        );
       }
 
       // C. AGGREGATE UPDATE
       await tx.productVariantStock.updateMany({
-        where: { variantId: item.variantId, locationId: transaction.locationId },
+        where: {
+          variantId: item.variantId,
+          locationId: transaction.locationId,
+        },
         data: {
           currentStock: { decrement: qtyToDeduct },
           reservedStock: { decrement: qtyToDeduct },
@@ -151,7 +171,7 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
           city: deliveryAddress.city,
           state: deliveryAddress.state,
           postalCode: deliveryAddress.zip,
-          country: deliveryAddress.country || 'KEN',
+          country: deliveryAddress.country || "KEN",
           customerId: transaction.customerId,
           businessAccountId: transaction.businessAccountId,
         },
@@ -159,7 +179,8 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
       shippingAddressId = newAddress.id;
     } else if (transaction.customer?.addresses?.length) {
       const defaultAddr =
-        transaction.customer.addresses.find((a: any) => a.isDefault) || transaction.customer.addresses[0];
+        transaction.customer.addresses.find((a: any) => a.isDefault) ||
+        transaction.customer.addresses[0];
       shippingAddressId = defaultAddr.id;
     }
 
@@ -193,20 +214,36 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
     });
 
     // 5. Generate Proof Documents (Background)
-    const { documentService } = await import('../../../lib/services/document.service');
-    documentService.generateAndAttachProofDocuments({
+    const { documentService } =
+      await import("../../../lib/services/document.service");
+    documentService
+      .generateAndAttachProofDocuments({
         transactionId,
         fulfillmentId: fulfillment.id,
         organizationId,
-        memberId
-    }).catch(err => console.error('Failed to generate proof documents:', err));
+        memberId,
+      })
+      .catch((err) =>
+        console.error("Failed to generate proof documents:", err),
+      );
 
     return fulfillment;
   });
 }
 
-export async function performReconciliation(prisma: PrismaClient, data: ReconcileParams) {
-  const { fulfilmentId, organizationId, reconciledBy, outcome, proofUrl, receivedBy, failureReason } = data;
+export async function performReconciliation(
+  prisma: PrismaClient,
+  data: ReconcileParams,
+) {
+  const {
+    fulfilmentId,
+    organizationId,
+    reconciledBy,
+    outcome,
+    proofUrl,
+    receivedBy,
+    failureReason,
+  } = data;
 
   return await (prisma as any).$transaction(async (tx: any) => {
     const fulfillment = await tx.fulfillment.findUnique({
@@ -222,14 +259,17 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
       },
     });
 
-    if (!fulfillment || fulfillment.transaction.organizationId !== organizationId) {
-      throw new Error('FULFILLMENT_OR_TRANSACTION_NOT_FOUND');
+    if (
+      !fulfillment ||
+      fulfillment.transaction.organizationId !== organizationId
+    ) {
+      throw new Error("FULFILLMENT_OR_TRANSACTION_NOT_FOUND");
     }
 
     const transaction = fulfillment.transaction;
     const locationId = transaction.locationId;
 
-    if (outcome === 'DELIVERED') {
+    if (outcome === "DELIVERED") {
       await tx.fulfillment.update({
         where: { id: fulfillment.id },
         data: {
@@ -250,10 +290,10 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
         },
       });
 
-      return { success: true, status: 'COMPLETED' };
+      return { success: true, status: "COMPLETED" };
     }
 
-    if (outcome === 'FAILED') {
+    if (outcome === "FAILED") {
       await tx.fulfillment.update({
         where: { id: fulfillment.id },
         data: {
@@ -272,9 +312,12 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
         },
       });
 
-      const totalRefundAmount = transaction.items.reduce((sum: number, item: any) => {
-        return sum + Number(item.lineTotal);
-      }, 0);
+      const totalRefundAmount = transaction.items.reduce(
+        (sum: number, item: any) => {
+          return sum + Number(item.lineTotal);
+        },
+        0,
+      );
 
       const returnRecord = await tx.return.create({
         data: {
@@ -307,7 +350,7 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
             variantId: item.variantId,
             locationId: locationId,
           },
-          orderBy: { receivedDate: 'desc' },
+          orderBy: { receivedDate: "desc" },
         });
 
         let stockBatchId = targetBatch?.id;
@@ -365,7 +408,7 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
             toLocationId: locationId,
             fromLocationId: null,
             quantity: item.quantity,
-            movementType: 'CUSTOMER_RETURN',
+            movementType: "CUSTOMER_RETURN",
             referenceId: returnRecord.id,
             memberId: reconciledBy,
             notes: `Failed delivery return for Order #${transaction.number}`,
@@ -374,7 +417,7 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
         });
       }
 
-      return { success: true, status: 'FAILED_AND_RETURNED' };
+      return { success: true, status: "FAILED_AND_RETURNED" };
     }
   });
 }

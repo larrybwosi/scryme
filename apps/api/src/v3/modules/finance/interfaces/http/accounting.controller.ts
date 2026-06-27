@@ -15,7 +15,9 @@ export class AccountingController {
 
   @Post("initialize")
   async initialize(@Body() body: { organizationId: string }) {
-    return this.accountingService.initializeChartOfAccounts(body.organizationId);
+    return this.accountingService.initializeChartOfAccounts(
+      body.organizationId,
+    );
   }
 
   @Get("reports/profit-loss")
@@ -36,7 +38,10 @@ export class AccountingController {
     @Query("organizationId") organizationId: string,
     @Query("asOfDate") asOfDate: string,
   ) {
-    return this.reportingService.getBalanceSheet(organizationId, new Date(asOfDate));
+    return this.reportingService.getBalanceSheet(
+      organizationId,
+      new Date(asOfDate),
+    );
   }
 
   @Get("reports/cash-flow")

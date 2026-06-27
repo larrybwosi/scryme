@@ -26,7 +26,10 @@ async function bootstrap() {
   );
 
   // Request logging for debugging - only in non-production or if explicitly enabled
-  if (env.NODE_ENV !== "production" || process.env.ENABLE_REQUEST_LOGGING === "true") {
+  if (
+    env.NODE_ENV !== "production" ||
+    process.env.ENABLE_REQUEST_LOGGING === "true"
+  ) {
     app
       .getHttpAdapter()
       .getInstance()

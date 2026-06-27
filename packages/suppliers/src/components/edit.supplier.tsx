@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,13 +6,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { SupplierUI as Supplier } from '../types/index';
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { SupplierUI as Supplier } from "../types/index";
 
 interface EditSupplierDialogProps {
   open: boolean;
@@ -21,7 +27,12 @@ interface EditSupplierDialogProps {
   onSave: (supplierData: Partial<Supplier>) => void;
 }
 
-export const EditSupplierDialog: React.FC<EditSupplierDialogProps> = ({ open, onOpenChange, supplier, onSave }) => {
+export const EditSupplierDialog: React.FC<EditSupplierDialogProps> = ({
+  open,
+  onOpenChange,
+  supplier,
+  onSave,
+}) => {
   const handleSave = () => {
     onSave({});
     onOpenChange(false);
@@ -32,7 +43,9 @@ export const EditSupplierDialog: React.FC<EditSupplierDialogProps> = ({ open, on
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit Supplier Information</DialogTitle>
-          <DialogDescription>Update supplier details and contact information</DialogDescription>
+          <DialogDescription>
+            Update supplier details and contact information
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-2 gap-4">

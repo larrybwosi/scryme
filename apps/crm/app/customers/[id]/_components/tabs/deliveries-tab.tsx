@@ -1,19 +1,35 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Truck, Package, MapPin, Calendar, Hash, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { EmptyState } from '@/components/ui/empty-state';
-import type { CustomerWithRelations } from '@/lib/types';
-import { createFulfillmentAction } from '@/app/actions/fulfillments';
-import { toast } from 'sonner';
-import { formatDate } from '@/lib/utils';
+import React, { useState } from "react";
+import {
+  Truck,
+  Package,
+  MapPin,
+  Calendar,
+  Hash,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  X,
+} from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import type { CustomerWithRelations } from "@/lib/types";
+import { createFulfillmentAction } from "@/app/actions/fulfillments";
+import { toast } from "sonner";
+import { formatDate } from "@/lib/utils";
 
 interface DeliveriesTabProps {
   customer: CustomerWithRelations;
 }
 
-function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: any }) {
+function DeliveryRow({
+  delivery,
+  transaction,
+}: {
+  delivery: any;
+  transaction: any;
+}) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -30,11 +46,13 @@ function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: an
         {/* Core info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[13.5px] font-semibold text-foreground">{transaction.number}</span>
+            <span className="text-[13.5px] font-semibold text-foreground">
+              {transaction.number}
+            </span>
             <StatusBadge status={delivery.status} size="sm" />
           </div>
           <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
-            {delivery.deliveryNotes || 'No notes'}
+            {delivery.deliveryNotes || "No notes"}
           </p>
         </div>
 
@@ -64,7 +82,7 @@ function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: an
                 </span>
               </div>
               <p className="text-[12.5px] font-medium text-foreground font-mono">
-                {delivery.trackingNumber || 'N/A'}
+                {delivery.trackingNumber || "N/A"}
               </p>
             </div>
             <div>
@@ -74,7 +92,9 @@ function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: an
                   Carrier
                 </span>
               </div>
-              <p className="text-[12.5px] font-medium text-foreground">{delivery.carrier || 'Unassigned'}</p>
+              <p className="text-[12.5px] font-medium text-foreground">
+                {delivery.carrier || "Unassigned"}
+              </p>
             </div>
             {delivery.deliveredAt && (
               <div>
@@ -96,7 +116,9 @@ function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: an
                   Notes
                 </span>
               </div>
-              <p className="text-[12.5px] text-foreground">{delivery.deliveryNotes || 'None'}</p>
+              <p className="text-[12.5px] text-foreground">
+                {delivery.deliveryNotes || "None"}
+              </p>
             </div>
           </div>
         </div>
@@ -105,29 +127,43 @@ function DeliveryRow({ delivery, transaction }: { delivery: any, transaction: an
   );
 }
 
-const FULFILLMENT_TYPES = ['DELIVERY', 'SHIPPING', 'PICKUP', 'IMMEDIATE'];
-const FULFILLMENT_STATUSES = ['PENDING', 'PREPARING', 'READY', 'IN_TRANSIT', 'DELIVERED', 'SHIPPED', 'COMPLETED', 'CANCELLED'];
+const FULFILLMENT_TYPES = ["DELIVERY", "SHIPPING", "PICKUP", "IMMEDIATE"];
+const FULFILLMENT_STATUSES = [
+  "PENDING",
+  "PREPARING",
+  "READY",
+  "IN_TRANSIT",
+  "DELIVERED",
+  "SHIPPED",
+  "COMPLETED",
+  "CANCELLED",
+];
 
 export function DeliveriesTab({ customer }: DeliveriesTabProps) {
   const [showForm, setShowForm] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<string>("All");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    transactionId: '',
-    type: 'DELIVERY' as any,
-    status: 'PENDING' as any,
-    deliveryNotes: '',
-    scheduledAt: new Date().toISOString().split('T')[0],
-    carrier: '',
-    trackingNumber: '',
+    transactionId: "",
+    type: "DELIVERY" as any,
+    status: "PENDING" as any,
+    deliveryNotes: "",
+    scheduledAt: new Date().toISOString().split("T")[0],
+    carrier: "",
+    trackingNumber: "",
   });
 
-  const deliveries = customer.transactions.flatMap(t =>
-    t.fulfillments.map(f => ({ ...f, transaction: t }))
-  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const deliveries = customer.transactions
+    .flatMap((t) => t.fulfillments.map((f) => ({ ...f, transaction: t })))
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 
   const filtered =
-    filterStatus === 'All' ? deliveries : deliveries.filter((d) => d.status === filterStatus);
+    filterStatus === "All"
+      ? deliveries
+      : deliveries.filter((d) => d.status === filterStatus);
 
   const handleAdd = async () => {
     if (!form.transactionId || !form.scheduledAt) return;
@@ -145,19 +181,19 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
     setLoading(false);
 
     if (result.success) {
-      toast.success('Delivery logged successfully');
+      toast.success("Delivery logged successfully");
       setForm({
-        transactionId: '',
-        type: 'DELIVERY',
-        status: 'PENDING',
-        deliveryNotes: '',
-        scheduledAt: new Date().toISOString().split('T')[0],
-        carrier: '',
-        trackingNumber: '',
+        transactionId: "",
+        type: "DELIVERY",
+        status: "PENDING",
+        deliveryNotes: "",
+        scheduledAt: new Date().toISOString().split("T")[0],
+        carrier: "",
+        trackingNumber: "",
       });
       setShowForm(false);
     } else {
-      toast.error(result.error || 'Failed to log delivery');
+      toast.error(result.error || "Failed to log delivery");
     }
   };
 
@@ -176,14 +212,16 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
           className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border bg-primary text-white border-primary hover:bg-primary/90 transition-colors"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
-          {showForm ? 'Cancel' : 'Log Delivery'}
+          {showForm ? "Cancel" : "Log Delivery"}
         </button>
       </div>
 
       {/* Add form */}
       {showForm && (
         <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">New Delivery</h4>
+          <h4 className="text-[13px] font-bold text-foreground mb-4">
+            New Delivery
+          </h4>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
@@ -191,12 +229,16 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               </label>
               <select
                 value={form.transactionId}
-                onChange={(e) => setForm((f) => ({ ...f, transactionId: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, transactionId: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
                 <option value="">Select an order...</option>
-                {customer.transactions.map(t => (
-                  <option key={t.id} value={t.id}>{t.number} - {t.type} ({t.status})</option>
+                {customer.transactions.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.number} - {t.type} ({t.status})
+                  </option>
                 ))}
               </select>
             </div>
@@ -206,11 +248,15 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               </label>
               <select
                 value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, type: e.target.value as any }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
                 {FULFILLMENT_TYPES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
@@ -220,11 +266,15 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               </label>
               <select
                 value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, status: e.target.value as any }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               >
                 {FULFILLMENT_STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
@@ -234,7 +284,9 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               </label>
               <input
                 value={form.carrier}
-                onChange={(e) => setForm((f) => ({ ...f, carrier: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, carrier: e.target.value }))
+                }
                 placeholder="e.g. FedEx, DHL"
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
@@ -245,7 +297,9 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               </label>
               <input
                 value={form.trackingNumber}
-                onChange={(e) => setForm((f) => ({ ...f, trackingNumber: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, trackingNumber: e.target.value }))
+                }
                 placeholder="TRK-XXXXXXXX"
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
@@ -257,7 +311,9 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               <input
                 type="date"
                 value={form.scheduledAt}
-                onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, scheduledAt: e.target.value }))
+                }
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
               />
             </div>
@@ -267,7 +323,9 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               </label>
               <textarea
                 value={form.deliveryNotes}
-                onChange={(e) => setForm((f) => ({ ...f, deliveryNotes: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, deliveryNotes: e.target.value }))
+                }
                 placeholder="Any special instructions..."
                 rows={2}
                 className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors resize-none"
@@ -280,7 +338,7 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               disabled={loading || !form.transactionId || !form.scheduledAt}
               className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Logging...' : 'Log Delivery'}
+              {loading ? "Logging..." : "Log Delivery"}
             </button>
           </div>
         </div>
@@ -288,7 +346,7 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
 
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {['All', ...FULFILLMENT_STATUSES].map((s) => {
+        {["All", ...FULFILLMENT_STATUSES].map((s) => {
           const isActive = filterStatus === s;
           return (
             <button
@@ -296,8 +354,8 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               onClick={() => setFilterStatus(s)}
               className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
                 isActive
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+                  ? "bg-primary text-white border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground"
               }`}
             >
               {s}
@@ -312,15 +370,19 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
           icon={Package}
           title="No deliveries found"
           description={
-            filterStatus === 'All'
-              ? 'No deliveries have been logged for this customer.'
+            filterStatus === "All"
+              ? "No deliveries have been logged for this customer."
               : `No deliveries with status "${filterStatus}".`
           }
         />
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((d) => (
-            <DeliveryRow key={d.id} delivery={d} transaction={(d as any).transaction} />
+            <DeliveryRow
+              key={d.id}
+              delivery={d}
+              transaction={(d as any).transaction}
+            />
           ))}
         </div>
       )}

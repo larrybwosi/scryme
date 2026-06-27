@@ -64,12 +64,18 @@ export default function PendingOrdersList() {
 
   const mapOrderType = (type: string): any => {
     switch (type) {
-      case 'dine-in': return 'Dine in';
-      case 'takeaway': return 'Takeaway';
-      case 'delivery': return 'Delivery';
-      case 'pickup': return 'Pickup';
-      case 'online': return 'Online';
-      default: return 'Takeaway';
+      case 'dine-in':
+        return 'Dine in';
+      case 'takeaway':
+        return 'Takeaway';
+      case 'delivery':
+        return 'Delivery';
+      case 'pickup':
+        return 'Pickup';
+      case 'online':
+        return 'Online';
+      default:
+        return 'Takeaway';
     }
   };
 
@@ -108,19 +114,17 @@ export default function PendingOrdersList() {
                     {getOrderIcon(order.orderType)}
                     <span>{mapOrderType(order.orderType)}</span>
                   </div>
-                  <Badge className={cn('text-[10px] uppercase tracking-wider h-5 px-1.5', getStatusColor(order.status))}>
+                  <Badge
+                    className={cn('text-[10px] uppercase tracking-wider h-5 px-1.5', getStatusColor(order.status))}
+                  >
                     {order.status}
                   </Badge>
                 </div>
 
                 {/* Middle Row: Customer & Total */}
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-foreground truncate pr-2">
-                    {order.customerName || 'Guest'}
-                  </span>
-                  <span className="font-semibold text-foreground whitespace-nowrap">
-                    {formatCurrency(order.total)}
-                  </span>
+                  <span className="font-semibold text-foreground truncate pr-2">{order.customerName || 'Guest'}</span>
+                  <span className="font-semibold text-foreground whitespace-nowrap">{formatCurrency(order.total)}</span>
                 </div>
 
                 {/* Bottom Row: Metadata Grid */}
@@ -140,10 +144,10 @@ export default function PendingOrdersList() {
 
                 {/* Action Button */}
                 {order.paymentMethod === 'pending' && (
-                  <Button 
-                    size="sm" 
-                    variant="default" 
-                    className="w-full h-8 mt-1 text-xs font-semibold shadow-none" 
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="w-full h-8 mt-1 text-xs font-semibold shadow-none"
                     onClick={e => handlePayOrder(order, e)}
                   >
                     Pay Now
@@ -192,10 +196,10 @@ export default function PendingOrdersList() {
             const state = usePosStore.getState();
             state.updateOrderStatus(orderToPay.id, 'completed');
             if (orderToPay.tableNumber) {
-               const table = state.tables.find(t => t.number === orderToPay.tableNumber);
-               if (table) {
-                 state.clearTableOrder(table.id);
-               }
+              const table = state.tables.find(t => t.number === orderToPay.tableNumber);
+              if (table) {
+                state.clearTableOrder(table.id);
+              }
             }
             setPaymentDialogOpen(false);
           }}

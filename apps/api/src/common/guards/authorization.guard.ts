@@ -30,7 +30,7 @@ export class AuthorizationGuard implements CanActivate {
     const { v2Context } = context.switchToHttp().getRequest<any>();
 
     if (requiredPermissions) {
-      const hasPermission = requiredPermissions.every((permission) =>
+      const hasPermission = requiredPermissions.every(permission =>
         this.hasPermission(v2Context.permissions, permission),
       );
       if (!hasPermission) {
@@ -39,7 +39,7 @@ export class AuthorizationGuard implements CanActivate {
     }
 
     if (requiredScopes) {
-      const hasScope = requiredScopes.every((scope) =>
+      const hasScope = requiredScopes.every(scope =>
         this.hasScope(v2Context.scopes, scope),
       );
       if (!hasScope) {

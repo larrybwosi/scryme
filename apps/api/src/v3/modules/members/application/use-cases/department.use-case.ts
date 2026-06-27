@@ -130,14 +130,18 @@ export class DepartmentUseCase {
     // Handle Integrations (Scryme & Plane)
     try {
       const [scrymeConfig, planeConfig] = await Promise.all([
-        this.prisma.client.scrymeConfiguration.findUnique({ where: { organizationId } }),
-        this.prisma.client.planeConfiguration.findUnique({ where: { organizationId } }),
+        this.prisma.client.scrymeConfiguration.findUnique({
+          where: { organizationId },
+        }),
+        this.prisma.client.planeConfiguration.findUnique({
+          where: { organizationId },
+        }),
       ]);
 
       const updates: any = {};
 
       if (scrymeConfig?.workspaceSlug && scrymeConfig.isActive) {
-        const channelSlug = `dept-${department.name.toLowerCase().replace(/\s+/g, '-')}`;
+        const channelSlug = `dept-${department.name.toLowerCase().replace(/\s+/g, "-")}`;
         const channel = await this.scrymeClient.createChannel(
           scrymeConfig.workspaceSlug,
           department.name,
@@ -163,7 +167,7 @@ export class DepartmentUseCase {
         });
       }
     } catch (error) {
-      console.error('Failed to provision integrations for department:', error);
+      console.error("Failed to provision integrations for department:", error);
     }
 
     await this.prisma.client.auditLog.create({
@@ -268,24 +272,34 @@ export class DepartmentUseCase {
     try {
       const fullDept = await this.prisma.client.department.findUnique({
         where: { id: departmentId },
-        include: { organization: { include: { scrymeConfiguration: true, planeConfiguration: true } } }
+        include: {
+          organization: {
+            include: { scrymeConfiguration: true, planeConfiguration: true },
+          },
+        },
       });
       const fullMember = await this.prisma.client.member.findUnique({
         where: { id: dto.memberId },
-        include: { user: { select: { email: true, scrymeUserId: true } } }
+        include: { user: { select: { email: true, scrymeUserId: true } } },
       });
 
       if (fullDept && fullMember?.user?.email) {
-        const { scrymeConfiguration, planeConfiguration, slug } = fullDept.organization;
+        const { scrymeConfiguration, planeConfiguration, slug } =
+          fullDept.organization;
 
-        if (scrymeConfiguration?.workspaceSlug && scrymeConfiguration.isActive) {
+        if (
+          scrymeConfiguration?.workspaceSlug &&
+          scrymeConfiguration.isActive
+        ) {
           let channelId = fullDept.scrymeChannelId;
 
           // Enterprise: Automatically create channel if missing
           if (!channelId) {
-            this.logger.log(`Scryme channel missing for department ${fullDept.name}, creating...`);
+            this.logger.log(
+              `Scryme channel missing for department ${fullDept.name}, creating...`,
+            );
             try {
-              const channelSlug = `dept-${fullDept.name.toLowerCase().replace(/\s+/g, '-')}`;
+              const channelSlug = `dept-${fullDept.name.toLowerCase().replace(/\s+/g, "-")}`;
               const channel = await this.scrymeClient.createChannel(
                 scrymeConfiguration.workspaceSlug,
                 fullDept.name,
@@ -297,7 +311,9 @@ export class DepartmentUseCase {
                 data: { scrymeChannelId: channelId },
               });
             } catch (err: any) {
-              this.logger.error(`Failed to auto-create Scryme channel: ${err.message}`);
+              this.logger.error(
+                `Failed to auto-create Scryme channel: ${err.message}`,
+              );
             }
           }
 
@@ -309,29 +325,36 @@ export class DepartmentUseCase {
                 fullMember.user.email,
               );
             } catch (err: any) {
-            // If user not found, try robust mapping
-            if (
-              err.response?.status === 404 &&
-              fullMember.user.scrymeUserId
-            ) {
-              this.logger.warn(
-                `Email-based add failed for ${fullMember.user.email}, retrying with scrymeUserId`,
-              );
-              // Scryme API might have an ID-based add method or we use sync
+              // If user not found, try robust mapping
+              if (
+                err.response?.status === 404 &&
+                fullMember.user.scrymeUserId
+              ) {
+                this.logger.warn(
+                  `Email-based add failed for ${fullMember.user.email}, retrying with scrymeUserId`,
+                );
+                // Scryme API might have an ID-based add method or we use sync
+              }
+              throw err;
             }
-            throw err;
           }
         }
-      }
 
-      if (fullDept.planeProjectId && planeConfiguration?.workspaceSlug) {
-           // Plane requires adding to workspace first, then project
-           await this.planeClient.addWorkspaceMember(planeConfiguration.workspaceSlug, fullMember.user.email);
-           await this.planeClient.addProjectMember(planeConfiguration.workspaceSlug, fullDept.planeProjectId, fullMember.id);
+        if (fullDept.planeProjectId && planeConfiguration?.workspaceSlug) {
+          // Plane requires adding to workspace first, then project
+          await this.planeClient.addWorkspaceMember(
+            planeConfiguration.workspaceSlug,
+            fullMember.user.email,
+          );
+          await this.planeClient.addProjectMember(
+            planeConfiguration.workspaceSlug,
+            fullDept.planeProjectId,
+            fullMember.id,
+          );
         }
       }
     } catch (error) {
-      console.error('Failed to sync member to integrations:', error);
+      console.error("Failed to sync member to integrations:", error);
     }
 
     return membership;

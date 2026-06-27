@@ -24,7 +24,7 @@ export class StandardResponseInterceptor<T> implements NestInterceptor<
     next: CallHandler,
   ): Observable<Response<T>> {
     return next.handle().pipe(
-      map((data) => {
+      map(data => {
         if (data && typeof data === "object" && "success" in data) {
           return data;
         }

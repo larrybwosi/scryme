@@ -147,7 +147,10 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -167,7 +170,11 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
         </div>
 
         <div className="pt-4">
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Creating..." : "Create Lead"}
           </Button>
         </div>

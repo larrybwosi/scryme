@@ -1,22 +1,25 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { campaignSegmentSchema, type CampaignSegmentFormValues } from '@/lib/validations';
-import { createSegment } from '@/app/actions/campaigns';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  campaignSegmentSchema,
+  type CampaignSegmentFormValues,
+} from "@/lib/validations";
+import { createSegment } from "@/app/actions/campaigns";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@repo/ui/components/ui/form';
-import { Input } from '@repo/ui/components/ui/input';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Button } from '@repo/ui/components/ui/button';
-import { toast } from 'sonner';
+  FormMessage,
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Button } from "@repo/ui/components/ui/button";
+import { toast } from "sonner";
 
 interface SegmentFormProps {
   organizationId: string;
@@ -27,9 +30,9 @@ export function SegmentForm({ organizationId, onSuccess }: SegmentFormProps) {
   const form = useForm<CampaignSegmentFormValues>({
     resolver: zodResolver(campaignSegmentSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      filters: { conditions: [], logic: 'AND' },
+      name: "",
+      description: "",
+      filters: { conditions: [], logic: "AND" },
     },
   });
 
@@ -37,13 +40,13 @@ export function SegmentForm({ organizationId, onSuccess }: SegmentFormProps) {
     try {
       const result = await createSegment(values, organizationId);
       if (result.success) {
-        toast.success('Segment created successfully');
+        toast.success("Segment created successfully");
         onSuccess();
       } else {
-        toast.error(result.error || 'Failed to create segment');
+        toast.error(result.error || "Failed to create segment");
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     }
   };
 
@@ -71,7 +74,11 @@ export function SegmentForm({ organizationId, onSuccess }: SegmentFormProps) {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Customers with >$1000 spend..." {...field} value={field.value || ''} />
+                <Textarea
+                  placeholder="Customers with >$1000 spend..."
+                  {...field}
+                  value={field.value || ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,12 +86,14 @@ export function SegmentForm({ organizationId, onSuccess }: SegmentFormProps) {
         />
 
         <div className="p-4 bg-slate-50 rounded-lg border border-dashed text-center">
-           <p className="text-xs text-muted-foreground">Filter builder UI will be implemented here.</p>
+          <p className="text-xs text-muted-foreground">
+            Filter builder UI will be implemented here.
+          </p>
         </div>
 
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Creating...' : 'Create Segment'}
+            {form.formState.isSubmitting ? "Creating..." : "Create Segment"}
           </Button>
         </div>
       </form>

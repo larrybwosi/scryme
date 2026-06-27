@@ -36,7 +36,12 @@ export function ThermalReceiptPreview({
   const titleSize = config.titleFontSize || 20;
 
   const alignmentClass = config.textAlignment === 'center' ? 'text-center' : 'text-left';
-  const dividerStyle = config.dividerStyle === 'dashed' ? 'border-dashed' : config.dividerStyle === 'dotted' ? 'border-dotted' : 'border-solid';
+  const dividerStyle =
+    config.dividerStyle === 'dashed'
+      ? 'border-dashed'
+      : config.dividerStyle === 'dotted'
+        ? 'border-dotted'
+        : 'border-solid';
   const primaryColor = config.primaryColor || '#000000';
 
   const formatCurrency = (amount: number) => {
@@ -72,7 +77,11 @@ export function ThermalReceiptPreview({
           <div
             className={cn(
               'mb-2 flex',
-              config.logoPosition === 'center' ? 'justify-center' : config.logoPosition === 'right' ? 'justify-end' : 'justify-start'
+              config.logoPosition === 'center'
+                ? 'justify-center'
+                : config.logoPosition === 'right'
+                  ? 'justify-end'
+                  : 'justify-start'
             )}
           >
             <div
@@ -108,7 +117,10 @@ export function ThermalReceiptPreview({
         </div>
 
         {/* Compliance details in header */}
-        <div className="mt-2 flex flex-wrap justify-center gap-x-2 gap-y-0.5 opacity-70" style={{ fontSize: `${headerSize - 3}px` }}>
+        <div
+          className="mt-2 flex flex-wrap justify-center gap-x-2 gap-y-0.5 opacity-70"
+          style={{ fontSize: `${headerSize - 3}px` }}
+        >
           {config.showTaxNumber && config.taxNumber && <span>TIN: {config.taxNumber}</span>}
           {config.showVatNumber && config.vatNumber && <span>VAT: {config.vatNumber}</span>}
           {config.showCompanyRegNumber && config.companyRegNumber && <span>REG: {config.companyRegNumber}</span>}
@@ -160,7 +172,10 @@ export function ThermalReceiptPreview({
 
       {/* Modern Template Style Header */}
       {template === 'modern' ? (
-        <div className="bg-black text-white px-2 py-1 mb-2 flex justify-between font-bold" style={{ fontSize: `${headerSize - 2}px` }}>
+        <div
+          className="bg-black text-white px-2 py-1 mb-2 flex justify-between font-bold"
+          style={{ fontSize: `${headerSize - 2}px` }}
+        >
           <span>ITEM</span>
           <div className="flex gap-4">
             <span>QTY</span>
@@ -183,9 +198,7 @@ export function ThermalReceiptPreview({
                 {item.variantName && item.variantName !== 'Default Variant' && (
                   <p className="text-[10px] opacity-70 italic">({item.variantName})</p>
                 )}
-                {config.showItemSku && item.sku && (
-                  <p className="text-[9px] opacity-60">SKU: {item.sku}</p>
-                )}
+                {config.showItemSku && item.sku && <p className="text-[9px] opacity-60">SKU: {item.sku}</p>}
               </div>
               <div className="flex gap-4 items-start" style={{ fontSize: `${baseSize}px` }}>
                 <span className="w-8 text-center">{item.quantity}</span>
@@ -195,9 +208,7 @@ export function ThermalReceiptPreview({
               </div>
             </div>
             {config.showItemNotes && item.notes && (
-              <p className="text-[10px] italic opacity-80 pl-2 mt-0.5 border-l border-zinc-300">
-                * {item.notes}
-              </p>
+              <p className="text-[10px] italic opacity-80 pl-2 mt-0.5 border-l border-zinc-300">* {item.notes}</p>
             )}
           </div>
         ))}
@@ -245,7 +256,10 @@ export function ThermalReceiptPreview({
         )}
 
         {config.showPaymentMethod && (
-          <div className="flex justify-between mt-2 pt-2 border-t border-zinc-200 opacity-80" style={{ fontSize: `${baseSize - 1}px` }}>
+          <div
+            className="flex justify-between mt-2 pt-2 border-t border-zinc-200 opacity-80"
+            style={{ fontSize: `${baseSize - 1}px` }}
+          >
             <span>PAYMENT METHOD</span>
             <span className="uppercase">{order.paymentMethod}</span>
           </div>
@@ -302,7 +316,9 @@ export function ThermalReceiptPreview({
               <div className="w-24 h-24 bg-zinc-200 flex items-center justify-center text-[10px] text-zinc-400 font-bold border border-zinc-300">
                 QR CODE
               </div>
-              {config.qrCodeTarget === 'survey' && <p className="text-[9px] uppercase tracking-tighter">Scan to Rate Us</p>}
+              {config.qrCodeTarget === 'survey' && (
+                <p className="text-[9px] uppercase tracking-tighter">Scan to Rate Us</p>
+              )}
             </div>
           )}
 
@@ -334,9 +350,7 @@ export function ThermalReceiptPreview({
           </div>
         )}
 
-        <p className="text-[9px] opacity-40 mt-4">
-          NeoReceipts v2.0 - {format(new Date(), 'yyyy')}
-        </p>
+        <p className="text-[9px] opacity-40 mt-4">NeoReceipts v2.0 - {format(new Date(), 'yyyy')}</p>
       </div>
     </div>
   );

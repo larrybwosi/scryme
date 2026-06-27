@@ -202,12 +202,7 @@ export default function PendingTransactionsPage() {
       const settings = usePosStore.getState().settings;
       const branchName = useAuthStore.getState().currentLocation?.name;
 
-      await printDocument(
-        'invoice',
-        { invoiceUrl: tx.invoiceLink, number: tx.number || tx.id },
-        settings,
-        branchName
-      );
+      await printDocument('invoice', { invoiceUrl: tx.invoiceLink, number: tx.number || tx.id }, settings, branchName);
       toast.success('Print job sent');
     } catch (err: any) {
       toast.error('Print failed', { description: err.message || 'Check printer settings' });
@@ -222,12 +217,7 @@ export default function PendingTransactionsPage() {
       const settings = usePosStore.getState().settings;
       const branchName = useAuthStore.getState().currentLocation?.name;
 
-      await printDocument(
-        'waybill',
-        { waybillUrl: url, number: tx.number || tx.id },
-        settings,
-        branchName
-      );
+      await printDocument('waybill', { waybillUrl: url, number: tx.number || tx.id }, settings, branchName);
       toast.success('Print job sent');
     } catch (err: any) {
       toast.error('Print failed', { description: err.message || 'Check printer settings' });

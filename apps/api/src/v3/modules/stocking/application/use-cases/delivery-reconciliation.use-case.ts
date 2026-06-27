@@ -69,7 +69,7 @@ export class DeliveryReconciliationUseCase {
     memberId: string,
     dto: DispatchOrderDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // Logic for dispatching
       return { success: true };
     });
@@ -80,7 +80,7 @@ export class DeliveryReconciliationUseCase {
     memberId: string,
     dto: ReconcilePodDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const fulfillmentId = dto.fulfillmentId;
       const qtyDelivered = dto.quantityDelivered || 0;
       const qtyReturned = 0; // Legacy mapping from when DTO had qtyReturned
@@ -221,7 +221,7 @@ export class DeliveryReconciliationUseCase {
 
             if (sellingUnitId && baseUnitId && sellingUnitId !== baseUnitId) {
               const conversion = item.variant.product.unitConversions.find(
-                (c) =>
+                c =>
                   c.fromUnitId === sellingUnitId && c.toUnitId === baseUnitId,
               );
               if (conversion) {

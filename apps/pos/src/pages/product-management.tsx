@@ -3,7 +3,14 @@ import { usePosProducts } from '@/hooks/products';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@repo/ui/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@repo/ui/components/ui/dialog';
 import { Label } from '@repo/ui/components/ui/label';
 import { Plus, Pencil, Trash2, Search, Printer } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
@@ -41,21 +48,25 @@ export default function ProductManagementPage() {
       barcode: barcode,
       price: parseFloat(formData.get('price') as string),
       stock: parseInt(formData.get('stock') as string) || 0,
-      variants: editingProduct?.variants?.map((v: any, idx: number) => idx === 0 ? { ...v, barcode } : v) || [{
+      variants: editingProduct?.variants?.map((v: any, idx: number) => (idx === 0 ? { ...v, barcode } : v)) || [
+        {
           variantId: uuidv4(),
           name: 'Default',
           sku: '',
           barcode: barcode,
           stock: parseInt(formData.get('stock') as string) || 0,
-          sellableUnits: [{
+          sellableUnits: [
+            {
               unitId: uuidv4(),
               unitName: 'Unit',
               conversion: 1,
               price: parseFloat(formData.get('price') as string),
-              isBaseUnit: true
-          }]
-      }],
-      location_id: 'standalone'
+              isBaseUnit: true,
+            },
+          ],
+        },
+      ],
+      location_id: 'standalone',
     };
 
     try {
@@ -90,15 +101,23 @@ export default function ProductManagementPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Product Management</h1>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingProduct(null);
-            setScannedBarcode('');
-          }
-        }}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={open => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingProduct(null);
+              setScannedBarcode('');
+            }
+          }}
+        >
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingProduct(null); setScannedBarcode(''); }}>
+            <Button
+              onClick={() => {
+                setEditingProduct(null);
+                setScannedBarcode('');
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" /> Add Product
             </Button>
           </DialogTrigger>
@@ -113,16 +132,34 @@ export default function ProductManagementPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="barcode">Barcode</Label>
-                <Input id="barcode" name="barcode" defaultValue={scannedBarcode || editingProduct?.barcode || editingProduct?.variants?.[0]?.barcode} placeholder="Scan or enter barcode" />
+                <Input
+                  id="barcode"
+                  name="barcode"
+                  defaultValue={scannedBarcode || editingProduct?.barcode || editingProduct?.variants?.[0]?.barcode}
+                  placeholder="Scan or enter barcode"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="price">Price</Label>
-                  <Input id="price" name="price" type="number" step="0.01" defaultValue={editingProduct?.price || editingProduct?.variants?.[0]?.price} required />
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingProduct?.price || editingProduct?.variants?.[0]?.price}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stock">Stock</Label>
-                  <Input id="stock" name="stock" type="number" defaultValue={editingProduct?.stock || editingProduct?.variants?.[0]?.stock} required />
+                  <Input
+                    id="stock"
+                    name="stock"
+                    type="number"
+                    defaultValue={editingProduct?.stock || editingProduct?.variants?.[0]?.stock}
+                    required
+                  />
                 </div>
               </div>
               <DialogFooter>
@@ -139,7 +176,7 @@ export default function ProductManagementPage() {
           placeholder="Search products..."
           className="pl-10"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
         />
       </div>
 
@@ -159,7 +196,9 @@ export default function ProductManagementPage() {
               <TableRow key={product.productId}>
                 <TableCell className="font-medium">{product.productName || product.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
-                <TableCell>{product.price || product.variants?.[0]?.price || product.variants?.[0]?.sellableUnits?.[0]?.price}</TableCell>
+                <TableCell>
+                  {product.price || product.variants?.[0]?.price || product.variants?.[0]?.sellableUnits?.[0]?.price}
+                </TableCell>
                 <TableCell>{product.stock || product.variants?.[0]?.stock}</TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -169,21 +208,26 @@ export default function ProductManagementPage() {
                     onClick={async () => {
                       try {
                         const currency = usePosStore.getState().settings.receiptConfig.currency || 'USD';
-                        await LabelService.printLabels([{
-                          id: product.productId,
-                          name: product.productName,
-                          barcode: product.barcode || product.sku || product.productId,
-                          price: product.price || product.variants?.[0]?.price || 0,
-                          currency,
-                          quantity: 1
-                        }], {
-                          size: '50x30',
-                          showPrice: true,
-                          showSku: true,
-                          showName: true,
-                          barcodeType: 'code128',
-                          printerName: 'default'
-                        });
+                        await LabelService.printLabels(
+                          [
+                            {
+                              id: product.productId,
+                              name: product.productName,
+                              barcode: product.barcode || product.sku || product.productId,
+                              price: product.price || product.variants?.[0]?.price || 0,
+                              currency,
+                              quantity: 1,
+                            },
+                          ],
+                          {
+                            size: '50x30',
+                            showPrice: true,
+                            showSku: true,
+                            showName: true,
+                            barcodeType: 'code128',
+                            printerName: 'default',
+                          }
+                        );
                         toast.success('Label sent to printer');
                       } catch (err) {
                         toast.error('Printing failed');
@@ -192,10 +236,22 @@ export default function ProductManagementPage() {
                   >
                     <Printer className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setEditingProduct(product);
+                      setIsDialogOpen(true);
+                    }}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(product.productId)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive"
+                    onClick={() => handleDelete(product.productId)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </TableCell>

@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
-import {
-  InvoiceTemplate,
-  DocumentGenerator,
-} from "./index";
+import { InvoiceTemplate, DocumentGenerator } from "./index";
 
 // Mock @react-pdf/renderer
 vi.mock("@react-pdf/renderer", async () => {

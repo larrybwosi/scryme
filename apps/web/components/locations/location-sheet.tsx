@@ -69,7 +69,9 @@ const locationSchema = z.object({
 
 type LocationFormValues = z.infer<typeof locationSchema>;
 
-interface LocationSheetProps extends React.ComponentPropsWithoutRef<typeof SheetTrigger> {
+interface LocationSheetProps extends React.ComponentPropsWithoutRef<
+  typeof SheetTrigger
+> {
   children?: React.ReactNode;
   location?: any;
   locations?: any[];

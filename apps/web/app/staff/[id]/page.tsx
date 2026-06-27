@@ -14,7 +14,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { BarChart3, Activity, Settings, LayoutDashboard, Building2 } from "lucide-react";
+import {
+  BarChart3,
+  Activity,
+  Settings,
+  LayoutDashboard,
+  Building2,
+} from "lucide-react";
 
 export default async function StaffMemberPage({
   params,
@@ -84,7 +90,11 @@ export default async function StaffMemberPage({
 
           <TabsContent value="overview" className="space-y-6 outline-none">
             <StaffOverview stats={stats} />
-            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
+            <StaffDepartments
+              memberships={
+                (departmentsResult.success ? departmentsResult.data : []) ?? []
+              }
+            />
             <StaffActivity
               transactions={member.transactions}
               attendanceLogs={member.attendanceLogs}
@@ -113,7 +123,11 @@ export default async function StaffMemberPage({
           </TabsContent>
 
           <TabsContent value="departments" className="outline-none">
-            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
+            <StaffDepartments
+              memberships={
+                (departmentsResult.success ? departmentsResult.data : []) ?? []
+              }
+            />
           </TabsContent>
         </Tabs>
       </div>

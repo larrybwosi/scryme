@@ -35,18 +35,22 @@ The **Scryme API** is a robust, enterprise-grade [NestJS](https://nestjs.com/) R
 ### Steps
 
 1. **Install Dependencies** (from the monorepo root)
+
    ```bash
    pnpm install
    ```
 
 2. **Environment Variables**
    Create a `.env` file based on `.env.example`:
+
    ```bash
    cp .env.example .env
    ```
+
    Fill in your database credentials and Zitadel configuration.
 
 3. **Database Setup**
+
    ```bash
    pnpm run db:migrate:dev
    pnpm run db:seed
@@ -68,6 +72,7 @@ The **Scryme API** is a robust, enterprise-grade [NestJS](https://nestjs.com/) R
 The API is containerized and ready for production.
 
 1. **Build the Image**
+
    ```bash
    docker build -t scryme-api -f apps/api/Dockerfile .
    ```
@@ -82,14 +87,14 @@ The API is containerized and ready for production.
 
 Ensure the following variables are set in your production environment:
 
-| Variable | Description |
-| :--- | :--- |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `ZITADEL_API_URL` | Your Zitadel domain |
-| `ZITADEL_CLIENT_ID` | Zitadel application client ID |
-| `REDIS_URL` | Redis connection URL |
-| `RABBITMQ_URL` | RabbitMQ connection URL |
-| `JWT_SECRET` | Secret for signing internal tokens |
+| Variable            | Description                        |
+| :------------------ | :--------------------------------- |
+| `DATABASE_URL`      | PostgreSQL connection string       |
+| `ZITADEL_API_URL`   | Your Zitadel domain                |
+| `ZITADEL_CLIENT_ID` | Zitadel application client ID      |
+| `REDIS_URL`         | Redis connection URL               |
+| `RABBITMQ_URL`      | RabbitMQ connection URL            |
+| `JWT_SECRET`        | Secret for signing internal tokens |
 
 ---
 

@@ -1,6 +1,6 @@
-import React from 'react';
-import { cn } from '../lib/utils';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import React from "react";
+import { cn } from "../lib/utils";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 export interface PaginationProps {
   currentPage: number;
@@ -32,7 +32,10 @@ export function Pagination({
         pages.push(i);
       }
     } else {
-      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let startPage = Math.max(
+        1,
+        currentPage - Math.floor(maxVisiblePages / 2),
+      );
       let endPage = startPage + maxVisiblePages - 1;
 
       if (endPage > totalPages) {
@@ -43,7 +46,7 @@ export function Pagination({
       if (startPage > 1) {
         pages.push(1);
         if (startPage > 2) {
-          pages.push('...');
+          pages.push("...");
         }
       }
 
@@ -53,7 +56,7 @@ export function Pagination({
 
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
-          pages.push('...');
+          pages.push("...");
         }
         pages.push(totalPages);
       }
@@ -77,9 +80,9 @@ export function Pagination({
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row items-center justify-between gap-4 mt-6',
-        isLoading && 'opacity-75 pointer-events-none',
-        className
+        "flex flex-col sm:flex-row items-center justify-between gap-4 mt-6",
+        isLoading && "opacity-75 pointer-events-none",
+        className,
       )}
     >
       <div className="text-sm text-muted-foreground">
@@ -90,7 +93,8 @@ export function Pagination({
           </div>
         ) : (
           <>
-            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalItems)} of {totalItems}{' '}
+            Showing {(currentPage - 1) * pageSize + 1} to{" "}
+            {Math.min(currentPage * pageSize, totalItems)} of {totalItems}{" "}
             entries
           </>
         )}
@@ -101,15 +105,15 @@ export function Pagination({
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1 || isLoading}
           className={cn(
-            'inline-flex items-center justify-center rounded-md p-2 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-accent hover:text-accent-foreground',
-            isLoading && 'cursor-not-allowed'
+            "inline-flex items-center justify-center rounded-md p-2 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-accent hover:text-accent-foreground",
+            isLoading && "cursor-not-allowed",
           )}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
         {getPageNumbers().map((page, index) =>
-          page === '...' ? (
+          page === "..." ? (
             <span key={index} className="px-3 py-1 text-sm">
               ...
             </span>
@@ -119,11 +123,11 @@ export function Pagination({
               onClick={() => handlePageChange(page as number)}
               disabled={isLoading}
               className={cn(
-                'inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium transition-colors',
+                "inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium transition-colors",
                 currentPage === page
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent hover:text-accent-foreground',
-                isLoading && 'cursor-not-allowed'
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-accent hover:text-accent-foreground",
+                isLoading && "cursor-not-allowed",
               )}
             >
               {isLoading && currentPage === page ? (
@@ -135,15 +139,15 @@ export function Pagination({
                 page
               )}
             </button>
-          )
+          ),
         )}
 
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages || isLoading}
           className={cn(
-            'inline-flex items-center justify-center rounded-md p-2 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-accent hover:text-accent-foreground',
-            isLoading && 'cursor-not-allowed'
+            "inline-flex items-center justify-center rounded-md p-2 text-sm font-medium disabled:opacity-50 disabled:pointer-events-none hover:bg-accent hover:text-accent-foreground",
+            isLoading && "cursor-not-allowed",
           )}
         >
           <ChevronRight className="h-4 w-4" />
@@ -155,14 +159,14 @@ export function Pagination({
           <span>Items per page:</span>
           <select
             value={pageSize}
-            onChange={e => handlePageSizeChange(Number(e.target.value))}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
             disabled={isLoading}
             className={cn(
-              'rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              isLoading && 'cursor-not-allowed opacity-50'
+              "rounded-md border border-input bg-background px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isLoading && "cursor-not-allowed opacity-50",
             )}
           >
-            {[10, 25, 50, 100].map(size => (
+            {[10, 25, 50, 100].map((size) => (
               <option key={size} value={size}>
                 {size}
               </option>

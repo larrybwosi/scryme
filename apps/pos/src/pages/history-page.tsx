@@ -1,18 +1,31 @@
-"use client"
+'use client';
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect } from 'react';
 import posthog from 'posthog-js';
-import { usePosStore } from "@/store/store"
-import { Card } from "@repo/ui/components/ui/card"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { Search, Download, Eye, Printer, AlertCircle, CheckCircle2, Cloud, RefreshCw, Wifi, WifiOff, Trash2, AlertTriangle } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { usePendingSales, useNetworkStatus, useRetrySale, useDeleteSale, useOldSalesCheck } from "@/hooks/sales"
-import { ReceiptDialog } from "@/components/receipt-dialog"
-import { Order } from "@/types"
+import { usePosStore } from '@/store/store';
+import { Card } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Badge } from '@repo/ui/components/ui/badge';
+import {
+  Search,
+  Download,
+  Eye,
+  Printer,
+  AlertCircle,
+  CheckCircle2,
+  Cloud,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Trash2,
+  AlertTriangle,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { usePendingSales, useNetworkStatus, useRetrySale, useDeleteSale, useOldSalesCheck } from '@/hooks/sales';
+import { ReceiptDialog } from '@/components/receipt-dialog';
+import { Order } from '@/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,46 +35,46 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/ui/alert-dialog"
+} from '@repo/ui/components/ui/alert-dialog';
 
 export function HistoryPage() {
-  const { pendingSales: queue, isLoading, error, syncSales, isSyncing } = usePendingSales()
-  const { isOnline } = useNetworkStatus()
-  const retrySale = useRetrySale()
-  const deleteSale = useDeleteSale()
-  useOldSalesCheck() // Check for old sales on mount
-  
-  const settings = usePosStore((state) => state.settings)
-  
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [dateFilter, setDateFilter] = useState<string>("all")
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [saleToDelete, setSaleToDelete] = useState<string | null>(null)
+  const { pendingSales: queue, isLoading, error, syncSales, isSyncing } = usePendingSales();
+  const { isOnline } = useNetworkStatus();
+  const retrySale = useRetrySale();
+  const deleteSale = useDeleteSale();
+  useOldSalesCheck(); // Check for old sales on mount
+
+  const settings = usePosStore(state => state.settings);
+
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
 
   // Receipt Printing State
-  const [receiptOpen, setReceiptOpen] = useState(false)
-  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (searchQuery) {
       const timer = setTimeout(() => {
-        posthog.capture("history_search", { query: searchQuery.substring(0, 50) });
+        posthog.capture('history_search', { query: searchQuery.substring(0, 50) });
       }, 1000);
       return () => clearTimeout(timer);
     }
   }, [searchQuery]);
 
   useEffect(() => {
-    if (statusFilter !== "all") {
-      posthog.capture("history_filter_status", { status: statusFilter });
+    if (statusFilter !== 'all') {
+      posthog.capture('history_filter_status', { status: statusFilter });
     }
   }, [statusFilter]);
 
   useEffect(() => {
-    if (dateFilter !== "all") {
-      posthog.capture("history_filter_date", { date: dateFilter });
+    if (dateFilter !== 'all') {
+      posthog.capture('history_filter_date', { date: dateFilter });
     }
   }, [dateFilter]);
 
@@ -76,10 +89,10 @@ export function HistoryPage() {
       variantName: item.variantName,
       unitName: item.sellingUnitName,
       selectedUnit: {
-          unitId: item.sellingUnitId,
-          unitName: item.sellingUnitName || '',
-          price: item.unitPrice || 0
-      }
+        unitId: item.sellingUnitId,
+        unitName: item.sellingUnitName || '',
+        price: item.unitPrice || 0,
+      },
     }));
 
     const order: any = {
@@ -96,50 +109,50 @@ export function HistoryPage() {
       datetime: new Date().toISOString(), // This should ideally come from timestamp
       // We might need to pass the actual timestamp from the parent object if available
     };
-    
+
     setReceiptOrder(order);
     setReceiptOpen(true);
   };
 
   const filteredOrders = useMemo(() => {
-    const now = new Date()
-    let startDate: Date | null = null
+    const now = new Date();
+    let startDate: Date | null = null;
 
     switch (dateFilter) {
-      case "today":
-        startDate = new Date()
-        startDate.setHours(0, 0, 0, 0)
-        break
-      case "week":
-        startDate = new Date()
-        startDate.setDate(now.getDate() - 7)
-        break
-      case "month":
-        startDate = new Date()
-        startDate.setMonth(now.getMonth() - 1)
-        break
-      case "all":
+      case 'today':
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'week':
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'all':
       default:
-        startDate = null
-        break
+        startDate = null;
+        break;
     }
 
-    return queue.filter((item) => {
-      const customerId = item.transactionData.customerId || ""
-      const saleNumber = item.transactionData.saleNumber || ""
-      
+    return queue.filter(item => {
+      const customerId = item.transactionData.customerId || '';
+      const saleNumber = item.transactionData.saleNumber || '';
+
       const matchesSearch =
         customerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        saleNumber.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter
-      const matchesDate = !startDate || new Date(item.timestamp) >= startDate
+        saleNumber.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchesSearch && matchesStatus && matchesDate
-    })
-  }, [queue, searchQuery, statusFilter, dateFilter])
+      const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+      const matchesDate = !startDate || new Date(item.timestamp) >= startDate;
 
-  const selectedOrderData = selectedOrderId ? queue.find((o) => o.id === selectedOrderId) : null
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [queue, searchQuery, statusFilter, dateFilter]);
+
+  const selectedOrderData = selectedOrderId ? queue.find(o => o.id === selectedOrderId) : null;
 
   // Loading state
   if (isLoading) {
@@ -155,7 +168,7 @@ export function HistoryPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Error state
@@ -169,15 +182,11 @@ export function HistoryPage() {
           <div>
             <h3 className="text-lg font-medium text-destructive">Failed to Load Transactions</h3>
             <p className="text-sm text-muted-foreground mt-2">
-              {error.message || "An error occurred while fetching transaction history"}
+              {error.message || 'An error occurred while fetching transaction history'}
             </p>
           </div>
           <div className="space-x-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => window.location.reload()}
-              className="gap-2"
-            >
+            <Button variant="outline" onClick={() => window.location.reload()} className="gap-2">
               <RefreshCw className="w-4 h-4" />
               Retry
             </Button>
@@ -188,22 +197,22 @@ export function HistoryPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   const calculateTotal = (data: any) => {
-    const received = data.amountReceived || 0
-    const change = data.change || 0
-    return Math.max(0, received - change)
-  }
+    const received = data.amountReceived || 0;
+    const change = data.change || 0;
+    return Math.max(0, received - change);
+  };
 
   const totalSales = filteredOrders
-    .filter((o) => o.status === "SYNCED")
-    .reduce((sum, order) => sum + calculateTotal(order.transactionData), 0)
-    
-  const completedOrders = filteredOrders.filter((o) => o.status === "SYNCED").length
-  const avgOrderValue = completedOrders > 0 ? totalSales / completedOrders : 0
-  const totalOrders = filteredOrders.length
+    .filter(o => o.status === 'SYNCED')
+    .reduce((sum, order) => sum + calculateTotal(order.transactionData), 0);
+
+  const completedOrders = filteredOrders.filter(o => o.status === 'SYNCED').length;
+  const avgOrderValue = completedOrders > 0 ? totalSales / completedOrders : 0;
+  const totalOrders = filteredOrders.length;
 
   return (
     <div className="flex h-full">
@@ -218,25 +227,25 @@ export function HistoryPage() {
             </div>
             <div className="flex items-center gap-3">
               {/* Network Status Indicator */}
-              <Badge 
-                variant={isOnline ? "default" : "destructive"} 
+              <Badge
+                variant={isOnline ? 'default' : 'destructive'}
                 className={cn(
-                  "gap-2 px-3 py-1.5",
-                  isOnline ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
+                  'gap-2 px-3 py-1.5',
+                  isOnline ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'
                 )}
               >
                 {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-                {isOnline ? "Online" : "Offline"}
+                {isOnline ? 'Online' : 'Offline'}
               </Badge>
-              
+
               {/* Manual Sync Button */}
-              <Button 
+              <Button
                 onClick={() => syncSales()}
-                disabled={isSyncing || !isOnline || queue.filter(s => s.status === "PENDING").length === 0}
+                disabled={isSyncing || !isOnline || queue.filter(s => s.status === 'PENDING').length === 0}
                 className="gap-2"
               >
-                <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
-                {isSyncing ? "Syncing..." : "Sync Now"}
+                <RefreshCw className={cn('w-4 h-4', isSyncing && 'animate-spin')} />
+                {isSyncing ? 'Syncing...' : 'Sync Now'}
               </Button>
             </div>
           </div>
@@ -273,7 +282,7 @@ export function HistoryPage() {
                 <Input
                   placeholder="Search by ID or Sale #..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -346,25 +355,29 @@ export function HistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredOrders.map((item) => (
+                    {filteredOrders.map(item => (
                       <tr
                         key={item.id}
                         className={cn(
-                          "border-b border-border hover:bg-muted/50 transition-colors cursor-pointer",
-                          selectedOrderId === item.id && "bg-muted",
+                          'border-b border-border hover:bg-muted/50 transition-colors cursor-pointer',
+                          selectedOrderId === item.id && 'bg-muted'
                         )}
                         onClick={() => setSelectedOrderId(item.id)}
                       >
                         <td className="p-4">
                           <span className="font-medium">
-                              {item.transactionData.saleNumber || <span className="text-muted-foreground text-xs italic">Pending Gen</span>}
+                            {item.transactionData.saleNumber || (
+                              <span className="text-muted-foreground text-xs italic">Pending Gen</span>
+                            )}
                           </span>
                         </td>
                         <td className="p-4">
                           <span className="text-sm">
-                              {item.transactionData.customerId ? 
-                                  item.transactionData.customerId.slice(0, 8) + '...' : 
-                                  <span className="text-muted-foreground">Guest</span>}
+                            {item.transactionData.customerId ? (
+                              item.transactionData.customerId.slice(0, 8) + '...'
+                            ) : (
+                              <span className="text-muted-foreground">Guest</span>
+                            )}
                           </span>
                         </td>
                         <td className="p-4">
@@ -373,15 +386,15 @@ export function HistoryPage() {
                           </Badge>
                         </td>
                         <td className="p-4 text-sm text-muted-foreground">
-                          {new Date(item.timestamp).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}{" "}
+                          {new Date(item.timestamp).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}{' '}
                           <span className="text-xs">
-                              {new Date(item.timestamp).toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              })}
+                            {new Date(item.timestamp).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </span>
                         </td>
                         <td className="p-4 text-sm">{item.transactionData.cartItems.length} items</td>
@@ -400,8 +413,11 @@ export function HistoryPage() {
                             {(() => {
                               const now = Date.now();
                               const ageInDays = (now - item.timestamp) / (1000 * 60 * 60 * 24);
-                              return ageInDays > 3 && item.status !== "SYNCED" ? (
-                                <Badge variant="outline" className="bg-amber-500/10 text-amber-700 border-amber-200 gap-1">
+                              return ageInDays > 3 && item.status !== 'SYNCED' ? (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-amber-500/10 text-amber-700 border-amber-200 gap-1"
+                                >
                                   <AlertTriangle className="w-3 h-3" />
                                   Old
                                 </Badge>
@@ -410,32 +426,32 @@ export function HistoryPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <Eye className="w-4 h-4" />
                             </Button>
                             {/* Retry button for failed sales */}
-                            {item.status === "FAILED" && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                            {item.status === 'FAILED' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   retrySale.mutate(item.id);
                                 }}
                                 disabled={retrySale.isPending}
                               >
-                                <RefreshCw className={cn("w-4 h-4", retrySale.isPending && "animate-spin")} />
+                                <RefreshCw className={cn('w-4 h-4', retrySale.isPending && 'animate-spin')} />
                               </Button>
                             )}
                             {/* Delete button for failed sales */}
-                            {(item.status === "FAILED" || item.retryCount > 5) && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
+                            {(item.status === 'FAILED' || item.retryCount > 5) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   setSaleToDelete(item.id);
                                   setDeleteConfirmOpen(true);
@@ -480,22 +496,22 @@ export function HistoryPage() {
               </div>
 
               <div className="flex gap-2 mt-2">
-                 <Badge variant="secondary" className={getQueueStatusColor(selectedOrderData.status)}>
-                    {selectedOrderData.status}
+                <Badge variant="secondary" className={getQueueStatusColor(selectedOrderData.status)}>
+                  {selectedOrderData.status}
                 </Badge>
                 {selectedOrderData.transactionData.isWholesale && (
-                    <Badge variant="outline" className="bg-purple-500/10 text-purple-700">Wholesale</Badge>
+                  <Badge variant="outline" className="bg-purple-500/10 text-purple-700">
+                    Wholesale
+                  </Badge>
                 )}
               </div>
-              
+
               {/* Show retry count and last error for failed transactions */}
               {selectedOrderData.status === 'FAILED' && selectedOrderData.lastError && (
                 <div className="bg-red-50 p-3 rounded-md text-red-900 text-sm mt-3">
                   <span className="font-semibold block mb-1">Error:</span>
                   {selectedOrderData.lastError}
-                  <div className="text-xs mt-1 text-red-700">
-                    Retry attempts: {selectedOrderData.retryCount || 0}
-                  </div>
+                  <div className="text-xs mt-1 text-red-700">Retry attempts: {selectedOrderData.retryCount || 0}</div>
                 </div>
               )}
             </div>
@@ -507,18 +523,19 @@ export function HistoryPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Customer ID</span>
-                  <span className="font-mono text-xs">{selectedOrderData.transactionData.customerId || "Guest"}</span>
+                  <span className="font-mono text-xs">{selectedOrderData.transactionData.customerId || 'Guest'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Method</span>
                   <span className="font-medium">{selectedOrderData.transactionData.paymentMethod}</span>
                 </div>
-                {selectedOrderData.transactionData.paymentMethod === 'MPESA' && selectedOrderData.transactionData.mpesaPhoneNumber && (
+                {selectedOrderData.transactionData.paymentMethod === 'MPESA' &&
+                  selectedOrderData.transactionData.mpesaPhoneNumber && (
                     <div className="flex justify-between">
-                    <span className="text-muted-foreground">M-Pesa Phone</span>
-                    <span className="font-medium">{selectedOrderData.transactionData.mpesaPhoneNumber}</span>
+                      <span className="text-muted-foreground">M-Pesa Phone</span>
+                      <span className="font-medium">{selectedOrderData.transactionData.mpesaPhoneNumber}</span>
                     </div>
-                )}
+                  )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment Status</span>
                   <span className="font-medium">{selectedOrderData.transactionData.paymentStatus}</span>
@@ -530,24 +547,27 @@ export function HistoryPage() {
               <h3 className="font-semibold mb-3">Items</h3>
               <div className="space-y-3 bg-muted/30 p-3 rounded-lg">
                 {selectedOrderData.transactionData.cartItems.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm border-b border-border/50 pb-2 last:border-0 hover:bg-white/50 dark:hover:bg-black/20 p-2 rounded-sm transition-colors">
+                  <div
+                    key={index}
+                    className="flex justify-between text-sm border-b border-border/50 pb-2 last:border-0 hover:bg-white/50 dark:hover:bg-black/20 p-2 rounded-sm transition-colors"
+                  >
                     <div className="flex-1 pr-4">
                       <div className="font-medium text-sm truncate w-48" title={item.productName || item.productId}>
-                          {item.productName || <span className="text-muted-foreground font-mono text-xs">{item.productId}</span>}
+                        {item.productName || (
+                          <span className="text-muted-foreground font-mono text-xs">{item.productId}</span>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground truncate w-48">
-                         {item.variantName || <span className="font-mono text-[10px]">{item.variantId}</span>}
-                         {item.sellingUnitName && (
-                             <span className="ml-1 opacity-70">• {item.sellingUnitName}</span>
-                         )}
+                        {item.variantName || <span className="font-mono text-[10px]">{item.variantId}</span>}
+                        {item.sellingUnitName && <span className="ml-1 opacity-70">• {item.sellingUnitName}</span>}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">x{item.quantity}</div>
-                       {item.unitPrice && (
-                          <div className="text-[10px] text-muted-foreground">
-                              @ {settings.currency} {item.unitPrice.toLocaleString()}
-                          </div>
+                      {item.unitPrice && (
+                        <div className="text-[10px] text-muted-foreground">
+                          @ {settings.currency} {item.unitPrice.toLocaleString()}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -568,13 +588,13 @@ export function HistoryPage() {
                   {settings.currency} {(selectedOrderData.transactionData.change || 0).toLocaleString()}
                 </span>
               </div>
-               <div className="flex justify-between">
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">Discount</span>
                 <span className="text-emerald-600">
                   -{settings.currency} {(selectedOrderData.transactionData.discountAmount || 0).toLocaleString()}
                 </span>
               </div>
-              
+
               <div className="flex justify-between pt-2 border-t border-border">
                 <span className="font-semibold">Calculated Total</span>
                 <span className="font-bold text-lg">
@@ -584,15 +604,15 @@ export function HistoryPage() {
             </div>
 
             {selectedOrderData.transactionData.notes && (
-                <div className="bg-amber-50 p-3 rounded-md text-amber-900 text-sm">
-                    <span className="font-semibold block mb-1">Notes:</span>
-                    {selectedOrderData.transactionData.notes}
-                </div>
+              <div className="bg-amber-50 p-3 rounded-md text-amber-900 text-sm">
+                <span className="font-semibold block mb-1">Notes:</span>
+                {selectedOrderData.transactionData.notes}
+              </div>
             )}
 
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1 gap-2 bg-transparent hover:bg-muted"
                 onClick={() => handlePrintReceipt(selectedOrderData.transactionData)}
               >
@@ -600,13 +620,13 @@ export function HistoryPage() {
                 Print Receipt
               </Button>
             </div>
-            
+
             {/* Retry Button for Failed items */}
             {selectedOrderData.status === 'FAILED' && (
-                 <Button className="w-full gap-2 bg-red-600 hover:bg-red-700 text-white mt-2">
-                 <RefreshCw className="w-4 h-4" />
-                 Retry Sync
-               </Button>
+              <Button className="w-full gap-2 bg-red-600 hover:bg-red-700 text-white mt-2">
+                <RefreshCw className="w-4 h-4" />
+                Retry Sync
+              </Button>
             )}
           </div>
         </div>
@@ -628,23 +648,20 @@ export function HistoryPage() {
             <AlertDialogTitle>Delete Failed Sale?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove this sale from the queue. This action cannot be undone.
-              {saleToDelete && (() => {
-                const sale = queue.find(s => s.id === saleToDelete);
-                return sale ? (
-                  <div className="mt-3 p-3 bg-muted rounded-md text-sm">
-                    <div className="font-medium">Sale Details:</div>
-                    <div className="text-muted-foreground mt-1">
-                      Sale #: {sale.transactionData.saleNumber || 'Pending'}
+              {saleToDelete &&
+                (() => {
+                  const sale = queue.find(s => s.id === saleToDelete);
+                  return sale ? (
+                    <div className="mt-3 p-3 bg-muted rounded-md text-sm">
+                      <div className="font-medium">Sale Details:</div>
+                      <div className="text-muted-foreground mt-1">
+                        Sale #: {sale.transactionData.saleNumber || 'Pending'}
+                      </div>
+                      <div className="text-muted-foreground">Items: {sale.transactionData.cartItems.length}</div>
+                      <div className="text-muted-foreground">Retry Attempts: {sale.retryCount}</div>
                     </div>
-                    <div className="text-muted-foreground">
-                      Items: {sale.transactionData.cartItems.length}
-                    </div>
-                    <div className="text-muted-foreground">
-                      Retry Attempts: {sale.retryCount}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
+                  ) : null;
+                })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -664,35 +681,35 @@ export function HistoryPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
 
 const getQueueStatusColor = (status: string) => {
   switch (status) {
-    case "PENDING":
-      return "bg-amber-500/10 text-amber-700 border-amber-200"
-    case "SYNCING":
-      return "bg-blue-500/10 text-blue-700 border-blue-200 animate-pulse"
-    case "SYNCED":
-      return "bg-emerald-500/10 text-emerald-700 border-emerald-200"
-    case "FAILED":
-      return "bg-red-500/10 text-red-700 border-red-200"
+    case 'PENDING':
+      return 'bg-amber-500/10 text-amber-700 border-amber-200';
+    case 'SYNCING':
+      return 'bg-blue-500/10 text-blue-700 border-blue-200 animate-pulse';
+    case 'SYNCED':
+      return 'bg-emerald-500/10 text-emerald-700 border-emerald-200';
+    case 'FAILED':
+      return 'bg-red-500/10 text-red-700 border-red-200';
     default:
-      return "bg-gray-500/10 text-gray-700"
+      return 'bg-gray-500/10 text-gray-700';
   }
-}
+};
 
 const getQueueStatusIcon = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return <Cloud className="w-3 h-3" />
-      case "SYNCING":
-        return <RefreshCw className="w-3 h-3 animate-spin" />
-      case "SYNCED":
-        return <CheckCircle2 className="w-3 h-3" />
-      case "FAILED":
-        return <AlertCircle className="w-3 h-3" />
-      default:
-        return null
-    }
+  switch (status) {
+    case 'PENDING':
+      return <Cloud className="w-3 h-3" />;
+    case 'SYNCING':
+      return <RefreshCw className="w-3 h-3 animate-spin" />;
+    case 'SYNCED':
+      return <CheckCircle2 className="w-3 h-3" />;
+    case 'FAILED':
+      return <AlertCircle className="w-3 h-3" />;
+    default:
+      return null;
   }
+};

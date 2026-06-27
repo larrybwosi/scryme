@@ -1,4 +1,3 @@
-
 // Standardized response structure for actions
 export interface ActionResponse<TData = null> {
   success: boolean;

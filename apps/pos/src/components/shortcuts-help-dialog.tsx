@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@repo/ui/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@repo/ui/components/ui/dialog';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { Separator } from '@repo/ui/components/ui/separator';
 
@@ -54,23 +48,19 @@ export function ShortcutsHelpDialog({ open, onOpenChange }: ShortcutsHelpDialogP
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Keyboard Shortcuts</DialogTitle>
-          <DialogDescription>
-            Speed up your workflow with these keyboard shortcuts.
-          </DialogDescription>
+          <DialogDescription>Speed up your workflow with these keyboard shortcuts.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
           {shortcutGroups.map((group, groupIdx) => (
             <div key={group.title} className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                {group.title}
-              </h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{group.title}</h3>
               <div className="grid gap-3">
                 {group.shortcuts.map((shortcut, idx) => (
                   <div key={idx} className="flex items-center justify-between">
                     <span className="text-sm">{shortcut.description}</span>
                     <div className="flex items-center gap-2">
                       <KbdGroup>
-                        {shortcut.keys.map((key) => (
+                        {shortcut.keys.map(key => (
                           <Kbd key={key}>{key}</Kbd>
                         ))}
                       </KbdGroup>
@@ -78,7 +68,7 @@ export function ShortcutsHelpDialog({ open, onOpenChange }: ShortcutsHelpDialogP
                         <>
                           <span className="text-xs text-muted-foreground">or</span>
                           <KbdGroup>
-                            {shortcut.extra.map((key) => (
+                            {shortcut.extra.map(key => (
                               <Kbd key={key}>{key}</Kbd>
                             ))}
                           </KbdGroup>

@@ -1,27 +1,33 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { CalendarIcon } from "lucide-react"
-import type { DateRange } from "react-day-picker"
+import * as React from "react";
+import { CalendarIcon } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 
-import { cn } from "../lib/utils"
-import { Button } from "./ui/button"
-import { Calendar } from "./ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
+import { Calendar } from "./ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface DatePickerWithRangeProps {
-  className?: string
-  date?: DateRange
-  onDateChange?: (date: DateRange | undefined) => void
+  className?: string;
+  date?: DateRange;
+  onDateChange?: (date: DateRange | undefined) => void;
 }
 
-export function DatePickerWithRange({ className, date, onDateChange }: DatePickerWithRangeProps) {
-  const [selectedDate, setSelectedDate] = React.useState<DateRange | undefined>(date)
+export function DatePickerWithRange({
+  className,
+  date,
+  onDateChange,
+}: DatePickerWithRangeProps) {
+  const [selectedDate, setSelectedDate] = React.useState<DateRange | undefined>(
+    date,
+  );
 
   const handleDateChange = (newDate: DateRange | undefined) => {
-    setSelectedDate(newDate)
-    onDateChange?.(newDate)
-  }
+    setSelectedDate(newDate);
+    onDateChange?.(newDate);
+  };
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -30,13 +36,17 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
           <Button
             id="date"
             variant={"outline"}
-            className={cn("justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}
+            className={cn(
+              "justify-start text-left font-normal",
+              !selectedDate && "text-muted-foreground",
+            )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {selectedDate?.from ? (
               selectedDate.to ? (
                 <>
-                  {selectedDate.from.toLocaleDateString()} - {selectedDate.to.toLocaleDateString()}
+                  {selectedDate.from.toLocaleDateString()} -{" "}
+                  {selectedDate.to.toLocaleDateString()}
                 </>
               ) : (
                 selectedDate.from.toLocaleDateString()
@@ -58,7 +68,7 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }
 
 /**
@@ -67,4 +77,4 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
  *
  *   import { DateRangePicker } from "./ui/date-range-picker";
  */
-export { DatePickerWithRange as DateRangePicker }
+export { DatePickerWithRange as DateRangePicker };

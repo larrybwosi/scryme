@@ -1,8 +1,14 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
+import { useState, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -10,18 +16,51 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@repo/ui/components/ui/dialog';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { Plus, Edit, Eye, File, Clock, Layers, Copy, Rocket, Loader2, Search, Filter, Calendar, MoreVertical, Trash2 } from 'lucide-react';
-import { CreateEditTemplate } from '@/components/bakery/CreateEditTemplate';
-import { Separator } from '@repo/ui/components/ui/separator';
-import { Sheet, SheetHeader, SheetTitle, SheetTrigger, SheetContent } from '@repo/ui/components/ui/sheet';
-import { useDeleteTemplate, useTemplates, useDuplicateTemplate, useCreateBatchFromTemplate } from '@/hooks/bakery';
-import { Template, TemplateSchedule } from '@/types/bakery';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
+} from "@repo/ui/components/ui/dialog";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import {
+  Plus,
+  Edit,
+  Eye,
+  File,
+  Clock,
+  Layers,
+  Copy,
+  Rocket,
+  Loader2,
+  Search,
+  Filter,
+  Calendar,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
+import { CreateEditTemplate } from "@/components/bakery/CreateEditTemplate";
+import { Separator } from "@repo/ui/components/ui/separator";
+import {
+  Sheet,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetContent,
+} from "@repo/ui/components/ui/sheet";
+import {
+  useDeleteTemplate,
+  useTemplates,
+  useDuplicateTemplate,
+  useCreateBatchFromTemplate,
+} from "@/hooks/bakery";
+import { Template, TemplateSchedule } from "@/types/bakery";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,61 +68,69 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui/components/ui/dropdown-menu';
+} from "@repo/ui/components/ui/dropdown-menu";
 
 export default function TemplateManager() {
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null,
+  );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
 
-  const { data: templates, isLoading: loadingTemplates, error } = useTemplates();
+  const {
+    data: templates,
+    isLoading: loadingTemplates,
+    error,
+  } = useTemplates();
   const { mutateAsync: deleteTemplate } = useDeleteTemplate();
-  const { mutate: duplicateTemplate, isPending: isDuplicating } = useDuplicateTemplate();
-  const { mutate: createBatchFromTemplate, isPending: isCreatingBatch } = useCreateBatchFromTemplate();
+  const { mutate: duplicateTemplate, isPending: isDuplicating } =
+    useDuplicateTemplate();
+  const { mutate: createBatchFromTemplate, isPending: isCreatingBatch } =
+    useCreateBatchFromTemplate();
 
   const filteredTemplates = useMemo(() => {
     if (!templates) return [];
     return templates.filter(
-      t =>
+      (t) =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.recipe.name.toLowerCase().includes(searchTerm.toLowerCase())
+        t.recipe.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [templates, searchTerm]);
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (window.confirm('Delete this production template?')) {
+    if (window.confirm("Delete this production template?")) {
       try {
         await deleteTemplate(templateId);
-        toast.success('Template removed');
+        toast.success("Template removed");
       } catch (error) {
-        toast.error('Failed to remove template');
+        toast.error("Failed to remove template");
       }
     }
   };
 
   const handleDuplicate = (templateId: string) => {
     duplicateTemplate(templateId, {
-      onSuccess: () => toast.success('Template duplicated'),
-      onError: () => toast.error('Failed to duplicate'),
+      onSuccess: () => toast.success("Template duplicated"),
+      onError: () => toast.error("Failed to duplicate"),
     });
   };
 
   const handleQuickLaunch = (templateId: string) => {
     createBatchFromTemplate(templateId, {
-      onSuccess: () => toast.success('Production run launched!'),
-      onError: (err: any) => toast.error(err?.message || 'Launch failed'),
+      onSuccess: () => toast.success("Production run launched!"),
+      onError: (err: any) => toast.error(err?.message || "Launch failed"),
     });
   };
 
   const formatScheduleSummary = (schedules?: TemplateSchedule[]) => {
-    if (!schedules || schedules.length === 0) return 'Manual Launch Only';
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const days = schedules.map(s => dayNames[s.dayOfWeek]);
+    if (!schedules || schedules.length === 0) return "Manual Launch Only";
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const days = schedules.map((s) => dayNames[s.dayOfWeek]);
     const uniqueDays = [...new Set(days)];
     const time = schedules[0].time;
-    return `${uniqueDays.join(', ')} @ ${time}`;
+    return `${uniqueDays.join(", ")} @ ${time}`;
   };
 
   return (
@@ -96,11 +143,15 @@ export default function TemplateManager() {
             <Input
               placeholder="Search templates..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 h-10 border-border/60 focus-visible:ring-primary/20 transition-all"
             />
           </div>
-          <Button variant="outline" size="icon" className="h-10 w-10 border-border/60">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 border-border/60"
+          >
             <Filter className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>
@@ -109,10 +160,10 @@ export default function TemplateManager() {
           <Button
             variant="outline"
             className="h-10 gap-2 text-xs border-border/60 font-medium"
-            onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
+            onClick={() => setViewMode(viewMode === "grid" ? "table" : "grid")}
           >
             <Layers className="h-4 w-4" />
-            {viewMode === 'grid' ? 'Table View' : 'Grid View'}
+            {viewMode === "grid" ? "Table View" : "Grid View"}
           </Button>
 
           <Button
@@ -125,7 +176,7 @@ export default function TemplateManager() {
         </div>
       </div>
 
-      {viewMode === 'table' ? (
+      {viewMode === "table" ? (
         <div className="rounded-lg border border-border/50 bg-card overflow-hidden shadow-sm">
           <Table>
             <TableHeader className="bg-muted/30">
@@ -157,10 +208,15 @@ export default function TemplateManager() {
                       </TableCell>
                     </TableRow>
                   ))
-                : filteredTemplates.map(template => (
-                    <TableRow key={template.id} className="group hover:bg-muted/30 transition-colors">
+                : filteredTemplates.map((template) => (
+                    <TableRow
+                      key={template.id}
+                      className="group hover:bg-muted/30 transition-colors"
+                    >
                       <TableCell className="py-4 px-6">
-                        <span className="font-bold text-foreground text-sm tracking-tight">{template.name}</span>
+                        <span className="font-bold text-foreground text-sm tracking-tight">
+                          {template.name}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span className="text-xs font-bold text-muted-foreground uppercase">
@@ -168,7 +224,7 @@ export default function TemplateManager() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-bold font-mono text-sm">
-                        {template.quantity}{' '}
+                        {template.quantity}{" "}
                         <span className="text-[10px] text-muted-foreground uppercase">
                           {template.recipe.yieldUnit as any}
                         </span>
@@ -181,13 +237,15 @@ export default function TemplateManager() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={template.isActive ? 'outline' : 'secondary'}
+                          variant={template.isActive ? "outline" : "secondary"}
                           className={cn(
-                            'text-[9px] font-black uppercase tracking-widest border-none px-2 py-0.5',
-                            template.isActive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'
+                            "text-[9px] font-black uppercase tracking-widest border-none px-2 py-0.5",
+                            template.isActive
+                              ? "bg-emerald-500/10 text-emerald-600"
+                              : "bg-muted text-muted-foreground",
                           )}
                         >
-                          {template.isActive ? 'Active' : 'Disabled'}
+                          {template.isActive ? "Active" : "Disabled"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right pr-6">
@@ -216,7 +274,9 @@ export default function TemplateManager() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Edit Template
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(template.id)}>
+                            <DropdownMenuItem
+                              onClick={() => handleDuplicate(template.id)}
+                            >
                               <Copy className="mr-2 h-4 w-4" /> Duplicate
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -236,7 +296,7 @@ export default function TemplateManager() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTemplates.map(template => (
+          {filteredTemplates.map((template) => (
             <Card
               key={template.id}
               className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 border-border/50 bg-card/50 backdrop-blur-sm"
@@ -254,11 +314,13 @@ export default function TemplateManager() {
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-[8px] font-black uppercase border-none',
-                      template.isActive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-muted text-muted-foreground'
+                      "text-[8px] font-black uppercase border-none",
+                      template.isActive
+                        ? "bg-emerald-500/10 text-emerald-600"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
-                    {template.isActive ? 'Active' : 'Offline'}
+                    {template.isActive ? "Active" : "Offline"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -269,7 +331,7 @@ export default function TemplateManager() {
                       Base Yield
                     </span>
                     <span className="text-xl font-black text-foreground tabular-nums">
-                      {template.quantity}{' '}
+                      {template.quantity}{" "}
                       <span className="text-xs text-muted-foreground font-bold">
                         {template.recipe.yieldUnit as any}
                       </span>
@@ -335,10 +397,18 @@ export default function TemplateManager() {
       )}
 
       {/* Overlays */}
-      <CreateEditTemplate isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} template={null} />
+      <CreateEditTemplate
+        isOpen={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        template={null}
+      />
 
       {selectedTemplate && (
-        <CreateEditTemplate isOpen={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} template={selectedTemplate} />
+        <CreateEditTemplate
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          template={selectedTemplate}
+        />
       )}
     </div>
   );

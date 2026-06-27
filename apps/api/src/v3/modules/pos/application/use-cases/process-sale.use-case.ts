@@ -65,7 +65,7 @@ export class ProcessSaleUseCase {
   }
 
   private async getV(tx: any, items: any[]) {
-    const ids = items.map((i) => i.variantId);
+    const ids = items.map(i => i.variantId);
     const v = await tx.productVariant.findMany({
       where: { id: { in: ids } },
       select: {
@@ -83,8 +83,8 @@ export class ProcessSaleUseCase {
   }
 
   private prepI(items: any[], variants: any[], organizationId: string) {
-    return items.map((i) => {
-      const v = variants.find((v) => v.id === i.variantId)!;
+    return items.map(i => {
+      const v = variants.find(v => v.id === i.variantId)!;
       const p = Number(v.retailPrice || 0);
       return {
         variantId: v.id,
@@ -157,7 +157,7 @@ export class ProcessSaleUseCase {
     // ⚡ Optimization: Use Promise.all to parallelize stock updates and createMany for movements
     // This reduces sequential DB round-trips from 2N to ~2, significantly speeding up sales with multiple items.
 
-    const stockUpdates = items.map((i) =>
+    const stockUpdates = items.map(i =>
       tx.productVariantStock.update({
         where: {
           variantId_locationId: { variantId: i.variantId, locationId: locId },
@@ -169,7 +169,7 @@ export class ProcessSaleUseCase {
       }),
     );
 
-    const movements = items.map((i) => ({
+    const movements = items.map(i => ({
       organizationId: orgId,
       variantId: i.variantId,
       toLocationId: locId,
@@ -189,7 +189,7 @@ export class ProcessSaleUseCase {
   private done(orgId: string, tId: string, tNo: string, cId?: string) {
     this.loyaltyService
       .calculatePointsForTransaction(tId)
-      .then((p) => {
+      .then(p => {
         if (p > 0 && cId)
           this.loyaltyService.awardPoints(cId, p, orgId, `Points ${tNo}`, tId);
       })

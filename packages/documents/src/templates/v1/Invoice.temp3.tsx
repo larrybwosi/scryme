@@ -1,29 +1,36 @@
 // @ts-nocheck
 // components/InvoicePDF.tsx
-import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { InvoiceData } from '../../types';
+import React from "react";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+} from "@react-pdf/renderer";
+import { InvoiceData } from "../../types";
 
 // Create styles
 const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 10,
-    fontFamily: 'Helvetica',
-    backgroundColor: '#F5F5F5',
+    fontFamily: "Helvetica",
+    backgroundColor: "#F5F5F5",
   },
   header: {
     marginBottom: 30,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'right',
+    fontWeight: "bold",
+    textAlign: "right",
     marginBottom: 20,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 5,
   },
   leftColumn: {
@@ -31,10 +38,10 @@ const styles = StyleSheet.create({
   },
   rightColumn: {
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   label: {
-    color: '#666',
+    color: "#666",
     fontSize: 9,
     marginBottom: 2,
   },
@@ -44,12 +51,12 @@ const styles = StyleSheet.create({
   },
   invoiceToLabel: {
     fontSize: 9,
-    color: '#666',
+    color: "#666",
     marginBottom: 3,
   },
   invoiceToName: {
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 3,
   },
   table: {
@@ -57,38 +64,38 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tableHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: '#CCCCCC',
+    borderBottomColor: "#CCCCCC",
     paddingBottom: 8,
     marginBottom: 10,
   },
   tableHeaderCell: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   descriptionHeader: {
     flex: 3,
   },
   qtyHeader: {
     flex: 0.5,
-    textAlign: 'center',
+    textAlign: "center",
   },
   rateHeader: {
     flex: 0.7,
-    textAlign: 'right',
+    textAlign: "right",
   },
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: "#EEEEEE",
   },
   chevron: {
     width: 15,
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   description: {
     flex: 3,
@@ -98,85 +105,85 @@ const styles = StyleSheet.create({
   },
   qty: {
     flex: 0.5,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 10,
   },
   rate: {
     flex: 0.7,
-    textAlign: 'right',
+    textAlign: "right",
     fontSize: 10,
   },
   totalsSection: {
     marginTop: 20,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     width: 200,
     marginBottom: 8,
   },
   totalLabel: {
     fontSize: 10,
-    color: '#666',
+    color: "#666",
   },
   totalValue: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   finalTotal: {
     borderTopWidth: 1,
-    borderTopColor: '#CCCCCC',
+    borderTopColor: "#CCCCCC",
     paddingTop: 8,
     marginTop: 4,
   },
   finalTotalLabel: {
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   finalTotalValue: {
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   paymentSection: {
     marginTop: 30,
   },
   sectionTitle: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    color: '#333',
+    color: "#333",
   },
   paymentDetails: {
     fontSize: 9,
     marginBottom: 4,
-    color: '#666',
+    color: "#666",
   },
   paymentTerms: {
     fontSize: 9,
     lineHeight: 1.5,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   signatureSection: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 150,
     right: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
   signatureText: {
     fontSize: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginBottom: 20,
   },
   signatureLabel: {
     fontSize: 9,
-    color: '#666',
+    color: "#666",
     borderTopWidth: 1,
-    borderTopColor: '#333',
+    borderTopColor: "#333",
     paddingTop: 4,
     width: 120,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
@@ -188,22 +195,23 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
     rate: item.rate || item.unitPrice || item.price,
   }));
   const subtotal = data.subtotal;
-  const gstRate = data.gstRate || data.taxRate || (data.tax / subtotal) * 100 || 0;
+  const gstRate =
+    data.gstRate || data.taxRate || (data.tax / subtotal) * 100 || 0;
   const gstAmount = data.tax;
   const total = data.total || data.grandTotal || 0;
 
   const invoiceTo = data.invoiceTo || {
     name: data.client.name,
     address: data.client.address,
-    city: '',
-    state: '',
-    country: '',
-    postalCode: '',
+    city: "",
+    state: "",
+    country: "",
+    postalCode: "",
   };
 
   const bankDetails = data.bankDetails || {
-    accountNo: 'N/A',
-    sortCode: 'N/A',
+    accountNo: "N/A",
+    sortCode: "N/A",
   };
 
   return (
@@ -216,11 +224,17 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
           <View style={styles.headerRow}>
             <View style={styles.leftColumn}>
               <Text style={styles.label}>Client Name</Text>
-              <Text style={styles.value}>{data.client?.name || (data as any).clientName}</Text>
+              <Text style={styles.value}>
+                {data.client?.name || (data as any).clientName}
+              </Text>
               <Text style={styles.label}>Company Name</Text>
-              <Text style={styles.value}>{data.company?.name || (data as any).companyName}</Text>
+              <Text style={styles.value}>
+                {data.company?.name || (data as any).companyName}
+              </Text>
               <Text style={styles.label}>Invoice No</Text>
-              <Text style={styles.value}>{data.invoiceNumber || (data as any).invoiceNo}</Text>
+              <Text style={styles.value}>
+                {data.invoiceNumber || (data as any).invoiceNo}
+              </Text>
               <Text style={styles.value}>{String(data.date) as any}</Text>
             </View>
 
@@ -228,13 +242,13 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
               <Text style={styles.invoiceToLabel}>Invoice to</Text>
               <Text style={styles.invoiceToName}>{invoiceTo.name}</Text>
               <Text style={[styles.value, { fontSize: 9 }]}>
-                {typeof invoiceTo.address === 'string' ? invoiceTo.address : ''}
+                {typeof invoiceTo.address === "string" ? invoiceTo.address : ""}
               </Text>
               <Text style={[styles.value, { fontSize: 9 }]}>
                 {invoiceTo.city}
-                {invoiceTo.state ? `, ${invoiceTo.state}` : ''}
-                {invoiceTo.country ? `, ${invoiceTo.country}` : ''}
-                {invoiceTo.postalCode ? `, ${invoiceTo.postalCode}` : ''}
+                {invoiceTo.state ? `, ${invoiceTo.state}` : ""}
+                {invoiceTo.country ? `, ${invoiceTo.country}` : ""}
+                {invoiceTo.postalCode ? `, ${invoiceTo.postalCode}` : ""}
               </Text>
             </View>
           </View>
@@ -243,9 +257,13 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
         {/* Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.descriptionHeader]}>Description</Text>
+            <Text style={[styles.tableHeaderCell, styles.descriptionHeader]}>
+              Description
+            </Text>
             <Text style={[styles.tableHeaderCell, styles.qtyHeader]}>QTY</Text>
-            <Text style={[styles.tableHeaderCell, styles.rateHeader]}>Rate</Text>
+            <Text style={[styles.tableHeaderCell, styles.rateHeader]}>
+              Rate
+            </Text>
           </View>
 
           {items.map((item: any, index: number) => (
@@ -254,7 +272,7 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.qty}>{item.quantity}</Text>
               <Text style={styles.rate}>
-                {data.currencySymbol || '$'}
+                {data.currencySymbol || "$"}
                 {item.rate.toFixed(2)}
               </Text>
             </View>
@@ -266,21 +284,21 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Amount Due</Text>
             <Text style={styles.totalValue}>
-              {data.currencySymbol || '$'}
+              {data.currencySymbol || "$"}
               {subtotal.toFixed(2)}
             </Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tax ({gstRate.toFixed(1)}%)</Text>
             <Text style={styles.totalValue}>
-              {data.currencySymbol || '$'}
+              {data.currencySymbol || "$"}
               {gstAmount.toFixed(2)}
             </Text>
           </View>
           <View style={[styles.totalRow, styles.finalTotal]}>
             <Text style={styles.finalTotalLabel}>Total Amount Due</Text>
             <Text style={styles.finalTotalValue}>
-              {data.currencySymbol || '$'}
+              {data.currencySymbol || "$"}
               {total.toFixed(2)}
             </Text>
           </View>
@@ -290,19 +308,29 @@ export const InvoicePDF: React.FC<{ data: InvoiceData }> = ({ data }) => {
         <View style={styles.paymentSection}>
           <Text style={styles.sectionTitle}>Payment Method</Text>
           <Text style={styles.paymentDetails}>Bank Details</Text>
-          <Text style={styles.paymentDetails}>Account No : {bankDetails.accountNo}</Text>
-          <Text style={styles.paymentDetails}>Sort Code : {bankDetails.sortCode}</Text>
+          <Text style={styles.paymentDetails}>
+            Account No : {bankDetails.accountNo}
+          </Text>
+          <Text style={styles.paymentDetails}>
+            Sort Code : {bankDetails.sortCode}
+          </Text>
         </View>
 
         {/* Payment Terms */}
         <View style={[styles.paymentSection, { marginTop: 15 }]}>
           <Text style={styles.sectionTitle}>Payment Terms</Text>
-          <Text style={styles.paymentTerms}>{data.payment?.terms || data.paymentTerms || (data as any).paymentTerms}</Text>
+          <Text style={styles.paymentTerms}>
+            {data.payment?.terms ||
+              data.paymentTerms ||
+              (data as any).paymentTerms}
+          </Text>
         </View>
 
         {/* Signature */}
         <View style={styles.signatureSection}>
-          <Text style={styles.signatureText}>{data.signature?.name || 'Authorized'}</Text>
+          <Text style={styles.signatureText}>
+            {data.signature?.name || "Authorized"}
+          </Text>
           <Text style={styles.signatureLabel}>Signature</Text>
         </View>
       </Page>

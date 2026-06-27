@@ -31,7 +31,10 @@ export async function getDrivers() {
     return { success: true, data: drivers };
   } catch (error: any) {
     console.error("Error fetching drivers:", error);
-    return { success: false, error: error.message || "Failed to fetch drivers" };
+    return {
+      success: false,
+      error: error.message || "Failed to fetch drivers",
+    };
   }
 }
 
@@ -63,7 +66,10 @@ export async function createDriver(data: {
     return { success: true, data: driver };
   } catch (error: any) {
     console.error("Error creating driver:", error);
-    return { success: false, error: error.message || "Failed to create driver" };
+    return {
+      success: false,
+      error: error.message || "Failed to create driver",
+    };
   }
 }
 
@@ -76,7 +82,7 @@ export async function updateDriver(
     availability?: DriverStatus;
     vehicleId?: string;
     deliveryPartnerId?: string;
-  }
+  },
 ) {
   const session = await getServerAuth();
   if (!session || !session.organizationId) {
@@ -95,7 +101,8 @@ export async function updateDriver(
         phone: data.phone,
         availability: data.availability,
         vehicleId: data.vehicleId === "" ? null : data.vehicleId,
-        deliveryPartnerId: data.deliveryPartnerId === "" ? null : data.deliveryPartnerId,
+        deliveryPartnerId:
+          data.deliveryPartnerId === "" ? null : data.deliveryPartnerId,
       },
     });
 
@@ -104,7 +111,10 @@ export async function updateDriver(
     return { success: true, data: driver };
   } catch (error: any) {
     console.error("Error updating driver:", error);
-    return { success: false, error: error.message || "Failed to update driver" };
+    return {
+      success: false,
+      error: error.message || "Failed to update driver",
+    };
   }
 }
 
@@ -126,7 +136,10 @@ export async function deleteDriver(id: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting driver:", error);
-    return { success: false, error: error.message || "Failed to delete driver" };
+    return {
+      success: false,
+      error: error.message || "Failed to delete driver",
+    };
   }
 }
 
@@ -154,10 +167,10 @@ export async function getDriverDetail(id: string) {
                 number: true,
                 finalTotal: true,
                 currencyCode: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
     });
 
@@ -168,7 +181,10 @@ export async function getDriverDetail(id: string) {
     return { success: true, data: driver };
   } catch (error: any) {
     console.error("Error fetching driver detail:", error);
-    return { success: false, error: error.message || "Failed to fetch driver detail" };
+    return {
+      success: false,
+      error: error.message || "Failed to fetch driver detail",
+    };
   }
 }
 

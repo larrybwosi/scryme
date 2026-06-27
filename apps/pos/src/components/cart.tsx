@@ -17,7 +17,24 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@repo/ui/components/ui/dialog';
-import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck } from 'lucide-react';
+import {
+  Trash2,
+  Edit2,
+  Minus,
+  Plus,
+  PanelRightClose,
+  PanelRightOpen,
+  ShoppingCart,
+  Pause,
+  Clock,
+  ImageOff,
+  User,
+  ReceiptText,
+  Printer,
+  Package,
+  Tag,
+  ShieldCheck,
+} from 'lucide-react';
 import { Kbd } from '@/components/ui/kbd';
 import PaymentModal from '@/components/pos/payment-dialog';
 import { CustomerSelector } from '@/components/customer-selector';
@@ -43,9 +60,12 @@ export function Cart() {
 
   // --- UI States ---
   const {
-    paymentDialogOpen, setPaymentDialogOpen,
-    holdOrderDialogOpen, setHoldOrderDialogOpen,
-    prescriptionDialogOpen, setPrescriptionDialogOpen
+    paymentDialogOpen,
+    setPaymentDialogOpen,
+    holdOrderDialogOpen,
+    setHoldOrderDialogOpen,
+    prescriptionDialogOpen,
+    setPrescriptionDialogOpen,
   } = useUiStore();
 
   const [ageVerificationOpen, setAgeVerificationOpen] = useState(false);
@@ -264,7 +284,7 @@ export function Cart() {
 
   const handlePharmacistVerify = () => {
     usePosStore.setState(state => ({
-      currentOrder: { ...state.currentOrder, isPharmacistVerified: true }
+      currentOrder: { ...state.currentOrder, isPharmacistVerified: true },
     }));
     setShowPharmacistVerification(false);
 
@@ -325,7 +345,8 @@ export function Cart() {
     } catch (error) {
       console.error('Print Bill Error:', error);
       toast.error('Print Failed', {
-        description: error instanceof Error ? error.message : 'Could not print the bill. Please check your printer connection.',
+        description:
+          error instanceof Error ? error.message : 'Could not print the bill. Please check your printer connection.',
       });
     } finally {
       setIsPrintingBill(false);
@@ -435,7 +456,10 @@ export function Cart() {
             <div className="grid grid-cols-1 gap-2">
               <div className="flex gap-2">
                 {showTableField && (
-                  <Select value={currentOrder.tableNumber || 'No Table'} onValueChange={(val) => setTableNumber(val === 'No Table' ? '' : val)}>
+                  <Select
+                    value={currentOrder.tableNumber || 'No Table'}
+                    onValueChange={val => setTableNumber(val === 'No Table' ? '' : val)}
+                  >
                     <SelectTrigger className="h-9 text-xs flex-1 bg-muted/40">
                       <SelectValue placeholder="Select Table" />
                     </SelectTrigger>
@@ -452,13 +476,16 @@ export function Cart() {
                 {currentOrder.orderType === 'dine-in' && (
                   <div className="w-[88px] shrink-0">
                     <div className="relative flex items-center bg-muted/40 rounded-md border border-input h-9 overflow-hidden">
-                      <button 
+                      <button
                         className="px-2 h-full text-muted-foreground hover:bg-muted/80 transition-colors"
                         onClick={() => {
                           const currentStr = usePosStore.getState().currentOrder.metadata?.guestsCount;
                           const guests = Math.max(1, (parseInt(currentStr) || 1) - 1);
                           usePosStore.setState(state => ({
-                            currentOrder: { ...state.currentOrder, metadata: { ...state.currentOrder.metadata, guestsCount: guests } }
+                            currentOrder: {
+                              ...state.currentOrder,
+                              metadata: { ...state.currentOrder.metadata, guestsCount: guests },
+                            },
                           }));
                         }}
                       >
@@ -468,13 +495,16 @@ export function Cart() {
                         {currentOrder.metadata?.guestsCount || 1}
                         <User className="w-3 h-3 ml-0.5 opacity-50" />
                       </div>
-                      <button 
+                      <button
                         className="px-2 h-full text-muted-foreground hover:bg-muted/80 transition-colors"
                         onClick={() => {
                           const currentStr = usePosStore.getState().currentOrder.metadata?.guestsCount;
                           const guests = (parseInt(currentStr) || 1) + 1;
                           usePosStore.setState(state => ({
-                            currentOrder: { ...state.currentOrder, metadata: { ...state.currentOrder.metadata, guestsCount: guests } }
+                            currentOrder: {
+                              ...state.currentOrder,
+                              metadata: { ...state.currentOrder.metadata, guestsCount: guests },
+                            },
                           }));
                         }}
                       >
@@ -520,7 +550,7 @@ export function Cart() {
                           className="object-cover w-full h-full"
                           loading="lazy"
                         />
-                      ):(
+                      ) : (
                         <div className="flex flex-col items-center justify-center w-full h-full text-muted-foreground/30">
                           <ImageOff className="w-6 h-6 mb-1.5" />
                           <span className="text-xs font-medium">No Image</span>
@@ -671,7 +701,9 @@ export function Cart() {
                 >
                   <Pause className="w-4 h-4" />
                   <span className="text-[10px] font-medium">Hold</span>
-                  <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75">S</Kbd>
+                  <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75">
+                    S
+                  </Kbd>
                 </Button>
               )}
 
@@ -695,15 +727,20 @@ export function Cart() {
               <Button
                 className={cn(
                   'h-12 shadow-md text-sm font-bold uppercase tracking-wide relative group/btn',
-                  (enableHoldSale && businessConfig.type === 'restaurant') ? 'col-span-3' :
-                  (enableHoldSale || businessConfig.type === 'restaurant') ? 'col-span-4' : 'col-span-5'
+                  enableHoldSale && businessConfig.type === 'restaurant'
+                    ? 'col-span-3'
+                    : enableHoldSale || businessConfig.type === 'restaurant'
+                      ? 'col-span-4'
+                      : 'col-span-5'
                 )}
                 onClick={handleConfirmPayment}
                 disabled={currentOrder.items.length === 0}
                 title={`Checkout (${modifier}+Enter)`}
               >
                 Checkout
-                <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75 text-primary-foreground bg-primary-foreground/20">↵</Kbd>
+                <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75 text-primary-foreground bg-primary-foreground/20">
+                  ↵
+                </Kbd>
               </Button>
             </div>
 
@@ -876,14 +913,17 @@ export function Cart() {
               Pharmacist Verification Required
             </DialogTitle>
             <DialogDescription>
-              This order contains prescription-only items. A registered pharmacist must verify this order before proceeding.
+              This order contains prescription-only items. A registered pharmacist must verify this order before
+              proceeding.
             </DialogDescription>
           </DialogHeader>
           <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 flex items-center gap-3">
             <User className="w-10 h-10 text-emerald-600" />
             <div>
               <p className="text-sm font-bold text-emerald-900">Verification Step</p>
-              <p className="text-xs text-emerald-700">Please confirm that you have reviewed the prescription and the items.</p>
+              <p className="text-xs text-emerald-700">
+                Please confirm that you have reviewed the prescription and the items.
+              </p>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">

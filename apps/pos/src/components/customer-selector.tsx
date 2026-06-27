@@ -4,7 +4,14 @@ import { useState, useEffect } from 'react';
 import { Check, ChevronsUpDown, User, Building2, MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@repo/ui/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@repo/ui/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
 import { usePosStore } from '@/store/store';
 import { usePosCustomers } from '@/hooks/customers';

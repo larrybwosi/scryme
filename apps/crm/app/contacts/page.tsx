@@ -1,6 +1,6 @@
-import { ContactsView } from './_components/contacts-view';
-import { OrgProvider } from '../../components/org-context';
-import { getOrganizationContext } from '../actions/auth';
+import { ContactsView } from "./_components/contacts-view";
+import { OrgProvider } from "../../components/org-context";
+import { getOrganizationContext } from "../actions/auth";
 
 export default async function ContactsPage() {
   const context = (await getOrganizationContext())!;
@@ -8,7 +8,7 @@ export default async function ContactsPage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId || "default-org-id"}>
       <ContactsView />
     </OrgProvider>
   );

@@ -46,9 +46,13 @@ export function PriceListDialog({
     currency: priceList?.currency || "USD",
     isGlobal: priceList?.isGlobal ?? false,
     priority: priceList?.priority || 0,
-    validFrom: priceList?.validFrom ? new Date(priceList.validFrom).toISOString().split('T')[0] : "",
-    validTo: priceList?.validTo ? new Date(priceList.validTo).toISOString().split('T')[0] : "",
-    customerTags: priceList?.customerTags || [] as string[],
+    validFrom: priceList?.validFrom
+      ? new Date(priceList.validFrom).toISOString().split("T")[0]
+      : "",
+    validTo: priceList?.validTo
+      ? new Date(priceList.validTo).toISOString().split("T")[0]
+      : "",
+    customerTags: priceList?.customerTags || ([] as string[]),
   });
 
   const [tagInput, setTagInput] = useState("");
@@ -106,7 +110,8 @@ export function PriceListDialog({
             {priceList ? "Edit Price List" : "Create Price List"}
           </SheetTitle>
           <SheetDescription>
-            Configure the basic settings, validity, and customer targeting for this price list.
+            Configure the basic settings, validity, and customer targeting for
+            this price list.
           </SheetDescription>
         </SheetHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -116,7 +121,9 @@ export function PriceListDialog({
               <Input
                 id="name"
                 value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="e.g. Summer Sale"
                 required
               />
@@ -126,7 +133,12 @@ export function PriceListDialog({
               <Input
                 id="code"
                 value={formData.code}
-                onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase().replace(/\s+/g, '_') })}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    code: e.target.value.toUpperCase().replace(/\s+/g, "_"),
+                  })
+                }
                 placeholder="e.g. SUMMER_2024"
                 required
               />
@@ -138,7 +150,9 @@ export function PriceListDialog({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              onChange={e =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="Describe the purpose of this price list"
             />
           </div>
@@ -166,7 +180,12 @@ export function PriceListDialog({
                 id="priority"
                 type="number"
                 value={formData.priority}
-                onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                onChange={e =>
+                  setFormData({
+                    ...formData,
+                    priority: parseInt(e.target.value) || 0,
+                  })
+                }
               />
             </div>
           </div>
@@ -178,7 +197,9 @@ export function PriceListDialog({
                 id="validFrom"
                 type="date"
                 value={formData.validFrom}
-                onChange={e => setFormData({ ...formData, validFrom: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, validFrom: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -187,7 +208,9 @@ export function PriceListDialog({
                 id="validTo"
                 type="date"
                 value={formData.validTo}
-                onChange={e => setFormData({ ...formData, validTo: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, validTo: e.target.value })
+                }
               />
             </div>
           </div>
@@ -196,7 +219,9 @@ export function PriceListDialog({
             <Checkbox
               id="isGlobal"
               checked={formData.isGlobal}
-              onCheckedChange={checked => setFormData({ ...formData, isGlobal: !!checked })}
+              onCheckedChange={checked =>
+                setFormData({ ...formData, isGlobal: !!checked })
+              }
             />
             <Label htmlFor="isGlobal" className="font-normal cursor-pointer">
               Set as Global (Base Price)
@@ -209,7 +234,11 @@ export function PriceListDialog({
               {formData.customerTags.map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="gap-1">
                   {tag}
-                  <X size={12} className="cursor-pointer" onClick={() => removeTag(tag)} />
+                  <X
+                    size={12}
+                    className="cursor-pointer"
+                    onClick={() => removeTag(tag)}
+                  />
                 </Badge>
               ))}
             </div>
@@ -219,26 +248,34 @@ export function PriceListDialog({
                 value={tagInput}
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addTag(tagInput);
                   }
                 }}
               />
-              <Button type="button" variant="outline" onClick={() => addTag(tagInput)}>Add</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => addTag(tagInput)}>
+                Add
+              </Button>
             </div>
             {availableTags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 <span className="text-xs text-gray-500 mr-1">Suggested:</span>
-                {availableTags.filter(t => !formData.customerTags.includes(t)).slice(0, 5).map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => addTag(tag)}
-                    className="text-xs text-blue-600 hover:underline">
-                    {tag}
-                  </button>
-                ))}
+                {availableTags
+                  .filter(t => !formData.customerTags.includes(t))
+                  .slice(0, 5)
+                  .map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => addTag(tag)}
+                      className="text-xs text-blue-600 hover:underline">
+                      {tag}
+                    </button>
+                  ))}
               </div>
             )}
           </div>

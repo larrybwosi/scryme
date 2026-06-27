@@ -1,46 +1,46 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import posthog from 'posthog-js'
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar"
-import { Search, Mail, Phone, Edit, User, Plus, RefreshCw, ChevronRight } from "lucide-react"
-import AddCustomerSheet from "@/components/customers/add-customer"
-import { useFormattedCurrency } from "@/lib/utils"
-import { usePosCustomers } from "@/hooks/customers"
+import { useState, useEffect } from 'react';
+import posthog from 'posthog-js';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Avatar, AvatarFallback } from '@repo/ui/components/ui/avatar';
+import { Search, Mail, Phone, Edit, User, Plus, RefreshCw, ChevronRight } from 'lucide-react';
+import AddCustomerSheet from '@/components/customers/add-customer';
+import { useFormattedCurrency } from '@/lib/utils';
+import { usePosCustomers } from '@/hooks/customers';
 
 export default function CustomersPage() {
-  const { customers, isSyncing, triggerSync } = usePosCustomers()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { customers, isSyncing, triggerSync } = usePosCustomers();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const filteredCustomers = customers.filter(
-    (customer) =>
+    customer =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer?.phone?.includes(searchQuery),
-  )
+      customer?.phone?.includes(searchQuery)
+  );
 
   useEffect(() => {
     if (searchQuery) {
       const timer = setTimeout(() => {
-        posthog.capture("customer_search", { query: searchQuery.substring(0, 50) })
-      }, 1000)
-      return () => clearTimeout(timer)
+        posthog.capture('customer_search', { query: searchQuery.substring(0, 50) });
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [searchQuery])
+  }, [searchQuery]);
 
-  const formatCurrency = useFormattedCurrency()
+  const formatCurrency = useFormattedCurrency();
 
   function getInitials(name: string) {
     return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
+      .split(' ')
+      .map(n => n[0])
+      .join('')
       .toUpperCase()
-      .slice(0, 2)
+      .slice(0, 2);
   }
 
   return (
@@ -49,13 +49,11 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Customers</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {customers.length} total customers
-          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">{customers.length} total customers</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={triggerSync} disabled={isSyncing}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
             Sync
           </Button>
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
@@ -73,7 +71,7 @@ export default function CustomersPage() {
         <Input
           placeholder="Search by name, email or phone..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={e => setSearchQuery(e.target.value)}
           className="pl-9 h-9 text-sm"
         />
       </div>
@@ -97,7 +95,7 @@ export default function CustomersPage() {
             </div>
             <p className="text-sm font-medium">No customers found</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {searchQuery ? "Try a different search term." : "Add your first customer to get started."}
+              {searchQuery ? 'Try a different search term.' : 'Add your first customer to get started.'}
             </p>
             {!searchQuery && (
               <Button variant="outline" size="sm" className="mt-4" onClick={() => setIsDialogOpen(true)}>
@@ -108,7 +106,7 @@ export default function CustomersPage() {
           </div>
         ) : (
           <ul className="divide-y">
-            {filteredCustomers.map((customer) => (
+            {filteredCustomers.map(customer => (
               <li
                 key={customer.id}
                 className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-4 py-3.5 items-center hover:bg-muted/30 transition-colors group"
@@ -144,25 +142,21 @@ export default function CustomersPage() {
                       <span>{customer.phone}</span>
                     </div>
                   )}
-                  {!customer.email && !customer.phone && (
-                    <span className="text-sm text-muted-foreground/50">—</span>
-                  )}
+                  {!customer.email && !customer.phone && <span className="text-sm text-muted-foreground/50">—</span>}
                 </div>
 
                 {/* Total spend */}
-                <div className="text-sm font-medium tabular-nums">
-                  {formatCurrency(customer?.totalPurchases || 0)}
-                </div>
+                <div className="text-sm font-medium tabular-nums">{formatCurrency(customer?.totalPurchases || 0)}</div>
 
                 {/* Last visit */}
                 <div className="text-sm text-muted-foreground">
                   {customer?.lastVisit
                     ? new Date(customer.lastVisit).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
                       })
-                    : "—"}
+                    : '—'}
                 </div>
 
                 {/* Actions */}
@@ -187,5 +181,5 @@ export default function CustomersPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

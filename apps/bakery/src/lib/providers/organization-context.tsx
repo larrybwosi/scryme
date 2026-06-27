@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import sdk, { isTauri, isOfflineMode } from '@/lib/sdk';
-import { BakerySettings } from '@/types/bakery';
-import { tauriInvoke } from '@/lib/tauri-bridge';
+import React, { createContext, useContext, ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import sdk, { isTauri, isOfflineMode } from "@/lib/sdk";
+import { BakerySettings } from "@/types/bakery";
+import { tauriInvoke } from "@/lib/tauri-bridge";
 
 interface OrganizationContextType {
   currency: string;
@@ -16,10 +16,12 @@ const OrganizationContext = createContext<OrganizationContextType | null>(null);
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['bakerySettings'],
+    queryKey: ["bakerySettings"],
     queryFn: async () => {
       if (isTauri() || isOfflineMode()) {
-        return tauriInvoke<BakerySettings>('get_settings', { orgId: 'local-org' });
+        return tauriInvoke<BakerySettings>("get_settings", {
+          orgId: "local-org",
+        });
       }
       return sdk.bakery.getSettings();
     },
@@ -28,18 +30,24 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   // Since we don't have currency in BakerySettings yet, we'll default to USD
   // In a real scenario, this might come from the organization settings
   const value = {
-    currency: 'USD',
+    currency: "USD",
     isLoading,
     settings,
   };
 
-  return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;
+  return (
+    <OrganizationContext.Provider value={value}>
+      {children}
+    </OrganizationContext.Provider>
+  );
 }
 
 export function useOrganization() {
   const context = useContext(OrganizationContext);
   if (!context) {
-    throw new Error('useOrganization must be used within an OrganizationProvider');
+    throw new Error(
+      "useOrganization must be used within an OrganizationProvider",
+    );
   }
   return context;
 }

@@ -154,10 +154,9 @@ export function POS() {
     setPage(1);
     if (debouncedSearch) {
       // trackEvent("pos_search", { query: debouncedSearch.substring(0, 50) });
-      posthog.capture("pos_search", { query: debouncedSearch.substring(0, 50) });
+      posthog.capture('pos_search', { query: debouncedSearch.substring(0, 50) });
     }
   }, [debouncedSearch]);
-
 
   useEffect(() => {
     if (activeCategory !== 'all') {
@@ -204,7 +203,7 @@ export function POS() {
         if (/[a-zA-Z0-9]/.test(e.key)) {
           // If not focused, focus and let the event propagate
           if (document.activeElement !== searchInputRef.current) {
-             searchInputRef.current?.focus();
+            searchInputRef.current?.focus();
           }
         }
       }
@@ -455,7 +454,10 @@ export function POS() {
                 </Button>
 
                 {showAlternatives && selectedProductForAlternatives && (
-                  <Badge variant="secondary" className="h-9 px-3 gap-2 bg-emerald-100 text-emerald-800 border-emerald-200 animate-in fade-in slide-in-from-left-2">
+                  <Badge
+                    variant="secondary"
+                    className="h-9 px-3 gap-2 bg-emerald-100 text-emerald-800 border-emerald-200 animate-in fade-in slide-in-from-left-2"
+                  >
                     <span className="text-[10px] uppercase font-bold opacity-70">For:</span>
                     <span className="font-bold truncate max-w-[150px]">{selectedProductForAlternatives.name}</span>
                     <X
@@ -684,7 +686,9 @@ export function POS() {
                       : 'flex flex-col gap-1.5 w-full'
                   )}
                 >
-                  {(showAlternatives && (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'pharmacy' && selectedProductForAlternatives
+                  {(showAlternatives &&
+                  (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'pharmacy' &&
+                  selectedProductForAlternatives
                     ? alternativeProducts
                     : products
                   ).map(product =>
@@ -817,25 +821,28 @@ export function POS() {
 
       <BarcodeScannerDialog open={showBarcodeScanner} onOpenChange={setShowBarcodeScanner} />
 
-      <AlertDialog open={!!unknownBarcode} onOpenChange={(open) => !open && setUnknownBarcode(null)}>
+      <AlertDialog open={!!unknownBarcode} onOpenChange={open => !open && setUnknownBarcode(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Unknown Barcode</AlertDialogTitle>
             <AlertDialogDescription>
-              Barcode <span className="font-mono font-bold">{unknownBarcode}</span> was not found in the system. Would you like to register a new product for it?
+              Barcode <span className="font-mono font-bold">{unknownBarcode}</span> was not found in the system. Would
+              you like to register a new product for it?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              const barcode = unknownBarcode;
-              setUnknownBarcode(null);
-              navigate('/product-management');
-              // Give it some time to navigate and mount
-              setTimeout(() => {
-                window.dispatchEvent(new CustomEvent('barcode-scanned-for-registration', { detail: { barcode } }));
-              }, 500);
-            }}>
+            <AlertDialogAction
+              onClick={() => {
+                const barcode = unknownBarcode;
+                setUnknownBarcode(null);
+                navigate('/product-management');
+                // Give it some time to navigate and mount
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('barcode-scanned-for-registration', { detail: { barcode } }));
+                }, 500);
+              }}
+            >
               Register Product
             </AlertDialogAction>
           </AlertDialogFooter>

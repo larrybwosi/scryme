@@ -128,7 +128,10 @@ export class WindmillTemplateService {
       await fs.access(templatesDir);
     } catch (e) {
       // Fallback for different build structures (e.g. if we are in dist/services/)
-      templatesDir = path.join(process.cwd(), "../../packages/windmill/templates");
+      templatesDir = path.join(
+        process.cwd(),
+        "../../packages/windmill/templates",
+      );
       try {
         await fs.access(templatesDir);
       } catch (e2) {

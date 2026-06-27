@@ -19,7 +19,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-0">
-               <SettingsPage />
+              <SettingsPage />
             </div>
           </ScrollArea>
         </div>

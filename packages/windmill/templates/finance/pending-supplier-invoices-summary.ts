@@ -1,5 +1,5 @@
-import { db as prisma } from '@repo/db';
-import { NotificationEngine } from '@repo/notifications';
+import { db as prisma } from "@repo/db";
+import { NotificationEngine } from "@repo/notifications";
 
 const notificationEngine = new NotificationEngine();
 
@@ -28,7 +28,7 @@ export async function main(data: {
   const members = await prisma.member.findMany({
     where: {
       organizationId,
-      role: { in: ['ADMIN', 'MANAGER'] },
+      role: { in: ["ADMIN", "MANAGER"] },
       isActive: true,
     },
     include: {
@@ -37,7 +37,7 @@ export async function main(data: {
   });
 
   // 2. Filter by those who have opted in for supplierInvoiceReminders
-  const optedInMembers = members.filter(member => {
+  const optedInMembers = members.filter((member) => {
     const prefs = member.user.notificationPrefs as any;
     // Default to true if not set, or check explicit preference
     return prefs?.supplierInvoiceReminders !== false;
@@ -45,15 +45,15 @@ export async function main(data: {
 
   if (optedInMembers.length === 0) {
     console.log(`No opted-in admins/managers found for Org ${organizationId}`);
-    return { success: true, message: 'No recipients opted in' };
+    return { success: true, message: "No recipients opted in" };
   }
 
-  const recipientUserIds = optedInMembers.map(m => m.userId);
+  const recipientUserIds = optedInMembers.map((m) => m.userId);
 
   // 3. Send notification via NotificationEngine
   await notificationEngine.notify({
     organizationId,
-    templateName: 'PENDING_SUPPLIER_INVOICES_SUMMARY',
+    templateName: "PENDING_SUPPLIER_INVOICES_SUMMARY",
     data: {
       orgName,
       count,
@@ -63,7 +63,7 @@ export async function main(data: {
     recipients: {
       userIds: recipientUserIds,
     },
-    channels: ['WEBHOOK', 'DISCORD'],
+    channels: ["WEBHOOK", "DISCORD"],
   });
 
   return {

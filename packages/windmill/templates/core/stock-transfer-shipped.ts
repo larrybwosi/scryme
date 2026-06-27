@@ -8,8 +8,10 @@ export async function main(
   transferNumber: string,
   shippedAt: string,
   carrier?: string,
-  trackingNumber?: string
+  trackingNumber?: string,
 ) {
-  console.log(`[StockTransfer] Shipped: ${transferNumber} via ${carrier || 'unknown'}`);
+  console.log(
+    `[StockTransfer] Shipped: ${transferNumber} via ${carrier || "unknown"}`,
+  );
   return { success: true };
 }

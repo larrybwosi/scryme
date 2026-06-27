@@ -30,7 +30,7 @@ describe("ExpenseUseCase", () => {
     budget: {
       update: vi.fn(),
     },
-    $transaction: vi.fn((cb) => cb(mockPrismaClient)),
+    $transaction: vi.fn(cb => cb(mockPrismaClient)),
   };
 
   const mockPrismaService = {

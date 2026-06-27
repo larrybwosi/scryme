@@ -1,21 +1,28 @@
-import React from 'react';
-import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import React from "react";
+import {
+  Document,
+  Image,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     padding: 12,
-    width: '80mm',
+    width: "80mm",
     fontSize: 9,
     lineHeight: 1.2,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 8,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    borderBottomStyle: 'solid',
+    borderBottomColor: "#333",
+    borderBottomStyle: "solid",
   },
   headerLogo: {
     width: 45,
@@ -25,70 +32,70 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 3,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 0.5,
-    color: '#1a1a1a',
+    color: "#1a1a1a",
   },
   headerSubtitle: {
     fontSize: 8,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 1,
-    color: '#666',
+    color: "#666",
   },
   headerDateTime: {
     fontSize: 8,
-    textAlign: 'center',
-    color: '#666',
+    textAlign: "center",
+    color: "#666",
     letterSpacing: 0.2,
   },
   divider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    borderBottomStyle: 'dashed',
+    borderBottomColor: "#ddd",
+    borderBottomStyle: "dashed",
     marginVertical: 6,
   },
   strongDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    borderBottomStyle: 'solid',
+    borderBottomColor: "#333",
+    borderBottomStyle: "solid",
     marginVertical: 6,
   },
   infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 3,
     paddingVertical: 1,
   },
   infoLabel: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 8,
-    color: '#333',
-    textTransform: 'uppercase',
+    color: "#333",
+    textTransform: "uppercase",
     letterSpacing: 0.3,
   },
   infoValue: {
     fontSize: 8,
-    color: '#1a1a1a',
-    textAlign: 'right',
+    color: "#1a1a1a",
+    textAlign: "right",
   },
   itemsSection: {
     marginVertical: 8,
   },
   itemsHeader: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 9,
     marginBottom: 4,
-    color: '#333',
-    textTransform: 'uppercase',
+    color: "#333",
+    textTransform: "uppercase",
     letterSpacing: 0.3,
   },
   itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 2,
     paddingVertical: 1,
   },
@@ -98,77 +105,77 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 8,
-    color: '#1a1a1a',
+    color: "#1a1a1a",
     marginBottom: 1,
   },
   itemQuantity: {
     fontSize: 7,
-    color: '#666',
-    fontStyle: 'italic',
+    color: "#666",
+    fontStyle: "italic",
   },
   itemPrice: {
     fontSize: 8,
-    color: '#1a1a1a',
-    fontWeight: 'bold',
-    textAlign: 'right',
+    color: "#1a1a1a",
+    fontWeight: "bold",
+    textAlign: "right",
   },
   summarySection: {
     marginTop: 8,
     paddingTop: 6,
     borderTopWidth: 1,
-    borderTopColor: '#333',
-    borderTopStyle: 'solid',
+    borderTopColor: "#333",
+    borderTopStyle: "solid",
   },
   summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 2,
     paddingVertical: 1,
   },
   summaryLabel: {
     fontSize: 8,
-    color: '#333',
-    textTransform: 'uppercase',
+    color: "#333",
+    textTransform: "uppercase",
     letterSpacing: 0.2,
   },
   summaryValue: {
     fontSize: 8,
-    color: '#1a1a1a',
-    textAlign: 'right',
+    color: "#1a1a1a",
+    textAlign: "right",
   },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 4,
     paddingTop: 4,
     borderTopWidth: 2,
-    borderTopColor: '#333',
-    borderTopStyle: 'solid',
+    borderTopColor: "#333",
+    borderTopStyle: "solid",
   },
   totalLabel: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 11,
-    color: '#1a1a1a',
-    textTransform: 'uppercase',
+    color: "#1a1a1a",
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   totalValue: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 11,
-    color: '#1a1a1a',
-    textAlign: 'right',
+    color: "#1a1a1a",
+    textAlign: "right",
   },
   paymentSection: {
     marginTop: 8,
     paddingTop: 6,
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    borderTopStyle: 'dashed',
+    borderTopColor: "#ddd",
+    borderTopStyle: "dashed",
   },
   qrSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
     marginBottom: 8,
     paddingVertical: 6,
@@ -180,46 +187,46 @@ const styles = StyleSheet.create({
   },
   qrLabel: {
     fontSize: 7,
-    color: '#666',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    color: "#666",
+    textAlign: "center",
+    fontStyle: "italic",
   },
   barcodeSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginVertical: 6,
   },
   barcode: {
     fontSize: 12,
     letterSpacing: 2,
-    textAlign: 'center',
-    color: '#1a1a1a',
-    fontWeight: 'bold',
+    textAlign: "center",
+    color: "#1a1a1a",
+    fontWeight: "bold",
   },
   footer: {
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    borderTopStyle: 'dashed',
-    alignItems: 'center',
+    borderTopColor: "#ddd",
+    borderTopStyle: "dashed",
+    alignItems: "center",
   },
   footerText: {
     fontSize: 8,
-    textAlign: 'center',
-    color: '#666',
+    textAlign: "center",
+    color: "#666",
     marginBottom: 2,
   },
   footerBrand: {
     fontSize: 9,
-    textAlign: 'center',
-    color: '#333',
-    fontWeight: 'bold',
+    textAlign: "center",
+    color: "#333",
+    fontWeight: "bold",
     marginBottom: 3,
   },
   footerTimestamp: {
     fontSize: 6,
-    textAlign: 'center',
-    color: '#999',
+    textAlign: "center",
+    color: "#999",
   },
 });
 
@@ -228,12 +235,12 @@ const formatCurrency = (amount: number): string => {
 };
 
 const formatDateTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Date(dateString).toLocaleString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: true,
   });
 };
@@ -279,7 +286,10 @@ interface SaleReceiptPDFProps {
   qrCodeDataUrl: string;
 }
 
-export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ saleData, qrCodeDataUrl }) => {
+export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({
+  saleData,
+  qrCodeDataUrl,
+}) => {
   const {
     saleNumber,
     saleDate,
@@ -304,7 +314,9 @@ export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ saleData, qrCode
     <Document>
       <Page size={[226.77, 650]} style={styles.page}>
         <View style={styles.header}>
-          {organization.logo && <Image src={organization.logo} style={styles.headerLogo} />}
+          {organization.logo && (
+            <Image src={organization.logo} style={styles.headerLogo} />
+          )}
           <Text style={styles.headerTitle}>{organization.name}</Text>
           <Text style={styles.headerSubtitle}>{location.name}</Text>
           <Text style={styles.headerDateTime}>{formattedDate}</Text>
@@ -337,7 +349,9 @@ export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ saleData, qrCode
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemQuantity}>Qty: {item.quantity}</Text>
               </View>
-              <Text style={styles.itemPrice}>${formatCurrency(item.unitPrice * item.quantity)}</Text>
+              <Text style={styles.itemPrice}>
+                ${formatCurrency(item.unitPrice * item.quantity)}
+              </Text>
             </View>
           ))}
         </View>
@@ -347,26 +361,34 @@ export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ saleData, qrCode
         <View style={styles.summarySection}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal:</Text>
-            <Text style={styles.summaryValue}>${formatCurrency(totalAmount)}</Text>
+            <Text style={styles.summaryValue}>
+              ${formatCurrency(totalAmount)}
+            </Text>
           </View>
 
           {discountAmount > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Discount:</Text>
-              <Text style={styles.summaryValue}>-${formatCurrency(discountAmount)}</Text>
+              <Text style={styles.summaryValue}>
+                -${formatCurrency(discountAmount)}
+              </Text>
             </View>
           )}
 
           {appliedTaxes.map((tax, index) => (
             <View key={index} style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>{tax.taxName || 'Tax'}:</Text>
-              <Text style={styles.summaryValue}>${formatCurrency(tax.taxAmount)}</Text>
+              <Text style={styles.summaryLabel}>{tax.taxName || "Tax"}:</Text>
+              <Text style={styles.summaryValue}>
+                ${formatCurrency(tax.taxAmount)}
+              </Text>
             </View>
           ))}
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalValue}>${formatCurrency(finalAmount)}</Text>
+            <Text style={styles.totalValue}>
+              ${formatCurrency(finalAmount)}
+            </Text>
           </View>
         </View>
 
@@ -380,7 +402,9 @@ export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ saleData, qrCode
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Amount Received:</Text>
-            <Text style={styles.infoValue}>${formatCurrency(amountReceived)}</Text>
+            <Text style={styles.infoValue}>
+              ${formatCurrency(amountReceived)}
+            </Text>
           </View>
 
           {change > 0 && (
@@ -405,7 +429,9 @@ export const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ saleData, qrCode
         <View style={styles.footer}>
           <Text style={styles.footerText}>Thank you for your business!</Text>
           <Text style={styles.footerBrand}>{organization.name}</Text>
-          <Text style={styles.footerTimestamp}>Generated: {currentTimestamp}</Text>
+          <Text style={styles.footerTimestamp}>
+            Generated: {currentTimestamp}
+          </Text>
         </View>
       </Page>
     </Document>

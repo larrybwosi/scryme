@@ -17,7 +17,7 @@ describe('usePosProducts Hook', () => {
       { productId: 'p2', productName: 'Product 2', totalStock: 5, sellableUnits: [], variants: [] },
     ];
 
-    mockInvoke.mockImplementation(async (cmd) => {
+    mockInvoke.mockImplementation(async cmd => {
       if (cmd === 'search_products_command') {
         return { products: mockProducts, totalCount: 2 };
       }
@@ -36,13 +36,10 @@ describe('usePosProducts Hook', () => {
   it('should handle search with debouncing', async () => {
     mockInvoke.mockResolvedValue({ products: [], totalCount: 0 });
 
-    const { rerender } = renderHook(
-      ({ search }) => usePosProducts({ search, category: 'all' }),
-      {
-        wrapper,
-        initialProps: { search: '' }
-      }
-    );
+    const { rerender } = renderHook(({ search }) => usePosProducts({ search, category: 'all' }), {
+      wrapper,
+      initialProps: { search: '' },
+    });
 
     // Initial call
     expect(mockInvoke).toHaveBeenCalledTimes(1);
@@ -56,9 +53,12 @@ describe('usePosProducts Hook', () => {
     // Wait for debounce (500ms)
     await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(2), { timeout: 1000 });
 
-    expect(mockInvoke).toHaveBeenLastCalledWith('search_products_command', expect.objectContaining({
-      query: 'apple'
-    }));
+    expect(mockInvoke).toHaveBeenLastCalledWith(
+      'search_products_command',
+      expect.objectContaining({
+        query: 'apple',
+      })
+    );
   });
 
   it('should trigger sync command', async () => {
@@ -81,10 +81,13 @@ describe('usePosProducts Hook', () => {
       result.current.triggerSync();
     });
 
-    await waitFor(() => {
+    await waitFor(
+      () => {
         const calls = mockInvoke.mock.calls;
         const hasSyncCall = calls.some(call => call[0] === 'sync_products_command');
         expect(hasSyncCall).toBe(true);
-    }, { timeout: 2000 });
+      },
+      { timeout: 2000 }
+    );
   });
 });

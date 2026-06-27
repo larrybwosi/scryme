@@ -111,7 +111,10 @@ export function EnhancedDocumentSettings({
       address: config?.companyAddress || organization?.address,
       phone: config?.companyPhone || organization?.phone,
       email: config?.companyEmail || organization?.email,
-      logo: (config?.showLogo ?? true) ? (config?.logoUrl || organization?.logo) : null,
+      logo:
+        (config?.showLogo ?? true)
+          ? config?.logoUrl || organization?.logo
+          : null,
     };
 
     let mockData: any;
@@ -121,7 +124,9 @@ export function EnhancedDocumentSettings({
 
     if (mockData.branding) {
       mockData.branding.primaryColor =
-        config?.primaryColor || organization?.primaryColor || mockData.branding.primaryColor;
+        config?.primaryColor ||
+        organization?.primaryColor ||
+        mockData.branding.primaryColor;
       mockData.branding.showPoweredBy = config?.showPoweredBy ?? true;
       mockData.branding.watermarkText = config?.watermarkText;
       mockData.branding.showLogo = config?.showLogo ?? true;
@@ -132,14 +137,22 @@ export function EnhancedDocumentSettings({
       mockData.branding.logoUrl = baseDetails.logo;
     }
 
-    mockData.currency = organization?.settings?.defaultCurrency || 'USD';
-    const symbolMap: Record<string, string> = { 'USD': '$', 'KES': 'KSh', 'EUR': '€', 'GBP': '£' };
+    mockData.currency = organization?.settings?.defaultCurrency || "USD";
+    const symbolMap: Record<string, string> = {
+      USD: "$",
+      KES: "KSh",
+      EUR: "€",
+      GBP: "£",
+    };
     mockData.currencySymbol = symbolMap[mockData.currency] || mockData.currency;
     mockData.currencySettings = {
       code: mockData.currency,
       symbol: mockData.currencySymbol,
-      locale: organization?.settings?.defaultTimezone === 'Africa/Nairobi' ? 'en-KE' : 'en-US',
-      precision: 2
+      locale:
+        organization?.settings?.defaultTimezone === "Africa/Nairobi"
+          ? "en-KE"
+          : "en-US",
+      precision: 2,
     };
 
     mockData.footerText = config?.footerText;
@@ -307,7 +320,8 @@ export function EnhancedDocumentSettings({
                     No templates available
                   </p>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Templates for this document type haven&apos;t been added yet.
+                    Templates for this document type haven&apos;t been added
+                    yet.
                   </p>
                 </div>
               )}

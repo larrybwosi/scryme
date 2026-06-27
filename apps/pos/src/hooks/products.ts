@@ -84,10 +84,11 @@ export function usePosProducts({ search, category, page = 1, pageSize = 50, enab
           ...p,
           productName: p.productName || p.name || '',
           stock: p.stock ?? p.totalStock ?? 0,
-          variants: p.variants?.map(v => ({
-            ...v,
-            variantName: v.variantName || v.name || '',
-          })) || [],
+          variants:
+            p.variants?.map(v => ({
+              ...v,
+              variantName: v.variantName || v.name || '',
+            })) || [],
         })),
         totalCount: response.totalCount,
       };

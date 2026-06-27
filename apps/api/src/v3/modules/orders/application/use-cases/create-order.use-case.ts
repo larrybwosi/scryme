@@ -64,7 +64,7 @@ export class CreateOrderUseCase {
         quantity: Number(i.quantity),
         lineTotal: Number(i.lineTotal),
       })),
-    }).catch((err) =>
+    }).catch(err =>
       console.error("[v3 Order] Failed to emit Windmill event:", err),
     );
 

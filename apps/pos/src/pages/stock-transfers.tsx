@@ -380,7 +380,7 @@ export default function StockTransferCreate() {
         documents: attachedFiles.map(f => f.path || f.name),
       };
       await invoke('submit_stock_transfer', { payload });
-      posthog.capture("stock_transfer_initiated");
+      posthog.capture('stock_transfer_initiated');
       toast.success('Stock transfer submitted successfully');
       setItems([]);
       setNotes('');

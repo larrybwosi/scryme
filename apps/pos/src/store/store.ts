@@ -493,23 +493,26 @@ export interface Table {
 }
 
 interface PosStore {
-  userCarts: Record<string, {
-    customerName: string;
-    orderType: OrderType;
-    items: OrderItem[];
-    tableNumber?: string;
-    instructions?: string;
-    metadata?: Record<string, any>;
-    customerId?: string;
-    customerPhone?: string;
-    loyaltyPoints?: number;
-    prescriptionId?: string;
-    doctorName?: string;
-    isPharmacistVerified?: boolean;
-    insuranceProvider?: string;
-    insurancePolicyNumber?: string;
-    insuranceAmount?: number;
-  }>;
+  userCarts: Record<
+    string,
+    {
+      customerName: string;
+      orderType: OrderType;
+      items: OrderItem[];
+      tableNumber?: string;
+      instructions?: string;
+      metadata?: Record<string, any>;
+      customerId?: string;
+      customerPhone?: string;
+      loyaltyPoints?: number;
+      prescriptionId?: string;
+      doctorName?: string;
+      isPharmacistVerified?: boolean;
+      insuranceProvider?: string;
+      insurancePolicyNumber?: string;
+      insuranceAmount?: number;
+    }
+  >;
   currentOrder: {
     customerName: string;
     orderType: OrderType;
@@ -563,7 +566,13 @@ interface PosStore {
   setCustomerId: (id: string) => void;
   setCustomer: (customer: Customer) => void;
   setOrderType: (type: OrderType) => void;
-  addItemToOrder: (product: Product, variantId: string, unit: SellableUnit, quantity: number, options?: { isWholesale?: boolean }) => void;
+  addItemToOrder: (
+    product: Product,
+    variantId: string,
+    unit: SellableUnit,
+    quantity: number,
+    options?: { isWholesale?: boolean }
+  ) => void;
   updateItemQuantity: (productId: string, variantId: string, unitId: string, quantity: number) => void;
   updateItemInOrder: (item: OrderItem) => void;
   removeItemFromOrder: (productId: string, variantId: string, unitId: string) => void;
@@ -1044,7 +1053,9 @@ export const usePosStore = create<PosStore>()(
             imageUrl: product.imageUrl,
             isWholesale: options?.isWholesale || false,
             // Pharmacy Check: if category is "Prescription" or "Medicine"
-            requiresPrescription: product.category.toLowerCase().includes('prescription') || product.category.toLowerCase().includes('medicine'),
+            requiresPrescription:
+              product.category.toLowerCase().includes('prescription') ||
+              product.category.toLowerCase().includes('medicine'),
           };
 
           return {
@@ -1060,7 +1071,9 @@ export const usePosStore = create<PosStore>()(
           currentOrder: {
             ...state.currentOrder,
             items: state.currentOrder.items.map(item =>
-              item.productId === productId && item.variantId === variantId && item.selectedUnit.unitId === unitId ? { ...item, quantity } : item
+              item.productId === productId && item.variantId === variantId && item.selectedUnit.unitId === unitId
+                ? { ...item, quantity }
+                : item
             ),
           },
         })),
@@ -1117,7 +1130,8 @@ export const usePosStore = create<PosStore>()(
           currentOrder: {
             ...state.currentOrder,
             items: state.currentOrder.items.filter(
-              item => !(item.productId === productId && item.variantId === variantId && item.selectedUnit.unitId === unitId)
+              item =>
+                !(item.productId === productId && item.variantId === variantId && item.selectedUnit.unitId === unitId)
             ),
           },
         })),
@@ -1269,7 +1283,7 @@ export const usePosStore = create<PosStore>()(
       },
 
       resetOrder: () => {
-        posthog.capture("cart_cleared");
+        posthog.capture('cart_cleared');
         set({
           currentOrder: {
             customerName: '',
@@ -1339,13 +1353,12 @@ export const usePosStore = create<PosStore>()(
 
         // --- Logic: Find Table to Clear ---
         const tableToClear = state.tables.find(
-          t => t.number === state.currentOrder.tableNumber || 
-               t.currentOrderId === state.currentOrder.metadata?.orderId
+          t => t.number === state.currentOrder.tableNumber || t.currentOrderId === state.currentOrder.metadata?.orderId
         );
 
         // Broadcast to Kitchen if enabled
         if (state.settings.enableKdsSystem) {
-           sendOrderToKitchen(newOrder);
+          sendOrderToKitchen(newOrder);
         }
 
         // Update State
@@ -1438,7 +1451,7 @@ export const usePosStore = create<PosStore>()(
           id: Date.now().toString(),
           orderNumber: `#${Math.floor(100000 + Math.random() * 900000)}`,
           customerName: state.currentOrder.customerName || 'Walk-in Customer',
-          orderType: state.currentOrder.tableNumber ? 'dine-in' : state.currentOrder.orderType as any,
+          orderType: state.currentOrder.tableNumber ? 'dine-in' : (state.currentOrder.orderType as any),
           status: 'waiting',
           items: [...state.currentOrder.items],
           createdAt: new Date(),
@@ -1959,18 +1972,18 @@ export const usePosStore = create<PosStore>()(
 
       setTableNumber: (tableNumber, guestsCount) =>
         set(state => ({
-          currentOrder: { 
-            ...state.currentOrder, 
+          currentOrder: {
+            ...state.currentOrder,
             tableNumber,
-            orderType: tableNumber ? 'dine-in' : state.currentOrder.orderType as any,
+            orderType: tableNumber ? 'dine-in' : (state.currentOrder.orderType as any),
             metadata: {
               ...state.currentOrder.metadata,
               guestsCount: guestsCount !== undefined ? guestsCount : state.currentOrder.metadata?.guestsCount,
-            }
+            },
           },
         })),
 
-      recallUnpaidOrder: orderId => 
+      recallUnpaidOrder: orderId =>
         set(state => {
           const unpaidOrder = state.orders.find(o => o.id === orderId);
           if (!unpaidOrder) return state;
@@ -1995,7 +2008,7 @@ export const usePosStore = create<PosStore>()(
         set(state => ({
           currentOrder: { ...state.currentOrder, instructions },
         })),
-      
+
       fetchTables: async () => {
         try {
           const tables = await invoke<Table[]>('get_tables_command');
@@ -2020,7 +2033,7 @@ export const usePosStore = create<PosStore>()(
       updateTable: async (id, tableUpdate) => {
         const existingTable = get().tables.find(t => t.id === id);
         if (!existingTable) return;
-        
+
         const updatedTable = { ...existingTable, ...tableUpdate };
         try {
           await invoke('upsert_table_command', { table: updatedTable });
@@ -2042,13 +2055,13 @@ export const usePosStore = create<PosStore>()(
       setTableStatus: async (id, status) => {
         const table = get().tables.find(t => t.id === id);
         if (!table) return;
-        
+
         try {
-          await invoke('update_table_status_command', { 
-            id, 
-            status, 
+          await invoke('update_table_status_command', {
+            id,
+            status,
             orderId: table.currentOrderId || null,
-            guestsCount: table.guestsCount || null
+            guestsCount: table.guestsCount || null,
           });
           get().fetchTables();
         } catch (error) {
@@ -2058,11 +2071,11 @@ export const usePosStore = create<PosStore>()(
 
       assignOrderToTable: async (tableId, orderId, guestsCount) => {
         try {
-          await invoke('update_table_status_command', { 
-            id: tableId, 
-            status: 'occupied', 
+          await invoke('update_table_status_command', {
+            id: tableId,
+            status: 'occupied',
             orderId,
-            guestsCount: guestsCount || null
+            guestsCount: guestsCount || null,
           });
           get().fetchTables();
         } catch (error) {
@@ -2072,11 +2085,11 @@ export const usePosStore = create<PosStore>()(
 
       clearTableOrder: async tableId => {
         try {
-          await invoke('update_table_status_command', { 
-            id: tableId, 
-            status: 'available', 
+          await invoke('update_table_status_command', {
+            id: tableId,
+            status: 'available',
             orderId: null,
-            guestsCount: null
+            guestsCount: null,
           });
           get().fetchTables();
         } catch (error) {

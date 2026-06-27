@@ -1,8 +1,8 @@
-import { notificationEngine } from '../index';
-import { db } from '@repo/db';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { notificationEngine } from "../index";
+import { db } from "@repo/db";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock('@repo/db', () => ({
+vi.mock("@repo/db", () => ({
   db: {
     notificationTemplate: {
       findUnique: vi.fn(),
@@ -24,40 +24,42 @@ vi.mock('@repo/db', () => ({
   },
 }));
 
-vi.mock('axios', () => ({
+vi.mock("axios", () => ({
   default: {
     post: vi.fn().mockResolvedValue({ status: 200 }),
   },
 }));
 
-describe('NotificationEngine', () => {
+describe("NotificationEngine", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should construct report tables correctly using the handlebars helper', async () => {
+  it("should construct report tables correctly using the handlebars helper", async () => {
     const template = {
-      id: 'template-id',
-      content: 'Report:\n{{table items}}',
-      subject: 'Weekly Report',
+      id: "template-id",
+      content: "Report:\n{{table items}}",
+      subject: "Weekly Report",
     };
 
     (db.notificationTemplate.findUnique as any).mockResolvedValue(template);
-    (db.notificationDispatch.create as any).mockResolvedValue({ id: 'dispatch-id' });
+    (db.notificationDispatch.create as any).mockResolvedValue({
+      id: "dispatch-id",
+    });
 
     await notificationEngine.notify({
-      organizationId: 'org-id',
-      templateName: 'test-template',
+      organizationId: "org-id",
+      templateName: "test-template",
       data: {
         items: [
-          { Name: 'Bread', Stock: 10 },
-          { Name: 'Milk', Stock: 5 },
+          { Name: "Bread", Stock: 10 },
+          { Name: "Milk", Stock: 5 },
         ],
       },
     });
 
     const createCall = (db.notificationDispatch.create as any).mock.calls[0][0];
-    expect(createCall.data.finalContent).toContain('| Name | Stock |');
-    expect(createCall.data.finalContent).toContain('| Bread | 10 |');
+    expect(createCall.data.finalContent).toContain("| Name | Stock |");
+    expect(createCall.data.finalContent).toContain("| Bread | 10 |");
   });
 });

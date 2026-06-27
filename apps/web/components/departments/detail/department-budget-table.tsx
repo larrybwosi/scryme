@@ -23,7 +23,11 @@ interface DepartmentBudgetTableProps {
   budgets: any[];
 }
 
-export function DepartmentBudgetTable({ departmentId, activeBudgetId, budgets }: DepartmentBudgetTableProps) {
+export function DepartmentBudgetTable({
+  departmentId,
+  activeBudgetId,
+  budgets,
+}: DepartmentBudgetTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSetActive = async (budgetId: string) => {
@@ -43,7 +47,9 @@ export function DepartmentBudgetTable({ departmentId, activeBudgetId, budgets }:
       <div className="p-4 border-b flex items-center justify-between bg-gray-50/30">
         <div>
           <h3 className="font-bold text-[#1D1D1F]">Department Budgets</h3>
-          <p className="text-xs text-gray-500">Track and manage department spending allocations.</p>
+          <p className="text-xs text-gray-500">
+            Track and manage department spending allocations.
+          </p>
         </div>
         <AddBudgetSheet departmentId={departmentId}>
           <Button size="sm" className="gap-2 bg-[#1D1D1F] text-white">
@@ -70,27 +76,37 @@ export function DepartmentBudgetTable({ departmentId, activeBudgetId, budgets }:
               </TableCell>
             </TableRow>
           ) : (
-            budgets.map((budget) => {
+            budgets.map(budget => {
               const isActive = budget.id === activeBudgetId;
               const isExpired = new Date(budget.periodEnd) < new Date();
 
               return (
-                <TableRow key={budget.id} className={isActive ? "bg-green-50/30" : ""}>
+                <TableRow
+                  key={budget.id}
+                  className={isActive ? "bg-green-50/30" : ""}>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{budget.name}</span>
-                      <span className="text-[10px] text-gray-500 line-clamp-1">{budget.description}</span>
+                      <span className="text-[10px] text-gray-500 line-clamp-1">
+                        {budget.description}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col text-xs">
-                      <span>{format(new Date(budget.periodStart), "MMM dd, yyyy")}</span>
+                      <span>
+                        {format(new Date(budget.periodStart), "MMM dd, yyyy")}
+                      </span>
                       <span className="text-gray-400">to</span>
-                      <span>{format(new Date(budget.periodEnd), "MMM dd, yyyy")}</span>
+                      <span>
+                        {format(new Date(budget.periodEnd), "MMM dd, yyyy")}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-bold">KES {Number(budget.amount).toLocaleString()}</span>
+                    <span className="font-bold">
+                      KES {Number(budget.amount).toLocaleString()}
+                    </span>
                   </TableCell>
                   <TableCell>
                     {isActive ? (
@@ -99,7 +115,9 @@ export function DepartmentBudgetTable({ departmentId, activeBudgetId, budgets }:
                         Active
                       </Badge>
                     ) : isExpired ? (
-                      <Badge variant="secondary" className="text-gray-500 gap-1">
+                      <Badge
+                        variant="secondary"
+                        className="text-gray-500 gap-1">
                         <History size={10} />
                         Expired
                       </Badge>
@@ -114,8 +132,7 @@ export function DepartmentBudgetTable({ departmentId, activeBudgetId, budgets }:
                         size="sm"
                         className="text-xs h-7"
                         onClick={() => handleSetActive(budget.id)}
-                        disabled={loading === budget.id}
-                      >
+                        disabled={loading === budget.id}>
                         Set Active
                       </Button>
                     )}

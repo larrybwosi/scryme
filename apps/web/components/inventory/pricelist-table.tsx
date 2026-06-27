@@ -75,10 +75,15 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
     const from = priceList.validFrom ? new Date(priceList.validFrom) : null;
     const to = priceList.validTo ? new Date(priceList.validTo) : null;
 
-    if (!priceList.isActive) return <Badge variant="destructive">Inactive</Badge>;
+    if (!priceList.isActive)
+      return <Badge variant="destructive">Inactive</Badge>;
     if (from && now < from) return <Badge variant="secondary">Scheduled</Badge>;
     if (to && now > to) return <Badge variant="outline">Expired</Badge>;
-    return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Active</Badge>;
+    return (
+      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
+        Active
+      </Badge>
+    );
   };
 
   return (
@@ -111,7 +116,9 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
                         {priceList.name}
                       </span>
                       {priceList.isGlobal && (
-                        <Badge variant="outline" className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200">
                           <Globe size={10} className="mr-1" />
                           Global
                         </Badge>
@@ -125,16 +132,23 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
                 <TableCell>
                   <div className="flex flex-wrap gap-1 max-w-[200px]">
                     {priceList.isGlobal ? (
-                      <span className="text-xs text-gray-400 italic">All Customers</span>
+                      <span className="text-xs text-gray-400 italic">
+                        All Customers
+                      </span>
                     ) : priceList.customerTags?.length > 0 ? (
                       priceList.customerTags.map((tag: string) => (
-                        <Badge key={tag} variant="secondary" className="text-[10px] h-5 bg-gray-100 text-gray-600 border-none">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-[10px] h-5 bg-gray-100 text-gray-600 border-none">
                           <Tag size={10} className="mr-1" />
                           {tag}
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-xs text-gray-400">Explicit assignment only</span>
+                      <span className="text-xs text-gray-400">
+                        Explicit assignment only
+                      </span>
                     )}
                   </div>
                 </TableCell>
@@ -142,10 +156,16 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
                   <div className="flex flex-col gap-0.5 text-xs text-gray-500">
                     <div className="flex items-center gap-1">
                       <Calendar size={12} className="shrink-0" />
-                      <span>{priceList.validFrom ? new Date(priceList.validFrom).toLocaleDateString() : "Always"}</span>
+                      <span>
+                        {priceList.validFrom
+                          ? new Date(priceList.validFrom).toLocaleDateString()
+                          : "Always"}
+                      </span>
                     </div>
                     {priceList.validTo && (
-                      <span className="pl-4 text-[10px]">until {new Date(priceList.validTo).toLocaleDateString()}</span>
+                      <span className="pl-4 text-[10px]">
+                        until {new Date(priceList.validTo).toLocaleDateString()}
+                      </span>
                     )}
                   </div>
                 </TableCell>
@@ -154,9 +174,7 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
                     {priceList._count?.items || 0} items
                   </span>
                 </TableCell>
-                <TableCell>
-                  {getStatusBadge(priceList)}
-                </TableCell>
+                <TableCell>{getStatusBadge(priceList)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <Tooltip>
@@ -179,7 +197,8 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
                           <span>View Details</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setEditingPriceList(priceList)}>
+                      <DropdownMenuItem
+                        onClick={() => setEditingPriceList(priceList)}>
                         <Edit className="mr-2 h-4 w-4" />
                         <span>Edit Configuration</span>
                       </DropdownMenuItem>
@@ -212,8 +231,8 @@ export function PriceListTable({ data, availableTags }: PriceListTableProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Price List?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the price list and all associated prices and rules.
-              This action cannot be undone.
+              This will permanently delete the price list and all associated
+              prices and rules. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

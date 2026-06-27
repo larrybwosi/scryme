@@ -13,11 +13,7 @@ import { BusinessAccountService } from "./application/use-cases/business-account
 import { CrmModule } from "../crm/crm.module";
 
 @Module({
-  imports: [
-    PrismaModule,
-    RedisModule,
-    CrmModule,
-  ],
+  imports: [PrismaModule, RedisModule, CrmModule],
   controllers: [CustomerController, BusinessAccountController],
   providers: [
     CustomerResolver,

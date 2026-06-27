@@ -114,7 +114,7 @@ export class ProductController {
   ) {
     const organizationId = req.organization.id;
 
-    const result = await this.prisma.client.$transaction(async (tx) => {
+    const result = await this.prisma.client.$transaction(async tx => {
       // If setting as preferred, unset any existing preferred supplier for this variant
       if (body.isPreferred === true) {
         await tx.productSupplier.updateMany({

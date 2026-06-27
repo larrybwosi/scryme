@@ -12,8 +12,8 @@ import type {
   TransactionItem,
   User,
   Address,
-  CrmFollowUp
-} from '@repo/db';
+  CrmFollowUp,
+} from "@repo/db";
 
 export type CustomerWithRelations = Customer & {
   addresses: Address[];
@@ -22,9 +22,15 @@ export type CustomerWithRelations = Customer & {
     fulfillments: (Fulfillment & { items: FulfillmentItem[] })[];
     items: TransactionItem[];
   })[];
-  crmRecord: (CrmRecord & {
-    activities: (CrmActivity & { member: (Member & { user: User }) | null })[];
-    notes: (CrmNote & { createdBy: (Member & { user: User }) | null })[];
-    followUps: (CrmFollowUp & { assignedTo: (Member & { user: User }) | null })[];
-  }) | null;
+  crmRecord:
+    | (CrmRecord & {
+        activities: (CrmActivity & {
+          member: (Member & { user: User }) | null;
+        })[];
+        notes: (CrmNote & { createdBy: (Member & { user: User }) | null })[];
+        followUps: (CrmFollowUp & {
+          assignedTo: (Member & { user: User }) | null;
+        })[];
+      })
+    | null;
 };

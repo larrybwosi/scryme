@@ -1,66 +1,73 @@
 // @ts-nocheck
-import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer';
-import { InvoiceData } from '../../types';
+import React from "react";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Link,
+} from "@react-pdf/renderer";
+import { InvoiceData } from "../../types";
 
 // Create styles
 const styles = StyleSheet.create({
   page: {
     padding: 0, // Page padding is handled by sections
     fontSize: 9,
-    fontFamily: 'Helvetica',
-    backgroundColor: '#FFFFFF',
+    fontFamily: "Helvetica",
+    backgroundColor: "#FFFFFF",
   },
   // Header section
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 30, // Reduced from 40
     paddingBottom: 20, // Reduced from 30
   },
   logoSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   logo: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#14B8A6', // Teal color from original
+    backgroundColor: "#14B8A6", // Teal color from original
     marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   companyInfo: {
-    flexDirection: 'column',
+    flexDirection: "column",
   },
   companyName: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     marginBottom: 2,
   },
   companyTagline: {
     fontSize: 8,
-    color: '#6B7280', // Changed from teal to gray to match target
+    color: "#6B7280", // Changed from teal to gray to match target
   },
   headerRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   headerText: {
     fontSize: 8,
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 2,
   },
   // NEW: Section for Client + Invoice Details
   introSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 40,
     marginTop: 15, // Reduced from 20
     marginBottom: 20, // Reduced from 25
@@ -72,212 +79,212 @@ const styles = StyleSheet.create({
   },
   clientTitle: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     marginBottom: 8,
   },
   clientText: {
     fontSize: 8,
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 2,
   },
   websiteLink: {
     fontSize: 8,
-    color: '#14B8A6',
+    color: "#14B8A6",
     marginTop: 5,
-    textDecoration: 'none',
+    textDecoration: "none",
   },
   // NEW: Invoice Details Section (Now on right)
   invoiceDetailsSection: {
     flex: 0.8,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   invoiceTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     marginBottom: 15, // Reduced from 20
-    textAlign: 'right',
+    textAlign: "right",
   },
   detailsGrid: {
-    width: '100%',
+    width: "100%",
   },
   infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
     marginBottom: 5,
   },
   infoLabel: {
     fontSize: 8,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   infoValue: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
   },
   infoValueLarge: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
   },
   // Table section
   tableContainer: {
     paddingHorizontal: 40,
   },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#14B8A6', // Using original teal
+    flexDirection: "row",
+    backgroundColor: "#14B8A6", // Using original teal
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
   tableHeaderCell: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
   },
   descriptionHeader: {
     flex: 3,
   },
   quantityHeader: {
     flex: 0.7,
-    textAlign: 'center',
+    textAlign: "center",
   },
   priceHeader: {
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   totalHeader: {
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingVertical: 10, // Reduced from 12
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
   tableRowAlternate: {
-    backgroundColor: '#F8F9FA', // Light gray for alternate rows
+    backgroundColor: "#F8F9FA", // Light gray for alternate rows
   },
   tableCell: {
     fontSize: 8,
-    color: '#374151',
+    color: "#374151",
   },
   itemDescription: {
     flex: 3,
   },
   itemTitle: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     marginBottom: 3,
   },
   itemDetails: {
     fontSize: 7,
-    color: '#6B7280',
+    color: "#6B7280",
     lineHeight: 1.4,
   },
   itemQuantity: {
     flex: 0.7,
-    textAlign: 'center',
+    textAlign: "center",
   },
   itemPrice: {
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   itemTotal: {
     flex: 1,
-    textAlign: 'right',
-    fontWeight: 'bold',
+    textAlign: "right",
+    fontWeight: "bold",
   },
   // Bottom Section
   bottomSection: {
     paddingHorizontal: 40,
     paddingTop: 15, // Reduced from 20
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   leftBottom: {
     flex: 1,
     paddingRight: 20,
   },
   rightBottom: {
-    width: '40%',
+    width: "40%",
   },
   sectionTitle: {
     fontSize: 9,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     marginBottom: 5,
   },
   termsValue: {
     fontSize: 8,
-    color: '#6B7280',
-    fontWeight: 'normal',
+    color: "#6B7280",
+    fontWeight: "normal",
   },
   paymentText: {
     fontSize: 7,
-    color: '#6B7280',
+    color: "#6B7280",
     lineHeight: 1.5,
   },
   // Totals
   totalsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
   totalLabel: {
     fontSize: 8,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   totalValue: {
     fontSize: 8,
-    color: '#1F2937',
-    fontWeight: 'bold',
+    color: "#1F2937",
+    fontWeight: "bold",
   },
   discountValue: {
     fontSize: 8,
-    color: '#EF4444', // Red for discount
-    fontWeight: 'bold',
+    color: "#EF4444", // Red for discount
+    fontWeight: "bold",
   },
   grandTotalRow: {
-    backgroundColor: '#14B8A6', // Using original teal
+    backgroundColor: "#14B8A6", // Using original teal
     marginTop: 2,
   },
   grandTotalLabel: {
     fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   grandTotalValue: {
     fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   // Signature Section
   signatureSection: {
     paddingHorizontal: 40,
     paddingTop: 20, // Reduced from 30
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   signatureName: {
     fontSize: 10,
-    color: '#1F2937',
+    color: "#1F2937",
     marginBottom: 2,
   },
   signatureTitle: {
     fontSize: 8,
-    color: '#6B7280',
+    color: "#6B7280",
   },
   thankYou: {
     fontSize: 11,
-    fontWeight: 'bold',
-    color: '#1F2937',
+    fontWeight: "bold",
+    color: "#1F2937",
     paddingHorizontal: 40,
     marginTop: 15, // Reduced from 20
     marginBottom: 10, // Reduced from 15
@@ -285,8 +292,8 @@ const styles = StyleSheet.create({
   },
   // Footer
   footer: {
-    backgroundColor: '#343A40', // Darker gray from target
-    position: 'absolute',
+    backgroundColor: "#343A40", // Darker gray from target
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
@@ -295,63 +302,76 @@ const styles = StyleSheet.create({
   },
   footerTitle: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   footerText: {
     fontSize: 7,
-    color: '#D1D5DB',
+    color: "#D1D5DB",
     lineHeight: 1.5,
     marginBottom: 10,
   },
   footerWebsite: {
     fontSize: 9,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'right',
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "right",
   },
 });
 
-export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoiceData }) => {
+export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({
+  data: invoiceData,
+}) => {
   const data = {
     ...invoiceData,
     companyName: invoiceData.companyName || invoiceData.company.name,
-    companyTagline: invoiceData.companyTagline || invoiceData.company.tagline || '',
+    companyTagline:
+      invoiceData.companyTagline || invoiceData.company.tagline || "",
     companyAddress: {
-      city: invoiceData.company.city || '',
+      city: invoiceData.company.city || "",
       street: invoiceData.company.address,
-      zipCode: '',
+      zipCode: "",
     },
     companyContact: invoiceData.companyContact || {
-      phone: invoiceData.company.phone || '',
-      fax: '',
-      email: invoiceData.company.email || '',
+      phone: invoiceData.company.phone || "",
+      fax: "",
+      email: invoiceData.company.email || "",
     },
     invoiceTo: invoiceData.invoiceTo || {
       name: invoiceData.client.name,
-      address: typeof invoiceData.client.address === 'string' ? invoiceData.client.address : '',
-      phone: invoiceData.client.phone || '',
-      fax: '',
-      email: invoiceData.client.email || '',
+      address:
+        typeof invoiceData.client.address === "string"
+          ? invoiceData.client.address
+          : "",
+      phone: invoiceData.client.phone || "",
+      fax: "",
+      email: invoiceData.client.email || "",
     },
-    website: invoiceData.website || invoiceData.company.website || '',
+    website: invoiceData.website || invoiceData.company.website || "",
     invoiceDate: invoiceData.date,
     invoiceNo: invoiceData.invoiceNumber,
     items: invoiceData.items.map((item: any) => ({
       description: item.description || item.itemName,
-      details: item.details || '',
+      details: item.details || "",
       quantity: item.qty || item.quantity,
       unitPrice: item.unitPrice || item.price || item.rate,
       total: item.amount || item.total,
     })),
-    taxRate: invoiceData.taxRate || (invoiceData.tax / invoiceData.subtotal) * 100 || 0,
+    taxRate:
+      invoiceData.taxRate ||
+      (invoiceData.tax / invoiceData.subtotal) * 100 ||
+      0,
     discount: invoiceData.discount || 0,
-    terms: invoiceData.terms || invoiceData.payment.terms || '',
-    paymentInformation: invoiceData.paymentInformation || (invoiceData.payment.availableMethods || []).join(', '),
-    signature: invoiceData.signature || { name: '', title: '' },
-    termsAndConditions: invoiceData.termsAndConditions || invoiceData.payment.terms || '',
-    footerWebsite: invoiceData.footerWebsite || invoiceData.company.website || '',
+    terms: invoiceData.terms || invoiceData.payment.terms || "",
+    paymentInformation:
+      invoiceData.paymentInformation ||
+      (invoiceData.payment.availableMethods || []).join(", "),
+    signature: invoiceData.signature || { name: "", title: "" },
+    termsAndConditions:
+      invoiceData.termsAndConditions || invoiceData.payment.terms || "",
+    footerWebsite:
+      invoiceData.footerWebsite || invoiceData.company.website || "",
   };
   // Calculate totals
   const subtotal = invoiceData.subtotal;
@@ -376,11 +396,18 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
 
           <View style={styles.headerRight}>
             <Text style={styles.headerText}>
-              {data.companyAddress.city && `${data.companyAddress.city}, `}{data.companyAddress.street} {data.companyAddress.zipCode}
+              {data.companyAddress.city && `${data.companyAddress.city}, `}
+              {data.companyAddress.street} {data.companyAddress.zipCode}
             </Text>
-            <Text style={styles.headerText}>Phone: {data.companyContact.phone}</Text>
-            <Text style={styles.headerText}>Fax: {data.companyContact.fax}</Text>
-            <Text style={styles.headerText}>E-mail: {data.companyContact.email}</Text>
+            <Text style={styles.headerText}>
+              Phone: {data.companyContact.phone}
+            </Text>
+            <Text style={styles.headerText}>
+              Fax: {data.companyContact.fax}
+            </Text>
+            <Text style={styles.headerText}>
+              E-mail: {data.companyContact.email}
+            </Text>
           </View>
         </View>
 
@@ -392,8 +419,14 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
             <Text style={styles.clientText}>{data.invoiceTo.name}</Text>
             <Text style={styles.clientText}>{data.invoiceTo.address}</Text>
             <Text style={styles.clientText}>Phone: {data.invoiceTo.phone}</Text>
-            {data.invoiceTo.fax && <Text style={styles.clientText}>Fax: {data.invoiceTo.fax}</Text>}
-            {data.invoiceTo.email && <Text style={styles.clientText}>E-mail: {data.invoiceTo.email}</Text>}
+            {data.invoiceTo.fax && (
+              <Text style={styles.clientText}>Fax: {data.invoiceTo.fax}</Text>
+            )}
+            {data.invoiceTo.email && (
+              <Text style={styles.clientText}>
+                E-mail: {data.invoiceTo.email}
+              </Text>
+            )}
             <Link src={`http://${data.website}`} style={styles.websiteLink}>
               <Text>{data.website}</Text>
             </Link>
@@ -406,7 +439,11 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Total Due:</Text>
                 <Text style={styles.infoValueLarge}>
-                  {invoiceData.currencySymbol} {totalDue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {invoiceData.currencySymbol}{" "}
+                  {totalDue.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
               <View style={styles.infoRow}>
@@ -424,14 +461,25 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
         {/* Items Table */}
         <View style={styles.tableContainer}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.descriptionHeader]}>Item Description</Text>
-            <Text style={[styles.tableHeaderCell, styles.quantityHeader]}>Quantity</Text>
-            <Text style={[styles.tableHeaderCell, styles.priceHeader]}>Unit Price</Text>
-            <Text style={[styles.tableHeaderCell, styles.totalHeader]}>Total</Text>
+            <Text style={[styles.tableHeaderCell, styles.descriptionHeader]}>
+              Item Description
+            </Text>
+            <Text style={[styles.tableHeaderCell, styles.quantityHeader]}>
+              Quantity
+            </Text>
+            <Text style={[styles.tableHeaderCell, styles.priceHeader]}>
+              Unit Price
+            </Text>
+            <Text style={[styles.tableHeaderCell, styles.totalHeader]}>
+              Total
+            </Text>
           </View>
 
           {data.items.map((item, index) => {
-            const rowStyle = index % 2 === 1 ? [styles.tableRow, styles.tableRowAlternate] : styles.tableRow;
+            const rowStyle =
+              index % 2 === 1
+                ? [styles.tableRow, styles.tableRowAlternate]
+                : styles.tableRow;
 
             return (
               <View key={index} style={rowStyle}>
@@ -444,12 +492,18 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
                 </View>
                 <View style={styles.itemPrice}>
                   <Text style={styles.tableCell}>
-                    {invoiceData.currencySymbol} {item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {invoiceData.currencySymbol}{" "}
+                    {item.unitPrice.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                    })}
                   </Text>
                 </View>
                 <View style={styles.itemTotal}>
                   <Text style={styles.tableCell}>
-                    {invoiceData.currencySymbol} {item.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {invoiceData.currencySymbol}{" "}
+                    {item.total.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                    })}
                   </Text>
                 </View>
               </View>
@@ -464,29 +518,45 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
               Terms: <Text style={styles.termsValue}>{data.terms}</Text>
             </Text>
 
-            <Text style={[styles.sectionTitle, { marginTop: 15 }]}>Payment Information</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 15 }]}>
+              Payment Information
+            </Text>
             <Text style={styles.paymentText}>{data.paymentInformation}</Text>
           </View>
 
           <View style={styles.rightBottom}>
             <View style={styles.totalsRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>{invoiceData.currencySymbol} {subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+              <Text style={styles.totalValue}>
+                {invoiceData.currencySymbol}{" "}
+                {subtotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
-              <Text style={styles.totalLabel}>Tax Rate {data.taxRate.toFixed(1)}%</Text>
-              <Text style={styles.totalValue}>{invoiceData.currencySymbol} {taxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+              <Text style={styles.totalLabel}>
+                Tax Rate {data.taxRate.toFixed(1)}%
+              </Text>
+              <Text style={styles.totalValue}>
+                {invoiceData.currencySymbol}{" "}
+                {taxAmount.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
             </View>
             <View style={styles.totalsRow}>
               <Text style={styles.totalLabel}>Discount {data.discount}%</Text>
               <Text style={styles.discountValue}>
-                - {invoiceData.currencySymbol} {discountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                - {invoiceData.currencySymbol}{" "}
+                {discountAmount.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
               </Text>
             </View>
             <View style={[styles.totalsRow, styles.grandTotalRow]}>
               <Text style={styles.grandTotalLabel}>Total Due:</Text>
               <Text style={styles.grandTotalValue}>
-                {invoiceData.currencySymbol} {totalDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                {invoiceData.currencySymbol}{" "}
+                {totalDue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </Text>
             </View>
           </View>
@@ -503,13 +573,18 @@ export const ModernInvoicePDF: React.FC<{ data: InvoiceData }> = ({ data: invoic
 
         {/* Footer (Absolute Positioned) */}
         <View style={styles.footer}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
             <View style={{ flex: 1, paddingRight: 20 }}>
               <Text style={styles.footerTitle}>Terms & Conditions</Text>
               <Text style={styles.footerText}>{data.termsAndConditions}</Text>
             </View>
-            <View style={{ width: '30%', justifyContent: 'flex-end' }}>
-              <Link src={`http://${data.footerWebsite}`} style={styles.footerWebsite}>
+            <View style={{ width: "30%", justifyContent: "flex-end" }}>
+              <Link
+                src={`http://${data.footerWebsite}`}
+                style={styles.footerWebsite}
+              >
                 <Text>{data.footerWebsite}</Text>
               </Link>
             </View>

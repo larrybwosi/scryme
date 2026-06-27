@@ -276,7 +276,7 @@ export default function CustomerForm({
     return formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined;
   };
 
-    const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+  const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full bg-background text-foreground mb-6">

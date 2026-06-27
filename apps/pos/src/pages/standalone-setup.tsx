@@ -51,7 +51,7 @@ export default function StandaloneSetup() {
       await invoke('set_device_config', {
         baseUrl: 'http://localhost',
         locationId: 'standalone',
-        deviceKey: 'standalone-key'
+        deviceKey: 'standalone-key',
       });
 
       // Mock device config and location for standalone
@@ -95,7 +95,7 @@ export default function StandaloneSetup() {
                 id="licenseKey"
                 placeholder="XXXX-XXXX-XXXX-XXXX"
                 value={licenseKey}
-                onChange={(e) => setLicenseKey(e.target.value)}
+                onChange={e => setLicenseKey(e.target.value)}
               />
             </div>
           </CardContent>
@@ -123,7 +123,7 @@ export default function StandaloneSetup() {
                 placeholder="1234"
                 maxLength={6}
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
                 className="text-center text-2xl tracking-widest"
               />
             </div>

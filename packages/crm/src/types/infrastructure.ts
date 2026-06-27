@@ -1,4 +1,4 @@
-import { CrmActivity, CrmNote as _CrmNote } from '@repo/db/client';
+import { CrmActivity, CrmNote as _CrmNote } from "@repo/db/client";
 
 export interface ActivityLogger {
   logActivity(input: {

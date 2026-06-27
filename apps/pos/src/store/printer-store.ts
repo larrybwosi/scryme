@@ -71,7 +71,7 @@ export const usePrinterStore = create<PrinterState>()(
         const autoAssignments = get().assignments;
         const newAssignments = { ...autoAssignments };
 
-        Object.keys(autoAssignments).forEach((key) => {
+        Object.keys(autoAssignments).forEach(key => {
           const type = key as PrinterJobType;
           if (autoAssignments[type]) {
             const printer = printers.find(p => p.id === autoAssignments[type]);

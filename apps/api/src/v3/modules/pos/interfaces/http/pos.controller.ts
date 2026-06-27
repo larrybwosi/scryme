@@ -184,6 +184,9 @@ export class PosController {
     @Query("limit") limit?: string,
   ) {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
-    return this.registerPettyCashUseCase.getRecentTransactions(ctx, parsedLimit);
+    return this.registerPettyCashUseCase.getRecentTransactions(
+      ctx,
+      parsedLimit,
+    );
   }
 }

@@ -1,6 +1,11 @@
-import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
-import { SupplierUI as Supplier } from '../types/index';
+import React from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@repo/ui/components/ui/sheet";
+import { SupplierUI as Supplier } from "../types/index";
 
 interface SupplierDetailsSheetProps {
   supplier: Supplier | null;
@@ -8,7 +13,11 @@ interface SupplierDetailsSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export const SupplierDetailsSheet: React.FC<SupplierDetailsSheetProps> = ({ supplier, isOpen, onOpenChange }) => {
+export const SupplierDetailsSheet: React.FC<SupplierDetailsSheetProps> = ({
+  supplier,
+  isOpen,
+  onOpenChange,
+}) => {
   if (!supplier) return null;
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>

@@ -33,7 +33,7 @@ export class PrismaCustomerRepository implements ICustomerRepository {
     });
 
     return customers.map(
-      (c) =>
+      c =>
         new Customer(
           c.id,
           c.name,

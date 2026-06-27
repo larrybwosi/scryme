@@ -73,7 +73,7 @@ export class DeliveryPartnerUseCase {
     dto: PartnerWalletActionDto,
     type: WalletTxType = WalletTxType.ADJUSTMENT,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const partner = await tx.deliveryPartner.findFirst({
         where: { id: partnerId, organizationId },
       });

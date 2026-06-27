@@ -30,17 +30,17 @@ export class CheckoutUseCase {
     if (cart.items.length === 0) throw new BadRequestException("Cart is empty");
 
     const variantIds = cart.items
-      .map((i) => i.variantId)
-      .filter((id) => id !== "base");
+      .map(i => i.variantId)
+      .filter(id => id !== "base");
     const variants = await this.prisma.client.productVariant.findMany({
       where: { id: { in: variantIds } },
       include: { product: true },
     });
-    const variantMap = new Map(variants.map((v) => [v.id, v]));
+    const variantMap = new Map(variants.map(v => [v.id, v]));
 
     // Calculate totals since Cart model doesn't have them
     let subtotal = new Decimal(0);
-    const orderItemsData = cart.items.map((item) => {
+    const orderItemsData = cart.items.map(item => {
       const variant = variantMap.get(item.variantId);
       const unitPrice = variant?.retailPrice
         ? new Decimal(variant.retailPrice.toString())

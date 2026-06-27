@@ -46,27 +46,27 @@ export function TableSelectorDialog({ open, onOpenChange, onSelectTable }: Table
                 <Users className="w-4 h-4" /> Capacity: {selectedTableForGuests.capacity}
               </p>
             </div>
-            
+
             <div className="w-full max-w-xs space-y-3">
               <Label className="text-center block text-sm font-medium">Number of Guests</Label>
               <div className="flex items-center gap-3">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => setGuestsInput(prev => Math.max(1, parseInt(prev || '1') - 1).toString())}
                 >
                   -
                 </Button>
-                <Input 
-                  type="number" 
-                  className="text-center text-xl font-bold h-12 no-spinners" 
+                <Input
+                  type="number"
+                  className="text-center text-xl font-bold h-12 no-spinners"
                   value={guestsInput}
                   onChange={e => setGuestsInput(e.target.value)}
                   min={1}
                 />
-                <Button 
-                  variant="outline" 
-                  size="icon" 
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => setGuestsInput(prev => (parseInt(prev || '0') + 1).toString())}
                 >
                   +
@@ -78,12 +78,12 @@ export function TableSelectorDialog({ open, onOpenChange, onSelectTable }: Table
               <Button variant="outline" className="flex-1 h-12" onClick={() => setSelectedTableForGuests(null)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>
-              <Button 
-                className="flex-1 h-12" 
+              <Button
+                className="flex-1 h-12"
                 onClick={() => {
                   const guests = parseInt(guestsInput);
                   if (isNaN(guests) || guests <= 0) {
-                    toast.error("Please enter a valid number of guests");
+                    toast.error('Please enter a valid number of guests');
                     return;
                   }
                   onSelectTable(selectedTableForGuests.number, guests);

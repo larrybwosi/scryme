@@ -1,4 +1,4 @@
-import { Rest } from 'ably';
+import { Rest } from "ably";
 
 // Lazily-initialised singleton — the guard runs at call-time (inside a request
 // handler) rather than at module-evaluation time so the build never throws even
@@ -10,7 +10,7 @@ function getAbly(): Rest {
 
   const key = process.env.ABLY_API_KEY;
   if (!key) {
-    throw new Error('Missing ABLY_API_KEY environment variable');
+    throw new Error("Missing ABLY_API_KEY environment variable");
   }
 
   _ably = new Rest({ key, logLevel: 0 });

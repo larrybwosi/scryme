@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,7 +8,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@repo/ui/components/ui/alert-dialog';
+} from "@repo/ui/components/ui/alert-dialog";
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
@@ -17,7 +17,12 @@ interface DeleteConfirmationDialogProps {
   onDelete: (type: string, id: string) => void;
 }
 
-export function DeleteConfirmationDialog({ open, onOpenChange, deleteTarget, onDelete }: DeleteConfirmationDialogProps) {
+export function DeleteConfirmationDialog({
+  open,
+  onOpenChange,
+  deleteTarget,
+  onDelete,
+}: DeleteConfirmationDialogProps) {
   const handleDelete = () => {
     if (deleteTarget) {
       onDelete(deleteTarget.type, deleteTarget.id);
@@ -30,12 +35,16 @@ export function DeleteConfirmationDialog({ open, onOpenChange, deleteTarget, onD
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the {deleteTarget?.type}.
+            This action cannot be undone. This will permanently delete the{" "}
+            {deleteTarget?.type}.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-red-600 hover:bg-red-700"
+          >
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>

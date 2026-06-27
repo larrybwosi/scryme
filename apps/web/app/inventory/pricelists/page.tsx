@@ -44,7 +44,7 @@ export default async function PriceListsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-             <PriceListListClient tags={tags} />
+            <PriceListListClient tags={tags} />
           </div>
         </div>
       </div>

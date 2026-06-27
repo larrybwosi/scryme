@@ -1,10 +1,16 @@
-import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { cn } from '@/lib/utils';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
-import { useSuppliers } from '@/lib/api/suppliers';
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { cn } from "@/lib/utils";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { useSuppliers } from "@/lib/api/suppliers";
 
 interface Supplier {
   id: string;
@@ -25,14 +31,19 @@ interface SupplierSelectProps {
 export const SupplierSelect: React.FC<SupplierSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a supplier',
+  placeholder = "Select a supplier",
   disabled = false,
   required = false,
   className,
 }) => {
-  const { data: suppliersResponse, isLoading: loadingSuppliers, error } = useSuppliers();
+  const {
+    data: suppliersResponse,
+    isLoading: loadingSuppliers,
+    error,
+  } = useSuppliers();
 
-  const suppliers: Supplier[] = ((suppliersResponse as any)?.data || suppliersResponse) || [];
+  const suppliers: Supplier[] =
+    (suppliersResponse as any)?.data || suppliersResponse || [];
 
   if (loadingSuppliers) {
     return <Skeleton className={cn("h-10 w-full", className)} />;
@@ -58,7 +69,7 @@ export const SupplierSelect: React.FC<SupplierSelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {suppliers.map(supplier => (
+        {suppliers.map((supplier) => (
           <SelectItem key={supplier.id} value={supplier.id}>
             <div className="flex flex-col">
               <span className="font-medium">{supplier.name}</span>

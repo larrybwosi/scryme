@@ -1,9 +1,8 @@
-'use client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MemberRole } from '@repo/sdk/src/index';
-import { toast } from 'sonner';
-import sdk from '@/lib/sdk';
-
+"use client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MemberRole } from "@repo/sdk/src/index";
+import { toast } from "sonner";
+import sdk from "@/lib/sdk";
 
 export interface Member {
   id: string;
@@ -26,8 +25,8 @@ export interface Member {
 export interface Employee {
   id: string;
   name: string;
-  status: 'Active' | 'Inactive' | 'On Leave' | 'Terminated';
-  gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
+  status: "Active" | "Inactive" | "On Leave" | "Terminated";
+  gender: "Male" | "Female" | "Other" | "Prefer not to say";
   age: string;
   position: string;
   department: string;
@@ -48,8 +47,8 @@ export interface Attendance {
 }
 
 const paths = {
-  list: () => sdk.client.get('/users/members'),
-  create: (data: Partial<Member>) => sdk.client.post('/users/members', data),
+  list: () => sdk.client.get("/users/members"),
+  create: (data: Partial<Member>) => sdk.client.post("/users/members", data),
   get: (memberId: string) => sdk.client.get(`/users/members/${memberId}`),
   update: (memberId: string, data: Partial<Member>) =>
     sdk.client.patch(`/users/members/${memberId}`, data),
@@ -59,7 +58,7 @@ const paths = {
 // Members
 export const useListMembers = () => {
   const { data, refetch, error, isLoading } = useQuery({
-    queryKey: ['members'],
+    queryKey: ["members"],
     queryFn: paths.list,
   });
 
@@ -78,7 +77,7 @@ export const useCreateMember = () => {
   return useMutation({
     mutationFn: (data: Partial<Member>) => paths.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
     },
   });
 };
@@ -102,13 +101,16 @@ export const useCreateUserAndMember = () => {
       const data = await paths.create(userData as any);
       return (data as any)?.data || data;
     },
-    onSuccess: data => {
-      console.log('User created successfully', data);
-      queryClient.invalidateQueries({ queryKey: ['members'] });
+    onSuccess: (data) => {
+      console.log("User created successfully", data);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
     },
     onError: (error: any) => {
-      console.error('Error creating user:', error.response?.data?.error || error.message);
-      toast.error('Error creating user', {
+      console.error(
+        "Error creating user:",
+        error.response?.data?.error || error.message,
+      );
+      toast.error("Error creating user", {
         description: error.response?.data?.error || error.message,
       });
     },
@@ -121,8 +123,8 @@ export const useUpdateMember = (memberId: string) => {
   return useMutation({
     mutationFn: (data: Partial<Member>) => paths.update(memberId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      queryClient.invalidateQueries({ queryKey: ['member', memberId] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["member", memberId] });
     },
   });
 };
@@ -133,14 +135,14 @@ export const useDeleteMember = () => {
   return useMutation({
     mutationFn: (memberId: string) => paths.delete(memberId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
     },
   });
 };
 
 export const useGetMember = (memberId: string) => {
   return useQuery({
-    queryKey: ['member', memberId],
+    queryKey: ["member", memberId],
     queryFn: () => paths.get(memberId),
     enabled: !!memberId,
   });
@@ -150,13 +152,14 @@ export const useUnbanMember = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (memberId: string) => sdk.client.post(`/users/members/${memberId}/unban`),
+    mutationFn: (memberId: string) =>
+      sdk.client.post(`/users/members/${memberId}/unban`),
     onSuccess: (data: any, memberId) => {
       queryClient.invalidateQueries({
-        queryKey: ['members'],
+        queryKey: ["members"],
       });
       queryClient.invalidateQueries({
-        queryKey: ['member', memberId],
+        queryKey: ["member", memberId],
       });
 
       if (data.meta?.message) {
@@ -164,23 +167,23 @@ export const useUnbanMember = () => {
       }
     },
     onError: (error: Error) => {
-      console.error('Failed to unban member:', error);
+      console.error("Failed to unban member:", error);
     },
   });
 };
 
 // 1. Define the input type for the mutation
 interface ChangePinPayload {
-    memberId: string;
-    newPin: string;
+  memberId: string;
+  newPin: string;
 }
 
 // 2. Define the API function
 const changeMemberPin = async (payload: ChangePinPayload): Promise<Member> => {
-    return sdk.client.patch(`/users/members/${payload.memberId}/pin`, {
-        pin: payload.newPin,
-        memberId: payload.memberId,
-    });
+  return sdk.client.patch(`/users/members/${payload.memberId}/pin`, {
+    pin: payload.newPin,
+    memberId: payload.memberId,
+  });
 };
 
 // 3. Create the TanStack Query mutation hook
@@ -190,11 +193,11 @@ export const useChangeMemberPin = () => {
   return useMutation({
     mutationFn: changeMemberPin,
     onSuccess: (data, variables) => {
-        queryClient.invalidateQueries({ queryKey: ['members'] });
-        queryClient.setQueryData(['member', data.id], data);
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.setQueryData(["member", data.id], data);
     },
     onError: (error) => {
-        console.error('Failed to change member pin:', error);
+      console.error("Failed to change member pin:", error);
     },
   });
 };

@@ -10,7 +10,9 @@ export default function TaxCompliancePage() {
         icon={<Building2 className="w-7 h-7" />}
       />
       <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-xl bg-muted/20">
-          <p className="text-muted-foreground italic">Kenyan Tax Compliance Dashboard Coming Soon</p>
+        <p className="text-muted-foreground italic">
+          Kenyan Tax Compliance Dashboard Coming Soon
+        </p>
       </div>
     </div>
   );

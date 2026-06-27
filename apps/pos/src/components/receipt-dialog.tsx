@@ -75,9 +75,7 @@ const formatOrderForReceipt = (order: any): Order | null => {
     taxAmount: taxes, // For backend
     total,
     createdAt: order.datetime ? new Date(order.datetime) : new Date(),
-    payments: order.payments || [
-      { method: order.paymentMethod || 'Cash', amount: total }
-    ], // For backend
+    payments: order.payments || [{ method: order.paymentMethod || 'Cash', amount: total }], // For backend
   } as any;
 };
 
@@ -192,7 +190,9 @@ const ActionPanel = ({
             {completedOrder.payments?.some((p: any) => p.method === 'INSURANCE') && (
               <SummaryMetric
                 label="Insurance Co-pay"
-                value={completedOrder.payments.filter((p: any) => p.method === 'INSURANCE').reduce((s: number, p: any) => s + p.amount, 0)}
+                value={completedOrder.payments
+                  .filter((p: any) => p.method === 'INSURANCE')
+                  .reduce((s: number, p: any) => s + p.amount, 0)}
                 currency={currency}
                 highlight
               />
@@ -237,7 +237,11 @@ const ActionPanel = ({
                 className="flex-1 h-12 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all active:scale-[0.98]"
                 variant="outline"
               >
-                {isPrintingLabels ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tag className="mr-2 h-4 w-4" />}
+                {isPrintingLabels ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Tag className="mr-2 h-4 w-4" />
+                )}
                 Print Labels
               </Button>
             )}
@@ -361,13 +365,16 @@ export function ReceiptDialog({ open, onOpenChange, completedOrder, onClose }: R
           <ActionPanel
             completedOrder={completedOrder}
             formattedOrder={formattedOrder}
-            onPrint={() => DocumentInstance && handlePrint(DocumentInstance, `Receipt_${safeOrderNum}`, {
-              ...formattedOrder,
-              // Ensure backend-specific fields are present even if TypeScript complained
-              subTotal: (formattedOrder as any).subTotal,
-              taxAmount: (formattedOrder as any).taxAmount,
-              discountAmount: (formattedOrder as any).discountAmount,
-            })}
+            onPrint={() =>
+              DocumentInstance &&
+              handlePrint(DocumentInstance, `Receipt_${safeOrderNum}`, {
+                ...formattedOrder,
+                // Ensure backend-specific fields are present even if TypeScript complained
+                subTotal: (formattedOrder as any).subTotal,
+                taxAmount: (formattedOrder as any).taxAmount,
+                discountAmount: (formattedOrder as any).discountAmount,
+              })
+            }
             onPrintLabels={async () => {
               if (!completedOrder) return;
               try {

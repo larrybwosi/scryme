@@ -3,15 +3,7 @@ import bwipjs from 'bwip-js';
 /**
  * Supported barcode formats for enterprise use.
  */
-export type BarcodeFormat =
-  | 'code128'
-  | 'code39'
-  | 'ean13'
-  | 'ean8'
-  | 'upca'
-  | 'qr'
-  | 'pdf417'
-  | 'datamatrix';
+export type BarcodeFormat = 'code128' | 'code39' | 'ean13' | 'ean8' | 'upca' | 'qr' | 'pdf417' | 'datamatrix';
 
 export interface BarcodeOptions {
   width?: number;
@@ -31,11 +23,7 @@ export const BarcodeService = {
   /**
    * Generates a barcode as a Data URL (PNG).
    */
-  async generate(
-    text: string,
-    format: BarcodeFormat = 'code128',
-    options: BarcodeOptions = {}
-  ): Promise<string> {
+  async generate(text: string, format: BarcodeFormat = 'code128', options: BarcodeOptions = {}): Promise<string> {
     if (!text) {
       throw new Error('Barcode text is required');
     }
@@ -51,7 +39,7 @@ export const BarcodeService = {
         upc: 'upca',
         qr: 'qrcode',
         pdf417: 'pdf417',
-        datamatrix: 'datamatrix'
+        datamatrix: 'datamatrix',
       };
 
       const canvas = document.createElement('canvas');
@@ -66,7 +54,7 @@ export const BarcodeService = {
         rotate: options.rotate ?? 'N',
         paddingwidth: options.padding ?? 0,
         paddingheight: options.padding ?? 0,
-        backgroundcolor: options.background ?? 'ffffff'
+        backgroundcolor: options.background ?? 'ffffff',
       });
 
       return canvas.toDataURL('image/png');
@@ -92,5 +80,5 @@ export const BarcodeService = {
       default:
         return text.length > 0;
     }
-  }
+  },
 };

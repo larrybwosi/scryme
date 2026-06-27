@@ -57,8 +57,8 @@ export class CheckB2BAvailabilityUseCase {
       },
     });
 
-    return dto.variantIds.map((variantId) => {
-      const stock = stocks.find((s) => s.variantId === variantId);
+    return dto.variantIds.map(variantId => {
+      const stock = stocks.find(s => s.variantId === variantId);
       return {
         variantId,
         locationId,

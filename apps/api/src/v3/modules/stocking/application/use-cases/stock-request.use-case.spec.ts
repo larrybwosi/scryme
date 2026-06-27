@@ -6,7 +6,7 @@ import {
   PurchaseStatus,
 } from "@repo/db";
 
-vi.mock("@repo/db", async (importOriginal) => ({
+vi.mock("@repo/db", async importOriginal => ({
   ...((await importOriginal()) as any),
   StockRequestStatus: {
     PENDING: "PENDING",
@@ -55,7 +55,7 @@ describe("StockRequestUseCase", () => {
 
     prisma = {
       client: {
-        $transaction: vi.fn(async (callback) => await callback(mockTx)),
+        $transaction: vi.fn(async callback => await callback(mockTx)),
         stockRequest: mockTx.stockRequest,
       },
     };

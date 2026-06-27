@@ -1,7 +1,13 @@
-import React from 'react';
-import { Page, Text, View, Document } from '@react-pdf/renderer';
-import { commonStyles as styles } from './document-styles';
-import { PDFHeader, PDFFooter, PDFTable, PDFTableRow, PDFTableCell } from './PDFComponents';
+import React from "react";
+import { Page, Text, View, Document } from "@react-pdf/renderer";
+import { commonStyles as styles } from "./document-styles";
+import {
+  PDFHeader,
+  PDFFooter,
+  PDFTable,
+  PDFTableRow,
+  PDFTableCell,
+} from "./PDFComponents";
 
 export interface StockRequestListPDFData {
   organizationName: string;
@@ -17,7 +23,11 @@ export interface StockRequestListPDFData {
   }>;
 }
 
-export const StockRequestListTemplate = ({ data }: { data: StockRequestListPDFData }) => (
+export const StockRequestListTemplate = ({
+  data,
+}: {
+  data: StockRequestListPDFData;
+}) => (
   <Document>
     <Page size="A4" style={styles.page} orientation="landscape">
       <PDFHeader
@@ -30,13 +40,27 @@ export const StockRequestListTemplate = ({ data }: { data: StockRequestListPDFDa
       <View style={styles.section}>
         <PDFTable>
           <PDFTableRow>
-            <PDFTableCell width="15%" isHeader>Request #</PDFTableCell>
-            <PDFTableCell width="15%" isHeader>Date</PDFTableCell>
-            <PDFTableCell width="20%" isHeader>Location</PDFTableCell>
-            <PDFTableCell width="10%" isHeader>Items</PDFTableCell>
-            <PDFTableCell width="10%" isHeader>Priority</PDFTableCell>
-            <PDFTableCell width="15%" isHeader>Status</PDFTableCell>
-            <PDFTableCell width="15%" isHeader>Est. Cost</PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Request #
+            </PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Date
+            </PDFTableCell>
+            <PDFTableCell width="20%" isHeader>
+              Location
+            </PDFTableCell>
+            <PDFTableCell width="10%" isHeader>
+              Items
+            </PDFTableCell>
+            <PDFTableCell width="10%" isHeader>
+              Priority
+            </PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Status
+            </PDFTableCell>
+            <PDFTableCell width="15%" isHeader>
+              Est. Cost
+            </PDFTableCell>
           </PDFTableRow>
           {data.requests.map((req, i) => (
             <PDFTableRow key={i}>
@@ -52,7 +76,10 @@ export const StockRequestListTemplate = ({ data }: { data: StockRequestListPDFDa
         </PDFTable>
       </View>
 
-      <PDFFooter orgName={data.organizationName} docType="Stock Requests List" />
+      <PDFFooter
+        orgName={data.organizationName}
+        docType="Stock Requests List"
+      />
     </Page>
   </Document>
 );

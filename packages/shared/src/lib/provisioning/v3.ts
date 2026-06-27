@@ -4,14 +4,16 @@ import * as bcrypt from "bcryptjs";
 export async function provisionDeviceV3(prisma: any, token: string) {
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-  const setupToken = await (prisma.client || prisma).deviceSetupToken.findFirst({
-    where: {
-      tokenHash,
-      revokedAt: null,
-      usedAt: null,
-      expiresAt: { gt: new Date() },
+  const setupToken = await (prisma.client || prisma).deviceSetupToken.findFirst(
+    {
+      where: {
+        tokenHash,
+        revokedAt: null,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
     },
-  });
+  );
 
   if (!setupToken) {
     throw new Error("Invalid or expired setup token");

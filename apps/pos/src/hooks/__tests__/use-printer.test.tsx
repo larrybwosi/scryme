@@ -138,10 +138,13 @@ describe('usePrinter and PrinterStore', () => {
     });
 
     expect(printResult.success).toBe(true);
-    expect(invoke).toHaveBeenCalledWith('print_job', expect.objectContaining({
-      jobType: 'receipt',
-      order: order,
-    }));
+    expect(invoke).toHaveBeenCalledWith(
+      'print_job',
+      expect.objectContaining({
+        jobType: 'receipt',
+        order: order,
+      })
+    );
   });
 
   it('fails if no printer is assigned for the job type', async () => {

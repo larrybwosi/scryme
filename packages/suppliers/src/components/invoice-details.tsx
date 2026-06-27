@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,16 +6,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
-import { Label } from '@repo/ui/components/ui/label';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { Download } from 'lucide-react';
-import { useFormattedCurrency } from '../lib/utils';
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Label } from "@repo/ui/components/ui/label";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { Download } from "lucide-react";
+import { useFormattedCurrency } from "../lib/utils";
 
 // Types
-type InvoiceStatus = 'paid' | 'pending' | 'overdue';
+type InvoiceStatus = "paid" | "pending" | "overdue";
 
 interface InvoiceItem {
   id: string;
@@ -45,9 +52,9 @@ interface InvoiceDetailsDialogProps {
 }
 
 const statusColors: Record<InvoiceStatus, string> = {
-  paid: 'bg-green-100 text-green-800',
-  pending: 'bg-blue-100 text-blue-800',
-  overdue: 'bg-red-100 text-red-800',
+  paid: "bg-green-100 text-green-800",
+  pending: "bg-blue-100 text-blue-800",
+  overdue: "bg-red-100 text-red-800",
 };
 
 export function InvoiceDetailsDialog({
@@ -65,7 +72,9 @@ export function InvoiceDetailsDialog({
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Invoice Details - {selectedInvoice.number}</DialogTitle>
-          <DialogDescription>Complete details for invoice from {selectedInvoice.date}</DialogDescription>
+          <DialogDescription>
+            Complete details for invoice from {selectedInvoice.date}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -75,7 +84,9 @@ export function InvoiceDetailsDialog({
             </div>
             <div>
               <Label>Status</Label>
-              <Badge className={statusColors[selectedInvoice.status]}>{selectedInvoice.status}</Badge>
+              <Badge className={statusColors[selectedInvoice.status]}>
+                {selectedInvoice.status}
+              </Badge>
             </div>
             <div>
               <Label>Invoice Date</Label>
@@ -87,7 +98,9 @@ export function InvoiceDetailsDialog({
             </div>
             <div>
               <Label>Total Amount</Label>
-              <p className="font-bold">{formatCurrency(selectedInvoice.amount)}</p>
+              <p className="font-bold">
+                {formatCurrency(selectedInvoice.amount)}
+              </p>
             </div>
             <div>
               <Label>Invoice URL</Label>
@@ -115,7 +128,7 @@ export function InvoiceDetailsDialog({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedInvoice.items.map(item => (
+                  {selectedInvoice.items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
@@ -131,12 +144,17 @@ export function InvoiceDetailsDialog({
           {selectedInvoice.notes && (
             <div>
               <Label>Notes</Label>
-              <p className="mt-1 p-3 bg-slate-50 rounded-md">{selectedInvoice.notes}</p>
+              <p className="mt-1 p-3 bg-slate-50 rounded-md">
+                {selectedInvoice.notes}
+              </p>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => onDownloadInvoice(selectedInvoice.invoiceUrl)}>
+            <Button
+              variant="outline"
+              onClick={() => onDownloadInvoice(selectedInvoice.invoiceUrl)}
+            >
               <Download className="w-4 h-4 mr-2" />
               Download Invoice
             </Button>

@@ -42,7 +42,7 @@ export interface DocumentItem {
   amount?: number;
 }
 
-export type DocumentFormat = 'A4' | 'THERMAL';
+export type DocumentFormat = "A4" | "THERMAL";
 
 export interface CurrencySettings {
   code: string;
@@ -141,14 +141,16 @@ export interface InvoiceData extends BaseDocumentData {
   customerAddress?: string;
   customerPhone?: string;
 
-  items: Array<DocumentItem & {
-    details?: string;
-    // Legacy compatibility fields
-    qty?: number;
-    price?: number;
-    total?: number;
-    itemDescription?: string;
-  }>;
+  items: Array<
+    DocumentItem & {
+      details?: string;
+      // Legacy compatibility fields
+      qty?: number;
+      price?: number;
+      total?: number;
+      itemDescription?: string;
+    }
+  >;
 
   subtotal: number;
   tax: number;

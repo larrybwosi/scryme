@@ -1,22 +1,25 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { campaignWorkflowSchema, type CampaignWorkflowFormValues } from '@/lib/validations';
-import { createWorkflow } from '@/app/actions/campaigns';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  campaignWorkflowSchema,
+  type CampaignWorkflowFormValues,
+} from "@/lib/validations";
+import { createWorkflow } from "@/app/actions/campaigns";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@repo/ui/components/ui/form';
-import { Input } from '@repo/ui/components/ui/input';
-import { Button } from '@repo/ui/components/ui/button';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+  FormMessage,
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface WorkflowFormProps {
   organizationId: string;
@@ -28,14 +31,17 @@ export function WorkflowForm({ organizationId, onSuccess }: WorkflowFormProps) {
   const form = useForm<CampaignWorkflowFormValues>({
     resolver: zodResolver(campaignWorkflowSchema),
     defaultValues: {
-      name: '',
+      name: "",
       nodes: [
         {
-          id: '1',
-          type: 'trigger',
-          data: { label: 'New Customer Created', description: 'Triggers when a new customer is added to CRM' },
+          id: "1",
+          type: "trigger",
+          data: {
+            label: "New Customer Created",
+            description: "Triggers when a new customer is added to CRM",
+          },
           position: { x: 250, y: 50 },
-        }
+        },
       ],
       edges: [],
       isActive: false,
@@ -46,13 +52,13 @@ export function WorkflowForm({ organizationId, onSuccess }: WorkflowFormProps) {
     try {
       const result = await createWorkflow(values, organizationId);
       if (result.success) {
-        toast.success('Workflow created successfully');
+        toast.success("Workflow created successfully");
         onSuccess(result.data.id);
       } else {
-        toast.error(result.error || 'Failed to create workflow');
+        toast.error(result.error || "Failed to create workflow");
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     }
   };
 
@@ -75,7 +81,9 @@ export function WorkflowForm({ organizationId, onSuccess }: WorkflowFormProps) {
 
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Creating...' : 'Create & Open Editor'}
+            {form.formState.isSubmitting
+              ? "Creating..."
+              : "Create & Open Editor"}
           </Button>
         </div>
       </form>

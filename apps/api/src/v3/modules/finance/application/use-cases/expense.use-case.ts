@@ -28,7 +28,7 @@ export class ExpenseUseCase {
     );
     const expenseNumber = await this.generateExpenseNumber(organizationId);
 
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       const expense = await this.persistExpense(
         tx,
         organizationId,
@@ -295,7 +295,7 @@ export class ExpenseUseCase {
     memberId: string,
     expenseId: string,
   ) {
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       const expense = await tx.expense.findFirst({
         where: { id: expenseId, organizationId },
         // ⚡ Bolt Optimization: Select only required fields for verification

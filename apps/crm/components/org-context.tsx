@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from "react";
 
 interface OrgContextType {
   organizationId: string;
@@ -8,7 +8,13 @@ interface OrgContextType {
 
 const OrgContext = createContext<OrgContextType | undefined>(undefined);
 
-export function OrgProvider({ children, organizationId }: { children: ReactNode; organizationId: string }) {
+export function OrgProvider({
+  children,
+  organizationId,
+}: {
+  children: ReactNode;
+  organizationId: string;
+}) {
   return (
     <OrgContext.Provider value={{ organizationId }}>
       {children}
@@ -19,7 +25,7 @@ export function OrgProvider({ children, organizationId }: { children: ReactNode;
 export function useOrg() {
   const context = useContext(OrgContext);
   if (context === undefined) {
-    throw new Error('useOrg must be used within an OrgProvider');
+    throw new Error("useOrg must be used within an OrgProvider");
   }
   return context;
 }

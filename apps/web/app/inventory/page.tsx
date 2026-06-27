@@ -9,7 +9,14 @@ import { InventoryTable } from "../../components/inventory/inventory-table";
 import { InventoryFilters } from "../../components/inventory/inventory-filters";
 import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Filter, RotateCw, LayoutGrid, Download, Tag } from "lucide-react";
+import {
+  Plus,
+  Filter,
+  RotateCw,
+  LayoutGrid,
+  Download,
+  Tag,
+} from "lucide-react";
 import { ProductSheet } from "../../components/inventory/product-sheet";
 import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";

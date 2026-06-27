@@ -1,34 +1,39 @@
-import { db, Payment, UnclaimedPayment } from '@repo/db';
-import { realtimeService } from '@repo/shared/realtime';
-import { decrypt } from '@repo/shared/api/v2/utils/encryption';
-import { MpesaClient } from './client';
-import { MpesaTriggerInput, MpesaCallbackPayload, MpesaC2BPayload, MpesaCredentials } from './types';
+import { db, Payment, UnclaimedPayment } from "@repo/db";
+import { realtimeService } from "@repo/shared/realtime";
+import { decrypt } from "@repo/shared/api/v2/utils/encryption";
+import { MpesaClient } from "./client";
+import {
+  MpesaTriggerInput,
+  MpesaCallbackPayload,
+  MpesaC2BPayload,
+  MpesaCredentials,
+} from "./types";
 import {
   mpesaTriggerSchema,
   mpesaCallbackSchema,
   mpesaC2BConfirmationSchema,
   mpesaC2BValidationSchema,
-} from './validations';
+} from "./validations";
 
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException } from "@nestjs/common";
 
 // Safaricom M-Pesa IP Ranges (Source: Safaricom Developer Portal)
 const SAFARICOM_IPS = [
-  '196.201.214.200',
-  '196.201.214.206',
-  '196.201.213.114',
-  '196.201.214.207',
-  '196.201.214.208',
-  '196.201.213.44',
-  '196.201.212.127',
-  '196.201.212.138',
-  '196.201.212.129',
-  '196.201.212.136',
-  '196.201.212.74',
-  '196.201.212.69',
-  '196.201.214.0/24',
-  '196.201.213.0/24',
-  '196.201.212.0/24',
+  "196.201.214.200",
+  "196.201.214.206",
+  "196.201.213.114",
+  "196.201.214.207",
+  "196.201.214.208",
+  "196.201.213.44",
+  "196.201.212.127",
+  "196.201.212.138",
+  "196.201.212.129",
+  "196.201.212.136",
+  "196.201.212.74",
+  "196.201.212.69",
+  "196.201.214.0/24",
+  "196.201.213.0/24",
+  "196.201.212.0/24",
 ];
 
 @Injectable()
@@ -37,15 +42,18 @@ export class MpesaService {
    * Validates if the request is coming from Safaricom.
    */
   validateWebhookIp(ip: string) {
-    if (process.env.NODE_ENV === 'development' || process.env.SKIP_IP_VALIDATION === 'true') {
+    if (
+      process.env.NODE_ENV === "development" ||
+      process.env.SKIP_IP_VALIDATION === "true"
+    ) {
       return true;
     }
 
-    const cleanIp = ip.startsWith('::ffff:') ? ip.replace('::ffff:', '') : ip;
+    const cleanIp = ip.startsWith("::ffff:") ? ip.replace("::ffff:", "") : ip;
 
     const isWhitelisted = SAFARICOM_IPS.some((range) => {
-      if (range.includes('/')) {
-        const [subnet, mask] = range.split('/');
+      if (range.includes("/")) {
+        const [subnet, mask] = range.split("/");
         const ipNum = this.ipToLong(cleanIp);
         const subnetNum = this.ipToLong(subnet);
         const maskNum = -1 << (32 - parseInt(mask, 10));
@@ -59,14 +67,20 @@ export class MpesaService {
     }
 
     console.warn(`Unauthorized M-Pesa Callback from IP: ${ip}`);
-    throw new ForbiddenException('Invalid Callback Source');
+    throw new ForbiddenException("Invalid Callback Source");
   }
 
   private ipToLong(ip: string): number {
-    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+    return (
+      ip
+        .split(".")
+        .reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0
+    );
   }
 
-  private async getOrganizationByShortCode(shortCode: string): Promise<string | null> {
+  private async getOrganizationByShortCode(
+    shortCode: string,
+  ): Promise<string | null> {
     const config = await db.paymentCredentials.findFirst({
       where: { mpesaShortCode: shortCode },
       select: { organizationId: true },
@@ -80,25 +94,26 @@ export class MpesaService {
   async initiateStkPush(input: MpesaTriggerInput & { userId?: string }) {
     const parsed = mpesaTriggerSchema.safeParse(input);
     if (!parsed.success) {
-      console.error('Invalid M-Pesa Trigger Input:', parsed.error);
-      throw new Error('Invalid input');
+      console.error("Invalid M-Pesa Trigger Input:", parsed.error);
+      throw new Error("Invalid input");
     }
 
-    const { organizationId, amount, phoneNumber, transactionId, paymentId } = parsed.data;
+    const { organizationId, amount, phoneNumber, transactionId, paymentId } =
+      parsed.data;
 
     const config = await db.paymentCredentials.findUnique({
       where: { organizationId },
     });
 
     if (!config) {
-      throw new Error('M-Pesa is not configured for this organization');
+      throw new Error("M-Pesa is not configured for this organization");
     }
 
     const credentials: MpesaCredentials = {
       mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
       mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
       mpesaShortCode: config.mpesaShortCode,
-      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : '',
+      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : "",
       mpesaType: config.mpesaType as any,
       environment: config.environment as any,
     };
@@ -116,14 +131,14 @@ export class MpesaService {
     await db.mpesaPaymentRequest.create({
       data: {
         organizationId,
-        memberId: input.userId || 'system',
+        memberId: input.userId || "system",
         paymentId,
         checkoutRequestId: response.CheckoutRequestID,
         merchantRequestId: response.MerchantRequestID,
         amount,
         phoneNumber,
         reference: transactionId,
-        status: 'PENDING',
+        status: "PENDING",
         saleNumber: transactionId, // Using transactionId as reference
       },
     });
@@ -134,16 +149,26 @@ export class MpesaService {
   /**
    * Handles STK Push Callback from Safaricom.
    */
-  async handleStkCallback(organizationId: string, paymentId: string, payload: MpesaCallbackPayload) {
+  async handleStkCallback(
+    organizationId: string,
+    paymentId: string,
+    payload: MpesaCallbackPayload,
+  ) {
     try {
       const { Body } = payload;
       const { stkCallback } = Body;
-      const { ResultCode, ResultDesc, CallbackMetadata, CheckoutRequestID } = stkCallback;
+      const { ResultCode, ResultDesc, CallbackMetadata, CheckoutRequestID } =
+        stkCallback;
 
-      const mpesaReceipt = CallbackMetadata?.Item?.find((item) => item.Name === 'MpesaReceiptNumber')?.Value as string;
-      const amountPaid = Number(CallbackMetadata?.Item?.find((item) => item.Name === 'Amount')?.Value || 0);
+      const mpesaReceipt = CallbackMetadata?.Item?.find(
+        (item) => item.Name === "MpesaReceiptNumber",
+      )?.Value as string;
+      const amountPaid = Number(
+        CallbackMetadata?.Item?.find((item) => item.Name === "Amount")?.Value ||
+          0,
+      );
 
-      const paymentStatus = ResultCode === 0 ? 'PAID' : 'FAILED';
+      const paymentStatus = ResultCode === 0 ? "PAID" : "FAILED";
 
       await db.$transaction(async (tx: any) => {
         const updatedPayment = await tx.payment.update({
@@ -162,7 +187,7 @@ export class MpesaService {
         await tx.mpesaPaymentRequest.updateMany({
           where: { checkoutRequestId: CheckoutRequestID },
           data: {
-            status: ResultCode === 0 ? 'SUCCESS' : 'FAILED',
+            status: ResultCode === 0 ? "SUCCESS" : "FAILED",
             resultCode: ResultCode,
             resultDescription: ResultDesc,
             mpesaReceiptNumber: mpesaReceipt,
@@ -174,38 +199,50 @@ export class MpesaService {
         await tx.auditLog.create({
           data: {
             organizationId,
-            action: 'UPDATE',
-            entityType: 'PAYMENT_GATEWAY',
+            action: "UPDATE",
+            entityType: "PAYMENT_GATEWAY",
             entityId: paymentId,
             description: `M-Pesa STK Callback: ${ResultDesc} (${ResultCode})`,
-            status: ResultCode === 0 ? 'SUCCESS' : 'FAILURE',
+            status: ResultCode === 0 ? "SUCCESS" : "FAILURE",
             details: payload as any,
           },
         });
 
-        if (paymentStatus === 'PAID') {
-          await this.updateTransactionOnPayment(tx, updatedPayment.transactionId, amountPaid);
+        if (paymentStatus === "PAID") {
+          await this.updateTransactionOnPayment(
+            tx,
+            updatedPayment.transactionId,
+            amountPaid,
+          );
         }
       });
 
-      const status = ResultCode === 0 ? 'COMPLETED' : 'FAILED';
-      await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
-        paymentId,
-        status,
-        data: {
-          receipt: mpesaReceipt,
-          description: ResultDesc,
+      const status = ResultCode === 0 ? "COMPLETED" : "FAILED";
+      await realtimeService.publish(
+        `organization:${organizationId}:payments`,
+        "payment-update",
+        {
+          paymentId,
+          status,
+          data: {
+            receipt: mpesaReceipt,
+            description: ResultDesc,
+          },
         },
-      });
+      );
 
       return { success: true };
     } catch (error) {
-      console.error('Error processing M-Pesa callback:', error);
+      console.error("Error processing M-Pesa callback:", error);
       throw error;
     }
   }
 
-  private async updateTransactionOnPayment(tx: any, transactionId: string, amount: number) {
+  private async updateTransactionOnPayment(
+    tx: any,
+    transactionId: string,
+    amount: number,
+  ) {
     const updatedTransaction = await tx.transaction.update({
       where: { id: transactionId },
       data: {
@@ -214,16 +251,20 @@ export class MpesaService {
     });
 
     // Check if transaction is now fully paid
-    let newPaymentStatus = 'PARTIALLY_PAID';
-    if (Number(updatedTransaction.totalPaid) >= Number(updatedTransaction.finalTotal)) {
-      newPaymentStatus = 'PAID';
+    let newPaymentStatus = "PARTIALLY_PAID";
+    if (
+      Number(updatedTransaction.totalPaid) >=
+      Number(updatedTransaction.finalTotal)
+    ) {
+      newPaymentStatus = "PAID";
     }
 
     await tx.transaction.update({
       where: { id: updatedTransaction.id },
       data: {
         paymentStatus: newPaymentStatus as any,
-        status: newPaymentStatus === 'PAID' ? 'CONFIRMED' : updatedTransaction.status,
+        status:
+          newPaymentStatus === "PAID" ? "CONFIRMED" : updatedTransaction.status,
       },
     });
 
@@ -236,7 +277,7 @@ export class MpesaService {
       data: {
         amountPaid: Number(updatedTransaction.totalPaid),
         balanceDue: balanceDue,
-        status: newPaymentStatus === 'PAID' ? 'PAID' : 'PARTIALLY_PAID',
+        status: newPaymentStatus === "PAID" ? "PAID" : "PARTIALLY_PAID",
       },
     });
   }
@@ -247,15 +288,16 @@ export class MpesaService {
   async handleC2BValidation(payload: any) {
     const parsed = mpesaC2BValidationSchema.safeParse(payload);
     if (!parsed.success) {
-      console.error('Invalid M-Pesa C2B Validation Payload:', parsed.error);
-      return { ResultCode: 1, ResultDesc: 'Invalid payload' };
+      console.error("Invalid M-Pesa C2B Validation Payload:", parsed.error);
+      return { ResultCode: 1, ResultDesc: "Invalid payload" };
     }
 
     const { BillRefNumber, BusinessShortCode } = parsed.data;
-    const organizationId = await this.getOrganizationByShortCode(BusinessShortCode);
+    const organizationId =
+      await this.getOrganizationByShortCode(BusinessShortCode);
 
     if (!organizationId) {
-      return { ResultCode: 1, ResultDesc: 'Invalid ShortCode' };
+      return { ResultCode: 1, ResultDesc: "Invalid ShortCode" };
     }
 
     // Check if a transaction exists with this order number
@@ -265,10 +307,10 @@ export class MpesaService {
 
     if (!transaction) {
       // We can still accept the payment and mark it as unclaimed
-      return { ResultCode: 0, ResultDesc: 'Accepted - Unclaimed' };
+      return { ResultCode: 0, ResultDesc: "Accepted - Unclaimed" };
     }
 
-    return { ResultCode: 0, ResultDesc: 'Accepted' };
+    return { ResultCode: 0, ResultDesc: "Accepted" };
   }
 
   /**
@@ -277,19 +319,30 @@ export class MpesaService {
   async handleC2BConfirmation(payload: any) {
     const parsed = mpesaC2BConfirmationSchema.safeParse(payload);
     if (!parsed.success) {
-      console.error('Invalid M-Pesa C2B Confirmation Payload:', parsed.error);
-      return { success: false, error: 'Invalid payload' };
+      console.error("Invalid M-Pesa C2B Confirmation Payload:", parsed.error);
+      return { success: false, error: "Invalid payload" };
     }
 
-    const { TransID, TransAmount, BillRefNumber, MSISDN, FirstName, MiddleName, LastName, BusinessShortCode } =
-      parsed.data;
+    const {
+      TransID,
+      TransAmount,
+      BillRefNumber,
+      MSISDN,
+      FirstName,
+      MiddleName,
+      LastName,
+      BusinessShortCode,
+    } = parsed.data;
 
     const amount = Number(TransAmount);
-    const organizationId = await this.getOrganizationByShortCode(BusinessShortCode);
+    const organizationId =
+      await this.getOrganizationByShortCode(BusinessShortCode);
 
     if (!organizationId) {
-      console.error(`M-Pesa C2B Confirmation for unknown ShortCode: ${BusinessShortCode}`);
-      return { success: false, error: 'Invalid ShortCode' };
+      console.error(
+        `M-Pesa C2B Confirmation for unknown ShortCode: ${BusinessShortCode}`,
+      );
+      return { success: false, error: "Invalid ShortCode" };
     }
 
     // Attempt to find the transaction by order number
@@ -312,14 +365,16 @@ export class MpesaService {
             data: {
               transactionId: transaction.id,
               organizationId: transaction.organizationId,
-              method: 'MPESA',
-              status: 'PAID',
+              method: "MPESA",
+              status: "PAID",
               amount: amount,
               amountReceived: amount,
               gatewayTxnId: TransID,
               gatewayResponse: payload as any,
               payerPhone: MSISDN,
-              payerName: [FirstName, MiddleName, LastName].filter(Boolean).join(' '),
+              payerName: [FirstName, MiddleName, LastName]
+                .filter(Boolean)
+                .join(" "),
               processedAt: new Date(),
               referenceNumber: BillRefNumber,
             },
@@ -327,24 +382,28 @@ export class MpesaService {
 
           await this.updateTransactionOnPayment(tx, transaction.id, amount);
 
-          await realtimeService.publish(`organization:${transaction.organizationId}:payments`, 'payment-update', {
-            transactionId: transaction.id,
-            status: 'COMPLETED',
-            data: {
-              receipt: TransID,
-              amount,
+          await realtimeService.publish(
+            `organization:${transaction.organizationId}:payments`,
+            "payment-update",
+            {
+              transactionId: transaction.id,
+              status: "COMPLETED",
+              data: {
+                receipt: TransID,
+                amount,
+              },
             },
-          });
+          );
 
           // Audit Logging
           await tx.auditLog.create({
             data: {
               organizationId: transaction.organizationId,
-              action: 'CREATE',
-              entityType: 'PAYMENT_GATEWAY',
+              action: "CREATE",
+              entityType: "PAYMENT_GATEWAY",
               entityId: payment.id,
               description: `M-Pesa C2B Confirmation: Received ${amount} for order ${BillRefNumber}`,
-              status: 'SUCCESS',
+              status: "SUCCESS",
               details: payload as any,
             },
           });
@@ -373,11 +432,11 @@ export class MpesaService {
           // Audit Logging for unclaimed
           await tx.auditLog.create({
             data: {
-              action: 'CREATE',
-              entityType: 'PAYMENT_GATEWAY',
+              action: "CREATE",
+              entityType: "PAYMENT_GATEWAY",
               entityId: unclaimed.id,
               description: `M-Pesa C2B Confirmation (Unclaimed): Received ${amount} for unknown order ${BillRefNumber}`,
-              status: 'WARNING',
+              status: "WARNING",
               details: payload as any,
             },
           });
@@ -385,7 +444,7 @@ export class MpesaService {
       }
       return { success: true };
     } catch (error) {
-      console.error('Error in handleC2BConfirmation:', error);
+      console.error("Error in handleC2BConfirmation:", error);
       throw error;
     }
   }
@@ -398,14 +457,14 @@ export class MpesaService {
     const successfulPayment = await db.payment.findFirst({
       where: {
         transactionId,
-        status: 'PAID',
+        status: "PAID",
         ...(organizationId ? { organizationId } : {}),
       },
     });
 
     if (successfulPayment) {
       return {
-        status: 'PAID',
+        status: "PAID",
         amount: successfulPayment.amount,
         receipt: successfulPayment.gatewayTxnId,
         paidAt: successfulPayment.processedAt,
@@ -420,28 +479,28 @@ export class MpesaService {
       },
     });
 
-    if (!transaction) throw new Error('Transaction not found');
+    if (!transaction) throw new Error("Transaction not found");
 
-    if (transaction.paymentStatus === 'PAID') {
-      return { status: 'PAID', amount: transaction.totalPaid };
+    if (transaction.paymentStatus === "PAID") {
+      return { status: "PAID", amount: transaction.totalPaid };
     }
 
     // 3. Check for pending STK Push requests
     const pendingRequest = await db.mpesaPaymentRequest.findFirst({
       where: {
         saleNumber: transaction.number,
-        status: 'PENDING',
+        status: "PENDING",
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     if (pendingRequest) {
       // Optional: We could query Safaricom here to be absolutely sure
       // For now, return processing
       return {
-        status: 'PROCESSING',
+        status: "PROCESSING",
         checkoutRequestId: pendingRequest.checkoutRequestId,
-        message: 'STK Push is still pending',
+        message: "STK Push is still pending",
       };
     }
 
@@ -455,14 +514,14 @@ export class MpesaService {
 
     if (unclaimed) {
       return {
-        status: 'UNCLAIMED_FOUND',
+        status: "UNCLAIMED_FOUND",
         amount: unclaimed.amount,
         receipt: unclaimed.transId,
-        message: 'A matching unclaimed payment was found. Please claim it.',
+        message: "A matching unclaimed payment was found. Please claim it.",
       };
     }
 
-    return { status: 'UNPAID' };
+    return { status: "UNPAID" };
   }
 
   /**
@@ -479,7 +538,10 @@ export class MpesaService {
     }
     // Search by transaction code (receipt)
     const payment = await db.payment.findFirst({
-      where: { gatewayTxnId: input.transactionCode, organizationId: input.organizationId },
+      where: {
+        gatewayTxnId: input.transactionCode,
+        organizationId: input.organizationId,
+      },
     });
 
     if (payment) {
@@ -504,15 +566,15 @@ export class MpesaService {
         organizationId,
         claimed: false,
         OR: [
-          { transId: { contains: query, mode: 'insensitive' } },
+          { transId: { contains: query, mode: "insensitive" } },
           { msisdn: { contains: query } },
-          { firstName: { contains: query, mode: 'insensitive' } },
-          { middleName: { contains: query, mode: 'insensitive' } },
-          { lastName: { contains: query, mode: 'insensitive' } },
-          { billRefNumber: { contains: query, mode: 'insensitive' } },
+          { firstName: { contains: query, mode: "insensitive" } },
+          { middleName: { contains: query, mode: "insensitive" } },
+          { lastName: { contains: query, mode: "insensitive" } },
+          { billRefNumber: { contains: query, mode: "insensitive" } },
         ],
       },
-      orderBy: { transTime: 'desc' },
+      orderBy: { transTime: "desc" },
       take: 20,
     });
   }
@@ -520,19 +582,24 @@ export class MpesaService {
   /**
    * Claims an unclaimed payment and links it to a transaction.
    */
-  async claimPayment(organizationId: string, unclaimedPaymentId: string, transactionId: string, memberId: string) {
+  async claimPayment(
+    organizationId: string,
+    unclaimedPaymentId: string,
+    transactionId: string,
+    memberId: string,
+  ) {
     const unclaimed = await db.unclaimedPayment.findUnique({
       where: { id: unclaimedPaymentId },
     });
 
-    if (!unclaimed) throw new Error('Unclaimed payment not found');
-    if (unclaimed.claimed) throw new Error('Payment already claimed');
+    if (!unclaimed) throw new Error("Unclaimed payment not found");
+    if (unclaimed.claimed) throw new Error("Payment already claimed");
 
     const transaction = await db.transaction.findUnique({
       where: { id: transactionId },
     });
 
-    if (!transaction) throw new Error('Transaction not found');
+    if (!transaction) throw new Error("Transaction not found");
 
     return db.$transaction(async (tx: any) => {
       // Create a payment record
@@ -540,14 +607,20 @@ export class MpesaService {
         data: {
           transactionId: transaction.id,
           organizationId,
-          method: 'MPESA',
-          status: 'PAID',
+          method: "MPESA",
+          status: "PAID",
           amount: unclaimed.amount,
           amountReceived: unclaimed.amount,
           gatewayTxnId: unclaimed.transId,
           gatewayResponse: unclaimed.rawResponse as any,
           payerPhone: unclaimed.msisdn,
-          payerName: [unclaimed.firstName, unclaimed.middleName, unclaimed.lastName].filter(Boolean).join(' '),
+          payerName: [
+            unclaimed.firstName,
+            unclaimed.middleName,
+            unclaimed.lastName,
+          ]
+            .filter(Boolean)
+            .join(" "),
           processedAt: new Date(),
           referenceNumber: unclaimed.billRefNumber,
           notes: `Manually claimed by member ${memberId}`,
@@ -566,17 +639,25 @@ export class MpesaService {
       });
 
       // Update transaction status
-      await this.updateTransactionOnPayment(tx, transaction.id, Number(unclaimed.amount));
+      await this.updateTransactionOnPayment(
+        tx,
+        transaction.id,
+        Number(unclaimed.amount),
+      );
 
       // Realtime notification
-      await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
-        transactionId: transaction.id,
-        status: 'COMPLETED',
-        data: {
-          receipt: unclaimed.transId,
-          amount: unclaimed.amount,
+      await realtimeService.publish(
+        `organization:${organizationId}:payments`,
+        "payment-update",
+        {
+          transactionId: transaction.id,
+          status: "COMPLETED",
+          data: {
+            receipt: unclaimed.transId,
+            amount: unclaimed.amount,
+          },
         },
-      });
+      );
 
       return payment;
     });
@@ -592,7 +673,7 @@ export class MpesaService {
     });
 
     if (existingPayment) {
-      return { verified: true, source: 'DB', payment: existingPayment };
+      return { verified: true, source: "DB", payment: existingPayment };
     }
 
     const unclaimed = await db.unclaimedPayment.findFirst({
@@ -600,7 +681,7 @@ export class MpesaService {
     });
 
     if (unclaimed) {
-      return { verified: true, source: 'UNCLAIMED', unclaimed };
+      return { verified: true, source: "UNCLAIMED", unclaimed };
     }
 
     // 2. Query Safaricom if not found locally
@@ -608,16 +689,18 @@ export class MpesaService {
       where: { organizationId },
     });
 
-    if (!config) throw new Error('M-Pesa not configured');
+    if (!config) throw new Error("M-Pesa not configured");
 
     const credentials: MpesaCredentials = {
       mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
       mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
       mpesaShortCode: config.mpesaShortCode,
-      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : '',
+      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : "",
       mpesaType: config.mpesaType as any,
       environment: config.environment as any,
-      mpesaInitiatorPass: config.mpesaInitiatorPass ? decrypt(config.mpesaInitiatorPass) : undefined,
+      mpesaInitiatorPass: config.mpesaInitiatorPass
+        ? decrypt(config.mpesaInitiatorPass)
+        : undefined,
     };
 
     const client = new MpesaClient(credentials);
@@ -629,12 +712,13 @@ export class MpesaService {
 
       return {
         verified: false,
-        source: 'SAFARICOM',
-        message: 'Request sent to Safaricom. Please wait for callback or check again in a moment.',
+        source: "SAFARICOM",
+        message:
+          "Request sent to Safaricom. Please wait for callback or check again in a moment.",
         response,
       };
     } catch (error: any) {
-      console.error('Safaricom verification error:', error);
+      console.error("Safaricom verification error:", error);
       throw new Error(`Failed to verify with Safaricom: ${error.message}`);
     }
   }

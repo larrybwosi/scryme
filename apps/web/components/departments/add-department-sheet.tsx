@@ -44,7 +44,12 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
   const handleOpenChange = async (newOpen: boolean) => {
     setOpen(newOpen);
     if (newOpen) {
-      const [membersResult, locationsResult, costCentersResult, departmentsResult] = await Promise.all([
+      const [
+        membersResult,
+        locationsResult,
+        costCentersResult,
+        departmentsResult,
+      ] = await Promise.all([
         getStaffMembers(),
         getInventoryLocations(),
         getCostCenters(),
@@ -54,7 +59,8 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
       if (membersResult.success) setMembers(membersResult.data || []);
       setLocations(locationsResult || []);
       setCostCenters(costCentersResult || []);
-      if (departmentsResult.success) setParentDepartments(departmentsResult.data || []);
+      if (departmentsResult.success)
+        setParentDepartments(departmentsResult.data || []);
     }
   };
 
@@ -126,11 +132,15 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No Head Assigned</SelectItem>
-                    {members.map((member) => (
+                    {members.map(member => (
                       <SelectItem key={member.id} value={member.id}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{member.user.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{member.user.email}</span>
+                          <span className="font-medium">
+                            {member.user.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {member.user.email}
+                          </span>
                         </div>
                       </SelectItem>
                     ))}
@@ -146,7 +156,7 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None (Top Level)</SelectItem>
-                    {parentDepartments.map((dept) => (
+                    {parentDepartments.map(dept => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name}
                       </SelectItem>
@@ -165,7 +175,7 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {locations.map((loc) => (
+                    {locations.map(loc => (
                       <SelectItem key={loc.id} value={loc.id}>
                         {loc.name}
                       </SelectItem>
@@ -182,7 +192,7 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {costCenters.map((cc) => (
+                    {costCenters.map(cc => (
                       <SelectItem key={cc.id} value={cc.id}>
                         {cc.code} - {cc.name}
                       </SelectItem>

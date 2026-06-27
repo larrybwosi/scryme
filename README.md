@@ -50,24 +50,28 @@ Scryme is built as a monorepo using [Turborepo](https://turbo.build/), ensuring 
 ### Setup Guide
 
 1. **Clone the Repository**
+
    ```bash
    git clone https://github.com/larrybwosi/scryme.git
    cd scryme
    ```
 
 2. **Install Dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Start Infrastructure**
    Scryme uses Docker Compose for local development (DB, Redis, RabbitMQ).
+
    ```bash
    docker compose up -d
    ```
 
 4. **Environment Configuration**
    Copy `.env.example` to the relevant apps:
+
    ```bash
    cp .env.example .env # Root env
    cp apps/api/.env.example apps/api/.env
@@ -75,6 +79,7 @@ Scryme is built as a monorepo using [Turborepo](https://turbo.build/), ensuring 
    ```
 
 5. **Database Migration & Seeding**
+
    ```bash
    pnpm run db:migrate:dev
    pnpm run db:seed
@@ -93,13 +98,17 @@ Scryme is built as a monorepo using [Turborepo](https://turbo.build/), ensuring 
 For production deployments, we support Docker-based setups for web services and native builds for desktop applications.
 
 ### Web & API (Docker)
+
 We provide a production-ready Docker Compose configuration. Refer to the [Deployment Guide](./apps/api/README.md#deployment) for more details.
+
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### Desktop Apps (Tauri)
+
 To build the POS or Bakery applications for distribution:
+
 ```bash
 cd apps/pos # or apps/bakery
 pnpm tauri build

@@ -39,7 +39,11 @@ describe("ShortUrlController", () => {
     mockImageService = {
       optimizeImage: vi.fn(),
     };
-    controller = new ShortUrlController(mockImageService, mockPrisma, mockRedis);
+    controller = new ShortUrlController(
+      mockImageService,
+      mockPrisma,
+      mockRedis,
+    );
   });
 
   it("should return from cache if available", async () => {
@@ -52,8 +56,8 @@ describe("ShortUrlController", () => {
     };
     mockRedis.get.mockResolvedValueOnce(mockAttachment); // Metadata cache
     mockRedis.get.mockResolvedValueOnce({
-        content: Buffer.from("cached content").toString("base64"),
-        mimeType: "application/pdf"
+      content: Buffer.from("cached content").toString("base64"),
+      mimeType: "application/pdf",
     }); // File content cache
 
     const res = {

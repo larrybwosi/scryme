@@ -136,7 +136,6 @@ export default function StockAcceptancePage() {
     }
   }, [selectedShipment]);
 
-
   const handleOpenReceive = (shipment: IncomingShipment) => {
     setSelectedShipment(shipment);
     setView('receive');
@@ -277,14 +276,16 @@ export default function StockAcceptancePage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Receive Shipment: {selectedShipment.referenceNumber}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Receive Shipment: {selectedShipment.referenceNumber}
+              </h1>
               <p className="text-muted-foreground mt-1">
                 From {selectedShipment.source} • {new Date(selectedShipment.date).toLocaleDateString()}
               </p>
             </div>
           </div>
           <div className="flex gap-3">
-             <Button variant="outline" onClick={handleBackToList} disabled={isSubmitting}>
+            <Button variant="outline" onClick={handleBackToList} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button
@@ -309,7 +310,9 @@ export default function StockAcceptancePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Items ({selectedShipment.items.length})</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Items ({selectedShipment.items.length})
+            </h3>
             <div className="grid gap-4">
               {selectedShipment.items.map(item => {
                 const input = itemInputs[item.id] || {};
@@ -418,7 +421,7 @@ export default function StockAcceptancePage() {
 
           <div className="space-y-6">
             <Card>
-               <CardHeader>
+              <CardHeader>
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider">Receipt Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">

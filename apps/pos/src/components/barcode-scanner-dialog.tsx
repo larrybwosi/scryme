@@ -22,53 +22,58 @@ export function BarcodeScannerDialog({ open, onOpenChange }: BarcodeScannerDialo
   const products = usePosStore(state => state.products);
   const addItemToOrder = usePosStore(state => state.addItemToOrder);
 
-  const handleBarcodeSubmit = useCallback(async (scannedCode: string) => {
-    setError('');
+  const handleBarcodeSubmit = useCallback(
+    async (scannedCode: string) => {
+      setError('');
 
-    if (!scannedCode.trim()) {
-      setError('Please enter a barcode');
-      return;
-    }
-
-    // Check local store first
-    let product = products.find(p => p.barcode === scannedCode.trim() || p.variants?.some((v: any) => v.barcode === scannedCode.trim()));
-
-    if (!product) {
-      // Try backend lookup
-      try {
-        const invoke = (await import('@tauri-apps/api/core')).invoke;
-        product = await invoke<any>('get_product_by_barcode_command', {
-          barcode: scannedCode.trim(),
-        });
-      } catch (err) {
-        console.error('Backend barcode lookup failed:', err);
+      if (!scannedCode.trim()) {
+        setError('Please enter a barcode');
+        return;
       }
-    }
 
-    if (!product) {
-      setError(`Product not found for barcode: ${scannedCode}`);
+      // Check local store first
+      let product = products.find(
+        p => p.barcode === scannedCode.trim() || p.variants?.some((v: any) => v.barcode === scannedCode.trim())
+      );
+
+      if (!product) {
+        // Try backend lookup
+        try {
+          const invoke = (await import('@tauri-apps/api/core')).invoke;
+          product = await invoke<any>('get_product_by_barcode_command', {
+            barcode: scannedCode.trim(),
+          });
+        } catch (err) {
+          console.error('Backend barcode lookup failed:', err);
+        }
+      }
+
+      if (!product) {
+        setError(`Product not found for barcode: ${scannedCode}`);
+        setBarcode('');
+        return;
+      }
+
+      if (product.stock <= 0) {
+        setError(`${product.productName} is out of stock`);
+        setBarcode('');
+        return;
+      }
+
+      const defaultUnit = product.sellableUnits.find(u => u.isBaseUnit) || product.sellableUnits[0];
+      addItemToOrder(product, product.variantId, defaultUnit, 1);
+
+      // Success feedback
       setBarcode('');
-      return;
-    }
+      setError('');
 
-    if (product.stock <= 0) {
-      setError(`${product.productName} is out of stock`);
-      setBarcode('');
-      return;
-    }
-
-    const defaultUnit = product.sellableUnits.find(u => u.isBaseUnit) || product.sellableUnits[0];
-    addItemToOrder(product, product.variantId, defaultUnit, 1);
-
-    // Success feedback
-    setBarcode('');
-    setError('');
-
-    // Auto-close after successful scan
-    setTimeout(() => {
-      onOpenChange(false);
-    }, 500);
-  }, [products, addItemToOrder, onOpenChange]);
+      // Auto-close after successful scan
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 500);
+    },
+    [products, addItemToOrder, onOpenChange]
+  );
 
   useEffect(() => {
     if (open) {

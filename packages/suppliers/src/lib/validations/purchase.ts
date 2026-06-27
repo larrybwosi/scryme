@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 const attachmentSchema = z.object({
   fileUrl: z.string().url(),
@@ -8,13 +8,8 @@ const attachmentSchema = z.object({
 });
 
 const isoDateTransformer = z
-  .union([
-    z.string().datetime(),
-    z.date(),
-    z.null(),
-    z.undefined(),
-  ])
-  .transform(val => {
+  .union([z.string().datetime(), z.date(), z.null(), z.undefined()])
+  .transform((val) => {
     if (val instanceof Date) {
       return val.toISOString();
     }

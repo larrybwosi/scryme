@@ -46,11 +46,17 @@ interface RealtimeState {
   error: string | null;
   initialize: () => void;
   publish: (channel: string, event: string, data: any) => Promise<void>;
-  subscribe: (channel: string, event: string, callback: (data: any) => void, options?: { rewind?: number }) => () => void;
+  subscribe: (
+    channel: string,
+    event: string,
+    callback: (data: any) => void,
+    options?: { rewind?: number }
+  ) => () => void;
 }
 
 export const useRealtimeStore = create<RealtimeState>((set, get) => ({
-  provider: (import.meta.env.VITE_REALTIME_PROVIDER as any) || (import.meta.env.NEXT_PUBLIC_REALTIME_PROVIDER as any) || 'ably',
+  provider:
+    (import.meta.env.VITE_REALTIME_PROVIDER as any) || (import.meta.env.NEXT_PUBLIC_REALTIME_PROVIDER as any) || 'ably',
   ablyClient: null,
   socketClient: null,
   paymentChannel: null,
@@ -72,7 +78,8 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
     set({ status: 'loading', error: null, ablyClient: null, socketClient: null, authRetryCount: 0 });
 
     if (provider === 'socketio') {
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002';
+      const socketUrl =
+        import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002';
 
       const socket = io(socketUrl, {
         transports: ['websocket'],
@@ -87,10 +94,10 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         const locationId = authStore.currentLocation?.id;
         const member = authStore.currentMember;
         if (locationId && member) {
-            socket.emit('presence:enter', {
-                channel: `presence:${locationId}`,
-                metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() }
-            });
+          socket.emit('presence:enter', {
+            channel: `presence:${locationId}`,
+            metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() },
+          });
         }
       });
 
@@ -99,26 +106,25 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         invoke('update_network_status_command', { isOnline: false }).catch(console.error);
       });
 
-      socket.on('connect_error', (error) => {
+      socket.on('connect_error', error => {
         set({ connectionState: 'failed', status: 'error', error: error.message });
       });
 
       const fetchToken = async () => {
-          try {
-              const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
-              const parsed = RealtimeConfigSchema.parse(response);
-              set({ paymentChannel: parsed.data.metadata.paymentChannel });
+        try {
+          const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
+          const parsed = RealtimeConfigSchema.parse(response);
+          set({ paymentChannel: parsed.data.metadata.paymentChannel });
 
-              socket.auth = { token: parsed.data.tokenRequest.token };
-              socket.connect();
-          } catch (error) {
-              set({ status: 'error', error: 'Failed to fetch auth token' });
-          }
+          socket.auth = { token: parsed.data.tokenRequest.token };
+          socket.connect();
+        } catch (error) {
+          set({ status: 'error', error: 'Failed to fetch auth token' });
+        }
       };
 
       fetchToken();
       set({ socketClient: socket });
-
     } else {
       let authAttempt = 0;
       const authCallback: AuthOptions['authCallback'] = async (tokenParams, callback) => {
@@ -141,7 +147,11 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           } catch (error) {
             authAttempt += 1;
             set({ authRetryCount: authAttempt });
-            const errorMessage = isAxiosError(error) ? error.response?.data?.message || error.message : error instanceof Error ? error.message : 'Failed to fetch Ably auth token';
+            const errorMessage = isAxiosError(error)
+              ? error.response?.data?.message || error.message
+              : error instanceof Error
+                ? error.message
+                : 'Failed to fetch Ably auth token';
 
             if (authAttempt >= BACKOFF_MAX_RETRIES) {
               set({ status: 'error', error: errorMessage });
@@ -175,7 +185,9 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         } else if (['disconnected', 'suspended', 'failed', 'closed'].includes(state)) {
           invoke('update_network_status_command', { isOnline: false }).catch(console.error);
         }
-        window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state, reason: stateChange.reason } }));
+        window.dispatchEvent(
+          new CustomEvent('realtime-connection-change', { detail: { state, reason: stateChange.reason } })
+        );
       });
 
       set({ ablyClient: client });
@@ -202,13 +214,13 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
     } else if (provider === 'socketio' && socketClient) {
       socketClient.emit('join', { channel: channelName, options });
       const internalCallback = (data: any) => {
-          callback(data);
+        callback(data);
       };
       socketClient.on(event, internalCallback);
       return () => {
-          socketClient.off(event, internalCallback);
+        socketClient.off(event, internalCallback);
       };
     }
     return () => {};
-  }
+  },
 }));

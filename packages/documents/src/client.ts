@@ -26,4 +26,4 @@ export {
   Tspan,
   LinearGradient,
   RadialGradient,
-} from '@react-pdf/renderer';
+} from "@react-pdf/renderer";

@@ -1,10 +1,13 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
-import { customerSchema, type CustomerFormValues } from '../../lib/validations';
-import { revalidatePath } from 'next/cache';
+import { db } from "@repo/db";
+import { customerSchema, type CustomerFormValues } from "../../lib/validations";
+import { revalidatePath } from "next/cache";
 
-export async function createCustomer(data: CustomerFormValues, organizationId: string): Promise<any> {
+export async function createCustomer(
+  data: CustomerFormValues,
+  organizationId: string,
+): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
 
@@ -15,16 +18,22 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
       },
     });
 
-    revalidatePath('/customers');
-    revalidatePath('/contacts');
+    revalidatePath("/customers");
+    revalidatePath("/contacts");
     return { success: true, data: customer };
   } catch (error: any) {
-    console.error('Error creating customer:', error);
-    return { success: false, error: error.message || 'Failed to create customer' };
+    console.error("Error creating customer:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to create customer",
+    };
   }
 }
 
-export async function updateCustomer(id: string, data: CustomerFormValues): Promise<any> {
+export async function updateCustomer(
+  id: string,
+  data: CustomerFormValues,
+): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
 
@@ -33,13 +42,16 @@ export async function updateCustomer(id: string, data: CustomerFormValues): Prom
       data: validatedData,
     });
 
-    revalidatePath('/customers');
-    revalidatePath('/contacts');
+    revalidatePath("/customers");
+    revalidatePath("/contacts");
     revalidatePath(`/customers/${id}`);
     return { success: true, data: customer };
   } catch (error: any) {
-    console.error('Error updating customer:', error);
-    return { success: false, error: error.message || 'Failed to update customer' };
+    console.error("Error updating customer:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to update customer",
+    };
   }
 }
 
@@ -49,26 +61,29 @@ export async function deleteCustomer(id: string): Promise<any> {
       where: { id },
     });
 
-    revalidatePath('/customers');
-    revalidatePath('/contacts');
+    revalidatePath("/customers");
+    revalidatePath("/contacts");
     return { success: true };
   } catch (error: any) {
-    console.error('Error deleting customer:', error);
-    return { success: false, error: error.message || 'Failed to delete customer' };
+    console.error("Error deleting customer:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete customer",
+    };
   }
 }
 
 export async function getCustomers(
   organizationId: string,
-  filter?: { type?: 'B2C' | 'B2B' | 'CONTACT'; businessAccountId?: string }
+  filter?: { type?: "B2C" | "B2B" | "CONTACT"; businessAccountId?: string },
 ): Promise<any[]> {
   try {
     const where: any = { organizationId };
 
-    if (filter?.type === 'B2C') {
-      where.customerType = 'B2C';
+    if (filter?.type === "B2C") {
+      where.customerType = "B2C";
       where.businessAccountId = null;
-    } else if (filter?.type === 'CONTACT') {
+    } else if (filter?.type === "CONTACT") {
       where.businessAccountId = { not: null };
     }
 
@@ -81,12 +96,12 @@ export async function getCustomers(
       include: {
         businessAccount: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
     return customers;
   } catch (error) {
-    console.error('Error fetching customers:', error);
-    throw new Error('Failed to fetch customers');
+    console.error("Error fetching customers:", error);
+    throw new Error("Failed to fetch customers");
   }
 }
 
@@ -101,7 +116,7 @@ export async function getCustomer(id: string): Promise<any> {
           include: {
             items: true,
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 20,
         },
         transactions: {
@@ -113,7 +128,7 @@ export async function getCustomer(id: string): Promise<any> {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 20,
         },
         crmRecord: {
@@ -126,7 +141,7 @@ export async function getCustomer(id: string): Promise<any> {
                   },
                 },
               },
-              orderBy: { createdAt: 'desc' },
+              orderBy: { createdAt: "desc" },
               take: 20,
             },
             notes: {
@@ -137,7 +152,7 @@ export async function getCustomer(id: string): Promise<any> {
                   },
                 },
               },
-              orderBy: { createdAt: 'desc' },
+              orderBy: { createdAt: "desc" },
               take: 20,
             },
             followUps: {
@@ -148,7 +163,7 @@ export async function getCustomer(id: string): Promise<any> {
                   },
                 },
               },
-              orderBy: { dueDate: 'asc' },
+              orderBy: { dueDate: "asc" },
               take: 20,
             },
           },
@@ -157,7 +172,7 @@ export async function getCustomer(id: string): Promise<any> {
     });
     return customer;
   } catch (error) {
-    console.error('Error fetching customer:', error);
-    throw new Error('Failed to fetch customer');
+    console.error("Error fetching customer:", error);
+    throw new Error("Failed to fetch customer");
   }
 }

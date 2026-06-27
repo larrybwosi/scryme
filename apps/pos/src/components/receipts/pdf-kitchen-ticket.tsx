@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   colQty: { width: 30, fontSize: 9, fontWeight: 'bold' },
   colItem: { flex: 1, fontSize: 9, fontWeight: 'bold' },
   colPrice: { width: 45, fontSize: 9, fontWeight: 'bold', textAlign: 'right' },
-  
+
   itemContainer: {
     marginBottom: 6,
   },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     textAlign: 'center',
-  }
+  },
 });
 
 // ----------------------------------------------------------------
@@ -202,7 +202,7 @@ export const PDFKitchenTicket = ({ order, businessName, kitchenTicketConfig }: P
     itemName: {
       fontSize: baseFontSize,
       fontWeight: 'bold',
-      flex: 1, 
+      flex: 1,
       textTransform: 'uppercase',
     },
     quantity: {
@@ -238,7 +238,6 @@ export const PDFKitchenTicket = ({ order, businessName, kitchenTicketConfig }: P
   return (
     <Document>
       <Page size={getPageSize()} style={dynamicStyles.page}>
-        
         {/* ----------------- Header ----------------- */}
         <View style={styles.ticketHeader}>
           {config.shopName && <Text style={styles.shopName}>{config.shopName}</Text>}
@@ -338,7 +337,7 @@ export const PDFKitchenTicket = ({ order, businessName, kitchenTicketConfig }: P
         <View style={styles.footer}>
           <Text style={styles.timestamp}>Total Items: {totalItemsCount}</Text>
           <Text style={styles.timestamp}>Printed: {format(new Date(), 'MM/dd/yyyy HH:mm:ss')}</Text>
-          
+
           <Text style={styles.endOfTicket}>- END OF TICKET -</Text>
         </View>
       </Page>

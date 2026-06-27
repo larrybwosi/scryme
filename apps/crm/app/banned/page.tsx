@@ -89,8 +89,9 @@ const BannedPage = () => {
               How to restore access?
             </AlertTitle>
             <AlertDescription className="text-blue-700/80 dark:text-blue-400/80 text-xs mt-1">
-              Please contact your system administrator or your organization&apos;s
-              owner to request a review of your account status.
+              Please contact your system administrator or your
+              organization&apos;s owner to request a review of your account
+              status.
             </AlertDescription>
           </Alert>
         </CardContent>

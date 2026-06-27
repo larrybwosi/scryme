@@ -10,7 +10,11 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import { MoreHorizontal, Eye, Edit, Trash2, Users } from "lucide-react";
 import {
@@ -55,11 +59,12 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
           {data.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="h-32 text-center text-gray-500">
-                No departments found. Create your first department to get started.
+                No departments found. Create your first department to get
+                started.
               </TableCell>
             </TableRow>
           ) : (
-            data.map((dept) => (
+            data.map(dept => (
               <TableRow key={dept.id} className="group hover:bg-gray-50/50">
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -76,7 +81,9 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
                       )}
                     </div>
                     <div>
-                      <div className="font-bold text-[#1D1D1F]">{dept.name}</div>
+                      <div className="font-bold text-[#1D1D1F]">
+                        {dept.name}
+                      </div>
                       <div className="text-xs text-gray-500 truncate max-w-[200px]">
                         {dept.description || "No description"}
                       </div>
@@ -92,14 +99,20 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
                           {dept.head.user.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">{dept.head.user.name}</span>
+                      <span className="text-sm font-medium">
+                        {dept.head.user.name}
+                      </span>
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-400 italic">Not Assigned</span>
+                    <span className="text-xs text-gray-400 italic">
+                      Not Assigned
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-none font-medium">
+                  <Badge
+                    variant="secondary"
+                    className="bg-gray-100 text-gray-700 border-none font-medium">
                     {dept._count.departmentMembers} Members
                   </Badge>
                 </TableCell>
@@ -115,8 +128,7 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            aria-label="More actions"
-                          >
+                            aria-label="More actions">
                             <MoreHorizontal size={16} />
                           </Button>
                         </DropdownMenuTrigger>
@@ -125,22 +137,22 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
                     </Tooltip>
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem asChild>
-                        <Link href={`/staff/departments/${dept.id}`} className="flex items-center gap-2 cursor-pointer">
+                        <Link
+                          href={`/staff/departments/${dept.id}`}
+                          className="flex items-center gap-2 cursor-pointer">
                           <Eye size={14} />
                           <span>View Details</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="flex items-center gap-2 cursor-pointer"
-                        onClick={() => setEditingDept(dept)}
-                      >
+                        onClick={() => setEditingDept(dept)}>
                         <Edit size={14} />
                         <span>Edit Dept</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="flex items-center gap-2 text-red-600 cursor-pointer"
-                        onClick={() => setDeletingDept(dept)}
-                      >
+                        onClick={() => setDeletingDept(dept)}>
                         <Trash2 size={14} />
                         <span>Delete</span>
                       </DropdownMenuItem>
@@ -157,8 +169,7 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
         <EditDepartmentSheet
           department={editingDept}
           open={!!editingDept}
-          onOpenChange={(open) => !open && setEditingDept(null)}
-        >
+          onOpenChange={open => !open && setEditingDept(null)}>
           <span className="hidden" />
         </EditDepartmentSheet>
       )}
@@ -168,7 +179,7 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
           departmentId={deletingDept.id}
           departmentName={deletingDept.name}
           open={!!deletingDept}
-          onOpenChange={(open) => !open && setDeletingDept(null)}
+          onOpenChange={open => !open && setDeletingDept(null)}
         />
       )}
     </div>

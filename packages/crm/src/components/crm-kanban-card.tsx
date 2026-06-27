@@ -1,12 +1,16 @@
-'use client';
+"use client";
 
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { cn } from '@repo/ui/lib/utils';
-import { Card, CardContent } from '@repo/ui/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/ui/avatar';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Calendar, Building2, User, GripVertical } from 'lucide-react';
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@repo/ui/lib/utils";
+import { Card, CardContent } from "@repo/ui/components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Calendar, Building2, User, GripVertical } from "lucide-react";
 
 export interface DealCardData {
   id: string;
@@ -28,7 +32,11 @@ interface CrmKanbanCardProps {
   isDragging?: boolean;
 }
 
-export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps) {
+export function CrmKanbanCard({
+  deal,
+  onClick,
+  isDragging,
+}: CrmKanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -44,9 +52,9 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -55,9 +63,9 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null;
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
+      return new Date(dateStr).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
       });
     } catch {
       return null;
@@ -65,26 +73,28 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
   };
 
   const getInitials = (name: string | null) => {
-    if (!name) return '?';
+    if (!name) return "?";
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
-  const isOverdue = deal.expectedCloseDate && new Date(deal.expectedCloseDate) < new Date();
+  const isOverdue =
+    deal.expectedCloseDate && new Date(deal.expectedCloseDate) < new Date();
 
   return (
     <Card
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group cursor-grab active:cursor-grabbing transition-all duration-200',
-        'hover:shadow-md hover:border-primary/20',
-        'bg-card border-border/60',
-        (isDragging || isSortableDragging) && 'opacity-50 shadow-lg rotate-2 scale-105'
+        "group cursor-grab active:cursor-grabbing transition-all duration-200",
+        "hover:shadow-md hover:border-primary/20",
+        "bg-card border-border/60",
+        (isDragging || isSortableDragging) &&
+          "opacity-50 shadow-lg rotate-2 scale-105",
       )}
       {...attributes}
       {...listeners}
@@ -95,7 +105,9 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
           <div className="flex items-start gap-2 min-w-0 flex-1">
             <GripVertical className="h-4 w-4 text-muted-foreground/40 mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="min-w-0 flex-1">
-              <h4 className="font-medium text-sm leading-tight truncate text-foreground">{deal.name}</h4>
+              <h4 className="font-medium text-sm leading-tight truncate text-foreground">
+                {deal.name}
+              </h4>
               {deal.companyName && (
                 <div className="flex items-center gap-1 mt-1 text-muted-foreground">
                   <Building2 className="h-3 w-3 flex-shrink-0" />
@@ -118,11 +130,18 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
             {deal.contactName && (
               <div className="flex items-center gap-1 min-w-0">
                 <User className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate max-w-[80px]">{deal.contactName}</span>
+                <span className="truncate max-w-[80px]">
+                  {deal.contactName}
+                </span>
               </div>
             )}
             {deal.expectedCloseDate && (
-              <div className={cn('flex items-center gap-1', isOverdue && 'text-destructive')}>
+              <div
+                className={cn(
+                  "flex items-center gap-1",
+                  isOverdue && "text-destructive",
+                )}
+              >
                 <Calendar className="h-3 w-3 flex-shrink-0" />
                 <span>{formatDate(deal.expectedCloseDate)}</span>
               </div>
@@ -134,11 +153,18 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
         <div className="flex items-center justify-between pt-1 border-t border-border/40">
           <div className="flex items-center gap-2">
             <Avatar className="h-5 w-5">
-              <AvatarImage src={deal.ownerAvatar || undefined} alt={deal.ownerName || 'Owner'} />
-              <AvatarFallback className="text-[10px] bg-muted">{getInitials(deal.ownerName)}</AvatarFallback>
+              <AvatarImage
+                src={deal.ownerAvatar || undefined}
+                alt={deal.ownerName || "Owner"}
+              />
+              <AvatarFallback className="text-[10px] bg-muted">
+                {getInitials(deal.ownerName)}
+              </AvatarFallback>
             </Avatar>
             {deal.ownerName && (
-              <span className="text-xs text-muted-foreground truncate max-w-[80px]">{deal.ownerName}</span>
+              <span className="text-xs text-muted-foreground truncate max-w-[80px]">
+                {deal.ownerName}
+              </span>
             )}
           </div>
           <div className="flex items-center gap-1.5">
@@ -148,7 +174,9 @@ export function CrmKanbanCard({ deal, onClick, isDragging }: CrmKanbanCardProps)
                 style={{ width: `${deal.probability}%` }}
               />
             </div>
-            <span className="text-[10px] text-muted-foreground font-medium w-6 text-right">{deal.probability}%</span>
+            <span className="text-[10px] text-muted-foreground font-medium w-6 text-right">
+              {deal.probability}%
+            </span>
           </div>
         </div>
       </CardContent>

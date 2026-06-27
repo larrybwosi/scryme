@@ -75,7 +75,7 @@ export function CustomersView() {
     mutate,
   } = useSWR(
     organizationId ? ["customers-b2c", organizationId] : null,
-    () => getCustomers(organizationId, { type: 'B2C' }),
+    () => getCustomers(organizationId, { type: "B2C" }),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -312,7 +312,10 @@ export function CustomersView() {
                       )}
                     >
                       <td className="px-5 py-3.5">
-                        <Link href={`/customers/${customer.id}`} className="flex items-center gap-3">
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="flex items-center gap-3"
+                        >
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {customer.name.charAt(0).toUpperCase()}
                           </div>
@@ -451,7 +454,10 @@ export function CustomersView() {
         </div>
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

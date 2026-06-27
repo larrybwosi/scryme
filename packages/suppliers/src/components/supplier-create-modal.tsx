@@ -1,12 +1,24 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Textarea } from '@repo/ui/components/ui/textarea';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@repo/ui/components/ui/sheet";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
   Building2,
   Package,
@@ -23,157 +35,194 @@ import {
   Edit,
   AlertCircle,
   X,
-} from 'lucide-react';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/ui/form';
-import { useCreateSupplier, useGetSupplier, useUpdateSupplier } from '../lib/api/suppliers';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
-import { memo, useEffect } from 'react';
-import { supplierSchema } from '../lib/validations/suppliers';
-import type { SupplierFormValues } from '../lib/validations/suppliers';
+} from "lucide-react";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@repo/ui/components/ui/form";
+import {
+  useCreateSupplier,
+  useGetSupplier,
+  useUpdateSupplier,
+} from "../lib/api/suppliers";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/ui/components/ui/alert";
+import { memo, useEffect } from "react";
+import { supplierSchema } from "../lib/validations/suppliers";
+import type { SupplierFormValues } from "../lib/validations/suppliers";
 
 interface CreateEditSupplierSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   supplierId?: string;
 }
 
 const typeConfig = {
-  manufacturer: { label: 'Manufacturer', icon: Building2 },
-  distributor: { label: 'Distributor', icon: Truck },
-  wholesaler: { label: 'Wholesaler', icon: Package },
-  service_provider: { label: 'Service Provider', icon: Users },
+  manufacturer: { label: "Manufacturer", icon: Building2 },
+  distributor: { label: "Distributor", icon: Truck },
+  wholesaler: { label: "Wholesaler", icon: Package },
+  service_provider: { label: "Service Provider", icon: Users },
 };
 
 const riskLevelConfig = {
-  low: { label: 'Low', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
-  medium: { label: 'Medium', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' },
-  high: { label: 'High', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
+  low: {
+    label: "Low",
+    color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  },
+  medium: {
+    label: "Medium",
+    color:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  },
+  high: {
+    label: "High",
+    color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  },
 };
 
-function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: CreateEditSupplierSheetProps) {
-  const { data: supplierData, isLoading: isLoadingSupplier, error: supplierError } = useGetSupplier(supplierId || '');
+function CreateEditSupplierSheet({
+  isOpen,
+  onOpenChange,
+  mode,
+  supplierId,
+}: CreateEditSupplierSheetProps) {
+  const {
+    data: supplierData,
+    isLoading: isLoadingSupplier,
+    error: supplierError,
+  } = useGetSupplier(supplierId || "");
 
-  const { mutateAsync: createSupplier, isPending: isCreating } = useCreateSupplier();
-  const { mutateAsync: updateSupplier, isPending: isUpdating } = useUpdateSupplier();
+  const { mutateAsync: createSupplier, isPending: isCreating } =
+    useCreateSupplier();
+  const { mutateAsync: updateSupplier, isPending: isUpdating } =
+    useUpdateSupplier();
 
-  const isLoading = mode === 'edit' ? isLoadingSupplier : false;
+  const isLoading = mode === "edit" ? isLoadingSupplier : false;
   const isSubmitting = isCreating || isUpdating;
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema as any),
     defaultValues: {
-      id: '',
-      name: '',
-      code: '',
-      type: 'manufacturer',
+      id: "",
+      name: "",
+      code: "",
+      type: "manufacturer",
       contact: {
-        primaryContact: '',
-        phone: '',
-        email: '',
-        website: '',
+        primaryContact: "",
+        phone: "",
+        email: "",
+        website: "",
       },
       address: {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: 'KE',
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "KE",
       },
       businessInfo: {
-        taxId: '',
-        registrationNumber: '',
-        paymentTerms: 'Net 30',
-        currency: 'USD',
+        taxId: "",
+        registrationNumber: "",
+        paymentTerms: "Net 30",
+        currency: "USD",
       },
       categories: [],
       customBadges: [],
-      riskLevel: 'low',
+      riskLevel: "low",
     },
   });
 
   // Reset form when supplier data loads or mode changes
   useEffect(() => {
-    if (mode === 'edit' && supplierData) {
+    if (mode === "edit" && supplierData) {
       // Transform the API data to match the form structure
       const formData = {
-        id: supplierData.id || '',
-        name: supplierData.name || '',
-        code: supplierData.code || '',
-        type: supplierData.type || 'manufacturer',
+        id: supplierData.id || "",
+        name: supplierData.name || "",
+        code: supplierData.code || "",
+        type: supplierData.type || "manufacturer",
         contact: {
-          primaryContact: supplierData.contact?.primaryContact || '',
-          phone: supplierData.contact?.phone || '',
-          email: supplierData.contact?.email || '',
-          website: supplierData.contact?.website || '',
+          primaryContact: supplierData.contact?.primaryContact || "",
+          phone: supplierData.contact?.phone || "",
+          email: supplierData.contact?.email || "",
+          website: supplierData.contact?.website || "",
         },
         address: {
-          street: supplierData.address?.street || '',
-          city: supplierData.address?.city || '',
-          state: supplierData.address?.state || '',
-          zipCode: supplierData.address?.zipCode || '',
-          country: supplierData.address?.country || 'USA',
+          street: supplierData.address?.street || "",
+          city: supplierData.address?.city || "",
+          state: supplierData.address?.state || "",
+          zipCode: supplierData.address?.zipCode || "",
+          country: supplierData.address?.country || "USA",
         },
         businessInfo: {
-          taxId: supplierData.businessInfo?.taxId || '',
-          registrationNumber: supplierData.businessInfo?.registrationNumber || '',
-          paymentTerms: supplierData.businessInfo?.paymentTerms || 'Net 30',
-          currency: supplierData.businessInfo?.currency || 'USD',
+          taxId: supplierData.businessInfo?.taxId || "",
+          registrationNumber:
+            supplierData.businessInfo?.registrationNumber || "",
+          paymentTerms: supplierData.businessInfo?.paymentTerms || "Net 30",
+          currency: supplierData.businessInfo?.currency || "USD",
         },
         categories: Array.isArray(supplierData.categories)
-          ? supplierData.categories.join(', ')
-          : supplierData.categories || '',
+          ? supplierData.categories.join(", ")
+          : supplierData.categories || "",
         customBadges: Array.isArray(supplierData.customBadges)
-          ? supplierData.customBadges.join(', ')
-          : supplierData.customBadges || '',
-        riskLevel: supplierData.riskLevel || 'low',
+          ? supplierData.customBadges.join(", ")
+          : supplierData.customBadges || "",
+        riskLevel: supplierData.riskLevel || "low",
       };
       form.reset(formData);
-    } else if (mode === 'create') {
+    } else if (mode === "create") {
       form.reset({
-        id: '',
-        name: '',
-        code: '',
-        type: 'manufacturer',
+        id: "",
+        name: "",
+        code: "",
+        type: "manufacturer",
         contact: {
-          primaryContact: '',
-          phone: '',
-          email: '',
-          website: '',
+          primaryContact: "",
+          phone: "",
+          email: "",
+          website: "",
         },
         address: {
-          street: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: 'USA',
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "USA",
         },
         businessInfo: {
-          taxId: '',
-          registrationNumber: '',
-          paymentTerms: 'Net 30',
-          currency: 'USD',
+          taxId: "",
+          registrationNumber: "",
+          paymentTerms: "Net 30",
+          currency: "USD",
         },
         categories: [],
         customBadges: [],
-        riskLevel: 'low',
+        riskLevel: "low",
       });
     }
   }, [supplierData, mode, form, isOpen]);
 
   const handleSubmit = async (data: SupplierFormValues) => {
     try {
-      if (mode === 'create') {
+      if (mode === "create") {
         await createSupplier(data);
-      } else if (mode === 'edit' && supplierId) {
+      } else if (mode === "edit" && supplierId) {
         await updateSupplier({ supplierId, data });
       }
       onOpenChange(false);
     } catch (error) {
       // Error handling is done in the mutation hooks
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -183,7 +232,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
   };
 
   const renderRiskBadge = (level: string) => {
-    const config = riskLevelConfig[level as keyof typeof riskLevelConfig] || riskLevelConfig.low;
+    const config =
+      riskLevelConfig[level as keyof typeof riskLevelConfig] ||
+      riskLevelConfig.low;
     return (
       <Badge variant="outline" className={`${config.color} border-0`}>
         {config.label}
@@ -192,8 +243,8 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
   };
 
   const generateSupplierCode = (name: string) => {
-    if (!name) return '';
-    const prefix = name.slice(0, 3).toUpperCase().replace(/\s/g, '');
+    if (!name) return "";
+    const prefix = name.slice(0, 3).toUpperCase().replace(/\s/g, "");
     const randomNum = Math.floor(100 + Math.random() * 900);
     return `${prefix}${randomNum}`;
   };
@@ -206,14 +257,19 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
     </div>
   );
 
-  if (mode === 'edit' && supplierError) {
+  if (mode === "edit" && supplierError) {
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-2xl">
-          <Alert variant="destructive" className="bg-destructive/10 text-destructive">
+          <Alert
+            variant="destructive"
+            className="bg-destructive/10 text-destructive"
+          >
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Failed to load supplier data. Please try again.</AlertDescription>
+            <AlertDescription>
+              Failed to load supplier data. Please try again.
+            </AlertDescription>
           </Alert>
           <div className="flex justify-end mt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -231,7 +287,7 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
         <div className="flex justify-between items-center">
           <SheetHeader className="flex-1">
             <SheetTitle className="flex items-center gap-2 text-foreground">
-              {mode === 'create' ? (
+              {mode === "create" ? (
                 <>
                   <Building2 className="h-5 w-5" />
                   Add New Supplier
@@ -239,14 +295,18 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
               ) : (
                 <>
                   <Edit className="h-5 w-5" />
-                  {isLoading ? <Skeleton className="h-6 w-40 bg-muted" /> : `Edit Supplier: ${supplierData?.name}`}
+                  {isLoading ? (
+                    <Skeleton className="h-6 w-40 bg-muted" />
+                  ) : (
+                    `Edit Supplier: ${supplierData?.name}`
+                  )}
                 </>
               )}
             </SheetTitle>
             <SheetDescription className="text-muted-foreground">
-              {mode === 'create'
-                ? 'Register a new supplier for your organization. Fill in all required information to establish a new supplier relationship.'
-                : 'Update the information for this supplier.'}
+              {mode === "create"
+                ? "Register a new supplier for your organization. Fill in all required information to establish a new supplier relationship."
+                : "Update the information for this supplier."}
             </SheetDescription>
           </SheetHeader>
           <Button
@@ -282,10 +342,15 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-6">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6 mt-6"
+            >
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-foreground">Basic Information</h3>
+                  <h3 className="text-lg font-medium text-foreground">
+                    Basic Information
+                  </h3>
 
                   <FormField
                     control={form.control}
@@ -304,9 +369,10 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             className="bg-background text-foreground border-input"
                           />
                         </FormControl>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
-                            Official company name as registered in business documents
+                            Official company name as registered in business
+                            documents
                           </p>
                         )}
                         <FormMessage />
@@ -328,20 +394,23 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             <Input
                               placeholder="e.g., SUP123"
                               {...field}
-                              onChange={e => field.onChange(e.target.value.toUpperCase())}
-                              disabled={mode === 'edit' || isSubmitting}
+                              onChange={(e) =>
+                                field.onChange(e.target.value.toUpperCase())
+                              }
+                              disabled={mode === "edit" || isSubmitting}
                               className="bg-background text-foreground border-input"
                             />
                           </FormControl>
-                          {mode === 'create' && (
+                          {mode === "create" && (
                             <Button
                               type="button"
                               variant="outline"
                               onClick={() => {
-                                const name = form.getValues('name');
+                                const name = form.getValues("name");
                                 if (name) {
-                                  const generatedCode = generateSupplierCode(name);
-                                  form.setValue('code', generatedCode);
+                                  const generatedCode =
+                                    generateSupplierCode(name);
+                                  form.setValue("code", generatedCode);
                                 }
                               }}
                               disabled={isSubmitting}
@@ -350,9 +419,10 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             </Button>
                           )}
                         </div>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
-                            Auto-generated unique identifier (first 3 letters of name + random 3 digits)
+                            Auto-generated unique identifier (first 3 letters of
+                            name + random 3 digits)
                           </p>
                         )}
                         <FormMessage />
@@ -370,29 +440,45 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             <Truck className="h-4 w-4" />
                             Supplier Type *
                           </FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isSubmitting}
+                          >
                             <FormControl>
                               <SelectTrigger className="bg-background text-foreground border-input">
                                 <div className="flex items-center gap-2">
                                   {getTypeIcon(field.value)}
-                                  <span>{typeConfig[field.value as keyof typeof typeConfig]?.label}</span>
+                                  <span>
+                                    {
+                                      typeConfig[
+                                        field.value as keyof typeof typeConfig
+                                      ]?.label
+                                    }
+                                  </span>
                                 </div>
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent className="bg-background text-foreground border-input">
                               <SelectItem value="manufacturer">
-                                {mode === 'create' ? 'Manufacturer - Produces goods directly' : 'Manufacturer'}
+                                {mode === "create"
+                                  ? "Manufacturer - Produces goods directly"
+                                  : "Manufacturer"}
                               </SelectItem>
                               <SelectItem value="distributor">
-                                {mode === 'create'
-                                  ? 'Distributor - Distributes products from manufacturers'
-                                  : 'Distributor'}
+                                {mode === "create"
+                                  ? "Distributor - Distributes products from manufacturers"
+                                  : "Distributor"}
                               </SelectItem>
                               <SelectItem value="wholesaler">
-                                {mode === 'create' ? 'Wholesaler - Sells in bulk quantities' : 'Wholesaler'}
+                                {mode === "create"
+                                  ? "Wholesaler - Sells in bulk quantities"
+                                  : "Wholesaler"}
                               </SelectItem>
                               <SelectItem value="service_provider">
-                                {mode === 'create' ? 'Service Provider - Provides services' : 'Service Provider'}
+                                {mode === "create"
+                                  ? "Service Provider - Provides services"
+                                  : "Service Provider"}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -410,7 +496,11 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             <Shield className="h-4 w-4" />
                             Risk Level
                           </FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isSubmitting}
+                          >
                             <FormControl>
                               <SelectTrigger className="bg-background text-foreground border-input">
                                 {renderRiskBadge(field.value || "low")}
@@ -418,13 +508,19 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             </FormControl>
                             <SelectContent className="bg-background text-foreground border-input">
                               <SelectItem value="low">
-                                {mode === 'create' ? 'Low - Established, reliable supplier' : 'Low'}
+                                {mode === "create"
+                                  ? "Low - Established, reliable supplier"
+                                  : "Low"}
                               </SelectItem>
                               <SelectItem value="medium">
-                                {mode === 'create' ? 'Medium - Some concerns or new relationship' : 'Medium'}
+                                {mode === "create"
+                                  ? "Medium - Some concerns or new relationship"
+                                  : "Medium"}
                               </SelectItem>
                               <SelectItem value="high">
-                                {mode === 'create' ? 'High - Requires close monitoring' : 'High'}
+                                {mode === "create"
+                                  ? "High - Requires close monitoring"
+                                  : "High"}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -436,7 +532,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-foreground">Contact Information</h3>
+                  <h3 className="text-lg font-medium text-foreground">
+                    Contact Information
+                  </h3>
 
                   <FormField
                     control={form.control}
@@ -455,7 +553,7 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             className="bg-background text-foreground border-input"
                           />
                         </FormControl>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
                             Main point of contact for business communications
                           </p>
@@ -529,7 +627,7 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             className="bg-background text-foreground border-input"
                           />
                         </FormControl>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
                             Company website for reference and verification
                           </p>
@@ -541,7 +639,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-foreground">Address Information</h3>
+                  <h3 className="text-lg font-medium text-foreground">
+                    Address Information
+                  </h3>
 
                   <FormField
                     control={form.control}
@@ -560,7 +660,7 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             className="bg-background text-foreground border-input"
                           />
                         </FormControl>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
                             Complete street address including building number
                           </p>
@@ -576,7 +676,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                       name="address.city"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">City *</FormLabel>
+                          <FormLabel className="text-foreground">
+                            City *
+                          </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="New York"
@@ -594,7 +696,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                       name="address.state"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">State/Province *</FormLabel>
+                          <FormLabel className="text-foreground">
+                            State/Province *
+                          </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="NY"
@@ -615,7 +719,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                       name="address.zipCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">ZIP/Postal Code *</FormLabel>
+                          <FormLabel className="text-foreground">
+                            ZIP/Postal Code *
+                          </FormLabel>
                           <FormControl>
                             <Input
                               placeholder="10001"
@@ -633,8 +739,14 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                       name="address.country"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">Country *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                          <FormLabel className="text-foreground">
+                            Country *
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isSubmitting}
+                          >
                             <FormControl>
                               <SelectTrigger className="bg-background text-foreground border-input">
                                 <SelectValue />
@@ -644,7 +756,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                               <SelectItem value="KE">Kenya</SelectItem>
                               <SelectItem value="USA">United States</SelectItem>
                               <SelectItem value="UG">Uganda</SelectItem>
-                              <SelectItem value="GBR">United Kingdom</SelectItem>
+                              <SelectItem value="GBR">
+                                United Kingdom
+                              </SelectItem>
                               <SelectItem value="DEU">Germany</SelectItem>
                               <SelectItem value="FRA">France</SelectItem>
                               <SelectItem value="Other">Other</SelectItem>
@@ -658,7 +772,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-foreground">Business Information</h3>
+                  <h3 className="text-lg font-medium text-foreground">
+                    Business Information
+                  </h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -668,7 +784,9 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                         <FormItem>
                           <FormLabel className="flex items-center gap-2 text-foreground">
                             <FileText className="h-4 w-4" />
-                            {form.watch('address.country') === 'KE' ? 'KRA PIN *' : 'Tax ID/EIN *'}
+                            {form.watch("address.country") === "KE"
+                              ? "KRA PIN *"
+                              : "Tax ID/EIN *"}
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -715,21 +833,37 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                           <DollarSign className="h-4 w-4" />
                           Payment Terms *
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isSubmitting}
+                        >
                           <FormControl>
                             <SelectTrigger className="bg-background text-foreground border-input">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="bg-background text-foreground border-input">
-                            {mode === 'create' ? (
+                            {mode === "create" ? (
                               <>
-                                <SelectItem value="Net 15">Net 15 - Payment due in 15 days</SelectItem>
-                                <SelectItem value="Net 30">Net 30 - Payment due in 30 days</SelectItem>
-                                <SelectItem value="Net 45">Net 45 - Payment due in 45 days</SelectItem>
-                                <SelectItem value="Net 60">Net 60 - Payment due in 60 days</SelectItem>
-                                <SelectItem value="COD">COD - Cash on Delivery</SelectItem>
-                                <SelectItem value="Prepaid">Prepaid - Payment before delivery</SelectItem>
+                                <SelectItem value="Net 15">
+                                  Net 15 - Payment due in 15 days
+                                </SelectItem>
+                                <SelectItem value="Net 30">
+                                  Net 30 - Payment due in 30 days
+                                </SelectItem>
+                                <SelectItem value="Net 45">
+                                  Net 45 - Payment due in 45 days
+                                </SelectItem>
+                                <SelectItem value="Net 60">
+                                  Net 60 - Payment due in 60 days
+                                </SelectItem>
+                                <SelectItem value="COD">
+                                  COD - Cash on Delivery
+                                </SelectItem>
+                                <SelectItem value="Prepaid">
+                                  Prepaid - Payment before delivery
+                                </SelectItem>
                               </>
                             ) : (
                               <>
@@ -743,7 +877,7 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             )}
                           </SelectContent>
                         </Select>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
                             Standard payment terms for invoices and orders
                           </p>
@@ -770,9 +904,10 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             className="min-h-[60px] bg-background text-foreground border-input"
                           />
                         </FormControl>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
-                            Comma-separated list of product categories this supplier provides
+                            Comma-separated list of product categories this
+                            supplier provides
                           </p>
                         )}
                         <FormMessage />
@@ -797,9 +932,10 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
                             className="min-h-[60px] bg-background text-foreground border-input"
                           />
                         </FormControl>
-                        {mode === 'create' && (
+                        {mode === "create" && (
                           <p className="text-xs text-muted-foreground">
-                            Comma-separated list of special certifications or designations
+                            Comma-separated list of special certifications or
+                            designations
                           </p>
                         )}
                         <FormMessage />
@@ -810,17 +946,22 @@ function CreateEditSupplierSheet({ isOpen, onOpenChange, mode, supplierId }: Cre
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-border">
-                <Button variant="outline" type="button" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting
-                    ? mode === 'create'
-                      ? 'Creating...'
-                      : 'Saving...'
-                    : mode === 'create'
-                      ? 'Add Supplier'
-                      : 'Save Changes'}
+                    ? mode === "create"
+                      ? "Creating..."
+                      : "Saving..."
+                    : mode === "create"
+                      ? "Add Supplier"
+                      : "Save Changes"}
                 </Button>
               </div>
             </form>

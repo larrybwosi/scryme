@@ -1,30 +1,32 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { StickyNote, User, Plus, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { EmptyState } from '@/components/ui/empty-state';
-import type { CustomerWithRelations } from '@/lib/types';
-import { createNote } from '@/app/actions/notes';
-import { toast } from 'sonner';
-import { formatDate } from '@/lib/utils';
+import React, { useState } from "react";
+import { StickyNote, User, Plus, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
+import type { CustomerWithRelations } from "@/lib/types";
+import { createNote } from "@/app/actions/notes";
+import { toast } from "sonner";
+import { formatDate } from "@/lib/utils";
 
 interface NotesTabProps {
   customer: CustomerWithRelations;
 }
 
-function NoteCard({
-  note,
-}: {
-  note: any;
-}) {
-  const authorName = note.createdBy?.user?.name || note.createdBy?.email || 'System';
-  const initials = authorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+function NoteCard({ note }: { note: any }) {
+  const authorName =
+    note.createdBy?.user?.name || note.createdBy?.email || "System";
+  const initials = authorName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <div
       className={cn(
-        'relative bg-card rounded-xl border p-4 group transition-shadow hover:shadow-sm border-border'
+        "relative bg-card rounded-xl border p-4 group transition-shadow hover:shadow-sm border-border",
       )}
     >
       <p className="text-[13.5px] text-foreground leading-relaxed whitespace-pre-wrap">
@@ -35,7 +37,9 @@ function NoteCard({
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
             {initials}
           </div>
-          <span className="text-[11.5px] text-muted-foreground">{authorName}</span>
+          <span className="text-[11.5px] text-muted-foreground">
+            {authorName}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">
@@ -49,7 +53,7 @@ function NoteCard({
 
 export function NotesTab({ customer }: NotesTabProps) {
   const [showForm, setShowForm] = useState(false);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
   const notes = customer.crmRecord?.notes || [];
@@ -59,16 +63,19 @@ export function NotesTab({ customer }: NotesTabProps) {
 
     setLoading(true);
     try {
-      await createNote({
-        content: content.trim(),
-        recordId: customer.crmRecordId,
-      }, customer.organizationId);
+      await createNote(
+        {
+          content: content.trim(),
+          recordId: customer.crmRecordId,
+        },
+        customer.organizationId,
+      );
 
-      toast.success('Note added successfully');
-      setContent('');
+      toast.success("Note added successfully");
+      setContent("");
       setShowForm(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to add note');
+      toast.error(error.message || "Failed to add note");
     } finally {
       setLoading(false);
     }
@@ -81,20 +88,21 @@ export function NotesTab({ customer }: NotesTabProps) {
         <div>
           <h3 className="text-[15px] font-bold text-foreground">Notes</h3>
           <p className="text-[12px] text-muted-foreground mt-0.5">
-            {notes.length} {notes.length === 1 ? 'note' : 'notes'} on this customer
+            {notes.length} {notes.length === 1 ? "note" : "notes"} on this
+            customer
           </p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
           className={cn(
-            'flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border transition-colors',
+            "flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border transition-colors",
             showForm
-              ? 'bg-muted text-muted-foreground border-border'
-              : 'bg-primary text-white border-primary hover:bg-primary/90'
+              ? "bg-muted text-muted-foreground border-border"
+              : "bg-primary text-white border-primary hover:bg-primary/90",
           )}
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
-          {showForm ? 'Cancel' : 'Add Note'}
+          {showForm ? "Cancel" : "Add Note"}
         </button>
       </div>
 
@@ -123,7 +131,7 @@ export function NotesTab({ customer }: NotesTabProps) {
                   disabled={loading || !content.trim()}
                   className="text-[12.5px] font-semibold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loading ? 'Saving...' : 'Save Note'}
+                  {loading ? "Saving..." : "Save Note"}
                 </button>
               </div>
             </div>

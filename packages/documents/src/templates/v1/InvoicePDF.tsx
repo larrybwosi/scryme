@@ -1,48 +1,62 @@
-import React from 'react';
-import { Document, Image, Page, StyleSheet, Text, View, Font } from '@react-pdf/renderer';
-import { InvoiceData } from '../../types';
+import React from "react";
+import {
+  Document,
+  Image,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+  Font,
+} from "@react-pdf/renderer";
+import { InvoiceData } from "../../types";
 
 // Register a professional and clean font (e.g., Lato from Google Fonts)
 Font.register({
-  family: 'Lato',
+  family: "Lato",
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/lato/v23/S6uyw4BMUTPHjx4wWw.ttf', fontWeight: 'normal' },
-    { src: 'https://fonts.gstatic.com/s/lato/v23/S6u9w4BMUTPHh6UVSwiPHA.ttf', fontWeight: 'bold' },
+    {
+      src: "https://fonts.gstatic.com/s/lato/v23/S6uyw4BMUTPHjx4wWw.ttf",
+      fontWeight: "normal",
+    },
+    {
+      src: "https://fonts.gstatic.com/s/lato/v23/S6u9w4BMUTPHh6UVSwiPHA.ttf",
+      fontWeight: "bold",
+    },
   ],
 });
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Lato',
+    fontFamily: "Lato",
     fontSize: 10,
     padding: 30,
-    color: '#333',
-    backgroundColor: '#fff',
+    color: "#333",
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 30,
     borderBottomWidth: 2,
-    borderBottomColor: '#4A90E2',
+    borderBottomColor: "#4A90E2",
     paddingBottom: 10,
   },
   companyName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   invoiceTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#4A90E2',
+    fontWeight: "bold",
+    color: "#4A90E2",
   },
   companyInfo: {
-    textAlign: 'right',
+    textAlign: "right",
   },
   section: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   billTo: {
@@ -50,12 +64,12 @@ const styles = StyleSheet.create({
   },
   invoiceDetails: {
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   sectionTitle: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#4A90E2',
+    fontWeight: "bold",
+    color: "#4A90E2",
     marginBottom: 5,
   },
   text: {
@@ -64,86 +78,86 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 9,
-    color: '#777',
+    color: "#777",
     marginBottom: 2,
   },
   table: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#4A90E2',
-    color: '#fff',
+    flexDirection: "row",
+    backgroundColor: "#4A90E2",
+    color: "#fff",
     padding: 5,
   },
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
     padding: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   tableRowAlt: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
   },
   colDescription: {
-    width: '55%',
+    width: "55%",
     fontSize: 10,
   },
   colQty: {
-    width: '10%',
-    textAlign: 'right',
+    width: "10%",
+    textAlign: "right",
     fontSize: 10,
   },
   colPrice: {
-    width: '17.5%',
-    textAlign: 'right',
+    width: "17.5%",
+    textAlign: "right",
     fontSize: 10,
   },
   colAmount: {
-    width: '17.5%',
-    textAlign: 'right',
+    width: "17.5%",
+    textAlign: "right",
     fontSize: 10,
   },
   headerText: {
     fontSize: 10,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
   },
   totalSection: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     marginTop: 10,
   },
   totalRow: {
-    flexDirection: 'row',
-    width: '40%',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    width: "40%",
+    justifyContent: "space-between",
     padding: 3,
   },
   grandTotal: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 12,
     marginTop: 5,
     paddingTop: 5,
     borderTopWidth: 2,
-    borderTopColor: '#4A90E2',
+    borderTopColor: "#4A90E2",
   },
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 30,
     left: 30,
     right: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: "#eee",
     paddingTop: 10,
   },
   footerText: {
     fontSize: 9,
-    color: '#888',
+    color: "#888",
   },
   qrCode: {
     width: 80,
@@ -158,8 +172,8 @@ interface InvoicePDFProps {
 
 export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => {
   const branding = data.branding;
-  const companyName = branding?.companyName || 'Our Company';
-  const companyAddress = branding?.companyAddress || '';
+  const companyName = branding?.companyName || "Our Company";
+  const companyAddress = branding?.companyAddress || "";
 
   return (
     <Document>
@@ -181,7 +195,9 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => {
         <View style={styles.section}>
           <View style={styles.billTo}>
             <Text style={styles.sectionTitle}>Bill To</Text>
-            <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.customerName}</Text>
+            <Text style={[styles.text, { fontWeight: "bold" }]}>
+              {data.customerName}
+            </Text>
             <Text style={styles.text}>{data.customerAddress}</Text>
           </View>
         </View>
@@ -189,20 +205,35 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => {
         {/* Items Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.headerText, styles.colDescription]}>Description</Text>
+            <Text style={[styles.headerText, styles.colDescription]}>
+              Description
+            </Text>
             <Text style={[styles.headerText, styles.colQty]}>Qty</Text>
             <Text style={[styles.headerText, styles.colPrice]}>Unit Price</Text>
             <Text style={[styles.headerText, styles.colAmount]}>Amount</Text>
           </View>
           {data.items?.map((item: any, i: number) => (
-            <View key={i} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}>
-              <Text style={styles.colDescription}>{item.description || item.itemName}</Text>
+            <View
+              key={i}
+              style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}
+            >
+              <Text style={styles.colDescription}>
+                {item.description || item.itemName}
+              </Text>
               <Text style={styles.colQty}>{item.quantity || item.qty}</Text>
               <Text style={styles.colPrice}>
-                {data.currencySymbol}{(item.unitPrice || item.rate || item.price || 0).toFixed(2)}
+                {data.currencySymbol}
+                {(item.unitPrice || item.rate || item.price || 0).toFixed(2)}
               </Text>
               <Text style={styles.colAmount}>
-                {data.currencySymbol}{(item.totalPrice || item.amount || item.total || ((item.quantity || item.qty || 0) * (item.unitPrice || item.rate || item.price || 0))).toFixed(2)}
+                {data.currencySymbol}
+                {(
+                  item.totalPrice ||
+                  item.amount ||
+                  item.total ||
+                  (item.quantity || item.qty || 0) *
+                    (item.unitPrice || item.rate || item.price || 0)
+                ).toFixed(2)}
               </Text>
             </View>
           ))}
@@ -212,15 +243,24 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => {
         <View style={styles.totalSection}>
           <View style={styles.totalRow}>
             <Text>Subtotal</Text>
-            <Text>{data.currencySymbol}{(data.subtotal || 0).toFixed(2)}</Text>
+            <Text>
+              {data.currencySymbol}
+              {(data.subtotal || 0).toFixed(2)}
+            </Text>
           </View>
           <View style={styles.totalRow}>
             <Text>Tax</Text>
-            <Text>{data.currencySymbol}{(data.tax || 0).toFixed(2)}</Text>
+            <Text>
+              {data.currencySymbol}
+              {(data.tax || 0).toFixed(2)}
+            </Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
             <Text>Total</Text>
-            <Text>{data.currencySymbol}{(data.total || 0).toFixed(2)}</Text>
+            <Text>
+              {data.currencySymbol}
+              {(data.total || 0).toFixed(2)}
+            </Text>
           </View>
         </View>
 
@@ -234,7 +274,9 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ data, qrCode }) => {
               </>
             )}
           </View>
-          {(qrCode || data.qrCode) && <Image style={styles.qrCode} src={qrCode || data.qrCode} />}
+          {(qrCode || data.qrCode) && (
+            <Image style={styles.qrCode} src={qrCode || data.qrCode} />
+          )}
         </View>
       </Page>
     </Document>

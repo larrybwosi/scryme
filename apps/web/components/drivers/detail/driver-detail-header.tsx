@@ -16,9 +16,7 @@ export function DriverDetailHeader({ driver }: { driver: any }) {
             <ArrowLeft size={20} />
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold text-[#1D1D1F]">
-          Driver Profile
-        </h1>
+        <h1 className="text-2xl font-bold text-[#1D1D1F]">Driver Profile</h1>
       </div>
 
       <div className="bg-white p-6 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -64,7 +62,8 @@ export function DriverDetailHeader({ driver }: { driver: any }) {
                   variant="secondary"
                   className="bg-blue-50 text-blue-700 border-blue-100 gap-1">
                   <Truck size={12} />
-                  {driver.vehicle.licensePlate} ({driver.vehicle.make} {driver.vehicle.model})
+                  {driver.vehicle.licensePlate} ({driver.vehicle.make}{" "}
+                  {driver.vehicle.model})
                 </Badge>
               )}
               {driver.deliveryPartner && (
@@ -85,7 +84,7 @@ export function DriverDetailHeader({ driver }: { driver: any }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-           {/* Add edit button or status toggle here */}
+          {/* Add edit button or status toggle here */}
         </div>
       </div>
     </div>

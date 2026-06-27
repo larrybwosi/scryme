@@ -37,28 +37,43 @@ const STORAGE_KEYS = {
 } as const;
 
 function getSkippedVersion(): string | null {
-  try { return localStorage.getItem(STORAGE_KEYS.SKIPPED_VERSION); }
-  catch { return null; }
+  try {
+    return localStorage.getItem(STORAGE_KEYS.SKIPPED_VERSION);
+  } catch {
+    return null;
+  }
 }
 
 function setSkippedVersion(version: string): void {
-  try { localStorage.setItem(STORAGE_KEYS.SKIPPED_VERSION, version); }
-  catch { /* ignore */ }
+  try {
+    localStorage.setItem(STORAGE_KEYS.SKIPPED_VERSION, version);
+  } catch {
+    /* ignore */
+  }
 }
 
 function getSnoozedUntil(): number {
-  try { return parseInt(localStorage.getItem(STORAGE_KEYS.SNOOZED_UNTIL) ?? '0', 10); }
-  catch { return 0; }
+  try {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.SNOOZED_UNTIL) ?? '0', 10);
+  } catch {
+    return 0;
+  }
 }
 
 function setSnoozedUntil(ts: number): void {
-  try { localStorage.setItem(STORAGE_KEYS.SNOOZED_UNTIL, String(ts)); }
-  catch { /* ignore */ }
+  try {
+    localStorage.setItem(STORAGE_KEYS.SNOOZED_UNTIL, String(ts));
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearSnooze(): void {
-  try { localStorage.removeItem(STORAGE_KEYS.SNOOZED_UNTIL); }
-  catch { /* ignore */ }
+  try {
+    localStorage.removeItem(STORAGE_KEYS.SNOOZED_UNTIL);
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -70,22 +85,13 @@ const UpdaterContext = createContext<UpdaterContextType | undefined>(undefined);
 const ProgressToast = ({ progress }: { progress: number }) => (
   <div className="fixed bottom-5 right-5 z-50 w-80 rounded-lg border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-800 dark:bg-gray-900">
     <div className="mb-2 flex items-center justify-between">
-      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Downloading Update...
-      </h4>
-      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-        {progress}%
-      </span>
+      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Downloading Update...</h4>
+      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{progress}%</span>
     </div>
     <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
-      <div
-        className="h-full bg-blue-600 transition-all duration-300 ease-out"
-        style={{ width: `${progress}%` }}
-      />
+      <div className="h-full bg-blue-600 transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
     </div>
-    <p className="mt-2 text-xs text-gray-500">
-      The application will restart automatically when finished.
-    </p>
+    <p className="mt-2 text-xs text-gray-500">The application will restart automatically when finished.</p>
   </div>
 );
 
@@ -147,41 +153,44 @@ export const UpdaterProvider = ({
 
   // ── Install ─────────────────────────────────────────────────────────────────
 
-  const processUpdate = useCallback(async (updateObj: Update) => {
-    setStatus('DOWNLOADING');
-    if (!isCritical) setIsModalOpen(false);
-    setError(null);
+  const processUpdate = useCallback(
+    async (updateObj: Update) => {
+      setStatus('DOWNLOADING');
+      if (!isCritical) setIsModalOpen(false);
+      setError(null);
 
-    try {
-      let downloadedBytes = 0;
-      let totalBytes = 0;
+      try {
+        let downloadedBytes = 0;
+        let totalBytes = 0;
 
-      await updateObj.downloadAndInstall((progress) => {
-        switch (progress.event) {
-          case 'Started':
-            totalBytes = progress.data.contentLength ?? 0;
-            break;
-          case 'Progress':
-            downloadedBytes += progress.data.chunkLength;
-            if (totalBytes > 0) {
-              setDownloadProgress(Math.round((downloadedBytes / totalBytes) * 100));
-            }
-            break;
-          case 'Finished':
-            setStatus('DONE');
-            break;
-        }
-      });
+        await updateObj.downloadAndInstall(progress => {
+          switch (progress.event) {
+            case 'Started':
+              totalBytes = progress.data.contentLength ?? 0;
+              break;
+            case 'Progress':
+              downloadedBytes += progress.data.chunkLength;
+              if (totalBytes > 0) {
+                setDownloadProgress(Math.round((downloadedBytes / totalBytes) * 100));
+              }
+              break;
+            case 'Finished':
+              setStatus('DONE');
+              break;
+          }
+        });
 
-      // Clear any snooze/skip state now that we've installed
-      clearSnooze();
-      await relaunch();
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to update');
-      setStatus('ERROR');
-      setIsModalOpen(true);
-    }
-  }, [isCritical]);
+        // Clear any snooze/skip state now that we've installed
+        clearSnooze();
+        await relaunch();
+      } catch (e: any) {
+        setError(e.message ?? 'Failed to update');
+        setStatus('ERROR');
+        setIsModalOpen(true);
+      }
+    },
+    [isCritical]
+  );
 
   const startInstall = useCallback(async () => {
     if (!update) return;
@@ -193,9 +202,7 @@ export const UpdaterProvider = ({
   const fetchReleaseNotes = async (version: string): Promise<string | null> => {
     try {
       const tag = version.startsWith('v') ? version : `v${version}`;
-      const res = await fetch(
-        `https://api.github.com/repos/larrybwosi/dealio-desktop/releases/tags/${tag}`
-      );
+      const res = await fetch(`https://api.github.com/repos/larrybwosi/dealio-desktop/releases/tags/${tag}`);
       if (!res.ok) return null;
       const data = await res.json();
       return data.body ?? null;
@@ -243,11 +250,9 @@ export const UpdaterProvider = ({
       }
 
       // Determine criticality before deciding whether to honour snooze
-      let critical = !!(notes?.includes('[CRITICAL]'));
+      let critical = !!notes?.includes('[CRITICAL]');
       if (!critical && updateResult.date) {
-        const diffDays = Math.ceil(
-          Math.abs(Date.now() - new Date(updateResult.date).getTime()) / 86_400_000
-        );
+        const diffDays = Math.ceil(Math.abs(Date.now() - new Date(updateResult.date).getTime()) / 86_400_000);
         if (diffDays > deprecatedAfterDays) critical = true;
       }
 
@@ -314,7 +319,9 @@ export const UpdaterProvider = ({
 
       <UpdateDialog
         open={isModalOpen}
-        onOpenChange={(open) => { if (!open) snoozeUpdate(); }}
+        onOpenChange={open => {
+          if (!open) snoozeUpdate();
+        }}
         onClose={snoozeUpdate}
         onSkip={skipVersion}
         onConfirm={startInstall}

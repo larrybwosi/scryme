@@ -3,23 +3,31 @@
  * Handles conversions between system units, organization units, and product-specific units
  */
 
-
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type UnitType = 'MASS' | 'VOLUME' | 'LENGTH' | 'AREA' | 'COUNT' | 'TIME' | 'TEMPERATURE' | 'ENERGY' | 'CUSTOM';
+export type UnitType =
+  | "MASS"
+  | "VOLUME"
+  | "LENGTH"
+  | "AREA"
+  | "COUNT"
+  | "TIME"
+  | "TEMPERATURE"
+  | "ENERGY"
+  | "CUSTOM";
 
 export type IndustryCategory =
-  | 'UNIVERSAL'
-  | 'FOOD_SERVICE'
-  | 'RETAIL'
-  | 'MANUFACTURING'
-  | 'HEALTHCARE'
-  | 'CONSTRUCTION'
-  | 'AGRICULTURE'
-  | 'HOSPITALITY'
-  | 'OTHER';
+  | "UNIVERSAL"
+  | "FOOD_SERVICE"
+  | "RETAIL"
+  | "MANUFACTURING"
+  | "HEALTHCARE"
+  | "CONSTRUCTION"
+  | "AGRICULTURE"
+  | "HOSPITALITY"
+  | "OTHER";
 
 export interface BaseUnit {
   id: string;
@@ -88,7 +96,11 @@ export interface ConversionResult {
 
 export interface ConversionError {
   error: string;
-  code: 'INCOMPATIBLE_TYPES' | 'NO_CONVERSION_PATH' | 'INVALID_UNIT' | 'DIVISION_BY_ZERO';
+  code:
+    | "INCOMPATIBLE_TYPES"
+    | "NO_CONVERSION_PATH"
+    | "INVALID_UNIT"
+    | "DIVISION_BY_ZERO";
 }
 
 // ============================================================================
@@ -103,7 +115,7 @@ export class UnitConverter {
   constructor(
     systemConversions: UnitConversion[] = [],
     orgConversions: UnitConversion[] = [],
-    productConversions: ProductUnitConversion[] = []
+    productConversions: ProductUnitConversion[] = [],
   ) {
     this.loadConversions(systemConversions, orgConversions, productConversions);
   }
@@ -114,10 +126,10 @@ export class UnitConverter {
   private loadConversions(
     systemConversions: UnitConversion[],
     orgConversions: UnitConversion[],
-    productConversions: ProductUnitConversion[]
+    productConversions: ProductUnitConversion[],
   ): void {
     // Load system conversions
-    systemConversions.forEach(conv => {
+    systemConversions.forEach((conv) => {
       if (!this.systemConversions.has(conv.fromUnitId)) {
         this.systemConversions.set(conv.fromUnitId, []);
       }
@@ -125,7 +137,7 @@ export class UnitConverter {
     });
 
     // Load org conversions
-    orgConversions.forEach(conv => {
+    orgConversions.forEach((conv) => {
       if (!this.orgConversions.has(conv.fromUnitId)) {
         this.orgConversions.set(conv.fromUnitId, []);
       }
@@ -133,7 +145,7 @@ export class UnitConverter {
     });
 
     // Load product conversions (grouped by product)
-    productConversions.forEach(conv => {
+    productConversions.forEach((conv) => {
       const key = `${conv.productId}:${conv.fromUnitId}`;
       if (!this.productConversions.has(key)) {
         this.productConversions.set(key, []);
@@ -146,7 +158,12 @@ export class UnitConverter {
    * Convert value between units
    * Priority: Product-specific > Organization > System
    */
-  convert(value: number, fromUnitId: string, toUnitId: string, productId?: string): ConversionResult | ConversionError {
+  convert(
+    value: number,
+    fromUnitId: string,
+    toUnitId: string,
+    productId?: string,
+  ): ConversionResult | ConversionError {
     if (value === 0) {
       return {
         value: 0,
@@ -167,20 +184,32 @@ export class UnitConverter {
 
     // 1. Try product-specific conversion first
     if (productId) {
-      const productConv = this.findProductConversion(productId, fromUnitId, toUnitId);
+      const productConv = this.findProductConversion(
+        productId,
+        fromUnitId,
+        toUnitId,
+      );
       if (productConv) {
         return this.applyConversion(value, productConv, fromUnitId, toUnitId);
       }
     }
 
     // 2. Try organization conversion
-    const orgConv = this.findDirectConversion(fromUnitId, toUnitId, this.orgConversions);
+    const orgConv = this.findDirectConversion(
+      fromUnitId,
+      toUnitId,
+      this.orgConversions,
+    );
     if (orgConv) {
       return this.applyConversion(value, orgConv, fromUnitId, toUnitId);
     }
 
     // 3. Try system conversion
-    const systemConv = this.findDirectConversion(fromUnitId, toUnitId, this.systemConversions);
+    const systemConv = this.findDirectConversion(
+      fromUnitId,
+      toUnitId,
+      this.systemConversions,
+    );
     if (systemConv) {
       return this.applyConversion(value, systemConv, fromUnitId, toUnitId);
     }
@@ -192,8 +221,8 @@ export class UnitConverter {
     }
 
     return {
-      error: 'No conversion path found between units',
-      code: 'NO_CONVERSION_PATH',
+      error: "No conversion path found between units",
+      code: "NO_CONVERSION_PATH",
     };
   }
 
@@ -204,7 +233,7 @@ export class UnitConverter {
     value: number,
     conversion: UnitConversion,
     fromUnit: string,
-    toUnit: string
+    toUnit: string,
   ): ConversionResult {
     const factor = Number(conversion.factor);
     const offset = Number(conversion.offset);
@@ -221,7 +250,10 @@ export class UnitConverter {
   /**
    * Apply a chain of conversions
    */
-  private applyConversionPath(value: number, path: UnitConversion[]): ConversionResult {
+  private applyConversionPath(
+    value: number,
+    path: UnitConversion[],
+  ): ConversionResult {
     let result = value;
     let isApproximate = false;
     const conversionPath: string[] = [];
@@ -250,12 +282,18 @@ export class UnitConverter {
   /**
    * Find product-specific conversion
    */
-  private findProductConversion(productId: string, fromUnitId: string, toUnitId: string): ProductUnitConversion | null {
+  private findProductConversion(
+    productId: string,
+    fromUnitId: string,
+    toUnitId: string,
+  ): ProductUnitConversion | null {
     const key = `${productId}:${fromUnitId}`;
     const conversions = this.productConversions.get(key) || [];
 
     // Find matching conversion and return highest priority
-    const matches = conversions.filter(c => c.toUnitId === toUnitId).sort((a, b) => b.priority - a.priority);
+    const matches = conversions
+      .filter((c) => c.toUnitId === toUnitId)
+      .sort((a, b) => b.priority - a.priority);
 
     return matches[0] || null;
   }
@@ -266,17 +304,22 @@ export class UnitConverter {
   private findDirectConversion(
     fromUnitId: string,
     toUnitId: string,
-    conversionMap: Map<string, UnitConversion[]>
+    conversionMap: Map<string, UnitConversion[]>,
   ): UnitConversion | null {
     const conversions = conversionMap.get(fromUnitId) || [];
-    return conversions.find(c => c.toUnitId === toUnitId) || null;
+    return conversions.find((c) => c.toUnitId === toUnitId) || null;
   }
 
   /**
    * Find conversion path using BFS (for multi-step conversions)
    */
-  private findConversionPath(fromUnitId: string, toUnitId: string): UnitConversion[] | null {
-    const queue: { unitId: string; path: UnitConversion[] }[] = [{ unitId: fromUnitId, path: [] }];
+  private findConversionPath(
+    fromUnitId: string,
+    toUnitId: string,
+  ): UnitConversion[] | null {
+    const queue: { unitId: string; path: UnitConversion[] }[] = [
+      { unitId: fromUnitId, path: [] },
+    ];
     const visited = new Set<string>([fromUnitId]);
 
     while (queue.length > 0) {
@@ -325,7 +368,7 @@ export class UnitConverter {
     value: number,
     fromUnitId: string,
     toUnitId: string,
-    productId?: string
+    productId?: string,
   ): ConversionResult | ConversionError {
     return this.convert(value, toUnitId, fromUnitId, productId);
   }
@@ -341,13 +384,13 @@ export class ProductVariantUnitHelper {
    */
   static getBaseUnit(variant: ProductVariantUnit): {
     id: string;
-    type: 'system' | 'org';
+    type: "system" | "org";
   } | null {
     if (variant.baseUnitId) {
-      return { id: variant.baseUnitId, type: 'system' };
+      return { id: variant.baseUnitId, type: "system" };
     }
     if (variant.baseOrgUnitId) {
-      return { id: variant.baseOrgUnitId, type: 'org' };
+      return { id: variant.baseOrgUnitId, type: "org" };
     }
     return null;
   }
@@ -357,13 +400,13 @@ export class ProductVariantUnitHelper {
    */
   static getStockingUnit(variant: ProductVariantUnit): {
     id: string;
-    type: 'system' | 'org';
+    type: "system" | "org";
   } | null {
     if (variant.stockingUnitId) {
-      return { id: variant.stockingUnitId, type: 'system' };
+      return { id: variant.stockingUnitId, type: "system" };
     }
     if (variant.stockingOrgUnitId) {
-      return { id: variant.stockingOrgUnitId, type: 'org' };
+      return { id: variant.stockingOrgUnitId, type: "org" };
     }
     return null;
   }
@@ -379,7 +422,11 @@ export class ProductVariantUnitHelper {
    * Check if variant uses only system units
    */
   static usesOnlySystemUnits(variant: ProductVariantUnit): boolean {
-    return !!((variant.baseUnitId || variant.stockingUnitId) && !variant.baseOrgUnitId && !variant.stockingOrgUnitId);
+    return !!(
+      (variant.baseUnitId || variant.stockingUnitId) &&
+      !variant.baseOrgUnitId &&
+      !variant.stockingOrgUnitId
+    );
   }
 
   /**
@@ -389,15 +436,15 @@ export class ProductVariantUnitHelper {
     quantity: number,
     variant: ProductVariantUnit,
     converter: UnitConverter,
-    productId?: string
+    productId?: string,
   ): ConversionResult | ConversionError {
     const baseUnit = this.getBaseUnit(variant);
     const stockingUnit = this.getStockingUnit(variant);
 
     if (!baseUnit || !stockingUnit) {
       return {
-        error: 'Missing base or stocking unit',
-        code: 'INVALID_UNIT',
+        error: "Missing base or stocking unit",
+        code: "INVALID_UNIT",
       };
     }
 
@@ -411,15 +458,15 @@ export class ProductVariantUnitHelper {
     quantity: number,
     variant: ProductVariantUnit,
     converter: UnitConverter,
-    productId?: string
+    productId?: string,
   ): ConversionResult | ConversionError {
     const baseUnit = this.getBaseUnit(variant);
     const stockingUnit = this.getStockingUnit(variant);
 
     if (!baseUnit || !stockingUnit) {
       return {
-        error: 'Missing base or stocking unit',
-        code: 'INVALID_UNIT',
+        error: "Missing base or stocking unit",
+        code: "INVALID_UNIT",
       };
     }
 
@@ -437,13 +484,13 @@ export class SellingUnitHelper {
    */
   static getUnit(sellingUnit: VariantSellingUnit): {
     id: string;
-    type: 'system' | 'org';
+    type: "system" | "org";
   } | null {
     if (sellingUnit.systemUnitId) {
-      return { id: sellingUnit.systemUnitId, type: 'system' };
+      return { id: sellingUnit.systemUnitId, type: "system" };
     }
     if (sellingUnit.orgUnitId) {
-      return { id: sellingUnit.orgUnitId, type: 'org' };
+      return { id: sellingUnit.orgUnitId, type: "org" };
     }
     return null;
   }
@@ -456,14 +503,14 @@ export class SellingUnitHelper {
     sellingUnit: VariantSellingUnit,
     baseUnitId: string,
     converter: UnitConverter,
-    productId?: string
+    productId?: string,
   ): ConversionResult | ConversionError {
     const unit = this.getUnit(sellingUnit);
 
     if (!unit) {
       return {
-        error: 'Invalid selling unit',
-        code: 'INVALID_UNIT',
+        error: "Invalid selling unit",
+        code: "INVALID_UNIT",
       };
     }
 
@@ -490,14 +537,14 @@ export class SellingUnitHelper {
     sellingUnit: VariantSellingUnit,
     baseUnitId: string,
     converter: UnitConverter,
-    productId?: string
+    productId?: string,
   ): ConversionResult | ConversionError {
     const unit = this.getUnit(sellingUnit);
 
     if (!unit) {
       return {
-        error: 'Invalid selling unit',
-        code: 'INVALID_UNIT',
+        error: "Invalid selling unit",
+        code: "INVALID_UNIT",
       };
     }
 
@@ -506,8 +553,8 @@ export class SellingUnitHelper {
       const multiplier = Number(sellingUnit.conversionMultiplier);
       if (multiplier === 0) {
         return {
-          error: 'Division by zero',
-          code: 'DIVISION_BY_ZERO',
+          error: "Division by zero",
+          code: "DIVISION_BY_ZERO",
         };
       }
       return {
@@ -530,15 +577,24 @@ export class SellingUnitHelper {
     baseUnitId: string,
     converter: UnitConverter,
     productId?: string,
-    priceType: 'retail' | 'wholesale' = 'retail'
+    priceType: "retail" | "wholesale" = "retail",
   ): number | null {
-    const price = priceType === 'retail' ? sellingUnit.retailPrice : sellingUnit.wholesalePrice;
+    const price =
+      priceType === "retail"
+        ? sellingUnit.retailPrice
+        : sellingUnit.wholesalePrice;
 
     if (!price) return null;
 
-    const conversionResult = this.convertToBase(1, sellingUnit, baseUnitId, converter, productId);
+    const conversionResult = this.convertToBase(
+      1,
+      sellingUnit,
+      baseUnitId,
+      converter,
+      productId,
+    );
 
-    if ('error' in conversionResult) return null;
+    if ("error" in conversionResult) return null;
 
     return Number(price) / conversionResult.value;
   }
@@ -551,30 +607,43 @@ export class SellingUnitHelper {
     baseUnitId: string,
     sellingUnits: VariantSellingUnit[],
     converter: UnitConverter,
-    productId?: string
+    productId?: string,
   ): VariantSellingUnit | null {
-    const activeUnits = sellingUnits.filter(u => u.isActive);
+    const activeUnits = sellingUnits.filter((u) => u.isActive);
 
     if (activeUnits.length === 0) return null;
 
     // Convert all units to base for comparison
     const unitsWithBaseQty = activeUnits
-      .map(unit => {
-        const conversion = this.convertFromBase(quantity, unit, baseUnitId, converter, productId);
+      .map((unit) => {
+        const conversion = this.convertFromBase(
+          quantity,
+          unit,
+          baseUnitId,
+          converter,
+          productId,
+        );
 
-        if ('error' in conversion) return null;
+        if ("error" in conversion) return null;
 
         return {
           unit,
           baseQuantity: conversion.value,
         };
       })
-      .filter((item): item is { unit: VariantSellingUnit; baseQuantity: number } => item !== null);
+      .filter(
+        (item): item is { unit: VariantSellingUnit; baseQuantity: number } =>
+          item !== null,
+      );
 
     // Find unit where converted quantity is closest to a whole number
     const best = unitsWithBaseQty.reduce((prev, curr) => {
-      const prevRemainder = Math.abs(prev.baseQuantity - Math.round(prev.baseQuantity));
-      const currRemainder = Math.abs(curr.baseQuantity - Math.round(curr.baseQuantity));
+      const prevRemainder = Math.abs(
+        prev.baseQuantity - Math.round(prev.baseQuantity),
+      );
+      const currRemainder = Math.abs(
+        curr.baseQuantity - Math.round(curr.baseQuantity),
+      );
 
       return currRemainder < prevRemainder ? curr : prev;
     });
@@ -594,9 +663,12 @@ export class PriceCalculator {
   static calculatePrice(
     quantity: number,
     sellingUnit: VariantSellingUnit,
-    priceType: 'retail' | 'wholesale' = 'retail'
+    priceType: "retail" | "wholesale" = "retail",
   ): number | null {
-    const price = priceType === 'retail' ? sellingUnit.retailPrice : sellingUnit.wholesalePrice;
+    const price =
+      priceType === "retail"
+        ? sellingUnit.retailPrice
+        : sellingUnit.wholesalePrice;
 
     if (!price) return null;
 
@@ -612,17 +684,17 @@ export class PriceCalculator {
     sellingUnit: VariantSellingUnit,
     converter: UnitConverter,
     productId?: string,
-    priceType: 'retail' | 'wholesale' = 'retail'
+    priceType: "retail" | "wholesale" = "retail",
   ): number | null {
     const conversionResult = SellingUnitHelper.convertFromBase(
       baseQuantity,
       sellingUnit,
       baseUnitId,
       converter,
-      productId
+      productId,
     );
 
-    if ('error' in conversionResult) return null;
+    if ("error" in conversionResult) return null;
 
     return this.calculatePrice(conversionResult.value, sellingUnit, priceType);
   }
@@ -636,24 +708,36 @@ export class PriceCalculator {
     sellingUnits: VariantSellingUnit[],
     converter: UnitConverter,
     productId?: string,
-    priceType: 'retail' | 'wholesale' = 'retail'
+    priceType: "retail" | "wholesale" = "retail",
   ): { price: number; sellingUnit: VariantSellingUnit } | null {
-    const activeUnits = sellingUnits.filter(u => u.isActive);
+    const activeUnits = sellingUnits.filter((u) => u.isActive);
 
     const prices = activeUnits
-      .map(unit => {
-        const price = this.calculatePriceFromBase(baseQuantity, baseUnitId, unit, converter, productId, priceType);
+      .map((unit) => {
+        const price = this.calculatePriceFromBase(
+          baseQuantity,
+          baseUnitId,
+          unit,
+          converter,
+          productId,
+          priceType,
+        );
 
         if (price === null) return null;
 
         return { price, sellingUnit: unit };
       })
-      .filter((item): item is { price: number; sellingUnit: VariantSellingUnit } => item !== null);
+      .filter(
+        (item): item is { price: number; sellingUnit: VariantSellingUnit } =>
+          item !== null,
+      );
 
     if (prices.length === 0) return null;
 
     // Return lowest price
-    return prices.reduce((prev, curr) => (curr.price < prev.price ? curr : prev));
+    return prices.reduce((prev, curr) =>
+      curr.price < prev.price ? curr : prev,
+    );
   }
 }
 
@@ -671,7 +755,7 @@ export class InventoryCalculator {
     sellingUnits: VariantSellingUnit[],
     converter: UnitConverter,
     productId?: string,
-    priceType: 'retail' | 'wholesale' = 'wholesale'
+    priceType: "retail" | "wholesale" = "wholesale",
   ): number | null {
     const bestPrice = PriceCalculator.getBestPrice(
       stockLevel,
@@ -679,7 +763,7 @@ export class InventoryCalculator {
       sellingUnits,
       converter,
       productId,
-      priceType
+      priceType,
     );
 
     return bestPrice?.price || null;
@@ -694,20 +778,25 @@ export class InventoryCalculator {
     reorderQty: number,
     variant: ProductVariantUnit,
     converter: UnitConverter,
-    productId?: string
+    productId?: string,
   ): ConversionResult | ConversionError {
     if (currentStock >= reorderPoint) {
       return {
         value: 0,
-        fromUnit: '',
-        toUnit: '',
+        fromUnit: "",
+        toUnit: "",
         isApproximate: false,
       };
     }
 
     const quantityNeeded = reorderQty;
 
-    return ProductVariantUnitHelper.convertBaseToStocking(quantityNeeded, variant, converter, productId);
+    return ProductVariantUnitHelper.convertBaseToStocking(
+      quantityNeeded,
+      variant,
+      converter,
+      productId,
+    );
   }
 
   /**
@@ -720,7 +809,10 @@ export class InventoryCalculator {
   /**
    * Calculate stock coverage (days of inventory)
    */
-  static calculateStockCoverage(currentStock: number, averageDailyUsage: number): number {
+  static calculateStockCoverage(
+    currentStock: number,
+    averageDailyUsage: number,
+  ): number {
     if (averageDailyUsage === 0) return Infinity;
     return currentStock / averageDailyUsage;
   }
@@ -741,33 +833,45 @@ export class UnitValidator {
   /**
    * Validate selling unit setup
    */
-  static validateSellingUnit(sellingUnit: VariantSellingUnit): { valid: boolean; errors: string[] } {
+  static validateSellingUnit(sellingUnit: VariantSellingUnit): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     // Must have either system or org unit (not both)
     if (!sellingUnit.systemUnitId && !sellingUnit.orgUnitId) {
-      errors.push('Selling unit must reference either a system unit or organization unit');
+      errors.push(
+        "Selling unit must reference either a system unit or organization unit",
+      );
     }
     if (sellingUnit.systemUnitId && sellingUnit.orgUnitId) {
-      errors.push('Selling unit cannot reference both system and organization units');
+      errors.push(
+        "Selling unit cannot reference both system and organization units",
+      );
     }
 
     // Must have at least one price
     if (!sellingUnit.retailPrice && !sellingUnit.wholesalePrice) {
-      errors.push('Selling unit must have at least one price (retail or wholesale)');
+      errors.push(
+        "Selling unit must have at least one price (retail or wholesale)",
+      );
     }
 
     // Prices must be positive
     if (sellingUnit.retailPrice && Number(sellingUnit.retailPrice) <= 0) {
-      errors.push('Retail price must be positive');
+      errors.push("Retail price must be positive");
     }
     if (sellingUnit.wholesalePrice && Number(sellingUnit.wholesalePrice) <= 0) {
-      errors.push('Wholesale price must be positive');
+      errors.push("Wholesale price must be positive");
     }
 
     // Conversion multiplier must be positive if set
-    if (sellingUnit.conversionMultiplier && Number(sellingUnit.conversionMultiplier) <= 0) {
-      errors.push('Conversion multiplier must be positive');
+    if (
+      sellingUnit.conversionMultiplier &&
+      Number(sellingUnit.conversionMultiplier) <= 0
+    ) {
+      errors.push("Conversion multiplier must be positive");
     }
 
     return {
@@ -779,22 +883,29 @@ export class UnitValidator {
   /**
    * Validate product variant unit setup
    */
-  static validateProductVariantUnits(variant: ProductVariantUnit): { valid: boolean; errors: string[] } {
+  static validateProductVariantUnits(variant: ProductVariantUnit): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     // Must have a base unit
     if (!variant.baseUnitId && !variant.baseOrgUnitId) {
-      errors.push('Product variant must have a base unit');
+      errors.push("Product variant must have a base unit");
     }
 
     // Cannot have both system and org base unit
     if (variant.baseUnitId && variant.baseOrgUnitId) {
-      errors.push('Product variant cannot have both system and organization base units');
+      errors.push(
+        "Product variant cannot have both system and organization base units",
+      );
     }
 
     // Cannot have both system and org stocking unit
     if (variant.stockingUnitId && variant.stockingOrgUnitId) {
-      errors.push('Product variant cannot have both system and organization stocking units');
+      errors.push(
+        "Product variant cannot have both system and organization stocking units",
+      );
     }
 
     return {
@@ -818,9 +929,9 @@ export class UnitFormatter {
     options: {
       decimals?: number;
       locale?: string;
-    } = {}
+    } = {},
   ): string {
-    const { decimals = 2, locale = 'en-US' } = options;
+    const { decimals = 2, locale = "en-US" } = options;
 
     const formatted = new Intl.NumberFormat(locale, {
       minimumFractionDigits: 0,
@@ -833,9 +944,13 @@ export class UnitFormatter {
   /**
    * Format price with currency
    */
-  static formatPrice(price: number, currency: string = 'USD', locale: string = 'en-US'): string {
+  static formatPrice(
+    price: number,
+    currency: string = "USD",
+    locale: string = "en-US",
+  ): string {
     return new Intl.NumberFormat(locale, {
-      style: 'currency',
+      style: "currency",
       currency,
     }).format(price);
   }
@@ -843,7 +958,12 @@ export class UnitFormatter {
   /**
    * Format price per unit
    */
-  static formatPricePerUnit(price: number, unit: BaseUnit, currency: string = 'USD', locale: string = 'en-US'): string {
+  static formatPricePerUnit(
+    price: number,
+    unit: BaseUnit,
+    currency: string = "USD",
+    locale: string = "en-US",
+  ): string {
     const formattedPrice = this.formatPrice(price, currency, locale);
     return `${formattedPrice}/${unit.symbol}`;
   }
@@ -858,17 +978,23 @@ export class UnitFormatter {
     options: {
       decimals?: number;
       locale?: string;
-    } = {}
+    } = {},
   ): string {
-    const { decimals = 2, locale = 'en-US' } = options;
+    const { decimals = 2, locale = "en-US" } = options;
 
-    const fromQty = this.formatQuantity(Number(result.fromUnit), fromUnit, { decimals, locale });
-    const toQty = this.formatQuantity(result.value, toUnit, { decimals, locale });
+    const fromQty = this.formatQuantity(Number(result.fromUnit), fromUnit, {
+      decimals,
+      locale,
+    });
+    const toQty = this.formatQuantity(result.value, toUnit, {
+      decimals,
+      locale,
+    });
 
-    const approx = result.isApproximate ? '≈ ' : '';
+    const approx = result.isApproximate ? "≈ " : "";
     return `${fromQty} = ${approx}${toQty}`;
   }
 }
 
 export const converter = new UnitConverter();
-export const priceCalculator = new PriceCalculator()
+export const priceCalculator = new PriceCalculator();

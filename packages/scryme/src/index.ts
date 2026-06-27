@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 export interface ScrymeChatWorkspace {
   id: string;
@@ -16,8 +16,8 @@ export interface ScrymeChatMessage {
 export interface ScrymeChatAction {
   id: string;
   label: string;
-  type: 'button';
-  style?: 'primary' | 'secondary' | 'danger';
+  type: "button";
+  style?: "primary" | "secondary" | "danger";
   value?: string;
 }
 
@@ -30,7 +30,7 @@ export interface ScrymeChatUser {
 export interface ScrymeChatChannel {
   id: string;
   slug: string;
-  type: 'public' | 'private' | 'dm';
+  type: "public" | "private" | "dm";
 }
 
 export class ScrymeChatApiClient {
@@ -41,35 +41,40 @@ export class ScrymeChatApiClient {
   private tokenExpiresAt: number | null = null;
 
   constructor(
-    baseUrl: string = process.env.SCRYME_CHAT_API_URL || 'https://api.scryme.app',
-    clientId: string = process.env.SCRYME_CHAT_CLIENT_ID || '',
-    clientSecret: string = process.env.SCRYME_CHAT_CLIENT_SECRET || ''
+    baseUrl: string = process.env.SCRYME_CHAT_API_URL ||
+      "https://api.scryme.app",
+    clientId: string = process.env.SCRYME_CHAT_CLIENT_ID || "",
+    clientSecret: string = process.env.SCRYME_CHAT_CLIENT_SECRET || "",
   ) {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.baseUrl = baseUrl.replace(/\/$/, "");
     this.clientId = clientId;
     this.clientSecret = clientSecret;
   }
 
   private async ensureAuthenticated(): Promise<void> {
-    if (this.accessToken && this.tokenExpiresAt && Date.now() < this.tokenExpiresAt) {
+    if (
+      this.accessToken &&
+      this.tokenExpiresAt &&
+      Date.now() < this.tokenExpiresAt
+    ) {
       return;
     }
 
     if (!this.clientId || !this.clientSecret) {
-      throw new Error('Scryme Chat M2M credentials missing');
+      throw new Error("Scryme Chat M2M credentials missing");
     }
 
     const response = await axios.post(
       `${this.baseUrl}/api/v2/oauth/token`,
       {
-        grant_type: 'client_credentials',
+        grant_type: "client_credentials",
         client_id: this.clientId,
         client_secret: this.clientSecret,
       },
       {
         timeout: 10000,
         maxContentLength: 1 * 1024 * 1024, // 1MB for token
-      }
+      },
     );
 
     this.accessToken = response.data.access_token;
@@ -79,9 +84,9 @@ export class ScrymeChatApiClient {
   }
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
     path: string,
-    data?: any
+    data?: any,
   ): Promise<T> {
     await this.ensureAuthenticated();
 
@@ -91,7 +96,7 @@ export class ScrymeChatApiClient {
       data,
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       timeout: 10000,
       maxContentLength: 10 * 1024 * 1024, // 10MB limit
@@ -103,8 +108,11 @@ export class ScrymeChatApiClient {
   /**
    * Create a new workspace in Scryme Chat.
    */
-  async createWorkspace(name: string, slug: string): Promise<ScrymeChatWorkspace> {
-    return this.request<ScrymeChatWorkspace>('POST', '/api/v2/m2m/workspaces', {
+  async createWorkspace(
+    name: string,
+    slug: string,
+  ): Promise<ScrymeChatWorkspace> {
+    return this.request<ScrymeChatWorkspace>("POST", "/api/v2/m2m/workspaces", {
       name,
       slug,
     });
@@ -114,7 +122,10 @@ export class ScrymeChatApiClient {
    * Get workspace details.
    */
   async getWorkspace(slug: string): Promise<ScrymeChatWorkspace> {
-    return this.request<ScrymeChatWorkspace>('GET', `/api/v2/m2m/workspaces/${slug}`);
+    return this.request<ScrymeChatWorkspace>(
+      "GET",
+      `/api/v2/m2m/workspaces/${slug}`,
+    );
   }
 
   /**
@@ -124,13 +135,17 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     name: string,
     slug: string,
-    type: 'public' | 'private' = 'public'
+    type: "public" | "private" = "public",
   ): Promise<ScrymeChatChannel> {
-    return this.request<ScrymeChatChannel>('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels`, {
-      name,
-      slug,
-      type,
-    });
+    return this.request<ScrymeChatChannel>(
+      "POST",
+      `/api/v2/m2m/workspaces/${workspaceSlug}/channels`,
+      {
+        name,
+        slug,
+        type,
+      },
+    );
   }
 
   /**
@@ -139,49 +154,82 @@ export class ScrymeChatApiClient {
   async addUserToChannel(
     workspaceSlug: string,
     channelSlug: string,
-    email: string
+    email: string,
   ): Promise<any> {
-    return this.request('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/members`, {
-      email
-    });
+    return this.request(
+      "POST",
+      `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/members`,
+      {
+        email,
+      },
+    );
   }
 
   /**
    * Send a message to a Scryme Chat channel.
    */
-  async sendMessage(workspaceSlug: string, channelSlug: string, message: ScrymeChatMessage): Promise<any> {
-    return this.request('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages`, message);
+  async sendMessage(
+    workspaceSlug: string,
+    channelSlug: string,
+    message: ScrymeChatMessage,
+  ): Promise<any> {
+    return this.request(
+      "POST",
+      `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages`,
+      message,
+    );
   }
 
   /**
    * Update an existing message.
    */
-  async updateMessage(workspaceSlug: string, channelSlug: string, messageId: string, message: ScrymeChatMessage): Promise<any> {
-    return this.request('PATCH', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages/${messageId}`, message);
+  async updateMessage(
+    workspaceSlug: string,
+    channelSlug: string,
+    messageId: string,
+    message: ScrymeChatMessage,
+  ): Promise<any> {
+    return this.request(
+      "PATCH",
+      `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages/${messageId}`,
+      message,
+    );
   }
 
   /**
    * Find a user in the workspace by email.
    */
-  async findUserByEmail(workspaceSlug: string, email: string): Promise<ScrymeChatUser | null> {
-    const users = await this.request<ScrymeChatUser[]>('GET', `/api/v2/m2m/workspaces/${workspaceSlug}/users?email=${encodeURIComponent(email)}`);
+  async findUserByEmail(
+    workspaceSlug: string,
+    email: string,
+  ): Promise<ScrymeChatUser | null> {
+    const users = await this.request<ScrymeChatUser[]>(
+      "GET",
+      `/api/v2/m2m/workspaces/${workspaceSlug}/users?email=${encodeURIComponent(email)}`,
+    );
     return users.length > 0 ? users[0] : null;
   }
 
   /**
    * Get or create a direct message channel with a user.
    */
-  async getDirectMessageChannel(workspaceSlug: string, userId: string): Promise<ScrymeChatChannel> {
-    return this.request<ScrymeChatChannel>('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/users/${userId}/dm`);
+  async getDirectMessageChannel(
+    workspaceSlug: string,
+    userId: string,
+  ): Promise<ScrymeChatChannel> {
+    return this.request<ScrymeChatChannel>(
+      "POST",
+      `/api/v2/m2m/workspaces/${workspaceSlug}/users/${userId}/dm`,
+    );
   }
 
   /**
    * Register a global webhook for interactive actions.
    */
   async registerGlobalWebhook(webhookUrl: string): Promise<any> {
-     return this.request('POST', '/api/v2/m2m/webhooks', {
-       url: webhookUrl,
-       events: ['message.action']
-     });
+    return this.request("POST", "/api/v2/m2m/webhooks", {
+      url: webhookUrl,
+      events: ["message.action"],
+    });
   }
 }

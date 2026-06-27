@@ -37,7 +37,7 @@ export class ScrymeApprovalService {
     await this.notifyDiscussionChannel(organizationId, requestId);
 
     const pendingDecisions = request.decisions.filter(
-      (d) => d.stepNumber === request.currentStep,
+      d => d.stepNumber === request.currentStep,
     );
 
     for (const decision of pendingDecisions) {
@@ -104,14 +104,15 @@ export class ScrymeApprovalService {
 
         // Enterprise: DO NOT use scrymeThreadId in DMs across different users.
         // DM threads are user-specific. Instead, we use it only if it was started in THIS DM.
-        const existingDmMessage = await this.prisma.client.scrymeMessage.findFirst({
-          where: {
-            relatedId: requestId,
-            recipientId: decision.approverId,
-            channelSlug: dmChannel.slug,
-          },
-          orderBy: { createdAt: "asc" },
-        });
+        const existingDmMessage =
+          await this.prisma.client.scrymeMessage.findFirst({
+            where: {
+              relatedId: requestId,
+              recipientId: decision.approverId,
+              channelSlug: dmChannel.slug,
+            },
+            orderBy: { createdAt: "asc" },
+          });
 
         const message = await this.scrymeClient.sendMessage(
           workspaceSlug,
@@ -181,7 +182,7 @@ export class ScrymeApprovalService {
     if (!workspaceSlug) return;
 
     const finalDecision = request.decisions.find(
-      (d) => d.approverId === decisionByMemberId && d.status !== "PENDING",
+      d => d.approverId === decisionByMemberId && d.status !== "PENDING",
     );
 
     if (!finalDecision) return;
@@ -281,7 +282,10 @@ export class ScrymeApprovalService {
       let statusEmoji = "ℹ️";
       let title = "Update on your Approval Request";
 
-      if (latestDecision.status === "APPROVED" && request.status === "APPROVED") {
+      if (
+        latestDecision.status === "APPROVED" &&
+        request.status === "APPROVED"
+      ) {
         statusEmoji = "✅";
         title = "Request Approved";
       } else if (latestDecision.status === "REJECTED") {
@@ -320,7 +324,10 @@ export class ScrymeApprovalService {
   /**
    * Enterprise: Post to a central discussion channel for the approval request.
    */
-  private async notifyDiscussionChannel(organizationId: string, requestId: string) {
+  private async notifyDiscussionChannel(
+    organizationId: string,
+    requestId: string,
+  ) {
     const request = await this.prisma.client.approvalRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -329,9 +336,11 @@ export class ScrymeApprovalService {
       },
     });
 
-    if (!request || !request.organization.scrymeConfiguration?.workspaceSlug) return;
+    if (!request || !request.organization.scrymeConfiguration?.workspaceSlug)
+      return;
 
-    const workspaceSlug = request.organization.scrymeConfiguration.workspaceSlug;
+    const workspaceSlug =
+      request.organization.scrymeConfiguration.workspaceSlug;
 
     // Determine target channel (e.g., 'finance-approvals' or department channel)
     let targetChannel = "notifications";
@@ -339,14 +348,15 @@ export class ScrymeApprovalService {
     // Try to find the requester's department channel
     const deptMember = await this.prisma.client.departmentMember.findFirst({
       where: { memberId: request.requesterId },
-      include: { department: true }
+      include: { department: true },
     });
 
     if (deptMember?.department?.scrymeChannelId) {
       targetChannel = deptMember.department.scrymeChannelId;
     }
 
-    const content = `💬 *Discussion Thread for Approval: ${request.relatedRecordNumber}*\n` +
+    const content =
+      `💬 *Discussion Thread for Approval: ${request.relatedRecordNumber}*\n` +
       `Requested by: ${request.requester.user.name || request.requester.user.email}\n` +
       `Amount: ${request.currency} ${request.amount.toString()}\n` +
       `Please use this thread for team discussion regarding this request.`;
@@ -354,11 +364,15 @@ export class ScrymeApprovalService {
     try {
       // If we don't have a central thread ID yet, create the root message
       if (!request.scrymeThreadId) {
-        const message = await this.scrymeClient.sendMessage(workspaceSlug, targetChannel, { content });
+        const message = await this.scrymeClient.sendMessage(
+          workspaceSlug,
+          targetChannel,
+          { content },
+        );
 
         await this.prisma.client.approvalRequest.update({
           where: { id: requestId },
-          data: { scrymeThreadId: message.id }
+          data: { scrymeThreadId: message.id },
         });
 
         await this.prisma.client.scrymeMessage.create({
@@ -370,11 +384,13 @@ export class ScrymeApprovalService {
             content,
             eventType: "APPROVAL_DISCUSSION_ROOT",
             relatedId: requestId,
-          }
+          },
         });
       }
     } catch (error: any) {
-      this.logger.error(`Failed to post to discussion channel: ${error.message}`);
+      this.logger.error(
+        `Failed to post to discussion channel: ${error.message}`,
+      );
     }
   }
 }

@@ -61,7 +61,12 @@ export class ShortUrlController {
         return res.status(HttpStatus.NOT_FOUND).send("Link not found");
       }
 
-      const { organizationId, mimeType, id: attachmentId, isPublic } = attachment;
+      const {
+        organizationId,
+        mimeType,
+        id: attachmentId,
+        isPublic,
+      } = attachment;
 
       // 1. Check Authorization for private attachments
       // We check organization settings for forced privacy or if the attachment itself is private

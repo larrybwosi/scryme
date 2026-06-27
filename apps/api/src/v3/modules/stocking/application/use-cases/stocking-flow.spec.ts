@@ -7,7 +7,7 @@ vi.mock("@repo/windmill/server", () => ({
   emitStockTransferReceived: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock("@repo/db", async (importOriginal) => ({
+vi.mock("@repo/db", async importOriginal => ({
   ...((await importOriginal()) as any),
   PurchaseStatus: {
     DRAFT: "DRAFT",
@@ -146,7 +146,7 @@ describe("Stocking Flow Verification", () => {
 
     prisma = {
       client: {
-        $transaction: vi.fn(async (callback) => {
+        $transaction: vi.fn(async callback => {
           if (typeof callback === "function") {
             return await callback(mockTx);
           }

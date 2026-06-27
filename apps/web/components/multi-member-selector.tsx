@@ -104,14 +104,13 @@ export function MultiMemberSelector({
                 <Badge
                   key={member.id}
                   variant="secondary"
-                  className="flex items-center gap-1 pr-1"
-                >
+                  className="flex items-center gap-1 pr-1">
                   <span className="max-w-[120px] truncate">
                     {member.user.name || member.user.email}
                   </span>
                   <X
                     className="h-3 w-3 cursor-pointer hover:text-red-500"
-                    onClick={(e) => removeMember(e, member.user.email)}
+                    onClick={e => removeMember(e, member.user.email)}
                   />
                 </Badge>
               ))
@@ -138,12 +137,13 @@ export function MultiMemberSelector({
                   value={member.user.name + " " + member.user.email}
                   onSelect={() => toggleMember(member.user.email)}
                   className="flex items-center gap-3 py-3">
-                  <div className={cn(
-                    "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                    value.includes(member.user.email)
-                      ? "bg-primary text-primary-foreground"
-                      : "opacity-50 [&_svg]:invisible"
-                  )}>
+                  <div
+                    className={cn(
+                      "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                      value.includes(member.user.email)
+                        ? "bg-primary text-primary-foreground"
+                        : "opacity-50 [&_svg]:invisible",
+                    )}>
                     <Check className="h-4 w-4" />
                   </div>
                   <Avatar className="h-8 w-8">

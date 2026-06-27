@@ -30,7 +30,7 @@ describe('KdsStore', () => {
       items: [],
       note: '',
       server: 'John',
-      covers: 2
+      covers: 2,
     } as any;
 
     useKdsStore.getState().addOrder(order);

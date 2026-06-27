@@ -8,7 +8,7 @@ import { ApiRealtimeService } from "@/common/services/realtime.service";
 import { BadRequestException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("@repo/db", async (importOriginal) => ({
+vi.mock("@repo/db", async importOriginal => ({
   ...((await importOriginal()) as any),
   db: {},
 }));

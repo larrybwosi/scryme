@@ -1,16 +1,29 @@
-'use client';
+"use client";
 
-import { Check, ChevronsUpDown, Loader2, Package, AlertCircle } from 'lucide-react';
-import { FC, useMemo, useState } from 'react';
+import {
+  Check,
+  ChevronsUpDown,
+  Loader2,
+  Package,
+  AlertCircle,
+} from "lucide-react";
+import { FC, useMemo, useState } from "react";
 
-import { cn } from '../lib/utils';
-import { Button } from './ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 // --- Types ---
 
-type ProductType = 'FINISHED_GOOD' | 'RAW_MATERIAL' | 'SERVICE' | 'ASSET';
+type ProductType = "FINISHED_GOOD" | "RAW_MATERIAL" | "SERVICE" | "ASSET";
 
 interface ProductVariant {
   id: string;
@@ -38,7 +51,7 @@ interface ProductVariantsSelectProps {
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
-  productType?: ProductType | 'ALL';
+  productType?: ProductType | "ALL";
   includeLocation?: boolean;
   showLocationInfo?: boolean;
   excludeVariant?: string;
@@ -56,9 +69,9 @@ interface ProductVariantsSelectProps {
 export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a product variant...',
+  placeholder = "Select a product variant...",
   disabled = false,
-  productType = 'FINISHED_GOOD',
+  productType = "FINISHED_GOOD",
   showLocationInfo = true,
   excludeVariant,
   excludeVariantIds = [],
@@ -66,7 +79,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   isLoading = false,
   isFetching = false,
   error,
-  searchTerm = '',
+  searchTerm = "",
   onSearchChange,
 }) => {
   const [open, setOpen] = useState(false);
@@ -74,25 +87,25 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   // Combine excluded variant IDs
   const allExcludedIds = useMemo(
     () => [...(excludeVariant ? [excludeVariant] : []), ...excludeVariantIds],
-    [excludeVariant, excludeVariantIds]
+    [excludeVariant, excludeVariantIds],
   );
 
   // Filter out excluded variants
   const filteredVariants = useMemo(() => {
     if (!variants) return [];
     return allExcludedIds.length > 0
-      ? variants.filter(variant => !allExcludedIds.includes(variant.id))
+      ? variants.filter((variant) => !allExcludedIds.includes(variant.id))
       : variants;
   }, [variants, allExcludedIds]);
 
   // Find the currently selected variant object for display
   const selectedVariant = useMemo(() => {
-    return filteredVariants.find(v => v.id === value);
+    return filteredVariants.find((v) => v.id === value);
   }, [filteredVariants, value]);
 
   // Group variants by product type if type is 'ALL'
   const groupedVariants = useMemo(() => {
-    if (productType !== 'ALL') return null;
+    if (productType !== "ALL") return null;
 
     return filteredVariants.reduce(
       (acc, variant) => {
@@ -103,19 +116,19 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
         acc[type].push(variant);
         return acc;
       },
-      {} as Record<ProductType, ProductVariant[]>
+      {} as Record<ProductType, ProductVariant[]>,
     );
   }, [filteredVariants, productType]);
 
   // Helper function to format location info
   const formatLocationInfo = (variant: ProductVariant): string => {
-    if (!variant.location) return 'No location';
+    if (!variant.location) return "No location";
 
     const location = variant.location;
     if (location.address) {
       const { city, state, country } = location.address;
       const parts = [city, state, country].filter(Boolean);
-      return parts.length > 0 ? parts.join(', ') : location.name;
+      return parts.length > 0 ? parts.join(", ") : location.name;
     }
     return location.name;
   };
@@ -123,7 +136,11 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   // --- Initial Loading State ---
   if (isLoading && !variants?.length) {
     return (
-      <Button variant="outline" disabled className="w-full justify-between cursor-not-allowed opacity-70">
+      <Button
+        variant="outline"
+        disabled
+        className="w-full justify-between cursor-not-allowed opacity-70"
+      >
         <span className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading variants...
@@ -163,12 +180,16 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{variant.name}</span>
-            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{variant.sku}</span>
+            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              {variant.sku}
+            </span>
           </div>
           {value === variant.id && <Check className="h-4 w-4 text-primary" />}
         </div>
         {showLocationInfo && variant.location && (
-          <span className="text-xs text-muted-foreground mt-1 truncate">Location: {formatLocationInfo(variant)}</span>
+          <span className="text-xs text-muted-foreground mt-1 truncate">
+            Location: {formatLocationInfo(variant)}
+          </span>
         )}
       </div>
     </CommandItem>
@@ -183,8 +204,8 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            'w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground h-auto min-h-[40px] py-2',
-            !value && 'text-muted-foreground'
+            "w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground h-auto min-h-[40px] py-2",
+            !value && "text-muted-foreground",
           )}
         >
           {selectedVariant ? (
@@ -193,7 +214,9 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
                 <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
                 {selectedVariant.name}
               </span>
-              <span className="text-xs text-muted-foreground ml-6">SKU: {selectedVariant.sku}</span>
+              <span className="text-xs text-muted-foreground ml-6">
+                SKU: {selectedVariant.sku}
+              </span>
             </div>
           ) : (
             <span className="flex items-center gap-2">{placeholder}</span>
@@ -211,22 +234,26 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
               value={searchTerm}
               onValueChange={onSearchChange}
             />
-            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />}
+            {isFetching && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+            )}
           </div>
           <CommandList>
-            <CommandEmpty>{isFetching ? 'Searching...' : 'No product found.'}</CommandEmpty>
+            <CommandEmpty>
+              {isFetching ? "Searching..." : "No product found."}
+            </CommandEmpty>
 
-            {productType === 'ALL' && groupedVariants ? (
+            {productType === "ALL" && groupedVariants ? (
               Object.entries(groupedVariants).map(([type, typeVariants]) => (
-                <CommandGroup key={type} heading={type.replace('_', ' ')}>
-                  {(typeVariants as ProductVariant[])?.map(variant => (
+                <CommandGroup key={type} heading={type.replace("_", " ")}>
+                  {(typeVariants as ProductVariant[])?.map((variant) => (
                     <VariantItem key={variant.id} variant={variant} />
                   ))}
                 </CommandGroup>
               ))
             ) : (
               <CommandGroup heading="Available Variants">
-                {filteredVariants.map(variant => (
+                {filteredVariants.map((variant) => (
                   <VariantItem key={variant.id} variant={variant} />
                 ))}
               </CommandGroup>

@@ -11,10 +11,10 @@ export interface HubStatus {
 // --- 1. Role Initialization (Run this on app startup) ---
 export async function initializeNetworkRole() {
   const role = localStorage.getItem('DEVICE_ROLE'); // 'MAIN_HUB', 'TABLET', or 'KDS'
-  
+
   // Listen for hub start/stop events if we are the hub
   if (role === 'MAIN_HUB') {
-    listen('kds-hub-started', (event) => {
+    listen('kds-hub-started', event => {
       const url = event.payload as string;
       localStorage.setItem('HUB_WS_URL', url);
       connectToHub(url);
@@ -38,14 +38,14 @@ export async function initializeNetworkRole() {
         connectToHub(wsUrl);
       }
     } catch (e) {
-      console.error("Failed to check Hub status:", e);
+      console.error('Failed to check Hub status:', e);
     }
   } else if (role === 'TABLET' || role === 'KDS') {
     // For other devices, grab the IP of the Hub (Inputted during setup)
     const hubIp = localStorage.getItem('HUB_IP_ADDRESS');
     if (hubIp) {
-       console.log(`Connecting to Hub at ${hubIp}...`);
-       connectToHub(`ws://${hubIp}:8080/kds-ws`);
+      console.log(`Connecting to Hub at ${hubIp}...`);
+      connectToHub(`ws://${hubIp}:8080/kds-ws`);
     }
   }
 }
@@ -54,12 +54,12 @@ export async function startHub() {
   try {
     const wsUrl = await invoke<string>('start_kds_hub');
     localStorage.setItem('HUB_WS_URL', wsUrl);
-    console.log("Hub started at:", wsUrl);
+    console.log('Hub started at:', wsUrl);
     // Wait a bit for the server to be fully ready before connecting
     setTimeout(() => connectToHub(wsUrl), 500);
     return wsUrl;
   } catch (e) {
-    console.error("Failed to start Hub:", e);
+    console.error('Failed to start Hub:', e);
     throw e;
   }
 }
@@ -72,9 +72,9 @@ export async function stopHub() {
       socket.close();
       socket = null;
     }
-    console.log("Hub stopped.");
+    console.log('Hub stopped.');
   } catch (e) {
-    console.error("Failed to stop Hub:", e);
+    console.error('Failed to stop Hub:', e);
     throw e;
   }
 }
@@ -101,13 +101,17 @@ function addToOfflineQueue(payload: string) {
   try {
     const newMsg = JSON.parse(payload);
     if (newMsg.payload?.id) {
-       if (queue.some(m => {
-         try {
-           return JSON.parse(m).payload?.id === newMsg.payload.id;
-         } catch { return false; }
-       })) {
-         return; // Skip duplicate
-       }
+      if (
+        queue.some(m => {
+          try {
+            return JSON.parse(m).payload?.id === newMsg.payload.id;
+          } catch {
+            return false;
+          }
+        })
+      ) {
+        return; // Skip duplicate
+      }
     }
   } catch (e) {}
 
@@ -152,7 +156,7 @@ export function connectToHub(url: string) {
   socket = new WebSocket(url);
 
   socket.onopen = () => {
-    console.log("Connected to Local POS Hub!");
+    console.log('Connected to Local POS Hub!');
     reconnectAttempts = 0;
     useKdsStore.getState().setConnectionStatus('connected');
     startHeartbeat();
@@ -161,19 +165,21 @@ export function connectToHub(url: string) {
     const role = localStorage.getItem('DEVICE_ROLE');
     const user = JSON.parse(localStorage.getItem('pos-auth-storage-v3') || '{}').state?.currentMember;
 
-    socket?.send(JSON.stringify({
-      type: 'DeviceStatus',
-      payload: {
-        id: localStorage.getItem('DEVICE_ID') || 'unknown',
-        name: localStorage.getItem('DEVICE_NAME') || 'Terminal',
-        device_type: role,
-        status: 'online',
-        last_seen: Date.now(),
-        current_user_id: user?.id || null,
-        current_user_name: user?.name || null,
-        station: localStorage.getItem('KDS_STATION') || null
-      }
-    }));
+    socket?.send(
+      JSON.stringify({
+        type: 'DeviceStatus',
+        payload: {
+          id: localStorage.getItem('DEVICE_ID') || 'unknown',
+          name: localStorage.getItem('DEVICE_NAME') || 'Terminal',
+          device_type: role,
+          status: 'online',
+          last_seen: Date.now(),
+          current_user_id: user?.id || null,
+          current_user_name: user?.name || null,
+          station: localStorage.getItem('KDS_STATION') || null,
+        },
+      })
+    );
 
     // Process offline queue
     const queue = getOfflineQueue();
@@ -188,37 +194,37 @@ export function connectToHub(url: string) {
     }
   };
 
-  socket.onmessage = (event) => {
+  socket.onmessage = event => {
     try {
       const message = JSON.parse(event.data);
 
       // Handle incoming broadcast messages
       if (message.type === 'NewOrder') {
-          const order = message.payload;
-          useKdsStore.getState().addOrder(order);
-          console.log("KDS: New Ticket Arrived!", order);
+        const order = message.payload;
+        useKdsStore.getState().addOrder(order);
+        console.log('KDS: New Ticket Arrived!', order);
 
-          const role = localStorage.getItem('DEVICE_ROLE');
-          const kdsConfig = usePosStore.getState().settings.kitchenTicketConfig;
-          if (role === 'KDS' && kdsConfig.autoPrintKds) {
-              usePosStore.getState().printReceipt(order.id);
-          }
+        const role = localStorage.getItem('DEVICE_ROLE');
+        const kdsConfig = usePosStore.getState().settings.kitchenTicketConfig;
+        if (role === 'KDS' && kdsConfig.autoPrintKds) {
+          usePosStore.getState().printReceipt(order.id);
+        }
       }
 
       if (message.type === 'SyncOrders') {
-          const orders = message.payload;
-          useKdsStore.getState().setOrders(orders);
-          console.log("KDS: Orders Synced", orders.length);
+        const orders = message.payload;
+        useKdsStore.getState().setOrders(orders);
+        console.log('KDS: Orders Synced', orders.length);
       }
 
       if (message.type === 'OrderStatusUpdated') {
-          const { id, new_status } = message.payload;
-          useKdsStore.getState().updateOrderStatus(id, new_status);
+        const { id, new_status } = message.payload;
+        useKdsStore.getState().updateOrderStatus(id, new_status);
 
-          let posStatus = 'pending';
-          if (new_status === 'in_progress' || new_status === 'PREPARING') posStatus = 'cooking';
-          if (new_status === 'done' || new_status === 'READY' || new_status === 'COMPLETED') posStatus = 'ready';
-          usePosStore.getState().updateOrderStatus(id, posStatus as any);
+        let posStatus = 'pending';
+        if (new_status === 'in_progress' || new_status === 'PREPARING') posStatus = 'cooking';
+        if (new_status === 'done' || new_status === 'READY' || new_status === 'COMPLETED') posStatus = 'ready';
+        usePosStore.getState().updateOrderStatus(id, posStatus as any);
       }
 
       if (message.type === 'AssignmentUpdate') {
@@ -229,9 +235,11 @@ export function connectToHub(url: string) {
           localStorage.setItem('ASSIGNED_USER_ID', user_id || '');
           localStorage.setItem('ASSIGNED_USER_NAME', user_name || '');
 
-          window.dispatchEvent(new CustomEvent('assignment-updated', {
-            detail: { userId: user_id, userName: user_name }
-          }));
+          window.dispatchEvent(
+            new CustomEvent('assignment-updated', {
+              detail: { userId: user_id, userName: user_name },
+            })
+          );
         }
       }
 
@@ -239,36 +247,42 @@ export function connectToHub(url: string) {
         const { id, station } = message.payload;
         const myStation = localStorage.getItem('KDS_STATION') || 'all';
         if (station === 'all' || station === myStation) {
-          window.dispatchEvent(new CustomEvent('order-eta-query', {
-            detail: { orderId: id }
-          }));
+          window.dispatchEvent(
+            new CustomEvent('order-eta-query', {
+              detail: { orderId: id },
+            })
+          );
         }
       }
 
       if (message.type === 'OrderEtaResponse') {
         const { id, eta_minutes } = message.payload;
-        window.dispatchEvent(new CustomEvent('order-eta-response', {
-          detail: { orderId: id, etaMinutes: eta_minutes }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('order-eta-response', {
+            detail: { orderId: id, etaMinutes: eta_minutes },
+          })
+        );
       }
 
       if (message.type === 'TabletActivity') {
-        window.dispatchEvent(new CustomEvent('tablet-activity-update', {
-          detail: message.payload
-        }));
+        window.dispatchEvent(
+          new CustomEvent('tablet-activity-update', {
+            detail: message.payload,
+          })
+        );
       }
     } catch (e) {
-      console.error("Failed to parse WebSocket message:", e);
+      console.error('Failed to parse WebSocket message:', e);
     }
   };
 
-  socket.onerror = (error) => {
-    console.error("WebSocket Error:", error);
+  socket.onerror = error => {
+    console.error('WebSocket Error:', error);
     useKdsStore.getState().setConnectionStatus('error');
   };
 
   socket.onclose = () => {
-    console.warn("Lost connection to Hub.");
+    console.warn('Lost connection to Hub.');
     useKdsStore.getState().setConnectionStatus('disconnected');
     socket = null;
     stopHeartbeat();
@@ -281,7 +295,7 @@ export function connectToHub(url: string) {
         connectToHub(url);
       }, delay);
     } else {
-      console.error("Max reconnect attempts reached.");
+      console.error('Max reconnect attempts reached.');
     }
   };
 }
@@ -290,46 +304,51 @@ export function connectToHub(url: string) {
 export function sendOrderToKitchen(fullOrder: any) {
   const KdsOrderPayload = {
     id: fullOrder.id,
-    num: fullOrder.orderNumber || fullOrder.saleNumber || fullOrder.id.substring(0, 6) || `TKT-${Math.floor(Math.random() * 1000)}`,
+    num:
+      fullOrder.orderNumber ||
+      fullOrder.saleNumber ||
+      fullOrder.id.substring(0, 6) ||
+      `TKT-${Math.floor(Math.random() * 1000)}`,
     type: fullOrder.orderType === 'dine-in' ? 'dine' : fullOrder.orderType === 'delivery' ? 'delivery' : 'takeout',
     station: 'hot', // Route properly if you have logic later
     table: fullOrder.tableNumber || '',
     status: 'new',
     createdAt: Date.now(),
-    items: fullOrder.items?.map((item: any) => ({
-      id: item.productId + '-' + Math.random(),
-      name: item.productName || item.name,
-      quantity: item.quantity,
-      modifiers: '',
-      isAllergy: false,
-      status: 'pending'
-    })) || [],
+    items:
+      fullOrder.items?.map((item: any) => ({
+        id: item.productId + '-' + Math.random(),
+        name: item.productName || item.name,
+        quantity: item.quantity,
+        modifiers: '',
+        isAllergy: false,
+        status: 'pending',
+      })) || [],
     note: fullOrder.notes || '',
     server: fullOrder.customerName || 'Cashier',
-    covers: null
+    covers: null,
   };
 
   const payload = {
-    type: "NewOrder",
-    payload: KdsOrderPayload
+    type: 'NewOrder',
+    payload: KdsOrderPayload,
   };
 
   const jsonPayload = JSON.stringify(payload);
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(jsonPayload);
   } else {
-    console.error("Hub offline! Saving to local offline queue...");
+    console.error('Hub offline! Saving to local offline queue...');
     addToOfflineQueue(jsonPayload);
   }
 }
 
 export function updateOrderStatusInKitchen(orderId: string, status: string) {
   const payload = {
-    type: "OrderStatusUpdated",
+    type: 'OrderStatusUpdated',
     payload: {
       id: orderId,
-      new_status: status
-    }
+      new_status: status,
+    },
   };
 
   const jsonPayload = JSON.stringify(payload);
@@ -340,13 +359,13 @@ export function updateOrderStatusInKitchen(orderId: string, status: string) {
   }
 }
 
-export function sendTabletActivity(activity: { current_page: string, cart_items: any[], table_number: string | null }) {
+export function sendTabletActivity(activity: { current_page: string; cart_items: any[]; table_number: string | null }) {
   const payload = {
-    type: "TabletActivity",
+    type: 'TabletActivity',
     payload: {
       device_id: localStorage.getItem('DEVICE_ID') || 'unknown',
-      ...activity
-    }
+      ...activity,
+    },
   };
 
   const jsonPayload = JSON.stringify(payload);
@@ -357,11 +376,11 @@ export function sendTabletActivity(activity: { current_page: string, cart_items:
 
 export function queryOrderEta(orderId: string, station: string = 'all') {
   const payload = {
-    type: "OrderEtaQuery",
+    type: 'OrderEtaQuery',
     payload: {
       id: orderId,
-      station: station
-    }
+      station: station,
+    },
   };
 
   const jsonPayload = JSON.stringify(payload);
@@ -372,11 +391,11 @@ export function queryOrderEta(orderId: string, station: string = 'all') {
 
 export function sendOrderEtaResponse(orderId: string, etaMinutes: number) {
   const payload = {
-    type: "OrderEtaResponse",
+    type: 'OrderEtaResponse',
     payload: {
       id: orderId,
-      eta_minutes: etaMinutes
-    }
+      eta_minutes: etaMinutes,
+    },
   };
 
   const jsonPayload = JSON.stringify(payload);

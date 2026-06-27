@@ -5,10 +5,16 @@
  * The native CRM module provides dynamic fields and activities.
  */
 
-import { db as prisma, type Customer, type CrmRecord, type Invoice, type Transaction } from "@repo/db";
+import {
+  db as prisma,
+  type Customer,
+  type CrmRecord,
+  type Invoice,
+  type Transaction,
+} from "@repo/db";
 // import { runAutomation } from '@repo/windmill/server';
 import type { ActionResponse } from "../../types/action-response";
-import { LoyaltyService } from './loyalty.service';
+import { LoyaltyService } from "./loyalty.service";
 
 export const CustomerService = {
   /**
@@ -21,10 +27,12 @@ export const CustomerService = {
       page?: number;
       pageSize?: number;
       orderBy?: string;
-    }
-  ): Promise<ActionResponse<{ customers: any[]; totalCount: number; totalPages: number }>> {
+    },
+  ): Promise<
+    ActionResponse<{ customers: any[]; totalCount: number; totalPages: number }>
+  > {
     try {
-      const { query = '', page = 1, pageSize = 15 } = searchParams ?? {};
+      const { query = "", page = 1, pageSize = 15 } = searchParams ?? {};
       const skip = (page - 1) * pageSize;
 
       const where = {
@@ -32,9 +40,9 @@ export const CustomerService = {
         ...(query
           ? {
               OR: [
-                { name: { contains: query, mode: 'insensitive' as const } },
-                { email: { contains: query, mode: 'insensitive' as const } },
-                { phone: { contains: query, mode: 'insensitive' as const } },
+                { name: { contains: query, mode: "insensitive" as const } },
+                { email: { contains: query, mode: "insensitive" as const } },
+                { phone: { contains: query, mode: "insensitive" as const } },
               ],
             }
           : {}),
@@ -45,7 +53,7 @@ export const CustomerService = {
           where,
           take: pageSize,
           skip,
-          orderBy: { name: 'asc' },
+          orderBy: { name: "asc" },
           // ⚡ Bolt: Performance Optimization
           // Remove broad 'include: { crmRecord: true }' to avoid fetching large dynamic JSON data in list view.
           // This reduces database I/O and response payload size while maintaining the scalar data contract.
@@ -56,23 +64,26 @@ export const CustomerService = {
       return {
         success: true,
         data: {
-          customers: customers.map((c: Customer & { crmRecord?: CrmRecord | null }) => ({
-            ...c,
-            localId: c.id,
-            // UI compatibility shape
-            name: { firstName: c.name, lastName: '' },
-            emails: { primaryEmail: c.email },
-            phones: { primaryPhoneNumber: c.phone },
-          })),
+          customers: customers.map(
+            (c: Customer & { crmRecord?: CrmRecord | null }) => ({
+              ...c,
+              localId: c.id,
+              // UI compatibility shape
+              name: { firstName: c.name, lastName: "" },
+              emails: { primaryEmail: c.email },
+              phones: { primaryPhoneNumber: c.phone },
+            }),
+          ),
           totalCount,
           totalPages: Math.ceil(totalCount / pageSize),
         },
       };
     } catch (error) {
-      console.error('[CustomerService] getCustomers error:', error);
+      console.error("[CustomerService] getCustomers error:", error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to fetch customers.',
+        message:
+          error instanceof Error ? error.message : "Failed to fetch customers.",
       };
     }
   },
@@ -80,7 +91,10 @@ export const CustomerService = {
   /**
    * Fetch a single customer by their local ID with financial data.
    */
-  async getCustomerById(organizationId: string, customerId: string): Promise<ActionResponse<any>> {
+  async getCustomerById(
+    organizationId: string,
+    customerId: string,
+  ): Promise<ActionResponse<any>> {
     try {
       // PERFORMANCE: Use database-level aggregation for financial stats to avoid loading all invoices into memory.
       // We also limit the number of related records (invoices, notes, activities) fetched to reduce payload size.
@@ -90,17 +104,17 @@ export const CustomerService = {
           include: {
             crmRecord: {
               include: {
-                notes: { orderBy: { timelineDate: 'desc' }, take: 10 },
-                activities: { orderBy: { createdAt: 'desc' }, take: 10 },
+                notes: { orderBy: { timelineDate: "desc" }, take: 10 },
+                activities: { orderBy: { createdAt: "desc" }, take: 10 },
               },
             },
             invoices: {
-              orderBy: { postingDate: 'desc' },
+              orderBy: { postingDate: "desc" },
               take: 10,
             },
             transactions: {
               where: { organizationId },
-              orderBy: { createdAt: 'desc' },
+              orderBy: { createdAt: "desc" },
               take: 10,
             },
           },
@@ -110,13 +124,13 @@ export const CustomerService = {
           _sum: { grandTotal: true },
         }),
         prisma.invoice.aggregate({
-          where: { customerId, organizationId, status: 'PAID' },
+          where: { customerId, organizationId, status: "PAID" },
           _sum: { grandTotal: true },
         }),
       ]);
 
       if (!customer) {
-        return { success: false, message: 'Customer not found.' };
+        return { success: false, message: "Customer not found." };
       }
 
       const totalInvoiced = totals._sum.grandTotal || 0;
@@ -128,20 +142,24 @@ export const CustomerService = {
         data: {
           ...customer,
           localId: customer.id,
-          name: { firstName: customer.name, lastName: '' },
+          name: { firstName: customer.name, lastName: "" },
           emails: { primaryEmail: customer.email },
           phones: { primaryPhoneNumber: customer.phone },
           balance,
           stats: [
-            { label: 'Total Invoiced', value: totalInvoiced, color: 'blue' },
-            { label: 'Total Paid', value: totalPaidInvoices, color: 'green' },
-            { label: 'Current Balance', value: balance, color: balance > 0 ? 'orange' : 'green' },
-          ]
+            { label: "Total Invoiced", value: totalInvoiced, color: "blue" },
+            { label: "Total Paid", value: totalPaidInvoices, color: "green" },
+            {
+              label: "Current Balance",
+              value: balance,
+              color: balance > 0 ? "orange" : "green",
+            },
+          ],
         },
       };
     } catch (error) {
-      console.error('[CustomerService] getCustomerById error:', error);
-      return { success: false, message: 'Failed to fetch customer.' };
+      console.error("[CustomerService] getCustomerById error:", error);
+      return { success: false, message: "Failed to fetch customer." };
     }
   },
 
@@ -161,7 +179,7 @@ export const CustomerService = {
       avatar?: string | null;
       city?: string | null;
       jobTitle?: string | null;
-    }
+    },
   ): Promise<ActionResponse<{ customer: any; localId: string }>> {
     try {
       const { id, name, email, phone, company } = formData;
@@ -188,7 +206,7 @@ export const CustomerService = {
         // Trigger CRM Sync (New Master)
         try {
           const personObject = await prisma.crmObjectDefinition.findFirst({
-            where: { organizationId, name: 'person' }
+            where: { organizationId, name: "person" },
           });
 
           if (personObject) {
@@ -200,20 +218,29 @@ export const CustomerService = {
                   firstName: customer.name,
                   email: customer.email,
                   phone: customer.phone,
-                }
-              }
+                },
+              },
             });
             await prisma.customer.update({
               where: { id: customer.id },
-              data: { crmRecordId: crmRecord.id }
+              data: { crmRecordId: crmRecord.id },
             });
           }
         } catch (crmError) {
-          console.error('[CustomerService] CRM Record creation failed:', crmError);
+          console.error(
+            "[CustomerService] CRM Record creation failed:",
+            crmError,
+          );
         }
 
         // Process referral signup rewards
-        await LoyaltyService.processReferral(prisma as any, organizationId, customer.id, customer.id, 'SIGNUP');
+        await LoyaltyService.processReferral(
+          prisma as any,
+          organizationId,
+          customer.id,
+          customer.id,
+          "SIGNUP",
+        );
 
         // Trigger Windmill notification for new customer registration
         try {
@@ -229,17 +256,22 @@ export const CustomerService = {
             },
           }); */
         } catch (error) {
-          console.error('[CustomerService] Failed to trigger registration notification:', error);
+          console.error(
+            "[CustomerService] Failed to trigger registration notification:",
+            error,
+          );
         }
       }
 
       return {
         success: true,
-        message: id ? 'Customer updated successfully.' : 'Customer created successfully.',
+        message: id
+          ? "Customer updated successfully."
+          : "Customer created successfully.",
         data: {
           customer: {
             ...customer,
-            name: { firstName: customer.name, lastName: '' },
+            name: { firstName: customer.name, lastName: "" },
             emails: { primaryEmail: customer.email },
             phones: { primaryPhoneNumber: customer.phone },
           },
@@ -247,8 +279,9 @@ export const CustomerService = {
         },
       };
     } catch (error) {
-      console.error('[CustomerService] saveCustomer error:', error);
-      const msg = error instanceof Error ? error.message : 'Failed to save customer.';
+      console.error("[CustomerService] saveCustomer error:", error);
+      const msg =
+        error instanceof Error ? error.message : "Failed to save customer.";
       return { success: false, message: msg };
     }
   },
@@ -259,17 +292,21 @@ export const CustomerService = {
   async deleteCustomer(
     organizationId: string,
     _userId: string,
-    customerId: string
+    customerId: string,
   ): Promise<ActionResponse<{ id: string }>> {
     try {
       await prisma.customer.delete({
         where: { id: customerId, organizationId },
       });
 
-      return { success: true, message: 'Customer deleted successfully.', data: { id: customerId } };
+      return {
+        success: true,
+        message: "Customer deleted successfully.",
+        data: { id: customerId },
+      };
     } catch (error) {
-      console.error('[CustomerService] deleteCustomer error:', error);
-      return { success: false, message: 'Failed to delete customer.' };
+      console.error("[CustomerService] deleteCustomer error:", error);
+      return { success: false, message: "Failed to delete customer." };
     }
   },
 };

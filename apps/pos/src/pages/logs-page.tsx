@@ -4,15 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@repo/ui/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import {
-  Terminal,
-  RefreshCw,
-  Download,
-  AlertCircle,
-  Clock,
-  User,
-  Activity
-} from 'lucide-react';
+import { Terminal, RefreshCw, Download, AlertCircle, Clock, User, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
@@ -83,7 +75,7 @@ export default function LogsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchLogs} disabled={isLoading}>
-            <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
+            <RefreshCw className={cn('w-4 h-4 mr-2', isLoading && 'animate-spin')} />
             Refresh
           </Button>
           <Button variant="outline" size="sm" onClick={downloadLogs}>
@@ -117,17 +109,25 @@ export default function LogsPage() {
                     <p>No audit events found.</p>
                   </div>
                 ) : (
-                  auditLogs.map((log) => (
+                  auditLogs.map(log => (
                     <div key={log.id} className="flex gap-4 p-4 rounded-lg border bg-white dark:bg-zinc-900 shadow-sm">
-                      <div className={cn(
-                        "mt-1 p-2 rounded-full h-fit",
-                        log.level === 'CRITICAL' ? "bg-red-100 text-red-600" :
-                        log.level === 'WARNING' ? "bg-amber-100 text-amber-600" :
-                        "bg-blue-100 text-blue-600"
-                      )}>
-                        {log.level === 'CRITICAL' ? <AlertCircle className="w-4 h-4" /> :
-                         log.level === 'WARNING' ? <AlertCircle className="w-4 h-4" /> :
-                         <Activity className="w-4 h-4" />}
+                      <div
+                        className={cn(
+                          'mt-1 p-2 rounded-full h-fit',
+                          log.level === 'CRITICAL'
+                            ? 'bg-red-100 text-red-600'
+                            : log.level === 'WARNING'
+                              ? 'bg-amber-100 text-amber-600'
+                              : 'bg-blue-100 text-blue-600'
+                        )}
+                      >
+                        {log.level === 'CRITICAL' ? (
+                          <AlertCircle className="w-4 h-4" />
+                        ) : log.level === 'WARNING' ? (
+                          <AlertCircle className="w-4 h-4" />
+                        ) : (
+                          <Activity className="w-4 h-4" />
+                        )}
                       </div>
                       <div className="flex-1 space-y-1">
                         <div className="flex justify-between">

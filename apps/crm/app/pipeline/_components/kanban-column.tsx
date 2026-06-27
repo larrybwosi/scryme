@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { cn } from '@repo/ui/lib/utils';
+import React from "react";
+import { useDroppable } from "@dnd-kit/core";
+import { cn } from "@repo/ui/lib/utils";
 
 interface KanbanColumnProps {
   id: string;
@@ -11,7 +11,12 @@ interface KanbanColumnProps {
   children: React.ReactNode;
 }
 
-export function KanbanColumn({ id, title, count, children }: KanbanColumnProps) {
+export function KanbanColumn({
+  id,
+  title,
+  count,
+  children,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
   });
@@ -21,7 +26,7 @@ export function KanbanColumn({ id, title, count, children }: KanbanColumnProps) 
       ref={setNodeRef}
       className={cn(
         "flex flex-col w-80 min-w-[320px] bg-muted/30 rounded-xl border border-transparent transition-colors",
-        isOver && "bg-primary/5 border-primary/20"
+        isOver && "bg-primary/5 border-primary/20",
       )}
     >
       <div className="p-4 flex items-center justify-between">
@@ -34,9 +39,7 @@ export function KanbanColumn({ id, title, count, children }: KanbanColumnProps) 
           </span>
         </div>
       </div>
-      <div className="flex-1 px-3 pb-4">
-        {children}
-      </div>
+      <div className="flex-1 px-3 pb-4">{children}</div>
     </div>
   );
 }

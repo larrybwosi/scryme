@@ -1,16 +1,23 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@repo/ui/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { useGetSupplierPriceHistory } from '../lib/api/suppliers';
-import { formatDate, useFormattedCurrency } from '../lib/utils';
-import { TrendingDown, TrendingUp, Minus, Clock } from 'lucide-react';
+} from "@repo/ui/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { useGetSupplierPriceHistory } from "../lib/api/suppliers";
+import { formatDate, useFormattedCurrency } from "../lib/utils";
+import { TrendingDown, TrendingUp, Minus, Clock } from "lucide-react";
 
 interface PriceHistoryDialogProps {
   open: boolean;
@@ -25,9 +32,12 @@ export const PriceHistoryDialog: React.FC<PriceHistoryDialogProps> = ({
   onOpenChange,
   supplierId,
   variantId,
-  productName
+  productName,
 }) => {
-  const { data: history, isLoading } = useGetSupplierPriceHistory(supplierId, variantId);
+  const { data: history, isLoading } = useGetSupplierPriceHistory(
+    supplierId,
+    variantId,
+  );
   const formatCurrency = useFormattedCurrency();
 
   return (
@@ -54,7 +64,9 @@ export const PriceHistoryDialog: React.FC<PriceHistoryDialogProps> = ({
                 <TableBody>
                   {history.map((entry, index) => {
                     const prevEntry = history[index + 1];
-                    const diff = prevEntry ? entry.costPrice - prevEntry.costPrice : 0;
+                    const diff = prevEntry
+                      ? entry.costPrice - prevEntry.costPrice
+                      : 0;
 
                     return (
                       <TableRow key={entry.id}>
@@ -66,12 +78,16 @@ export const PriceHistoryDialog: React.FC<PriceHistoryDialogProps> = ({
                           {diff > 0 ? (
                             <div className="flex items-center justify-center text-destructive">
                               <TrendingUp className="h-4 w-4 mr-1" />
-                              <span className="text-xs">+{formatCurrency(diff)}</span>
+                              <span className="text-xs">
+                                +{formatCurrency(diff)}
+                              </span>
                             </div>
                           ) : diff < 0 ? (
                             <div className="flex items-center justify-center text-green-600">
                               <TrendingDown className="h-4 w-4 mr-1" />
-                              <span className="text-xs">{formatCurrency(diff)}</span>
+                              <span className="text-xs">
+                                {formatCurrency(diff)}
+                              </span>
                             </div>
                           ) : (
                             <Minus className="h-4 w-4 mx-auto text-muted-foreground" />

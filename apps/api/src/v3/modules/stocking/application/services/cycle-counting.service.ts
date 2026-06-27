@@ -67,7 +67,7 @@ export class CycleCountingService {
         scheduledDate: new Date(),
         notes: `Automatically generated from Cycle Count Config: ${config.name}. Included ABC: ${config.includeABC?.join(",") || "All"}`,
         items: {
-          create: stock.map((s) => ({
+          create: stock.map(s => ({
             variantId: s.variantId,
             systemQuantity: s.currentStock,
           })),

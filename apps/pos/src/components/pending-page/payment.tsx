@@ -24,7 +24,7 @@ import {
   X,
   Search,
   CheckCircle2,
-  XCircle
+  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
@@ -138,16 +138,16 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
   const handleFileUpload = async () => {
     const { open } = await import('@tauri-apps/plugin-dialog');
     const selected = await open({
-        multiple: false,
-        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }]
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg'] }],
     });
 
     if (selected && typeof selected === 'string') {
-        setFilePath(selected);
-        const { readFile } = await import('@tauri-apps/plugin-fs');
-        const contents = await readFile(selected);
-        const blob = new Blob([contents]);
-        setFilePreview(URL.createObjectURL(blob));
+      setFilePath(selected);
+      const { readFile } = await import('@tauri-apps/plugin-fs');
+      const contents = await readFile(selected);
+      const blob = new Blob([contents]);
+      setFilePreview(URL.createObjectURL(blob));
     }
   };
 
@@ -160,7 +160,7 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
       await invoke('initiate_mpesa_payment_command', {
         phoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
         amount: parseFloat(amount),
-        saleNumber: transactionId || 'UNKNOWN'
+        saleNumber: transactionId || 'UNKNOWN',
       });
       toast.info('STK Push sent to customer');
     } catch (err: any) {
@@ -215,8 +215,10 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
                 key={m.id}
                 onClick={() => setMethod(m.id)}
                 className={cn(
-                  "flex-1 py-4 flex flex-col items-center gap-1 transition-colors border-b-2",
-                  method === m.id ? "border-primary bg-primary/5 text-primary" : "border-transparent text-muted-foreground hover:bg-muted"
+                  'flex-1 py-4 flex flex-col items-center gap-1 transition-colors border-b-2',
+                  method === m.id
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-transparent text-muted-foreground hover:bg-muted'
                 )}
               >
                 <m.icon className="w-5 h-5" />
@@ -231,7 +233,9 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
               <div className="space-y-2">
                 <Label>Amount</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">KSh</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">
+                    KSh
+                  </span>
                   <Input
                     type="number"
                     value={amount}
@@ -243,11 +247,7 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
               </div>
               <div className="space-y-2">
                 <Label>Reference (Optional)</Label>
-                <Input
-                  value={reference}
-                  onChange={e => setReference(e.target.value)}
-                  placeholder="e.g. TX123456"
-                />
+                <Input value={reference} onChange={e => setReference(e.target.value)} placeholder="e.g. TX123456" />
               </div>
             </div>
 
@@ -261,13 +261,13 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
                   className="space-y-4 p-4 bg-muted/30 rounded-lg border border-dashed"
                 >
                   <div className="flex gap-2 p-1 bg-muted rounded-md mb-4">
-                    {['STK', 'QR', 'SEARCH'].map((mode) => (
+                    {['STK', 'QR', 'SEARCH'].map(mode => (
                       <button
                         key={mode}
                         onClick={() => setMpesaMode(mode as MpesaMode)}
                         className={cn(
-                          "flex-1 py-1 text-xs font-semibold rounded transition-all",
-                          mpesaMode === mode ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+                          'flex-1 py-1 text-xs font-semibold rounded transition-all',
+                          mpesaMode === mode ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
                         )}
                       >
                         {mode}
@@ -290,23 +290,29 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
                         onClick={handleMpesaStkPush}
                         disabled={!mpesaPhone || !amount || mpesaWaiting}
                       >
-                        {mpesaWaiting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
+                        {mpesaWaiting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Smartphone className="w-4 h-4" />
+                        )}
                         Send STK Push
                       </Button>
                       {mpesaStatus !== 'IDLE' && (
-                        <div className={cn(
-                          "p-3 rounded-md text-sm flex items-center gap-2",
-                          mpesaStatus === 'WAITING' && "bg-amber-50 text-amber-700 border border-amber-200",
-                          mpesaStatus === 'SUCCESS' && "bg-emerald-50 text-emerald-700 border border-emerald-200",
-                          mpesaStatus === 'FAILED' && "bg-red-50 text-red-700 border border-red-200"
-                        )}>
+                        <div
+                          className={cn(
+                            'p-3 rounded-md text-sm flex items-center gap-2',
+                            mpesaStatus === 'WAITING' && 'bg-amber-50 text-amber-700 border border-amber-200',
+                            mpesaStatus === 'SUCCESS' && 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                            mpesaStatus === 'FAILED' && 'bg-red-50 text-red-700 border border-red-200'
+                          )}
+                        >
                           {mpesaStatus === 'WAITING' && <Loader2 className="w-4 h-4 animate-spin" />}
                           {mpesaStatus === 'SUCCESS' && <CheckCircle2 className="w-4 h-4" />}
                           {mpesaStatus === 'FAILED' && <XCircle className="w-4 h-4" />}
                           <span className="font-medium">
-                            {mpesaStatus === 'WAITING' && "Waiting for customer PIN..."}
-                            {mpesaStatus === 'SUCCESS' && "Payment Confirmed!"}
-                            {mpesaStatus === 'FAILED' && "Payment Failed or Timed Out"}
+                            {mpesaStatus === 'WAITING' && 'Waiting for customer PIN...'}
+                            {mpesaStatus === 'SUCCESS' && 'Payment Confirmed!'}
+                            {mpesaStatus === 'FAILED' && 'Payment Failed or Timed Out'}
                           </span>
                         </div>
                       )}
@@ -315,7 +321,7 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
 
                   {mpesaMode === 'QR' && (
                     <div className="flex flex-col items-center gap-4 py-2">
-                       <div className="bg-white p-2 rounded shadow-sm">
+                      <div className="bg-white p-2 rounded shadow-sm">
                         <QRCodeSVG value={mpesaQrData} size={150} />
                       </div>
                       <div className="text-center text-xs space-y-1">
@@ -338,19 +344,33 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
                       </div>
                       <div className="max-h-[150px] overflow-y-auto space-y-2 pr-1">
                         {isSearchingMpesa ? (
-                          <div className="py-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>
+                          <div className="py-4 text-center">
+                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                          </div>
                         ) : unclaimedPayments?.length ? (
                           unclaimedPayments.map((p: any) => (
-                            <div key={p.id} className="p-2 border rounded flex justify-between items-center bg-background">
+                            <div
+                              key={p.id}
+                              className="p-2 border rounded flex justify-between items-center bg-background"
+                            >
                               <div className="text-xs">
                                 <p className="font-bold">{p.transId}</p>
-                                <p className="text-muted-foreground">{p.msisdn} • {formatCurrency(p.amount)}</p>
+                                <p className="text-muted-foreground">
+                                  {p.msisdn} • {formatCurrency(p.amount)}
+                                </p>
                               </div>
-                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => {
-                                setReference(p.transId);
-                                setAmount(p.amount.toString());
-                                toast.success('Payment linked');
-                              }}>Link</Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-[10px]"
+                                onClick={() => {
+                                  setReference(p.transId);
+                                  setAmount(p.amount.toString());
+                                  toast.success('Payment linked');
+                                }}
+                              >
+                                Link
+                              </Button>
                             </div>
                           ))
                         ) : (
@@ -365,28 +385,31 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
 
             {/* Proof of Payment / Attachment */}
             <div className="space-y-3">
-                <Label>Proof of Payment Attachment (Optional)</Label>
-                {!filePreview ? (
-                    <div
-                        onClick={handleFileUpload}
-                        className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                    >
-                        <Upload className="w-8 h-8 text-muted-foreground" />
-                        <p className="text-sm font-medium">Click to upload bank slip or cheque</p>
-                    </div>
-                ) : (
-                    <div className="relative rounded-lg border overflow-hidden">
-                        <img src={filePreview} alt="Proof" className="w-full h-32 object-cover" />
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-7 w-7 rounded-full shadow-lg"
-                            onClick={() => { setFilePath(null); setFilePreview(null); }}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                )}
+              <Label>Proof of Payment Attachment (Optional)</Label>
+              {!filePreview ? (
+                <div
+                  onClick={handleFileUpload}
+                  className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground" />
+                  <p className="text-sm font-medium">Click to upload bank slip or cheque</p>
+                </div>
+              ) : (
+                <div className="relative rounded-lg border overflow-hidden">
+                  <img src={filePreview} alt="Proof" className="w-full h-32 object-cover" />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7 rounded-full shadow-lg"
+                    onClick={() => {
+                      setFilePath(null);
+                      setFilePreview(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -405,13 +428,11 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={submitPayment}
-            disabled={paymentMutation.isPending || !amount}
-            className="min-w-[140px]"
-          >
+          <Button onClick={submitPayment} disabled={paymentMutation.isPending || !amount} className="min-w-[140px]">
             {paymentMutation.isPending ? (
-              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...
+              </>
             ) : (
               'Confirm Payment'
             )}

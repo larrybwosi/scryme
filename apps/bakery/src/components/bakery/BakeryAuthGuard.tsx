@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Navigate, useLocation } from 'react-router';
-import { useAuth } from '@/lib/providers/auth-context';
-import SessionSkeleton from './session-loader';
+import React from "react";
+import { Navigate, useLocation } from "react-router";
+import { useAuth } from "@/lib/providers/auth-context";
+import SessionSkeleton from "./session-loader";
 
 interface BakeryAuthGuardProps {
   children: React.ReactNode;

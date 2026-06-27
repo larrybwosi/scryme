@@ -74,9 +74,14 @@ describe("V3AuthCoreService", () => {
       const mockMembers = Array(50).fill({ id: "1", pinHash: "hash" });
       mockMembers.push({ id: "success", pinHash: "match" });
       (prisma.client.member.findMany as any).mockResolvedValue(mockMembers);
-      (bcrypt.compare as any).mockImplementation((pin: string, hash: string) => pin === "1234" && hash === "match");
+      (bcrypt.compare as any).mockImplementation(
+        (pin: string, hash: string) => pin === "1234" && hash === "match",
+      );
 
-      const result = await (service as any).validateLoginMember("org-1", "1234");
+      const result = await (service as any).validateLoginMember(
+        "org-1",
+        "1234",
+      );
       expect(result.id).toBe("success");
     });
 

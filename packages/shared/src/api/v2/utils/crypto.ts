@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 /**
  * Perform a timing-safe match between a plaintext value and a hashed/stored value.
@@ -8,8 +8,8 @@ import crypto from 'crypto';
  * @param stored The expected value (should be a hash or encrypted value)
  */
 export function timingSafeMatch(plaintext: string, stored: string): boolean {
-  const expectedHash = crypto.createHash('sha256').update(stored).digest();
-  const actualHash = crypto.createHash('sha256').update(plaintext).digest();
+  const expectedHash = crypto.createHash("sha256").update(stored).digest();
+  const actualHash = crypto.createHash("sha256").update(plaintext).digest();
 
   if (expectedHash.length !== actualHash.length) {
     return false;
@@ -21,6 +21,9 @@ export function timingSafeMatch(plaintext: string, stored: string): boolean {
 /**
  * Perform a timing-safe match for a bearer token.
  */
-export function timingSafeBearerMatch(token: string, expected: string): boolean {
+export function timingSafeBearerMatch(
+  token: string,
+  expected: string,
+): boolean {
   return timingSafeMatch(token, expected);
 }

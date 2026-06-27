@@ -23,7 +23,8 @@ export default async function DriversPage() {
               Driver Management
             </h1>
             <p className="text-sm text-gray-500">
-              Manage your organization&apos;s drivers, vehicles and delivery partners.
+              Manage your organization&apos;s drivers, vehicles and delivery
+              partners.
             </p>
           </div>
         </div>

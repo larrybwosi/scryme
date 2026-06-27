@@ -1,9 +1,15 @@
-import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Skeleton } from './ui/skeleton';
-import { Alert, AlertDescription } from './ui/alert';
-import { AlertCircle, User } from 'lucide-react';
-import Image from 'next/image';
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
+import { Alert, AlertDescription } from "./ui/alert";
+import { AlertCircle, User } from "lucide-react";
+import Image from "next/image";
 
 interface Member {
   id: string;
@@ -11,8 +17,8 @@ interface Member {
   email: string;
   role?: string;
   image?: string | null;
-  isActive: 'active' | 'inactive' | 'pending';
-  status: 'ONLINE' | 'OFFLINE';
+  isActive: "active" | "inactive" | "pending";
+  status: "ONLINE" | "OFFLINE";
   username: string;
   isGuest: boolean;
   customRoles: string[];
@@ -31,7 +37,7 @@ interface MemberSelectProps {
   required?: boolean;
   excludeMember?: string;
   filterByRole?: string[];
-  filterByStatus?: ('active' | 'inactive' | 'pending')[];
+  filterByStatus?: ("active" | "inactive" | "pending")[];
   showRole?: boolean;
   showDepartment?: boolean;
   members: Member[];
@@ -42,12 +48,12 @@ interface MemberSelectProps {
 export const MemberSelect: React.FC<MemberSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a member',
+  placeholder = "Select a member",
   disabled = false,
   required = false,
   excludeMember,
   filterByRole,
-  filterByStatus = ['active'],
+  filterByStatus = ["active"],
   showRole = false,
   showDepartment = false,
   members,
@@ -67,7 +73,9 @@ export const MemberSelect: React.FC<MemberSelectProps> = ({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load members. Please try again later.</AlertDescription>
+        <AlertDescription>
+          Failed to load members. Please try again later.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -86,17 +94,23 @@ export const MemberSelect: React.FC<MemberSelectProps> = ({
 
   // Filter out excluded member
   if (excludeMember) {
-    filteredMembers = filteredMembers.filter(member => member.id !== excludeMember);
+    filteredMembers = filteredMembers.filter(
+      (member) => member.id !== excludeMember,
+    );
   }
 
   // Filter by status using isActive field
   if (filterByStatus && filterByStatus.length > 0) {
-    filteredMembers = filteredMembers.filter(member => filterByStatus.includes(member.isActive));
+    filteredMembers = filteredMembers.filter((member) =>
+      filterByStatus.includes(member.isActive),
+    );
   }
 
   // Filter by role
   if (filterByRole && filterByRole.length > 0) {
-    filteredMembers = filteredMembers.filter(member => member.role && filterByRole.includes(member.role));
+    filteredMembers = filteredMembers.filter(
+      (member) => member.role && filterByRole.includes(member.role),
+    );
   }
 
   // Helper function to format member details
@@ -108,10 +122,10 @@ export const MemberSelect: React.FC<MemberSelectProps> = ({
     }
 
     if (showDepartment && member.customRoles && member.customRoles.length > 0) {
-      details.push(member.customRoles.join(', '));
+      details.push(member.customRoles.join(", "));
     }
 
-    return details.length > 0 ? details.join(' • ') : member.email;
+    return details.length > 0 ? details.join(" • ") : member.email;
   };
 
   return (
@@ -125,7 +139,7 @@ export const MemberSelect: React.FC<MemberSelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {filteredMembers.map(member => (
+        {filteredMembers.map((member) => (
           <SelectItem key={member.id} value={member.id}>
             <div className="flex items-center gap-2 w-full">
               {member.image ? (
@@ -145,10 +159,14 @@ export const MemberSelect: React.FC<MemberSelectProps> = ({
                 <div className="flex items-center gap-1">
                   <span className="font-medium truncate">{member.name}</span>
                   {member.isGuest && (
-                    <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">Guest</span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                      Guest
+                    </span>
                   )}
                 </div>
-                <span className="text-sm text-muted-foreground truncate">{formatMemberDetails(member)}</span>
+                <span className="text-sm text-muted-foreground truncate">
+                  {formatMemberDetails(member)}
+                </span>
               </div>
             </div>
           </SelectItem>

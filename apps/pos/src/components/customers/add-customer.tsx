@@ -17,7 +17,7 @@ export default function AddCustomerSheet({ open, onOpenChange }: AddCustomerShee
   const handleAddCustomer = async (data: unknown) => {
     try {
       await createCustomer(data);
-      posthog.capture("customer_created");
+      posthog.capture('customer_created');
       toast.success('Customer added successfully!');
       onOpenChange(false);
     } catch {

@@ -1,10 +1,16 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
-import { crmObjectDefinitionSchema, type CrmObjectDefinitionFormValues } from '../../lib/validations';
-import { revalidatePath } from 'next/cache';
+import { db } from "@repo/db";
+import {
+  crmObjectDefinitionSchema,
+  type CrmObjectDefinitionFormValues,
+} from "../../lib/validations";
+import { revalidatePath } from "next/cache";
 
-export async function createObjectDefinition(data: CrmObjectDefinitionFormValues, organizationId: string) {
+export async function createObjectDefinition(
+  data: CrmObjectDefinitionFormValues,
+  organizationId: string,
+) {
   const validatedData = crmObjectDefinitionSchema.parse(data);
 
   const definition = await db.crmObjectDefinition.create({
@@ -14,17 +20,19 @@ export async function createObjectDefinition(data: CrmObjectDefinitionFormValues
     },
   });
 
-  revalidatePath('/settings/crm');
+  revalidatePath("/settings/crm");
   return definition;
 }
 
-export async function getObjectDefinitions(organizationId: string): Promise<any[]> {
+export async function getObjectDefinitions(
+  organizationId: string,
+): Promise<any[]> {
   return await db.crmObjectDefinition.findMany({
     where: { organizationId },
     include: {
       fields: true,
     },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   });
 }
 

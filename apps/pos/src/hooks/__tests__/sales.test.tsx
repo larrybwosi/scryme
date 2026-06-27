@@ -13,10 +13,10 @@ vi.mock('@/store/pos-auth-store', () => ({
 }));
 
 const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false },
-    }
+  defaultOptions: {
+    queries: { retry: false },
+    mutations: { retry: false },
+  },
 });
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -51,10 +51,13 @@ describe('useProcessSale Hook', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 });
     expect(result.current.data?.success).toBe(true);
-    expect(mockInvoke).toHaveBeenCalledWith('process_sale_command', expect.objectContaining({
-      payload: expect.objectContaining({
-        memberId: 'mem_1'
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'process_sale_command',
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          memberId: 'mem_1',
+        }),
       })
-    }));
+    );
   });
 });

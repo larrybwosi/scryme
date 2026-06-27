@@ -16,7 +16,7 @@ export class ScanUnpackBatchUseCase {
   ) {}
 
   async execute(organizationId: string, memberId: string, batchId: string) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Find the batch and its related transfer item
       const batch = await tx.stockBatch.findUnique({
         where: { id: batchId, organizationId },
@@ -76,7 +76,7 @@ export class ScanUnpackBatchUseCase {
 
       // 4. Identify unpack parameters
       const supplierInfo = batch.variant.suppliers.find(
-        (s) => s.supplierId === batch.supplierId,
+        s => s.supplierId === batch.supplierId,
       );
 
       const unitsPerPackage =

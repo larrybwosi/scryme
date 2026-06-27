@@ -26,20 +26,18 @@ describe("OrdersService", () => {
               productVariant: {
                 findMany: vi.fn(),
               },
-              $transaction: vi.fn((cb) =>
+              $transaction: vi.fn(cb =>
                 cb({
                   transaction: {
-                    create: vi
-                      .fn()
-                      .mockResolvedValue({
-                        id: "new-id",
-                        number: "ECO-000001",
-                        status: "PENDING",
-                        paymentStatus: "UNPAID",
-                        finalTotal: 100,
-                        currencyCode: "USD",
-                        createdAt: new Date(),
-                      }),
+                    create: vi.fn().mockResolvedValue({
+                      id: "new-id",
+                      number: "ECO-000001",
+                      status: "PENDING",
+                      paymentStatus: "UNPAID",
+                      finalTotal: 100,
+                      currencyCode: "USD",
+                      createdAt: new Date(),
+                    }),
                   },
                 }),
               ),

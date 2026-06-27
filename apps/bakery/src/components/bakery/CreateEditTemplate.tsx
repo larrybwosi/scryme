@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 // Import Sheet components
 import {
   Sheet,
@@ -15,17 +21,37 @@ import {
   SheetHeader,
   SheetTitle,
   SheetFooter,
-} from '@repo/ui/components/ui/sheet';
-import { Template } from '@/types/bakery';
-import { Trash2, Clock, FileText, BookOpen, Layers, Shield, Loader2, ChefHat, Users, Check } from 'lucide-react';
+} from "@repo/ui/components/ui/sheet";
+import { Template } from "@/types/bakery";
+import {
+  Trash2,
+  Clock,
+  FileText,
+  BookOpen,
+  Layers,
+  Shield,
+  Loader2,
+  ChefHat,
+  Users,
+  Check,
+} from "lucide-react";
 // import { AdvancedUnitSelector } from '@/components/bakery/common/units/advance-select';
-import { Switch } from '@repo/ui/components/ui/switch';
-import { Checkbox } from '@repo/ui/components/ui/checkbox';
-import { TemplateFormData, templateSchema, updateTemplateSchema } from '@/validations/bakery';
-import { useCreateTemplate, useRecipes, useUpdateTemplate, useBakers } from '@/hooks/bakery';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { useDeleteConfirmation } from '@/lib/providers/delete-modal';
-import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
+import { Switch } from "@repo/ui/components/ui/switch";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import {
+  TemplateFormData,
+  templateSchema,
+  updateTemplateSchema,
+} from "@/validations/bakery";
+import {
+  useCreateTemplate,
+  useRecipes,
+  useUpdateTemplate,
+  useBakers,
+} from "@/hooks/bakery";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { useDeleteConfirmation } from "@/lib/providers/delete-modal";
+import { AdvancedUnitSelector } from "@/components/common/units/advance-select";
 
 interface CreateEditTemplateProps {
   template?: Template | null;
@@ -36,21 +62,37 @@ interface CreateEditTemplateProps {
 }
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sun' },
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
+  { value: 0, label: "Sun" },
+  { value: 1, label: "Mon" },
+  { value: 2, label: "Tue" },
+  { value: 3, label: "Wed" },
+  { value: 4, label: "Thu" },
+  { value: 5, label: "Fri" },
+  { value: 6, label: "Sat" },
 ] as const;
 
-export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange, onDelete }: CreateEditTemplateProps) {
-  const { mutateAsync: createTemplate, isPending: creatingTemplate } = useCreateTemplate();
-  const { mutateAsync: updateTemplate, isPending: updatingTemplate } = useUpdateTemplate();
+export function CreateEditTemplate({
+  template,
+  initialData,
+  isOpen,
+  onOpenChange,
+  onDelete,
+}: CreateEditTemplateProps) {
+  const { mutateAsync: createTemplate, isPending: creatingTemplate } =
+    useCreateTemplate();
+  const { mutateAsync: updateTemplate, isPending: updatingTemplate } =
+    useUpdateTemplate();
   const { confirmDelete } = useDeleteConfirmation();
-  const { data: recipes = [], isLoading: isLoadingRecipes, error: recipesError } = useRecipes();
-  const { data: bakers = [], isLoading: isLoadingBakers, error: bakersError } = useBakers();
+  const {
+    data: recipes = [],
+    isLoading: isLoadingRecipes,
+    error: recipesError,
+  } = useRecipes();
+  const {
+    data: bakers = [],
+    isLoading: isLoadingBakers,
+    error: bakersError,
+  } = useBakers();
   const isEditing = !!template;
 
   // Use the appropriate schema based on whether we're editing or creating
@@ -66,45 +108,55 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
   } = useForm({
     resolver: zodResolver(currentSchema),
     defaultValues: {
-      name: template?.name ?? initialData?.name ?? '',
-      recipeId: template?.recipeId ?? initialData?.recipeId ?? '',
+      name: template?.name ?? initialData?.name ?? "",
+      recipeId: template?.recipeId ?? initialData?.recipeId ?? "",
       quantity: template?.quantity ?? initialData?.quantity ?? 1,
-      systemUnitId: template?.systemUnitId ?? initialData?.systemUnitId ?? undefined,
+      systemUnitId:
+        template?.systemUnitId ?? initialData?.systemUnitId ?? undefined,
       orgUnitId: template?.orgUnitId ?? initialData?.orgUnitId ?? undefined,
-      recipeMultiplier: template?.recipeMultiplier ?? initialData?.recipeMultiplier ?? 1.0,
+      recipeMultiplier:
+        template?.recipeMultiplier ?? initialData?.recipeMultiplier ?? 1.0,
       duration: template?.duration ?? initialData?.duration ?? undefined,
-      leadBakerId: template?.leadBakerId ?? initialData?.leadBakerId ?? undefined,
+      leadBakerId:
+        template?.leadBakerId ?? initialData?.leadBakerId ?? undefined,
       assistantBakerIds:
-        (template as any)?.assistantBakers?.map((ab: any) => ab.id) ?? initialData?.assistantBakerIds ?? [],
-      notes: template?.notes ?? initialData?.notes ?? '',
+        (template as any)?.assistantBakers?.map((ab: any) => ab.id) ??
+        initialData?.assistantBakerIds ??
+        [],
+      notes: template?.notes ?? initialData?.notes ?? "",
       isActive: template?.isActive ?? initialData?.isActive ?? true,
-      scheduleTime: template?.scheduleTime ?? initialData?.scheduleTime ?? '',
+      scheduleTime: template?.scheduleTime ?? initialData?.scheduleTime ?? "",
       scheduleDays: template?.scheduleDays ?? initialData?.scheduleDays ?? [],
-      shelfLifeDays: template?.shelfLifeDays ?? initialData?.shelfLifeDays ?? undefined,
+      shelfLifeDays:
+        template?.shelfLifeDays ?? initialData?.shelfLifeDays ?? undefined,
     },
   });
 
   const isLoading = isLoadingRecipes || isLoadingBakers;
   const error = recipesError || bakersError;
 
-  const watchedSystemUnitId = useWatch({ control, name: 'systemUnitId' });
-  const watchedOrgUnitId = useWatch({ control, name: 'orgUnitId' });
+  const watchedSystemUnitId = useWatch({ control, name: "systemUnitId" });
+  const watchedOrgUnitId = useWatch({ control, name: "orgUnitId" });
   const unitValue = watchedSystemUnitId || watchedOrgUnitId;
   const unitErrorMessage =
     !watchedSystemUnitId && !watchedOrgUnitId && errors.root?.message
       ? errors.root.message
       : errors.systemUnitId?.message || errors.orgUnitId?.message || undefined;
 
-  const handleUnitChange = (value: string | undefined, type: 'system' | 'org') => {
+  const handleUnitChange = (
+    value: string | undefined,
+    type: "system" | "org",
+  ) => {
     const options = { shouldDirty: true, shouldValidate: true };
     // Clear the other unit field to ensure only one is set
-    setValue('systemUnitId', type === 'system' ? value : undefined, options);
-    setValue('orgUnitId', type === 'org' ? value : undefined, options);
+    setValue("systemUnitId", type === "system" ? value : undefined, options);
+    setValue("orgUnitId", type === "org" ? value : undefined, options);
   };
 
   const handleFormSubmit = async (data: TemplateFormData) => {
     try {
-      const finalLeadBakerId = data.leadBakerId === 'none_clear' ? null : data.leadBakerId;
+      const finalLeadBakerId =
+        data.leadBakerId === "none_clear" ? null : data.leadBakerId;
       const submissionData = {
         ...data,
         leadBakerId: finalLeadBakerId,
@@ -128,7 +180,10 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
       }
       onOpenChange(false);
     } catch (error) {
-      console.error(`Failed to ${isEditing ? 'update' : 'create'} template:`, error);
+      console.error(
+        `Failed to ${isEditing ? "update" : "create"} template:`,
+        error,
+      );
     }
   };
 
@@ -136,9 +191,9 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
     if (!template || !onDelete) return;
 
     const confirmed = await confirmDelete({
-      entityType: 'template',
+      entityType: "template",
       entityName: template.name,
-      title: 'Delete Template',
+      title: "Delete Template",
       description: `Are you sure you want to delete the template "${template.name}"? This action cannot be undone.`,
     });
 
@@ -153,38 +208,45 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
     // Also reset if opening new with different initialData (though usually handled by key or separate effect)
     if (open) {
       reset({
-        name: template?.name ?? initialData?.name ?? '',
-        recipeId: template?.recipeId ?? initialData?.recipeId ?? '',
+        name: template?.name ?? initialData?.name ?? "",
+        recipeId: template?.recipeId ?? initialData?.recipeId ?? "",
         quantity: template?.quantity ?? initialData?.quantity ?? 1,
-        systemUnitId: template?.systemUnitId ?? initialData?.systemUnitId ?? undefined,
+        systemUnitId:
+          template?.systemUnitId ?? initialData?.systemUnitId ?? undefined,
         orgUnitId: template?.orgUnitId ?? initialData?.orgUnitId ?? undefined,
-        recipeMultiplier: template?.recipeMultiplier ?? initialData?.recipeMultiplier ?? 1.0,
+        recipeMultiplier:
+          template?.recipeMultiplier ?? initialData?.recipeMultiplier ?? 1.0,
         duration: template?.duration ?? initialData?.duration ?? undefined,
-        leadBakerId: template?.leadBakerId ?? initialData?.leadBakerId ?? undefined,
+        leadBakerId:
+          template?.leadBakerId ?? initialData?.leadBakerId ?? undefined,
         assistantBakerIds:
-          (template as any)?.assistantBakers?.map((ab: any) => ab.id) ?? initialData?.assistantBakerIds ?? [],
-        notes: template?.notes ?? initialData?.notes ?? '',
+          (template as any)?.assistantBakers?.map((ab: any) => ab.id) ??
+          initialData?.assistantBakerIds ??
+          [],
+        notes: template?.notes ?? initialData?.notes ?? "",
         isActive: template?.isActive ?? initialData?.isActive ?? true,
-        scheduleTime: template?.scheduleTime ?? initialData?.scheduleTime ?? '',
+        scheduleTime: template?.scheduleTime ?? initialData?.scheduleTime ?? "",
         scheduleDays: template?.scheduleDays ?? initialData?.scheduleDays ?? [],
-        shelfLifeDays: template?.shelfLifeDays ?? initialData?.shelfLifeDays ?? undefined,
+        shelfLifeDays:
+          template?.shelfLifeDays ?? initialData?.shelfLifeDays ?? undefined,
       });
     }
 
     if (!open && isEditing) {
       reset({
-        name: template?.name || '',
-        recipeId: template?.recipeId || '',
+        name: template?.name || "",
+        recipeId: template?.recipeId || "",
         quantity: template?.quantity || 1,
         systemUnitId: template?.systemUnitId || undefined,
         orgUnitId: template?.orgUnitId || undefined,
         recipeMultiplier: template?.recipeMultiplier || 1.0,
         duration: template?.duration || undefined,
         leadBakerId: template?.leadBakerId || undefined,
-        assistantBakerIds: (template as any)?.assistantBakers?.map((ab: any) => ab.id) || [],
-        notes: template?.notes || '',
+        assistantBakerIds:
+          (template as any)?.assistantBakers?.map((ab: any) => ab.id) || [],
+        notes: template?.notes || "",
         isActive: template?.isActive ?? true,
-        scheduleTime: template?.scheduleTime || '',
+        scheduleTime: template?.scheduleTime || "",
         scheduleDays: template?.scheduleDays || [],
         shelfLifeDays: template?.shelfLifeDays || undefined,
       });
@@ -198,21 +260,25 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
 
     let newDays;
     if (dayIndex > -1) {
-      newDays = currentDays.filter(d => d !== dayValue);
+      newDays = currentDays.filter((d) => d !== dayValue);
     } else {
       newDays = [...currentDays, dayValue];
     }
 
     // Sort days for consistency (Sun=0 to Sat=6)
     newDays.sort((a, b) => Number(a) - Number(b));
-    setValue('scheduleDays', newDays, { shouldValidate: true, shouldDirty: true });
+    setValue("scheduleDays", newDays, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
-  const scheduleDays = useWatch({ control, name: 'scheduleDays' }) || [];
-  const assistantBakerIds = useWatch({ control, name: 'assistantBakerIds' }) || [];
-  const leadBakerId = useWatch({ control, name: 'leadBakerId' });
-  const recipeId = useWatch({ control, name: 'recipeId' });
-  const isActive = useWatch({ control, name: 'isActive' });
+  const scheduleDays = useWatch({ control, name: "scheduleDays" }) || [];
+  const assistantBakerIds =
+    useWatch({ control, name: "assistantBakerIds" }) || [];
+  const leadBakerId = useWatch({ control, name: "leadBakerId" });
+  const recipeId = useWatch({ control, name: "recipeId" });
+  const isActive = useWatch({ control, name: "isActive" });
 
   const isDaySelected = (dayValue: number) => {
     return scheduleDays.includes(dayValue);
@@ -234,17 +300,17 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
         <SheetHeader className="pb-4 pt-6 px-6 border-b">
           <SheetTitle className="text-2xl font-bold flex items-center gap-3 text-foreground">
             <Layers className="h-6 w-6 text-muted-foreground" />
-            {isEditing ? 'Edit Template' : 'Create New Template'}
+            {isEditing ? "Edit Template" : "Create New Template"}
           </SheetTitle>
           <SheetDescription className="text-base text-muted-foreground">
             {isEditing
-              ? 'Update the reusable details for this product.'
-              : 'Define a reusable production template from an existing recipe.'}
+              ? "Update the reusable details for this product."
+              : "Define a reusable production template from an existing recipe."}
           </SheetDescription>
         </SheetHeader>
         <form
           id="template-form"
-          onSubmit={handleSubmit(data => handleFormSubmit(data as any))}
+          onSubmit={handleSubmit((data) => handleFormSubmit(data as any))}
           className="flex-1 space-y-8 overflow-y-auto py-4 px-6"
         >
           {/* Template Basics Section */}
@@ -257,40 +323,65 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
             {/* Template Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
-                Template Name {isEditing ? '' : <span className="text-destructive">*</span>}
+                Template Name{" "}
+                {isEditing ? "" : <span className="text-destructive">*</span>}
               </Label>
               <Input
                 id="name"
                 placeholder="e.g., Daily Bread Batch, Weekend Pastries"
-                {...register('name')}
-                className={errors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
+                {...register("name")}
+                className={
+                  errors.name
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : ""
+                }
                 disabled={isFormSubmitting}
               />
-              {errors.name && <p className="text-destructive text-sm mt-1">{errors.name.message}</p>}
+              {errors.name && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.name.message}
+                </p>
+              )}
             </div>
 
             {/* Base Recipe */}
             <div className="space-y-2">
               <Label htmlFor="recipeId" className="text-sm font-medium">
-                Base Recipe {isEditing ? '' : <span className="text-destructive">*</span>}
+                Base Recipe{" "}
+                {isEditing ? "" : <span className="text-destructive">*</span>}
               </Label>
               <Select
                 value={recipeId}
-                onValueChange={value => setValue('recipeId', value, { shouldValidate: true })}
+                onValueChange={(value) =>
+                  setValue("recipeId", value, { shouldValidate: true })
+                }
                 disabled={isLoading || isFormSubmitting}
               >
-                <SelectTrigger className={errors.recipeId ? 'border-destructive focus-visible:ring-destructive' : ''}>
-                  <SelectValue placeholder={isLoading ? 'Loading recipes...' : 'Select a base recipe'} />
+                <SelectTrigger
+                  className={
+                    errors.recipeId
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
+                >
+                  <SelectValue
+                    placeholder={
+                      isLoading ? "Loading recipes..." : "Select a base recipe"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {isLoading ? (
                     <div className="px-2 py-1.5 text-sm text-muted-foreground flex items-center">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      Loading...
                     </div>
                   ) : error ? (
-                    <div className="px-2 py-1.5 text-sm text-destructive">Failed to load recipes</div>
+                    <div className="px-2 py-1.5 text-sm text-destructive">
+                      Failed to load recipes
+                    </div>
                   ) : (
-                    recipes.map(recipe => (
+                    recipes.map((recipe) => (
                       <SelectItem key={recipe.id} value={recipe.id}>
                         {recipe.name}
                       </SelectItem>
@@ -298,7 +389,11 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   )}
                 </SelectContent>
               </Select>
-              {errors.recipeId && <p className="text-destructive text-sm mt-1">{errors.recipeId.message}</p>}
+              {errors.recipeId && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.recipeId.message}
+                </p>
+              )}
             </div>
 
             {/* Quantity and Unit Grid */}
@@ -306,7 +401,8 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
               {/* Quantity */}
               <div className="space-y-2">
                 <Label htmlFor="quantity" className="text-sm font-medium">
-                  Default Quantity {isEditing ? '' : <span className="text-destructive">*</span>}
+                  Default Quantity{" "}
+                  {isEditing ? "" : <span className="text-destructive">*</span>}
                 </Label>
                 <Input
                   id="quantity"
@@ -314,26 +410,43 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   step="0.01"
                   min="0.01"
                   placeholder="1"
-                  {...register('quantity', { valueAsNumber: true })}
-                  className={errors.quantity ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  {...register("quantity", { valueAsNumber: true })}
+                  className={
+                    errors.quantity
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                   disabled={isFormSubmitting}
                 />
-                {errors.quantity && <p className="text-destructive text-sm mt-1">{errors.quantity.message}</p>}
+                {errors.quantity && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.quantity.message}
+                  </p>
+                )}
               </div>
 
               {/* Unit */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
-                  Unit {isEditing ? '' : <span className="text-destructive">*</span>}
+                  Unit{" "}
+                  {isEditing ? "" : <span className="text-destructive">*</span>}
                 </Label>
                 <AdvancedUnitSelector
                   value={unitValue || undefined}
                   onValueChange={handleUnitChange}
                   disabled={isFormSubmitting}
                   placeholder="Select Unit"
-                  className={unitErrorMessage ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  className={
+                    unitErrorMessage
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                 />
-                {unitErrorMessage && <p className="text-destructive text-sm mt-1">{unitErrorMessage}</p>}
+                {unitErrorMessage && (
+                  <p className="text-destructive text-sm mt-1">
+                    {unitErrorMessage}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -348,15 +461,22 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 step="0.01"
                 min="0.01"
                 placeholder="1.0"
-                {...register('recipeMultiplier', { valueAsNumber: true })}
-                className={errors.recipeMultiplier ? 'border-destructive focus-visible:ring-destructive' : ''}
+                {...register("recipeMultiplier", { valueAsNumber: true })}
+                className={
+                  errors.recipeMultiplier
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : ""
+                }
                 disabled={isFormSubmitting}
               />
               {errors.recipeMultiplier && (
-                <p className="text-destructive text-sm mt-1">{errors.recipeMultiplier.message}</p>
+                <p className="text-destructive text-sm mt-1">
+                  {errors.recipeMultiplier.message}
+                </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Scale the recipe ingredients (e.g., 2.0 for double, 0.5 for half batch)
+                Scale the recipe ingredients (e.g., 2.0 for double, 0.5 for half
+                batch)
               </p>
             </div>
           </div>
@@ -367,7 +487,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
           <div className="space-y-6">
             <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
               <Clock className="h-5 w-5 text-amber-500" />
-              Schedule Settings{' '}
+              Schedule Settings{" "}
               <Badge variant="outline" className="text-xs font-normal ml-2">
                 Optional
               </Badge>
@@ -383,13 +503,23 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   id="scheduleTime"
                   type="time"
                   placeholder="HH:MM"
-                  {...register('scheduleTime')}
-                  className={errors.scheduleTime ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  {...register("scheduleTime")}
+                  className={
+                    errors.scheduleTime
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                   disabled={isFormSubmitting}
                 />
               </div>
-              {errors.scheduleTime && <p className="text-destructive text-sm mt-1">{errors.scheduleTime.message}</p>}
-              <p className="text-xs text-muted-foreground">Time when this template should be scheduled (e.g., 08:00)</p>
+              {errors.scheduleTime && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.scheduleTime.message}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Time when this template should be scheduled (e.g., 08:00)
+              </p>
             </div>
 
             {/* Schedule Days */}
@@ -400,12 +530,13 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 </Label>
                 {selectedDaysCount > 0 && (
                   <Badge variant="secondary" className="text-xs">
-                    {selectedDaysCount} day{selectedDaysCount !== 1 ? 's' : ''} selected
+                    {selectedDaysCount} day{selectedDaysCount !== 1 ? "s" : ""}{" "}
+                    selected
                   </Badge>
                 )}
               </div>
               <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                {DAYS_OF_WEEK.map(day => (
+                {DAYS_OF_WEEK.map((day) => (
                   <button
                     key={day.value}
                     type="button"
@@ -415,8 +546,8 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                       flex flex-col items-center justify-center p-1 sm:p-2 rounded-lg text-xs font-medium transition-colors
                       ${
                         isDaySelected(day.value)
-                          ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80 border border-input'
+                          ? "bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80 border border-input"
                       }
                       disabled:opacity-50 disabled:cursor-not-allowed
                     `}
@@ -425,9 +556,14 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   </button>
                 ))}
               </div>
-              {errors.scheduleDays && <p className="text-destructive text-sm mt-1">{errors.scheduleDays.message}</p>}
+              {errors.scheduleDays && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.scheduleDays.message}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">
-                Select days for recurring schedules (leave empty for one-time production)
+                Select days for recurring schedules (leave empty for one-time
+                production)
               </p>
             </div>
           </div>
@@ -438,7 +574,7 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
           <div className="space-y-6">
             <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
               <ChefHat className="h-5 w-5 text-muted-foreground" />
-              Personnel{' '}
+              Personnel{" "}
               <Badge variant="outline" className="text-xs font-normal ml-2">
                 Optional
               </Badge>
@@ -450,16 +586,18 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 Default Lead Baker
               </Label>
               <Select
-                value={leadBakerId || ''}
-                onValueChange={value => {
-                  setValue('leadBakerId', value || undefined, { shouldDirty: true });
+                value={leadBakerId || ""}
+                onValueChange={(value) => {
+                  setValue("leadBakerId", value || undefined, {
+                    shouldDirty: true,
+                  });
                   // Remove from assistants if selected as lead
                   const currentAssistants = assistantBakerIds;
                   if (value && currentAssistants.includes(value)) {
                     setValue(
-                      'assistantBakerIds',
-                      currentAssistants.filter(id => id !== value),
-                      { shouldDirty: true }
+                      "assistantBakerIds",
+                      currentAssistants.filter((id) => id !== value),
+                      { shouldDirty: true },
                     );
                   }
                 }}
@@ -469,61 +607,76 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   <SelectValue placeholder="No default lead (uses system default)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none_clear">None (System Default)</SelectItem>
+                  <SelectItem value="none_clear">
+                    None (System Default)
+                  </SelectItem>
                   {bakers
-                    .filter(b => b.isActive)
-                    .map(b => (
+                    .filter((b) => b.isActive)
+                    .map((b) => (
                       <SelectItem key={b.id} value={b.id}>
-                        {b.name || 'Unknown'}
+                        {b.name || "Unknown"}
                       </SelectItem>
                     ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">The baker who will be assigned as Lead by default</p>
+              <p className="text-xs text-muted-foreground">
+                The baker who will be assigned as Lead by default
+              </p>
             </div>
 
             {/* Assistant Bakers */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Default Assistant Bakers</Label>
+              <Label className="text-sm font-medium">
+                Default Assistant Bakers
+              </Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border rounded-lg bg-muted/20 max-h-40 overflow-y-auto">
                 {bakers
-                  .filter(b => b.isActive && b.id !== leadBakerId)
-                  .map(baker => {
+                  .filter((b) => b.isActive && b.id !== leadBakerId)
+                  .map((baker) => {
                     const isSelected = assistantBakerIds?.includes(baker.id);
                     return (
                       <div
                         key={baker.id}
                         className={`
                         flex items-center gap-2 p-2 rounded-md transition-colors cursor-pointer
-                        ${isSelected ? 'bg-primary/10 border-primary/20' : 'hover:bg-accent'}
+                        ${isSelected ? "bg-primary/10 border-primary/20" : "hover:bg-accent"}
                       `}
                         onClick={() => {
                           const current = assistantBakerIds;
                           if (isSelected) {
                             setValue(
-                              'assistantBakerIds',
-                              current.filter(id => id !== baker.id),
-                              { shouldDirty: true }
+                              "assistantBakerIds",
+                              current.filter((id) => id !== baker.id),
+                              { shouldDirty: true },
                             );
                           } else {
-                            setValue('assistantBakerIds', [...current, baker.id], { shouldDirty: true });
+                            setValue(
+                              "assistantBakerIds",
+                              [...current, baker.id],
+                              { shouldDirty: true },
+                            );
                           }
                         }}
                       >
                         <div
                           className={`
                         w-4 h-4 rounded border flex items-center justify-center transition-colors
-                        ${isSelected ? 'bg-primary border-primary' : 'border-input bg-background'}
+                        ${isSelected ? "bg-primary border-primary" : "border-input bg-background"}
                       `}
                         >
-                          {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                          {isSelected && (
+                            <Check className="h-3 w-3 text-primary-foreground" />
+                          )}
                         </div>
                         <span className="text-sm truncate">{baker.name}</span>
                       </div>
                     );
                   })}
-                {bakers.filter(b => b.isActive && b.id !== leadBakerId).length === 0 && (
-                  <p className="text-xs text-muted-foreground italic col-span-2">No other active bakers available.</p>
+                {bakers.filter((b) => b.isActive && b.id !== leadBakerId)
+                  .length === 0 && (
+                  <p className="text-xs text-muted-foreground italic col-span-2">
+                    No other active bakers available.
+                  </p>
                 )}
               </div>
             </div>
@@ -548,12 +701,22 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   type="number"
                   min="1"
                   placeholder="e.g., 240 (4 hours)"
-                  {...register('duration', { valueAsNumber: true })}
-                  className={errors.duration ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  {...register("duration", { valueAsNumber: true })}
+                  className={
+                    errors.duration
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                   disabled={isFormSubmitting}
                 />
-                {errors.duration && <p className="text-destructive text-sm mt-1">{errors.duration.message}</p>}
-                <p className="text-xs text-muted-foreground">Estimated time in minutes</p>
+                {errors.duration && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.duration.message}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Estimated time in minutes
+                </p>
               </div>
 
               {/* Shelf Life */}
@@ -566,14 +729,22 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                   type="number"
                   min="1"
                   placeholder="e.g., 3 or 7"
-                  {...register('shelfLifeDays', { valueAsNumber: true })}
-                  className={errors.shelfLifeDays ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  {...register("shelfLifeDays", { valueAsNumber: true })}
+                  className={
+                    errors.shelfLifeDays
+                      ? "border-destructive focus-visible:ring-destructive"
+                      : ""
+                  }
                   disabled={isFormSubmitting}
                 />
                 {errors.shelfLifeDays && (
-                  <p className="text-destructive text-sm mt-1">{errors.shelfLifeDays.message}</p>
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.shelfLifeDays.message}
+                  </p>
                 )}
-                <p className="text-xs text-muted-foreground">Days the product remains fresh</p>
+                <p className="text-xs text-muted-foreground">
+                  Days the product remains fresh
+                </p>
               </div>
             </div>
 
@@ -586,11 +757,13 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
                 id="notes"
                 placeholder="Special instructions, quality checks, or important reminders..."
                 rows={4}
-                {...register('notes')}
+                {...register("notes")}
                 disabled={isFormSubmitting}
                 className="resize-none"
               />
-              <p className="text-xs text-muted-foreground">Any special considerations for production</p>
+              <p className="text-xs text-muted-foreground">
+                Any special considerations for production
+              </p>
             </div>
           </div>
 
@@ -599,19 +772,24 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
           {/* Template Status */}
           <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/20 shadow-inner">
             <div className="space-y-1">
-              <Label htmlFor="isActive" className="text-base font-semibold flex items-center gap-2">
+              <Label
+                htmlFor="isActive"
+                className="text-base font-semibold flex items-center gap-2"
+              >
                 <Shield className="h-5 w-5 text-blue-500" /> Template Status
               </Label>
               <p className="text-sm text-muted-foreground">
                 {isActive
-                  ? 'Active templates can be used in production.'
-                  : 'Inactive templates are archived and cannot be used.'}
+                  ? "Active templates can be used in production."
+                  : "Inactive templates are archived and cannot be used."}
               </p>
             </div>
             <Switch
               id="isActive"
               checked={isActive}
-              onCheckedChange={checked => setValue('isActive', checked, { shouldDirty: true })}
+              onCheckedChange={(checked) =>
+                setValue("isActive", checked, { shouldDirty: true })
+              }
               disabled={isFormSubmitting}
               className="data-[state=checked]:bg-primary"
             />
@@ -655,12 +833,12 @@ export function CreateEditTemplate({ template, initialData, isOpen, onOpenChange
               {isFormSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {isEditing ? 'Saving...' : 'Creating...'}
+                  {isEditing ? "Saving..." : "Creating..."}
                 </>
               ) : isEditing ? (
-                'Save Changes'
+                "Save Changes"
               ) : (
-                'Create Template'
+                "Create Template"
               )}
             </Button>
           </div>

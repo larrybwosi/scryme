@@ -128,7 +128,7 @@ export class WindmillCallbackUseCase {
       `Processing approval callback for ${payload.entityType} ${payload.entityId}`,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Update the windmillExecution record (Consolidation)
       await tx.windmillExecution.updateMany({
         where: { jobId: payload.jobId },
@@ -201,7 +201,7 @@ export class WindmillCallbackUseCase {
       `Processing bakery disposal callback for batch ${payload.batchId}`,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Update Execution
       await tx.windmillExecution.updateMany({
         where: { jobId: payload.jobId },

@@ -1,28 +1,12 @@
 import { useState, useEffect } from 'react';
-import {
-  Barcode,
-  Search,
-  Printer,
-  Trash2,
-  Plus,
-  Settings2,
-  Package,
-  Layers,
-  Info
-} from 'lucide-react';
+import { Barcode, Search, Printer, Trash2, Plus, Settings2, Package, Layers, Info } from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import { Separator } from '@repo/ui/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@repo/ui/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Label } from '@repo/ui/components/ui/label';
 import { Switch } from '@repo/ui/components/ui/switch';
 import { toast } from 'sonner';
@@ -46,7 +30,7 @@ export default function BarcodePrintingPage() {
     barcodeType: 'code128',
     printerName: 'default',
     nameFontSize: 1,
-    priceFontSize: 2
+    priceFontSize: 2,
   });
 
   const currency = usePosStore(state => state.settings.receiptConfig.currency || 'USD');
@@ -74,7 +58,7 @@ export default function BarcodePrintingPage() {
       // Query the backend for products
       const response = await invoke<any>('search_products_command', {
         query: searchQuery,
-        limit: 20
+        limit: 20,
       });
       setSearchResults(response.products || []);
 
@@ -94,7 +78,7 @@ export default function BarcodePrintingPage() {
       const barcode = product.barcode || product.sku || product.productId;
       const dataUrl = await BarcodeService.generate(barcode, config.barcodeType as any, {
         height: 15,
-        scale: 2
+        scale: 2,
       });
       setPreviewBarcode(dataUrl);
     } catch (err) {
@@ -105,11 +89,9 @@ export default function BarcodePrintingPage() {
   const addToQueue = (product: any) => {
     const existing = printQueue.find(item => item.id === product.productId);
     if (existing) {
-      setPrintQueue(prev => prev.map(item =>
-        item.id === product.productId
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
+      setPrintQueue(prev =>
+        prev.map(item => (item.id === product.productId ? { ...item, quantity: item.quantity + 1 } : item))
+      );
     } else {
       const newItem: PrintLabelItem = {
         id: product.productId,
@@ -119,7 +101,7 @@ export default function BarcodePrintingPage() {
         price: product.sellableUnits?.[0]?.price || 0,
         currency: currency,
         category: product.category,
-        quantity: 1
+        quantity: 1,
       };
       setPrintQueue(prev => [...prev, newItem]);
     }
@@ -132,9 +114,7 @@ export default function BarcodePrintingPage() {
 
   const updateQuantity = (id: string, qty: number) => {
     if (qty < 1) return;
-    setPrintQueue(prev => prev.map(item =>
-      item.id === id ? { ...item, quantity: qty } : item
-    ));
+    setPrintQueue(prev => prev.map(item => (item.id === id ? { ...item, quantity: qty } : item)));
   };
 
   const handlePrint = async () => {
@@ -148,7 +128,7 @@ export default function BarcodePrintingPage() {
     toast.promise(printPromise, {
       loading: 'Sending labels to printer...',
       success: 'Labels sent successfully',
-      error: (err) => `Printing failed: ${err.message}`
+      error: err => `Printing failed: ${err.message}`,
     });
 
     try {
@@ -193,8 +173,8 @@ export default function BarcodePrintingPage() {
                     placeholder="Search products by name or SKU..."
                     className="pl-10"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
                 <Button onClick={handleSearch} disabled={isSearching}>
@@ -206,7 +186,7 @@ export default function BarcodePrintingPage() {
               <ScrollArea className="h-full pr-4">
                 {searchResults.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {searchResults.map((product) => (
+                    {searchResults.map(product => (
                       <div
                         key={product.productId}
                         onClick={() => generatePreview(product)}
@@ -220,7 +200,9 @@ export default function BarcodePrintingPage() {
                           <div className="text-xs text-muted-foreground flex items-center gap-2">
                             <span>SKU: {product.sku || 'N/A'}</span>
                             <span className="h-1 w-1 rounded-full bg-zinc-300" />
-                            <span>{currency} {product.sellableUnits?.[0]?.price || 0}</span>
+                            <span>
+                              {currency} {product.sellableUnits?.[0]?.price || 0}
+                            </span>
                           </div>
                         </div>
                         <Button
@@ -267,14 +249,19 @@ export default function BarcodePrintingPage() {
               <ScrollArea className="h-full pr-4">
                 {printQueue.length > 0 ? (
                   <div className="space-y-3">
-                    {printQueue.map((item) => (
+                    {printQueue.map(item => (
                       <div key={item.id} className="p-3 rounded-lg border bg-zinc-50 dark:bg-zinc-900/50 space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <div className="text-sm font-medium truncate">{item.name}</div>
                             <div className="text-[10px] text-muted-foreground truncate">{item.barcode}</div>
                           </div>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => removeFromQueue(item.id)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-500"
+                            onClick={() => removeFromQueue(item.id)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -292,7 +279,7 @@ export default function BarcodePrintingPage() {
                               type="number"
                               className="h-7 w-12 text-center p-0"
                               value={item.quantity}
-                              onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                              onChange={e => updateQuantity(item.id, parseInt(e.target.value) || 1)}
                             />
                             <Button
                               variant="outline"
@@ -309,9 +296,7 @@ export default function BarcodePrintingPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-10 text-muted-foreground text-sm">
-                    Your queue is empty
-                  </div>
+                  <div className="text-center py-10 text-muted-foreground text-sm">Your queue is empty</div>
                 )}
               </ScrollArea>
             </CardContent>
@@ -326,17 +311,17 @@ export default function BarcodePrintingPage() {
             </CardHeader>
             <CardContent>
               <div className="aspect-[2/1] w-full bg-white rounded-lg border flex flex-col items-center justify-center p-4">
-                 {previewBarcode ? (
-                   <>
+                {previewBarcode ? (
+                  <>
                     <img src={previewBarcode} alt="Barcode Preview" className="max-w-full h-auto" />
                     <span className="text-[10px] text-zinc-500 mt-2 font-mono">Sample Rendering</span>
-                   </>
-                 ) : (
-                   <div className="text-zinc-400 text-xs text-center">
-                     <Barcode className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                     Select a product to preview
-                   </div>
-                 )}
+                  </>
+                ) : (
+                  <div className="text-zinc-400 text-xs text-center">
+                    <Barcode className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    Select a product to preview
+                  </div>
+                )}
               </div>
             </CardContent>
             <Separator />
@@ -351,7 +336,7 @@ export default function BarcodePrintingPage() {
                 <Label>Target Printer</Label>
                 <Select
                   value={config.printerName}
-                  onValueChange={(v) => setConfig(prev => ({ ...prev, printerName: v }))}
+                  onValueChange={v => setConfig(prev => ({ ...prev, printerName: v }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select printer" />
@@ -359,7 +344,9 @@ export default function BarcodePrintingPage() {
                   <SelectContent>
                     <SelectItem value="default">System Default (Label)</SelectItem>
                     {printers.map(p => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -367,10 +354,7 @@ export default function BarcodePrintingPage() {
 
               <div className="space-y-2">
                 <Label>Label Size</Label>
-                <Select
-                  value={config.size}
-                  onValueChange={(v: LabelSize) => setConfig(prev => ({ ...prev, size: v }))}
-                >
+                <Select value={config.size} onValueChange={(v: LabelSize) => setConfig(prev => ({ ...prev, size: v }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -387,27 +371,33 @@ export default function BarcodePrintingPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="show-name" className="text-sm">Display Product Name</Label>
+                  <Label htmlFor="show-name" className="text-sm">
+                    Display Product Name
+                  </Label>
                   <Switch
                     id="show-name"
                     checked={config.showName}
-                    onCheckedChange={(v) => setConfig(prev => ({ ...prev, showName: v }))}
+                    onCheckedChange={v => setConfig(prev => ({ ...prev, showName: v }))}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="show-price" className="text-sm">Display Price</Label>
+                  <Label htmlFor="show-price" className="text-sm">
+                    Display Price
+                  </Label>
                   <Switch
                     id="show-price"
                     checked={config.showPrice}
-                    onCheckedChange={(v) => setConfig(prev => ({ ...prev, showPrice: v }))}
+                    onCheckedChange={v => setConfig(prev => ({ ...prev, showPrice: v }))}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="show-sku" className="text-sm">Display SKU</Label>
+                  <Label htmlFor="show-sku" className="text-sm">
+                    Display SKU
+                  </Label>
                   <Switch
                     id="show-sku"
                     checked={config.showSku}
-                    onCheckedChange={(v) => setConfig(prev => ({ ...prev, showSku: v }))}
+                    onCheckedChange={v => setConfig(prev => ({ ...prev, showSku: v }))}
                   />
                 </div>
               </div>
@@ -436,9 +426,11 @@ export default function BarcodePrintingPage() {
                   <Label>Name Size</Label>
                   <Select
                     value={String(config.nameFontSize)}
-                    onValueChange={(v) => setConfig(prev => ({ ...prev, nameFontSize: parseInt(v) }))}
+                    onValueChange={v => setConfig(prev => ({ ...prev, nameFontSize: parseInt(v) }))}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1">Normal</SelectItem>
                       <SelectItem value="2">Large</SelectItem>
@@ -449,9 +441,11 @@ export default function BarcodePrintingPage() {
                   <Label>Price Size</Label>
                   <Select
                     value={String(config.priceFontSize)}
-                    onValueChange={(v) => setConfig(prev => ({ ...prev, priceFontSize: parseInt(v) }))}
+                    onValueChange={v => setConfig(prev => ({ ...prev, priceFontSize: parseInt(v) }))}
                   >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1">Normal</SelectItem>
                       <SelectItem value="2">Large</SelectItem>
@@ -465,7 +459,8 @@ export default function BarcodePrintingPage() {
               <div className="flex items-start gap-3">
                 <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
                 <p className="text-[10px] text-muted-foreground">
-                  Ensure your label printer is loaded with the selected size. Using incorrect sizes may result in misaligned prints.
+                  Ensure your label printer is loaded with the selected size. Using incorrect sizes may result in
+                  misaligned prints.
                 </p>
               </div>
             </CardFooter>

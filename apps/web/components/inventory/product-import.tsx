@@ -581,9 +581,7 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
               <Button variant="outline" onClick={() => setStep("UPLOAD")}>
                 Back
               </Button>
-              <Button
-                disabled={!isMappingValid}
-                onClick={generateGroups}>
+              <Button disabled={!isMappingValid} onClick={generateGroups}>
                 Continue to Grouping
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
@@ -638,8 +636,9 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
                                 value={v.variantName}
                                 onChange={e => {
                                   const newGroups = [...groups];
-                                  newGroups[groupIdx].variants[vIdx].variantName =
-                                    e.target.value;
+                                  newGroups[groupIdx].variants[
+                                    vIdx
+                                  ].variantName = e.target.value;
                                   setGroups(newGroups);
                                 }}
                                 className="bg-transparent border-none focus:ring-0 w-16 p-0 text-xs"
@@ -827,7 +826,9 @@ export function ProductImport({ children }: { children: React.ReactNode }) {
                 <TableBody>
                   {groups.slice(0, 10).map((group, i) => (
                     <TableRow key={i}>
-                      <TableCell className="font-medium">{group.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {group.name}
+                      </TableCell>
                       <TableCell>
                         {group.variants.map(v => v.variantName).join(", ")}
                       </TableCell>

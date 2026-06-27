@@ -33,12 +33,7 @@ export interface NotifyOptions {
 
 export class NotificationEngine {
   async notify(options: NotifyOptions): Promise<NotificationDispatch> {
-    const {
-      organizationId,
-      templateName,
-      data,
-      recipients,
-    } = options;
+    const { organizationId, templateName, data, recipients } = options;
 
     let { channels = ["WEBHOOK"] } = options;
 
@@ -159,8 +154,8 @@ export class NotificationEngine {
           try {
             await this.deliverScryme(dispatch);
           } catch (err: any) {
-             console.error(`Failed to deliver to Scryme: ${err.message}`);
-             // Don't fail the whole dispatch if one channel fails
+            console.error(`Failed to deliver to Scryme: ${err.message}`);
+            // Don't fail the whole dispatch if one channel fails
           }
         }
         if (channel === "DISCORD") {
@@ -327,11 +322,7 @@ export class NotificationEngine {
       message.actions = dispatch.data.scrymeActions;
     }
 
-    await scrymeClient.sendMessage(
-      config.workspaceSlug,
-      channelSlug,
-      message,
-    );
+    await scrymeClient.sendMessage(config.workspaceSlug, channelSlug, message);
   }
 }
 

@@ -1,72 +1,72 @@
-"use client"
+'use client';
 
-import { useState, useMemo } from "react"
-import { usePosStore } from "@/store/store"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
-import { TrendingUp, DollarSign, ShoppingCart, Package, Calendar } from "lucide-react"
-import { Button } from "@repo/ui/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
+import { useState, useMemo } from 'react';
+import { usePosStore } from '@/store/store';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
+import { TrendingUp, DollarSign, ShoppingCart, Package, Calendar } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 
 export default function AnalyticsPage() {
-  const settings = usePosStore((state) => state.settings)
-  const getDailySummary = usePosStore((state) => state.getDailySummary)
-  const getTopProducts = usePosStore((state) => state.getTopProducts)
-  const orders = usePosStore((state) => state.orders)
-  const getLowStockProducts = usePosStore((state) => state.getLowStockProducts)
+  const settings = usePosStore(state => state.settings);
+  const getDailySummary = usePosStore(state => state.getDailySummary);
+  const getTopProducts = usePosStore(state => state.getTopProducts);
+  const orders = usePosStore(state => state.orders);
+  const getLowStockProducts = usePosStore(state => state.getLowStockProducts);
 
-  const [dateRange, setDateRange] = useState<"today" | "week" | "month" | "all">("today")
-  const [selectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'all'>('today');
+  const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const filteredOrders = useMemo(() => {
-    const now = new Date()
-    let startDate = new Date()
+    const now = new Date();
+    let startDate = new Date();
 
     switch (dateRange) {
-      case "today":
-        startDate.setHours(0, 0, 0, 0)
-        break
-      case "week":
-        startDate.setDate(now.getDate() - 7)
-        break
-      case "month":
-        startDate.setMonth(now.getMonth() - 1)
-        break
-      case "all":
-        startDate = new Date(0) // Beginning of time
-        break
+      case 'today':
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'week':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case 'all':
+        startDate = new Date(0); // Beginning of time
+        break;
     }
 
-    return orders.filter((order) => {
-      const orderDate = new Date(order.createdAt)
-      return order.status === "completed" && orderDate >= startDate
-    })
-  }, [orders, dateRange])
+    return orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return order.status === 'completed' && orderDate >= startDate;
+    });
+  }, [orders, dateRange]);
 
-  const dailySummary = useMemo(() => getDailySummary(selectedDate), [selectedDate, getDailySummary])
-  const topProducts = useMemo(() => getTopProducts(5), [getTopProducts])
-  const lowStockProducts = useMemo(() => getLowStockProducts(), [getLowStockProducts])
+  const dailySummary = useMemo(() => getDailySummary(selectedDate), [selectedDate, getDailySummary]);
+  const topProducts = useMemo(() => getTopProducts(5), [getTopProducts]);
+  const lowStockProducts = useMemo(() => getLowStockProducts(), [getLowStockProducts]);
 
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0)
-  const averageOrderValue = filteredOrders.length > 0 ? totalRevenue / filteredOrders.length : 0
-  const totalDiscount = filteredOrders.reduce((sum, order) => sum + order.discount, 0)
-  const totalTax = filteredOrders.reduce((sum, order) => sum + order.taxes, 0)
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+  const averageOrderValue = filteredOrders.length > 0 ? totalRevenue / filteredOrders.length : 0;
+  const totalDiscount = filteredOrders.reduce((sum, order) => sum + order.discount, 0);
+  const totalTax = filteredOrders.reduce((sum, order) => sum + order.taxes, 0);
 
   const paymentMethodBreakdown = useMemo(() => {
-    const breakdown: Record<string, number> = {}
-    filteredOrders.forEach((order) => {
-      breakdown[order.paymentMethod] = (breakdown[order.paymentMethod] || 0) + order.total
-    })
-    return breakdown
-  }, [filteredOrders])
+    const breakdown: Record<string, number> = {};
+    filteredOrders.forEach(order => {
+      breakdown[order.paymentMethod] = (breakdown[order.paymentMethod] || 0) + order.total;
+    });
+    return breakdown;
+  }, [filteredOrders]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
       currency: settings.currency,
       minimumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -106,7 +106,7 @@ export default function AnalyticsPage() {
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {dateRange === "all" ? "All time" : dateRange}
+                  {dateRange === 'all' ? 'All time' : dateRange}
                 </p>
               </CardContent>
             </Card>
@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Period Summary</CardTitle>
-                <CardDescription className="capitalize">{dateRange === "all" ? "All Time" : dateRange}</CardDescription>
+                <CardDescription className="capitalize">{dateRange === 'all' ? 'All Time' : dateRange}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
@@ -257,16 +257,16 @@ export default function AnalyticsPage() {
                 {lowStockProducts.length === 0 ? (
                   <p className="text-sm text-muted-foreground">All products are well stocked</p>
                 ) : (
-                  lowStockProducts.map((alert) => (
+                  lowStockProducts.map(alert => (
                     <div key={alert.productId} className="flex items-center justify-between p-3 rounded-lg border">
                       <div className="flex items-center gap-3">
                         <Package
-                          className={`w-5 h-5 ${alert.alertType === "out" ? "text-destructive" : "text-orange-500"}`}
+                          className={`w-5 h-5 ${alert.alertType === 'out' ? 'text-destructive' : 'text-orange-500'}`}
                         />
                         <div>
                           <div className="font-medium">{alert.productName}</div>
                           <div className="text-sm text-muted-foreground">
-                            {alert.currentStock} {alert.currentStock === 1 ? "unit" : "units"} remaining
+                            {alert.currentStock} {alert.currentStock === 1 ? 'unit' : 'units'} remaining
                           </div>
                         </div>
                       </div>
@@ -282,5 +282,5 @@ export default function AnalyticsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

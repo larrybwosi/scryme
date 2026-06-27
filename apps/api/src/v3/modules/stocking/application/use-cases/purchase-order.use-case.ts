@@ -33,7 +33,7 @@ export class PurchaseOrderUseCase {
   ) {
     const purchaseNumber = `PO-${Date.now()}`;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       let subTotal = 0;
       for (const item of dto.items) {
         subTotal += item.orderedQuantity * item.unitCost;
@@ -57,7 +57,7 @@ export class PurchaseOrderUseCase {
           status: PurchaseStatus.ORDERED,
           notes: dto.notes,
           items: {
-            create: dto.items.map((item) => ({
+            create: dto.items.map(item => ({
               variantId: item.variantId,
               orderedQuantity: item.orderedQuantity,
               unitCost: item.unitCost,
@@ -80,7 +80,7 @@ export class PurchaseOrderUseCase {
         requestedBy: purchase.member.user.name || "Unknown",
         totalAmount: Number(purchase.totalAmount),
         currency: purchase.currency,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
       );
 
@@ -94,7 +94,7 @@ export class PurchaseOrderUseCase {
     purchaseId: string,
     dto: ReceivePurchaseDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const purchase = await tx.purchase.findUnique({
         where: { id: purchaseId, organizationId },
         include: { items: { include: { variant: true } } },
@@ -120,7 +120,7 @@ export class PurchaseOrderUseCase {
 
       for (const itemDto of dto.items) {
         const purchaseItem = purchase.items.find(
-          (i) => i.id === itemDto.purchaseItemId,
+          i => i.id === itemDto.purchaseItemId,
         );
         if (!purchaseItem)
           throw new NotFoundException(
@@ -157,7 +157,7 @@ export class PurchaseOrderUseCase {
           // Handle Serial Numbers if provided
           if (batchDto.serialNumbers && batchDto.serialNumbers.length > 0) {
             await tx.serialNumber.createMany({
-              data: batchDto.serialNumbers.map((sn) => ({
+              data: batchDto.serialNumbers.map(sn => ({
                 organizationId,
                 serialNumber: sn,
                 variantId: purchaseItem.variantId,
@@ -258,10 +258,10 @@ export class PurchaseOrderUseCase {
       });
 
       const allReceived = updatedPurchase?.items.every(
-        (i) => i.receivedQuantity >= i.orderedQuantity,
+        i => i.receivedQuantity >= i.orderedQuantity,
       );
       const someReceived = updatedPurchase?.items.some(
-        (i) => i.receivedQuantity > 0,
+        i => i.receivedQuantity > 0,
       );
 
       await tx.purchase.update({
@@ -279,7 +279,7 @@ export class PurchaseOrderUseCase {
       // Trigger price recalculation for all items received in this PO
       for (const itemDto of dto.items) {
         const purchaseItem = purchase.items.find(
-          (i) => i.id === itemDto.purchaseItemId,
+          i => i.id === itemDto.purchaseItemId,
         );
         if (purchaseItem) {
           await this.pricingManagementService.handleCostChange(
@@ -315,9 +315,14 @@ export class PurchaseOrderUseCase {
     });
 
     // Post to ledger after approval
-    await this.accountingService.postPurchaseToLedger(updatedPurchase.id).catch((err) =>
-      console.error("[PurchaseOrderUseCase] Failed to post purchase to ledger:", err),
-    );
+    await this.accountingService
+      .postPurchaseToLedger(updatedPurchase.id)
+      .catch(err =>
+        console.error(
+          "[PurchaseOrderUseCase] Failed to post purchase to ledger:",
+          err,
+        ),
+      );
 
     return updatedPurchase;
   }

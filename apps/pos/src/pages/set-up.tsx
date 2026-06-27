@@ -45,7 +45,7 @@ interface SetupData {
 
 // --- Sub-Components ---
 
-const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl: string }) => {
+const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void; apiUrl: string }) => {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-2">
@@ -175,9 +175,7 @@ const SetupTokenStep = ({
                 Apply
               </Button>
             </div>
-            <p className="text-[9px] text-zinc-400 italic">
-              Caution: Changing this affects all terminal requests.
-            </p>
+            <p className="text-[9px] text-zinc-400 italic">Caution: Changing this affects all terminal requests.</p>
           </div>
         )}
         <div className="relative group">
@@ -222,11 +220,7 @@ const SetupTokenStep = ({
   );
 };
 
-const DeviceTypeStep = ({
-  onNext
-}: {
-  onNext: (type: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string) => void
-}) => {
+const DeviceTypeStep = ({ onNext }: { onNext: (type: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string) => void }) => {
   const [deviceType, setDeviceType] = useState<'MAIN_HUB' | 'KDS' | 'TABLET'>('MAIN_HUB');
   const [hubIp, setHubIp] = useState('');
   const [deviceName, setDeviceName] = useState('');
@@ -251,7 +245,7 @@ const DeviceTypeStep = ({
             id="deviceName"
             placeholder="e.g. Kitchen KDS 1, Front Desk Hub..."
             value={deviceName}
-            onChange={(e) => setDeviceName(e.target.value)}
+            onChange={e => setDeviceName(e.target.value)}
             className="rounded-none border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-600 mb-4"
             required
           />
@@ -259,22 +253,27 @@ const DeviceTypeStep = ({
 
         <div className="grid grid-cols-1 gap-3">
           {[
-            { id: 'MAIN_HUB', label: 'Main Hub / Register', Icon: Monitor, desc: 'Primary POS with full management capabilities.' },
+            {
+              id: 'MAIN_HUB',
+              label: 'Main Hub / Register',
+              Icon: Monitor,
+              desc: 'Primary POS with full management capabilities.',
+            },
             { id: 'KDS', label: 'Kitchen Display (KDS)', Icon: ChefHat, desc: 'Display and manage kitchen orders.' },
             { id: 'TABLET', label: 'Waiter Tablet', Icon: TabletIcon, desc: 'Mobile ordering for wait staff.' },
-          ].map((type) => (
+          ].map(type => (
             <button
               key={type.id}
               type="button"
               onClick={() => setDeviceType(type.id as any)}
               className={cn(
-                "flex items-start gap-4 p-4 border transition-all text-left",
+                'flex items-start gap-4 p-4 border transition-all text-left',
                 deviceType === type.id
-                  ? "border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-600"
-                  : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950"
+                  ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-600'
+                  : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950'
               )}
             >
-              <type.Icon className={cn("w-6 h-6 mt-1", deviceType === type.id ? "text-blue-600" : "text-zinc-400")} />
+              <type.Icon className={cn('w-6 h-6 mt-1', deviceType === type.id ? 'text-blue-600' : 'text-zinc-400')} />
               <div>
                 <p className="font-bold text-sm uppercase tracking-tight">{type.label}</p>
                 <p className="text-xs text-zinc-500">{type.desc}</p>
@@ -292,7 +291,7 @@ const DeviceTypeStep = ({
               id="hubIp"
               placeholder="e.g. 192.168.1.50"
               value={hubIp}
-              onChange={(e) => setHubIp(e.target.value)}
+              onChange={e => setHubIp(e.target.value)}
               className="rounded-none border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-600"
               required
             />
@@ -317,11 +316,11 @@ const DeviceTypeStep = ({
 const SuccessStep = ({
   location,
   deviceType,
-  hubIp
+  hubIp,
 }: {
-  location: Location | null,
-  deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET',
-  hubIp: string | null
+  location: Location | null;
+  deviceType: 'MAIN_HUB' | 'KDS' | 'TABLET';
+  hubIp: string | null;
 }) => {
   const [progress, setProgress] = useState(10);
   const navigate = useNavigate();
@@ -371,9 +370,9 @@ const SuccessStep = ({
 export default function SetupPage() {
   const [step, setStep] = useState(1);
   const [setupData, setSetupData] = useState<SetupData>({ setupToken: '', location: null });
-  const [deviceConfig, setDeviceConfig] = useState<{ type: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp: string | null }>({
+  const [deviceConfig, setDeviceConfig] = useState<{ type: 'MAIN_HUB' | 'KDS' | 'TABLET'; hubIp: string | null }>({
     type: 'MAIN_HUB',
-    hubIp: null
+    hubIp: null,
   });
   const [viewMode, setViewMode] = useState<'form' | 'instructions'>('form');
   const [appVersion, setAppVersion] = useState<string>('');
@@ -391,7 +390,7 @@ export default function SetupPage() {
 
   useEffect(() => {
     if (currentLocation) {
-        setSetupData(prev => ({ ...prev, location: currentLocation as any }));
+      setSetupData(prev => ({ ...prev, location: currentLocation as any }));
     }
   }, [currentLocation]);
 
@@ -496,9 +495,7 @@ export default function SetupPage() {
                   {step === 1 && (
                     <SetupTokenStep onNext={handleTokenNext} onShowInstructions={() => setViewMode('instructions')} />
                   )}
-                  {step === 2 && (
-                    <DeviceTypeStep onNext={handleDeviceTypeNext} />
-                  )}
+                  {step === 2 && <DeviceTypeStep onNext={handleDeviceTypeNext} />}
                   {step === 3 && (
                     <SuccessStep
                       location={setupData.location}

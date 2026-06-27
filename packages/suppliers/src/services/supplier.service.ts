@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { type V2ApiContext } from '@repo/shared/api/v2/types';
+import { Injectable, NotFoundException, Inject } from "@nestjs/common";
+import { type V2ApiContext } from "@repo/shared/api/v2/types";
 
 @Injectable()
 export class SupplierService {
-  constructor(@Inject('PRISMA_SERVICE') private readonly prisma: any) {}
+  constructor(@Inject("PRISMA_SERVICE") private readonly prisma: any) {}
 
   async getSuppliers(ctx: V2ApiContext) {
     const { organizationId } = ctx;
@@ -13,7 +13,7 @@ export class SupplierService {
         documents: true,
         _count: { select: { products: true } },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 
@@ -31,24 +31,28 @@ export class SupplierService {
         },
         priceHistory: {
           take: 10,
-          orderBy: { effectiveDate: 'desc' },
+          orderBy: { effectiveDate: "desc" },
           include: { variant: true },
         },
         performances: {
           take: 5,
-          orderBy: { periodEnd: 'desc' },
+          orderBy: { periodEnd: "desc" },
         },
         qualityIncidents: {
           take: 5,
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
       },
     });
-    if (!supplier) throw new NotFoundException('Supplier not found');
+    if (!supplier) throw new NotFoundException("Supplier not found");
     return supplier;
   }
 
-  async createSupplierDocument(ctx: V2ApiContext, supplierId: string, data: any) {
+  async createSupplierDocument(
+    ctx: V2ApiContext,
+    supplierId: string,
+    data: any,
+  ) {
     const { organizationId } = ctx;
     return this.prisma.client.supplierDocument.create({
       data: {
@@ -64,7 +68,7 @@ export class SupplierService {
     const count = await this.prisma.client.qualityIncident.count({
       where: { organizationId },
     });
-    const incidentNumber = `INC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+    const incidentNumber = `INC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
     return await this.prisma.client.$transaction(async (tx: any) => {
       const incident = await tx.qualityIncident.create({
@@ -136,7 +140,7 @@ export class SupplierService {
         supplier: true,
         reportedBy: { include: { user: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -144,8 +148,10 @@ export class SupplierService {
     const { organizationId } = ctx;
     const { title, description, supplierId, stockBatchId } = data;
 
-    const count = await this.prisma.client.recall.count({ where: { organizationId } });
-    const recallNumber = `REC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+    const count = await this.prisma.client.recall.count({
+      where: { organizationId },
+    });
+    const recallNumber = `REC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
     return await this.prisma.client.$transaction(async (tx: any) => {
       const recall = await tx.recall.create({
@@ -165,11 +171,14 @@ export class SupplierService {
           data: { isRecalled: true, recallId: recall.id },
         });
 
-        const affectedConsumptions = await tx.batchIngredientConsumption.findMany({
-          where: { stockBatchId },
-        });
+        const affectedConsumptions =
+          await tx.batchIngredientConsumption.findMany({
+            where: { stockBatchId },
+          });
 
-        const affectedBatchIds = affectedConsumptions.map((c: any) => c.batchId);
+        const affectedBatchIds = affectedConsumptions.map(
+          (c: any) => c.batchId,
+        );
 
         if (affectedBatchIds.length > 0) {
           await tx.batch.updateMany({
@@ -198,7 +207,7 @@ export class SupplierService {
           select: { stockBatches: true, productionBatches: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -215,29 +224,30 @@ export class SupplierService {
         },
       },
     });
-    if (!recall) throw new NotFoundException('Recall not found');
+    if (!recall) throw new NotFoundException("Recall not found");
     return recall;
   }
 
   async getSupplierLeadTime(organizationId: string, supplierId?: string) {
-    const performanceData = await this.prisma.client.supplierPerformance.findMany({
-      where: {
-        organizationId,
-        ...(supplierId && { supplierId }),
-      },
-      include: {
-        supplier: {
-          select: {
-            name: true,
-            code: true,
+    const performanceData =
+      await this.prisma.client.supplierPerformance.findMany({
+        where: {
+          organizationId,
+          ...(supplierId && { supplierId }),
+        },
+        include: {
+          supplier: {
+            select: {
+              name: true,
+              code: true,
+            },
           },
         },
-      },
-      orderBy: {
-        periodEnd: 'desc',
-      },
-      take: 12,
-    });
+        orderBy: {
+          periodEnd: "desc",
+        },
+        take: 12,
+      });
 
     return performanceData;
   }

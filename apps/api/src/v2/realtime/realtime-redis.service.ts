@@ -33,7 +33,7 @@ export class RealtimeRedisService {
   async getHistory(channel: string): Promise<any[]> {
     const key = `${this.HISTORY_PREFIX}${channel}`;
     const rawHistory = await this.redis.lrange(key, 0, -1);
-    return rawHistory.map((raw) => JSON.parse(raw)).reverse();
+    return rawHistory.map(raw => JSON.parse(raw)).reverse();
   }
 
   async getLastState(channel: string, event: string): Promise<any | null> {
@@ -79,8 +79,11 @@ export class RealtimeRedisService {
 
     // Cleanup expired members asynchronously to keep the read fast
     if (expiredClientIds.length > 0) {
-      this.redis.hdel(key, ...expiredClientIds).catch((err) => {
-        console.error(`Failed to cleanup expired presence members for ${channel}:`, err);
+      this.redis.hdel(key, ...expiredClientIds).catch(err => {
+        console.error(
+          `Failed to cleanup expired presence members for ${channel}:`,
+          err,
+        );
       });
     }
 

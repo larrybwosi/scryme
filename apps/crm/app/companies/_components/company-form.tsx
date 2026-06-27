@@ -1,12 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray } from 'react-hook-form';
-import { businessAccountSchema, type BusinessAccountFormValues } from '../../../lib/validations';
-import { createCompany, updateCompany } from '../../actions/companies';
-import { useOrg } from '../../../components/org-context';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFieldArray } from "react-hook-form";
+import {
+  businessAccountSchema,
+  type BusinessAccountFormValues,
+} from "../../../lib/validations";
+import { createCompany, updateCompany } from "../../actions/companies";
+import { useOrg } from "../../../components/org-context";
 import {
   Form,
   FormControl,
@@ -14,10 +17,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@repo/ui/components/ui/form';
-import { Input } from '@repo/ui/components/ui/input';
-import { Button } from '@repo/ui/components/ui/button';
-import { Plus, Trash2, Contact, Loader2 } from 'lucide-react';
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
+import { Plus, Trash2, Contact, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -34,8 +37,8 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
   const form = useForm<BusinessAccountFormValues>({
     resolver: zodResolver(businessAccountSchema),
     defaultValues: initialData || {
-      name: '',
-      taxId: '',
+      name: "",
+      taxId: "",
       contacts: [],
     },
   });
@@ -54,7 +57,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
       }
       onSuccess();
     } catch (error) {
-      console.error('Failed to save company', error);
+      console.error("Failed to save company", error);
     }
   };
 
@@ -66,7 +69,9 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
           name="name"
           render={({ field }: { field: any }) => (
             <FormItem>
-              <FormLabel>Company Name <span className="text-red-500">*</span></FormLabel>
+              <FormLabel>
+                Company Name <span className="text-red-500">*</span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Acme Corp" {...field} />
               </FormControl>
@@ -99,7 +104,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ name: '', email: '', phone: '' })}
+                onClick={() => append({ name: "", email: "", phone: "" })}
                 className="h-8 text-[12px]"
               >
                 <Plus size={14} className="mr-1" /> Add Contact
@@ -108,7 +113,10 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
 
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="p-3 border border-border rounded-lg bg-muted/30 space-y-3 relative group">
+                <div
+                  key={field.id}
+                  className="p-3 border border-border rounded-lg bg-muted/30 space-y-3 relative group"
+                >
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -128,7 +136,11 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Input placeholder="Contact Name" {...field} className="h-8 text-[13px]" />
+                          <Input
+                            placeholder="Contact Name"
+                            {...field}
+                            className="h-8 text-[13px]"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -141,7 +153,11 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Input placeholder="Email" {...field} className="h-8 text-[13px]" />
+                            <Input
+                              placeholder="Email"
+                              {...field}
+                              className="h-8 text-[13px]"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -153,7 +169,11 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <Input placeholder="Phone" {...field} className="h-8 text-[13px]" />
+                            <Input
+                              placeholder="Phone"
+                              {...field}
+                              className="h-8 text-[13px]"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -171,10 +191,10 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             {form.formState.isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {initialData ? 'Updating...' : 'Creating...'}
+                {initialData ? "Updating..." : "Creating..."}
               </>
             ) : (
-              <>{initialData ? 'Update' : 'Create'} Company</>
+              <>{initialData ? "Update" : "Create"} Company</>
             )}
           </Button>
         </div>

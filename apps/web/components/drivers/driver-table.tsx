@@ -12,7 +12,16 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
-import { User, Truck, Phone, Mail, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import {
+  User,
+  Truck,
+  Phone,
+  Mail,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -149,7 +158,9 @@ export function DriverTable({ data }: { data: Driver[] }) {
                 </TableCell>
                 <TableCell>
                   {driver.deliveryPartner ? (
-                    <Badge variant="secondary" className="font-normal text-[11px]">
+                    <Badge
+                      variant="secondary"
+                      className="font-normal text-[11px]">
                       {driver.deliveryPartner.name}
                     </Badge>
                   ) : (
@@ -171,7 +182,9 @@ export function DriverTable({ data }: { data: Driver[] }) {
                     <DropdownMenuContent align="end" className="w-[160px]">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem asChild>
-                        <Link href={`/staff/drivers/${driver.id}`} className="cursor-pointer">
+                        <Link
+                          href={`/staff/drivers/${driver.id}`}
+                          className="cursor-pointer">
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </Link>
@@ -179,8 +192,7 @@ export function DriverTable({ data }: { data: Driver[] }) {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600 cursor-pointer"
-                        onClick={() => handleDelete(driver.id)}
-                      >
+                        onClick={() => handleDelete(driver.id)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Driver
                       </DropdownMenuItem>

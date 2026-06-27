@@ -19,9 +19,11 @@ export function DetailActions({ department }: DetailActionsProps) {
       <EditDepartmentSheet
         department={department}
         open={editOpen}
-        onOpenChange={setEditOpen}
-      >
-        <Button variant="secondary" size="sm" className="gap-2 bg-white/10 hover:bg-white/20 border-none text-white backdrop-blur-md">
+        onOpenChange={setEditOpen}>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="gap-2 bg-white/10 hover:bg-white/20 border-none text-white backdrop-blur-md">
           <Edit size={16} />
           <span>Edit</span>
         </Button>
@@ -31,8 +33,7 @@ export function DetailActions({ department }: DetailActionsProps) {
         variant="destructive"
         size="sm"
         className="gap-2 bg-red-500/80 hover:bg-red-500 border-none text-white backdrop-blur-md"
-        onClick={() => setDeleteOpen(true)}
-      >
+        onClick={() => setDeleteOpen(true)}>
         <Trash2 size={16} />
         <span>Delete</span>
       </Button>

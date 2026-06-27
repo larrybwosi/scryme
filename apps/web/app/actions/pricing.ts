@@ -1,6 +1,13 @@
 "use server";
 
-import { db, Decimal, PricingMethod, RoundingMethod, PriceApprovalStatus, DiscountType } from "@repo/db";
+import {
+  db,
+  Decimal,
+  PricingMethod,
+  RoundingMethod,
+  PriceApprovalStatus,
+  DiscountType,
+} from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 
@@ -14,12 +21,12 @@ export async function getPriceLists() {
     },
     include: {
       _count: {
-        select: { items: true, customers: true }
-      }
+        select: { items: true, customers: true },
+      },
     },
     orderBy: {
-      priority: 'desc'
-    }
+      priority: "desc",
+    },
   });
 }
 
@@ -37,20 +44,20 @@ export async function getPriceList(id: string) {
         include: {
           variant: {
             include: {
-              product: true
-            }
+              product: true,
+            },
           },
           sellingUnit: {
             include: {
               systemUnit: true,
-              orgUnit: true
-            }
-          }
-        }
+              orgUnit: true,
+            },
+          },
+        },
       },
       rules: true,
       customers: true,
-    }
+    },
   });
 }
 
@@ -66,7 +73,8 @@ export async function createPriceList(data: {
   customerTags?: string[];
 }) {
   const context = await getServerAuth();
-  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
 
   const priceList = await db.priceList.create({
     data: {
@@ -83,7 +91,8 @@ export async function createPriceList(data: {
 
 export async function submitPriceListForApproval(id: string) {
   const context = await getServerAuth();
-  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
 
   const priceList = await db.priceList.update({
     where: { id, organizationId: context.organizationId },
@@ -101,7 +110,8 @@ export async function submitPriceListForApproval(id: string) {
 
 export async function approvePriceList(id: string, notes?: string) {
   const context = await getServerAuth();
-  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
 
   const priceList = await db.priceList.update({
     where: { id, organizationId: context.organizationId },
@@ -120,7 +130,8 @@ export async function approvePriceList(id: string, notes?: string) {
 
 export async function rejectPriceList(id: string, notes: string) {
   const context = await getServerAuth();
-  if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
 
   const priceList = await db.priceList.update({
     where: { id, organizationId: context.organizationId },
@@ -160,14 +171,17 @@ export async function deletePriceList(id: string) {
   revalidatePath("/inventory/pricelists");
 }
 
-export async function addPriceListItems(priceListId: string, items: Array<{
-  variantId: string;
-  sellingUnitId?: string | null;
-  method: PricingMethod;
-  percentageValue?: number | null;
-  price: number;
-  minQuantity?: number;
-}>) {
+export async function addPriceListItems(
+  priceListId: string,
+  items: Array<{
+    variantId: string;
+    sellingUnitId?: string | null;
+    method: PricingMethod;
+    percentageValue?: number | null;
+    price: number;
+    minQuantity?: number;
+  }>,
+) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -180,14 +194,14 @@ export async function addPriceListItems(priceListId: string, items: Array<{
               variantId: item.variantId,
               sellingUnitId: item.sellingUnitId,
               minQuantity: item.minQuantity ?? 1,
-            }
+            },
           }
         : {
             priceListId_variantId_minQuantity: {
               priceListId,
               variantId: item.variantId,
               minQuantity: item.minQuantity ?? 1,
-            }
+            },
           };
 
       return db.priceListItem.upsert({
@@ -196,15 +210,19 @@ export async function addPriceListItems(priceListId: string, items: Array<{
           ...item,
           priceListId,
           price: new Decimal(item.price),
-          percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
+          percentageValue: item.percentageValue
+            ? new Decimal(item.percentageValue)
+            : null,
         },
         update: {
           ...item,
           price: new Decimal(item.price),
-          percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
-        }
+          percentageValue: item.percentageValue
+            ? new Decimal(item.percentageValue)
+            : null,
+        },
       });
-    })
+    }),
   );
 
   revalidatePath(`/inventory/pricelists/${priceListId}`);
@@ -217,7 +235,7 @@ export async function removePriceListItem(id: string) {
 
   const item = await db.priceListItem.delete({
     where: { id },
-    select: { priceListId: true }
+    select: { priceListId: true },
   });
 
   if (item?.priceListId) {
@@ -231,13 +249,15 @@ export async function getUniqueCustomerTags() {
 
   const customers = await db.customer.findMany({
     where: { organizationId: context.organizationId },
-    select: { tags: true }
+    select: { tags: true },
   });
 
   const tags = new Set<string>();
-  customers.forEach((c: any) => c.tags.forEach((t: any) => {
-    if (t) tags.add(t);
-  }));
+  customers.forEach((c: any) =>
+    c.tags.forEach((t: any) => {
+      if (t) tags.add(t);
+    }),
+  );
 
   return Array.from(tags);
 }
@@ -254,12 +274,12 @@ export async function getProductsForPricing() {
           sellingUnits: {
             include: {
               systemUnit: true,
-              orgUnit: true
-            }
-          }
-        }
-      }
-    }
+              orgUnit: true,
+            },
+          },
+        },
+      },
+    },
   });
 }
 
@@ -306,7 +326,10 @@ export async function getCustomers() {
   });
 }
 
-export async function assignCustomersToPriceList(priceListId: string, customerIds: string[]) {
+export async function assignCustomersToPriceList(
+  priceListId: string,
+  customerIds: string[],
+) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -314,16 +337,19 @@ export async function assignCustomersToPriceList(priceListId: string, customerId
     where: { id: priceListId, organizationId: context.organizationId },
     data: {
       customers: {
-        connect: customerIds.map(id => ({ id }))
-      }
-    }
+        connect: customerIds.map(id => ({ id })),
+      },
+    },
   });
 
   revalidatePath(`/inventory/pricelists/${priceListId}`);
   return result;
 }
 
-export async function removeCustomerFromPriceList(priceListId: string, customerId: string) {
+export async function removeCustomerFromPriceList(
+  priceListId: string,
+  customerId: string,
+) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
@@ -331,9 +357,9 @@ export async function removeCustomerFromPriceList(priceListId: string, customerI
     where: { id: priceListId, organizationId: context.organizationId },
     data: {
       customers: {
-        disconnect: { id: customerId }
-      }
-    }
+        disconnect: { id: customerId },
+      },
+    },
   });
 
   revalidatePath(`/inventory/pricelists/${priceListId}`);

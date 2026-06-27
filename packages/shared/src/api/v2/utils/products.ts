@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma } from '@repo/db';
-import { formatVariantDisplayName } from './tokens';
+import { PrismaClient, Prisma } from "@repo/db";
+import { formatVariantDisplayName } from "./tokens";
 
 interface GetPosProductsParams {
   prisma: PrismaClient;
@@ -17,8 +17,8 @@ export async function getPosProducts({
   locationId,
   page = 1,
   limit = 50,
-  search = '',
-  categoryId = 'all',
+  search = "",
+  categoryId = "all",
 }: GetPosProductsParams) {
   try {
     const skip = (page - 1) * limit;
@@ -26,14 +26,14 @@ export async function getPosProducts({
     const searchFilter: Prisma.ProductWhereInput = search
       ? {
           OR: [
-            { name: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: "insensitive" } },
             {
               variants: {
                 some: {
                   OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { sku: { contains: search, mode: 'insensitive' } },
-                    { barcode: { contains: search, mode: 'insensitive' } },
+                    { name: { contains: search, mode: "insensitive" } },
+                    { sku: { contains: search, mode: "insensitive" } },
+                    { barcode: { contains: search, mode: "insensitive" } },
                   ],
                 },
               },
@@ -43,11 +43,13 @@ export async function getPosProducts({
       : {};
 
     const categoryFilter: Prisma.ProductWhereInput =
-      categoryId && categoryId !== 'all' ? { category: { name: categoryId } } : {};
+      categoryId && categoryId !== "all"
+        ? { category: { name: categoryId } }
+        : {};
 
     const whereClause: Prisma.ProductWhereInput = {
       organizationId,
-      type: 'FINISHED_GOOD',
+      type: "FINISHED_GOOD",
       isActive: true,
       ...searchFilter,
       ...categoryFilter,
@@ -133,16 +135,21 @@ export async function getPosProducts({
         let productTotalStock = 0;
 
         const variants = product.variants.map((variant: any) => {
-          const stock = variant.variantStocks.reduce((sum: number, s: any) => sum + (Number(s.availableStock) || 0), 0);
+          const stock = variant.variantStocks.reduce(
+            (sum: number, s: any) => sum + (Number(s.availableStock) || 0),
+            0,
+          );
           productTotalStock += stock;
 
           const sellableUnits: any[] = [];
-          const baseUnitId = variant.baseUnit?.id || variant.baseOrgUnit?.id || 'base';
-          const baseUnitName = variant.baseUnit?.name || variant.baseOrgUnit?.name || 'Unit';
+          const baseUnitId =
+            variant.baseUnit?.id || variant.baseOrgUnit?.id || "base";
+          const baseUnitName =
+            variant.baseUnit?.name || variant.baseOrgUnit?.name || "Unit";
 
           const formatPricing = (items: any[]) => {
             return (
-              items?.map(item => ({
+              items?.map((item) => ({
                 price: Number(item.price),
                 minQty: item.minQuantity,
                 maxQty: item.maxQuantity,
@@ -201,7 +208,7 @@ export async function getPosProducts({
         return {
           productId: product.id,
           name: product.name,
-          category: product.category?.name || 'Uncategorized',
+          category: product.category?.name || "Uncategorized",
           imageUrl: product.imageUrls?.[0] || null,
           totalStock: productTotalStock,
           variants,
@@ -219,8 +226,8 @@ export async function getPosProducts({
       },
     };
   } catch (error) {
-    console.error('Error fetching POS products:', error);
-    throw new Error('Could not fetch products for POS.');
+    console.error("Error fetching POS products:", error);
+    throw new Error("Could not fetch products for POS.");
   }
 }
 
@@ -247,7 +254,7 @@ export async function getPosProductsDelta({
 
     const whereClause: Prisma.ProductWhereInput = {
       organizationId,
-      type: 'FINISHED_GOOD',
+      type: "FINISHED_GOOD",
       isActive: true,
       OR: [
         { updatedAt: { gt: lastSyncDate } },
@@ -261,7 +268,10 @@ export async function getPosProductsDelta({
                 {
                   sellingUnits: {
                     some: {
-                      OR: [{ updatedAt: { gt: lastSyncDate } }, { createdAt: { gt: lastSyncDate } }],
+                      OR: [
+                        { updatedAt: { gt: lastSyncDate } },
+                        { createdAt: { gt: lastSyncDate } },
+                      ],
                     },
                   },
                 },
@@ -361,16 +371,21 @@ export async function getPosProductsDelta({
         let productTotalStock = 0;
 
         const variants = product.variants.map((variant: any) => {
-          const stock = variant.variantStocks.reduce((sum: number, s: any) => sum + (Number(s.availableStock) || 0), 0);
+          const stock = variant.variantStocks.reduce(
+            (sum: number, s: any) => sum + (Number(s.availableStock) || 0),
+            0,
+          );
           productTotalStock += stock;
 
           const sellableUnits: any[] = [];
-          const baseUnitId = variant.baseUnit?.id || variant.baseOrgUnit?.id || 'base';
-          const baseUnitName = variant.baseUnit?.name || variant.baseOrgUnit?.name || 'Unit';
+          const baseUnitId =
+            variant.baseUnit?.id || variant.baseOrgUnit?.id || "base";
+          const baseUnitName =
+            variant.baseUnit?.name || variant.baseOrgUnit?.name || "Unit";
 
           const formatPricing = (items: any[]) => {
             return (
-              items?.map(item => ({
+              items?.map((item) => ({
                 price: Number(item.price),
                 minQty: item.minQuantity,
                 maxQty: item.maxQuantity,
@@ -430,7 +445,7 @@ export async function getPosProductsDelta({
         return {
           productId: product.id,
           name: product.name,
-          category: product.category?.name || 'Uncategorized',
+          category: product.category?.name || "Uncategorized",
           imageUrl: product.imageUrls?.[0] || null,
           totalStock: productTotalStock,
           variants,
@@ -451,7 +466,7 @@ export async function getPosProductsDelta({
       syncTimestamp: new Date(),
     };
   } catch (error) {
-    console.error('Error fetching POS delta products:', error);
-    throw new Error('Could not fetch delta products for POS.');
+    console.error("Error fetching POS delta products:", error);
+    throw new Error("Could not fetch delta products for POS.");
   }
 }

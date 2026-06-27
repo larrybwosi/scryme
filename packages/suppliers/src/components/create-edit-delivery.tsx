@@ -1,19 +1,41 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
-import { Calendar } from '@repo/ui/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@repo/ui/components/ui/form';
-import { cn } from '../lib/utils';
+import { useState, useEffect } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { Calendar } from "@repo/ui/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@repo/ui/components/ui/form";
+import { cn } from "../lib/utils";
 import {
   Truck,
   Package,
@@ -24,14 +46,14 @@ import {
   FileText,
   Upload,
   X,
-} from 'lucide-react';
-import { SupplierSelect } from './supplier-select';
-import { createPurchaseSchema, type CreatePurchaseInput } from '../lib';
-import { format } from 'date-fns';
-import { useCreatePurchase } from '../lib';
-import Image from 'next/image';
-import { ProductVariantsSelect } from './product-variant-select';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { SupplierSelect } from "./supplier-select";
+import { createPurchaseSchema, type CreatePurchaseInput } from "../lib";
+import { format } from "date-fns";
+import { useCreatePurchase } from "../lib";
+import Image from "next/image";
+import { ProductVariantsSelect } from "./product-variant-select";
+import { toast } from "sonner";
 
 interface DeliveryModalProps {
   delivery: any | null;
@@ -40,17 +62,24 @@ interface DeliveryModalProps {
   onSave: (delivery: any) => void;
 }
 
-export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave }: DeliveryModalProps) {
+export default function SheduleDeliveryModal({
+  delivery,
+  isOpen,
+  onClose,
+  onSave,
+}: DeliveryModalProps) {
   const createPurchaseMutation = useCreatePurchase();
   const [isUploading, setIsUploading] = useState(false);
-  const [attachmentPreviews, setAttachmentPreviews] = useState<Array<{ file: File; previewUrl: string }>>([]);
+  const [attachmentPreviews, setAttachmentPreviews] = useState<
+    Array<{ file: File; previewUrl: string }>
+  >([]);
 
   const form = useForm<CreatePurchaseInput>({
     resolver: zodResolver(createPurchaseSchema as any),
     defaultValues: {
-      supplierId: '',
+      supplierId: "",
       expectedDate: null,
-      notes: '',
+      notes: "",
       items: [],
       attachments: [],
     },
@@ -58,27 +87,29 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'items',
+    name: "items",
   });
 
-  const items = form.watch('items');
+  const items = form.watch("items");
 
   useEffect(() => {
     if (isOpen) {
       if (delivery) {
         // If editing existing delivery, populate form
-        const expectedDate = delivery.expectedDate ? new Date(delivery.expectedDate) : null;
+        const expectedDate = delivery.expectedDate
+          ? new Date(delivery.expectedDate)
+          : null;
 
         form.reset({
-          supplierId: delivery.supplierId || '',
+          supplierId: delivery.supplierId || "",
           expectedDate: expectedDate ? expectedDate.toISOString() : null,
-          notes: delivery.notes || '',
+          notes: delivery.notes || "",
           items:
             // eslint-disable-next-line
             delivery.items?.map((item: any) => ({
-              variantId: item.variantId || '',
+              variantId: item.variantId || "",
               orderedQuantity: item.orderedQuantity || 1,
-              orderedUnitId: item.orderedUnitId || '',
+              orderedUnitId: item.orderedUnitId || "",
             })) || [],
           attachments: delivery.attachments || [],
         });
@@ -87,14 +118,14 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
         if (delivery.attachments?.length > 0) {
           // For existing attachments, you might want to show them differently
           // since they're already uploaded. This depends on your API structure.
-          console.log('Existing attachments:', delivery.attachments);
+          console.log("Existing attachments:", delivery.attachments);
         }
       } else {
         // Reset form for new delivery
         form.reset({
-          supplierId: '',
+          supplierId: "",
           expectedDate: null,
-          notes: '',
+          notes: "",
           items: [],
           attachments: [],
         });
@@ -105,15 +136,15 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
 
   const handleFileUpload = async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
-    const response = await fetch('/api/upload?file=true', {
-      method: 'POST',
+    const response = await fetch("/api/upload?file=true", {
+      method: "POST",
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload file');
+      throw new Error("Failed to upload file");
     }
 
     const data = await response.json();
@@ -124,16 +155,16 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
     const files = e.target.files;
     if (!files) return;
 
-    const newPreviews = Array.from(files).map(file => ({
+    const newPreviews = Array.from(files).map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
     }));
 
-    setAttachmentPreviews(prev => [...prev, ...newPreviews]);
+    setAttachmentPreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const removeAttachmentPreview = (index: number) => {
-    setAttachmentPreviews(prev => {
+    setAttachmentPreviews((prev) => {
       const newPreviews = [...prev];
       URL.revokeObjectURL(newPreviews[index].previewUrl);
       newPreviews.splice(index, 1);
@@ -145,7 +176,7 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
     try {
       setIsUploading(true);
       const uploadedAttachments = await Promise.all(
-        attachmentPreviews.map(async preview => {
+        attachmentPreviews.map(async (preview) => {
           const url = await handleFileUpload(preview.file);
           return {
             fileUrl: url,
@@ -153,7 +184,7 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
             mimeType: preview.file.type,
             sizeBytes: preview.file.size,
           };
-        })
+        }),
       );
 
       const finalData = {
@@ -165,14 +196,14 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
         onSuccess: (newPurchase) => {
           onSave(newPurchase);
           onClose();
-          toast.success('Purchase order created successfully');
+          toast.success("Purchase order created successfully");
         },
         onError: (error) => {
-          toast.error('Failed to create purchase order: ' + error.message);
-        }
+          toast.error("Failed to create purchase order: " + error.message);
+        },
       });
     } catch (error) {
-      toast.error('Failed to upload attachments');
+      toast.error("Failed to upload attachments");
     } finally {
       setIsUploading(false);
     }
@@ -180,9 +211,9 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
 
   const addProductItem = () => {
     append({
-      variantId: '',
+      variantId: "",
       orderedQuantity: 1,
-      orderedUnitId: '',
+      orderedUnitId: "",
     });
   };
 
@@ -192,17 +223,20 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Truck className="h-5 w-5 text-primary" />
-            {delivery ? 'Edit Purchase Order' : 'Create New Purchase Order'}
+            {delivery ? "Edit Purchase Order" : "Create New Purchase Order"}
           </DialogTitle>
           <DialogDescription>
             {delivery
-              ? 'Update the details for this purchase order.'
-              : 'Fill in the details to create a new purchase order for a supplier.'}
+              ? "Update the details for this purchase order."
+              : "Fill in the details to create a new purchase order for a supplier."}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 overflow-y-auto pr-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 overflow-y-auto pr-2"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column - Supplier and Dates */}
               <div className="space-y-4">
@@ -242,11 +276,15 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                             <Button
                               variant="outline"
                               className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground",
                               )}
                             >
-                              {field.value ? format(new Date(field.value), 'PPP') : <span>Pick a date</span>}
+                              {field.value ? (
+                                format(new Date(field.value), "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -254,9 +292,15 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? date.toISOString() : null)}
-                            disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            selected={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            onSelect={(date) =>
+                              field.onChange(date ? date.toISOString() : null)
+                            }
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
                             initialFocus
                           />
                         </PopoverContent>
@@ -280,7 +324,7 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                           placeholder="Any special instructions or comments for this purchase order..."
                           className="min-h-[80px]"
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -303,15 +347,19 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                       accept="image/*,.pdf,.doc,.docx"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Upload supporting documents. Files will be uploaded when you submit the form.
+                      Upload supporting documents. Files will be uploaded when
+                      you submit the form.
                     </p>
 
                     {/* Attachment Previews */}
                     <div className="space-y-2">
                       {attachmentPreviews.map((preview, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 border rounded-md">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 border rounded-md"
+                        >
                           <div className="flex items-center gap-2">
-                            {preview.file.type.startsWith('image/') ? (
+                            {preview.file.type.startsWith("image/") ? (
                               <Image
                                 src={preview.previewUrl}
                                 alt={preview.file.name}
@@ -322,7 +370,9 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                             ) : (
                               <FileText className="h-8 w-8 text-gray-400" />
                             )}
-                            <span className="text-sm truncate max-w-[200px]">{preview.file.name}</span>
+                            <span className="text-sm truncate max-w-[200px]">
+                              {preview.file.name}
+                            </span>
                           </div>
                           <Button
                             type="button"
@@ -355,7 +405,12 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                         </div>
                         <div className="flex justify-between">
                           <span>Total Quantity:</span>
-                          <span>{items.reduce((sum, item) => sum + (item.orderedQuantity || 0), 0)}</span>
+                          <span>
+                            {items.reduce(
+                              (sum, item) => sum + (item.orderedQuantity || 0),
+                              0,
+                            )}
+                          </span>
                         </div>
                       </div>
                     </CardContent>
@@ -379,12 +434,21 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                 <ScrollArea className="max-h-[400px] border rounded-md p-4">
                   <div className="space-y-4">
                     {fields.map((field, index) => {
-                      const quantity = form.watch(`items.${index}.orderedQuantity`) || 0;
+                      const quantity =
+                        form.watch(`items.${index}.orderedQuantity`) || 0;
 
                       return (
-                        <div key={field.id} className="space-y-3 p-3 border rounded-lg">
+                        <div
+                          key={field.id}
+                          className="space-y-3 p-3 border rounded-lg"
+                        >
                           <div className="flex items-center justify-between">
-                            <Button type="button" size="sm" variant="ghost" onClick={() => remove(index)}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => remove(index)}
+                            >
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
@@ -396,7 +460,9 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                               name={`items.${index}.variantId`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-xs">Product Variant *</FormLabel>
+                                  <FormLabel className="text-xs">
+                                    Product Variant *
+                                  </FormLabel>
                                   <FormControl>
                                     <ProductVariantsSelect
                                       value={field.value}
@@ -420,13 +486,19 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                                 name={`items.${index}.orderedQuantity`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-xs">Quantity *</FormLabel>
+                                    <FormLabel className="text-xs">
+                                      Quantity *
+                                    </FormLabel>
                                     <FormControl>
                                       <Input
                                         type="number"
                                         min="1"
-                                        value={field.value || ''}
-                                        onChange={e => field.onChange(parseInt(e.target.value) || 1)}
+                                        value={field.value || ""}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseInt(e.target.value) || 1,
+                                          )
+                                        }
                                       />
                                     </FormControl>
                                     <FormMessage />
@@ -440,12 +512,14 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                                 name={`items.${index}.orderedUnitId`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-xs">Unit *</FormLabel>
+                                    <FormLabel className="text-xs">
+                                      Unit *
+                                    </FormLabel>
                                     <FormControl>
-                                       <Input
-                                          placeholder="Unit (e.g. KG)"
-                                          {...field}
-                                       />
+                                      <Input
+                                        placeholder="Unit (e.g. KG)"
+                                        {...field}
+                                      />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -454,7 +528,9 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                             </div>
 
                             {/* Item Quantity Display */}
-                            <div className="text-xs text-muted-foreground pt-2 border-t">Quantity: {quantity}</div>
+                            <div className="text-xs text-muted-foreground pt-2 border-t">
+                              Quantity: {quantity}
+                            </div>
                           </div>
                         </div>
                       );
@@ -464,7 +540,9 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
                       <div className="text-center py-8 text-muted-foreground">
                         <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>No items added yet</p>
-                        <p className="text-sm">Click "Add Item" to start building your purchase order</p>
+                        <p className="text-sm">
+                          Click "Add Item" to start building your purchase order
+                        </p>
                       </div>
                     )}
                   </div>
@@ -477,12 +555,19 @@ export default function SheduleDeliveryModal({ delivery, isOpen, onClose, onSave
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createPurchaseMutation.isPending || isUploading || items.length === 0}>
+              <Button
+                type="submit"
+                disabled={
+                  createPurchaseMutation.isPending ||
+                  isUploading ||
+                  items.length === 0
+                }
+              >
                 {createPurchaseMutation.isPending || isUploading
-                  ? 'Saving...'
+                  ? "Saving..."
                   : delivery
-                    ? 'Update Purchase Order'
-                    : 'Create Purchase Order'}
+                    ? "Update Purchase Order"
+                    : "Create Purchase Order"}
               </Button>
             </div>
           </form>

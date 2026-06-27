@@ -137,7 +137,9 @@ export async function submitForApprovalCore(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestId: request.id }),
-    }).catch((err) => console.error("Failed to trigger scryme notification:", err));
+    }).catch((err) =>
+      console.error("Failed to trigger scryme notification:", err),
+    );
   }
 
   return request;
@@ -229,8 +231,7 @@ export async function makeApprovalDecisionCore(
 
     if (finalStatus === "APPROVED") {
       const hasMoreSteps =
-        request.workflow &&
-        request.workflow.steps.length > request.currentStep;
+        request.workflow && request.workflow.steps.length > request.currentStep;
       if (hasMoreSteps) {
         nextStep = request.currentStep + 1;
         finalStatus = "PENDING";
@@ -305,7 +306,12 @@ export async function makeApprovalDecisionCore(
     }
   }
 
-  const result = { request, finalStatus, nextStep, originalStep: request.currentStep };
+  const result = {
+    request,
+    finalStatus,
+    nextStep,
+    originalStep: request.currentStep,
+  };
 
   // Trigger Scryme notification updates if configured
   if (process.env.PUBLIC_API_URL) {
@@ -320,7 +326,9 @@ export async function makeApprovalDecisionCore(
         memberId: memberId,
         stepNumber: result.originalStep,
       }),
-    }).catch((err) => console.error("Failed to trigger scryme update-messages:", err));
+    }).catch((err) =>
+      console.error("Failed to trigger scryme update-messages:", err),
+    );
 
     // If moved to next step, notify new approvers
     if (nextStep > result.originalStep) {
@@ -328,7 +336,9 @@ export async function makeApprovalDecisionCore(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId: request.id }),
-      }).catch((err) => console.error("Failed to trigger scryme notify for next step:", err));
+      }).catch((err) =>
+        console.error("Failed to trigger scryme notify for next step:", err),
+      );
     }
 
     // If final decision or info requested, notify requester
@@ -342,7 +352,9 @@ export async function makeApprovalDecisionCore(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId: request.id }),
-      }).catch((err) => console.error("Failed to trigger scryme notify-requester:", err));
+      }).catch((err) =>
+        console.error("Failed to trigger scryme notify-requester:", err),
+      );
     }
   }
 

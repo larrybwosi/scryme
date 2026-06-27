@@ -43,7 +43,9 @@ const variantSchema = z.object({
 
 const formSchema = z.object({
   productId: z.string().min(1, "Product is required"),
-  variants: z.array(variantSchema).min(1, "At least one variant must be selected"),
+  variants: z
+    .array(variantSchema)
+    .min(1, "At least one variant must be selected"),
 });
 
 interface AddProductModalProps {
@@ -146,15 +148,19 @@ export function AddProductToCatalogModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl rounded-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold">Add Product to Catalog</DialogTitle>
+          <DialogTitle className="text-xl font-bold">
+            Add Product to Catalog
+          </DialogTitle>
           <DialogDescription>
-            Select a product and variants from your inventory to add to this supplier&apos;s
-            catalog.
+            Select a product and variants from your inventory to add to this
+            supplier&apos;s catalog.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 overflow-hidden">
             <div className="p-6 space-y-6 flex-1 overflow-hidden flex flex-col">
               <FormField
                 control={form.control}
@@ -169,7 +175,11 @@ export function AddProductToCatalogModal({
                         products={products}
                         value={field.value}
                         onValueChange={onProductChange}
-                        placeholder={isLoadingProducts ? "Loading products..." : "Select a product"}
+                        placeholder={
+                          isLoadingProducts
+                            ? "Loading products..."
+                            : "Select a product"
+                        }
                         className="h-11 rounded-xl"
                       />
                     </FormControl>
@@ -189,7 +199,8 @@ export function AddProductToCatalogModal({
                       Product Variants
                     </h4>
                     <Badge variant="outline" className="rounded-md">
-                      {fields.length} Variant{fields.length !== 1 ? "s" : ""} Found
+                      {fields.length} Variant{fields.length !== 1 ? "s" : ""}{" "}
+                      Found
                     </Badge>
                   </div>
 
@@ -202,8 +213,7 @@ export function AddProductToCatalogModal({
                             form.watch(`variants.${index}.selected`)
                               ? "border-primary/20 shadow-sm"
                               : "opacity-60 border-transparent grayscale-[0.5]"
-                          }`}
-                        >
+                          }`}>
                           <div className="flex items-start gap-4">
                             <FormField
                               control={form.control}
@@ -222,11 +232,17 @@ export function AddProductToCatalogModal({
                             <div className="flex-1 space-y-4">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <p className="font-bold text-sm">{field.name}</p>
-                                  <p className="text-xs text-muted-foreground font-mono">{field.sku}</p>
+                                  <p className="font-bold text-sm">
+                                    {field.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground font-mono">
+                                    {field.sku}
+                                  </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Retail Price</p>
+                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+                                    Retail Price
+                                  </p>
                                   <p className="font-bold text-sm text-green-600">
                                     KES {field.retailPrice.toLocaleString()}
                                   </p>
@@ -239,13 +255,19 @@ export function AddProductToCatalogModal({
                                   name={`variants.${index}.costPrice`}
                                   render={({ field: inputField }) => (
                                     <FormItem>
-                                      <FormLabel className="text-[10px] font-bold uppercase text-muted-foreground">Buying Cost</FormLabel>
+                                      <FormLabel className="text-[10px] font-bold uppercase text-muted-foreground">
+                                        Buying Cost
+                                      </FormLabel>
                                       <FormControl>
                                         <Input
                                           {...inputField}
                                           type="number"
                                           step="0.01"
-                                          disabled={!form.watch(`variants.${index}.selected`)}
+                                          disabled={
+                                            !form.watch(
+                                              `variants.${index}.selected`,
+                                            )
+                                          }
                                           className="h-9 text-sm rounded-lg"
                                           placeholder="0.00"
                                         />
@@ -259,11 +281,17 @@ export function AddProductToCatalogModal({
                                   name={`variants.${index}.supplierSku`}
                                   render={({ field: inputField }) => (
                                     <FormItem>
-                                      <FormLabel className="text-[10px] font-bold uppercase text-muted-foreground">Supplier SKU</FormLabel>
+                                      <FormLabel className="text-[10px] font-bold uppercase text-muted-foreground">
+                                        Supplier SKU
+                                      </FormLabel>
                                       <FormControl>
                                         <Input
                                           {...inputField}
-                                          disabled={!form.watch(`variants.${index}.selected`)}
+                                          disabled={
+                                            !form.watch(
+                                              `variants.${index}.selected`,
+                                            )
+                                          }
                                           className="h-9 text-sm rounded-lg"
                                           placeholder="Optional"
                                         />

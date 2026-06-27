@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Check, ChevronsUpDown, User, Loader2, Plus } from 'lucide-react';
+import * as React from "react";
+import { Check, ChevronsUpDown, User, Loader2, Plus } from "lucide-react";
 
-import { cn } from '../lib/utils';
-import { Button } from './ui/button';
+import { cn } from "../lib/utils";
+import { Button } from "./ui/button";
 import {
   Command,
   CommandEmpty,
@@ -13,8 +13,8 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+} from "./ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 // --- Types ---
 
@@ -56,7 +56,7 @@ interface CustomerSelectProps {
 export const CustomerSelect: React.FC<CustomerSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a customer...',
+  placeholder = "Select a customer...",
   disabled = false,
   required = false,
   excludeCustomer,
@@ -71,44 +71,58 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
   // Filter out excluded customers
   const filteredCustomers = React.useMemo(() => {
     if (!customers) return [];
-    return excludeCustomer ? customers.filter(c => c.id !== excludeCustomer) : customers;
+    return excludeCustomer
+      ? customers.filter((c) => c.id !== excludeCustomer)
+      : customers;
   }, [customers, excludeCustomer]);
 
   // Find the currently selected customer object for display
   const selectedCustomer = React.useMemo(() => {
-    return filteredCustomers.find(c => c.id === value);
+    return filteredCustomers.find((c) => c.id === value);
   }, [filteredCustomers, value]);
 
   // Helper to check if address exists
   const hasAddressDetails = (customer: Customer): boolean => {
     return !!(
       customer.address &&
-      (customer.address.street || customer.address.city || customer.address.state || customer.address.zipCode)
+      (customer.address.street ||
+        customer.address.city ||
+        customer.address.state ||
+        customer.address.zipCode)
     );
   };
 
   // Helper to format details (Address vs Contact Info)
   const formatCustomerDetails = (customer: Customer): string => {
     if (showAddress && hasAddressDetails(customer) && customer.address) {
-      const addressParts = [customer.address.city, customer.address.state].filter(Boolean);
+      const addressParts = [
+        customer.address.city,
+        customer.address.state,
+      ].filter(Boolean);
 
       // If city/state are empty, try street
       if (addressParts.length === 0 && customer.address.street) {
         return customer.address.street;
       }
 
-      return addressParts.join(', ');
+      return addressParts.join(", ");
     }
 
     // Fallback to Contact Info
-    const details = [customer.company, customer.email || customer.phone].filter(Boolean);
-    return details.join(' • ');
+    const details = [customer.company, customer.email || customer.phone].filter(
+      Boolean,
+    );
+    return details.join(" • ");
   };
 
   // --- Loading State ---
   if (isLoading) {
     return (
-      <Button variant="outline" disabled className="w-full justify-between cursor-not-allowed opacity-70">
+      <Button
+        variant="outline"
+        disabled
+        className="w-full justify-between cursor-not-allowed opacity-70"
+      >
         <span className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading customers...
@@ -139,8 +153,8 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
           aria-expanded={open}
           disabled={disabled || filteredCustomers.length === 0}
           className={cn(
-            'w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground',
-            !value && 'text-muted-foreground'
+            "w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground",
+            !value && "text-muted-foreground",
           )}
         >
           {selectedCustomer ? (
@@ -164,7 +178,7 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
             <CommandEmpty>No customer found.</CommandEmpty>
 
             <CommandGroup heading="Customers">
-              {filteredCustomers.map(customer => (
+              {filteredCustomers.map((customer) => (
                 <CommandItem
                   key={customer.id}
                   value={customer.name} // Used for search filtering
@@ -176,10 +190,16 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
                 >
                   <div className="flex flex-col w-full overflow-hidden">
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-medium text-foreground truncate">{customer.name}</span>
-                      {value === customer.id && <Check className="h-4 w-4 text-primary shrink-0 ml-2" />}
+                      <span className="font-medium text-foreground truncate">
+                        {customer.name}
+                      </span>
+                      {value === customer.id && (
+                        <Check className="h-4 w-4 text-primary shrink-0 ml-2" />
+                      )}
                     </div>
-                    <span className="text-xs text-muted-foreground truncate">{formatCustomerDetails(customer)}</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {formatCustomerDetails(customer)}
+                    </span>
                   </div>
                 </CommandItem>
               ))}

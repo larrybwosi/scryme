@@ -35,15 +35,27 @@ export class BakeryReportScheduler {
 
         const [reportHour] = settings.scrymeReportTime.split(":").map(Number);
 
-        if (settings.scrymeReportDay === currentDay && reportHour === currentHour) {
-          this.logger.log(`Triggering weekly bakery report for org ${settings.organizationId} (TZ: ${settings.timezone})`);
+        if (
+          settings.scrymeReportDay === currentDay &&
+          reportHour === currentHour
+        ) {
+          this.logger.log(
+            `Triggering weekly bakery report for org ${settings.organizationId} (TZ: ${settings.timezone})`,
+          );
 
           // Fire and forget
-          this.bakeryReportService.generateAndSendReport(settings.organizationId, 7)
-            .catch(err => this.logger.error(`Error in scheduled bakery report for org ${settings.organizationId}: ${err.message}`));
+          this.bakeryReportService
+            .generateAndSendReport(settings.organizationId, 7)
+            .catch(err =>
+              this.logger.error(
+                `Error in scheduled bakery report for org ${settings.organizationId}: ${err.message}`,
+              ),
+            );
         }
       } catch (error) {
-        this.logger.error(`Failed to process scheduled report for organization ${settings.organizationId}: ${error.message}`);
+        this.logger.error(
+          `Failed to process scheduled report for organization ${settings.organizationId}: ${error.message}`,
+        );
       }
     }
   }

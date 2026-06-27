@@ -204,22 +204,24 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             );
           })}
 
-          {deviceType === 'MAIN_HUB' && import.meta.env.MODE !== 'standalone' && (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'restaurant' && (
-            <Button
-              asChild
-              variant={isRouteActive('/hub-overview') ? 'secondary' : 'ghost'}
-              className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
-            >
-              <Link to="/hub-overview">
-                <Activity className={cn('w-4 h-4 shrink-0', isRouteActive('/hub-overview') && 'text-primary')} />
-                {!isCollapsed && (
-                  <span className={cn('truncate', isRouteActive('/hub-overview') && 'font-semibold')}>
-                    Hub Overview
-                  </span>
-                )}
-              </Link>
-            </Button>
-          )}
+          {deviceType === 'MAIN_HUB' &&
+            import.meta.env.MODE !== 'standalone' &&
+            (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'restaurant' && (
+              <Button
+                asChild
+                variant={isRouteActive('/hub-overview') ? 'secondary' : 'ghost'}
+                className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
+              >
+                <Link to="/hub-overview">
+                  <Activity className={cn('w-4 h-4 shrink-0', isRouteActive('/hub-overview') && 'text-primary')} />
+                  {!isCollapsed && (
+                    <span className={cn('truncate', isRouteActive('/hub-overview') && 'font-semibold')}>
+                      Hub Overview
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            )}
 
           <div className="my-4 border-t pt-4">
             {/* Hardcoded Items with correct isActive check */}
@@ -308,13 +310,16 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                       onClick={() => switchMember(member.id)}
                       className={cn(
                         'relative group transition-all',
-                        currentMember?.id === member.id && 'ring-2 ring-primary ring-offset-2 ring-offset-card rounded-full'
+                        currentMember?.id === member.id &&
+                          'ring-2 ring-primary ring-offset-2 ring-offset-card rounded-full'
                       )}
                       title={member.name}
                     >
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={member.image} />
-                        <AvatarFallback className="text-[10px]">{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="text-[10px]">
+                          {member.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       {currentMember?.id === member.id && (
                         <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-card flex items-center justify-center">
@@ -353,12 +358,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                 </div>
               )}
               {isCollapsed && checkedInMembers.length > 1 ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground"
-                  asChild
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" asChild>
                   <Link to="/checkin">
                     <Plus className="w-4 h-4" />
                   </Link>

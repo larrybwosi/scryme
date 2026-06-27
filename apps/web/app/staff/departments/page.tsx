@@ -10,15 +10,20 @@ export default async function DepartmentsPage({ searchParams }: Props) {
   const { search } = await searchParams;
   const [deptResult, statsResult] = await Promise.all([
     getDepartments(search),
-    getDepartmentStats()
+    getDepartmentStats(),
   ]);
 
   const departments = (deptResult.success ? deptResult.data : []) || [];
-  const stats = statsResult.success ? statsResult.data : { totalDepartments: 0, totalMembers: 0, totalBudget: 0 };
+  const stats = statsResult.success
+    ? statsResult.data
+    : { totalDepartments: 0, totalMembers: 0, totalBudget: 0 };
 
   return (
     <Suspense>
-      <DepartmentsClient initialDepartments={departments as any} stats={stats} />
+      <DepartmentsClient
+        initialDepartments={departments as any}
+        stats={stats}
+      />
     </Suspense>
   );
 }

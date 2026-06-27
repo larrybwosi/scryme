@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { Checkbox } from '@repo/ui/components/ui/checkbox';
-import { Button } from '@repo/ui/components/ui/button';
-import { Badge } from '@repo/ui/components/ui/badge';
+import React, { useState, useMemo } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { Button } from "@repo/ui/components/ui/button";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
-} from '@repo/ui/components/ui/dropdown-menu';
+} from "@repo/ui/components/ui/dropdown-menu";
 import {
   ArrowUpDown,
   ArrowUp,
@@ -26,14 +33,10 @@ import {
   Columns3,
   Download,
   UserPlus,
-
-
-
-
   FileText,
-} from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import { CrmObjectDefinition, CrmRecord, CrmFieldType } from '../types';
+} from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
+import { CrmObjectDefinition, CrmRecord, CrmFieldType } from "../types";
 
 interface CrmDataTableProps {
   objectDefinition: CrmObjectDefinition & { fields: any[] };
@@ -46,24 +49,32 @@ interface CrmDataTableProps {
   onExport?: (records: CrmRecord[]) => void;
 }
 
-type SortDirection = 'asc' | 'desc' | null;
+type SortDirection = "asc" | "desc" | null;
 
 const formatFieldValue = (value: any, type: CrmFieldType): React.ReactNode => {
-  if (value === null || value === undefined || value === '') {
+  if (value === null || value === undefined || value === "") {
     return <span className="text-muted-foreground">-</span>;
   }
 
   switch (type) {
     case CrmFieldType.EMAIL: {
       return (
-        <a href={`mailto:${value}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
+        <a
+          href={`mailto:${value}`}
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
           {value}
         </a>
       );
     }
     case CrmFieldType.PHONE: {
       return (
-        <a href={`tel:${value}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>
+        <a
+          href={`tel:${value}`}
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
           {value}
         </a>
       );
@@ -75,7 +86,7 @@ const formatFieldValue = (value: any, type: CrmFieldType): React.ReactNode => {
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline truncate max-w-[200px] block"
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           {value}
         </a>
@@ -83,22 +94,22 @@ const formatFieldValue = (value: any, type: CrmFieldType): React.ReactNode => {
     }
     case CrmFieldType.DATE: {
       try {
-        return new Date(value).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
+        return new Date(value).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
         });
       } catch {
         return value;
       }
     }
     case CrmFieldType.NUMBER: {
-      return typeof value === 'number' ? value.toLocaleString() : value;
+      return typeof value === "number" ? value.toLocaleString() : value;
     }
     case CrmFieldType.BOOLEAN: {
       return (
-        <Badge variant={value ? 'default' : 'secondary'} className="text-xs">
-          {value ? 'Yes' : 'No'}
+        <Badge variant={value ? "default" : "secondary"} className="text-xs">
+          {value ? "Yes" : "No"}
         </Badge>
       );
     }
@@ -152,16 +163,19 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(fields.map((f: any) => f.name)));
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
+    new Set(fields.map((f: any) => f.name)),
+  );
 
   const allSelected = records.length > 0 && selectedIds.size === records.length;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < records.length;
+  const someSelected =
+    selectedIds.size > 0 && selectedIds.size < records.length;
 
   const handleSelectAll = () => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(records.map(r => r.id)));
+      setSelectedIds(new Set(records.map((r) => r.id)));
     }
   };
 
@@ -177,17 +191,17 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
 
   const handleSort = (fieldName: string) => {
     if (sortField === fieldName) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
         setSortField(null);
         setSortDirection(null);
       } else {
-        setSortDirection('asc');
+        setSortDirection("asc");
       }
     } else {
       setSortField(fieldName);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
@@ -201,12 +215,16 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
 
-      const comparison = String(aValue).localeCompare(String(bValue), undefined, { numeric: true });
-      return sortDirection === 'asc' ? comparison : -comparison;
+      const comparison = String(aValue).localeCompare(
+        String(bValue),
+        undefined,
+        { numeric: true },
+      );
+      return sortDirection === "asc" ? comparison : -comparison;
     });
   }, [records, sortField, sortDirection]);
 
-  const selectedRecords = records.filter(r => selectedIds.has(r.id));
+  const selectedRecords = records.filter((r) => selectedIds.has(r.id));
   const visibleFields = fields.filter((f: any) => visibleColumns.has(f.name));
 
   return (
@@ -215,17 +233,28 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
       {selectedIds.size > 0 && (
         <div className="flex items-center justify-between px-4 py-2 bg-primary/5 border-b">
           <span className="text-sm font-medium">
-            {selectedIds.size} record{selectedIds.size !== 1 ? 's' : ''} selected
+            {selectedIds.size} record{selectedIds.size !== 1 ? "s" : ""}{" "}
+            selected
           </span>
           <div className="flex items-center gap-2">
             {onBulkAssign && (
-              <Button variant="outline" size="sm" onClick={() => onBulkAssign(selectedRecords)} className="h-7 gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onBulkAssign(selectedRecords)}
+                className="h-7 gap-1.5"
+              >
                 <UserPlus className="h-3.5 w-3.5" />
                 Assign
               </Button>
             )}
             {onExport && (
-              <Button variant="outline" size="sm" onClick={() => onExport(selectedRecords)} className="h-7 gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onExport(selectedRecords)}
+                className="h-7 gap-1.5"
+              >
                 <Download className="h-3.5 w-3.5" />
                 Export
               </Button>
@@ -241,7 +270,12 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
                 Delete
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="h-7">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+              className="h-7"
+            >
               Clear
             </Button>
           </div>
@@ -264,7 +298,7 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
               <DropdownMenuCheckboxItem
                 key={field.id}
                 checked={visibleColumns.has(field.name)}
-                onCheckedChange={checked => {
+                onCheckedChange={(checked) => {
                   const newVisible = new Set(visibleColumns);
                   if (checked) {
                     newVisible.add(field.name);
@@ -287,7 +321,7 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
             <TableHead className="w-12">
               <Checkbox
                 checked={allSelected}
-                ref={el => {
+                ref={(el) => {
                   if (el) (el as any).indeterminate = someSelected;
                 }}
                 onCheckedChange={handleSelectAll}
@@ -295,11 +329,15 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
               />
             </TableHead>
             {visibleFields.map((field: any) => (
-              <TableHead key={field.id} className="cursor-pointer select-none" onClick={() => handleSort(field.name)}>
+              <TableHead
+                key={field.id}
+                className="cursor-pointer select-none"
+                onClick={() => handleSort(field.name)}
+              >
                 <div className="flex items-center gap-1.5">
                   {field.label}
                   {sortField === field.name ? (
-                    sortDirection === 'asc' ? (
+                    sortDirection === "asc" ? (
                       <ArrowUp className="h-3.5 w-3.5 text-primary" />
                     ) : (
                       <ArrowDown className="h-3.5 w-3.5 text-primary" />
@@ -315,15 +353,18 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
         </TableHeader>
         <TableBody>
           {sortedRecords.length > 0 ? (
-            sortedRecords.map(record => {
+            sortedRecords.map((record) => {
               const isSelected = selectedIds.has(record.id);
               return (
                 <TableRow
                   key={record.id}
-                  className={cn('cursor-pointer transition-colors', isSelected && 'bg-primary/5')}
+                  className={cn(
+                    "cursor-pointer transition-colors",
+                    isSelected && "bg-primary/5",
+                  )}
                   onClick={() => onRecordClick?.(record)}
                 >
-                  <TableCell onClick={e => e.stopPropagation()}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={() => handleSelectRow(record.id)}
@@ -338,7 +379,7 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
                       </TableCell>
                     );
                   })}
-                  <TableCell onClick={e => e.stopPropagation()}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -350,7 +391,9 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onRecordClick?.(record)}>
+                        <DropdownMenuItem
+                          onClick={() => onRecordClick?.(record)}
+                        >
                           <Eye className="mr-2 h-4 w-4" />
                           View
                         </DropdownMenuItem>
@@ -360,7 +403,11 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
                             Edit
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(record.id)}>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigator.clipboard.writeText(record.id)
+                          }
+                        >
                           <Copy className="mr-2 h-4 w-4" />
                           Copy ID
                         </DropdownMenuItem>
@@ -384,14 +431,20 @@ export const CrmDataTable: React.FC<CrmDataTableProps> = ({
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={visibleFields.length + 2} className="h-32 text-center">
+              <TableCell
+                colSpan={visibleFields.length + 2}
+                className="h-32 text-center"
+              >
                 <div className="flex flex-col items-center justify-center gap-2">
                   <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                     <FileText className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <p className="text-muted-foreground font-medium">No records found</p>
+                  <p className="text-muted-foreground font-medium">
+                    No records found
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Create your first {objectDefinition.label.toLowerCase()} to get started
+                    Create your first {objectDefinition.label.toLowerCase()} to
+                    get started
                   </p>
                 </div>
               </TableCell>

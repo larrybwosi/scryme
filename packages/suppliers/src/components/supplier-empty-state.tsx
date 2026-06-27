@@ -1,10 +1,15 @@
-import { Button } from '@repo/ui/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Plus, Building, Truck, Package, BarChart3, Users } from 'lucide-react';
-import Link from 'next/link';
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Plus, Building, Truck, Package, BarChart3, Users } from "lucide-react";
+import Link from "next/link";
 
 export function SupplierEmptyState() {
-
   return (
     <>
       <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -17,10 +22,12 @@ export function SupplierEmptyState() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold tracking-tight mb-2">No Suppliers Yet</h2>
+        <h2 className="text-2xl font-bold tracking-tight mb-2">
+          No Suppliers Yet
+        </h2>
         <p className="text-muted-foreground mb-6 max-w-md">
-          Get started by adding your first supplier. Manage relationships, track deliveries, and monitor performance all
-          in one place.
+          Get started by adding your first supplier. Manage relationships, track
+          deliveries, and monitor performance all in one place.
         </p>
 
         <Link href="/suppliers?create=true">
@@ -53,7 +60,9 @@ export function SupplierEmptyState() {
               <CardTitle className="text-sm">Manage Inventory</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <CardDescription className="text-xs">Keep track of stock levels and product availability</CardDescription>
+              <CardDescription className="text-xs">
+                Keep track of stock levels and product availability
+              </CardDescription>
             </CardContent>
           </Card>
 

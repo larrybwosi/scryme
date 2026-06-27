@@ -402,7 +402,6 @@ const PaymentModal = ({
   const paymentChannel = useRealtimeStore(state => state.paymentChannel);
   const subscribe = useRealtimeStore(state => state.subscribe);
 
-
   // ── Payment helpers ──
   const addPayment = useCallback((payment: Omit<AddedPayment, 'id'>) => {
     setCurrentPayments(prev => [...prev, { ...payment, id: uuidv4() }]);
@@ -483,10 +482,10 @@ const PaymentModal = ({
   // ── Handlers ──
   const handleAddCash = () => {
     if (settings.enforceShiftForCashPayments && !activeShift && import.meta.env.MODE !== 'standalone') {
-        toast.error('No Active Shift', {
-            description: 'You must open a shift before processing cash payments.',
-        });
-        return;
+      toast.error('No Active Shift', {
+        description: 'You must open a shift before processing cash payments.',
+      });
+      return;
     }
 
     const amount = parseFloat(amountInput);
@@ -527,7 +526,6 @@ const PaymentModal = ({
       toast.success(`Redeemed ${formatCurrency(amountToDeduct)} from Gift Card`);
     }
   };
-
 
   const handleMpesaStkTrigger = async () => {
     const amount = parseFloat(amountInput);
@@ -578,7 +576,7 @@ const PaymentModal = ({
         }
         parts.push(`Duration: ${durationStr}`);
       }
-      
+
       const extraInfo = parts.join(' | ');
       if (finalNotes) {
         finalNotes = `${finalNotes}\n${extraInfo}`;
@@ -1379,10 +1377,12 @@ const PaymentModal = ({
                           tableNumber: tableNumber,
                           notes: notes,
                           customerName: customer?.name || '',
-                          orderType: orderType
+                          orderType: orderType,
                         };
                         sendOrderToKitchen(tempOrder);
-                        toast.success(tableNumber ? `Order sent to kitchen for Table ${tableNumber}` : 'Order sent to kitchen');
+                        toast.success(
+                          tableNumber ? `Order sent to kitchen for Table ${tableNumber}` : 'Order sent to kitchen'
+                        );
                       } else {
                         toast.success(tableNumber ? `Order saved to Table ${tableNumber}` : 'Order saved as pending');
                       }

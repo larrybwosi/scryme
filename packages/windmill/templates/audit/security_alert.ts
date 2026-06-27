@@ -4,11 +4,11 @@
  */
 export async function main(
   organizationId: string,
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
   message: string,
   sourceIp?: string,
   userAgent?: string,
-  details?: any
+  details?: any,
 ) {
   console.log(`[SecurityAlert] [${severity}] ${message}`);
   return { success: true };

@@ -47,7 +47,7 @@ export class PermissionsGuard implements CanActivate {
       organization.id,
     );
 
-    const hasPermission = requiredPermissions.every((permission) =>
+    const hasPermission = requiredPermissions.every(permission =>
       this.hasPermission(permissions, permission),
     );
 
@@ -91,13 +91,13 @@ export class PermissionsGuard implements CanActivate {
     let permissions: string[] = [];
 
     // Add permissions from custom roles
-    member.customRoles.forEach((role) => {
+    member.customRoles.forEach(role => {
       permissions = [...permissions, ...role.permissions];
     });
 
     // Add permissions from role groups
-    member.roleGroups.forEach((group) => {
-      group.permissionSets.forEach((set) => {
+    member.roleGroups.forEach(group => {
+      group.permissionSets.forEach(set => {
         permissions = [...permissions, ...set.permissions];
       });
     });

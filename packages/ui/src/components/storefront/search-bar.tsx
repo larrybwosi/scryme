@@ -1,6 +1,6 @@
-import React from 'react';
-import { Search } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import React from "react";
+import { Search } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 interface SearchBarProps {
   value?: string;
@@ -13,7 +13,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
   placeholder = "Search products...",
-  className
+  className,
 }) => {
   return (
     <div className={cn("relative", className)}>

@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
-import { db } from '@repo/db';
-import { getServerAuth } from '@repo/auth/server';
+import { NextResponse } from "next/server";
+import { db } from "@repo/db";
+import { getServerAuth } from "@repo/auth/server";
 
 export async function GET() {
   const auth = await getServerAuth();
   if (!auth?.organizationId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const [config, scrymeConfig] = await Promise.all([
@@ -24,8 +24,8 @@ export async function GET() {
   return NextResponse.json({
     configured: true,
     windmillBaseUrl: config?.windmillBaseUrl,
-    windmillApiKeyMasked: config?.windmillApiKey ? '••••••••••••••••' : null,
-    webhookSecretMasked: config?.webhookSecret ? '••••••••••••••••' : null,
+    windmillApiKeyMasked: config?.windmillApiKey ? "••••••••••••••••" : null,
+    webhookSecretMasked: config?.webhookSecret ? "••••••••••••••••" : null,
     workspaceId: config?.workspaceId,
     workspaceName: config?.workspaceName,
     scrymeChatWorkspaceId: scrymeConfig?.workspaceId,
@@ -37,7 +37,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const auth = await getServerAuth();
   if (!auth?.organizationId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await req.json();
@@ -53,8 +53,8 @@ export async function POST(req: Request) {
     create: {
       organizationId: auth.organizationId,
       windmillBaseUrl,
-      windmillApiKey: windmillApiKey || '',
-      webhookSecret: webhookSecret || '',
+      windmillApiKey: windmillApiKey || "",
+      webhookSecret: webhookSecret || "",
     },
   });
 

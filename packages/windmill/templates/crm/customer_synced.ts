@@ -8,14 +8,16 @@ export async function main(
   customerId: string,
   name: string,
   email?: string,
-  action?: 'created' | 'updated',
-  provider?: string
+  action?: "created" | "updated",
+  provider?: string,
 ) {
-  console.log(`[CustomerSynced] Customer ${name} (${customerId}) ${action} via ${provider}`);
+  console.log(
+    `[CustomerSynced] Customer ${name} (${customerId}) ${action} via ${provider}`,
+  );
 
   return {
     success: true,
     customerId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }

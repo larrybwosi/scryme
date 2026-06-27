@@ -108,58 +108,58 @@ const AppRoutes = () => {
 
   return (
     <>
-    <IdleTimer />
-    <AutoShiftModal />
-    <Routes>
-      {/* Routes with AppLayout wrapper */}
-      <Route element={<LayoutWrapper />}>
-        <Route index path="/" element={<POS />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/history" element={<HistoryPage />} />
-        {import.meta.env.MODE !== 'standalone' && <Route path="/analytics" element={<AnalyticsPage />} />}
-        {import.meta.env.MODE !== 'standalone' && (
-          <>
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/cash-drawer" element={<CashDrawerPage />} />
-            <Route path="/petty-cash" element={<PettyCashPage />} />
-            <Route path="/till-management" element={<TillManagementPage />} />
-            <Route path="/pending-transactions" element={<PendingTransactionsPage />} />
-            <Route path="/create-order" element={<CreateOrderPage />} />
-          </>
-        )}
-        <Route path="/receipt-settings" element={<ReceiptSettingsPage />} />
+      <IdleTimer />
+      <AutoShiftModal />
+      <Routes>
+        {/* Routes with AppLayout wrapper */}
+        <Route element={<LayoutWrapper />}>
+          <Route index path="/" element={<POS />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          {import.meta.env.MODE !== 'standalone' && <Route path="/analytics" element={<AnalyticsPage />} />}
+          {import.meta.env.MODE !== 'standalone' && (
+            <>
+              <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/cash-drawer" element={<CashDrawerPage />} />
+              <Route path="/petty-cash" element={<PettyCashPage />} />
+              <Route path="/till-management" element={<TillManagementPage />} />
+              <Route path="/pending-transactions" element={<PendingTransactionsPage />} />
+              <Route path="/create-order" element={<CreateOrderPage />} />
+            </>
+          )}
+          <Route path="/receipt-settings" element={<ReceiptSettingsPage />} />
 
-        {import.meta.env.MODE !== 'standalone' && (
-          <>
-            <Route path="/pricing" element={<PricingViewPage />} />
-            <Route path="/stock-acceptance" element={<StockDeliveryPage />} />
-            <Route path="/stock-transfer" element={<StockTransferCreate />} />
-            <Route path="/stock-request" element={<StockRequestCreate />} />
-          </>
-        )}
+          {import.meta.env.MODE !== 'standalone' && (
+            <>
+              <Route path="/pricing" element={<PricingViewPage />} />
+              <Route path="/stock-acceptance" element={<StockDeliveryPage />} />
+              <Route path="/stock-transfer" element={<StockTransferCreate />} />
+              <Route path="/stock-request" element={<StockRequestCreate />} />
+            </>
+          )}
 
-        {/* Restaurant/Hub and Spoke routes */}
-        {businessMode === 'restaurant' && (
-          <>
-            <Route path="/kds" element={<KDSPage />} />
-            <Route path="/hub-overview" element={<HubOverviewPage />} />
-            {import.meta.env.MODE !== 'standalone' && <Route path="/manage-tables" element={<ManageTablesPage />} />}
-          </>
-        )}
+          {/* Restaurant/Hub and Spoke routes */}
+          {businessMode === 'restaurant' && (
+            <>
+              <Route path="/kds" element={<KDSPage />} />
+              <Route path="/hub-overview" element={<HubOverviewPage />} />
+              {import.meta.env.MODE !== 'standalone' && <Route path="/manage-tables" element={<ManageTablesPage />} />}
+            </>
+          )}
 
-        {import.meta.env.MODE !== 'standalone' && <Route path="/shift-manager" element={<ShiftManager />} />}
+          {import.meta.env.MODE !== 'standalone' && <Route path="/shift-manager" element={<ShiftManager />} />}
 
-        <Route path="/product-management" element={<ProductManagementPage />} />
-        <Route path="/barcodes" element={<BarcodePrintingPage />} />
-        <Route path="/logs" element={<LogsPage />} />
-      </Route>
+          <Route path="/product-management" element={<ProductManagementPage />} />
+          <Route path="/barcodes" element={<BarcodePrintingPage />} />
+          <Route path="/logs" element={<LogsPage />} />
+        </Route>
 
-      {/* Routes without AppLayout */}
-      <Route path="/checkin" element={<CheckinPage />} />
-      <Route path="/setup" element={<SetupPage />} />
-      <Route path="/customer" element={<CustomerDisplay />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* Routes without AppLayout */}
+        <Route path="/checkin" element={<CheckinPage />} />
+        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/customer" element={<CustomerDisplay />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 };

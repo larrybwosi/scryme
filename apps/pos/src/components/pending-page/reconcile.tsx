@@ -52,7 +52,6 @@ export function ReconciliationDialog({ open, onOpenChange, fulfillmentId }: Reco
     onOpenChange(false);
   };
 
-
   const [filePath, setFilePath] = useState<string | null>(null);
 
   const handleFileUpload = async () => {
@@ -69,7 +68,7 @@ export function ReconciliationDialog({ open, onOpenChange, fulfillmentId }: Reco
       const blob = new Blob([contents]);
       setImagePreview(URL.createObjectURL(blob));
       // We set a dummy file object to satisfy any existing checks, but we mainly use filePath
-      setReconcileForm(p => ({ ...p, proofImage: new File([], "proof.png") }));
+      setReconcileForm(p => ({ ...p, proofImage: new File([], 'proof.png') }));
     }
   };
 

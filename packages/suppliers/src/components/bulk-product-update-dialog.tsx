@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { useBulkUpdateSupplierProducts } from '../lib/api/suppliers';
-import { toast } from 'sonner';
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { useBulkUpdateSupplierProducts } from "../lib/api/suppliers";
+import { toast } from "sonner";
 
 const bulkUpdateSchema = z.object({
-  action: z.enum(['price_increase', 'price_decrease', 'status_change']),
+  action: z.enum(["price_increase", "price_decrease", "status_change"]),
   value: z.coerce.number().optional(),
   status: z.string().optional(),
 });
@@ -34,12 +40,9 @@ interface BulkProductUpdateDialogProps {
   selectedProductIds: string[];
 }
 
-export const BulkProductUpdateDialog: React.FC<BulkProductUpdateDialogProps> = ({
-  open,
-  onOpenChange,
-  supplierId,
-  selectedProductIds
-}) => {
+export const BulkProductUpdateDialog: React.FC<
+  BulkProductUpdateDialogProps
+> = ({ open, onOpenChange, supplierId, selectedProductIds }) => {
   const mutation = useBulkUpdateSupplierProducts(supplierId);
 
   const {
@@ -51,22 +54,22 @@ export const BulkProductUpdateDialog: React.FC<BulkProductUpdateDialogProps> = (
   } = useForm<BulkUpdateValues>({
     resolver: zodResolver(bulkUpdateSchema as any),
     defaultValues: {
-      action: 'price_increase',
+      action: "price_increase",
     },
   });
 
-  const action = watch('action');
+  const action = watch("action");
 
   const onSubmit = async (data: BulkUpdateValues) => {
     try {
       await mutation.mutateAsync({
         productIds: selectedProductIds,
-        ...data
+        ...data,
       });
-      toast.success('Products updated successfully');
+      toast.success("Products updated successfully");
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to update products');
+      toast.error("Failed to update products");
     }
   };
 
@@ -84,30 +87,39 @@ export const BulkProductUpdateDialog: React.FC<BulkProductUpdateDialogProps> = (
             <Label>Action</Label>
             <Select
               value={action}
-              onValueChange={(v) => setValue('action', v as any)}
+              onValueChange={(v) => setValue("action", v as any)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="price_increase">Increase Price (%)</SelectItem>
-                <SelectItem value="price_decrease">Decrease Price (%)</SelectItem>
+                <SelectItem value="price_increase">
+                  Increase Price (%)
+                </SelectItem>
+                <SelectItem value="price_decrease">
+                  Decrease Price (%)
+                </SelectItem>
                 <SelectItem value="status_change">Change Status</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {(action === 'price_increase' || action === 'price_decrease') && (
+          {(action === "price_increase" || action === "price_decrease") && (
             <div className="space-y-2">
               <Label>Percentage Value (%)</Label>
-              <Input type="number" step="0.1" {...register('value')} placeholder="e.g. 5.0" />
+              <Input
+                type="number"
+                step="0.1"
+                {...register("value")}
+                placeholder="e.g. 5.0"
+              />
             </div>
           )}
 
-          {action === 'status_change' && (
+          {action === "status_change" && (
             <div className="space-y-2">
               <Label>New Status</Label>
-              <Select onValueChange={(v) => setValue('status', v)}>
+              <Select onValueChange={(v) => setValue("status", v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -121,7 +133,11 @@ export const BulkProductUpdateDialog: React.FC<BulkProductUpdateDialogProps> = (
           )}
 
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || mutation.isPending}>

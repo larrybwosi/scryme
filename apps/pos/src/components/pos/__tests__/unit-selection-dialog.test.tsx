@@ -62,7 +62,7 @@ describe('UnitSelectionDialog', () => {
 
     // Total price is in a div with a specific class
     const totalPriceDisplay = screen.getByText((content, element) => {
-       return !!element?.classList.contains('text-2xl') && content === 'KSh 100';
+      return !!element?.classList.contains('text-2xl') && content === 'KSh 100';
     });
     expect(totalPriceDisplay).toBeInTheDocument();
     expect(screen.getByText('KSh 100 per Box')).toBeInTheDocument();
@@ -79,16 +79,14 @@ describe('UnitSelectionDialog', () => {
       />
     );
 
-    const plusButton = screen.getAllByRole('button').find(btn =>
-      btn.querySelector('.lucide-plus')
-    );
+    const plusButton = screen.getAllByRole('button').find(btn => btn.querySelector('.lucide-plus'));
 
     if (plusButton) {
       fireEvent.click(plusButton);
     }
 
     const totalPriceDisplay = screen.getByText((content, element) => {
-       return !!element?.classList.contains('text-2xl') && content === 'KSh 20';
+      return !!element?.classList.contains('text-2xl') && content === 'KSh 20';
     });
     expect(totalPriceDisplay).toBeInTheDocument();
   });

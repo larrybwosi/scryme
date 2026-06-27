@@ -1,18 +1,47 @@
-'use client';
+"use client";
 
-import { memo, useEffect, useState } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
-import { Recipe } from '@/types/bakery';
-import { Save, Plus, Trash2, Loader2, Sparkles, AlertCircle, Cpu, FileText, Layers, Settings, Cloud } from 'lucide-react';
-import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
+import { memo, useEffect, useState } from "react";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@repo/ui/components/ui/sheet";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import { Recipe } from "@/types/bakery";
+import {
+  Save,
+  Plus,
+  Trash2,
+  Loader2,
+  Sparkles,
+  AlertCircle,
+  Cpu,
+  FileText,
+  Layers,
+  Settings,
+  Cloud,
+} from "lucide-react";
+import { AdvancedUnitSelector } from "@/components/common/units/advance-select";
 import {
   useCreateRecipe,
   useUpdateRecipe,
@@ -20,25 +49,31 @@ import {
   useListIngredients,
   useGenerateRecipeAi,
   useBakerySettings,
-} from '@/hooks/bakery';
-import { recipeSchema } from '@/validations/bakery';
-import { ProductVariantsSelect } from '@/components/common/product-variant-select';
-import { TagInput } from '@repo/ui/components/ui/tag-input';
-import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
-import { toast } from 'sonner';
-import { useFormattedCurrency } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+} from "@/hooks/bakery";
+import { recipeSchema } from "@/validations/bakery";
+import { ProductVariantsSelect } from "@/components/common/product-variant-select";
+import { TagInput } from "@repo/ui/components/ui/tag-input";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/ui/components/ui/alert";
+import { toast } from "sonner";
+import { useFormattedCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface CreateEditRecipeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipe?: Recipe | null;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   addAnother?: boolean;
 }
 
 function SelectSkeleton() {
-  return <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-md animate-pulse"></div>;
+  return (
+    <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-md animate-pulse"></div>
+  );
 }
 
 function IngredientFormSkeleton() {
@@ -52,26 +87,43 @@ function IngredientFormSkeleton() {
   );
 }
 
-function FormSection({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+function FormSection({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: any;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-800 first:border-0 first:pt-0">
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4 text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+          {title}
+        </h3>
       </div>
       <div className="space-y-4">{children}</div>
     </div>
   );
 }
 
-function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEditRecipeDialogProps) {
+function CreateEditRecipeDialog({
+  open,
+  onOpenChange,
+  recipe,
+  mode,
+}: CreateEditRecipeDialogProps) {
   const formattedCurrency = useFormattedCurrency();
-  const { data: categories, isLoading: loadingCategories } = useBakeryCategories();
-  const { data: ingredients, isLoading: loadingIngredients } = useListIngredients();
+  const { data: categories, isLoading: loadingCategories } =
+    useBakeryCategories();
+  const { data: ingredients, isLoading: loadingIngredients } =
+    useListIngredients();
   const { data: settings } = useBakerySettings();
 
-  const [activeTab, setActiveTab] = useState('manual');
-  const [aiPrompt, setAiPrompt] = useState('');
+  const [activeTab, setActiveTab] = useState("manual");
+  const [aiPrompt, setAiPrompt] = useState("");
 
   const createRecipe = useCreateRecipe();
   const updateRecipe = useUpdateRecipe();
@@ -87,101 +139,110 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   } = useForm<any>({
     resolver: zodResolver(recipeSchema),
     defaultValues: {
-      name: '',
-      categoryId: '',
+      name: "",
+      categoryId: "",
       yieldQuantity: 1,
       systemUnitId: undefined,
       orgUnitId: undefined,
       ingredients: [],
-      description: '',
-      instructions: '',
-      notes: '',
+      description: "",
+      instructions: "",
+      notes: "",
       tags: [],
-      producesVariantId: '',
+      producesVariantId: "",
       prepTime: 0,
       bakeTime: 0,
-      difficulty: 'MEDIUM',
+      difficulty: "MEDIUM",
     },
   });
 
-  const { fields: ingredientFields, append, remove } = useFieldArray({
+  const {
+    fields: ingredientFields,
+    append,
+    remove,
+  } = useFieldArray({
     control,
-    name: 'ingredients',
+    name: "ingredients",
   });
 
-  const watchIngredients = useWatch({ control, name: 'ingredients' });
-  const categoryId = useWatch({ control, name: 'categoryId' });
-  const systemUnitId = useWatch({ control, name: 'systemUnitId' });
-  const orgUnitId = useWatch({ control, name: 'orgUnitId' });
-  const producesVariantId = useWatch({ control, name: 'producesVariantId' });
-  const tags = useWatch({ control, name: 'tags' }) || [];
-  const difficulty = useWatch({ control, name: 'difficulty' }) || 'MEDIUM';
+  const watchIngredients = useWatch({ control, name: "ingredients" });
+  const categoryId = useWatch({ control, name: "categoryId" });
+  const systemUnitId = useWatch({ control, name: "systemUnitId" });
+  const orgUnitId = useWatch({ control, name: "orgUnitId" });
+  const producesVariantId = useWatch({ control, name: "producesVariantId" });
+  const tags = useWatch({ control, name: "tags" }) || [];
+  const difficulty = useWatch({ control, name: "difficulty" }) || "MEDIUM";
 
   useEffect(() => {
-    if (recipe && mode === 'edit') {
+    if (recipe && mode === "edit") {
       reset({
         name: recipe.name,
-        categoryId: recipe.categoryId || '',
-        description: recipe.description || '',
-        instructions: recipe.instructions || '',
-        notes: recipe.notes || '',
+        categoryId: recipe.categoryId || "",
+        description: recipe.description || "",
+        instructions: recipe.instructions || "",
+        notes: recipe.notes || "",
         yieldQuantity: recipe.yieldQuantity,
         systemUnitId: recipe.systemUnitId,
         orgUnitId: recipe.orgUnitId,
         producesVariantId: recipe.producesVariantId,
         prepTime: recipe.prepTime || 0,
         bakeTime: recipe.bakeTime || 0,
-        difficulty: recipe.difficulty || 'MEDIUM',
+        difficulty: recipe.difficulty || "MEDIUM",
         tags: recipe.tags || [],
-        ingredients: recipe.ingredients?.map(ing => ({
-          ingredientVariantId: ing.ingredientVariantId,
-          quantity: ing.quantity,
-          systemUnitId: ing.systemUnitId,
-          orgUnitId: ing.orgUnitId,
-          preparationNotes: ing.preparationNotes,
-        })) || [],
+        ingredients:
+          recipe.ingredients?.map((ing) => ({
+            ingredientVariantId: ing.ingredientVariantId,
+            quantity: ing.quantity,
+            systemUnitId: ing.systemUnitId,
+            orgUnitId: ing.orgUnitId,
+            preparationNotes: ing.preparationNotes,
+          })) || [],
       });
     } else {
       reset({
-        name: '',
-        categoryId: '',
+        name: "",
+        categoryId: "",
         yieldQuantity: 1,
         ingredients: [],
-        description: '',
-        instructions: '',
-        notes: '',
+        description: "",
+        instructions: "",
+        notes: "",
         tags: [],
-        producesVariantId: '',
+        producesVariantId: "",
         prepTime: 0,
         bakeTime: 0,
-        difficulty: 'MEDIUM',
+        difficulty: "MEDIUM",
       });
     }
   }, [recipe, mode, reset]);
 
   const onSubmit = async (data: any) => {
     try {
-      if (mode === 'edit' && recipe) {
+      if (mode === "edit" && recipe) {
         await updateRecipe.mutateAsync({ id: recipe.id, ...data });
-        toast.success('Recipe updated successfully');
+        toast.success("Recipe updated successfully");
       } else {
         await createRecipe.mutateAsync(data);
-        toast.success('Recipe created successfully');
+        toast.success("Recipe created successfully");
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to save recipe');
+      toast.error("Failed to save recipe");
     }
   };
 
   const handleGenerateRecipe = async () => {
     if (!aiPrompt.trim()) return;
     try {
-      const generatedData = await generateRecipeAi.mutateAsync({ prompt: aiPrompt });
+      const generatedData = await generateRecipeAi.mutateAsync({
+        prompt: aiPrompt,
+      });
       if (generatedData) {
         reset(generatedData);
-        setActiveTab('manual');
-        toast.success('Recipe generated successfully! Please review the details.');
+        setActiveTab("manual");
+        toast.success(
+          "Recipe generated successfully! Please review the details.",
+        );
       }
     } catch (error) {
       // Error handled by mutation state
@@ -189,13 +250,20 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   };
 
   const addIngredientRow = () => {
-    append({ ingredientVariantId: '', quantity: 0, systemUnitId: '' });
+    append({ ingredientVariantId: "", quantity: 0, systemUnitId: "" });
   };
 
-  const handleIngredientUnitChange = (index: number) => (value: string | undefined, type: 'system' | 'org') => {
-    setValue(`ingredients.${index}.systemUnitId` as any, type === 'system' ? value : undefined);
-    setValue(`ingredients.${index}.orgUnitId` as any, type === 'org' ? value : undefined);
-  };
+  const handleIngredientUnitChange =
+    (index: number) => (value: string | undefined, type: "system" | "org") => {
+      setValue(
+        `ingredients.${index}.systemUnitId` as any,
+        type === "system" ? value : undefined,
+      );
+      setValue(
+        `ingredients.${index}.orgUnitId` as any,
+        type === "org" ? value : undefined,
+      );
+    };
 
   const isGenerating = generateRecipeAi.isPending;
   const isSubmitting = createRecipe.isPending || updateRecipe.isPending;
@@ -203,20 +271,31 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto p-0 flex flex-col gap-0 border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-4xl overflow-y-auto p-0 flex flex-col gap-0 border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+      >
         <div className="flex-none p-6 space-y-1 bg-white dark:bg-slate-950 border-b">
           <SheetHeader>
             <SheetTitle className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tighter">
-              {mode === 'create' ? 'PROVISION NEW FORMULA' : 'REVISE CONFIGURATION'}
+              {mode === "create"
+                ? "PROVISION NEW FORMULA"
+                : "REVISE CONFIGURATION"}
             </SheetTitle>
             <SheetDescription className="text-sm font-medium text-slate-500 uppercase tracking-widest">
-              {mode === 'create' ? 'Initialize new master recipe data' : `Updating ${recipe?.name}`}
+              {mode === "create"
+                ? "Initialize new master recipe data"
+                : `Updating ${recipe?.name}`}
             </SheetDescription>
           </SheetHeader>
         </div>
 
         <div className="flex-1 px-6 py-6 overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full max-w-sm grid-cols-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl mb-6">
               <TabsTrigger
                 value="manual"
@@ -238,11 +317,19 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
               {!(settings as any)?.apiKey ? (
                 <div className="flex flex-col items-center justify-center text-center p-8 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 shadow-sm">
                   <Cloud className="h-10 w-10 text-slate-300 mb-3" />
-                  <h3 className="font-semibold text-slate-700">Cloud Sync Required</h3>
+                  <h3 className="font-semibold text-slate-700">
+                    Cloud Sync Required
+                  </h3>
                   <p className="text-xs text-slate-500 max-w-xs mt-1">
-                    AI recipe generation requires a connection to the Scryme server. Please configure your API key in Settings.
+                    AI recipe generation requires a connection to the Scryme
+                    server. Please configure your API key in Settings.
                   </p>
-                  <Button variant="outline" size="sm" className="mt-4" onClick={() => (window.location.href = "/settings")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => (window.location.href = "/settings")}
+                  >
                     Go to Settings
                   </Button>
                 </div>
@@ -252,20 +339,27 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     <Cpu className="h-6 w-6" />
                   </div>
                   <div className="space-y-1 max-w-md mb-6">
-                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">Recipe Copilot</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                      Recipe Copilot
+                    </h3>
                     <p className="text-sm text-slate-500">
-                      Describe your product requirements. The AI will automatically provision ingredients from your
-                      existing master data.
+                      Describe your product requirements. The AI will
+                      automatically provision ingredients from your existing
+                      master data.
                     </p>
                   </div>
 
                   {generateRecipeAi.isError && (
-                    <Alert variant="destructive" className="max-w-lg text-left mb-6">
+                    <Alert
+                      variant="destructive"
+                      className="max-w-lg text-left mb-6"
+                    >
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Generation Failed</AlertTitle>
                       <AlertDescription>
-                        {(generateRecipeAi.error as any)?.response?.data?.error ||
-                          'Failed to process request. Please refine your prompt.'}
+                        {(generateRecipeAi.error as any)?.response?.data
+                          ?.error ||
+                          "Failed to process request. Please refine your prompt."}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -275,7 +369,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                       placeholder="e.g. 'Standard sourdough boule, yielding 10 units, using high-hydration technique...'"
                       className="min-h-[140px] resize-none text-sm bg-slate-50 dark:bg-slate-950 border-slate-200"
                       value={aiPrompt}
-                      onChange={e => setAiPrompt(e.target.value)}
+                      onChange={(e) => setAiPrompt(e.target.value)}
                       disabled={isGenerating}
                     />
                     <Button
@@ -285,11 +379,13 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     >
                       {isGenerating ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing Requirements...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                          Processing Requirements...
                         </>
                       ) : (
                         <>
-                          <Sparkles className="mr-2 h-4 w-4" /> Generate Configuration
+                          <Sparkles className="mr-2 h-4 w-4" /> Generate
+                          Configuration
                         </>
                       )}
                     </Button>
@@ -307,20 +403,30 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                 <FormSection title="Core Information" icon={FileText}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-1.5">
-                      <Label htmlFor="name" className="text-xs font-medium text-slate-500 uppercase">
+                      <Label
+                        htmlFor="name"
+                        className="text-xs font-medium text-slate-500 uppercase"
+                      >
                         Recipe Name *
                       </Label>
                       <Input
                         id="name"
-                        {...register('name')}
+                        {...register("name")}
                         placeholder="Enter recipe code or name"
                         disabled={isSubmitting}
                         className="h-9"
                       />
-                      {errors.name && <p className="text-xs text-red-500">{(errors.name as any).message}</p>}
+                      {errors.name && (
+                        <p className="text-xs text-red-500">
+                          {(errors.name as any).message}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="categoryId" className="text-xs font-medium text-slate-500 uppercase">
+                      <Label
+                        htmlFor="categoryId"
+                        className="text-xs font-medium text-slate-500 uppercase"
+                      >
                         Category *
                       </Label>
                       {loadingCategories ? (
@@ -328,14 +434,21 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                       ) : (
                         <Select
                           value={categoryId}
-                          onValueChange={value => setValue('categoryId', value)}
+                          onValueChange={(value) =>
+                            setValue("categoryId", value)
+                          }
                           disabled={isSubmitting}
                         >
-                          <SelectTrigger className={cn('h-9', errors.categoryId && 'border-red-500')}>
+                          <SelectTrigger
+                            className={cn(
+                              "h-9",
+                              errors.categoryId && "border-red-500",
+                            )}
+                          >
                             <SelectValue placeholder="Select classification" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories?.map(category => (
+                            {categories?.map((category) => (
                               <SelectItem key={category.id} value={category.id}>
                                 {category.name}
                               </SelectItem>
@@ -343,17 +456,24 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                           </SelectContent>
                         </Select>
                       )}
-                      {errors.categoryId && <p className="text-xs text-red-500">{(errors.categoryId as any).message}</p>}
+                      {errors.categoryId && (
+                        <p className="text-xs text-red-500">
+                          {(errors.categoryId as any).message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="description" className="text-xs font-medium text-slate-500 uppercase">
+                    <Label
+                      htmlFor="description"
+                      className="text-xs font-medium text-slate-500 uppercase"
+                    >
                       Formula Description
                     </Label>
                     <Textarea
                       id="description"
-                      {...register('description')}
+                      {...register("description")}
                       placeholder="Brief overview of the product or process..."
                       rows={2}
                       disabled={isSubmitting}
@@ -362,12 +482,16 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Yield Output *</Label>
+                      <Label className="text-xs font-medium text-slate-500 uppercase">
+                        Yield Output *
+                      </Label>
                       <div className="flex gap-2">
                         <Input
                           type="number"
                           step="0.01"
-                          {...register('yieldQuantity', { valueAsNumber: true })}
+                          {...register("yieldQuantity", {
+                            valueAsNumber: true,
+                          })}
                           placeholder="Qty"
                           className="w-24 h-9"
                           disabled={isSubmitting}
@@ -376,8 +500,14 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                           <AdvancedUnitSelector
                             value={systemUnitId || orgUnitId || undefined}
                             onValueChange={(val, type) => {
-                              setValue('systemUnitId', type === 'system' ? val : undefined);
-                              setValue('orgUnitId', type === 'org' ? val : undefined);
+                              setValue(
+                                "systemUnitId",
+                                type === "system" ? val : undefined,
+                              );
+                              setValue(
+                                "orgUnitId",
+                                type === "org" ? val : undefined,
+                              );
                             }}
                             disabled={isSubmitting}
                             placeholder="Unit"
@@ -385,29 +515,39 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                         </div>
                       </div>
                       {(errors.yieldQuantity || errors.systemUnitId) && (
-                        <p className="text-xs text-red-500">Output quantity and unit are required</p>
+                        <p className="text-xs text-red-500">
+                          Output quantity and unit are required
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Produces Product Variant *</Label>
+                      <Label className="text-xs font-medium text-slate-500 uppercase">
+                        Produces Product Variant *
+                      </Label>
                       <ProductVariantsSelect
                         value={producesVariantId}
-                        onValueChange={val => setValue('producesVariantId', val)}
+                        onValueChange={(val) =>
+                          setValue("producesVariantId", val)
+                        }
                         disabled={isSubmitting}
                         placeholder="Link to inventory item"
                       />
                       {errors.producesVariantId && (
-                        <p className="text-xs text-red-500">Must link to an inventory variant</p>
+                        <p className="text-xs text-red-500">
+                          Must link to an inventory variant
+                        </p>
                       )}
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-slate-500 uppercase">Search Tags</Label>
+                    <Label className="text-xs font-medium text-slate-500 uppercase">
+                      Search Tags
+                    </Label>
                     <TagInput
                       tags={tags}
-                      onChange={tags => setValue('tags', tags)}
+                      onChange={(tags) => setValue("tags", tags)}
                       placeholder="Add searchable labels"
                     />
                   </div>
@@ -416,28 +556,36 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                 <FormSection title="Technical Parameters" icon={Settings}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Prep Time (min)</Label>
+                      <Label className="text-xs font-medium text-slate-500 uppercase">
+                        Prep Time (min)
+                      </Label>
                       <Input
                         type="number"
-                        {...register('prepTime', { valueAsNumber: true })}
+                        {...register("prepTime", { valueAsNumber: true })}
                         disabled={isSubmitting}
                         className="h-9"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Bake Time (min)</Label>
+                      <Label className="text-xs font-medium text-slate-500 uppercase">
+                        Bake Time (min)
+                      </Label>
                       <Input
                         type="number"
-                        {...register('bakeTime', { valueAsNumber: true })}
+                        {...register("bakeTime", { valueAsNumber: true })}
                         disabled={isSubmitting}
                         className="h-9"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Complexity</Label>
+                      <Label className="text-xs font-medium text-slate-500 uppercase">
+                        Complexity
+                      </Label>
                       <Select
                         value={difficulty}
-                        onValueChange={value => setValue('difficulty', value as any)}
+                        onValueChange={(value) =>
+                          setValue("difficulty", value as any)
+                        }
                         disabled={isSubmitting}
                       >
                         <SelectTrigger className="h-9">
@@ -445,8 +593,12 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="EASY">Level 1 - Easy</SelectItem>
-                          <SelectItem value="MEDIUM">Level 2 - Medium</SelectItem>
-                          <SelectItem value="HARD">Level 3 - Complex</SelectItem>
+                          <SelectItem value="MEDIUM">
+                            Level 2 - Medium
+                          </SelectItem>
+                          <SelectItem value="HARD">
+                            Level 3 - Complex
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -472,7 +624,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                         <>
                           {ingredientFields.map((field, index) => {
                             const currentIng = watchIngredients?.[index];
-                            const ingUnitValue = currentIng?.systemUnitId || currentIng?.orgUnitId;
+                            const ingUnitValue =
+                              currentIng?.systemUnitId || currentIng?.orgUnitId;
 
                             return (
                               <div
@@ -481,20 +634,28 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                               >
                                 <div>
                                   <Select
-                                    value={currentIng?.ingredientVariantId || ''}
-                                    onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value)}
+                                    value={
+                                      currentIng?.ingredientVariantId || ""
+                                    }
+                                    onValueChange={(value) =>
+                                      setValue(
+                                        `ingredients.${index}.ingredientVariantId` as any,
+                                        value,
+                                      )
+                                    }
                                     disabled={isSubmitting}
                                   >
                                     <SelectTrigger
                                       className={cn(
-                                        'h-9',
-                                        ingredientErrors?.[index] && 'border-red-500'
+                                        "h-9",
+                                        ingredientErrors?.[index] &&
+                                          "border-red-500",
                                       )}
                                     >
                                       <SelectValue placeholder="Select material" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {ingredients?.map(ing => (
+                                      {ingredients?.map((ing) => (
                                         <SelectItem key={ing.id} value={ing.id}>
                                           {ing.name}
                                         </SelectItem>
@@ -508,11 +669,15 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                     type="number"
                                     step="0.01"
                                     min="0.01"
-                                    {...register(`ingredients.${index}.quantity` as any, { valueAsNumber: true })}
+                                    {...register(
+                                      `ingredients.${index}.quantity` as any,
+                                      { valueAsNumber: true },
+                                    )}
                                     disabled={isSubmitting}
                                     className={cn(
-                                      'h-9 text-right tabular-nums',
-                                      ingredientErrors?.[index] && 'border-red-500'
+                                      "h-9 text-right tabular-nums",
+                                      ingredientErrors?.[index] &&
+                                        "border-red-500",
                                     )}
                                   />
                                 </div>
@@ -520,7 +685,9 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                 <div>
                                   <AdvancedUnitSelector
                                     value={ingUnitValue || undefined}
-                                    onValueChange={handleIngredientUnitChange(index)}
+                                    onValueChange={handleIngredientUnitChange(
+                                      index,
+                                    )}
                                     disabled={isSubmitting}
                                     placeholder="Unit"
                                   />
@@ -565,15 +732,21 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                   </Button>
                 </FormSection>
 
-                <FormSection title="Standard Operating Procedure (SOP)" icon={FileText}>
+                <FormSection
+                  title="Standard Operating Procedure (SOP)"
+                  icon={FileText}
+                >
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="instructions" className="text-xs font-medium text-slate-500 uppercase">
+                      <Label
+                        htmlFor="instructions"
+                        className="text-xs font-medium text-slate-500 uppercase"
+                      >
                         Execution Steps
                       </Label>
                       <Textarea
                         id="instructions"
-                        {...register('instructions')}
+                        {...register("instructions")}
                         placeholder="1. Step one..."
                         rows={5}
                         disabled={isSubmitting}
@@ -581,12 +754,15 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="notes" className="text-xs font-medium text-slate-500 uppercase">
+                      <Label
+                        htmlFor="notes"
+                        className="text-xs font-medium text-slate-500 uppercase"
+                      >
                         Quality Notes
                       </Label>
                       <Textarea
                         id="notes"
-                        {...register('notes')}
+                        {...register("notes")}
                         placeholder="Tolerances, QC steps, or internal routing notes"
                         disabled={isSubmitting}
                         rows={3}
@@ -600,14 +776,19 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         </div>
 
         <div className="flex-none flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button
             type="submit"
             form="recipe-form"
             className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
-            disabled={isSubmitting || activeTab === 'ai'}
+            disabled={isSubmitting || activeTab === "ai"}
           >
             {isSubmitting ? (
               <>
@@ -615,7 +796,10 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" /> {mode === 'create' ? 'Create Configuration' : 'Update Configuration'}
+                <Save className="h-4 w-4 mr-2" />{" "}
+                {mode === "create"
+                  ? "Create Configuration"
+                  : "Update Configuration"}
               </>
             )}
           </Button>

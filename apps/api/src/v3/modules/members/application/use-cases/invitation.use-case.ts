@@ -103,9 +103,7 @@ export class InvitationUseCase {
       role,
       token,
       expiresAt: invitation.expiresAt,
-    }).catch((err) =>
-      console.error("[Windmill] InvitationCreated error:", err),
-    );
+    }).catch(err => console.error("[Windmill] InvitationCreated error:", err));
 
     return invitation;
   }
@@ -156,7 +154,7 @@ export class InvitationUseCase {
     }
 
     // Logic to convert invitation to member
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // Create member
       const member = await tx.member.create({
         data: {
@@ -168,7 +166,7 @@ export class InvitationUseCase {
           departmentMemberships:
             invitation.departmentIds && invitation.departmentIds.length > 0
               ? {
-                  create: invitation.departmentIds.map((dId) => ({
+                  create: invitation.departmentIds.map(dId => ({
                     departmentId: dId,
                   })),
                 }
@@ -176,13 +174,13 @@ export class InvitationUseCase {
           customRoles:
             invitation.customRoleIds && invitation.customRoleIds.length > 0
               ? {
-                  connect: invitation.customRoleIds.map((id) => ({ id })),
+                  connect: invitation.customRoleIds.map(id => ({ id })),
                 }
               : undefined,
           roleGroups:
             invitation.roleGroupIds && invitation.roleGroupIds.length > 0
               ? {
-                  connect: invitation.roleGroupIds.map((id) => ({ id })),
+                  connect: invitation.roleGroupIds.map(id => ({ id })),
                 }
               : undefined,
         },

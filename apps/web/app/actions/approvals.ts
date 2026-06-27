@@ -89,7 +89,7 @@ export async function submitForApproval(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestId: request.id }),
-    }).catch((err) =>
+    }).catch(err =>
       console.error("Failed to trigger Scryme notification:", err),
     );
   }
@@ -121,7 +121,7 @@ export async function makeApprovalDecision(data: {
         memberId: auth.memberId,
         stepNumber: originalStep,
       }),
-    }).catch((err) => console.error("Failed to update Scryme messages:", err));
+    }).catch(err => console.error("Failed to update Scryme messages:", err));
   }
 
   // If moved to next step, notify new approvers
@@ -130,7 +130,7 @@ export async function makeApprovalDecision(data: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestId: request.id }),
-    }).catch((err) =>
+    }).catch(err =>
       console.error("Failed to trigger next step Scryme notification:", err),
     );
   }
@@ -147,7 +147,7 @@ export async function makeApprovalDecision(data: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requestId: request.id }),
-    }).catch((err) =>
+    }).catch(err =>
       console.error("Failed to notify requester via Scryme:", err),
     );
   }

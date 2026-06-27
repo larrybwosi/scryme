@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Form,
   FormControl,
@@ -11,29 +11,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@repo/ui/components/ui/form';
-import { Input } from '@repo/ui/components/ui/input';
-import { Button } from '@repo/ui/components/ui/button';
-import { Textarea } from '@repo/ui/components/ui/textarea';
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@repo/ui/components/ui/select';
-import { Checkbox } from '@repo/ui/components/ui/checkbox';
-import { CrmFieldType } from '../types';
-import { cn } from '@repo/ui/lib/utils';
-import { Loader2, Save } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@repo/ui/components/ui/select";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { CrmFieldType } from "../types";
+import { cn } from "@repo/ui/lib/utils";
+import { Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface CrmRecordFormProps {
   object: any;
   fields: any[];
   initialData?: any;
   onSubmit: (data: any) => Promise<void>;
-  mode?: 'create' | 'edit';
+  mode?: "create" | "edit";
   autoSave?: boolean;
 }
 
@@ -42,7 +42,7 @@ export function CrmRecordForm({
   fields,
   initialData,
   onSubmit,
-  mode = 'create',
+  mode = "create",
   autoSave = false,
 }: CrmRecordFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,7 +81,7 @@ export function CrmRecordForm({
 
   // Handle auto-save
   useEffect(() => {
-    if (!autoSave || mode !== 'edit') return;
+    if (!autoSave || mode !== "edit") return;
 
     // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = form.watch(async (value) => {
@@ -91,7 +91,7 @@ export function CrmRecordForm({
           await onSubmit(value);
           form.reset(value, { keepDirty: false });
         } catch (error) {
-          console.error('Auto-save failed:', error);
+          console.error("Auto-save failed:", error);
         } finally {
           setAutoSaving(false);
         }
@@ -104,12 +104,16 @@ export function CrmRecordForm({
     setIsSubmitting(true);
     try {
       await onSubmit(data);
-      if (mode === 'create') {
+      if (mode === "create") {
         form.reset();
       }
-      toast.success(`Record ${mode === 'create' ? 'created' : 'updated'} successfully`);
+      toast.success(
+        `Record ${mode === "create" ? "created" : "updated"} successfully`,
+      );
     } catch (_error) {
-      toast.error(`Failed to ${mode === 'create' ? 'create' : 'update'} record`);
+      toast.error(
+        `Failed to ${mode === "create" ? "create" : "update"} record`,
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -117,8 +121,8 @@ export function CrmRecordForm({
 
   const renderFieldInput = (field: any, formField: any) => {
     switch (field.type) {
-      case 'TEXTAREA' as any:
-        return <Textarea {...formField} value={formField.value || ''} />;
+      case "TEXTAREA" as any:
+        return <Textarea {...formField} value={formField.value || ""} />;
       case CrmFieldType.BOOLEAN:
         return (
           <Checkbox
@@ -144,9 +148,9 @@ export function CrmRecordForm({
       default:
         return (
           <Input
-            type={field.type === CrmFieldType.NUMBER ? 'number' : 'text'}
+            type={field.type === CrmFieldType.NUMBER ? "number" : "text"}
             {...formField}
-            value={formField.value || ''}
+            value={formField.value || ""}
           />
         );
     }
@@ -165,69 +169,73 @@ export function CrmRecordForm({
       }
       return acc;
     },
-    [[], []]
+    [[], []],
   );
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Form Fields */}
-        <div className={cn(
-          'gap-6',
-          fields.length > 4 ? 'grid grid-cols-1 md:grid-cols-2' : 'space-y-4'
-        )}>
-          {fields.length <= 4 ? (
-            // Single column layout
-            fields.map((field: any) => (
-              <FormField
-                key={field.id}
-                control={form.control}
-                name={field.name}
-                render={({ field: formField }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      {field.label}
-                      {field.isRequired && (
-                        <span className="text-destructive">*</span>
-                      )}
-                    </FormLabel>
-                    <FormControl>{renderFieldInput(field, formField)}</FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))
-          ) : (
-            // Two column layout
-            groupedFields.map((columnFields: any[], columnIndex: number) => (
-              <div key={columnIndex} className="space-y-4">
-                {columnFields.map((field: any) => (
-                  <FormField
-                    key={field.id}
-                    control={form.control}
-                    name={field.name}
-                    render={({ field: formField }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          {field.label}
-                          {field.isRequired && (
-                            <span className="text-destructive">*</span>
-                          )}
-                        </FormLabel>
-                        <FormControl>{renderFieldInput(field, formField)}</FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </div>
-            ))
+        <div
+          className={cn(
+            "gap-6",
+            fields.length > 4 ? "grid grid-cols-1 md:grid-cols-2" : "space-y-4",
           )}
+        >
+          {fields.length <= 4
+            ? // Single column layout
+              fields.map((field: any) => (
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={field.name}
+                  render={({ field: formField }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        {field.label}
+                        {field.isRequired && (
+                          <span className="text-destructive">*</span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        {renderFieldInput(field, formField)}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))
+            : // Two column layout
+              groupedFields.map((columnFields: any[], columnIndex: number) => (
+                <div key={columnIndex} className="space-y-4">
+                  {columnFields.map((field: any) => (
+                    <FormField
+                      key={field.id}
+                      control={form.control}
+                      name={field.name}
+                      render={({ field: formField }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            {field.label}
+                            {field.isRequired && (
+                              <span className="text-destructive">*</span>
+                            )}
+                          </FormLabel>
+                          <FormControl>
+                            {renderFieldInput(field, formField)}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              ))}
         </div>
 
         {/* Submit Button */}
         <div className="flex items-center justify-between pt-4 border-t">
-          {mode === 'edit' && (
+          {mode === "edit" && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {autoSaving ? (
                 <>
@@ -248,7 +256,7 @@ export function CrmRecordForm({
             disabled={isSubmitting || (autoSave && !form.formState.isDirty)}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'create' ? 'Create Record' : 'Save Changes'}
+            {mode === "create" ? "Create Record" : "Save Changes"}
           </Button>
         </div>
       </form>

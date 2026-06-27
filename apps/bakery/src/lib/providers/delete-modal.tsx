@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,10 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
 
-type EntityType = 'batch' | 'template' | 'recipe' | 'item';
+type EntityType = "batch" | "template" | "recipe" | "item";
 
 interface DeleteConfirmationConfig {
   entityType: EntityType;
@@ -26,19 +26,26 @@ interface DeleteConfirmationContextType {
   confirmDelete: (config: DeleteConfirmationConfig) => Promise<boolean>;
 }
 
-const DeleteConfirmationContext = createContext<DeleteConfirmationContextType | null>(null);
+const DeleteConfirmationContext =
+  createContext<DeleteConfirmationContextType | null>(null);
 
 interface DeleteConfirmationProviderProps {
   children: ReactNode;
 }
 
-export const DeleteConfirmationProvider = ({ children }: DeleteConfirmationProviderProps) => {
+export const DeleteConfirmationProvider = ({
+  children,
+}: DeleteConfirmationProviderProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<DeleteConfirmationConfig | null>(null);
-  const [resolver, setResolver] = useState<((value: boolean) => void) | null>(null);
+  const [resolver, setResolver] = useState<((value: boolean) => void) | null>(
+    null,
+  );
 
-  const confirmDelete = (config: DeleteConfirmationConfig): Promise<boolean> => {
-    return new Promise(resolve => {
+  const confirmDelete = (
+    config: DeleteConfirmationConfig,
+  ): Promise<boolean> => {
+    return new Promise((resolve) => {
       setConfig(config);
       setIsOpen(true);
       setResolver(() => resolve);
@@ -63,21 +70,22 @@ export const DeleteConfirmationProvider = ({ children }: DeleteConfirmationProvi
     if (config?.entityName) return config.entityName;
 
     switch (config?.entityType) {
-      case 'batch':
-        return 'batch';
-      case 'template':
-        return 'template';
-      case 'recipe':
-        return 'recipe';
+      case "batch":
+        return "batch";
+      case "template":
+        return "template";
+      case "recipe":
+        return "recipe";
       default:
-        return 'item';
+        return "item";
     }
   };
 
-  const getTitle = () => config?.title || 'Confirm Deletion';
+  const getTitle = () => config?.title || "Confirm Deletion";
 
   const getDescription = () =>
-    config?.description || `Are you sure you want to delete this ${getEntityName()}? This action cannot be undone.`;
+    config?.description ||
+    `Are you sure you want to delete this ${getEntityName()}? This action cannot be undone.`;
 
   return (
     <DeleteConfirmationContext.Provider value={{ confirmDelete }}>
@@ -90,10 +98,10 @@ export const DeleteConfirmationProvider = ({ children }: DeleteConfirmationProvi
           </DialogHeader>
           <DialogFooter>
             <Button variant="destructive" onClick={handleConfirm}>
-              {config?.confirmText || 'Delete'}
+              {config?.confirmText || "Delete"}
             </Button>
             <Button variant="outline" onClick={handleCancel}>
-              {config?.cancelText || 'Cancel'}
+              {config?.cancelText || "Cancel"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -106,7 +114,9 @@ export const useDeleteConfirmation = () => {
   const context = useContext(DeleteConfirmationContext);
 
   if (!context) {
-    throw new Error('useDeleteConfirmation must be used within a DeleteConfirmationProvider');
+    throw new Error(
+      "useDeleteConfirmation must be used within a DeleteConfirmationProvider",
+    );
   }
 
   return context;

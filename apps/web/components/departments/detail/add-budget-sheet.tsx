@@ -24,7 +24,10 @@ interface AddBudgetSheetProps {
   children: React.ReactNode;
 }
 
-export function AddBudgetSheet({ departmentId, children }: AddBudgetSheetProps) {
+export function AddBudgetSheet({
+  departmentId,
+  children,
+}: AddBudgetSheetProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -104,12 +107,7 @@ export function AddBudgetSheet({ departmentId, children }: AddBudgetSheetProps) 
               </div>
               <div className="space-y-2">
                 <Label htmlFor="periodEnd">End Date</Label>
-                <Input
-                  id="periodEnd"
-                  name="periodEnd"
-                  type="date"
-                  required
-                />
+                <Input id="periodEnd" name="periodEnd" type="date" required />
               </div>
             </div>
 
@@ -136,11 +134,14 @@ export function AddBudgetSheet({ departmentId, children }: AddBudgetSheetProps) 
             <div className="flex items-center space-x-2 pt-2">
               <Checkbox id="makeActive" name="makeActive" defaultChecked />
               <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="makeActive" className="text-sm font-medium cursor-pointer">
+                <Label
+                  htmlFor="makeActive"
+                  className="text-sm font-medium cursor-pointer">
                   Set as currently active budget
                 </Label>
                 <p className="text-[11px] text-gray-500">
-                  This will mark this budget as the primary allocation for this department.
+                  This will mark this budget as the primary allocation for this
+                  department.
                 </p>
               </div>
             </div>

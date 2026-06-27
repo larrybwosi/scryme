@@ -33,9 +33,14 @@ export class UploadController {
     );
 
     const buffer = await data.toBuffer();
-    const result = await storageService.upload(buffer, fileName, data.mimetype, {
-      organizationId,
-    });
+    const result = await storageService.upload(
+      buffer,
+      fileName,
+      data.mimetype,
+      {
+        organizationId,
+      },
+    );
 
     const { shortCode, shortUrl } = StorageCoreService.generateShortUrlInfo();
 

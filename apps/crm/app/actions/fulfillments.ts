@@ -1,13 +1,30 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
-import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+import { db } from "@repo/db";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 const fulfillmentSchema = z.object({
   transactionId: z.string(),
-  type: z.enum(['IMMEDIATE', 'PICKUP', 'DELIVERY', 'SHIPPING', 'DIGITAL', 'DINE_IN', 'SERVICE']),
-  status: z.enum(['PENDING', 'PREPARING', 'READY', 'IN_TRANSIT', 'DELIVERED', 'SHIPPED', 'COMPLETED', 'CANCELLED']),
+  type: z.enum([
+    "IMMEDIATE",
+    "PICKUP",
+    "DELIVERY",
+    "SHIPPING",
+    "DIGITAL",
+    "DINE_IN",
+    "SERVICE",
+  ]),
+  status: z.enum([
+    "PENDING",
+    "PREPARING",
+    "READY",
+    "IN_TRANSIT",
+    "DELIVERED",
+    "SHIPPED",
+    "COMPLETED",
+    "CANCELLED",
+  ]),
   deliveryNotes: z.string().optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
@@ -16,7 +33,9 @@ const fulfillmentSchema = z.object({
 
 export type CreateFulfillmentInput = z.infer<typeof fulfillmentSchema>;
 
-export async function createFulfillmentAction(data: CreateFulfillmentInput): Promise<any> {
+export async function createFulfillmentAction(
+  data: CreateFulfillmentInput,
+): Promise<any> {
   try {
     const validatedData = fulfillmentSchema.parse(data);
 
@@ -32,7 +51,7 @@ export async function createFulfillmentAction(data: CreateFulfillmentInput): Pro
       },
       include: {
         transaction: true,
-      }
+      },
     });
 
     if (fulfillment.transaction?.customerId) {
@@ -40,7 +59,10 @@ export async function createFulfillmentAction(data: CreateFulfillmentInput): Pro
     }
     return { success: true, data: fulfillment };
   } catch (error: any) {
-    console.error('Error creating fulfillment:', error);
-    return { success: false, error: error.message || 'Failed to create fulfillment' };
+    console.error("Error creating fulfillment:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to create fulfillment",
+    };
   }
 }

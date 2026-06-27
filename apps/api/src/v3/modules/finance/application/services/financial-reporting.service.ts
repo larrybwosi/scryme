@@ -5,7 +5,11 @@ import { PrismaService } from "../../../../../prisma/prisma.service";
 export class FinancialReportingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getProfitAndLoss(organizationId: string, startDate: Date, endDate: Date) {
+  async getProfitAndLoss(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const [accounts, lineSums] = await Promise.all([
       this.prisma.client.ledgerAccount.findMany({
         where: {
@@ -43,7 +47,8 @@ export class FinancialReportingService {
       const credit = Number(sums.credit || 0);
 
       // Revenue increases with Credit, Expenses increase with Debit
-      const balance = account.type === "REVENUE" ? credit - debit : debit - credit;
+      const balance =
+        account.type === "REVENUE" ? credit - debit : debit - credit;
 
       const entry = { name: account.name, code: account.code, balance };
 
@@ -99,7 +104,8 @@ export class FinancialReportingService {
       const credit = Number(sums.credit || 0);
 
       // Assets increase with Debit, Liabilities/Equity increase with Credit
-      const balance = account.type === "ASSET" ? debit - credit : credit - debit;
+      const balance =
+        account.type === "ASSET" ? debit - credit : credit - debit;
 
       const entry = { name: account.name, code: account.code, balance };
 
@@ -118,7 +124,11 @@ export class FinancialReportingService {
     return report;
   }
 
-  async getCashFlowStatement(organizationId: string, startDate: Date, endDate: Date) {
+  async getCashFlowStatement(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
     // Optimized Cash Flow (Direct Method - tracking Cash/Bank account movements)
     // Fetch journal lines directly for cash/bank accounts to avoid loading full LedgerAccount relation
     const journalLines = await this.prisma.client.journalLine.findMany({
@@ -161,7 +171,10 @@ export class FinancialReportingService {
       };
 
       // Simplified classification based on source type
-      if (line.journalEntry.sourceType === "SALE" || line.journalEntry.sourceType === "EXPENSE") {
+      if (
+        line.journalEntry.sourceType === "SALE" ||
+        line.journalEntry.sourceType === "EXPENSE"
+      ) {
         report.operatingActivities.push(activity);
       } else {
         // Fallback or other classifications can go here
@@ -173,7 +186,11 @@ export class FinancialReportingService {
     return report;
   }
 
-  async getKenyanTaxSummary(organizationId: string, startDate: Date, endDate: Date) {
+  async getKenyanTaxSummary(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const [filings, outputTaxResult, inputTaxResult] = await Promise.all([
       this.prisma.client.taxFiling.findMany({
         where: {

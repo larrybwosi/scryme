@@ -8,7 +8,11 @@ export interface StorageProvider {
     file: Buffer,
     filename: string,
     contentType: string,
-    options?: { uploadAsFile?: boolean; encrypt?: boolean; organizationId?: string },
+    options?: {
+      uploadAsFile?: boolean;
+      encrypt?: boolean;
+      organizationId?: string;
+    },
   ): Promise<StorageUploadResult>;
   delete(id: string, organizationId?: string): Promise<void>;
   getSignedUrl?(

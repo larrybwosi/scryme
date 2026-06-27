@@ -29,7 +29,7 @@ export function DeleteDepartmentDialog({
   departmentName,
   open,
   onOpenChange,
-  redirectToList = false
+  redirectToList = false,
 }: DeleteDepartmentDialogProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -58,21 +58,20 @@ export function DeleteDepartmentDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the <strong>{departmentName}</strong> department.
-            All memberships and department-specific data will be removed.
-            This action cannot be undone.
+            This will permanently delete the <strong>{departmentName}</strong>{" "}
+            department. All memberships and department-specific data will be
+            removed. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               handleDelete();
             }}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
+            className="bg-red-600 hover:bg-red-700 text-white">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

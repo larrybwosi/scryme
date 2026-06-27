@@ -1,25 +1,41 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { useState, useCallback } from "react";
+import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // shadcn components
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Calendar } from '@repo/ui/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
-import { Separator } from '@repo/ui/components/ui/separator';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
-import { Switch } from '@repo/ui/components/ui/switch';
-import { SupplierSelect } from '@/components/common/supplier-select';
-import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Calendar } from "@repo/ui/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import { Separator } from "@repo/ui/components/ui/separator";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
+import { Switch } from "@repo/ui/components/ui/switch";
+import { SupplierSelect } from "@/components/common/supplier-select";
+import { AdvancedUnitSelector } from "@/components/common/units/advance-select";
 
 // icons
 import {
@@ -41,16 +57,16 @@ import {
   Hash,
   Upload,
   Box,
-} from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
-import sdk from '@/lib/sdk';
-import { useUnits } from '@/lib/units/hooks';
+} from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import sdk from "@/lib/sdk";
+import { useUnits } from "@/lib/units/hooks";
 import {
   calculateLineQuantity,
   calculateLineUnitCost,
   calculateLineTotal,
-  calculateGrandTotal
-} from '@/lib/units/calculations';
+  calculateGrandTotal,
+} from "@/lib/units/calculations";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -77,7 +93,7 @@ interface GRNLine {
   // Container fields
   useContainer?: boolean;
   containerUnitId?: string;
-  containerUnitType?: 'system' | 'org';
+  containerUnitType?: "system" | "org";
   unitsPerContainer?: number;
   numContainers?: number;
   pricePerContainer?: number;
@@ -107,8 +123,10 @@ const formatBytes = (bytes: number) => {
 };
 
 const getFileIcon = (type: string) => {
-  if (type.startsWith('image/')) return <Image className="h-4 w-4 text-violet-500" />;
-  if (type === 'application/pdf') return <FileText className="h-4 w-4 text-red-500" />;
+  if (type.startsWith("image/"))
+    return <Image className="h-4 w-4 text-violet-500" />;
+  if (type === "application/pdf")
+    return <FileText className="h-4 w-4 text-red-500" />;
   return <File className="h-4 w-4 text-slate-400" />;
 };
 
@@ -131,9 +149,14 @@ function SectionHeading({
         <span className="flex items-center justify-center h-6 w-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
           {icon}
         </span>
-        <span className="text-sm font-semibold tracking-tight text-slate-800 dark:text-slate-200">{label}</span>
+        <span className="text-sm font-semibold tracking-tight text-slate-800 dark:text-slate-200">
+          {label}
+        </span>
         {count !== undefined && (
-          <Badge variant="secondary" className="text-[10px] h-4 px-1.5 rounded-full">
+          <Badge
+            variant="secondary"
+            className="text-[10px] h-4 px-1.5 rounded-full"
+          >
             {count}
           </Badge>
         )}
@@ -146,7 +169,7 @@ function SectionHeading({
 function DatePickerField({
   value,
   onChange,
-  placeholder = 'Pick date',
+  placeholder = "Pick date",
   hasError,
 }: {
   value: Date | undefined;
@@ -160,17 +183,22 @@ function DatePickerField({
         <Button
           variant="outline"
           className={cn(
-            'h-8 w-full justify-start text-left font-normal text-xs px-2',
-            !value && 'text-slate-400',
-            hasError && 'border-red-400 focus-visible:ring-red-400'
+            "h-8 w-full justify-start text-left font-normal text-xs px-2",
+            !value && "text-slate-400",
+            hasError && "border-red-400 focus-visible:ring-red-400",
           )}
         >
           <CalendarIcon className="mr-2 h-3 w-3 text-slate-400 shrink-0" />
-          {value ? format(value, 'MMM d, yyyy') : placeholder}
+          {value ? format(value, "MMM d, yyyy") : placeholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={value} onSelect={onChange} initialFocus />
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={onChange}
+          initialFocus
+        />
       </PopoverContent>
     </Popover>
   );
@@ -191,9 +219,9 @@ function AttachmentZone({
     (rawFiles: FileList | null) => {
       if (!rawFiles) return;
       const newFiles: UploadedFile[] = [];
-      Array.from(rawFiles).forEach(file => {
+      Array.from(rawFiles).forEach((file) => {
         const reader = new FileReader();
-        reader.onload = e => {
+        reader.onload = (e) => {
           newFiles.push({
             id: `${Date.now()}-${file.name}`,
             name: file.name,
@@ -206,7 +234,7 @@ function AttachmentZone({
         reader.readAsDataURL(file);
       });
     },
-    [onAdd]
+    [onAdd],
   );
 
   const onDrop = (e: React.DragEvent) => {
@@ -218,26 +246,29 @@ function AttachmentZone({
   return (
     <div className="space-y-3">
       <div
-        onDragOver={e => {
+        onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={onDrop}
         className={cn(
-          'relative flex flex-col items-center justify-center gap-2 rounded border border-dashed px-4 py-6 text-center transition-colors cursor-pointer',
+          "relative flex flex-col items-center justify-center gap-2 rounded border border-dashed px-4 py-6 text-center transition-colors cursor-pointer",
           isDragging
-            ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30'
-            : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-900/40'
+            ? "border-blue-400 bg-blue-50 dark:bg-blue-950/30"
+            : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-900/40",
         )}
-        onClick={() => document.getElementById('grn-file-input')?.click()}
+        onClick={() => document.getElementById("grn-file-input")?.click()}
       >
         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800">
           <Upload className="h-4 w-4 text-slate-500" />
         </div>
         <div>
           <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-            Drop files here or <span className="text-blue-600 dark:text-blue-400">click to browse</span>
+            Drop files here or{" "}
+            <span className="text-blue-600 dark:text-blue-400">
+              click to browse
+            </span>
           </p>
         </div>
         <input
@@ -246,20 +277,24 @@ function AttachmentZone({
           multiple
           accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.csv"
           className="sr-only"
-          onChange={e => processFiles(e.target.files)}
+          onChange={(e) => processFiles(e.target.files)}
         />
       </div>
 
       {files.length > 0 && (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {files.map(f => (
+          {files.map((f) => (
             <li
               key={f.id}
               className="flex items-center gap-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 py-1.5"
             >
               {getFileIcon(f.type)}
-              <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 truncate">{f.name}</span>
-              <span className="text-[10px] text-slate-400 shrink-0">{formatBytes(f.size)}</span>
+              <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 truncate">
+                {f.name}
+              </span>
+              <span className="text-[10px] text-slate-400 shrink-0">
+                {formatBytes(f.size)}
+              </span>
               <Button
                 type="button"
                 variant="ghost"
@@ -309,24 +344,24 @@ function BulkReceiveDialog({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
-  const watchLines = useWatch({ control, name: 'lines' });
+  const { fields, append, remove } = useFieldArray({ control, name: "lines" });
+  const watchLines = useWatch({ control, name: "lines" });
 
   const grandTotal = calculateGrandTotal(watchLines || []);
 
   const handleAddLine = () =>
     append({
-      ingredientId: '',
+      ingredientId: "",
       quantity: 0,
       unitCost: 0,
-      supplier: '',
-      lotNumber: '',
+      supplier: "",
+      lotNumber: "",
       manufactureDate: undefined,
       expiryDate: undefined,
-      notes: '',
+      notes: "",
       useContainer: false,
-      containerUnitId: '',
-      containerUnitType: 'system',
+      containerUnitId: "",
+      containerUnitType: "system",
       unitsPerContainer: 0,
       numContainers: 0,
       pricePerContainer: 0,
@@ -337,20 +372,20 @@ function BulkReceiveDialog({
       // Normalize lines before sending
       const normalizedPayload = {
         ...payload,
-        lines: payload.lines.map(line => ({
+        lines: payload.lines.map((line) => ({
           ingredientId: line.ingredientId,
           quantity: calculateLineQuantity(line),
           unitCost: calculateLineUnitCost(line),
           lotNumber: line.lotNumber,
           expiryDate: line.expiryDate,
           supplier: line.supplier,
-        }))
+        })),
       };
       return sdk.bakery.receiveIngredients(normalizedPayload as any);
     },
     onSuccess: (responseData, variables) => {
       toast.success(
-        `GRN ${variables.receiptReference} posted — ${variables.lines.length} line(s).`
+        `GRN ${variables.receiptReference} posted — ${variables.lines.length} line(s).`,
       );
       reset();
       setAttachments([]);
@@ -359,7 +394,10 @@ function BulkReceiveDialog({
     },
     onError: (error: any) => {
       // Extract the error message from the API response if available
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Failed to commit Goods Receipt Note. Please try again.';
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to commit Goods Receipt Note. Please try again.";
       toast.error(errorMessage);
     },
   });
@@ -367,7 +405,7 @@ function BulkReceiveDialog({
   // 2. Update the onSubmit handler
   const onSubmit = (data: BulkReceiveFormData) => {
     if (data.lines.length === 0) {
-      toast.error('Add at least one material line before posting.');
+      toast.error("Add at least one material line before posting.");
       return;
     }
 
@@ -385,9 +423,13 @@ function BulkReceiveDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => !v && handleClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-[95vw] lg:max-w-7xl h-[90vh] flex flex-col gap-0 p-0 overflow-hidden rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-2xl">
-        <form id="bulk-receive-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+        <form
+          id="bulk-receive-form"
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col h-full overflow-hidden"
+        >
           <div className="shrink-0 px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -411,7 +453,9 @@ function BulkReceiveDialog({
                     </span>
                     <span className="font-semibold text-slate-900 dark:text-slate-100 tabular-nums flex items-center">
                       <DollarSign className="h-3.5 w-3.5 text-slate-400" />
-                      {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {grandTotal.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                 </div>
@@ -421,24 +465,36 @@ function BulkReceiveDialog({
 
           <div className="shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-4 px-6 py-3 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <Label className="text-xs font-semibold text-slate-500 w-24 shrink-0">Reference No.</Label>
+              <Label className="text-xs font-semibold text-slate-500 w-24 shrink-0">
+                Reference No.
+              </Label>
               <div className="relative flex-1">
                 <Hash className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
                 <Input
-                  {...register('receiptReference', { required: true })}
-                  className={cn('h-8 pl-7 font-mono text-xs', errors.receiptReference && 'border-red-400')}
+                  {...register("receiptReference", { required: true })}
+                  className={cn(
+                    "h-8 pl-7 font-mono text-xs",
+                    errors.receiptReference && "border-red-400",
+                  )}
                 />
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Label className="text-xs font-semibold text-slate-500 w-24 shrink-0">Received Date</Label>
+              <Label className="text-xs font-semibold text-slate-500 w-24 shrink-0">
+                Received Date
+              </Label>
               <div className="flex-1">
                 <Controller
                   control={control}
                   name="receiptDate"
                   rules={{ required: true }}
                   render={({ field }) => (
-                    <DatePickerField value={field.value} onChange={field.onChange} placeholder="Select date" hasError={!!errors.receiptDate} />
+                    <DatePickerField
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select date"
+                      hasError={!!errors.receiptDate}
+                    />
                   )}
                 />
               </div>
@@ -449,61 +505,149 @@ function BulkReceiveDialog({
             <ScrollArea className="h-full w-full">
               <div className="p-6 space-y-6">
                 <div>
-                  <SectionHeading icon={<Package className="h-3.5 w-3.5" />} label="Material Lines" count={fields.length} action={<Button type="button" variant="outline" size="sm" onClick={handleAddLine} className="h-7 text-xs px-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"><Plus className="h-3 w-3 mr-1" />Add Line</Button>} />
+                  <SectionHeading
+                    icon={<Package className="h-3.5 w-3.5" />}
+                    label="Material Lines"
+                    count={fields.length}
+                    action={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddLine}
+                        className="h-7 text-xs px-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Line
+                      </Button>
+                    }
+                  />
                   <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs whitespace-nowrap">
                         <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-medium">
                           <tr>
-                            <th className="px-3 py-2 font-semibold w-8 text-center">#</th>
-                            <th className="px-3 py-2 font-semibold min-w-[180px]">Material</th>
-                            <th className="px-3 py-2 font-semibold w-[80px]">Mode</th>
-                            <th className="px-3 py-2 font-semibold min-w-[200px]">Qty & Cost Config</th>
-                            <th className="px-3 py-2 font-semibold w-[120px]">Lot Number</th>
-                            <th className="px-3 py-2 font-semibold w-[120px]">Expiry</th>
-                            <th className="px-3 py-2 font-semibold min-w-[160px]">Supplier & Remarks</th>
+                            <th className="px-3 py-2 font-semibold w-8 text-center">
+                              #
+                            </th>
+                            <th className="px-3 py-2 font-semibold min-w-[180px]">
+                              Material
+                            </th>
+                            <th className="px-3 py-2 font-semibold w-[80px]">
+                              Mode
+                            </th>
+                            <th className="px-3 py-2 font-semibold min-w-[200px]">
+                              Qty & Cost Config
+                            </th>
+                            <th className="px-3 py-2 font-semibold w-[120px]">
+                              Lot Number
+                            </th>
+                            <th className="px-3 py-2 font-semibold w-[120px]">
+                              Expiry
+                            </th>
+                            <th className="px-3 py-2 font-semibold min-w-[160px]">
+                              Supplier & Remarks
+                            </th>
                             <th className="px-3 py-2 font-semibold w-10 text-center"></th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                           {fields.length === 0 ? (
-                            <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-400"><ListPlus className="h-8 w-8 mb-1 opacity-50 mx-auto" />No materials added</td></tr>
+                            <tr>
+                              <td
+                                colSpan={8}
+                                className="px-4 py-8 text-center text-slate-400"
+                              >
+                                <ListPlus className="h-8 w-8 mb-1 opacity-50 mx-auto" />
+                                No materials added
+                              </td>
+                            </tr>
                           ) : (
                             fields.map((field, index) => {
                               const line = watchLines?.[index];
                               const selectedIngId = line?.ingredientId;
-                              const ingredient = ingredients.find(i => i.id === selectedIngId);
+                              const ingredient = ingredients.find(
+                                (i) => i.id === selectedIngId,
+                              );
                               const useContainer = line?.useContainer;
 
                               const handleIngredientSelect = (val: string) => {
                                 setValue(`lines.${index}.ingredientId`, val);
-                                const matched = ingredients.find(i => i.id === val);
+                                const matched = ingredients.find(
+                                  (i) => i.id === val,
+                                );
 
                                 // Priority 1: Backend stocking unit
-                                if (matched?.stockingUnitId || matched?.stockingOrgUnitId) {
+                                if (
+                                  matched?.stockingUnitId ||
+                                  matched?.stockingOrgUnitId
+                                ) {
                                   setValue(`lines.${index}.useContainer`, true);
-                                  setValue(`lines.${index}.containerUnitId`, matched.stockingUnitId || matched.stockingOrgUnitId);
-                                  setValue(`lines.${index}.containerUnitType`, matched.stockingUnitId ? 'system' : 'org');
-                                  setValue(`lines.${index}.unitsPerContainer`, matched.unitsPerContainer || 1);
+                                  setValue(
+                                    `lines.${index}.containerUnitId`,
+                                    matched.stockingUnitId ||
+                                      matched.stockingOrgUnitId,
+                                  );
+                                  setValue(
+                                    `lines.${index}.containerUnitType`,
+                                    matched.stockingUnitId ? "system" : "org",
+                                  );
+                                  setValue(
+                                    `lines.${index}.unitsPerContainer`,
+                                    matched.unitsPerContainer || 1,
+                                  );
                                 } else {
-                                  setValue(`lines.${index}.useContainer`, false);
+                                  setValue(
+                                    `lines.${index}.useContainer`,
+                                    false,
+                                  );
                                 }
                               };
 
                               return (
-                                <tr key={field.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors group">
-                                  <td className="px-3 py-2 text-center text-slate-400 font-mono text-[10px]">{index + 1}</td>
+                                <tr
+                                  key={field.id}
+                                  className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors group"
+                                >
+                                  <td className="px-3 py-2 text-center text-slate-400 font-mono text-[10px]">
+                                    {index + 1}
+                                  </td>
                                   <td className="px-3 py-2">
-                                    <Select value={selectedIngId} onValueChange={handleIngredientSelect}>
-                                      <SelectTrigger className="h-8 text-xs bg-transparent border-slate-200"><SelectValue placeholder="Item…" /></SelectTrigger>
+                                    <Select
+                                      value={selectedIngId}
+                                      onValueChange={handleIngredientSelect}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs bg-transparent border-slate-200">
+                                        <SelectValue placeholder="Item…" />
+                                      </SelectTrigger>
                                       <SelectContent>
-                                        {ingredients.map(ing => (
-                                          <SelectItem key={ing.id} value={ing.id} className="text-xs">{ing.name} <span className="ml-2 text-[10px] text-slate-400 font-mono">{ing.sku}</span></SelectItem>
+                                        {ingredients.map((ing) => (
+                                          <SelectItem
+                                            key={ing.id}
+                                            value={ing.id}
+                                            className="text-xs"
+                                          >
+                                            {ing.name}{" "}
+                                            <span className="ml-2 text-[10px] text-slate-400 font-mono">
+                                              {ing.sku}
+                                            </span>
+                                          </SelectItem>
                                         ))}
                                       </SelectContent>
                                     </Select>
                                   </td>
-                                  <td className="px-3 py-2 text-center"><Switch checked={useContainer} onCheckedChange={(val) => setValue(`lines.${index}.useContainer`, val)} className="scale-75" /></td>
+                                  <td className="px-3 py-2 text-center">
+                                    <Switch
+                                      checked={useContainer}
+                                      onCheckedChange={(val) =>
+                                        setValue(
+                                          `lines.${index}.useContainer`,
+                                          val,
+                                        )
+                                      }
+                                      className="scale-75"
+                                    />
+                                  </td>
                                   <td className="px-3 py-2">
                                     {useContainer ? (
                                       <div className="flex flex-col gap-1.5">
@@ -512,39 +656,109 @@ function BulkReceiveDialog({
                                             <AdvancedUnitSelector
                                               value={line.containerUnitId}
                                               onValueChange={(id, type) => {
-                                                setValue(`lines.${index}.containerUnitId`, id || '');
-                                                setValue(`lines.${index}.containerUnitType`, type);
+                                                setValue(
+                                                  `lines.${index}.containerUnitId`,
+                                                  id || "",
+                                                );
+                                                setValue(
+                                                  `lines.${index}.containerUnitType`,
+                                                  type,
+                                                );
 
-                                                const unit = [...systemUnits, ...orgUnits].find(u => u.id === id);
-                                                if (unit && 'conversionFactor' in unit && unit.conversionFactor) {
-                                                  setValue(`lines.${index}.unitsPerContainer`, unit.conversionFactor);
+                                                const unit = [
+                                                  ...systemUnits,
+                                                  ...orgUnits,
+                                                ].find((u) => u.id === id);
+                                                if (
+                                                  unit &&
+                                                  "conversionFactor" in unit &&
+                                                  unit.conversionFactor
+                                                ) {
+                                                  setValue(
+                                                    `lines.${index}.unitsPerContainer`,
+                                                    unit.conversionFactor,
+                                                  );
                                                 }
                                               }}
                                               className="h-7 text-[10px]"
                                               placeholder="Unit"
                                             />
                                           </div>
-                                          <Input type="number" placeholder="Num" {...register(`lines.${index}.numContainers`, { valueAsNumber: true })} className="h-7 w-12 text-[10px]" />
-                                          <span className="text-[10px] text-slate-400">×</span>
-                                          <Input type="number" placeholder="Qty/Cont" {...register(`lines.${index}.unitsPerContainer`, { valueAsNumber: true })} className="h-7 text-[10px] w-14" />
-                                          <span className="text-[10px] text-slate-400">@</span>
-                                          <Input type="number" placeholder="Price/Cont" {...register(`lines.${index}.pricePerContainer`, { valueAsNumber: true })} className="h-7 text-[10px] w-16" />
+                                          <Input
+                                            type="number"
+                                            placeholder="Num"
+                                            {...register(
+                                              `lines.${index}.numContainers`,
+                                              { valueAsNumber: true },
+                                            )}
+                                            className="h-7 w-12 text-[10px]"
+                                          />
+                                          <span className="text-[10px] text-slate-400">
+                                            ×
+                                          </span>
+                                          <Input
+                                            type="number"
+                                            placeholder="Qty/Cont"
+                                            {...register(
+                                              `lines.${index}.unitsPerContainer`,
+                                              { valueAsNumber: true },
+                                            )}
+                                            className="h-7 text-[10px] w-14"
+                                          />
+                                          <span className="text-[10px] text-slate-400">
+                                            @
+                                          </span>
+                                          <Input
+                                            type="number"
+                                            placeholder="Price/Cont"
+                                            {...register(
+                                              `lines.${index}.pricePerContainer`,
+                                              { valueAsNumber: true },
+                                            )}
+                                            className="h-7 text-[10px] w-16"
+                                          />
                                         </div>
                                       </div>
                                     ) : (
                                       <div className="flex items-center gap-2">
-                                        <Input type="number" {...register(`lines.${index}.quantity`, { valueAsNumber: true })} className="h-8 text-right text-xs w-24" placeholder="Qty" />
-                                        <Input type="number" {...register(`lines.${index}.unitCost`, { valueAsNumber: true })} className="h-8 text-right text-xs w-24" placeholder="Unit Cost" />
+                                        <Input
+                                          type="number"
+                                          {...register(
+                                            `lines.${index}.quantity`,
+                                            { valueAsNumber: true },
+                                          )}
+                                          className="h-8 text-right text-xs w-24"
+                                          placeholder="Qty"
+                                        />
+                                        <Input
+                                          type="number"
+                                          {...register(
+                                            `lines.${index}.unitCost`,
+                                            { valueAsNumber: true },
+                                          )}
+                                          className="h-8 text-right text-xs w-24"
+                                          placeholder="Unit Cost"
+                                        />
                                       </div>
                                     )}
                                   </td>
-                                  <td className="px-3 py-2"><Input {...register(`lines.${index}.lotNumber`)} placeholder="Lot #" className="h-8 font-mono text-[10px] uppercase" /></td>
+                                  <td className="px-3 py-2">
+                                    <Input
+                                      {...register(`lines.${index}.lotNumber`)}
+                                      placeholder="Lot #"
+                                      className="h-8 font-mono text-[10px] uppercase"
+                                    />
+                                  </td>
                                   <td className="px-3 py-2">
                                     <Controller
                                       control={control}
                                       name={`lines.${index}.expiryDate`}
                                       render={({ field }) => (
-                                        <DatePickerField value={field.value} onChange={field.onChange} placeholder="Expiry" />
+                                        <DatePickerField
+                                          value={field.value}
+                                          onChange={field.onChange}
+                                          placeholder="Expiry"
+                                        />
                                       )}
                                     />
                                   </td>
@@ -554,14 +768,29 @@ function BulkReceiveDialog({
                                         control={control}
                                         name={`lines.${index}.supplier`}
                                         render={({ field }) => (
-                                          <SupplierSelect value={field.value} onValueChange={field.onChange} placeholder="Supplier" className="h-7 text-[10px]" />
+                                          <SupplierSelect
+                                            value={field.value}
+                                            onValueChange={field.onChange}
+                                            placeholder="Supplier"
+                                            className="h-7 text-[10px]"
+                                          />
                                         )}
                                       />
-                                      <Input {...register(`lines.${index}.notes`)} placeholder="Notes" className="h-7 text-[10px]" />
+                                      <Input
+                                        {...register(`lines.${index}.notes`)}
+                                        placeholder="Notes"
+                                        className="h-7 text-[10px]"
+                                      />
                                     </div>
                                   </td>
                                   <td className="px-3 py-2 text-center pt-3">
-                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100" onClick={() => remove(index)}>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                                      onClick={() => remove(index)}
+                                    >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
                                   </td>
@@ -576,8 +805,24 @@ function BulkReceiveDialog({
                 </div>
                 <Separator className="bg-slate-200" />
                 <div className="pb-4">
-                  <SectionHeading icon={<Paperclip className="h-3.5 w-3.5" />} label="Supporting Documents" count={attachments.length || undefined} />
-                  <div className="max-w-2xl"><AttachmentZone files={attachments} onAdd={newFiles => setAttachments(prev => [...prev, ...newFiles])} onRemove={id => setAttachments(prev => prev.filter(f => f.id !== id))} /></div>
+                  <SectionHeading
+                    icon={<Paperclip className="h-3.5 w-3.5" />}
+                    label="Supporting Documents"
+                    count={attachments.length || undefined}
+                  />
+                  <div className="max-w-2xl">
+                    <AttachmentZone
+                      files={attachments}
+                      onAdd={(newFiles) =>
+                        setAttachments((prev) => [...prev, ...newFiles])
+                      }
+                      onRemove={(id) =>
+                        setAttachments((prev) =>
+                          prev.filter((f) => f.id !== id),
+                        )
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </ScrollArea>
@@ -589,9 +834,33 @@ function BulkReceiveDialog({
               Verify all line items before posting to inventory ledger.
             </div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={handleClose} disabled={isSubmitting} className="h-8">Cancel</Button>
-              <Button type="submit" size="sm" disabled={isSubmitting || fields.length === 0} className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] h-8">
-                {isSubmitting ? <><Loader2 className="h-3 w-3 mr-2 animate-spin" />Posting...</> : <><Check className="h-3.5 w-3.5 mr-2" />Post GRN</>}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="h-8"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmitting || fields.length === 0}
+                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] h-8"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5 mr-2" />
+                    Post GRN
+                  </>
+                )}
               </Button>
             </div>
           </div>

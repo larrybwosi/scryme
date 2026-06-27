@@ -9,7 +9,7 @@ We want to make contributing to this project as easy and transparent as possible
 - Submitting a fix
 - Proposing new features
 - Becoming a maintainer
- 
+
 ## Code of Conduct
 
 All contributors are expected to adhere to our Code of Conduct (Contributor Covenant). Please be respectful and professional in all interactions.

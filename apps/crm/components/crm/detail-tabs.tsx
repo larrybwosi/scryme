@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useCallback } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import React, { useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   StickyNote,
   Truck,
@@ -12,9 +12,17 @@ import {
   CalendarClock,
   Activity,
   Users,
-} from 'lucide-react';
+} from "lucide-react";
 
-export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups' | 'activities' | 'contacts';
+export type TabId =
+  | "notes"
+  | "deliveries"
+  | "invoices"
+  | "orders"
+  | "conversations"
+  | "followups"
+  | "activities"
+  | "contacts";
 
 interface Tab {
   id: TabId;
@@ -23,14 +31,14 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { id: 'notes', label: 'Notes', icon: StickyNote },
-  { id: 'activities', label: 'Activities', icon: Activity },
-  { id: 'deliveries', label: 'Deliveries', icon: Truck },
-  { id: 'invoices', label: 'Invoices', icon: Receipt },
-  { id: 'orders', label: 'Orders & Sales', icon: ShoppingBag },
-  { id: 'conversations', label: 'Conversations', icon: MessageSquare },
-  { id: 'followups', label: 'Follow-ups', icon: CalendarClock },
-  { id: 'contacts', label: 'Contacts', icon: Users },
+  { id: "notes", label: "Notes", icon: StickyNote },
+  { id: "activities", label: "Activities", icon: Activity },
+  { id: "deliveries", label: "Deliveries", icon: Truck },
+  { id: "invoices", label: "Invoices", icon: Receipt },
+  { id: "orders", label: "Orders & Sales", icon: ShoppingBag },
+  { id: "conversations", label: "Conversations", icon: MessageSquare },
+  { id: "followups", label: "Follow-ups", icon: CalendarClock },
+  { id: "contacts", label: "Contacts", icon: Users },
 ];
 
 interface DetailTabsProps {
@@ -40,7 +48,12 @@ interface DetailTabsProps {
   availableTabs?: TabId[];
 }
 
-export function DetailTabs({ activeTab, customerId, counts, availableTabs }: DetailTabsProps) {
+export function DetailTabs({
+  activeTab,
+  customerId,
+  counts,
+  availableTabs,
+}: DetailTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -48,20 +61,23 @@ export function DetailTabs({ activeTab, customerId, counts, availableTabs }: Det
   const handleTabChange = useCallback(
     (tabId: TabId) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set('tab', tabId);
+      params.set("tab", tabId);
       // Use current pathname to stay on the same detail page
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams, pathname]
+    [router, searchParams, pathname],
   );
 
   const displayedTabs = availableTabs
-    ? TABS.filter(t => availableTabs.includes(t.id))
+    ? TABS.filter((t) => availableTabs.includes(t.id))
     : TABS;
 
   return (
     <div className="border-b border-border bg-card">
-      <div className="flex items-center overflow-x-auto px-6 custom-scrollbar" style={{ msOverflowStyle: 'none' }}>
+      <div
+        className="flex items-center overflow-x-auto px-6 custom-scrollbar"
+        style={{ msOverflowStyle: "none" }}
+      >
         {displayedTabs.map((tab) => {
           const isActive = tab.id === activeTab;
           const count = counts?.[tab.id];
@@ -70,10 +86,10 @@ export function DetailTabs({ activeTab, customerId, counts, availableTabs }: Det
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={cn(
-                'flex items-center gap-2 px-4 py-3.5 text-[13px] font-medium border-b-2 whitespace-nowrap transition-colors',
+                "flex items-center gap-2 px-4 py-3.5 text-[13px] font-medium border-b-2 whitespace-nowrap transition-colors",
                 isActive
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
               )}
             >
               <tab.icon size={14} />
@@ -81,10 +97,10 @@ export function DetailTabs({ activeTab, customerId, counts, availableTabs }: Det
               {count !== undefined && count > 0 && (
                 <span
                   className={cn(
-                    'text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center',
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
                     isActive
-                      ? 'bg-primary/15 text-primary'
-                      : 'bg-muted text-muted-foreground'
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   {count}

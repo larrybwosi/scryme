@@ -7,20 +7,22 @@ import { invoke } from '@tauri-apps/api/core';
 
 // Mock dependencies
 vi.mock('@/store/store', () => ({
-  usePosStore: vi.fn((selector) => selector({
-    currentOrder: { items: [], customerId: null },
-    addItemToOrder: vi.fn(),
-    removeItemFromOrder: vi.fn(),
-    updateItemInOrder: vi.fn(),
-    resetOrder: vi.fn(),
-    settings: { enableBarcodeScanner: true, taxRate: 16 },
-    taxRate: 16,
-    heldOrders: [],
-    holdCurrentOrder: vi.fn(),
-    retrieveHeldOrder: vi.fn(),
-    deleteHeldOrder: vi.fn(),
-    getBusinessConfig: vi.fn(() => ({ type: 'supermarket', features: {} })),
-  })),
+  usePosStore: vi.fn(selector =>
+    selector({
+      currentOrder: { items: [], customerId: null },
+      addItemToOrder: vi.fn(),
+      removeItemFromOrder: vi.fn(),
+      updateItemInOrder: vi.fn(),
+      resetOrder: vi.fn(),
+      settings: { enableBarcodeScanner: true, taxRate: 16 },
+      taxRate: 16,
+      heldOrders: [],
+      holdCurrentOrder: vi.fn(),
+      retrieveHeldOrder: vi.fn(),
+      deleteHeldOrder: vi.fn(),
+      getBusinessConfig: vi.fn(() => ({ type: 'supermarket', features: {} })),
+    })
+  ),
 }));
 
 vi.mock('@/hooks/use-scanner', () => ({
@@ -29,7 +31,7 @@ vi.mock('@/hooks/use-scanner', () => ({
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
-  convertFileSrc: vi.fn((src) => src),
+  convertFileSrc: vi.fn(src => src),
 }));
 
 vi.mock('@/hooks/products', () => ({
@@ -62,20 +64,22 @@ describe('SupermarketPOS', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (usePosStore as any).mockImplementation((selector: any) => selector({
-      currentOrder: { items: [], customerId: null },
-      addItemToOrder: mockAddItemToOrder,
-      removeItemFromOrder: vi.fn(),
-      updateItemInOrder: vi.fn(),
-      resetOrder: mockResetOrder,
-      settings: { enableBarcodeScanner: true, taxRate: 16 },
-      taxRate: 16,
-      heldOrders: [],
-      holdCurrentOrder: vi.fn(),
-      retrieveHeldOrder: vi.fn(),
-      deleteHeldOrder: vi.fn(),
-      getBusinessConfig: vi.fn(() => ({ type: 'supermarket', features: {} })),
-    }));
+    (usePosStore as any).mockImplementation((selector: any) =>
+      selector({
+        currentOrder: { items: [], customerId: null },
+        addItemToOrder: mockAddItemToOrder,
+        removeItemFromOrder: vi.fn(),
+        updateItemInOrder: vi.fn(),
+        resetOrder: mockResetOrder,
+        settings: { enableBarcodeScanner: true, taxRate: 16 },
+        taxRate: 16,
+        heldOrders: [],
+        holdCurrentOrder: vi.fn(),
+        retrieveHeldOrder: vi.fn(),
+        deleteHeldOrder: vi.fn(),
+        getBusinessConfig: vi.fn(() => ({ type: 'supermarket', features: {} })),
+      })
+    );
 
     (useScanner as any).mockReturnValue({
       startScanner: vi.fn(),
@@ -131,20 +135,22 @@ describe('SupermarketPOS', () => {
   });
 
   it('allows clearing the entire sale', () => {
-     (usePosStore as any).mockImplementation((selector: any) => selector({
-      currentOrder: { items: [{ productId: 'p1', quantity: 1, selectedUnit: { price: 50 } }], customerId: null },
-      addItemToOrder: mockAddItemToOrder,
-      removeItemFromOrder: vi.fn(),
-      updateItemInOrder: vi.fn(),
-      resetOrder: mockResetOrder,
-      settings: { enableBarcodeScanner: true, taxRate: 16 },
-      taxRate: 16,
-      heldOrders: [],
-      holdCurrentOrder: vi.fn(),
-      retrieveHeldOrder: vi.fn(),
-      deleteHeldOrder: vi.fn(),
-      getBusinessConfig: vi.fn(() => ({ type: 'supermarket', features: {} })),
-    }));
+    (usePosStore as any).mockImplementation((selector: any) =>
+      selector({
+        currentOrder: { items: [{ productId: 'p1', quantity: 1, selectedUnit: { price: 50 } }], customerId: null },
+        addItemToOrder: mockAddItemToOrder,
+        removeItemFromOrder: vi.fn(),
+        updateItemInOrder: vi.fn(),
+        resetOrder: mockResetOrder,
+        settings: { enableBarcodeScanner: true, taxRate: 16 },
+        taxRate: 16,
+        heldOrders: [],
+        holdCurrentOrder: vi.fn(),
+        retrieveHeldOrder: vi.fn(),
+        deleteHeldOrder: vi.fn(),
+        getBusinessConfig: vi.fn(() => ({ type: 'supermarket', features: {} })),
+      })
+    );
 
     render(<SupermarketPOS />);
 

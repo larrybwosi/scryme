@@ -1,24 +1,33 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-const apiClient = axios.create({ baseURL: '/api' });
-import { toast } from 'sonner';
-import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+const apiClient = axios.create({ baseURL: "/api" });
+import { toast } from "sonner";
+import { useState, useMemo } from "react";
 
 // Types (copied from main file for completeness)
-type UnitType = 'MASS' | 'VOLUME' | 'LENGTH' | 'AREA' | 'COUNT' | 'TIME' | 'TEMPERATURE' | 'ENERGY' | 'CUSTOM';
+type UnitType =
+  | "MASS"
+  | "VOLUME"
+  | "LENGTH"
+  | "AREA"
+  | "COUNT"
+  | "TIME"
+  | "TEMPERATURE"
+  | "ENERGY"
+  | "CUSTOM";
 
 type IndustryCategory =
-  | 'UNIVERSAL'
-  | 'FOOD_SERVICE'
-  | 'RETAIL'
-  | 'MANUFACTURING'
-  | 'HEALTHCARE'
-  | 'CONSTRUCTION'
-  | 'AGRICULTURE'
-  | 'HOSPITALITY'
-  | 'OTHER';
+  | "UNIVERSAL"
+  | "FOOD_SERVICE"
+  | "RETAIL"
+  | "MANUFACTURING"
+  | "HEALTHCARE"
+  | "CONSTRUCTION"
+  | "AGRICULTURE"
+  | "HOSPITALITY"
+  | "OTHER";
 
 interface SystemUnit {
   id: string;
@@ -52,7 +61,7 @@ interface OrganizationUnit {
 
 // API functions
 const fetchSystemUnits = async (): Promise<SystemUnit[]> => {
-  const response = await axios.get('/api/units/system');
+  const response = await axios.get("/api/units/system");
   return response.data;
 };
 
@@ -61,12 +70,17 @@ const fetchOrganizationUnits = async (): Promise<OrganizationUnit[]> => {
   return response.data;
 };
 
-const createOrganizationUnit = async (data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
-  const response = await axios.post('/api/units/organization', data);
+const createOrganizationUnit = async (
+  data: Partial<OrganizationUnit>,
+): Promise<OrganizationUnit> => {
+  const response = await axios.post("/api/units/organization", data);
   return response.data;
 };
 
-const updateOrganizationUnit = async (unitId: string, data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
+const updateOrganizationUnit = async (
+  unitId: string,
+  data: Partial<OrganizationUnit>,
+): Promise<OrganizationUnit> => {
   const response = await axios.patch(`/api/units/organization/${unitId}`, data);
   return response.data;
 };
@@ -78,10 +92,14 @@ const deleteOrganizationUnit = async (unitId: string): Promise<void> => {
 // Main hook
 export function useUnits(organizationId?: string | null) {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'all' | 'system' | 'custom'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<UnitType | 'all'>('all');
-  const [categoryFilter, setCategoryFilter] = useState<IndustryCategory | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<"all" | "system" | "custom">(
+    "all",
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<UnitType | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<
+    IndustryCategory | "all"
+  >("all");
 
   // Queries
   const {
@@ -89,7 +107,7 @@ export function useUnits(organizationId?: string | null) {
     isLoading: systemLoading,
     error: systemError,
   } = useQuery({
-    queryKey: ['systemUnits'],
+    queryKey: ["systemUnits"],
     queryFn: fetchSystemUnits,
   });
 
@@ -98,7 +116,7 @@ export function useUnits(organizationId?: string | null) {
     isLoading: orgLoading,
     error: orgError,
   } = useQuery({
-    queryKey: ['organizationUnits', organizationId],
+    queryKey: ["organizationUnits", organizationId],
     queryFn: () => fetchOrganizationUnits(),
     enabled: !!organizationId,
   });
@@ -106,42 +124,51 @@ export function useUnits(organizationId?: string | null) {
   // Mutations
   const createMutation = useMutation({
     mutationFn: createOrganizationUnit,
-    onSuccess: newUnit => {
-      queryClient.setQueryData(['organizationUnits'], (old: OrganizationUnit[] = []) => [
-        ...old,
-        newUnit,
-      ]);
-      toast.success('Unit created successfully');
+    onSuccess: (newUnit) => {
+      queryClient.setQueryData(
+        ["organizationUnits"],
+        (old: OrganizationUnit[] = []) => [...old, newUnit],
+      );
+      toast.success("Unit created successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to create unit');
+      toast.error(error.response?.data?.error || "Failed to create unit");
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ unitId, data }: { unitId: string; data: Partial<OrganizationUnit> }) =>
-      updateOrganizationUnit(unitId, data),
-    onSuccess: updatedUnit => {
-      queryClient.setQueryData(['organizationUnits'], (old: OrganizationUnit[] = []) =>
-        old.map(unit => (unit.id === updatedUnit.id ? updatedUnit : unit))
+    mutationFn: ({
+      unitId,
+      data,
+    }: {
+      unitId: string;
+      data: Partial<OrganizationUnit>;
+    }) => updateOrganizationUnit(unitId, data),
+    onSuccess: (updatedUnit) => {
+      queryClient.setQueryData(
+        ["organizationUnits"],
+        (old: OrganizationUnit[] = []) =>
+          old.map((unit) => (unit.id === updatedUnit.id ? updatedUnit : unit)),
       );
-      toast.success('Unit updated successfully');
+      toast.success("Unit updated successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to update unit');
+      toast.error(error.response?.data?.error || "Failed to update unit");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteOrganizationUnit,
     onSuccess: (_, unitId) => {
-      queryClient.setQueryData(['organizationUnits'], (old: OrganizationUnit[] = []) =>
-        old.filter(unit => unit.id !== unitId)
+      queryClient.setQueryData(
+        ["organizationUnits"],
+        (old: OrganizationUnit[] = []) =>
+          old.filter((unit) => unit.id !== unitId),
       );
-      toast.success('Unit deleted successfully');
+      toast.success("Unit deleted successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to delete unit');
+      toast.error(error.response?.data?.error || "Failed to delete unit");
     },
   });
 
@@ -149,9 +176,9 @@ export function useUnits(organizationId?: string | null) {
   const filteredUnits = useMemo(() => {
     let units: (SystemUnit | OrganizationUnit)[] = [];
 
-    if (activeTab === 'all') {
+    if (activeTab === "all") {
       units = [...systemUnits, ...orgUnits];
-    } else if (activeTab === 'system') {
+    } else if (activeTab === "system") {
       units = systemUnits;
     } else {
       units = orgUnits;
@@ -161,31 +188,38 @@ export function useUnits(organizationId?: string | null) {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       units = units.filter(
-        u =>
+        (u) =>
           u.name.toLowerCase().includes(query) ||
           u.symbol.toLowerCase().includes(query) ||
-          u.abbreviation?.toLowerCase().includes(query)
+          u.abbreviation?.toLowerCase().includes(query),
       );
     }
 
     // Type filter
-    if (typeFilter !== 'all') {
-      units = units.filter(u => u.type === typeFilter);
+    if (typeFilter !== "all") {
+      units = units.filter((u) => u.type === typeFilter);
     }
 
     // Category filter
-    if (categoryFilter !== 'all') {
-      units = units.filter(u => u.category === categoryFilter);
+    if (categoryFilter !== "all") {
+      units = units.filter((u) => u.category === categoryFilter);
     }
 
     return units;
-  }, [systemUnits, orgUnits, activeTab, searchQuery, typeFilter, categoryFilter]);
+  }, [
+    systemUnits,
+    orgUnits,
+    activeTab,
+    searchQuery,
+    typeFilter,
+    categoryFilter,
+  ]);
 
   // Group by type for list display
   const groupedUnits = useMemo(() => {
     const groups: Record<string, (SystemUnit | OrganizationUnit)[]> = {};
 
-    filteredUnits.forEach(unit => {
+    filteredUnits.forEach((unit) => {
       if (!groups[unit.type]) {
         groups[unit.type] = [];
       }
@@ -227,7 +261,7 @@ export function useUnits(organizationId?: string | null) {
 
     // Helpers
     isSystemUnit: (unit: SystemUnit | OrganizationUnit): unit is SystemUnit => {
-      return 'isBaseUnit' in unit;
+      return "isBaseUnit" in unit;
     },
   };
 }

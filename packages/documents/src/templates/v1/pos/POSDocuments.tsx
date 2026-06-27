@@ -1,31 +1,31 @@
-import React from 'react';
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import React from "react";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 export interface CartItem {
-  variantId: string
-  productName: string
-  variantName: string
-  sku: string
-  quantity: number
-  unitPrice: number
-  sellingUnit: string
-  totalPrice: number
-  brand: string
+  variantId: string;
+  productName: string;
+  variantName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  sellingUnit: string;
+  totalPrice: number;
+  brand: string;
 }
 
 export interface ReceiptData {
-  items: CartItem[]
-  subtotal: number
-  taxAmount: number
-  total: number
-  taxName: string
-  taxRate: number
-  paymentMethod: string
-  cashReceived?: number
-  change?: number
-  receiptNumber: string
-  date: string
-  cashier: string
+  items: CartItem[];
+  subtotal: number;
+  taxAmount: number;
+  total: number;
+  taxName: string;
+  taxRate: number;
+  paymentMethod: string;
+  cashReceived?: number;
+  change?: number;
+  receiptNumber: string;
+  date: string;
+  cashier: string;
 }
 
 const styles = StyleSheet.create({
@@ -91,13 +91,15 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#666666",
   },
-})
+});
 
 export const ReceiptDocument: React.FC<{ data: any }> = ({ data }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
-        <Text style={styles.title}>{data.branding?.companyName || "POS Pro"}</Text>
+        <Text style={styles.title}>
+          {data.branding?.companyName || "POS Pro"}
+        </Text>
         <Text style={styles.subtitle}>Sales Receipt</Text>
         <Text>Receipt #: {data.receiptNumber || data.number}</Text>
         <Text>Date: {String(data.date)}</Text>
@@ -108,23 +110,39 @@ export const ReceiptDocument: React.FC<{ data: any }> = ({ data }) => (
       <View style={styles.section}>
         <View style={styles.row}>
           <Text style={{ fontWeight: "bold", flex: 2 }}>Item</Text>
-          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "center" }}>Qty</Text>
-          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>Price</Text>
-          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>Total</Text>
+          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "center" }}>
+            Qty
+          </Text>
+          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>
+            Price
+          </Text>
+          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>
+            Total
+          </Text>
         </View>
 
         {(data.items || []).map((item: any, index: number) => (
           <View key={index} style={styles.itemRow}>
             <View style={{ flex: 2 }}>
-              <Text style={styles.itemName}>{item.productName || item.itemName || "Item"}</Text>
-              <Text style={{ fontSize: 8, color: "#666666" }}>{item.variantName || ""}</Text>
-              <Text style={{ fontSize: 8, color: "#666666" }}>SKU: {item.sku || "N/A"}</Text>
+              <Text style={styles.itemName}>
+                {item.productName || item.itemName || "Item"}
+              </Text>
+              <Text style={{ fontSize: 8, color: "#666666" }}>
+                {item.variantName || ""}
+              </Text>
+              <Text style={{ fontSize: 8, color: "#666666" }}>
+                SKU: {item.sku || "N/A"}
+              </Text>
             </View>
             <Text style={styles.itemDetails}>
               {item.quantity || item.qty || 0} {item.sellingUnit || "units"}
             </Text>
-            <Text style={styles.itemPrice}>${(item.unitPrice || item.rate || 0).toFixed(2)}</Text>
-            <Text style={styles.itemPrice}>${(item.totalPrice || item.amount || 0).toFixed(2)}</Text>
+            <Text style={styles.itemPrice}>
+              ${(item.unitPrice || item.rate || 0).toFixed(2)}
+            </Text>
+            <Text style={styles.itemPrice}>
+              ${(item.totalPrice || item.amount || 0).toFixed(2)}
+            </Text>
           </View>
         ))}
       </View>
@@ -135,9 +153,7 @@ export const ReceiptDocument: React.FC<{ data: any }> = ({ data }) => (
           <Text>${(data.subtotal || 0).toFixed(2)}</Text>
         </View>
         <View style={styles.row}>
-          <Text>
-            {data.taxName || "Tax"}:
-          </Text>
+          <Text>{data.taxName || "Tax"}:</Text>
           <Text>${(data.taxAmount || data.tax || 0).toFixed(2)}</Text>
         </View>
         <View style={[styles.row, styles.total]}>
@@ -170,13 +186,15 @@ export const ReceiptDocument: React.FC<{ data: any }> = ({ data }) => (
       </View>
     </Page>
   </Document>
-)
+);
 
 export const InvoiceDocument: React.FC<{ data: any }> = ({ data }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
-        <Text style={styles.title}>{data.branding?.companyName || "POS Pro"}</Text>
+        <Text style={styles.title}>
+          {data.branding?.companyName || "POS Pro"}
+        </Text>
         <Text style={styles.subtitle}>INVOICE</Text>
         <Text>Invoice #: {data.invoiceNumber || data.number}</Text>
         <Text>Date: {String(data.date)}</Text>
@@ -185,30 +203,49 @@ export const InvoiceDocument: React.FC<{ data: any }> = ({ data }) => (
 
       <View style={styles.section}>
         <Text style={{ fontWeight: "bold", marginBottom: 10 }}>Bill To:</Text>
-        <Text>{data.customerName || data.customer?.name || "Customer Name"}</Text>
-        <Text>{data.customerAddress || data.customer?.address || "Customer Address"}</Text>
+        <Text>
+          {data.customerName || data.customer?.name || "Customer Name"}
+        </Text>
+        <Text>
+          {data.customerAddress || data.customer?.address || "Customer Address"}
+        </Text>
         <Text>{data.customerEmail || data.customer?.email || ""}</Text>
       </View>
 
       <View style={styles.section}>
         <View style={styles.row}>
           <Text style={{ fontWeight: "bold", flex: 2 }}>Description</Text>
-          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "center" }}>Qty</Text>
-          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>Rate</Text>
-          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>Amount</Text>
+          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "center" }}>
+            Qty
+          </Text>
+          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>
+            Rate
+          </Text>
+          <Text style={{ fontWeight: "bold", flex: 1, textAlign: "right" }}>
+            Amount
+          </Text>
         </View>
 
         {(data.items || []).map((item: any, index: number) => (
           <View key={index} style={styles.itemRow}>
             <View style={{ flex: 2 }}>
               <Text style={styles.itemName}>
-                {item.productName || item.itemName || "Item"} - {item.variantName || ""}
+                {item.productName || item.itemName || "Item"} -{" "}
+                {item.variantName || ""}
               </Text>
-              <Text style={{ fontSize: 8, color: "#666666" }}>SKU: {item.sku || "N/A"}</Text>
+              <Text style={{ fontSize: 8, color: "#666666" }}>
+                SKU: {item.sku || "N/A"}
+              </Text>
             </View>
-            <Text style={styles.itemDetails}>{item.quantity || item.qty || 0}</Text>
-            <Text style={styles.itemPrice}>${(item.unitPrice || item.rate || 0).toFixed(2)}</Text>
-            <Text style={styles.itemPrice}>${(item.totalPrice || item.amount || 0).toFixed(2)}</Text>
+            <Text style={styles.itemDetails}>
+              {item.quantity || item.qty || 0}
+            </Text>
+            <Text style={styles.itemPrice}>
+              ${(item.unitPrice || item.rate || 0).toFixed(2)}
+            </Text>
+            <Text style={styles.itemPrice}>
+              ${(item.totalPrice || item.amount || 0).toFixed(2)}
+            </Text>
           </View>
         ))}
       </View>
@@ -234,4 +271,4 @@ export const InvoiceDocument: React.FC<{ data: any }> = ({ data }) => (
       </View>
     </Page>
   </Document>
-)
+);

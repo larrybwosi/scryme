@@ -1,14 +1,14 @@
-import { RealtimeProvider, PresenceMember } from './types';
-import { AblyRealtimeProvider } from './ably.provider';
-import { SocketIORealtimeProvider } from './socketio.provider';
+import { RealtimeProvider, PresenceMember } from "./types";
+import { AblyRealtimeProvider } from "./ably.provider";
+import { SocketIORealtimeProvider } from "./socketio.provider";
 
 export class RealtimeService implements RealtimeProvider {
   private provider: RealtimeProvider;
 
   constructor() {
-    const providerType = process.env.REALTIME_PROVIDER || 'ably';
+    const providerType = process.env.REALTIME_PROVIDER || "ably";
 
-    if (providerType === 'socketio') {
+    if (providerType === "socketio") {
       this.provider = new SocketIORealtimeProvider();
     } else {
       this.provider = new AblyRealtimeProvider();
@@ -23,7 +23,11 @@ export class RealtimeService implements RealtimeProvider {
     return this.provider.getPresence(channel);
   }
 
-  async enterPresence(channel: string, clientId: string, data?: any): Promise<void> {
+  async enterPresence(
+    channel: string,
+    clientId: string,
+    data?: any,
+  ): Promise<void> {
     return this.provider.enterPresence(channel, clientId, data);
   }
 

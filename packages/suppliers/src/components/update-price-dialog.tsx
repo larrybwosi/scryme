@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -11,12 +11,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@repo/ui/components/ui/dialog';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { useUpdateProductPrice } from '../lib/api/suppliers';
-import { toast } from 'sonner';
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { useUpdateProductPrice } from "../lib/api/suppliers";
+import { toast } from "sonner";
 
 const updatePriceSchema = z.object({
   costPrice: z.coerce.number().min(0.01, "Price must be greater than zero"),
@@ -40,7 +40,7 @@ export const UpdatePriceDialog: React.FC<UpdatePriceDialogProps> = ({
   supplierId,
   productId,
   productName,
-  currentPrice
+  currentPrice,
 }) => {
   const mutation = useUpdateProductPrice(supplierId);
 
@@ -52,7 +52,7 @@ export const UpdatePriceDialog: React.FC<UpdatePriceDialogProps> = ({
     resolver: zodResolver(updatePriceSchema as any),
     defaultValues: {
       costPrice: currentPrice,
-      effectiveDate: new Date().toISOString().split('T')[0],
+      effectiveDate: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -60,12 +60,12 @@ export const UpdatePriceDialog: React.FC<UpdatePriceDialogProps> = ({
     try {
       await mutation.mutateAsync({
         productId,
-        costPrice: data.costPrice
+        costPrice: data.costPrice,
       });
-      toast.success('Price updated successfully');
+      toast.success("Price updated successfully");
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to update price');
+      toast.error("Failed to update price");
       console.error(error);
     }
   };
@@ -76,14 +76,20 @@ export const UpdatePriceDialog: React.FC<UpdatePriceDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Update Price</DialogTitle>
           <DialogDescription>
-            Update the cost price for <strong>{productName}</strong>. This will be recorded in the price history.
+            Update the cost price for <strong>{productName}</strong>. This will
+            be recorded in the price history.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="currentPrice">Current Price</Label>
-              <Input id="currentPrice" value={currentPrice} disabled className="bg-muted" />
+              <Input
+                id="currentPrice"
+                value={currentPrice}
+                disabled
+                className="bg-muted"
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="costPrice">New Price</Label>
@@ -91,11 +97,13 @@ export const UpdatePriceDialog: React.FC<UpdatePriceDialogProps> = ({
                 id="costPrice"
                 type="number"
                 step="0.01"
-                {...register('costPrice')}
+                {...register("costPrice")}
                 autoFocus
               />
               {errors.costPrice && (
-                <p className="text-sm text-destructive">{errors.costPrice.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.costPrice.message}
+                </p>
               )}
             </div>
             <div className="grid gap-2">
@@ -103,16 +111,22 @@ export const UpdatePriceDialog: React.FC<UpdatePriceDialogProps> = ({
               <Input
                 id="effectiveDate"
                 type="date"
-                {...register('effectiveDate')}
+                {...register("effectiveDate")}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting || mutation.isPending}>
-              {isSubmitting || mutation.isPending ? 'Updating...' : 'Update Price'}
+              {isSubmitting || mutation.isPending
+                ? "Updating..."
+                : "Update Price"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,9 +1,20 @@
-'use client';
+"use client";
 
-import { AlertTriangle, RefreshCw, Home, Mail } from 'lucide-react';
-import { Button } from '@repo/ui/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
+import { AlertTriangle, RefreshCw, Home, Mail } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/ui/components/ui/alert";
 
 interface ErrorComponentProps {
   error?: Error;
@@ -16,8 +27,8 @@ interface ErrorComponentProps {
 
 export function ErrorComponent({
   error,
-  title = 'Something went wrong',
-  description = 'An unexpected error occurred. Please try again.',
+  title = "Something went wrong",
+  description = "An unexpected error occurred. Please try again.",
   onRetry,
   showContactSupport = true,
   showHomeButton = true,
@@ -31,11 +42,12 @@ export function ErrorComponent({
   };
 
   const handleContactSupport = () => {
-    window.location.href = 'mailto:support@company.com?subject=Support Request: Error on Supplier Page';
+    window.location.href =
+      "mailto:support@company.com?subject=Support Request: Error on Supplier Page";
   };
 
   const handleGoHome = () => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   return (
@@ -47,8 +59,12 @@ export function ErrorComponent({
               <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">{title}</CardTitle>
-          <CardDescription className="text-gray-600 mt-2">{description}</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-gray-600 mt-2">
+            {description}
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -57,7 +73,7 @@ export function ErrorComponent({
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Error Details</AlertTitle>
               <AlertDescription className="text-xs font-mono wrap-break-word">
-                {error.message || 'Unknown error occurred'}
+                {error.message || "Unknown error occurred"}
               </AlertDescription>
             </Alert>
           )}
@@ -68,7 +84,9 @@ export function ErrorComponent({
               <li>Refreshing the page</li>
               <li>Checking your internet connection</li>
               <li>Clearing your browser cache</li>
-              {showContactSupport && <li>Contacting support if the problem persists</li>}
+              {showContactSupport && (
+                <li>Contacting support if the problem persists</li>
+              )}
             </ul>
           </div>
         </CardContent>
@@ -76,14 +94,22 @@ export function ErrorComponent({
         <CardFooter className="flex flex-col space-y-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             {onRetry !== undefined && (
-              <Button onClick={handleRetry} className="flex-1 flex items-center gap-2" variant="default">
+              <Button
+                onClick={handleRetry}
+                className="flex-1 flex items-center gap-2"
+                variant="default"
+              >
                 <RefreshCw className="h-4 w-4" />
                 Try Again
               </Button>
             )}
 
             {showHomeButton && (
-              <Button onClick={handleGoHome} className="flex-1 flex items-center gap-2" variant="outline">
+              <Button
+                onClick={handleGoHome}
+                className="flex-1 flex items-center gap-2"
+                variant="outline"
+              >
                 <Home className="h-4 w-4" />
                 Go Home
               </Button>
@@ -91,7 +117,12 @@ export function ErrorComponent({
           </div>
 
           {showContactSupport && (
-            <Button onClick={handleContactSupport} className="w-full flex items-center gap-2" variant="ghost" size="sm">
+            <Button
+              onClick={handleContactSupport}
+              className="w-full flex items-center gap-2"
+              variant="ghost"
+              size="sm"
+            >
               <Mail className="h-4 w-4" />
               Contact Support
             </Button>
@@ -114,7 +145,11 @@ export function NetworkErrorComponent({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-export function NotFoundErrorComponent({ resource = 'page' }: { resource?: string }) {
+export function NotFoundErrorComponent({
+  resource = "page",
+}: {
+  resource?: string;
+}) {
   return (
     <ErrorComponent
       title={`${resource.charAt(0).toUpperCase() + resource.slice(1)} Not Found`}
@@ -148,7 +183,13 @@ export function ServerErrorComponent({ onRetry }: { onRetry?: () => void }) {
 }
 
 // Loading error component specifically for supplier-related errors
-export function SupplierErrorComponent({ error, onRetry }: { error?: Error; onRetry?: () => void }) {
+export function SupplierErrorComponent({
+  error,
+  onRetry,
+}: {
+  error?: Error;
+  onRetry?: () => void;
+}) {
   return (
     <div className="p-6">
       <Card className="max-w-2xl mx-auto">
@@ -158,15 +199,21 @@ export function SupplierErrorComponent({ error, onRetry }: { error?: Error; onRe
               <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Supplier Data Error</CardTitle>
-          <CardDescription>We encountered an issue loading your supplier information.</CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            Supplier Data Error
+          </CardTitle>
+          <CardDescription>
+            We encountered an issue loading your supplier information.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription className="text-sm">{error.message}</AlertDescription>
+              <AlertDescription className="text-sm">
+                {error.message}
+              </AlertDescription>
             </Alert>
           )}
           <div className="text-sm text-gray-600">
@@ -183,7 +230,10 @@ export function SupplierErrorComponent({ error, onRetry }: { error?: Error; onRe
             <RefreshCw className="h-4 w-4" />
             Reload Suppliers
           </Button>
-          <Button variant="outline" onClick={() => (window.location.href = '/')}>
+          <Button
+            variant="outline"
+            onClick={() => (window.location.href = "/")}
+          >
             <Home className="h-4 w-4 mr-2" />
             Dashboard
           </Button>

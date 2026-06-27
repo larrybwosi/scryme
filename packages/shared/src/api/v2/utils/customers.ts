@@ -1,5 +1,5 @@
-import { PrismaClient } from '@repo/db';
-import { decrypt } from './encryption';
+import { PrismaClient } from "@repo/db";
+import { decrypt } from "./encryption";
 
 // --- Types ---
 
@@ -25,13 +25,16 @@ export interface CreatePosCustomerData {
 
 // --- Shared Helpers ---
 
-export async function getClientConfig(prisma: PrismaClient, organizationId: string): Promise<TwentyCrmClientConfig> {
+export async function getClientConfig(
+  prisma: PrismaClient,
+  organizationId: string,
+): Promise<TwentyCrmClientConfig> {
   const config = await (prisma as any).twentyCrmConfiguration.findUnique({
     where: { organizationId },
     select: { serverUrl: true, apiKey: true, isActive: true },
   });
   if (!config?.isActive || !config.serverUrl || !config.apiKey) {
-    throw new Error('Twenty CRM is not configured or inactive.');
+    throw new Error("Twenty CRM is not configured or inactive.");
   }
   return { serverUrl: config.serverUrl, apiKey: decrypt(config.apiKey) };
 }
@@ -40,14 +43,19 @@ export async function ensureLocalCustomerStub(
   prisma: PrismaClient,
   organizationId: string,
   twentyId: string,
-  personData: { name: string; email?: string | null; phone?: string | null; company?: string | null }
+  personData: {
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    company?: string | null;
+  },
 ): Promise<string> {
   // Check if mapping already exists
   const mapping = await (prisma as any).externalMapping.findFirst({
     where: {
       organizationId,
-      provider: 'TWENTY_CRM',
-      entityType: 'CUSTOMER',
+      provider: "TWENTY_CRM",
+      entityType: "CUSTOMER",
       externalId: twentyId,
     },
   });
@@ -63,7 +71,7 @@ export async function ensureLocalCustomerStub(
 
   const localCustomer = await (prisma as any).customer.create({
     data: {
-      name: personData.name || 'Unknown Customer',
+      name: personData.name || "Unknown Customer",
       email: personData.email ?? null,
       phone: personData.phone ?? null,
       company: personData.company ?? null,
@@ -81,8 +89,8 @@ export async function ensureLocalCustomerStub(
     await (prisma as any).externalMapping.create({
       data: {
         organizationId,
-        provider: 'TWENTY_CRM',
-        entityType: 'CUSTOMER',
+        provider: "TWENTY_CRM",
+        entityType: "CUSTOMER",
         internalId: localCustomer.id,
         externalId: twentyId,
       },

@@ -48,7 +48,11 @@ export class InsightService {
     let recencyScore = 0;
     if (transactions.length > 0) {
       const lastPurchase = new Date(
-        Math.max(...transactions.map((t: { createdAt: Date }) => t.createdAt.getTime())),
+        Math.max(
+          ...transactions.map((t: { createdAt: Date }) =>
+            t.createdAt.getTime(),
+          ),
+        ),
       );
       const daysSinceLastPurchase =
         (Date.now() - lastPurchase.getTime()) / (1000 * 60 * 60 * 24);
@@ -73,7 +77,7 @@ export class InsightService {
                 ...transactions.map((t: { createdAt: Date }) =>
                   t.createdAt.getTime(),
                 ),
-              )
+              ),
             )
           : null,
     };

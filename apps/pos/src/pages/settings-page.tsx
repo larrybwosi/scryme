@@ -173,8 +173,12 @@ export default function SettingsPage() {
   const [shareCartBetweenUsers, setShareCartBetweenUsers] = useState(settings?.shareCartBetweenUsers ?? true);
   const [shareShiftBetweenUsers, setShareShiftBetweenUsers] = useState(settings?.shareShiftBetweenUsers ?? true);
   const [enableAutoShiftPrompt, setEnableAutoShiftPrompt] = useState(settings?.enableAutoShiftPrompt ?? false);
-  const [enforceShiftForCashPayments, setEnforceShiftForCashPayments] = useState(settings?.enforceShiftForCashPayments ?? false);
-  const [forcedImmediateSyncThreshold, setForcedImmediateSyncThreshold] = useState((settings?.forcedImmediateSyncThreshold ?? 1000).toString());
+  const [enforceShiftForCashPayments, setEnforceShiftForCashPayments] = useState(
+    settings?.enforceShiftForCashPayments ?? false
+  );
+  const [forcedImmediateSyncThreshold, setForcedImmediateSyncThreshold] = useState(
+    (settings?.forcedImmediateSyncThreshold ?? 1000).toString()
+  );
 
   // KDS Settings
   const [enableKdsSystem, setEnableKdsSystem] = useState(settings?.enableKdsSystem ?? false);
@@ -686,12 +690,11 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between py-2">
                     <div className="flex-1">
                       <div className="font-medium">Share Cart Between Users</div>
-                      <p className="text-sm text-muted-foreground">If disabled, each user will have their own independent shopping cart</p>
+                      <p className="text-sm text-muted-foreground">
+                        If disabled, each user will have their own independent shopping cart
+                      </p>
                     </div>
-                    <Switch
-                      checked={shareCartBetweenUsers}
-                      onCheckedChange={setShareCartBetweenUsers}
-                    />
+                    <Switch checked={shareCartBetweenUsers} onCheckedChange={setShareCartBetweenUsers} />
                   </div>
 
                   <Separator />
@@ -699,12 +702,11 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between py-2">
                     <div className="flex-1">
                       <div className="font-medium">Share Shift Between Users</div>
-                      <p className="text-sm text-muted-foreground">If disabled, each user must open and manage their own shift session</p>
+                      <p className="text-sm text-muted-foreground">
+                        If disabled, each user must open and manage their own shift session
+                      </p>
                     </div>
-                    <Switch
-                      checked={shareShiftBetweenUsers}
-                      onCheckedChange={setShareShiftBetweenUsers}
-                    />
+                    <Switch checked={shareShiftBetweenUsers} onCheckedChange={setShareShiftBetweenUsers} />
                   </div>
 
                   <Separator />
@@ -712,12 +714,11 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between py-2">
                     <div className="flex-1">
                       <div className="font-medium">Auto-Prompt for Shift</div>
-                      <p className="text-sm text-muted-foreground">Automatically prompt for a new shift opening after login if none is active</p>
+                      <p className="text-sm text-muted-foreground">
+                        Automatically prompt for a new shift opening after login if none is active
+                      </p>
                     </div>
-                    <Switch
-                      checked={enableAutoShiftPrompt}
-                      onCheckedChange={setEnableAutoShiftPrompt}
-                    />
+                    <Switch checked={enableAutoShiftPrompt} onCheckedChange={setEnableAutoShiftPrompt} />
                   </div>
 
                   <Separator />
@@ -727,10 +728,7 @@ export default function SettingsPage() {
                       <div className="font-medium">Enforce Shift for Cash</div>
                       <p className="text-sm text-muted-foreground">Block cash payments if no active shift is found</p>
                     </div>
-                    <Switch
-                      checked={enforceShiftForCashPayments}
-                      onCheckedChange={setEnforceShiftForCashPayments}
-                    />
+                    <Switch checked={enforceShiftForCashPayments} onCheckedChange={setEnforceShiftForCashPayments} />
                   </div>
                 </div>
               </Card>
@@ -1360,7 +1358,9 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">Security & Sync Threshold</h3>
-                      <p className="text-sm text-muted-foreground">Force real-time server verification for large transactions</p>
+                      <p className="text-sm text-muted-foreground">
+                        Force real-time server verification for large transactions
+                      </p>
                     </div>
                   </div>
 
@@ -1368,7 +1368,9 @@ export default function SettingsPage() {
                     <div className="space-y-3">
                       <Label htmlFor="forcedImmediateSyncThreshold" className="flex items-center justify-between">
                         <span>Immediate Sync Threshold</span>
-                        <Badge variant="outline" className="font-mono">{currency}</Badge>
+                        <Badge variant="outline" className="font-mono">
+                          {currency}
+                        </Badge>
                       </Label>
                       <Input
                         id="forcedImmediateSyncThreshold"
@@ -1379,20 +1381,22 @@ export default function SettingsPage() {
                         className="h-12 text-lg font-bold"
                       />
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Sales <strong>above</strong> this amount will bypass the local queue and require a successful server response before completion. This prevents large offline sales that might fail later.
+                        Sales <strong>above</strong> this amount will bypass the local queue and require a successful
+                        server response before completion. This prevents large offline sales that might fail later.
                       </p>
                     </div>
 
                     <div className="flex items-center p-4 bg-background rounded border">
-                       <div className="space-y-1">
-                          <p className="text-sm font-medium">Currently configured to:</p>
-                          <p className="text-2xl font-bold text-primary">
-                            {Number(forcedImmediateSyncThreshold).toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{currency}</span>
-                          </p>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">
-                             Verification required above this limit
-                          </p>
-                       </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Currently configured to:</p>
+                        <p className="text-2xl font-bold text-primary">
+                          {Number(forcedImmediateSyncThreshold).toLocaleString()}{' '}
+                          <span className="text-sm font-normal text-muted-foreground">{currency}</span>
+                        </p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-2">
+                          Verification required above this limit
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1591,7 +1595,7 @@ export default function SettingsPage() {
                 </>
               )}
             </div>
-            
+
             {import.meta.env.MODE !== 'standalone' && (
               <Card className="border-muted/60 shadow-sm p-6 rounded-lg">
                 <div className="flex items-center gap-3 mb-6">
@@ -1618,7 +1622,6 @@ export default function SettingsPage() {
               </Card>
             )}
           </TabsContent>
-
 
           <TabsContent
             value="danger"

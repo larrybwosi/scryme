@@ -1,16 +1,34 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
-import { Calendar } from '@repo/ui/components/ui/calendar';
-import { Filter, Plus, X, Search, Save,   CalendarIcon, ChevronDown } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
-import { format } from 'date-fns';
-import { CrmFieldType } from '../types';
+import { useState } from "react";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import { Calendar } from "@repo/ui/components/ui/calendar";
+import {
+  Filter,
+  Plus,
+  X,
+  Search,
+  Save,
+  CalendarIcon,
+  ChevronDown,
+} from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
+import { format } from "date-fns";
+import { CrmFieldType } from "../types";
 
 export interface FilterCondition {
   id: string;
@@ -42,72 +60,75 @@ export interface CrmFilterBuilderProps {
   onDeleteView?: (viewId: string) => void;
 }
 
-const OPERATORS: Record<CrmFieldType | 'default', Array<{ value: string; label: string }>> = {
+const OPERATORS: Record<
+  CrmFieldType | "default",
+  Array<{ value: string; label: string }>
+> = {
   [CrmFieldType.TEXT]: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'not_contains', label: 'Does not contain' },
-    { value: 'equals', label: 'Equals' },
-    { value: 'not_equals', label: 'Does not equal' },
-    { value: 'starts_with', label: 'Starts with' },
-    { value: 'ends_with', label: 'Ends with' },
-    { value: 'is_empty', label: 'Is empty' },
-    { value: 'is_not_empty', label: 'Is not empty' },
+    { value: "contains", label: "Contains" },
+    { value: "not_contains", label: "Does not contain" },
+    { value: "equals", label: "Equals" },
+    { value: "not_equals", label: "Does not equal" },
+    { value: "starts_with", label: "Starts with" },
+    { value: "ends_with", label: "Ends with" },
+    { value: "is_empty", label: "Is empty" },
+    { value: "is_not_empty", label: "Is not empty" },
   ],
   [CrmFieldType.NUMBER]: [
-    { value: 'equals', label: 'Equals' },
-    { value: 'not_equals', label: 'Does not equal' },
-    { value: 'greater_than', label: 'Greater than' },
-    { value: 'less_than', label: 'Less than' },
-    { value: 'greater_or_equal', label: 'Greater or equal' },
-    { value: 'less_or_equal', label: 'Less or equal' },
-    { value: 'between', label: 'Between' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "equals", label: "Equals" },
+    { value: "not_equals", label: "Does not equal" },
+    { value: "greater_than", label: "Greater than" },
+    { value: "less_than", label: "Less than" },
+    { value: "greater_or_equal", label: "Greater or equal" },
+    { value: "less_or_equal", label: "Less or equal" },
+    { value: "between", label: "Between" },
+    { value: "is_empty", label: "Is empty" },
   ],
   [CrmFieldType.DATE]: [
-    { value: 'equals', label: 'On' },
-    { value: 'before', label: 'Before' },
-    { value: 'after', label: 'After' },
-    { value: 'between', label: 'Between' },
-    { value: 'last_7_days', label: 'Last 7 days' },
-    { value: 'last_30_days', label: 'Last 30 days' },
-    { value: 'this_month', label: 'This month' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "equals", label: "On" },
+    { value: "before", label: "Before" },
+    { value: "after", label: "After" },
+    { value: "between", label: "Between" },
+    { value: "last_7_days", label: "Last 7 days" },
+    { value: "last_30_days", label: "Last 30 days" },
+    { value: "this_month", label: "This month" },
+    { value: "is_empty", label: "Is empty" },
   ],
   [CrmFieldType.SELECT]: [
-    { value: 'equals', label: 'Is' },
-    { value: 'not_equals', label: 'Is not' },
-    { value: 'in', label: 'Is any of' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "equals", label: "Is" },
+    { value: "not_equals", label: "Is not" },
+    { value: "in", label: "Is any of" },
+    { value: "is_empty", label: "Is empty" },
   ],
   [CrmFieldType.MULTI_SELECT]: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'not_contains', label: 'Does not contain' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "contains", label: "Contains" },
+    { value: "not_contains", label: "Does not contain" },
+    { value: "is_empty", label: "Is empty" },
   ],
-  [CrmFieldType.BOOLEAN]: [{ value: 'equals', label: 'Is' }],
+  [CrmFieldType.BOOLEAN]: [{ value: "equals", label: "Is" }],
   [CrmFieldType.EMAIL]: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'equals', label: 'Equals' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "contains", label: "Contains" },
+    { value: "equals", label: "Equals" },
+    { value: "is_empty", label: "Is empty" },
   ],
   [CrmFieldType.PHONE]: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'equals', label: 'Equals' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "contains", label: "Contains" },
+    { value: "equals", label: "Equals" },
+    { value: "is_empty", label: "Is empty" },
   ],
   [CrmFieldType.URL]: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'equals', label: 'Equals' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "contains", label: "Contains" },
+    { value: "equals", label: "Equals" },
+    { value: "is_empty", label: "Is empty" },
   ],
   [CrmFieldType.JSON]: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "contains", label: "Contains" },
+    { value: "is_empty", label: "Is empty" },
   ],
   default: [
-    { value: 'contains', label: 'Contains' },
-    { value: 'equals', label: 'Equals' },
-    { value: 'is_empty', label: 'Is empty' },
+    { value: "contains", label: "Contains" },
+    { value: "equals", label: "Equals" },
+    { value: "is_empty", label: "Is empty" },
   ],
 };
 
@@ -127,73 +148,85 @@ export function CrmFilterBuilder({
   onDeleteView: _onDeleteView,
 }: CrmFilterBuilderProps) {
   const [isExpanded, setIsExpanded] = useState(filters.length > 0);
-  const [saveViewName, setSaveViewName] = useState('');
+  const [saveViewName, setSaveViewName] = useState("");
   const [showSaveInput, setShowSaveInput] = useState(false);
 
   const addFilter = () => {
     const newFilter: FilterCondition = {
       id: generateId(),
-      field: fields[0]?.name || '',
-      operator: 'contains',
-      value: '',
+      field: fields[0]?.name || "",
+      operator: "contains",
+      value: "",
     };
     onFiltersChange([...filters, newFilter]);
     setIsExpanded(true);
   };
 
   const removeFilter = (id: string) => {
-    onFiltersChange(filters.filter(f => f.id !== id));
+    onFiltersChange(filters.filter((f) => f.id !== id));
   };
 
   const updateFilter = (id: string, updates: Partial<FilterCondition>) => {
-    onFiltersChange(filters.map(f => (f.id === id ? { ...f, ...updates } : f)));
+    onFiltersChange(
+      filters.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    );
   };
 
   const clearAllFilters = () => {
     onFiltersChange([]);
-    onSearchChange('');
+    onSearchChange("");
   };
 
   const handleSaveView = () => {
     if (saveViewName.trim() && onSaveView) {
       onSaveView(saveViewName.trim(), filters);
-      setSaveViewName('');
+      setSaveViewName("");
       setShowSaveInput(false);
     }
   };
 
   const getOperatorsForField = (fieldName: string) => {
-    const field = fields.find(f => f.name === fieldName);
+    const field = fields.find((f) => f.name === fieldName);
     if (!field) return OPERATORS.default;
     return OPERATORS[field.type] || OPERATORS.default;
   };
 
   const renderValueInput = (filter: FilterCondition) => {
-    const field = fields.find(f => f.name === filter.field);
+    const field = fields.find((f) => f.name === filter.field);
     if (!field) return null;
 
     // No value input needed for empty checks
-    if (filter.operator === 'is_empty' || filter.operator === 'is_not_empty') {
+    if (filter.operator === "is_empty" || filter.operator === "is_not_empty") {
       return null;
     }
 
     switch (field.type) {
       case CrmFieldType.DATE:
-        if (filter.operator === 'between') {
+        if (filter.operator === "between") {
           return (
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-[110px] justify-start">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-[110px] justify-start"
+                  >
                     <CalendarIcon className="mr-2 h-3 w-3" />
-                    {filter.value?.from ? format(new Date(filter.value.from), 'MMM d') : 'From'}
+                    {filter.value?.from
+                      ? format(new Date(filter.value.from), "MMM d")
+                      : "From"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={filter.value?.from ? new Date(filter.value.from) : undefined}
-                    onSelect={date =>
+                    selected={
+                      filter.value?.from
+                        ? new Date(filter.value.from)
+                        : undefined
+                    }
+                    onSelect={(date) =>
                       updateFilter(filter.id, {
                         value: { ...filter.value, from: date?.toISOString() },
                       })
@@ -204,16 +237,24 @@ export function CrmFilterBuilder({
               <span className="text-muted-foreground">-</span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-[110px] justify-start">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-[110px] justify-start"
+                  >
                     <CalendarIcon className="mr-2 h-3 w-3" />
-                    {filter.value?.to ? format(new Date(filter.value.to), 'MMM d') : 'To'}
+                    {filter.value?.to
+                      ? format(new Date(filter.value.to), "MMM d")
+                      : "To"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={filter.value?.to ? new Date(filter.value.to) : undefined}
-                    onSelect={date =>
+                    selected={
+                      filter.value?.to ? new Date(filter.value.to) : undefined
+                    }
+                    onSelect={(date) =>
                       updateFilter(filter.id, {
                         value: { ...filter.value, to: date?.toISOString() },
                       })
@@ -224,22 +265,34 @@ export function CrmFilterBuilder({
             </div>
           );
         }
-        if (['last_7_days', 'last_30_days', 'this_month'].includes(filter.operator)) {
+        if (
+          ["last_7_days", "last_30_days", "this_month"].includes(
+            filter.operator,
+          )
+        ) {
           return null;
         }
         return (
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="w-[140px] justify-start">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-[140px] justify-start"
+              >
                 <CalendarIcon className="mr-2 h-3 w-3" />
-                {filter.value ? format(new Date(filter.value), 'MMM d, yyyy') : 'Pick date'}
+                {filter.value
+                  ? format(new Date(filter.value), "MMM d, yyyy")
+                  : "Pick date"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
                 selected={filter.value ? new Date(filter.value) : undefined}
-                onSelect={date => updateFilter(filter.id, { value: date?.toISOString() })}
+                onSelect={(date) =>
+                  updateFilter(filter.id, { value: date?.toISOString() })
+                }
               />
             </PopoverContent>
           </Popover>
@@ -247,12 +300,15 @@ export function CrmFilterBuilder({
 
       case CrmFieldType.SELECT:
         return (
-          <Select value={filter.value || ''} onValueChange={value => updateFilter(filter.id, { value })}>
+          <Select
+            value={filter.value || ""}
+            onValueChange={(value) => updateFilter(filter.id, { value })}
+          >
             <SelectTrigger className="h-8 w-[140px]">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
-              {field.options?.map(option => (
+              {field.options?.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -264,8 +320,10 @@ export function CrmFilterBuilder({
       case CrmFieldType.BOOLEAN:
         return (
           <Select
-            value={filter.value?.toString() || ''}
-            onValueChange={value => updateFilter(filter.id, { value: value === 'true' })}
+            value={filter.value?.toString() || ""}
+            onValueChange={(value) =>
+              updateFilter(filter.id, { value: value === "true" })
+            }
           >
             <SelectTrigger className="h-8 w-[100px]">
               <SelectValue placeholder="Select..." />
@@ -278,15 +336,15 @@ export function CrmFilterBuilder({
         );
 
       case CrmFieldType.NUMBER:
-        if (filter.operator === 'between') {
+        if (filter.operator === "between") {
           return (
             <div className="flex items-center gap-2">
               <Input
                 type="number"
                 placeholder="Min"
                 className="h-8 w-[80px]"
-                value={filter.value?.min || ''}
-                onChange={e =>
+                value={filter.value?.min || ""}
+                onChange={(e) =>
                   updateFilter(filter.id, {
                     value: { ...filter.value, min: e.target.value },
                   })
@@ -297,8 +355,8 @@ export function CrmFilterBuilder({
                 type="number"
                 placeholder="Max"
                 className="h-8 w-[80px]"
-                value={filter.value?.max || ''}
-                onChange={e =>
+                value={filter.value?.max || ""}
+                onChange={(e) =>
                   updateFilter(filter.id, {
                     value: { ...filter.value, max: e.target.value },
                   })
@@ -312,8 +370,8 @@ export function CrmFilterBuilder({
             type="number"
             placeholder="Value"
             className="h-8 w-[120px]"
-            value={filter.value || ''}
-            onChange={e => updateFilter(filter.id, { value: e.target.value })}
+            value={filter.value || ""}
+            onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
           />
         );
 
@@ -323,14 +381,14 @@ export function CrmFilterBuilder({
             type="text"
             placeholder="Value"
             className="h-8 w-[160px]"
-            value={filter.value || ''}
-            onChange={e => updateFilter(filter.id, { value: e.target.value })}
+            value={filter.value || ""}
+            onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
           />
         );
     }
   };
 
-  const hasActiveFilters = filters.length > 0 || searchQuery.trim() !== '';
+  const hasActiveFilters = filters.length > 0 || searchQuery.trim() !== "";
 
   return (
     <div className="space-y-3">
@@ -342,12 +400,12 @@ export function CrmFilterBuilder({
             placeholder="Search records..."
             className="pl-9 h-9"
             value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
 
         <Button
-          variant={hasActiveFilters ? 'secondary' : 'outline'}
+          variant={hasActiveFilters ? "secondary" : "outline"}
           size="sm"
           className="gap-2 h-9"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -359,14 +417,19 @@ export function CrmFilterBuilder({
               {filters.length}
             </Badge>
           )}
-          <ChevronDown className={cn('h-3 w-3 transition-transform', isExpanded && 'rotate-180')} />
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 transition-transform",
+              isExpanded && "rotate-180",
+            )}
+          />
         </Button>
 
         {savedViews.length > 0 && (
           <Select
             value=""
-            onValueChange={viewId => {
-              const view = savedViews.find(v => v.id === viewId);
+            onValueChange={(viewId) => {
+              const view = savedViews.find((v) => v.id === viewId);
               if (view && onLoadView) onLoadView(view);
             }}
           >
@@ -374,7 +437,7 @@ export function CrmFilterBuilder({
               <SelectValue placeholder="Saved views" />
             </SelectTrigger>
             <SelectContent>
-              {savedViews.map(view => (
+              {savedViews.map((view) => (
                 <SelectItem key={view.id} value={view.id}>
                   {view.name}
                 </SelectItem>
@@ -384,7 +447,12 @@ export function CrmFilterBuilder({
         )}
 
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={clearAllFilters}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 text-muted-foreground"
+            onClick={clearAllFilters}
+          >
             Clear all
           </Button>
         )}
@@ -395,8 +463,15 @@ export function CrmFilterBuilder({
         <div className="p-4 bg-muted/30 rounded-lg border space-y-3">
           {filters.length === 0 ? (
             <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground mb-3">No filters applied</p>
-              <Button variant="outline" size="sm" onClick={addFilter} className="gap-2">
+              <p className="text-sm text-muted-foreground mb-3">
+                No filters applied
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addFilter}
+                className="gap-2"
+              >
                 <Plus className="h-3 w-3" />
                 Add filter
               </Button>
@@ -405,7 +480,10 @@ export function CrmFilterBuilder({
             <>
               <div className="space-y-2">
                 {filters.map((filter, index) => (
-                  <div key={filter.id} className="flex items-center gap-2 flex-wrap">
+                  <div
+                    key={filter.id}
+                    className="flex items-center gap-2 flex-wrap"
+                  >
                     {index > 0 && (
                       <Badge variant="outline" className="text-xs">
                         AND
@@ -413,13 +491,15 @@ export function CrmFilterBuilder({
                     )}
                     <Select
                       value={filter.field}
-                      onValueChange={value => updateFilter(filter.id, { field: value, value: '' })}
+                      onValueChange={(value) =>
+                        updateFilter(filter.id, { field: value, value: "" })
+                      }
                     >
                       <SelectTrigger className="h-8 w-[140px]">
                         <SelectValue placeholder="Field" />
                       </SelectTrigger>
                       <SelectContent>
-                        {fields.map(field => (
+                        {fields.map((field) => (
                           <SelectItem key={field.name} value={field.name}>
                             {field.label}
                           </SelectItem>
@@ -429,13 +509,15 @@ export function CrmFilterBuilder({
 
                     <Select
                       value={filter.operator}
-                      onValueChange={value => updateFilter(filter.id, { operator: value })}
+                      onValueChange={(value) =>
+                        updateFilter(filter.id, { operator: value })
+                      }
                     >
                       <SelectTrigger className="h-8 w-[140px]">
                         <SelectValue placeholder="Operator" />
                       </SelectTrigger>
                       <SelectContent>
-                        {getOperatorsForField(filter.field).map(op => (
+                        {getOperatorsForField(filter.field).map((op) => (
                           <SelectItem key={op.value} value={op.value}>
                             {op.label}
                           </SelectItem>
@@ -458,7 +540,12 @@ export function CrmFilterBuilder({
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t">
-                <Button variant="outline" size="sm" onClick={addFilter} className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addFilter}
+                  className="gap-2"
+                >
                   <Plus className="h-3 w-3" />
                   Add filter
                 </Button>
@@ -471,10 +558,16 @@ export function CrmFilterBuilder({
                           placeholder="View name"
                           className="h-8 w-[140px]"
                           value={saveViewName}
-                          onChange={e => setSaveViewName(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && handleSaveView()}
+                          onChange={(e) => setSaveViewName(e.target.value)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleSaveView()
+                          }
                         />
-                        <Button size="sm" onClick={handleSaveView} disabled={!saveViewName.trim()}>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveView}
+                          disabled={!saveViewName.trim()}
+                        >
                           Save
                         </Button>
                         <Button
@@ -482,14 +575,19 @@ export function CrmFilterBuilder({
                           size="sm"
                           onClick={() => {
                             setShowSaveInput(false);
-                            setSaveViewName('');
+                            setSaveViewName("");
                           }}
                         >
                           Cancel
                         </Button>
                       </>
                     ) : (
-                      <Button variant="ghost" size="sm" onClick={() => setShowSaveInput(true)} className="gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowSaveInput(true)}
+                        className="gap-2"
+                      >
                         <Save className="h-3 w-3" />
                         Save view
                       </Button>
@@ -505,10 +603,10 @@ export function CrmFilterBuilder({
       {/* Quick Filters */}
       {filters.length > 0 && !isExpanded && (
         <div className="flex items-center gap-2 flex-wrap">
-          {filters.map(filter => {
-            const field = fields.find(f => f.name === filter.field);
+          {filters.map((filter) => {
+            const field = fields.find((f) => f.name === filter.field);
             const operators = getOperatorsForField(filter.field);
-            const operator = operators.find(o => o.value === filter.operator);
+            const operator = operators.find((o) => o.value === filter.operator);
 
             return (
               <Badge
@@ -517,11 +615,15 @@ export function CrmFilterBuilder({
                 className="gap-1.5 cursor-pointer hover:bg-destructive/20 group"
                 onClick={() => removeFilter(filter.id)}
               >
-                <span className="font-medium">{field?.label || filter.field}</span>
-                <span className="text-muted-foreground">{operator?.label || filter.operator}</span>
+                <span className="font-medium">
+                  {field?.label || filter.field}
+                </span>
+                <span className="text-muted-foreground">
+                  {operator?.label || filter.operator}
+                </span>
                 {filter.value && (
                   <span className="font-medium truncate max-w-[100px]">
-                    {typeof filter.value === 'object' ? 'range' : filter.value}
+                    {typeof filter.value === "object" ? "range" : filter.value}
                   </span>
                 )}
                 <X className="h-3 w-3 opacity-50 group-hover:opacity-100" />

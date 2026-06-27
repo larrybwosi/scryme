@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const addFavoriteSchema = z
   .object({
@@ -6,9 +6,9 @@ export const addFavoriteSchema = z
     productId: z.string().cuid().optional(),
     variantId: z.string().cuid().optional(),
   })
-  .refine(data => data.productId || data.variantId, {
-    message: 'Either productId or variantId must be provided.',
-    path: ['productId', 'variantId'],
+  .refine((data) => data.productId || data.variantId, {
+    message: "Either productId or variantId must be provided.",
+    path: ["productId", "variantId"],
   });
 
 export const removeFavoriteSchema = z.object({
@@ -40,9 +40,10 @@ export const updateReviewSchema = z
       variantId: z.string().cuid().optional(),
     }),
   })
-  .refine(data => Object.keys(data.data).length > 0, {
-    message: 'At least one field (rating, comment, or variantId) must be provided for update.',
-    path: ['data'],
+  .refine((data) => Object.keys(data.data).length > 0, {
+    message:
+      "At least one field (rating, comment, or variantId) must be provided for update.",
+    path: ["data"],
   });
 
 export const deleteReviewSchema = z.object({

@@ -75,7 +75,7 @@ export class StockRequestUseCase {
   }
 
   async approve(organizationId: string, memberId: string, requestId: string) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const request = await tx.stockRequest.findUnique({
         where: { id: requestId, organizationId },
       });
@@ -102,7 +102,7 @@ export class StockRequestUseCase {
     requestId: string,
     dto: FulfillFromTransferDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const request = await tx.stockRequest.findUnique({
         where: { id: requestId, organizationId },
         include: { items: true },
@@ -133,9 +133,9 @@ export class StockRequestUseCase {
             dto.notes || `Fulfillment for Request ${request.requestNumber}`,
           requestedById: memberId,
           items: {
-            create: dto.items.map((item) => {
+            create: dto.items.map(item => {
               const reqItem = request.items.find(
-                (ri) => ri.variantId === item.variantId,
+                ri => ri.variantId === item.variantId,
               );
               if (!reqItem)
                 throw new BadRequestException(
@@ -172,7 +172,7 @@ export class StockRequestUseCase {
     requestId: string,
     dto: FulfillFromPurchaseDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       const request = await tx.stockRequest.findUnique({
         where: { id: requestId, organizationId },
         include: { items: true },
@@ -211,7 +211,7 @@ export class StockRequestUseCase {
             dto.notes || `Fulfillment for Request ${request.requestNumber}`,
           memberId: memberId,
           items: {
-            create: dto.items.map((item) => ({
+            create: dto.items.map(item => ({
               variantId: item.variantId,
               orderedQuantity: item.orderedQuantity,
               unitCost: item.unitCost,

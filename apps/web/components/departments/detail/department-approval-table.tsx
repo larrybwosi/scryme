@@ -22,7 +22,11 @@ interface DepartmentApprovalTableProps {
   members: any[];
 }
 
-export function DepartmentApprovalTable({ departmentId, chains, members }: DepartmentApprovalTableProps) {
+export function DepartmentApprovalTable({
+  departmentId,
+  chains,
+  members,
+}: DepartmentApprovalTableProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleToggle = async (chainId: string, currentStatus: boolean) => {
@@ -31,7 +35,9 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
     setLoading(null);
 
     if (result.success) {
-      toast.success(`Approval chain ${!currentStatus ? 'enabled' : 'disabled'}`);
+      toast.success(
+        `Approval chain ${!currentStatus ? "enabled" : "disabled"}`,
+      );
     } else {
       toast.error(result.error || "Failed to update status");
     }
@@ -42,7 +48,9 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
       <div className="p-4 border-b flex items-center justify-between bg-gray-50/30">
         <div>
           <h3 className="font-bold text-[#1D1D1F]">Purchase Approval Chains</h3>
-          <p className="text-xs text-gray-500">Configure multi-step approval workflows for this department.</p>
+          <p className="text-xs text-gray-500">
+            Configure multi-step approval workflows for this department.
+          </p>
         </div>
         <AddApprovalChainSheet departmentId={departmentId} members={members}>
           <Button size="sm" className="gap-2 bg-[#1D1D1F] text-white">
@@ -69,12 +77,14 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
               </TableCell>
             </TableRow>
           ) : (
-            chains.map((chain) => (
+            chains.map(chain => (
               <TableRow key={chain.id}>
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{chain.name}</span>
-                    <span className="text-[10px] text-gray-500">{chain.description || "No description"}</span>
+                    <span className="text-[10px] text-gray-500">
+                      {chain.description || "No description"}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -90,7 +100,9 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
                       </Badge>
                     )}
                     {!chain.minAmount && !chain.maxAmount && (
-                      <span className="text-xs text-gray-400 italic">Always trigger</span>
+                      <span className="text-xs text-gray-400 italic">
+                        Always trigger
+                      </span>
                     )}
                   </div>
                 </TableCell>
@@ -100,11 +112,12 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
                       <React.Fragment key={step.id}>
                         <div
                           className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold"
-                          title={step.approver.user.name}
-                        >
+                          title={step.approver.user.name}>
                           {idx + 1}
                         </div>
-                        {idx < chain.steps.length - 1 && <div className="w-2 h-[1px] bg-gray-300" />}
+                        {idx < chain.steps.length - 1 && (
+                          <div className="w-2 h-[1px] bg-gray-300" />
+                        )}
                       </React.Fragment>
                     ))}
                   </div>
@@ -113,12 +126,17 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`gap-2 h-7 ${chain.isActive ? 'text-[#34A853]' : 'text-gray-400'}`}
+                    className={`gap-2 h-7 ${chain.isActive ? "text-[#34A853]" : "text-gray-400"}`}
                     onClick={() => handleToggle(chain.id, chain.isActive)}
-                    disabled={loading === chain.id}
-                  >
-                    {chain.isActive ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-                    <span className="text-[11px] font-medium">{chain.isActive ? "Active" : "Disabled"}</span>
+                    disabled={loading === chain.id}>
+                    {chain.isActive ? (
+                      <ToggleRight size={20} />
+                    ) : (
+                      <ToggleLeft size={20} />
+                    )}
+                    <span className="text-[11px] font-medium">
+                      {chain.isActive ? "Active" : "Disabled"}
+                    </span>
                   </Button>
                 </TableCell>
                 <TableCell className="text-right">

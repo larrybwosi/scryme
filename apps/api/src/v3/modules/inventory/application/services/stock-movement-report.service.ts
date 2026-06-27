@@ -14,8 +14,14 @@ export class StockMovementReportService {
     private readonly scrymeService: ScrymeService,
   ) {}
 
-  async generateAndSendReport(organizationId: string, recipientEmails: string[], days: number = 7) {
-    this.logger.log(`Generating stock movement report for org ${organizationId} for the last ${days} days`);
+  async generateAndSendReport(
+    organizationId: string,
+    recipientEmails: string[],
+    days: number = 7,
+  ) {
+    this.logger.log(
+      `Generating stock movement report for org ${organizationId} for the last ${days} days`,
+    );
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -37,15 +43,28 @@ export class StockMovementReportService {
     });
 
     if (movements.length === 0) {
-      this.logger.log(`No stock movements found for org ${organizationId} in the last ${days} days. Skipping report.`);
+      this.logger.log(
+        `No stock movements found for org ${organizationId} in the last ${days} days. Skipping report.`,
+      );
       return;
     }
 
-    const reportMessage = this.formatReportMessage(movements, days, organizationId);
+    const reportMessage = this.formatReportMessage(
+      movements,
+      days,
+      organizationId,
+    );
 
-    const scrymeConfig = await this.scrymeService.getConfiguration(organizationId);
-    if (!scrymeConfig || !scrymeConfig.workspaceSlug || !scrymeConfig.isActive) {
-      this.logger.warn(`Scryme not configured or inactive for org ${organizationId}. Cannot send report.`);
+    const scrymeConfig =
+      await this.scrymeService.getConfiguration(organizationId);
+    if (
+      !scrymeConfig ||
+      !scrymeConfig.workspaceSlug ||
+      !scrymeConfig.isActive
+    ) {
+      this.logger.warn(
+        `Scryme not configured or inactive for org ${organizationId}. Cannot send report.`,
+      );
       return;
     }
 
@@ -54,16 +73,28 @@ export class StockMovementReportService {
     const channelSlug = "notifications";
 
     try {
-      await this.scrymeClient.sendMessage(scrymeConfig.workspaceSlug, channelSlug, {
-        content: reportMessage,
-      });
-      this.logger.log(`Stock movement report sent to Scryme workspace ${scrymeConfig.workspaceSlug}`);
+      await this.scrymeClient.sendMessage(
+        scrymeConfig.workspaceSlug,
+        channelSlug,
+        {
+          content: reportMessage,
+        },
+      );
+      this.logger.log(
+        `Stock movement report sent to Scryme workspace ${scrymeConfig.workspaceSlug}`,
+      );
     } catch (error: any) {
-      this.logger.error(`Failed to send stock movement report to Scryme: ${error.message}`);
+      this.logger.error(
+        `Failed to send stock movement report to Scryme: ${error.message}`,
+      );
     }
   }
 
-  private formatReportMessage(movements: any[], days: number, organizationId: string): string {
+  private formatReportMessage(
+    movements: any[],
+    days: number,
+    organizationId: string,
+  ): string {
     const totalIn = movements
       .filter(m => this.isIncoming(m.movementType))
       .reduce((acc, m) => acc + Number(m.quantity), 0);
@@ -73,9 +104,9 @@ export class StockMovementReportService {
       .reduce((acc, m) => acc + Number(m.quantity), 0);
 
     // Group by variant for top moved items
-    const variantStats: Record<string, { name: string, qty: number }> = {};
+    const variantStats: Record<string, { name: string; qty: number }> = {};
     movements.forEach(m => {
-      const variantName = `${m.variant.product.name} (${m.variant.name || 'Default'})`;
+      const variantName = `${m.variant.product.name} (${m.variant.name || "Default"})`;
       if (!variantStats[variantName]) {
         variantStats[variantName] = { name: variantName, qty: 0 };
       }
@@ -111,7 +142,7 @@ export class StockMovementReportService {
       MovementType.CUSTOMER_RETURN,
       MovementType.PRODUCTION_IN,
       MovementType.UNPACK_IN,
-      MovementType.INITIAL_STOCK
+      MovementType.INITIAL_STOCK,
     ];
     return incomingTypes.includes(type);
   }
@@ -123,7 +154,7 @@ export class StockMovementReportService {
       MovementType.SUPPLIER_RETURN,
       MovementType.PRODUCTION_OUT,
       MovementType.QUALITY_REJECTION,
-      MovementType.UNPACK_OUT
+      MovementType.UNPACK_OUT,
     ];
     return outgoingTypes.includes(type);
   }

@@ -66,7 +66,7 @@ describe("UploadController", () => {
       v2Context: { organizationId: "org-123", memberId: "mem-123" },
     };
     const res = {
-      send: vi.fn().mockImplementation((data) => data),
+      send: vi.fn().mockImplementation(data => data),
     };
 
     await controller.uploadFile(req as any, res as any);

@@ -35,7 +35,7 @@ export class SplitBatchUseCase {
       );
     }
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       // 1. Deduct from parent
       await tx.stockBatch.update({
         where: { id: batchId },

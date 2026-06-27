@@ -1,8 +1,8 @@
-import * as jose from 'jose';
+import * as jose from "jose";
 
 export interface ZitadelJwtPayload extends jose.JWTPayload {
   sub: string;
-  'urn:zitadel:iam:org:id'?: string;
+  "urn:zitadel:iam:org:id"?: string;
   scope?: string;
 }
 
@@ -19,6 +19,9 @@ export async function verifyZitadelJwt(
   const { keys } = await res.json();
   const keyStore = jose.createLocalJWKSet({ keys });
 
-  const { payload } = await jose.jwtVerify(token, keyStore, { audience, issuer });
+  const { payload } = await jose.jwtVerify(token, keyStore, {
+    audience,
+    issuer,
+  });
   return payload as ZitadelJwtPayload;
 }

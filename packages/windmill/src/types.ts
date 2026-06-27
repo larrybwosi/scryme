@@ -6,7 +6,7 @@ export interface WindmillWorkspace {
 
 export interface WindmillJob {
   id: string;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
   result?: any;
   error?: string;
 }
@@ -22,7 +22,7 @@ export interface WindmillExecutionOptions<T = any> {
 
 export interface WindmillCallbackPayload {
   jobId: string;
-  status: 'COMPLETED' | 'FAILED';
+  status: "COMPLETED" | "FAILED";
   result?: any;
   error?: string;
   organizationId: string;
@@ -31,9 +31,9 @@ export interface WindmillCallbackPayload {
 }
 
 export interface ApprovalCallbackPayload extends WindmillCallbackPayload {
-  decision: 'APPROVED' | 'REJECTED' | 'PENDING_REVIEW';
+  decision: "APPROVED" | "REJECTED" | "PENDING_REVIEW";
   entityId: string;
-  entityType: 'PurchaseOrder' | 'Expense' | 'StockAdjustment';
+  entityType: "PurchaseOrder" | "Expense" | "StockAdjustment";
   workflowRef: string;
   decidedBy?: string;
   comments?: string;
@@ -42,7 +42,7 @@ export interface ApprovalCallbackPayload extends WindmillCallbackPayload {
 
 export interface BakeryDisposalCallbackPayload extends WindmillCallbackPayload {
   batchId: string;
-  action: 'DISPOSE' | 'REPURPOSE' | 'QUALITY_CHECK';
+  action: "DISPOSE" | "REPURPOSE" | "QUALITY_CHECK";
   disposalReason?: string;
   notes?: string;
   decidedBy?: string;
@@ -72,7 +72,12 @@ export interface WindmillHealthCheckResponse {
   latencyMs?: number;
 }
 
-export type WindmillParameterType = 'string' | 'number' | 'boolean' | 'select' | 'date';
+export type WindmillParameterType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "select"
+  | "date";
 
 export interface WindmillScriptParameter {
   name: string;

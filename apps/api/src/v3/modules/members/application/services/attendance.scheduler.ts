@@ -62,7 +62,10 @@ export class AttendanceScheduler {
         } else {
           // If enabled, we checkout at the configured time
           // Check if we are within 5 minutes of the configured time
-          if (currentTimeStr >= autoCheckoutTime && currentTimeStr < this.addMinutes(autoCheckoutTime, 5)) {
+          if (
+            currentTimeStr >= autoCheckoutTime &&
+            currentTimeStr < this.addMinutes(autoCheckoutTime, 5)
+          ) {
             shouldCheckout = true;
           }
         }

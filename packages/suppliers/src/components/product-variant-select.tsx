@@ -1,11 +1,22 @@
-'use client';
+"use client";
 
-import { Check, ChevronsUpDown, Loader2, Package } from 'lucide-react';
-import { FC, useMemo, useState } from 'react';
-import { cn } from '../lib/utils';
-import { Button } from '@repo/ui/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
+import { Check, ChevronsUpDown, Loader2, Package } from "lucide-react";
+import { FC, useMemo, useState } from "react";
+import { cn } from "../lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@repo/ui/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
 
 interface ProductVariant {
   id: string;
@@ -20,7 +31,7 @@ interface ProductVariantsSelectProps {
   value?: string;
   onValueChange?: (variantId: string, variant?: ProductVariant) => void;
   placeholder?: string;
-  productType?: string | 'ALL';
+  productType?: string | "ALL";
   includeLocation?: boolean;
   showLocationInfo?: boolean;
   disabled?: boolean;
@@ -31,19 +42,19 @@ interface ProductVariantsSelectProps {
 export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Search products...',
+  placeholder = "Search products...",
   disabled = false,
   className,
 }) => {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   const variants: any[] = [];
   const isLoading = false;
 
-  const selectedVariant = useMemo(() =>
-    variants.find(v => v.id === value),
-    [value, variants]
+  const selectedVariant = useMemo(
+    () => variants.find((v) => v.id === value),
+    [value, variants],
   );
 
   return (
@@ -54,7 +65,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
           role="combobox"
           aria-expanded={open}
           disabled={disabled || isLoading}
-          className={cn('w-full justify-between font-normal', className)}
+          className={cn("w-full justify-between font-normal", className)}
         >
           {selectedVariant ? (
             <div className="flex items-center gap-2 truncate">
@@ -80,7 +91,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
           />
           <CommandList>
             <CommandEmpty>
-              {isLoading ? 'Searching...' : 'No products found.'}
+              {isLoading ? "Searching..." : "No products found."}
             </CommandEmpty>
             <CommandGroup>
               {variants.map((variant) => (
@@ -94,13 +105,15 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
                 >
                   <Check
                     className={cn(
-                      'mr-2 h-4 w-4',
-                      value === variant.id ? 'opacity-100' : 'opacity-0'
+                      "mr-2 h-4 w-4",
+                      value === variant.id ? "opacity-100" : "opacity-0",
                     )}
                   />
                   <div className="flex flex-col">
                     <span>{variant.name}</span>
-                    <span className="text-xs text-muted-foreground">SKU: {variant.sku}</span>
+                    <span className="text-xs text-muted-foreground">
+                      SKU: {variant.sku}
+                    </span>
                   </div>
                 </CommandItem>
               ))}

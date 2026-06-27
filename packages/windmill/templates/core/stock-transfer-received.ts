@@ -7,8 +7,10 @@ export async function main(
   transferId: string,
   transferNumber: string,
   receivedAt: string,
-  receivedBy: string
+  receivedBy: string,
 ) {
-  console.log(`[StockTransfer] Received: ${transferNumber} by member ${receivedBy}`);
+  console.log(
+    `[StockTransfer] Received: ${transferNumber} by member ${receivedBy}`,
+  );
   return { success: true };
 }

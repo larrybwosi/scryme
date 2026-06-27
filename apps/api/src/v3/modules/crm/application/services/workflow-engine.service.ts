@@ -13,7 +13,7 @@ export class WorkflowExecutionEngine {
 
     // Find trigger node
     const nodes = workflow.nodes as any[];
-    const triggerNode = nodes.find((n) => n.type === "trigger");
+    const triggerNode = nodes.find(n => n.type === "trigger");
 
     if (!triggerNode) return;
 
@@ -46,7 +46,7 @@ export class WorkflowExecutionEngine {
     const nodes = instance.workflow.nodes as any[];
 
     // Find outgoing edges from current node
-    const nextEdges = edges.filter((e) => e.source === instance.currentNodeId);
+    const nextEdges = edges.filter(e => e.source === instance.currentNodeId);
 
     if (nextEdges.length === 0) {
       await db.campaignWorkflowInstance.update({
@@ -57,7 +57,7 @@ export class WorkflowExecutionEngine {
     }
 
     for (const edge of nextEdges) {
-      const nextNode = nodes.find((n) => n.id === edge.target);
+      const nextNode = nodes.find(n => n.id === edge.target);
       if (!nextNode) continue;
 
       await this.executeNode(instanceId, nextNode);
@@ -121,9 +121,8 @@ export class WorkflowExecutionEngine {
         data: { status: "HALTED" },
       });
 
-      const { workflowQueue } = await import(
-        "../../infrastructure/queues/workflow.queue-definition"
-      );
+      const { workflowQueue } =
+        await import("../../infrastructure/queues/workflow.queue-definition");
       await workflowQueue.add(
         "resume-workflow",
         { instanceId },

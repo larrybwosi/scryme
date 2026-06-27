@@ -28,7 +28,7 @@ export async function GET(
     },
     include: {
       fulfillments: {
-        include: { shippingAddress: true }
+        include: { shippingAddress: true },
       },
       customer: {
         include: {
@@ -61,7 +61,10 @@ export async function GET(
         ) as any,
       );
     } else if (type === "delivery-note") {
-      const documentData = Mappers.toDeliveryNoteData(transaction, transaction.fulfillments[0]);
+      const documentData = Mappers.toDeliveryNoteData(
+        transaction,
+        transaction.fulfillments[0],
+      );
       stream = await renderToStream(
         createElement(
           DeliveryNoteDocument as any,

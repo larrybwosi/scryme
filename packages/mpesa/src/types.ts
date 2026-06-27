@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   mpesaTriggerSchema,
   mpesaCallbackSchema,
@@ -8,7 +8,7 @@ import {
   PaymentCredentialsSchema,
   MpesaEnvironmentEnum,
   MpesaTypeEnum,
-} from './validations';
+} from "./validations";
 
 export type MpesaTriggerInput = z.infer<typeof mpesaTriggerSchema>;
 export type MpesaCallbackPayload = z.infer<typeof mpesaCallbackSchema>;

@@ -78,7 +78,7 @@ export class OrdersService {
         this.prisma.client.transaction.count({ where }),
       ]);
 
-      const shaped = transactions.map((t) => {
+      const shaped = transactions.map(t => {
         const meta = (t.metadata ?? {}) as Record<string, unknown>;
         return {
           id: t.id,
@@ -90,7 +90,7 @@ export class OrdersService {
           currency: t.currencyCode,
           customer: t.customer ?? null,
           createdAt: t.createdAt,
-          items: t.items.map((i) => ({
+          items: t.items.map(i => ({
             id: i.id,
             productName: i.productName,
             variantName: i.variantName,
@@ -161,7 +161,7 @@ export class OrdersService {
     }
 
     // Resolve variants and check stock
-    const variantIds = data.items.map((i) => i.variantId);
+    const variantIds = data.items.map(i => i.variantId);
     const variants = await this.prisma.client.productVariant.findMany({
       where: {
         id: { in: variantIds },
@@ -182,9 +182,7 @@ export class OrdersService {
     });
 
     if (variants.length !== variantIds.length) {
-      const missing = variantIds.filter(
-        (id) => !variants.find((v) => v.id === id),
-      );
+      const missing = variantIds.filter(id => !variants.find(v => v.id === id));
       throw new NotFoundException({
         message: "One or more variants not found",
         missingVariantIds: missing,
@@ -194,7 +192,7 @@ export class OrdersService {
     // Check stock levels
     const insufficientStock: any[] = [];
     for (const item of data.items) {
-      const variant = variants.find((v) => v.id === item.variantId)!;
+      const variant = variants.find(v => v.id === item.variantId)!;
       const stock = Number(variant.variantStocks[0]?.availableStock ?? 0);
       if (stock < item.quantity) {
         insufficientStock.push({
@@ -226,7 +224,7 @@ export class OrdersService {
     const orderNumber = `ECO-${String(count + 1).padStart(6, "0")}`;
 
     try {
-      const result = await this.prisma.client.$transaction(async (tx) => {
+      const result = await this.prisma.client.$transaction(async tx => {
         const transaction = await tx.transaction.create({
           data: {
             number: orderNumber,
@@ -252,8 +250,8 @@ export class OrdersService {
               apiKeyId: ctx.apiKeyId,
             },
             items: {
-              create: data.items.map((item) => {
-                const variant = variants.find((v) => v.id === item.variantId)!;
+              create: data.items.map(item => {
+                const variant = variants.find(v => v.id === item.variantId)!;
                 return {
                   variantId: item.variantId,
                   productName: variant.product.name,
@@ -292,15 +290,15 @@ export class OrdersService {
         customerId: data.customerId,
         totalAmount: Number(result.finalTotal),
         currency: result.currencyCode,
-        items: data.items.map((i) => {
-          const v = variants.find((varnt) => varnt.id === i.variantId)!;
+        items: data.items.map(i => {
+          const v = variants.find(varnt => varnt.id === i.variantId)!;
           return {
             productName: `${v.product.name} - ${v.name}`,
             quantity: i.quantity,
             lineTotal: i.unitPrice * i.quantity,
           };
         }),
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[v2 orders POST] Failed to emit Windmill event:", err),
       );
 

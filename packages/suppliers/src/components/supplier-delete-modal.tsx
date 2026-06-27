@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@repo/ui/components/ui/button';
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import { SupplierUI as Supplier } from '../types/index';
-import { XCircle } from 'lucide-react';
+} from "@repo/ui/components/ui/dialog";
+import { SupplierUI as Supplier } from "../types/index";
+import { XCircle } from "lucide-react";
 
 interface SupplierDeleteModalProps {
   isOpen: boolean;
@@ -20,7 +20,13 @@ interface SupplierDeleteModalProps {
   isLoading: boolean;
 }
 
-export function SupplierDeleteModal({ isOpen, onOpenChange, supplier, onDelete, isLoading }: SupplierDeleteModalProps) {
+export function SupplierDeleteModal({
+  isOpen,
+  onOpenChange,
+  supplier,
+  onDelete,
+  isLoading,
+}: SupplierDeleteModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -30,7 +36,8 @@ export function SupplierDeleteModal({ isOpen, onOpenChange, supplier, onDelete, 
             Confirm Deletion
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete supplier &quot;{supplier?.name}&quot;? This action cannot be undone.
+            Are you sure you want to delete supplier &quot;{supplier?.name}
+            &quot;? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex justify-end gap-2 mt-4">
@@ -38,7 +45,7 @@ export function SupplierDeleteModal({ isOpen, onOpenChange, supplier, onDelete, 
             Cancel
           </Button>
           <Button variant="destructive" onClick={onDelete} disabled={isLoading}>
-            {isLoading ? 'Deleting...' : 'Delete'}
+            {isLoading ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,13 +1,35 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
-import { Button } from '@repo/ui/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
-import SheduleDeliveryModal from './create-edit-delivery';
+import React, { useState, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import SheduleDeliveryModal from "./create-edit-delivery";
 import {
   Plus,
   Edit,
@@ -26,13 +48,13 @@ import {
   Trash2,
   Eye,
   ArrowUpDown,
-  Briefcase
-} from 'lucide-react';
-import { SupplierUI as Supplier } from '../types/index';
-import { SupplierLoadingState } from './supplier-loading-state';
-import { SupplierEmptyState } from './supplier-empty-state';
-import CreateEditSupplierModal from './supplier-create-modal';
-import { Checkbox } from '@repo/ui/components/ui/checkbox';
+  Briefcase,
+} from "lucide-react";
+import { SupplierUI as Supplier } from "../types/index";
+import { SupplierLoadingState } from "./supplier-loading-state";
+import { SupplierEmptyState } from "./supplier-empty-state";
+import CreateEditSupplierModal from "./supplier-create-modal";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,12 +62,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@repo/ui/components/ui/dropdown-menu';
-import Link from 'next/link';
+} from "@repo/ui/components/ui/dropdown-menu";
+import Link from "next/link";
 
 // Mocked search functionality
 const useListSuppliers = () => {
-    return { data: [], isLoading: false, error: null };
+  return { data: [], isLoading: false, error: null };
 };
 
 interface SupplierRowProps {
@@ -67,18 +89,43 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
   onReceive,
   onSchedule,
   isSelected,
-  onSelect
+  onSelect,
 }) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">Active</Badge>;
-      case 'inactive':
-        return <Badge variant="secondary" className="bg-gray-100 text-gray-600 hover:bg-gray-100">Inactive</Badge>;
-      case 'pending':
-        return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">Pending</Badge>;
-      case 'suspended':
-        return <Badge variant="destructive" className="bg-rose-100 text-rose-700 hover:bg-rose-100">Suspended</Badge>;
+      case "active":
+        return (
+          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
+            Active
+          </Badge>
+        );
+      case "inactive":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-gray-100 text-gray-600 hover:bg-gray-100"
+          >
+            Inactive
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-amber-50 text-amber-600 border-amber-200"
+          >
+            Pending
+          </Badge>
+        );
+      case "suspended":
+        return (
+          <Badge
+            variant="destructive"
+            className="bg-rose-100 text-rose-700 hover:bg-rose-100"
+          >
+            Suspended
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -95,7 +142,7 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
       <TableCell>
         <div className="flex flex-col gap-0.5">
           <Link
-             href={`/suppliers/${supplier.id}`}
+            href={`/suppliers/${supplier.id}`}
             className="font-medium hover:underline text-primary transition-colors"
           >
             {supplier.name}
@@ -103,7 +150,9 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="font-mono">{supplier.code}</span>
             <span>•</span>
-            <span className="capitalize">{supplier.type.replace('_', ' ')}</span>
+            <span className="capitalize">
+              {supplier.type.replace("_", " ")}
+            </span>
           </div>
         </div>
       </TableCell>
@@ -122,7 +171,11 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
       <TableCell>
         <div className="flex flex-wrap gap-1 max-w-[150px]">
           {supplier.categories.slice(0, 2).map((cat: string, i: number) => (
-            <Badge key={i} variant="secondary" className="text-[10px] h-4 px-1.5">
+            <Badge
+              key={i}
+              variant="secondary"
+              className="text-[10px] h-4 px-1.5"
+            >
               {cat}
             </Badge>
           ))}
@@ -142,7 +195,9 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
                 style={{ width: `${supplier.performance.qualityScore}%` }}
               />
             </div>
-            <span className="text-xs font-medium">{supplier.performance.qualityScore}%</span>
+            <span className="text-xs font-medium">
+              {supplier.performance.qualityScore}%
+            </span>
           </div>
           <div className="text-[10px] text-muted-foreground">
             {supplier.performance.totalOrders} orders total
@@ -155,7 +210,12 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="More options"
+                >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -171,7 +231,7 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
               <Edit className="mr-2 h-4 w-4" /> Edit Supplier
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onSchedule(supplier.id)}>
-                <Truck className="mr-2 h-4 w-4" /> Schedule Delivery
+              <Truck className="mr-2 h-4 w-4" /> Schedule Delivery
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onReceive(supplier.id)}>
               <Package className="mr-2 h-4 w-4" /> Receive Delivery
@@ -191,13 +251,17 @@ const SupplierRow: React.FC<SupplierRowProps> = ({
 };
 
 export default function SupplierManagement() {
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>(undefined);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | undefined>(
+    undefined,
+  );
   const [isScheduleDeliveryOpen, setIsScheduleDeliveryOpen] = useState(false);
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
+    null,
+  );
 
   // Fallback if data is not provided via props
   const suppliers: Supplier[] = [];
@@ -208,16 +272,17 @@ export default function SupplierManagement() {
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(s =>
-        s.name.toLowerCase().includes(query) ||
-        s.code.toLowerCase().includes(query) ||
-        s.contact.primaryContact.toLowerCase().includes(query) ||
-        s.contact.email.toLowerCase().includes(query)
+      result = result.filter(
+        (s) =>
+          s.name.toLowerCase().includes(query) ||
+          s.code.toLowerCase().includes(query) ||
+          s.contact.primaryContact.toLowerCase().includes(query) ||
+          s.contact.email.toLowerCase().includes(query),
       );
     }
 
-    if (activeTab !== 'all') {
-      result = result.filter(s => s.status === activeTab);
+    if (activeTab !== "all") {
+      result = result.filter((s) => s.status === activeTab);
     }
 
     return result;
@@ -225,7 +290,7 @@ export default function SupplierManagement() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedSuppliers(filteredSuppliers.map(s => s.id));
+      setSelectedSuppliers(filteredSuppliers.map((s) => s.id));
     } else {
       setSelectedSuppliers([]);
     }
@@ -233,18 +298,18 @@ export default function SupplierManagement() {
 
   const handleSelectSupplier = (id: string, checked: boolean) => {
     if (checked) {
-      setSelectedSuppliers(prev => [...prev, id]);
+      setSelectedSuppliers((prev) => [...prev, id]);
     } else {
-      setSelectedSuppliers(prev => prev.filter(sId => sId !== id));
+      setSelectedSuppliers((prev) => prev.filter((sId) => sId !== id));
     }
   };
 
   const handleDelete = (id: string) => {
-    console.log('Delete supplier', id);
+    console.log("Delete supplier", id);
   };
 
   const handleReceive = (id: string) => {
-    console.log('Receive delivery from', id);
+    console.log("Receive delivery from", id);
   };
 
   const handleSchedule = (id: string) => {
@@ -261,11 +326,15 @@ export default function SupplierManagement() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Suppliers</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your relationships with vendors, manufacturers and distributors.
+            Manage your relationships with vendors, manufacturers and
+            distributors.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="hidden sm:flex border-primary/20 hover:border-primary/40 transition-colors">
+          <Button
+            variant="outline"
+            className="hidden sm:flex border-primary/20 hover:border-primary/40 transition-colors"
+          >
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
           <Button
@@ -283,14 +352,18 @@ export default function SupplierManagement() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-primary/10 hover:border-primary/20 transition-colors shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Suppliers</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Suppliers
+            </CardTitle>
             <div className="bg-primary/10 p-2 rounded-lg">
-                <Briefcase className="h-4 w-4 text-primary" />
+              <Briefcase className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{suppliers.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all categories</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Across all categories
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -298,12 +371,27 @@ export default function SupplierManagement() {
       <Card className="shadow-md border-muted/60">
         <CardHeader className="border-b bg-muted/30 px-6 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full md:w-auto"
+            >
               <TabsList className="bg-background border h-9 p-0.5">
-                <TabsTrigger value="all" className="px-4 py-1 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All</TabsTrigger>
-                <TabsTrigger value="active" className="px-4 py-1 text-sm">Active</TabsTrigger>
-                <TabsTrigger value="pending" className="px-4 py-1 text-sm">Pending</TabsTrigger>
-                <TabsTrigger value="suspended" className="px-4 py-1 text-sm">Suspended</TabsTrigger>
+                <TabsTrigger
+                  value="all"
+                  className="px-4 py-1 text-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  All
+                </TabsTrigger>
+                <TabsTrigger value="active" className="px-4 py-1 text-sm">
+                  Active
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="px-4 py-1 text-sm">
+                  Pending
+                </TabsTrigger>
+                <TabsTrigger value="suspended" className="px-4 py-1 text-sm">
+                  Suspended
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex items-center gap-2">
@@ -319,7 +407,12 @@ export default function SupplierManagement() {
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Filter suppliers">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    aria-label="Filter suppliers"
+                  >
                     <Filter className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
@@ -335,7 +428,10 @@ export default function SupplierManagement() {
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
-                      checked={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
+                      checked={
+                        selectedSuppliers.length === filteredSuppliers.length &&
+                        filteredSuppliers.length > 0
+                      }
                       onCheckedChange={(checked) => handleSelectAll(!!checked)}
                     />
                   </TableHead>
@@ -344,11 +440,21 @@ export default function SupplierManagement() {
                       Supplier <ArrowUpDown className="h-3 w-3" />
                     </div>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">Contact</TableHead>
-                  <TableHead className="font-semibold text-foreground">Categories</TableHead>
-                  <TableHead className="font-semibold text-foreground">Performance</TableHead>
-                  <TableHead className="font-semibold text-foreground">Status</TableHead>
-                  <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Contact
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Categories
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Performance
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-right font-semibold text-foreground">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -356,7 +462,7 @@ export default function SupplierManagement() {
                   <SupplierRow
                     key={supplier.id}
                     supplier={supplier}
-                    onView={(id) => console.log('View', id)}
+                    onView={(id) => console.log("View", id)}
                     onEdit={(s) => {
                       setEditingSupplier(s);
                       setIsCreateModalOpen(true);

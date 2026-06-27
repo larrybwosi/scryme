@@ -74,7 +74,7 @@ export class ZitadelCustomerService {
         jwtPayload.name?.split(" ").slice(1).join(" ") ||
         "User";
 
-      const record = await this.prisma.client.$transaction(async (tx) => {
+      const record = await this.prisma.client.$transaction(async tx => {
         const txRecordService = new RecordService(
           tx as any,
           this.activityLogger,

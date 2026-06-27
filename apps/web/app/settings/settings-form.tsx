@@ -168,8 +168,7 @@ function SectionHeader({
       {badge && (
         <Badge
           variant="secondary"
-          className="text-xs bg-blue-50 text-blue-700 border border-blue-100 font-medium"
-        >
+          className="text-xs bg-blue-50 text-blue-700 border border-blue-100 font-medium">
           {badge}
         </Badge>
       )}
@@ -204,8 +203,7 @@ function PolicyRow({
               className={cn(
                 "text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border",
                 riskColors[risk],
-              )}
-            >
+              )}>
               {risk} risk
             </span>
           )}
@@ -265,8 +263,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col h-screen bg-zinc-50"
-    >
+      className="flex flex-col h-screen bg-zinc-50">
       {/* ── Top header bar ── */}
       <div className="shrink-0 bg-white border-b border-zinc-200 px-8">
         {/* Page title row */}
@@ -293,8 +290,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 isDirty
                   ? "text-amber-600 flex items-center gap-1.5"
                   : "text-zinc-400 flex items-center gap-1.5",
-              )}
-            >
+              )}>
               {isDirty ? (
                 <>
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -315,8 +311,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 size="sm"
                 onClick={() => form.reset()}
                 disabled={isPending}
-                className="h-8 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
-              >
+                className="h-8 text-xs text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100">
                 Discard
               </Button>
             )}
@@ -330,8 +325,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 isDirty
                   ? "bg-zinc-900 text-white hover:bg-zinc-800"
                   : "bg-zinc-100 text-zinc-400 cursor-default",
-              )}
-            >
+              )}>
               {isPending ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -349,7 +343,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
 
         {/* Horizontal tabs */}
         <div className="flex items-center gap-0 -mb-px">
-          {NAV_SECTIONS.map((section) => {
+          {NAV_SECTIONS.map(section => {
             const isActive = activeSection === section.id;
             return (
               <button
@@ -361,14 +355,12 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   isActive
                     ? "border-zinc-900 text-zinc-900"
                     : "border-transparent text-zinc-400 hover:text-zinc-600 hover:border-zinc-200",
-                )}
-              >
+                )}>
                 <span
                   className={cn(
                     "transition-colors",
                     isActive ? "text-zinc-900" : "text-zinc-400",
-                  )}
-                >
+                  )}>
                   {section.icon}
                 </span>
                 {section.label}
@@ -398,10 +390,10 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   <OrganizationProfileHeader
                     logo={form.watch("logo")}
                     banner={form.watch("banner")}
-                    onLogoChange={(url) =>
+                    onLogoChange={url =>
                       form.setValue("logo", url, { shouldDirty: true })
                     }
-                    onBannerChange={(url) =>
+                    onBannerChange={url =>
                       form.setValue("banner", url, { shouldDirty: true })
                     }
                     disabled={isPending}
@@ -425,8 +417,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       label="Organization Name"
                       required
                       error={errors.name?.message}
-                      fullWidth
-                    >
+                      fullWidth>
                       <Input
                         {...form.register("name")}
                         placeholder="Acme Corporation"
@@ -456,8 +447,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                     <Field
                       label="Address"
                       error={errors.address?.message}
-                      fullWidth
-                    >
+                      fullWidth>
                       <IconInput
                         icon={<MapPin className="w-4 h-4" />}
                         {...form.register("address")}
@@ -498,16 +488,14 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       label="Default Currency"
                       required
                       hint="Applied to all financial transactions and reports."
-                      error={errors.defaultCurrency?.message}
-                    >
+                      error={errors.defaultCurrency?.message}>
                       <Select
-                        onValueChange={(val) =>
+                        onValueChange={val =>
                           form.setValue("defaultCurrency", val, {
                             shouldDirty: true,
                           })
                         }
-                        value={form.watch("defaultCurrency")}
-                      >
+                        value={form.watch("defaultCurrency")}>
                         <SelectTrigger className="h-9 text-sm border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg">
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
@@ -528,8 +516,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       label="Default Country"
                       required
                       hint="Used as the fallback region for addresses and compliance."
-                      error={errors.country?.message}
-                    >
+                      error={errors.country?.message}>
                       <Input
                         {...form.register("country")}
                         placeholder="Kenya"
@@ -542,16 +529,14 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       required
                       hint="Timestamps and scheduled jobs run on this timezone."
                       error={errors.defaultTimezone?.message}
-                      fullWidth
-                    >
+                      fullWidth>
                       <Select
-                        onValueChange={(val) =>
+                        onValueChange={val =>
                           form.setValue("defaultTimezone", val, {
                             shouldDirty: true,
                           })
                         }
-                        value={form.watch("defaultTimezone")}
-                      >
+                        value={form.watch("defaultTimezone")}>
                         <SelectTrigger className="h-9 text-sm border-zinc-200 bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg">
                           <SelectValue placeholder="Select timezone" />
                         </SelectTrigger>
@@ -590,8 +575,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   ].map(({ key, value }) => (
                     <div
                       key={key}
-                      className="flex items-center justify-between px-6 py-3"
-                    >
+                      className="flex items-center justify-between px-6 py-3">
                       <span className="text-xs text-zinc-500 font-medium">
                         {key}
                       </span>
@@ -629,11 +613,10 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   <PolicyRow
                     title="Allow Negative Stock"
                     description="When enabled, sales can proceed even when recorded inventory reaches zero or below. Use with caution — this can mask shrinkage or data integrity issues."
-                    risk={form.watch("negativeStock") ? "high" : "low"}
-                  >
+                    risk={form.watch("negativeStock") ? "high" : "low"}>
                     <Switch
                       checked={form.watch("negativeStock")}
-                      onCheckedChange={(val) =>
+                      onCheckedChange={val =>
                         form.setValue("negativeStock", val, {
                           shouldDirty: true,
                         })

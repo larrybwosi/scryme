@@ -26,7 +26,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       },
     });
     return items.map(
-      (i) =>
+      i =>
         new InventoryItem(
           i.id,
           i.variantId,
@@ -51,7 +51,7 @@ export class PrismaInventoryRepository implements IInventoryRepository {
       },
     });
     return items.map(
-      (i) =>
+      i =>
         new InventoryItem(
           i.id,
           i.variantId,

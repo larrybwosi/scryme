@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from '@tauri-apps/api/core';
 
 export interface Shift {
   id: string;
@@ -19,34 +19,40 @@ export interface Shift {
 
 export const shiftService = {
   getShiftStatus: async (): Promise<Shift | null> => {
-    return await invoke("get_shift_command");
+    return await invoke('get_shift_command');
   },
 
   openShift: async (cardId: string, pin: string, floatAmount: number, openingCashDetails?: any): Promise<Shift> => {
     const deviceId = localStorage.getItem('DEVICE_ID');
-    return await invoke("open_shift_command", {
+    return await invoke('open_shift_command', {
       cardId,
       pin,
       floatAmount: Number(floatAmount), // Ensure number type
       openingCashDetails,
-      deviceId
+      deviceId,
     });
   },
 
-  closeShift: async (cardId: string, pin: string, actualCount: number, closingCashDetails?: any, printerName?: string): Promise<Shift> => {
-    return await invoke("close_shift_command", {
+  closeShift: async (
+    cardId: string,
+    pin: string,
+    actualCount: number,
+    closingCashDetails?: any,
+    printerName?: string
+  ): Promise<Shift> => {
+    return await invoke('close_shift_command', {
       cardId,
       pin,
       actualCount: Number(actualCount),
       closingCashDetails,
-      printerName
+      printerName,
     });
   },
 
   addCashDrop: async (amount: number, reason: string): Promise<void> => {
-    return await invoke("add_cash_drop_command", {
+    return await invoke('add_cash_drop_command', {
       amount: Number(amount),
-      reason
+      reason,
     });
-  }
+  },
 };

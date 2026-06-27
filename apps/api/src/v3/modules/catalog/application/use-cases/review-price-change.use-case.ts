@@ -35,7 +35,7 @@ export class ReviewPriceChangeUseCase {
       throw new BadRequestException(`Request is already ${request.status}`);
     }
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       if (status === PriceChangeStatus.APPROVED) {
         // Apply the new price
         await tx.priceListItem.update({

@@ -157,7 +157,7 @@ export class RoleManagementUseCase {
         organizationId,
         permissionSets: permissionSetIds
           ? {
-              connect: permissionSetIds.map((id) => ({ id })),
+              connect: permissionSetIds.map(id => ({ id })),
             }
           : undefined,
       },
@@ -178,7 +178,7 @@ export class RoleManagementUseCase {
       where: { id: memberId, organizationId },
       data: {
         customRoles: {
-          connect: roleIds.map((id) => ({ id })),
+          connect: roleIds.map(id => ({ id })),
         },
       },
     });
@@ -196,7 +196,7 @@ export class RoleManagementUseCase {
       where: { id: memberId, organizationId },
       data: {
         customRoles: {
-          disconnect: roleIds.map((id) => ({ id })),
+          disconnect: roleIds.map(id => ({ id })),
         },
       },
     });

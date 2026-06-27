@@ -1,11 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { customerSchema, type CustomerFormValues } from '../../../lib/validations';
-import { createCustomer, updateCustomer } from '../../actions/customers';
-import { useOrg } from '../../../components/org-context';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  customerSchema,
+  type CustomerFormValues,
+} from "../../../lib/validations";
+import { createCustomer, updateCustomer } from "../../actions/customers";
+import { useOrg } from "../../../components/org-context";
 import {
   Form,
   FormControl,
@@ -13,36 +16,40 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@repo/ui/components/ui/form';
-import { Input } from '@repo/ui/components/ui/input';
-import { Button } from '@repo/ui/components/ui/button';
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@repo/ui/components/ui/select';
+} from "@repo/ui/components/ui/select";
 
 interface CustomerFormProps {
   initialData?: CustomerFormValues & { id: string };
   onSuccess: () => void;
-  type?: 'B2C' | 'CONTACT';
+  type?: "B2C" | "CONTACT";
 }
 
-export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerFormProps) {
+export function CustomerForm({
+  initialData,
+  onSuccess,
+  type = "B2C",
+}: CustomerFormProps) {
   const { organizationId } = useOrg();
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: initialData || {
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
       customerType: type,
-      taxId: '',
+      taxId: "",
       isActive: true,
-      deliveryNotes: '',
+      deliveryNotes: "",
     },
   });
 
@@ -55,7 +62,7 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
       }
       onSuccess();
     } catch (error) {
-      console.error('Failed to save customer', error);
+      console.error("Failed to save customer", error);
     }
   };
 
@@ -130,7 +137,7 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
         />
         <div className="pt-4 flex justify-end gap-3">
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {initialData ? 'Update' : 'Create'} Customer
+            {initialData ? "Update" : "Create"} Customer
           </Button>
         </div>
       </form>

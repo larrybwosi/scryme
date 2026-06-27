@@ -1,7 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: '/api/organizations',
+  baseURL: "/api/organizations",
 });
 
 // api.interceptors.request.use(config => {

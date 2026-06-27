@@ -127,7 +127,7 @@ export function UnitSelectionDialog({
   const handleQtyChange = (val: number) => {
     const newQty = Math.max(1, val);
     if (newQty <= stock || stock === 0) {
-       setQuantity(newQty);
+      setQuantity(newQty);
     }
   };
 
@@ -139,14 +139,14 @@ export function UnitSelectionDialog({
             {title || `Select Unit: ${product.productName || product.name}`}
           </DialogTitle>
           <div className="flex items-center gap-2 mt-1">
-             <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold opacity-70">
-                {product.category}
-             </Badge>
-             {currentVariant?.sku && (
-               <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
-                 <Package className="w-3 h-3" /> {currentVariant.sku}
-               </span>
-             )}
+            <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-semibold opacity-70">
+              {product.category}
+            </Badge>
+            {currentVariant?.sku && (
+              <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+                <Package className="w-3 h-3" /> {currentVariant.sku}
+              </span>
+            )}
           </div>
         </DialogHeader>
 
@@ -158,18 +158,18 @@ export function UnitSelectionDialog({
               <ToggleGroup
                 type="single"
                 value={selectedVariantId}
-                onValueChange={(val) => {
+                onValueChange={val => {
                   if (val) {
                     setSelectedVariantId(val);
                     const v = product.variants.find(varnt => varnt.variantId === val);
                     if (v?.sellableUnits.length) {
-                       setSelectedUnitId(v.sellableUnits[0].unitId);
+                      setSelectedUnitId(v.sellableUnits[0].unitId);
                     }
                   }
                 }}
                 className="justify-start flex-wrap gap-2"
               >
-                {product.variants.map((v) => (
+                {product.variants.map(v => (
                   <ToggleGroupItem
                     key={v.variantId}
                     value={v.variantId}
@@ -190,10 +190,10 @@ export function UnitSelectionDialog({
               <ToggleGroup
                 type="single"
                 value={selectedUnitId}
-                onValueChange={(val) => val && setSelectedUnitId(val)}
+                onValueChange={val => val && setSelectedUnitId(val)}
                 className="grid grid-cols-2 sm:grid-cols-4 gap-2"
               >
-                {currentVariant.sellableUnits.map((u) => (
+                {currentVariant.sellableUnits.map(u => (
                   <ToggleGroupItem
                     key={u.unitId}
                     value={u.unitId}
@@ -201,30 +201,33 @@ export function UnitSelectionDialog({
                     className="h-10 px-2 flex flex-col gap-0 rounded-md data-[state=on]:border-primary data-[state=on]:bg-primary/5 data-[state=on]:text-primary"
                   >
                     <span className="text-xs font-bold">{u.unitName}</span>
-                    <span className="text-[10px] opacity-70">
-                       {formatCurrency(Number(u.price))}
-                    </span>
+                    <span className="text-[10px] opacity-70">{formatCurrency(Number(u.price))}</span>
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
             ) : (
               <ScrollArea className="h-[120px] rounded-md border p-2">
                 <div className="grid grid-cols-1 gap-1">
-                   {currentVariant?.sellableUnits.map((u) => (
-                     <button
-                       key={u.unitId}
-                       onClick={() => setSelectedUnitId(u.unitId)}
-                       className={cn(
-                         "flex items-center justify-between p-2 rounded-md transition-colors text-left",
-                         selectedUnitId === u.unitId ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                       )}
-                     >
-                       <span className="text-sm font-medium">{u.unitName}</span>
-                       <span className={cn("text-xs", selectedUnitId === u.unitId ? "text-primary-foreground/80" : "text-muted-foreground")}>
-                         {formatCurrency(Number(u.price))}
-                       </span>
-                     </button>
-                   ))}
+                  {currentVariant?.sellableUnits.map(u => (
+                    <button
+                      key={u.unitId}
+                      onClick={() => setSelectedUnitId(u.unitId)}
+                      className={cn(
+                        'flex items-center justify-between p-2 rounded-md transition-colors text-left',
+                        selectedUnitId === u.unitId ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                      )}
+                    >
+                      <span className="text-sm font-medium">{u.unitName}</span>
+                      <span
+                        className={cn(
+                          'text-xs',
+                          selectedUnitId === u.unitId ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                        )}
+                      >
+                        {formatCurrency(Number(u.price))}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </ScrollArea>
             )}
@@ -246,7 +249,7 @@ export function UnitSelectionDialog({
                 <Input
                   type="number"
                   value={quantity}
-                  onChange={(e) => handleQtyChange(parseInt(e.target.value) || 1)}
+                  onChange={e => handleQtyChange(parseInt(e.target.value) || 1)}
                   className="w-16 text-center text-lg font-bold h-10 border-none bg-transparent focus-visible:ring-0 no-spinners"
                 />
                 <Button
@@ -263,26 +266,24 @@ export function UnitSelectionDialog({
 
             <div className="text-right">
               <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Price</div>
-              <div className="text-2xl font-black text-primary">
-                {formatCurrency(price * quantity)}
-              </div>
+              <div className="text-2xl font-black text-primary">{formatCurrency(price * quantity)}</div>
               <div className="text-[10px] text-muted-foreground">
-                 {formatCurrency(price)} per {currentUnit?.unitName}
+                {formatCurrency(price)} per {currentUnit?.unitName}
               </div>
             </div>
           </div>
 
           {stock > 0 && stock < 20 && (
-             <div className="flex items-center gap-2 p-2 rounded-md bg-amber-50 text-amber-700 border border-amber-100 text-[11px] font-medium">
-                <Info className="w-3.5 h-3.5" />
-                Low stock alert: Only {stock} {currentUnit?.unitName} available in inventory.
-             </div>
+            <div className="flex items-center gap-2 p-2 rounded-md bg-amber-50 text-amber-700 border border-amber-100 text-[11px] font-medium">
+              <Info className="w-3.5 h-3.5" />
+              Low stock alert: Only {stock} {currentUnit?.unitName} available in inventory.
+            </div>
           )}
           {isOutOfStock && (
-             <div className="flex items-center gap-2 p-2 rounded-md bg-destructive/10 text-destructive border border-destructive/20 text-[11px] font-medium">
-                <Info className="w-3.5 h-3.5" />
-                This product variant is currently out of stock.
-             </div>
+            <div className="flex items-center gap-2 p-2 rounded-md bg-destructive/10 text-destructive border border-destructive/20 text-[11px] font-medium">
+              <Info className="w-3.5 h-3.5" />
+              This product variant is currently out of stock.
+            </div>
           )}
         </div>
 

@@ -31,10 +31,16 @@ interface AddApprovalChainSheetProps {
   children: React.ReactNode;
 }
 
-export function AddApprovalChainSheet({ departmentId, members, children }: AddApprovalChainSheetProps) {
+export function AddApprovalChainSheet({
+  departmentId,
+  members,
+  children,
+}: AddApprovalChainSheetProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [steps, setSteps] = useState<{ approverId: string }[]>([{ approverId: "" }]);
+  const [steps, setSteps] = useState<{ approverId: string }[]>([
+    { approverId: "" },
+  ]);
   const router = useRouter();
 
   const handleAddStep = () => {
@@ -67,8 +73,12 @@ export function AddApprovalChainSheet({ departmentId, members, children }: AddAp
       departmentId,
       name: formData.get("name") as string,
       description: formData.get("description") as string,
-      minAmount: formData.get("minAmount") ? Number(formData.get("minAmount")) : undefined,
-      maxAmount: formData.get("maxAmount") ? Number(formData.get("maxAmount")) : undefined,
+      minAmount: formData.get("minAmount")
+        ? Number(formData.get("minAmount"))
+        : undefined,
+      maxAmount: formData.get("maxAmount")
+        ? Number(formData.get("maxAmount"))
+        : undefined,
       priority: Number(formData.get("priority") || 0),
       steps: validSteps.map((s, i) => ({
         approverId: s.approverId,
@@ -105,29 +115,53 @@ export function AddApprovalChainSheet({ departmentId, members, children }: AddAp
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Chain Name</Label>
-                <Input id="name" name="name" placeholder="e.g. High Value Purchases" required />
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="e.g. High Value Purchases"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Input id="description" name="description" placeholder="Optional description" />
+                <Input
+                  id="description"
+                  name="description"
+                  placeholder="Optional description"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-2 border-t">
               <div className="space-y-2">
                 <Label htmlFor="minAmount">Min Amount (KES)</Label>
-                <Input id="minAmount" name="minAmount" type="number" placeholder="0.00" />
+                <Input
+                  id="minAmount"
+                  name="minAmount"
+                  type="number"
+                  placeholder="0.00"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maxAmount">Max Amount (KES)</Label>
-                <Input id="maxAmount" name="maxAmount" type="number" placeholder="No limit" />
+                <Input
+                  id="maxAmount"
+                  name="maxAmount"
+                  type="number"
+                  placeholder="No limit"
+                />
               </div>
             </div>
 
             <div className="space-y-4 pt-4 border-t">
               <div className="flex items-center justify-between">
                 <Label className="text-base font-bold">Approval Steps</Label>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddStep} className="gap-1 h-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddStep}
+                  className="gap-1 h-8">
                   <Plus size={14} /> Add Step
                 </Button>
               </div>
@@ -141,13 +175,12 @@ export function AddApprovalChainSheet({ departmentId, members, children }: AddAp
                       </div>
                       <Select
                         value={step.approverId}
-                        onValueChange={(val) => handleStepChange(index, val)}
-                      >
+                        onValueChange={val => handleStepChange(index, val)}>
                         <SelectTrigger className="flex-1">
                           <SelectValue placeholder="Select approver..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {members.map((m) => (
+                          {members.map(m => (
                             <SelectItem key={m.id} value={m.memberId}>
                               {m.member.user.name} ({m.role})
                             </SelectItem>
@@ -160,8 +193,7 @@ export function AddApprovalChainSheet({ departmentId, members, children }: AddAp
                         size="icon"
                         onClick={() => handleRemoveStep(index)}
                         disabled={steps.length === 1}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                      >
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50">
                         <Trash2 size={16} />
                       </Button>
                     </div>

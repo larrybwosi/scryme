@@ -76,7 +76,10 @@ export class WindmillApiClient {
   /**
    * Cancel a running job.
    */
-  async cancelJob(jobId: string, reason: string = "Canceled from Dealio"): Promise<void> {
+  async cancelJob(
+    jobId: string,
+    reason: string = "Canceled from Dealio",
+  ): Promise<void> {
     await this.request(`/jobs/cancel/${jobId}`, {
       method: "POST",
       body: JSON.stringify({ reason }),

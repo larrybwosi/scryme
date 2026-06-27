@@ -3,19 +3,32 @@
  * Using shadcn/ui components and Tailwind CSS
  */
 
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useState, useMemo, useCallback } from 'react';
-import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import * as React from "react";
+import { useState, useMemo, useCallback } from "react";
+import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { cn } from "../../lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 import {
   type UnitType,
@@ -23,7 +36,7 @@ import {
   type SystemUnit,
   type OrganizationUnit,
   type AnyUnit,
-} from '../../lib/units/utilities';
+} from "../../lib/units/utilities";
 
 // ============================================================================
 // BASIC UNIT SELECTOR (Combobox with Search)
@@ -46,8 +59,8 @@ export function UnitSelector({
   units,
   value,
   onValueChange,
-  placeholder = 'Select unit...',
-  emptyText = 'No unit found.',
+  placeholder = "Select unit...",
+  emptyText = "No unit found.",
   disabled = false,
   className,
   filterByType,
@@ -55,35 +68,42 @@ export function UnitSelector({
   showBadges = true,
 }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   // Filter units based on criteria
   const filteredUnits = useMemo(() => {
-    let filtered = units.filter(u => u.isActive);
+    let filtered = units.filter((u) => u.isActive);
 
     // Filter by type
     if (filterByType) {
       const types = Array.isArray(filterByType) ? filterByType : [filterByType];
-      filtered = filtered.filter(u => types.includes(u.type));
+      filtered = filtered.filter((u) => types.includes(u.type));
     }
 
     // Filter by category
     if (filterByCategory) {
-      const categories = Array.isArray(filterByCategory) ? filterByCategory : [filterByCategory];
-      filtered = filtered.filter(u => u.category && categories.includes(u.category));
+      const categories = Array.isArray(filterByCategory)
+        ? filterByCategory
+        : [filterByCategory];
+      filtered = filtered.filter(
+        (u) => u.category && categories.includes(u.category),
+      );
     }
 
     return filtered;
   }, [units, filterByType, filterByCategory]);
 
   // Get selected unit
-  const selectedUnit = useMemo(() => filteredUnits.find(u => u.id === value), [filteredUnits, value]);
+  const selectedUnit = useMemo(
+    () => filteredUnits.find((u) => u.id === value),
+    [filteredUnits, value],
+  );
 
   // Group units by type
   const groupedUnits = useMemo(() => {
     const groups: Record<string, AnyUnit[]> = {};
 
-    filteredUnits.forEach(unit => {
+    filteredUnits.forEach((unit) => {
       if (!groups[unit.type]) {
         groups[unit.type] = [];
       }
@@ -101,13 +121,19 @@ export function UnitSelector({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn('w-full justify-between', !value && 'text-muted-foreground', className)}
+          className={cn(
+            "w-full justify-between",
+            !value && "text-muted-foreground",
+            className,
+          )}
         >
           <span className="flex items-center gap-2 truncate">
             {selectedUnit ? (
               <>
                 <span className="font-medium">{selectedUnit.symbol}</span>
-                <span className="text-muted-foreground truncate">{selectedUnit.name}</span>
+                <span className="text-muted-foreground truncate">
+                  {selectedUnit.name}
+                </span>
                 {showBadges && (
                   <Badge variant="secondary" className="text-xs">
                     {selectedUnit.type}
@@ -123,12 +149,16 @@ export function UnitSelector({
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search units..." value={search} onValueChange={setSearch} />
+          <CommandInput
+            placeholder="Search units..."
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             {Object.entries(groupedUnits).map(([type, typeUnits]) => (
               <CommandGroup key={type} heading={type}>
-                {typeUnits.map(unit => (
+                {typeUnits.map((unit) => (
                   <CommandItem
                     key={unit.id}
                     value={`${unit.name} ${unit.symbol}`}
@@ -137,13 +167,21 @@ export function UnitSelector({
                       setOpen(false);
                     }}
                   >
-                    <Check className={cn('mr-2 h-4 w-4', value === unit.id ? 'opacity-100' : 'opacity-0')} />
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === unit.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
                     <div className="flex items-center gap-2 flex-1">
                       <span className="font-medium">{unit.symbol}</span>
                       <span className="text-muted-foreground">{unit.name}</span>
-                      {showBadges && 'isMetric' in unit && (
-                        <Badge variant={unit.isMetric ? 'default' : 'outline'} className="text-xs">
-                          {unit.isMetric ? 'Metric' : 'Imperial'}
+                      {showBadges && "isMetric" in unit && (
+                        <Badge
+                          variant={unit.isMetric ? "default" : "outline"}
+                          className="text-xs"
+                        >
+                          {unit.isMetric ? "Metric" : "Imperial"}
                         </Badge>
                       )}
                     </div>
@@ -190,7 +228,7 @@ export function DualUnitSelector({
   }, [fromValue, toValue, onFromChange, onToChange]);
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       <div>
         <Label className="text-sm font-medium mb-2 block">From Unit</Label>
         <UnitSelector
@@ -250,7 +288,7 @@ export function MultiUnitSelector({
   units,
   values = [],
   onValuesChange,
-  placeholder = 'Select units...',
+  placeholder = "Select units...",
   maxSelections,
   filterByType,
   disabled = false,
@@ -259,39 +297,42 @@ export function MultiUnitSelector({
   const [open, setOpen] = useState(false);
 
   const filteredUnits = useMemo(() => {
-    let filtered = units.filter(u => u.isActive);
+    let filtered = units.filter((u) => u.isActive);
     if (filterByType) {
       const types = Array.isArray(filterByType) ? filterByType : [filterByType];
-      filtered = filtered.filter(u => types.includes(u.type));
+      filtered = filtered.filter((u) => types.includes(u.type));
     }
     return filtered;
   }, [units, filterByType]);
 
-  const selectedUnits = useMemo(() => filteredUnits.filter(u => values.includes(u.id)), [filteredUnits, values]);
+  const selectedUnits = useMemo(
+    () => filteredUnits.filter((u) => values.includes(u.id)),
+    [filteredUnits, values],
+  );
 
   const handleSelect = useCallback(
     (unitId: string) => {
       const newValues = values.includes(unitId)
-        ? values.filter(id => id !== unitId)
+        ? values.filter((id) => id !== unitId)
         : maxSelections && values.length >= maxSelections
           ? values
           : [...values, unitId];
 
       onValuesChange(newValues);
     },
-    [values, onValuesChange, maxSelections]
+    [values, onValuesChange, maxSelections],
   );
 
   const handleRemove = useCallback(
     (unitId: string) => {
-      onValuesChange(values.filter(id => id !== unitId));
+      onValuesChange(values.filter((id) => id !== unitId));
     },
-    [values, onValuesChange]
+    [values, onValuesChange],
   );
 
   const groupedUnits = useMemo(() => {
     const groups: Record<string, AnyUnit[]> = {};
-    filteredUnits.forEach(unit => {
+    filteredUnits.forEach((unit) => {
       if (!groups[unit.type]) groups[unit.type] = [];
       groups[unit.type].push(unit);
     });
@@ -299,7 +340,7 @@ export function MultiUnitSelector({
   }, [filteredUnits]);
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -310,7 +351,9 @@ export function MultiUnitSelector({
             className="w-full justify-between"
           >
             <span className="truncate">
-              {values.length === 0 ? placeholder : `${values.length} unit${values.length > 1 ? 's' : ''} selected`}
+              {values.length === 0
+                ? placeholder
+                : `${values.length} unit${values.length > 1 ? "s" : ""} selected`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -322,9 +365,12 @@ export function MultiUnitSelector({
               <CommandEmpty>No units found.</CommandEmpty>
               {Object.entries(groupedUnits).map(([type, typeUnits]) => (
                 <CommandGroup key={type} heading={type}>
-                  {typeUnits.map(unit => {
+                  {typeUnits.map((unit) => {
                     const isSelected = values.includes(unit.id);
-                    const isDisabled = !isSelected && maxSelections !== undefined && values.length >= maxSelections;
+                    const isDisabled =
+                      !isSelected &&
+                      maxSelections !== undefined &&
+                      values.length >= maxSelections;
 
                     return (
                       <CommandItem
@@ -333,10 +379,17 @@ export function MultiUnitSelector({
                         onSelect={() => !isDisabled && handleSelect(unit.id)}
                         disabled={isDisabled}
                       >
-                        <Check className={cn('mr-2 h-4 w-4', isSelected ? 'opacity-100' : 'opacity-0')} />
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            isSelected ? "opacity-100" : "opacity-0",
+                          )}
+                        />
                         <div className="flex items-center gap-2 flex-1">
                           <span className="font-medium">{unit.symbol}</span>
-                          <span className="text-muted-foreground">{unit.name}</span>
+                          <span className="text-muted-foreground">
+                            {unit.name}
+                          </span>
                         </div>
                       </CommandItem>
                     );
@@ -350,8 +403,12 @@ export function MultiUnitSelector({
 
       {selectedUnits.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedUnits.map(unit => (
-            <Badge key={unit.id} variant="secondary" className="pl-2 pr-1 py-1 gap-1">
+          {selectedUnits.map((unit) => (
+            <Badge
+              key={unit.id}
+              variant="secondary"
+              className="pl-2 pr-1 py-1 gap-1"
+            >
               <span className="font-medium">{unit.symbol}</span>
               <span className="text-muted-foreground">{unit.name}</span>
               <button
@@ -387,21 +444,29 @@ interface UnitTypeFilterProps {
   className?: string;
 }
 
-export function UnitTypeFilter({ value, onValueChange, placeholder = 'All types', className }: UnitTypeFilterProps) {
+export function UnitTypeFilter({
+  value,
+  onValueChange,
+  placeholder = "All types",
+  className,
+}: UnitTypeFilterProps) {
   const unitTypes: UnitType[] = [
-    'MASS',
-    'VOLUME',
-    'LENGTH',
-    'AREA',
-    'COUNT',
-    'TIME',
-    'TEMPERATURE',
-    'ENERGY',
-    'CUSTOM',
+    "MASS",
+    "VOLUME",
+    "LENGTH",
+    "AREA",
+    "COUNT",
+    "TIME",
+    "TEMPERATURE",
+    "ENERGY",
+    "CUSTOM",
   ];
 
   return (
-    <Select value={value || undefined} onValueChange={v => onValueChange(v as UnitType)}>
+    <Select
+      value={value || undefined}
+      onValueChange={(v) => onValueChange(v as UnitType)}
+    >
       <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
@@ -409,7 +474,7 @@ export function UnitTypeFilter({ value, onValueChange, placeholder = 'All types'
         <SelectItem value="__all__" onClick={() => onValueChange(null)}>
           All Types
         </SelectItem>
-        {unitTypes.map(type => (
+        {unitTypes.map((type) => (
           <SelectItem key={type} value={type}>
             {type}
           </SelectItem>
@@ -441,23 +506,31 @@ export function InlineUnitSelector({
   className,
 }: InlineUnitSelectorProps) {
   const filteredUnits = useMemo(() => {
-    let filtered = units.filter(u => u.isActive);
+    let filtered = units.filter((u) => u.isActive);
     if (filterByType) {
       const types = Array.isArray(filterByType) ? filterByType : [filterByType];
-      filtered = filtered.filter(u => types.includes(u.type));
+      filtered = filtered.filter((u) => types.includes(u.type));
     }
     return filtered;
   }, [units, filterByType]);
 
   return (
-    <Select value={value || undefined} onValueChange={onValueChange} disabled={disabled}>
+    <Select
+      value={value || undefined}
+      onValueChange={onValueChange}
+      disabled={disabled}
+    >
       <SelectTrigger className={className}>
         <SelectValue placeholder="Unit">
-          {value && <span className="font-medium">{filteredUnits.find(u => u.id === value)?.symbol}</span>}
+          {value && (
+            <span className="font-medium">
+              {filteredUnits.find((u) => u.id === value)?.symbol}
+            </span>
+          )}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {filteredUnits.map(unit => (
+        {filteredUnits.map((unit) => (
           <SelectItem key={unit.id} value={unit.id}>
             <div className="flex items-center gap-2">
               <span className="font-medium">{unit.symbol}</span>

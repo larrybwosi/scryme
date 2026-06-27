@@ -132,7 +132,9 @@ describe("RegisterPettyCashUseCase", () => {
     } as any;
 
     const mockTransactions = [{ id: "tx_1", amount: 100 }];
-    prisma.client.pettyCashTransaction.findMany.mockResolvedValue(mockTransactions);
+    prisma.client.pettyCashTransaction.findMany.mockResolvedValue(
+      mockTransactions,
+    );
 
     const result = await useCase.getRecentTransactions(ctx, 5);
 

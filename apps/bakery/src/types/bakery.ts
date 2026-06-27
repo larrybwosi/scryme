@@ -1,7 +1,19 @@
-import { z } from 'zod';
-import { BatchStatus, ExpirationStatus, DisposalReason, RecipeDifficulty, ProductType } from './bakery-fix';
+import { z } from "zod";
+import {
+  BatchStatus,
+  ExpirationStatus,
+  DisposalReason,
+  RecipeDifficulty,
+  ProductType,
+} from "./bakery-fix";
 
-export { BatchStatus, ExpirationStatus, DisposalReason, RecipeDifficulty, ProductType };
+export {
+  BatchStatus,
+  ExpirationStatus,
+  DisposalReason,
+  RecipeDifficulty,
+  ProductType,
+};
 
 export interface SystemUnit {
   id: string;
@@ -236,7 +248,7 @@ export interface BakerySettings {
   bakers?: BakeryBaker[];
   autoCreateDailyBatches: boolean;
   expiryWarningDays: number;
-  authMode: 'SSO' | 'CARD_PIN';
+  authMode: "SSO" | "CARD_PIN";
   apiKey?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -388,8 +400,8 @@ export interface DisposeBatchForm {
 export interface UnifiedBatchDetails {
   batchNumber: string;
   internalId: string;
-  sourceType: 'SUPPLIER' | 'PRODUCTION';
-  status: 'active' | 'expired' | 'depleted' | 'quality_failed';
+  sourceType: "SUPPLIER" | "PRODUCTION";
+  status: "active" | "expired" | "depleted" | "quality_failed";
   qualityStatus: string;
   receivedOrProducedDate: Date;
   expiryDate: Date | null;

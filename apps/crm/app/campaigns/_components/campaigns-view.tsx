@@ -95,8 +95,14 @@ export function CampaignsView({
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const totalSent = campaigns.reduce((acc: number, c: any) => acc + (c.totalSent || 0), 0);
-  const totalOpened = campaigns.reduce((acc: number, c: any) => acc + (c.totalOpened || 0), 0);
+  const totalSent = campaigns.reduce(
+    (acc: number, c: any) => acc + (c.totalSent || 0),
+    0,
+  );
+  const totalOpened = campaigns.reduce(
+    (acc: number, c: any) => acc + (c.totalOpened || 0),
+    0,
+  );
   const avgOpenRate = totalSent > 0 ? (totalOpened / totalSent) * 100 : 0;
 
   const stats = [

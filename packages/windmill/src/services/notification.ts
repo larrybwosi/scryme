@@ -32,12 +32,7 @@ export interface NotifyOptions {
 
 export class NotificationEngine {
   async notify(options: NotifyOptions): Promise<NotificationDispatch> {
-    const {
-      organizationId,
-      templateName,
-      data,
-      recipients,
-    } = options;
+    const { organizationId, templateName, data, recipients } = options;
 
     let { channels = ["WEBHOOK"] } = options;
 

@@ -232,8 +232,7 @@ class UnitCalculationService {
     let stockDeductionNeeded = quantityToFulfill * conversionMultiplier;
     const initialDeductionNeeded = stockDeductionNeeded;
     let totalCostForLineItem = new Decimal(0);
-    const allocations: any[] =
-      [];
+    const allocations: any[] = [];
 
     const batchOrderBy: any[] =
       inventoryPolicy === "FEFO"

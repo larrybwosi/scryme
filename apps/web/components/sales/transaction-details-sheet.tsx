@@ -365,7 +365,9 @@ export function TransactionDetailsSheet({
                 <div className="space-y-6">
                   {transaction.attachments?.length > 0 ? (
                     (() => {
-                      const sortedAttachments = [...transaction.attachments].sort(
+                      const sortedAttachments = [
+                        ...transaction.attachments,
+                      ].sort(
                         (a, b) =>
                           new Date(b.uploadedAt).getTime() -
                           new Date(a.uploadedAt).getTime(),

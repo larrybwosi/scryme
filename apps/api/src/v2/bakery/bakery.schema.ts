@@ -8,7 +8,7 @@ export const RecipeIngredientSchema = z
     orgUnitId: z.string().optional().nullable(),
     preparationNotes: z.string().optional().nullable(),
   })
-  .refine((data) => data.systemUnitId || data.orgUnitId, {
+  .refine(data => data.systemUnitId || data.orgUnitId, {
     message:
       "At least one unit (system or organization) must be selected for the ingredient",
   });
@@ -35,7 +35,7 @@ const RecipeSchemaObject = z.object({
 });
 
 export const CreateRecipeSchema = RecipeSchemaObject.refine(
-  (data) => data.systemUnitId || data.orgUnitId,
+  data => data.systemUnitId || data.orgUnitId,
   {
     message:
       "At least one yield unit (system or organization) must be selected for the recipe",
@@ -60,7 +60,7 @@ const BatchSchemaObject = z.object({
 });
 
 export const CreateBatchSchema = BatchSchemaObject.refine(
-  (data) => data.systemUnitId || data.orgUnitId,
+  data => data.systemUnitId || data.orgUnitId,
   {
     message:
       "At least one unit (system or organization) must be selected for the batch quantity",
@@ -104,7 +104,7 @@ const TemplateSchemaObject = z.object({
 });
 
 export const CreateTemplateSchema = TemplateSchemaObject.refine(
-  (data) => data.systemUnitId || data.orgUnitId,
+  data => data.systemUnitId || data.orgUnitId,
   {
     message:
       "At least one unit (system or organization) must be selected for the template quantity",

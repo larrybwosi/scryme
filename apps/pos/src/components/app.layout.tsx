@@ -58,7 +58,7 @@ export default function AppLayoutProvider({ children }: AppLayoutProviderProps) 
         navigate('/');
       }
       // The POS component will handle the actual focus via its own effect or global listener
-    }
+    },
   });
 
   useEffect(() => {
@@ -69,9 +69,9 @@ export default function AppLayoutProvider({ children }: AppLayoutProviderProps) 
           id: item.productId,
           product_name: item.productName,
           quantity: item.quantity,
-          modifiers: []
+          modifiers: [],
         })),
-        table_number: currentOrder.tableNumber || null
+        table_number: currentOrder.tableNumber || null,
       });
     }
   }, [location.pathname, currentOrder.items, currentOrder.tableNumber, deviceType]);

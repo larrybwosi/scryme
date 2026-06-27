@@ -8,9 +8,11 @@ export async function main(
   budgetName: string,
   amountUsed: number,
   totalBudget: number,
-  currency: string
+  currency: string,
 ) {
   const percentage = (amountUsed / totalBudget) * 100;
-  console.log(`[BudgetExceeded] Budget "${budgetName}" is at ${percentage.toFixed(1)}%`);
+  console.log(
+    `[BudgetExceeded] Budget "${budgetName}" is at ${percentage.toFixed(1)}%`,
+  );
   return { success: true };
 }

@@ -31,9 +31,7 @@ export function usePdfActions() {
         const settings = usePosStore.getState().settings;
         const branchName = useAuthStore.getState().currentLocation?.name;
         const paperSize =
-          jobType === 'kitchen'
-            ? settings.kitchenTicketConfig?.paperSize
-            : settings.receiptConfig?.paperSize;
+          jobType === 'kitchen' ? settings.kitchenTicketConfig?.paperSize : settings.receiptConfig?.paperSize;
 
         const isThermal = paperSize === '58mm' || paperSize === '80mm';
 

@@ -1,17 +1,17 @@
-import React from 'react';
-import { useAuth } from '@/lib/providers/auth-context';
-import { Button } from '@repo/ui/components/ui/button';
-import { LogOut, User } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@repo/ui/components/ui/avatar';
+import React from "react";
+import { useAuth } from "@/lib/providers/auth-context";
+import { Button } from "@repo/ui/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 
 export const UserSwitcher: React.FC = () => {
   const { user, logout } = useAuth();
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .substring(0, 2);
   };
@@ -28,9 +28,11 @@ export const UserSwitcher: React.FC = () => {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col overflow-hidden">
-            <span className="text-xs font-bold truncate leading-tight">{user.name}</span>
+            <span className="text-xs font-bold truncate leading-tight">
+              {user.name}
+            </span>
             <span className="text-[10px] text-muted-foreground truncate uppercase tracking-tighter font-medium">
-              {user.role || 'Operator'}
+              {user.role || "Operator"}
             </span>
           </div>
         </div>

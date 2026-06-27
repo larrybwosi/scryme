@@ -12,7 +12,7 @@ mockWindows('main');
 export const mockInvoke = vi.fn();
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: (...args: any[]) => mockInvoke(...args),
-  convertFileSrc: vi.fn((path) => path),
+  convertFileSrc: vi.fn(path => path),
 }));
 
 // Provide a global mock implementation for specific commands if needed
@@ -69,8 +69,12 @@ global.ResizeObserver = class ResizeObserver {
 // Mock DOMMatrix for pdfjs-dist
 global.DOMMatrix = class DOMMatrix {
   constructor() {}
-  static fromFloat32Array() { return new DOMMatrix(); }
-  static fromFloat64Array() { return new DOMMatrix(); }
+  static fromFloat32Array() {
+    return new DOMMatrix();
+  }
+  static fromFloat64Array() {
+    return new DOMMatrix();
+  }
 } as any;
 
 // Mock react-pdf since it fails in jsdom due to canvas requirements

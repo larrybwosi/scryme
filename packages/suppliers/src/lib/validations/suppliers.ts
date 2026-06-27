@@ -4,7 +4,12 @@ export const supplierSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   code: z.string().min(1, "Code is required"),
-  type: z.enum(['manufacturer', 'distributor', 'wholesaler', 'service_provider']),
+  type: z.enum([
+    "manufacturer",
+    "distributor",
+    "wholesaler",
+    "service_provider",
+  ]),
   contact: z.object({
     primaryContact: z.string().min(1, "Primary contact is required"),
     phone: z.string().optional(),
@@ -27,7 +32,7 @@ export const supplierSchema = z.object({
   }),
   categories: z.union([z.string(), z.array(z.string())]).optional(),
   customBadges: z.union([z.string(), z.array(z.string())]).optional(),
-  riskLevel: z.enum(['low', 'medium', 'high']).optional(),
+  riskLevel: z.enum(["low", "medium", "high"]).optional(),
 });
 
 export type SupplierFormValues = z.infer<typeof supplierSchema>;

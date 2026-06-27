@@ -5,16 +5,16 @@ import { useAuthStore } from '@/store/pos-auth-store';
 import { usePosStore } from '@/store/store';
 
 export default function RealtimeInitializer() {
-  const initialize = useRealtimeStore((state) => state.initialize);
-  const ablyClient = useRealtimeStore((state) => state.ablyClient);
-  const socketClient = useRealtimeStore((state) => state.socketClient);
-  const connectionState = useRealtimeStore((state) => state.connectionState);
-  const subscribe = useRealtimeStore((state) => state.subscribe);
-  const currentLocation = useAuthStore((state) => state.currentLocation);
-  const currentMember = useAuthStore((state) => state.currentMember);
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized);
-  const updateProductStock = usePosStore((state) => state.updateProductStock);
-  const organizationId = useAuthStore((state) => state.deviceConfig?.orgSlug);
+  const initialize = useRealtimeStore(state => state.initialize);
+  const ablyClient = useRealtimeStore(state => state.ablyClient);
+  const socketClient = useRealtimeStore(state => state.socketClient);
+  const connectionState = useRealtimeStore(state => state.connectionState);
+  const subscribe = useRealtimeStore(state => state.subscribe);
+  const currentLocation = useAuthStore(state => state.currentLocation);
+  const currentMember = useAuthStore(state => state.currentMember);
+  const isAuthInitialized = useAuthStore(state => state.isInitialized);
+  const updateProductStock = usePosStore(state => state.updateProductStock);
+  const organizationId = useAuthStore(state => state.deviceConfig?.orgSlug);
 
   // ── Initialize Realtime once auth is ready ──────────────────────────────────
   useEffect(() => {
@@ -29,18 +29,17 @@ export default function RealtimeInitializer() {
     if (!currentLocation?.id || !currentMember) return;
 
     if (ablyClient) {
-        const presenceChannel = ablyClient.channels.get(`presence:${currentLocation.id}`);
-        presenceChannel.presence
-          .enter({ id: currentMember.id, name: currentMember.name, updatedAt: new Date().toISOString() })
-          .catch(() => {});
+      const presenceChannel = ablyClient.channels.get(`presence:${currentLocation.id}`);
+      presenceChannel.presence
+        .enter({ id: currentMember.id, name: currentMember.name, updatedAt: new Date().toISOString() })
+        .catch(() => {});
 
-        return () => {
-          presenceChannel.presence.leave().catch(() => {});
-        };
+      return () => {
+        presenceChannel.presence.leave().catch(() => {});
+      };
     } else if (socketClient && socketClient.connected) {
-        socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
+      socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
     }
-
   }, [ablyClient, socketClient, currentLocation?.id, currentMember]);
 
   // ── Reconnect when page becomes visible after being backgrounded ───────────
@@ -48,10 +47,7 @@ export default function RealtimeInitializer() {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
       const current = useRealtimeStore.getState();
-      if (
-        current.ablyClient &&
-        ['disconnected', 'suspended', 'failed'].includes(current.connectionState)
-      ) {
+      if (current.ablyClient && ['disconnected', 'suspended', 'failed'].includes(current.connectionState)) {
         current.ablyClient.connect();
       } else if (current.socketClient && !current.socketClient.connected) {
         current.socketClient.connect();
@@ -78,10 +74,10 @@ export default function RealtimeInitializer() {
 
     const channel = `organization:${organizationId}:inventory`;
     const unsub = subscribe(channel, 'stock-update', (data: any) => {
-        console.log('[Realtime] Stock update received:', data);
-        if (data.productId && typeof data.newStock === 'number') {
-            updateProductStock(data.productId, data.newStock);
-        }
+      console.log('[Realtime] Stock update received:', data);
+      if (data.productId && typeof data.newStock === 'number') {
+        updateProductStock(data.productId, data.newStock);
+      }
     });
 
     return () => unsub();

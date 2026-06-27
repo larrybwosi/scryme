@@ -3,16 +3,7 @@
 import { useState, memo, useMemo, useEffect, useRef } from 'react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Plus,
-  Trash2,
-  Save,
-  Loader2,
-  AlertCircle,
-  Check,
-  ChevronsUpDown,
-  Search,
-} from 'lucide-react';
+import { Plus, Trash2, Save, Loader2, AlertCircle, Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useFormattedCurrency, cn } from '@/lib/utils';
 import posthog from 'posthog-js';
 
@@ -31,12 +22,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@repo/ui/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+} from '@repo/ui/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
 import { CustomerSelect } from '@/components/customer.select';
 import { usePosProducts } from '@/hooks/products';
 import { useAuthStore } from '@/store/pos-auth-store';
@@ -71,10 +58,11 @@ export interface FlattenedProductVariant {
 
 // --- UTILS ---
 
-const NO_SPINNER_CLASS = "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
+const NO_SPINNER_CLASS =
+  '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
 const blockInvalidChar = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (["e", "E", "+", "-"].includes(e.key)) {
+  if (['e', 'E', '+', '-'].includes(e.key)) {
     e.preventDefault();
   }
 };
@@ -91,10 +79,10 @@ function resolvePrice(
   variantId: string | undefined,
   sellingUnitId: string | undefined,
   availableUnits: SellableUnit[],
-  priceMap: Record<string, number>,
+  priceMap: Record<string, number>
 ): number {
   if (!variantId) return 0;
-  const standardUnit = availableUnits.find((u) => u.unitId === sellingUnitId);
+  const standardUnit = availableUnits.find(u => u.unitId === sellingUnitId);
   const standardPrice = standardUnit?.price ?? 0;
   const key = `${variantId}:${sellingUnitId ?? 'null'}`;
   const customPrice = priceMap[key];
@@ -111,37 +99,41 @@ interface ProductSearchComboboxProps {
 
 function ProductSearchCombobox({ value, onSelect, error }: ProductSearchComboboxProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebounce(search, 500);
 
   const { products: data, isSyncing } = usePosProducts({
     search: debouncedSearch,
-    category: "all",
+    category: 'all',
     enabled: open,
   });
 
   const isSearching = search !== debouncedSearch || isSyncing;
 
   const products: FlattenedProductVariant[] = useMemo(() => {
-    return data?.flatMap((product: any) =>
-      (product.variants || []).map((variant: any) => ({
-        productId: product.productId,
-        productName: product.name,
-        imageUrl: product.imageUrl,
-        variantId: variant.variantId,
-        variantName: variant.name,
-        sku: variant.sku,
-        barcode: variant.barcode,
-        stock: variant.stock,
-        sellableUnits: variant.sellableUnits || [],
-      }))
-    ) ?? [];
+    return (
+      data?.flatMap((product: any) =>
+        (product.variants || []).map((variant: any) => ({
+          productId: product.productId,
+          productName: product.name,
+          imageUrl: product.imageUrl,
+          variantId: variant.variantId,
+          variantName: variant.name,
+          sku: variant.sku,
+          barcode: variant.barcode,
+          stock: variant.stock,
+          sellableUnits: variant.sellableUnits || [],
+        }))
+      ) ?? []
+    );
   }, [data]);
 
   const selectedProduct = products.find(p => p.variantId === value);
   const displayText = selectedProduct
     ? `${selectedProduct.productName} - ${selectedProduct.variantName}`
-    : (value ? "Item Selected (Search to change)" : "Select product...");
+    : value
+      ? 'Item Selected (Search to change)'
+      : 'Select product...';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -151,9 +143,9 @@ function ProductSearchCombobox({ value, onSelect, error }: ProductSearchCombobox
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between text-left font-normal truncate",
-            !value && "text-muted-foreground",
-            error && "border-red-500 ring-red-500/20"
+            'w-full justify-between text-left font-normal truncate',
+            !value && 'text-muted-foreground',
+            error && 'border-red-500 ring-red-500/20'
           )}
         >
           <span className="truncate">{displayText}</span>
@@ -173,9 +165,7 @@ function ProductSearchCombobox({ value, onSelect, error }: ProductSearchCombobox
             {isSearching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
           <CommandList>
-            {!isSearching && products.length === 0 && (
-              <CommandEmpty>No products found.</CommandEmpty>
-            )}
+            {!isSearching && products.length === 0 && <CommandEmpty>No products found.</CommandEmpty>}
             <CommandGroup>
               {products.map((product, index) => (
                 <CommandItem
@@ -189,12 +179,12 @@ function ProductSearchCombobox({ value, onSelect, error }: ProductSearchCombobox
                     onSelect(product);
                     setOpen(false);
                   }}
-                  className={cn("cursor-pointer", product.stock <= 0 && "opacity-50")}
+                  className={cn('cursor-pointer', product.stock <= 0 && 'opacity-50')}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", value === product.variantId ? "opacity-100" : "opacity-0")} />
+                  <Check className={cn('mr-2 h-4 w-4', value === product.variantId ? 'opacity-100' : 'opacity-0')} />
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className={cn("font-medium", product.stock <= 0 && "text-muted-foreground line-through")}>
+                      <span className={cn('font-medium', product.stock <= 0 && 'text-muted-foreground line-through')}>
                         {product.productName}
                       </span>
                       {product.stock <= 0 && (
@@ -206,7 +196,7 @@ function ProductSearchCombobox({ value, onSelect, error }: ProductSearchCombobox
                     <div className="flex gap-2 text-xs text-muted-foreground">
                       <span className="bg-zinc-100 dark:bg-zinc-800 px-1 rounded">{product.variantName}</span>
                       <span>•</span>
-                      <span className={product.stock < 5 ? "text-amber-500 font-medium" : ""}>
+                      <span className={product.stock < 5 ? 'text-amber-500 font-medium' : ''}>
                         Stock: {product.stock}
                       </span>
                     </div>
@@ -221,7 +211,12 @@ function ProductSearchCombobox({ value, onSelect, error }: ProductSearchCombobox
   );
 }
 
-const UnitSelect = memo(function UnitSelect({ units, value, onValueChange, disabled }: {
+const UnitSelect = memo(function UnitSelect({
+  units,
+  value,
+  onValueChange,
+  disabled,
+}: {
   units: SellableUnit[];
   value: string;
   onValueChange: (unitId: string, price: number) => void;
@@ -238,7 +233,7 @@ const UnitSelect = memo(function UnitSelect({ units, value, onValueChange, disab
         <SelectValue placeholder="Unit" />
       </SelectTrigger>
       <SelectContent>
-        {units.map((unit) => (
+        {units.map(unit => (
           <SelectItem key={unit.unitId} value={unit.unitId}>
             {unit.unitName}
           </SelectItem>
@@ -260,193 +255,177 @@ const UnitSelect = memo(function UnitSelect({ units, value, onValueChange, disab
 //     to always write on the next run, even if the price is numerically equal.
 // ---------------------------------------------------------------------------
 
-const OrderItemRow = memo(({
-  index,
-  control,
-  register,
-  remove,
-  setValue,
-  errors,
-  formatCurrency,
-  customerId,
-  priceMap,
-  isFetching,
-}: {
-  index: number;
-  control: any;
-  register: any;
-  remove: (index: number) => void;
-  setValue: any;
-  errors: any;
-  formatCurrency: (val: number) => string;
-  customerId?: string;
-  priceMap: Record<string, number>;
-  isFetching: boolean;
-}) => {
-  const rowValues = useWatch({ control, name: `items.${index}` });
-
-  // Register these fields so react-hook-form tracks them even though they lack direct inputs
-  register(`items.${index}.unitPrice`);
-  register(`items.${index}._availableUnits`);
-  register(`items.${index}._maxStock`);
-
-  const availableUnits: SellableUnit[] = useMemo(() => rowValues?._availableUnits || [], [rowValues?._availableUnits]);
-
-  const rowTotal = (rowValues?.quantity || 0) * (rowValues?.unitPrice || 0);
-
-  const standardUnit = availableUnits.find((u: any) => u.unitId === rowValues?.sellingUnitId);
-  const standardPrice = standardUnit?.price ?? 0;
-  const hasCustomPrice =
-    rowValues?.unitPrice > 0 &&
-    rowValues?.unitPrice !== standardPrice &&
-    !!customerId;
-
-  const prevResolvedPriceRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!rowValues?.variantId || !rowValues?.sellingUnitId) {
-      prevResolvedPriceRef.current = null;
-      return;
-    }
-
-    const resolved = resolvePrice(
-      rowValues.variantId,
-      rowValues.sellingUnitId,
-      availableUnits,
-      priceMap,
-    );
-
-    if (prevResolvedPriceRef.current !== resolved) {
-      prevResolvedPriceRef.current = resolved;
-      setValue(`items.${index}.unitPrice`, resolved, {
-        shouldValidate: false,
-        shouldDirty: true,
-      });
-    }
-  }, [
-    rowValues?.variantId,
-    rowValues?.sellingUnitId,
-    availableUnits,
+const OrderItemRow = memo(
+  ({
+    index,
+    control,
+    register,
+    remove,
+    setValue,
+    errors,
+    formatCurrency,
     customerId,
     priceMap,
-    index,
-    setValue,
-  ]);
+    isFetching,
+  }: {
+    index: number;
+    control: any;
+    register: any;
+    remove: (index: number) => void;
+    setValue: any;
+    errors: any;
+    formatCurrency: (val: number) => string;
+    customerId?: string;
+    priceMap: Record<string, number>;
+    isFetching: boolean;
+  }) => {
+    const rowValues = useWatch({ control, name: `items.${index}` });
 
-  return (
-    <tr className="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      <td className="px-6 py-4 text-xs text-zinc-400 font-mono align-top pt-6">{index + 1}</td>
+    // Register these fields so react-hook-form tracks them even though they lack direct inputs
+    register(`items.${index}.unitPrice`);
+    register(`items.${index}._availableUnits`);
+    register(`items.${index}._maxStock`);
 
-      {/* PRODUCT */}
-      <td className="px-6 py-4 align-top">
-        <Controller
-          control={control}
-          name={`items.${index}.variantId`}
-          render={({ field }) => (
-            <ProductSearchCombobox
-              value={field.value}
-              error={!!errors.items?.[index]?.variantId}
-              onSelect={(product) => {
-                field.onChange(product.variantId);
-                const defaultUnit = product.sellableUnits.find(u => u.isBaseUnit) || product.sellableUnits[0];
-                setValue(`items.${index}._availableUnits`, product.sellableUnits);
-                setValue(`items.${index}._maxStock`, product.stock);
-                setValue(`items.${index}.sellingUnitId`, defaultUnit?.unitId ?? undefined);
-                // Optimistic write — effect reconciles with priceMap immediately after
-                setValue(`items.${index}.unitPrice`, defaultUnit?.price ?? 0);
-                // Force effect to re-run even if resolved price equals optimistic price
-                prevResolvedPriceRef.current = null;
-              }}
-            />
-          )}
-        />
-        {errors.items?.[index]?.variantId && (
-          <div className="mt-1 text-[10px] text-red-500">Required</div>
-        )}
-      </td>
+    const availableUnits: SellableUnit[] = useMemo(
+      () => rowValues?._availableUnits || [],
+      [rowValues?._availableUnits]
+    );
 
-      {/* UNIT */}
-      <td className="px-6 py-4 align-top">
-        <Controller
-          control={control}
-          name={`items.${index}.sellingUnitId`}
-          render={({ field }) => (
-            <UnitSelect
-              value={field.value}
-              units={availableUnits}
-              disabled={!rowValues?.variantId}
-              onValueChange={(unitId, price) => {
-                field.onChange(unitId);
-                setValue(`items.${index}.unitPrice`, price);
-                prevResolvedPriceRef.current = null;
-              }}
-            />
-          )}
-        />
-        {errors.items?.[index]?.sellingUnitId && (
-          <div className="mt-1 text-[10px] text-red-500">Required</div>
-        )}
-      </td>
+    const rowTotal = (rowValues?.quantity || 0) * (rowValues?.unitPrice || 0);
 
-      {/* QUANTITY */}
-      <td className="px-6 py-4 align-top">
-        <Input
-          type="number"
-          min="1"
-          onKeyDown={blockInvalidChar}
-          {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-          className={cn(
-            "h-10 text-center",
-            NO_SPINNER_CLASS,
-            errors.items?.[index]?.quantity && "border-red-500 focus-visible:ring-red-500"
-          )}
-        />
-        {errors.items?.[index]?.quantity && (
-          <div className="mt-1 text-[10px] text-red-500">{errors.items?.[index]?.quantity.message}</div>
-        )}
-      </td>
+    const standardUnit = availableUnits.find((u: any) => u.unitId === rowValues?.sellingUnitId);
+    const standardPrice = standardUnit?.price ?? 0;
+    const hasCustomPrice = rowValues?.unitPrice > 0 && rowValues?.unitPrice !== standardPrice && !!customerId;
 
-      {/* TOTAL */}
-      <td className="px-6 py-4 align-top text-right font-medium pt-6">
-        {isFetching && rowValues?.variantId ? (
-          <div className="flex items-center justify-end gap-1.5">
-            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-            <span className="text-muted-foreground">{formatCurrency(rowTotal)}</span>
-          </div>
-        ) : (
-          <>
-            {formatCurrency(rowTotal)}
-            {hasCustomPrice && (
-              <div className="text-[10px] text-blue-600 font-semibold mt-1">Special Price</div>
+    const prevResolvedPriceRef = useRef<number | null>(null);
+
+    useEffect(() => {
+      if (!rowValues?.variantId || !rowValues?.sellingUnitId) {
+        prevResolvedPriceRef.current = null;
+        return;
+      }
+
+      const resolved = resolvePrice(rowValues.variantId, rowValues.sellingUnitId, availableUnits, priceMap);
+
+      if (prevResolvedPriceRef.current !== resolved) {
+        prevResolvedPriceRef.current = resolved;
+        setValue(`items.${index}.unitPrice`, resolved, {
+          shouldValidate: false,
+          shouldDirty: true,
+        });
+      }
+    }, [rowValues?.variantId, rowValues?.sellingUnitId, availableUnits, customerId, priceMap, index, setValue]);
+
+    return (
+      <tr className="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+        <td className="px-6 py-4 text-xs text-zinc-400 font-mono align-top pt-6">{index + 1}</td>
+
+        {/* PRODUCT */}
+        <td className="px-6 py-4 align-top">
+          <Controller
+            control={control}
+            name={`items.${index}.variantId`}
+            render={({ field }) => (
+              <ProductSearchCombobox
+                value={field.value}
+                error={!!errors.items?.[index]?.variantId}
+                onSelect={product => {
+                  field.onChange(product.variantId);
+                  const defaultUnit = product.sellableUnits.find(u => u.isBaseUnit) || product.sellableUnits[0];
+                  setValue(`items.${index}._availableUnits`, product.sellableUnits);
+                  setValue(`items.${index}._maxStock`, product.stock);
+                  setValue(`items.${index}.sellingUnitId`, defaultUnit?.unitId ?? undefined);
+                  // Optimistic write — effect reconciles with priceMap immediately after
+                  setValue(`items.${index}.unitPrice`, defaultUnit?.price ?? 0);
+                  // Force effect to re-run even if resolved price equals optimistic price
+                  prevResolvedPriceRef.current = null;
+                }}
+              />
             )}
-          </>
-        )}
-      </td>
+          />
+          {errors.items?.[index]?.variantId && <div className="mt-1 text-[10px] text-red-500">Required</div>}
+        </td>
 
-      {/* DELETE */}
-      <td className="px-6 py-4 align-top text-center pt-5">
-        <button
-          type="button"
-          onClick={() => remove(index)}
-          className="text-zinc-400 hover:text-red-500 transition-colors"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </td>
-    </tr>
-  );
-});
+        {/* UNIT */}
+        <td className="px-6 py-4 align-top">
+          <Controller
+            control={control}
+            name={`items.${index}.sellingUnitId`}
+            render={({ field }) => (
+              <UnitSelect
+                value={field.value}
+                units={availableUnits}
+                disabled={!rowValues?.variantId}
+                onValueChange={(unitId, price) => {
+                  field.onChange(unitId);
+                  setValue(`items.${index}.unitPrice`, price);
+                  prevResolvedPriceRef.current = null;
+                }}
+              />
+            )}
+          />
+          {errors.items?.[index]?.sellingUnitId && <div className="mt-1 text-[10px] text-red-500">Required</div>}
+        </td>
+
+        {/* QUANTITY */}
+        <td className="px-6 py-4 align-top">
+          <Input
+            type="number"
+            min="1"
+            onKeyDown={blockInvalidChar}
+            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+            className={cn(
+              'h-10 text-center',
+              NO_SPINNER_CLASS,
+              errors.items?.[index]?.quantity && 'border-red-500 focus-visible:ring-red-500'
+            )}
+          />
+          {errors.items?.[index]?.quantity && (
+            <div className="mt-1 text-[10px] text-red-500">{errors.items?.[index]?.quantity.message}</div>
+          )}
+        </td>
+
+        {/* TOTAL */}
+        <td className="px-6 py-4 align-top text-right font-medium pt-6">
+          {isFetching && rowValues?.variantId ? (
+            <div className="flex items-center justify-end gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              <span className="text-muted-foreground">{formatCurrency(rowTotal)}</span>
+            </div>
+          ) : (
+            <>
+              {formatCurrency(rowTotal)}
+              {hasCustomPrice && <div className="text-[10px] text-blue-600 font-semibold mt-1">Special Price</div>}
+            </>
+          )}
+        </td>
+
+        {/* DELETE */}
+        <td className="px-6 py-4 align-top text-center pt-5">
+          <button
+            type="button"
+            onClick={() => remove(index)}
+            className="text-zinc-400 hover:text-red-500 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </td>
+      </tr>
+    );
+  }
+);
 OrderItemRow.displayName = 'OrderItemRow';
 
 // --- ORDER TOTALS ---
 
-function OrderTotals({ control, formatCurrency, register }: { control: any, formatCurrency: any, register: any }) {
+function OrderTotals({ control, formatCurrency, register }: { control: any; formatCurrency: any; register: any }) {
   const items = useWatch({ control, name: 'items' });
   const shippingFee = useWatch({ control, name: 'shippingFee' }) || 0;
   const discountAmount = useWatch({ control, name: 'discountAmount' }) || 0;
 
-  const itemsSubtotal = items?.reduce((acc: number, item: any) =>
-    acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0) || 0;
+  const itemsSubtotal =
+    items?.reduce((acc: number, item: any) => acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0) ||
+    0;
   const orderTotal = itemsSubtotal + shippingFee - discountAmount;
 
   return (
@@ -458,16 +437,20 @@ function OrderTotals({ control, formatCurrency, register }: { control: any, form
       <div className="flex justify-between items-center text-sm text-zinc-600 dark:text-zinc-400">
         <Label className="font-normal text-xs">Shipping Fee</Label>
         <Input
-          type="number" step="any" onKeyDown={blockInvalidChar}
-          className={cn("h-7 w-20 text-right text-xs", NO_SPINNER_CLASS)}
+          type="number"
+          step="any"
+          onKeyDown={blockInvalidChar}
+          className={cn('h-7 w-20 text-right text-xs', NO_SPINNER_CLASS)}
           {...register('shippingFee', { valueAsNumber: true })}
         />
       </div>
       <div className="flex justify-between items-center text-sm text-zinc-600 dark:text-zinc-400">
         <Label className="font-normal text-xs">Discount</Label>
         <Input
-          type="number" step="any" onKeyDown={blockInvalidChar}
-          className={cn("h-7 w-20 text-right text-xs", NO_SPINNER_CLASS)}
+          type="number"
+          step="any"
+          onKeyDown={blockInvalidChar}
+          className={cn('h-7 w-20 text-right text-xs', NO_SPINNER_CLASS)}
           {...register('discountAmount', { valueAsNumber: true })}
         />
       </div>
@@ -482,14 +465,15 @@ function OrderTotals({ control, formatCurrency, register }: { control: any, form
 
 // --- PAYMENT BALANCE ---
 
-function PaymentBalanceDisplay({ control, formatCurrency }: { control: any, formatCurrency: any }) {
+function PaymentBalanceDisplay({ control, formatCurrency }: { control: any; formatCurrency: any }) {
   const items = useWatch({ control, name: 'items' });
   const payments = useWatch({ control, name: 'payments' });
   const shippingFee = useWatch({ control, name: 'shippingFee' }) || 0;
   const discountAmount = useWatch({ control, name: 'discountAmount' }) || 0;
 
-  const itemsSubtotal = items?.reduce((acc: number, item: any) =>
-    acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0) || 0;
+  const itemsSubtotal =
+    items?.reduce((acc: number, item: any) => acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0) ||
+    0;
   const orderTotal = itemsSubtotal + shippingFee - discountAmount;
   const totalPaid = payments?.reduce((acc: number, p: any) => acc + (Number(p.amount) || 0), 0) || 0;
   const balanceDue = orderTotal - totalPaid;
@@ -556,7 +540,7 @@ export default function CreateOrderPage() {
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('API Error:', error);
       setSubmitStatus('error');
     },
@@ -609,16 +593,13 @@ export default function CreateOrderPage() {
         return {
           variantId: item.variantId,
           unitId: item.sellingUnitId ?? null,
-          isBaseUnit: !!(unit?.isBaseUnit),
+          isBaseUnit: !!unit?.isBaseUnit,
         };
       })
       .filter((i): i is { variantId: string; unitId: string | null; isBaseUnit: boolean } => i !== null);
   }, [items]);
 
-  const { priceMap, isFetching: isPriceMapFetching } = useBatchPricing(
-    batchPricingItems,
-    customerId
-  );
+  const { priceMap, isFetching: isPriceMapFetching } = useBatchPricing(batchPricingItems, customerId);
 
   const fulfillmentType = watch('fulfillment.type');
 
@@ -661,11 +642,7 @@ export default function CreateOrderPage() {
     return (
       <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 p-6 md:p-8 font-sans">
         <div className="mx-auto max-w-3xl bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <OrderSuccessView
-            orderId={createdOrderId}
-            invoiceUrl={createdInvoiceUrl!}
-            onReset={handleReset}
-          />
+          <OrderSuccessView orderId={createdOrderId} invoiceUrl={createdInvoiceUrl!} onReset={handleReset} />
         </div>
       </div>
     );
@@ -675,7 +652,6 @@ export default function CreateOrderPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 flex flex-col">
       <div className="w-full bg-white dark:bg-zinc-900 flex flex-col min-h-screen">
-
         {/* HEADER ACTIONS BAR */}
         <div className="px-8 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/30 dark:bg-zinc-900/50">
           <div className="flex items-center gap-2 text-zinc-500" />
@@ -697,11 +673,12 @@ export default function CreateOrderPage() {
 
         {/* MAIN INVOICE CONTENT */}
         <div className="p-8 md:p-12 space-y-8 flex-1 w-full">
-
           {/* HEADER SECTION */}
           <div className="flex flex-col md:flex-row justify-between items-start gap-8 border-b border-zinc-100 dark:border-zinc-800 pb-8">
             <div>
-              <h1 className="text-3xl font-serif font-bold tracking-tight text-zinc-900 dark:text-zinc-50">New Order</h1>
+              <h1 className="text-3xl font-serif font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                New Order
+              </h1>
               <p className="text-sm text-zinc-500 mt-2 max-w-md">
                 Create a commercial invoice or sales order. Ensure all customer details are verified before saving.
               </p>
@@ -725,9 +702,7 @@ export default function CreateOrderPage() {
                   )}
                 />
               </div>
-              <div className="text-xs text-zinc-400 mt-1">
-                Draft Date: {new Date().toLocaleDateString()}
-              </div>
+              <div className="text-xs text-zinc-400 mt-1">Draft Date: {new Date().toLocaleDateString()}</div>
             </div>
           </div>
 
@@ -747,7 +722,6 @@ export default function CreateOrderPage() {
 
           {/* GRID: BILL TO | SHIP TO | NOTES */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-
             {/* LEFT: CUSTOMER */}
             <div className="lg:col-span-5 space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-4">
@@ -777,7 +751,9 @@ export default function CreateOrderPage() {
                 <div className="p-4 bg-zinc-50/50 dark:bg-zinc-800/20 rounded-md border border-zinc-100 dark:border-zinc-800 text-sm text-zinc-600 min-h-[100px] flex items-center justify-center text-center">
                   {customerId ? (
                     <div className="text-left w-full">
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-100 block mb-1">SELECTED CUSTOMER</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100 block mb-1">
+                        SELECTED CUSTOMER
+                      </span>
                       <span className="text-zinc-500 text-xs">Address integration coming soon...</span>
                     </div>
                   ) : (
@@ -800,7 +776,9 @@ export default function CreateOrderPage() {
                     name="fulfillment.type"
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value={FulfillmentType.DELIVERY}>Dispatch / Delivery</SelectItem>
                           <SelectItem value={FulfillmentType.PICKUP}>Counter Pickup</SelectItem>
@@ -819,7 +797,9 @@ export default function CreateOrderPage() {
                       disabled={!customerId || customerAddresses.length === 0}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder={customerAddresses.length === 0 ? "No addresses on file" : "Select Address"} />
+                        <SelectValue
+                          placeholder={customerAddresses.length === 0 ? 'No addresses on file' : 'Select Address'}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {customerAddresses.map((addr: any) => (
@@ -828,7 +808,9 @@ export default function CreateOrderPage() {
                           </SelectItem>
                         ))}
                         {customerAddresses.length === 0 && (
-                          <SelectItem value="none" disabled>No addresses found</SelectItem>
+                          <SelectItem value="none" disabled>
+                            No addresses found
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -866,9 +848,7 @@ export default function CreateOrderPage() {
                     <th className="px-4 py-3 w-32 text-right">
                       <span className="flex items-center justify-end gap-1.5">
                         Amount
-                        {isPriceMapFetching && (
-                          <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />
-                        )}
+                        {isPriceMapFetching && <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />}
                       </span>
                     </th>
                     <th className="px-4 py-3 w-10"></th>
@@ -915,7 +895,6 @@ export default function CreateOrderPage() {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

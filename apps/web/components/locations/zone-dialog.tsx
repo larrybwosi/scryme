@@ -42,7 +42,9 @@ const zoneSchema = z.object({
 
 type ZoneFormValues = z.infer<typeof zoneSchema>;
 
-interface ZoneDialogProps extends React.ComponentPropsWithoutRef<typeof DialogTrigger> {
+interface ZoneDialogProps extends React.ComponentPropsWithoutRef<
+  typeof DialogTrigger
+> {
   children?: React.ReactNode;
   locationId: string;
   zone?: any;

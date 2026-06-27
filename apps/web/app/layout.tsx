@@ -1,9 +1,9 @@
-import './globals.css';
-import { SidebarWrapper } from '../components/sidebar-wrapper';
+import "./globals.css";
+import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { RealtimeProvider } from "@repo/shared/realtime/client";
-import { TopLoader } from '../components/top-loader';
+import { TopLoader } from "../components/top-loader";
 
 export default function RootLayout({
   children,

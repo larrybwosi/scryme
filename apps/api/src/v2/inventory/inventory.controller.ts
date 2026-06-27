@@ -180,7 +180,7 @@ export class InventoryController {
       justification: request.justification,
       organizationName: request.organization.name,
       logoUrl: request.organization.logo,
-      items: request.items.map((item) => ({
+      items: request.items.map(item => ({
         sku: item.variant.sku,
         productName: item.variant.product.name,
         variantName: item.variant.name,
@@ -296,7 +296,7 @@ export class InventoryController {
       notes: transfer.notes,
       organizationName: transfer.organization.name,
       logoUrl: transfer.organization.logo,
-      items: transfer.items.map((item) => ({
+      items: transfer.items.map(item => ({
         sku: item.variant.sku,
         productName: item.variant.product.name,
         variantName: item.variant.name,

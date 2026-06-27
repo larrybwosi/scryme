@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
-import { getCompany } from '../../actions/companies';
-import { CompanyDetailView } from './_components/company-detail-view';
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { getCompany } from "../../actions/companies";
+import { CompanyDetailView } from "./_components/company-detail-view";
 
 interface CompanyPageProps {
   params: Promise<{ id: string }>;

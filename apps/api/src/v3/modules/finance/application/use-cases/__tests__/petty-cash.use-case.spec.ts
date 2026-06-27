@@ -20,7 +20,7 @@ describe("PettyCashUseCase", () => {
       create: vi.fn(),
       findMany: vi.fn(),
     },
-    $transaction: vi.fn((cb) => cb(mockPrismaClient)),
+    $transaction: vi.fn(cb => cb(mockPrismaClient)),
   };
 
   const mockPrismaService = {

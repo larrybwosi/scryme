@@ -1,10 +1,10 @@
-import { db } from '@repo/db';
-import { Prisma } from '@repo/db';
-import { z } from 'zod';
-import { formatVariantDisplayName } from './utils';
-import { supplierSchema } from '../lib/validations/suppliers';
-import { navariService } from '../services/navari.service';
-import { SupplierUI } from '../types/index';
+import { db } from "@repo/db";
+import { Prisma } from "@repo/db";
+import { z } from "zod";
+import { formatVariantDisplayName } from "./utils";
+import { supplierSchema } from "../lib/validations/suppliers";
+import { navariService } from "../services/navari.service";
+import { SupplierUI } from "../types/index";
 
 export async function getSuppliers(organizationId: string) {
   const suppliers = await db.supplier.findMany({
@@ -24,71 +24,94 @@ export async function getSuppliers(organizationId: string) {
       purchases: {
         take: 5,
         orderBy: {
-          orderDate: 'desc',
+          orderDate: "desc",
         },
       },
       documents: true,
       qualityIncidents: {
         include: {
           batch: true,
-          stockBatch: { include: { variant: { include: { product: true } } } }
+          stockBatch: { include: { variant: { include: { product: true } } } },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
       },
       priceHistory: {
         include: { variant: { include: { product: true } } },
-        orderBy: { effectiveDate: 'desc' },
-        take: 10
-      }
+        orderBy: { effectiveDate: "desc" },
+        take: 10,
+      },
     },
   });
 
   const formattedSuppliers: SupplierUI[] = suppliers.map((supplier: any) => {
-    const customFields = supplier.customFields ? JSON.parse(supplier.customFields as string) : {};
+    const customFields = supplier.customFields
+      ? JSON.parse(supplier.customFields as string)
+      : {};
 
     const totalOrders = supplier.purchases.length;
-    const totalValue = supplier.purchases.reduce((sum: number, purchase: any) => sum + Number(purchase.totalAmount), 0);
+    const totalValue = supplier.purchases.reduce(
+      (sum: number, purchase: any) => sum + Number(purchase.totalAmount),
+      0,
+    );
     const averageOrderValue = totalOrders > 0 ? totalValue / totalOrders : 0;
 
     return {
       id: supplier.id,
       name: supplier.name,
-      code: supplier.code || supplier.name.toLowerCase().replace(/\s+/g, '-') || 'unknown',
-      type: (supplier.type.toLowerCase() as any) || 'manufacturer',
-      status: (supplier.isActive ? 'active' : 'inactive') as any,
+      code:
+        supplier.code ||
+        supplier.name.toLowerCase().replace(/\s+/g, "-") ||
+        "unknown",
+      type: (supplier.type.toLowerCase() as any) || "manufacturer",
+      status: (supplier.isActive ? "active" : "inactive") as any,
       contact: {
-        primaryContact: supplier.primaryContact || 'Unknown Contact',
-        phone: supplier.phone || '',
-        email: supplier.email || '',
+        primaryContact: supplier.primaryContact || "Unknown Contact",
+        phone: supplier.phone || "",
+        email: supplier.email || "",
         website: supplier.website || undefined,
       },
       address: {
-        street: supplier.street || '',
-        city: supplier.city || '',
-        state: supplier.state || '',
-        zipCode: supplier.zipCode || '',
-        country: supplier.country || '',
+        street: supplier.street || "",
+        city: supplier.city || "",
+        state: supplier.state || "",
+        zipCode: supplier.zipCode || "",
+        country: supplier.country || "",
       },
       businessInfo: {
-        taxId: supplier.taxId || '',
-        registrationNumber: supplier.registrationNumber || '',
-        paymentTerms: supplier.paymentTerms || 'Net 30',
-        currency: supplier.currency || 'USD',
+        taxId: supplier.taxId || "",
+        registrationNumber: supplier.registrationNumber || "",
+        paymentTerms: supplier.paymentTerms || "Net 30",
+        currency: supplier.currency || "USD",
       },
       performance: {
-        rating: typeof customFields.rating === 'number' ? customFields.rating : 0,
-        onTimeDelivery: typeof customFields.onTimeDelivery === 'number' ? customFields.onTimeDelivery : 0,
-        qualityScore: typeof customFields.qualityScore === 'number' ? customFields.qualityScore : 0,
+        rating:
+          typeof customFields.rating === "number" ? customFields.rating : 0,
+        onTimeDelivery:
+          typeof customFields.onTimeDelivery === "number"
+            ? customFields.onTimeDelivery
+            : 0,
+        qualityScore:
+          typeof customFields.qualityScore === "number"
+            ? customFields.qualityScore
+            : 0,
         totalOrders,
         totalValue,
         averageOrderValue,
-        responseTime: typeof customFields.responseTime === 'number' ? customFields.responseTime : 0,
+        responseTime:
+          typeof customFields.responseTime === "number"
+            ? customFields.responseTime
+            : 0,
       },
-      deliveryLocations: Array.isArray(customFields.deliveryLocations) ? customFields.deliveryLocations : [],
+      deliveryLocations: Array.isArray(customFields.deliveryLocations)
+        ? customFields.deliveryLocations
+        : [],
       categories: supplier.products.map((ps: any) => ps.product.category.name),
-      customBadges: Array.isArray(customFields.customBadges) ? customFields.customBadges : [],
-      riskLevel: (supplier.riskLevel.toLowerCase() as any) || 'low',
-      lastOrderDate: supplier.purchases[0]?.orderDate.toISOString() || undefined,
+      customBadges: Array.isArray(customFields.customBadges)
+        ? customFields.customBadges
+        : [],
+      riskLevel: (supplier.riskLevel.toLowerCase() as any) || "low",
+      lastOrderDate:
+        supplier.purchases[0]?.orderDate.toISOString() || undefined,
       products: supplier.products.map((ps: any) => ({
         id: ps.productId,
         name: ps.product.name,
@@ -127,70 +150,91 @@ export async function getSupplier(organizationId: string, supplierId: string) {
       purchases: {
         take: 5,
         orderBy: {
-          orderDate: 'desc',
+          orderDate: "desc",
         },
       },
       documents: true,
       qualityIncidents: {
         include: {
           batch: true,
-          stockBatch: { include: { variant: { include: { product: true } } } }
+          stockBatch: { include: { variant: { include: { product: true } } } },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
       },
       priceHistory: {
         include: { variant: { include: { product: true } } },
-        orderBy: { effectiveDate: 'desc' },
-        take: 10
-      }
+        orderBy: { effectiveDate: "desc" },
+        take: 10,
+      },
     },
   });
 
   if (!supplier) return null;
 
-  const customFields = supplier.customFields ? JSON.parse(supplier.customFields as string) : {};
+  const customFields = supplier.customFields
+    ? JSON.parse(supplier.customFields as string)
+    : {};
   const totalOrders = supplier.purchases.length;
-  const totalValue = supplier.purchases.reduce((sum: number, purchase: any) => sum + Number(purchase.totalAmount), 0);
+  const totalValue = supplier.purchases.reduce(
+    (sum: number, purchase: any) => sum + Number(purchase.totalAmount),
+    0,
+  );
   const averageOrderValue = totalOrders > 0 ? totalValue / totalOrders : 0;
 
   const formattedSupplier: SupplierUI = {
     id: supplier.id,
     name: supplier.name,
-    code: supplier.code || supplier.name.toLowerCase().replace(/\s+/g, '-') || 'unknown',
-    type: (supplier.type.toLowerCase() as any) || 'manufacturer',
-    status: (supplier.isActive ? 'active' : 'inactive') as any,
+    code:
+      supplier.code ||
+      supplier.name.toLowerCase().replace(/\s+/g, "-") ||
+      "unknown",
+    type: (supplier.type.toLowerCase() as any) || "manufacturer",
+    status: (supplier.isActive ? "active" : "inactive") as any,
     contact: {
-      primaryContact: supplier.primaryContact || 'Unknown Contact',
-      phone: supplier.phone || '',
-      email: supplier.email || '',
+      primaryContact: supplier.primaryContact || "Unknown Contact",
+      phone: supplier.phone || "",
+      email: supplier.email || "",
       website: supplier.website || undefined,
     },
     address: {
-      street: supplier.street || '',
-      city: supplier.city || '',
-      state: supplier.state || '',
-      zipCode: supplier.zipCode || '',
-      country: supplier.country || '',
+      street: supplier.street || "",
+      city: supplier.city || "",
+      state: supplier.state || "",
+      zipCode: supplier.zipCode || "",
+      country: supplier.country || "",
     },
     businessInfo: {
-      taxId: supplier.taxId || '',
-      registrationNumber: supplier.registrationNumber || '',
-      paymentTerms: supplier.paymentTerms || 'Net 30',
-      currency: supplier.currency || 'USD',
+      taxId: supplier.taxId || "",
+      registrationNumber: supplier.registrationNumber || "",
+      paymentTerms: supplier.paymentTerms || "Net 30",
+      currency: supplier.currency || "USD",
     },
     performance: {
-      rating: typeof customFields.rating === 'number' ? customFields.rating : 0,
-      onTimeDelivery: typeof customFields.onTimeDelivery === 'number' ? customFields.onTimeDelivery : 0,
-      qualityScore: typeof customFields.qualityScore === 'number' ? customFields.qualityScore : 0,
+      rating: typeof customFields.rating === "number" ? customFields.rating : 0,
+      onTimeDelivery:
+        typeof customFields.onTimeDelivery === "number"
+          ? customFields.onTimeDelivery
+          : 0,
+      qualityScore:
+        typeof customFields.qualityScore === "number"
+          ? customFields.qualityScore
+          : 0,
       totalOrders,
       totalValue,
       averageOrderValue,
-      responseTime: typeof customFields.responseTime === 'number' ? customFields.responseTime : 0,
+      responseTime:
+        typeof customFields.responseTime === "number"
+          ? customFields.responseTime
+          : 0,
     },
-    deliveryLocations: Array.isArray(customFields.deliveryLocations) ? customFields.deliveryLocations : [],
+    deliveryLocations: Array.isArray(customFields.deliveryLocations)
+      ? customFields.deliveryLocations
+      : [],
     categories: supplier.products.map((ps: any) => ps.product.category.name),
-    customBadges: Array.isArray(customFields.customBadges) ? customFields.customBadges : [],
-    riskLevel: (supplier.riskLevel.toLowerCase() as any) || 'low',
+    customBadges: Array.isArray(customFields.customBadges)
+      ? customFields.customBadges
+      : [],
+    riskLevel: (supplier.riskLevel.toLowerCase() as any) || "low",
     lastOrderDate: supplier.purchases[0]?.orderDate.toISOString() || undefined,
     products: supplier.products.map((ps: any) => ({
       id: ps.productId,
@@ -220,19 +264,26 @@ export async function createSupplier(organizationId: string, body: unknown) {
   const data = validation.data;
 
   // KRA PIN Validation via Navari for Kenyan Organizations
-  if (data.address.country === 'KE' || data.address.country === 'Kenya') {
+  if (data.address.country === "KE" || data.address.country === "Kenya") {
     try {
       if (data.businessInfo.taxId) {
-        const pinValidation = await navariService.validateKRAPin(organizationId, data.businessInfo.taxId);
+        const pinValidation = await navariService.validateKRAPin(
+          organizationId,
+          data.businessInfo.taxId,
+        );
         if (pinValidation && !pinValidation.valid) {
           return {
-            error: { message: pinValidation.message || 'Invalid KRA PIN according to KRA records.' },
-            status: 400
+            error: {
+              message:
+                pinValidation.message ||
+                "Invalid KRA PIN according to KRA records.",
+            },
+            status: 400,
           };
         }
       }
     } catch (error) {
-      console.warn('Navari PIN validation failed, proceeding anyway:', error);
+      console.warn("Navari PIN validation failed, proceeding anyway:", error);
     }
   }
 
@@ -257,7 +308,7 @@ export async function createSupplier(organizationId: string, body: unknown) {
       zipCode: data.address.zipCode,
       country: data.address.country,
       categories: data.categories as string[],
-      riskLevel: (data.riskLevel?.toUpperCase() as any) || 'LOW',
+      riskLevel: (data.riskLevel?.toUpperCase() as any) || "LOW",
     },
   });
 

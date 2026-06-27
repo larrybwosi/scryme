@@ -1,14 +1,26 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@repo/ui/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/ui/dialog';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Loader2, Star, ShieldCheck, Settings } from 'lucide-react';
-import { useBakerySettingsManagement } from '@/hooks/bakery';
-import { BakeryBaker } from '@/types/bakery';
-import { cn } from '@/lib/utils';
-import { useListMembers } from '@/lib/api/members';
+import { useState, useEffect } from "react";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Loader2, Star, ShieldCheck, Settings } from "lucide-react";
+import { useBakerySettingsManagement } from "@/hooks/bakery";
+import { BakeryBaker } from "@/types/bakery";
+import { cn } from "@/lib/utils";
+import { useListMembers } from "@/lib/api/members";
 
 interface OperatorFormDialogProps {
   open?: boolean;
@@ -16,29 +28,34 @@ interface OperatorFormDialogProps {
   baker?: BakeryBaker | null;
 }
 
-export default function OperatorFormDialog({ open, onOpenChange, baker }: OperatorFormDialogProps) {
+export default function OperatorFormDialog({
+  open,
+  onOpenChange,
+  baker,
+}: OperatorFormDialogProps) {
   const isEditMode = !!baker;
-  const [selectedMemberId, setSelectedMemberId] = useState('');
-  const [pin, setPin] = useState('');
-  const [specialtiesInput, setSpecialtiesInput] = useState('');
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [pin, setPin] = useState("");
+  const [specialtiesInput, setSpecialtiesInput] = useState("");
   const [isDefault, setIsDefault] = useState(false);
 
   const { data: members, isLoading: membersLoading } = useListMembers();
-  const { bakers, addBaker, updateBaker, isAddingBaker, isUpdating } = useBakerySettingsManagement();
+  const { bakers, addBaker, updateBaker, isAddingBaker, isUpdating } =
+    useBakerySettingsManagement();
 
   // Lifecycle for Edit mode population
   useEffect(() => {
     if (open) {
       if (isEditMode && baker) {
         setSelectedMemberId(baker.memberId || "");
-        setPin((baker as any).pin || '');
-        setSpecialtiesInput(baker.specialties?.join(', ') || '');
+        setPin((baker as any).pin || "");
+        setSpecialtiesInput(baker.specialties?.join(", ") || "");
         // Assuming your type supports isDefault, adapt as needed for your exact schema
         setIsDefault((baker as any).isDefault || false);
       } else {
-        setSelectedMemberId('');
-        setPin('');
-        setSpecialtiesInput('');
+        setSelectedMemberId("");
+        setPin("");
+        setSpecialtiesInput("");
         setIsDefault(false);
       }
     }
@@ -47,7 +64,9 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
   // Filter out members who are already operators (only for creation mode)
   const availableMembers =
     members?.filter((member) =>
-      isEditMode ? member.id === baker?.memberId : !bakers?.some(b => b.memberId === member.id)
+      isEditMode
+        ? member.id === baker?.memberId
+        : !bakers?.some((b) => b.memberId === member.id),
     ) || [];
 
   const isSubmitting = isAddingBaker || isUpdating;
@@ -56,13 +75,13 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
     if (!selectedMemberId) return;
 
     const specialtiesArray = specialtiesInput
-      .split(',')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
     const payload = {
       memberId: selectedMemberId,
-      pin: pin || '1234',
+      pin: pin || "1234",
       specialties: specialtiesArray,
       isDefault: isDefault,
     };
@@ -72,7 +91,7 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
         onOpenChange?.(false);
       },
       onError: (error: any) => {
-        console.error('Failed to commit operator configuration:', error);
+        console.error("Failed to commit operator configuration:", error);
       },
     };
 
@@ -81,7 +100,9 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
       if (updateBaker) {
         updateBaker({ bakerId: baker.id, data: payload }, options);
       } else {
-        console.warn('updateBaker is missing from useBakerySettingsManagement hook.');
+        console.warn(
+          "updateBaker is missing from useBakerySettingsManagement hook.",
+        );
         onOpenChange?.(false); // Failsafe close
       }
     } else {
@@ -94,7 +115,7 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
   };
 
   const selectedMember =
-    availableMembers.find(member => member.id === selectedMemberId) ||
+    availableMembers.find((member) => member.id === selectedMemberId) ||
     (isEditMode ? members?.find((m) => m.id === baker?.memberId) : null);
 
   return (
@@ -105,12 +126,14 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
               <ShieldCheck className="h-5 w-5 text-blue-600" />
-              {isEditMode ? 'Modify Operator Settings' : 'Provision New Operator'}
+              {isEditMode
+                ? "Modify Operator Settings"
+                : "Provision New Operator"}
             </DialogTitle>
             <DialogDescription className="text-sm text-slate-500">
               {isEditMode
-                ? 'Update assignment rules and execution specialties for this staff member.'
-                : 'Authorize a system user to execute production runs and manage batches.'}
+                ? "Update assignment rules and execution specialties for this staff member."
+                : "Authorize a system user to execute production runs and manage batches."}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -119,7 +142,9 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
         <div className="p-6 space-y-6">
           {/* Section 1: Identity */}
           <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Identity Record</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Identity Record
+            </Label>
             <div className="space-y-1.5">
               <Select
                 value={selectedMemberId}
@@ -157,7 +182,10 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
             </Label>
 
             <div className="space-y-2">
-              <Label htmlFor="pin" className="text-sm text-slate-700 dark:text-slate-300">
+              <Label
+                htmlFor="pin"
+                className="text-sm text-slate-700 dark:text-slate-300"
+              >
                 Access PIN (up to 20 chars)
               </Label>
               <Input
@@ -166,7 +194,7 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
                 maxLength={20}
                 placeholder="••••••••"
                 value={pin}
-                onChange={e => setPin(e.target.value)}
+                onChange={(e) => setPin(e.target.value)}
                 disabled={!selectedMemberId || isSubmitting}
                 className="h-9 border-slate-200 dark:border-slate-800 font-mono tracking-widest"
               />
@@ -176,28 +204,32 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="specialties" className="text-sm text-slate-700 dark:text-slate-300">
+              <Label
+                htmlFor="specialties"
+                className="text-sm text-slate-700 dark:text-slate-300"
+              >
                 Qualified Specialties
               </Label>
               <Input
                 id="specialties"
                 placeholder="e.g. Sourdough, Pastry, Lamination"
                 value={specialtiesInput}
-                onChange={e => setSpecialtiesInput(e.target.value)}
+                onChange={(e) => setSpecialtiesInput(e.target.value)}
                 disabled={!selectedMemberId || isSubmitting}
                 className="h-9 border-slate-200 dark:border-slate-800"
               />
               <p className="text-[11px] text-slate-400">
-                Comma-separated matrix defining authorized production categories.
+                Comma-separated matrix defining authorized production
+                categories.
               </p>
 
               {/* Dynamic Tag Preview */}
               {specialtiesInput && (
                 <div className="flex flex-wrap gap-1.5 pt-2">
                   {specialtiesInput
-                    .split(',')
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0)
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter((s) => s.length > 0)
                     .map((specialty, index) => (
                       <span
                         key={index}
@@ -217,7 +249,7 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
                   id="default-baker"
                   type="checkbox"
                   checked={isDefault}
-                  onChange={e => setIsDefault(e.target.checked)}
+                  onChange={(e) => setIsDefault(e.target.checked)}
                   disabled={!selectedMemberId || isSubmitting}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
                 />
@@ -230,10 +262,16 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
                   Primary Shift Operator
                 </Label>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Automatically assign this operator to new production runs via the Smart Wizard by default.
+                  Automatically assign this operator to new production runs via
+                  the Smart Wizard by default.
                 </p>
               </div>
-              <Star className={cn('h-4 w-4 ml-auto', isDefault ? 'text-amber-500 fill-current' : 'text-slate-300')} />
+              <Star
+                className={cn(
+                  "h-4 w-4 ml-auto",
+                  isDefault ? "text-amber-500 fill-current" : "text-slate-300",
+                )}
+              />
             </div>
           </div>
         </div>
@@ -258,9 +296,9 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
                 <Loader2 className="w-4 h-4 animate-spin mr-2" /> Committing...
               </>
             ) : isEditMode ? (
-              'Save Configuration'
+              "Save Configuration"
             ) : (
-              'Authorize Operator'
+              "Authorize Operator"
             )}
           </Button>
         </div>

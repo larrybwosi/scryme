@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
-import { db } from '@repo/db';
-import { LeadDetailView } from './_components/lead-detail-view';
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { db } from "@repo/db";
+import { LeadDetailView } from "./_components/lead-detail-view";
 
 interface LeadPageProps {
   params: Promise<{ id: string }>;
@@ -31,7 +31,7 @@ export default async function LeadPage({ params }: LeadPageProps) {
     },
   });
 
-  if (!lead || lead.objectDefinition.name !== 'lead') notFound();
+  if (!lead || lead.objectDefinition.name !== "lead") notFound();
 
   return (
     <Suspense fallback={<div>Loading lead details...</div>}>

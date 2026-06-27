@@ -34,7 +34,10 @@ const dealFormSchema = z.object({
   amount: z.string().transform((v) => Number(v) || 0),
   stage: z.string().min(1, "Stage is required"),
   expectedCloseDate: z.string().optional(),
-  probability: z.string().optional().transform((v) => Number(v) || 0),
+  probability: z
+    .string()
+    .optional()
+    .transform((v) => Number(v) || 0),
   description: z.string().optional(),
   associatedCustomerId: z.string().optional().nullable(),
   associatedCompanyId: z.string().optional().nullable(),
@@ -48,12 +51,12 @@ interface DealFormProps {
 }
 
 const STAGES = [
-  { id: 'discovery', title: 'Discovery' },
-  { id: 'qualification', title: 'Qualification' },
-  { id: 'proposal', title: 'Proposal' },
-  { id: 'negotiation', title: 'Negotiation' },
-  { id: 'closed_won', title: 'Closed Won' },
-  { id: 'closed_lost', title: 'Closed Lost' },
+  { id: "discovery", title: "Discovery" },
+  { id: "qualification", title: "Qualification" },
+  { id: "proposal", title: "Proposal" },
+  { id: "negotiation", title: "Negotiation" },
+  { id: "closed_won", title: "Closed Won" },
+  { id: "closed_lost", title: "Closed Lost" },
 ];
 
 export function DealForm({ onSuccess, initialData }: DealFormProps) {
@@ -205,10 +208,17 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Associated Company</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || undefined}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={loadingOptions ? "Loading..." : "Select a company"} />
+                    <SelectValue
+                      placeholder={
+                        loadingOptions ? "Loading..." : "Select a company"
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -231,10 +241,17 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Associated Contact</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || undefined}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={loadingOptions ? "Loading..." : "Select a contact"} />
+                    <SelectValue
+                      placeholder={
+                        loadingOptions ? "Loading..." : "Select a contact"
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

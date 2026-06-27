@@ -2,8 +2,8 @@ export interface Supplier {
   id: string;
   name: string;
   code: string;
-  type: 'manufacturer' | 'distributor' | 'wholesaler' | 'service_provider';
-  status: 'active' | 'inactive' | 'pending' | 'suspended';
+  type: "manufacturer" | "distributor" | "wholesaler" | "service_provider";
+  status: "active" | "inactive" | "pending" | "suspended";
   contact: {
     primaryContact: string;
     phone: string;
@@ -35,7 +35,7 @@ export interface Supplier {
   deliveryLocations: string[];
   categories: string[];
   customBadges?: string[];
-  riskLevel?: 'low' | 'medium' | 'high';
+  riskLevel?: "low" | "medium" | "high";
   lastOrderDate?: string;
   products: Array<{
     id: string;

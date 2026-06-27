@@ -109,7 +109,11 @@ describe("BakeryService", () => {
       mockPrisma.client.batch.groupBy.mockResolvedValue([]);
       mockPrisma.client.recipe.findMany.mockResolvedValue([]);
 
-      const result = await service.getProductionStats("org-1", new Date(), new Date());
+      const result = await service.getProductionStats(
+        "org-1",
+        new Date(),
+        new Date(),
+      );
       expect(result.totalBatches).toBe(0);
       expect(result.totalWaste).toBe(0);
       expect(result.recipeStats).toHaveLength(0);

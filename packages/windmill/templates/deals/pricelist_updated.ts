@@ -8,7 +8,7 @@ export async function main(
   priceListId: string,
   priceListCode: string,
   title: string,
-  dealUrl: string
+  dealUrl: string,
 ) {
   console.log(`[PriceListUpdated] "${title}" (${priceListCode}) is now live!`);
   console.log(`URL: ${dealUrl}`);
@@ -16,6 +16,6 @@ export async function main(
   return {
     success: true,
     priceListId,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }

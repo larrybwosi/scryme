@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useAuthStore } from "@/store/pos-auth-store";
-import { Button } from "@repo/ui/components/ui/button";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
-import { Textarea } from "@repo/ui/components/ui/textarea";
-import { Banknote, History, RefreshCcw, Upload, X, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { invoke } from "@tauri-apps/api/core";
-import { usePosStore } from "@/store/store";
-import { useCashDrawer } from "@/hooks/use-cash-drawer";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { useAuthStore } from '@/store/pos-auth-store';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import { Banknote, History, RefreshCcw, Upload, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { invoke } from '@tauri-apps/api/core';
+import { usePosStore } from '@/store/store';
+import { useCashDrawer } from '@/hooks/use-cash-drawer';
 
 export default function PettyCashPage() {
   const { openPhysicalDrawer } = useCashDrawer();
   const { currentLocation } = useAuth();
   const { currentMember } = useAuthStore();
   const memberId = currentMember?.id;
-  const orgSlug = useAuthStore((state) => state.deviceConfig?.orgSlug);
-  const currency = usePosStore((state) => state.settings.currency);
+  const orgSlug = useAuthStore(state => state.deviceConfig?.orgSlug);
+  const currency = usePosStore(state => state.settings.currency);
 
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,13 +43,13 @@ export default function PettyCashPage() {
     if (!orgSlug) return;
     try {
       setIsLoadingFunds(true);
-      const response = await invoke<any>("authenticated_api_request", {
-        method: "GET",
+      const response = await invoke<any>('authenticated_api_request', {
+        method: 'GET',
         path: `api/v3/${orgSlug}/pos/petty-cash/funds`,
       });
       setFunds(response.data || []);
     } catch (error) {
-      console.error("Failed to fetch petty cash funds:", error);
+      console.error('Failed to fetch petty cash funds:', error);
     } finally {
       setIsLoadingFunds(false);
     }
@@ -59,14 +59,14 @@ export default function PettyCashPage() {
     if (!orgSlug) return;
     try {
       setIsLoadingTransactions(true);
-      const response = await invoke<any>("authenticated_api_request", {
-        method: "GET",
+      const response = await invoke<any>('authenticated_api_request', {
+        method: 'GET',
         path: `api/v3/${orgSlug}/pos/petty-cash/transactions`,
         query: { limit: 10 },
       });
       setTransactions(response.data || []);
     } catch (error) {
-      console.error("Failed to fetch petty cash transactions:", error);
+      console.error('Failed to fetch petty cash transactions:', error);
     } finally {
       setIsLoadingTransactions(false);
     }
@@ -76,30 +76,30 @@ export default function PettyCashPage() {
     if (!orgSlug) return;
 
     try {
-      const { open } = await import("@tauri-apps/plugin-dialog");
+      const { open } = await import('@tauri-apps/plugin-dialog');
       const selected = await open({
         multiple: false,
-        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp"] }],
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
       });
 
-      if (selected && typeof selected === "string") {
+      if (selected && typeof selected === 'string') {
         setIsUploading(true);
-        toast.info("Uploading receipt...");
+        toast.info('Uploading receipt...');
 
-        const response = await invoke<any>("upload_file_command", {
+        const response = await invoke<any>('upload_file_command', {
           filePath: selected,
         });
 
         if (response.url) {
           setReceiptUrl(response.url);
-          toast.success("Receipt uploaded");
+          toast.success('Receipt uploaded');
         } else {
-          throw new Error("No URL returned from upload");
+          throw new Error('No URL returned from upload');
         }
       }
     } catch (error) {
-      console.error("Upload failed", error);
-      toast.error("Failed to upload receipt");
+      console.error('Upload failed', error);
+      toast.error('Failed to upload receipt');
     } finally {
       setIsUploading(false);
     }
@@ -114,12 +114,12 @@ export default function PettyCashPage() {
       const payload = {
         amount: parseFloat(amount),
         description,
-        paymentMethod: "CASH",
+        paymentMethod: 'CASH',
         receiptUrl,
         memberId,
       };
 
-      await invoke("register_petty_cash_command", {
+      await invoke('register_petty_cash_command', {
         orgSlug,
         payload,
       });
@@ -127,16 +127,16 @@ export default function PettyCashPage() {
       // Open physical drawer
       await openPhysicalDrawer();
 
-      toast.success("Petty cash expense registered successfully");
-      setAmount("");
-      setDescription("");
+      toast.success('Petty cash expense registered successfully');
+      setAmount('');
+      setDescription('');
       setReceiptUrl(null);
       fetchFunds(); // Refresh balance
       fetchTransactions(); // Refresh activity
     } catch (error: any) {
-      console.error("Failed to register petty cash:", error);
-      toast.error("Failed to register petty cash", {
-        description: error.message || "An unexpected error occurred",
+      console.error('Failed to register petty cash:', error);
+      toast.error('Failed to register petty cash', {
+        description: error.message || 'An unexpected error occurred',
       });
     } finally {
       setIsSubmitting(false);
@@ -151,7 +151,7 @@ export default function PettyCashPage() {
           <p className="text-muted-foreground mt-1">Register and track minor expenses</p>
         </div>
         <Button variant="outline" size="icon" onClick={fetchFunds} disabled={isLoadingFunds}>
-          <RefreshCcw className={isLoadingFunds ? "animate-spin" : ""} />
+          <RefreshCcw className={isLoadingFunds ? 'animate-spin' : ''} />
         </Button>
       </div>
 
@@ -175,7 +175,7 @@ export default function PettyCashPage() {
                     placeholder="0.00"
                     className="pl-10"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={e => setAmount(e.target.value)}
                     required
                   />
                 </div>
@@ -188,7 +188,7 @@ export default function PettyCashPage() {
                   placeholder="What was this expense for?"
                   rows={3}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={e => setDescription(e.target.value)}
                   required
                 />
               </div>
@@ -225,7 +225,7 @@ export default function PettyCashPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting || isUploading}>
-                {isSubmitting ? "Registering..." : "Register Expense"}
+                {isSubmitting ? 'Registering...' : 'Register Expense'}
               </Button>
             </form>
           </CardContent>
@@ -246,9 +246,7 @@ export default function PettyCashPage() {
               ) : (
                 <div className="text-muted-foreground italic">No active fund</div>
               )}
-              <p className="text-xs text-muted-foreground mt-2">
-                Location: {currentLocation?.name || "Global"}
-              </p>
+              <p className="text-xs text-muted-foreground mt-2">Location: {currentLocation?.name || 'Global'}</p>
             </CardContent>
           </Card>
 
@@ -260,30 +258,26 @@ export default function PettyCashPage() {
             <CardContent>
               {isLoadingTransactions ? (
                 <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
+                  {[1, 2, 3].map(i => (
                     <div key={i} className="h-10 w-full animate-pulse bg-muted rounded" />
                   ))}
                 </div>
               ) : transactions.length > 0 ? (
                 <div className="space-y-4">
-                  {transactions.map((tx) => (
+                  {transactions.map(tx => (
                     <div key={tx.id} className="flex justify-between items-start border-b pb-2 last:border-0 last:pb-0">
                       <div className="space-y-1">
                         <p className="text-xs font-medium leading-none">{tx.description}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {new Date(tx.createdAt).toLocaleString()}
-                        </p>
+                        <p className="text-[10px] text-muted-foreground">{new Date(tx.createdAt).toLocaleString()}</p>
                       </div>
                       <div className="text-xs font-bold whitespace-nowrap">
-                        {tx.type === "EXPENSE" ? "-" : "+"} {currency} {parseFloat(tx.amount).toLocaleString()}
+                        {tx.type === 'EXPENSE' ? '-' : '+'} {currency} {parseFloat(tx.amount).toLocaleString()}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-xs text-muted-foreground italic">
-                  No recent activity found.
-                </div>
+                <div className="text-xs text-muted-foreground italic">No recent activity found.</div>
               )}
             </CardContent>
           </Card>

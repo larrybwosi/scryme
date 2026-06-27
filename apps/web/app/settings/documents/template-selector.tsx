@@ -82,10 +82,10 @@ export function TemplateSelector({
   mockData.invoiceNumber = formattedNumber;
 
   const previewTemplate = INVOICE_TEMPLATE_METADATA.find(
-    (t) => t.id === previewId,
+    t => t.id === previewId,
   );
   const selectedTemplate = INVOICE_TEMPLATE_METADATA.find(
-    (t) => t.id === selectedId,
+    t => t.id === selectedId,
   );
 
   return (
@@ -96,42 +96,36 @@ export function TemplateSelector({
         border: "1px solid #D1D5DB",
         height: "calc(100vh - 200px)", // Adjusted for full viewport height minus header/padding
         minHeight: "600px",
-      }}
-    >
+      }}>
       {/* ── Left Panel — Template List ───────────────────────────── */}
       <div
         className="lg:col-span-4 flex flex-col h-full overflow-hidden"
-        style={{ borderRight: "1px solid #D1D5DB", background: "#F8F9FA" }}
-      >
+        style={{ borderRight: "1px solid #D1D5DB", background: "#F8F9FA" }}>
         {/* Panel Header */}
         <div
           className="px-5 py-4 flex items-center justify-between"
           style={{
             background: "#FFFFFF",
             borderBottom: "1px solid #E5E7EB",
-          }}
-        >
+          }}>
           <div className="flex items-center gap-3">
             <div
               className="flex items-center justify-center w-8 h-8"
               style={{
                 background: "#1E3A5F",
                 borderRadius: "6px",
-              }}
-            >
+              }}>
               <Layers className="h-4 w-4 text-white" />
             </div>
             <div>
               <p
                 className="text-sm font-semibold leading-tight"
-                style={{ color: "#111827", letterSpacing: "-0.01em" }}
-              >
+                style={{ color: "#111827", letterSpacing: "-0.01em" }}>
                 Invoice Templates
               </p>
               <p
                 className="text-[11px] leading-tight mt-0.5"
-                style={{ color: "#6B7280" }}
-              >
+                style={{ color: "#6B7280" }}>
                 {INVOICE_TEMPLATE_METADATA.length} templates available
               </p>
             </div>
@@ -143,8 +137,7 @@ export function TemplateSelector({
               color: "#1E3A5F",
               border: "1px solid #C7D4E3",
               borderRadius: "4px",
-            }}
-          >
+            }}>
             Settings
           </span>
         </div>
@@ -152,12 +145,10 @@ export function TemplateSelector({
         {/* Section label */}
         <div
           className="px-5 py-2 flex items-center gap-2"
-          style={{ borderBottom: "1px solid #E5E7EB", background: "#F8F9FA" }}
-        >
+          style={{ borderBottom: "1px solid #E5E7EB", background: "#F8F9FA" }}>
           <span
             className="text-[10px] font-semibold uppercase tracking-widest"
-            style={{ color: "#9CA3AF" }}
-          >
+            style={{ color: "#9CA3AF" }}>
             Available Templates
           </span>
         </div>
@@ -186,8 +177,7 @@ export function TemplateSelector({
                   boxShadow: isSelected
                     ? "0 1px 4px 0 rgba(30,58,95,0.08)"
                     : "none",
-                }}
-              >
+                }}>
                 {/* Left accent */}
                 <div
                   className="absolute left-0 top-0 bottom-0 transition-all duration-150"
@@ -204,8 +194,7 @@ export function TemplateSelector({
                     paddingRight: "14px",
                     paddingTop: "12px",
                     paddingBottom: "12px",
-                  }}
-                >
+                  }}>
                   {/* Row top */}
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <span
@@ -213,8 +202,7 @@ export function TemplateSelector({
                       style={{
                         color: isSelected ? "#1E3A5F" : "#1F2937",
                         letterSpacing: "-0.01em",
-                      }}
-                    >
+                      }}>
                       {template.name}
                     </span>
                     <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
@@ -225,8 +213,7 @@ export function TemplateSelector({
                           color: isSelected ? "#1E3A5F" : "#6B7280",
                           border: `1px solid ${isSelected ? "#C7D4E3" : "#E5E7EB"}`,
                           borderRadius: "4px",
-                        }}
-                      >
+                        }}>
                         {template.version}
                       </span>
                       {isSelected && (
@@ -235,8 +222,7 @@ export function TemplateSelector({
                           style={{
                             background: "#1E3A5F",
                             borderRadius: "50%",
-                          }}
-                        >
+                          }}>
                           <Check
                             className="h-2.5 w-2.5 text-white"
                             strokeWidth={3}
@@ -248,16 +234,14 @@ export function TemplateSelector({
 
                   <p
                     className="text-[12px] leading-relaxed line-clamp-2"
-                    style={{ color: "#6B7280" }}
-                  >
+                    style={{ color: "#6B7280" }}>
                     {template.description}
                   </p>
 
                   {/* Row footer */}
                   <div
                     className="flex items-center justify-between mt-3 pt-2.5"
-                    style={{ borderTop: "1px solid #F3F4F6" }}
-                  >
+                    style={{ borderTop: "1px solid #F3F4F6" }}>
                     <button
                       className="flex items-center gap-1.5 transition-colors"
                       style={{
@@ -265,11 +249,10 @@ export function TemplateSelector({
                         fontSize: "11px",
                         fontWeight: isPreviewing ? 600 : 500,
                       }}
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         setPreviewId(template.id);
-                      }}
-                    >
+                      }}>
                       <Eye className="h-3 w-3" />
                       {isPreviewing ? "Previewing" : "Preview"}
                     </button>
@@ -277,15 +260,13 @@ export function TemplateSelector({
                     {isSelected ? (
                       <span
                         className="text-[11px] font-semibold flex items-center gap-1"
-                        style={{ color: "#1E3A5F" }}
-                      >
+                        style={{ color: "#1E3A5F" }}>
                         Active
                       </span>
                     ) : (
                       <span
                         className="text-[11px] font-medium flex items-center gap-0.5 transition-colors"
-                        style={{ color: "#9CA3AF" }}
-                      >
+                        style={{ color: "#9CA3AF" }}>
                         Select <ChevronRight className="h-3 w-3" />
                       </span>
                     )}
@@ -302,8 +283,7 @@ export function TemplateSelector({
           style={{
             borderTop: "1px solid #E5E7EB",
             background: "#FFFFFF",
-          }}
-        >
+          }}>
           {hasChanges && (
             <div
               className="flex items-start gap-2 rounded mb-3 px-3 py-2.5"
@@ -311,8 +291,7 @@ export function TemplateSelector({
                 background: "#FFFBEB",
                 border: "1px solid #FDE68A",
                 borderRadius: "6px",
-              }}
-            >
+              }}>
               <AlertCircle
                 className="h-3.5 w-3.5 mt-0.5 shrink-0"
                 style={{ color: "#D97706" }}
@@ -320,8 +299,7 @@ export function TemplateSelector({
               <div>
                 <p
                   className="text-[11px] font-semibold"
-                  style={{ color: "#92400E" }}
-                >
+                  style={{ color: "#92400E" }}>
                   Unsaved changes
                 </p>
                 <p className="text-[10px] mt-0.5" style={{ color: "#B45309" }}>
@@ -347,8 +325,7 @@ export function TemplateSelector({
               letterSpacing: "-0.01em",
             }}
             onClick={handleSave}
-            disabled={isPending || !hasChanges}
-          >
+            disabled={isPending || !hasChanges}>
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
@@ -360,8 +337,7 @@ export function TemplateSelector({
           </Button>
           <p
             className="text-center mt-2 text-[10px]"
-            style={{ color: "#9CA3AF" }}
-          >
+            style={{ color: "#9CA3AF" }}>
             Applies to all future invoices in this organization
           </p>
         </div>
@@ -370,16 +346,14 @@ export function TemplateSelector({
       {/* ── Right Panel — PDF Preview ────────────────────────────── */}
       <div
         className="lg:col-span-8 flex flex-col h-full overflow-hidden"
-        style={{ background: "#EAECEF" }}
-      >
+        style={{ background: "#EAECEF" }}>
         {/* Preview Toolbar */}
         <div
           className="flex items-center justify-between px-5 py-3"
           style={{
             background: "#FFFFFF",
             borderBottom: "1px solid #E5E7EB",
-          }}
-        >
+          }}>
           <div className="flex items-center gap-3">
             {/* Document icon block */}
             <div
@@ -388,15 +362,13 @@ export function TemplateSelector({
                 background: "#F3F4F6",
                 border: "1px solid #E5E7EB",
                 borderRadius: "5px",
-              }}
-            >
+              }}>
               <FileText className="h-3.5 w-3.5" style={{ color: "#6B7280" }} />
             </div>
             <div className="flex items-center gap-2">
               <span
                 className="text-[11px] font-medium"
-                style={{ color: "#9CA3AF" }}
-              >
+                style={{ color: "#9CA3AF" }}>
                 Preview
               </span>
               <span className="text-[11px]" style={{ color: "#D1D5DB" }}>
@@ -404,8 +376,7 @@ export function TemplateSelector({
               </span>
               <span
                 className="text-[13px] font-semibold"
-                style={{ color: "#111827", letterSpacing: "-0.01em" }}
-              >
+                style={{ color: "#111827", letterSpacing: "-0.01em" }}>
                 {previewTemplate?.name}
               </span>
               <span
@@ -415,8 +386,7 @@ export function TemplateSelector({
                   color: "#6B7280",
                   border: "1px solid #E5E7EB",
                   borderRadius: "4px",
-                }}
-              >
+                }}>
                 {previewTemplate?.version}
               </span>
             </div>
@@ -431,8 +401,7 @@ export function TemplateSelector({
                 color: "#B45309",
                 border: "1px solid #FDE68A",
                 borderRadius: "4px",
-              }}
-            >
+              }}>
               Sample data
             </Badge>
           </div>
@@ -447,14 +416,12 @@ export function TemplateSelector({
                 borderRadius: "6px",
                 boxShadow:
                   "0 2px 8px 0 rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
-              }}
-            >
+              }}>
               <PDFViewer
                 width="100%"
                 height="100%"
                 className="border-none block"
-                showToolbar={true}
-              >
+                showToolbar={true}>
                 <SelectedTemplateComponent
                   data={mockData}
                   qrCode="https://via.placeholder.com/150"
@@ -470,8 +437,7 @@ export function TemplateSelector({
           style={{
             background: "#FFFFFF",
             borderTop: "1px solid #E5E7EB",
-          }}
-        >
+          }}>
           <p className="text-[11px]" style={{ color: "#9CA3AF" }}>
             Previewing with sample data — live invoices will reflect your
             organization profile.
@@ -479,8 +445,7 @@ export function TemplateSelector({
           {selectedId === previewId ? (
             <span
               className="text-[11px] font-semibold flex items-center gap-1"
-              style={{ color: "#1E3A5F" }}
-            >
+              style={{ color: "#1E3A5F" }}>
               <Check className="h-3 w-3" strokeWidth={2.5} />
               Active selection
             </span>
@@ -490,8 +455,7 @@ export function TemplateSelector({
               style={{ color: "#1E3A5F" }}
               onClick={() => {
                 setSelectedId(previewId);
-              }}
-            >
+              }}>
               Select this template →
             </button>
           )}

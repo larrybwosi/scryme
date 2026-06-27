@@ -488,7 +488,8 @@ export function OrderForm({
                     {/* Business Account */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
-                        <Building2 className="w-3 h-3" /> Business Account (Enterprise)
+                        <Building2 className="w-3 h-3" /> Business Account
+                        (Enterprise)
                       </Label>
                       <Controller
                         name="businessAccountId"
@@ -550,25 +551,32 @@ export function OrderForm({
                         render={({ field }) => {
                           const selectedCustomerId = watch("customerId");
                           const selectedBusinessId = watch("businessAccountId");
-                          const customer = customers.find(c => c.id === selectedCustomerId);
-                          const business = businessAccounts.find(b => b.id === selectedBusinessId);
+                          const customer = customers.find(
+                            c => c.id === selectedCustomerId,
+                          );
+                          const business = businessAccounts.find(
+                            b => b.id === selectedBusinessId,
+                          );
                           const addresses = [
                             ...(customer?.addresses || []),
-                            ...(business?.addresses || [])
+                            ...(business?.addresses || []),
                           ];
 
                           return (
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
-                              disabled={!selectedCustomerId && !selectedBusinessId}>
+                              disabled={
+                                !selectedCustomerId && !selectedBusinessId
+                              }>
                               <SelectTrigger className="bg-white">
                                 <SelectValue placeholder="Select shipping address" />
                               </SelectTrigger>
                               <SelectContent>
                                 {addresses.map(a => (
                                   <SelectItem key={a.id} value={a.id}>
-                                    {a.street1}, {a.city} ({a.label || "Address"})
+                                    {a.street1}, {a.city} (
+                                    {a.label || "Address"})
                                   </SelectItem>
                                 ))}
                                 {addresses.length === 0 && (

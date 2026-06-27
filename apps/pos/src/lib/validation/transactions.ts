@@ -6,22 +6,27 @@ export enum TransactionStatus {
   CONFIRMED = 'CONFIRMED',
 }
 
-export const OrderItemSchema = z.object({
-  variantId: z.string().cuid('Invalid variant ID'),
-  sellingUnitId: z.string().cuid('Invalid selling unit ID').optional(),
-  quantity: z.number().int().positive('Quantity must be a positive integer'),
-  unitPrice: z.number().nonnegative('Price cannot be negative').optional(),
-  _maxStock: z.number().optional(),
-  _availableUnits: z.array(z.any()).optional(),
-}).refine((data) => {
-  if (data._maxStock !== undefined && data.quantity > data._maxStock) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Exceeds available stock",
-  path: ["quantity"]
-});
+export const OrderItemSchema = z
+  .object({
+    variantId: z.string().cuid('Invalid variant ID'),
+    sellingUnitId: z.string().cuid('Invalid selling unit ID').optional(),
+    quantity: z.number().int().positive('Quantity must be a positive integer'),
+    unitPrice: z.number().nonnegative('Price cannot be negative').optional(),
+    _maxStock: z.number().optional(),
+    _availableUnits: z.array(z.any()).optional(),
+  })
+  .refine(
+    data => {
+      if (data._maxStock !== undefined && data.quantity > data._maxStock) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Exceeds available stock',
+      path: ['quantity'],
+    }
+  );
 
 export const OrderPaymentSchema = z.object({
   method: z.nativeEnum(PaymentMethod, {
@@ -123,12 +128,16 @@ export const ProcessSaleInputSchema = z
     }),
 
     // Multi-Tender / Split Payment Breakdown
-    payments: z.array(z.object({
-      method: z.nativeEnum(PaymentMethod),
-      amount: z.number().nonnegative(),
-      reference: z.string().optional(), // e.g. M-Pesa Code, Gift Card Code
-      meta: z.record(z.any()).optional()
-    })).optional(),
+    payments: z
+      .array(
+        z.object({
+          method: z.nativeEnum(PaymentMethod),
+          amount: z.number().nonnegative(),
+          reference: z.string().optional(), // e.g. M-Pesa Code, Gift Card Code
+          meta: z.record(z.any()).optional(),
+        })
+      )
+      .optional(),
 
     paymentStatus: z.nativeEnum(PaymentStatus, {
       required_error: 'Payment status is required',
@@ -137,7 +146,7 @@ export const ProcessSaleInputSchema = z
 
     // M-Pesa Specific
     mpesaType: z.nativeEnum(MpesaFlowType).optional().nullable(),
-    
+
     mpesaPhoneNumber: z
       .string()
       .regex(kenyanPhoneRegex, 'Invalid Kenyan Phone Number')

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { X, Plus } from 'lucide-react';
-import { Badge } from './badge';
-import { Button } from './button';
-import { Input } from './input';
-import { cn } from '@repo/ui/lib/utils';
+import * as React from "react";
+import { X, Plus } from "lucide-react";
+import { Badge } from "./badge";
+import { Button } from "./button";
+import { Input } from "./input";
+import { cn } from "@repo/ui/lib/utils";
 
 interface TagInputProps {
   placeholder?: string;
@@ -14,14 +14,19 @@ interface TagInputProps {
   className?: string;
 }
 
-export function TagInput({ placeholder = 'Add tag...', tags, onChange, className }: TagInputProps) {
-  const [inputValue, setInputValue] = React.useState('');
+export function TagInput({
+  placeholder = "Add tag...",
+  tags,
+  onChange,
+  className,
+}: TagInputProps) {
+  const [inputValue, setInputValue] = React.useState("");
 
   const addTag = () => {
     const trimmedValue = inputValue.trim();
     if (trimmedValue && !tags.includes(trimmedValue)) {
       onChange([...tags, trimmedValue]);
-      setInputValue('');
+      setInputValue("");
     }
   };
 
@@ -30,18 +35,27 @@ export function TagInput({ placeholder = 'Add tag...', tags, onChange, className
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTag();
-    } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
+    } else if (e.key === "Backspace" && !inputValue && tags.length > 0) {
       removeTag(tags[tags.length - 1]);
     }
   };
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2 p-2 rounded-md border border-input bg-background ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2', className)}>
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2 p-2 rounded-md border border-input bg-background ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        className,
+      )}
+    >
       {tags.map((tag) => (
-        <Badge key={tag} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+        <Badge
+          key={tag}
+          variant="secondary"
+          className="flex items-center gap-1 px-2 py-1"
+        >
           {tag}
           <button
             type="button"
@@ -60,7 +74,7 @@ export function TagInput({ placeholder = 'Add tag...', tags, onChange, className
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={addTag}
-          placeholder={tags.length === 0 ? placeholder : ''}
+          placeholder={tags.length === 0 ? placeholder : ""}
           className="w-full bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground focus:ring-0 p-0"
         />
       </div>

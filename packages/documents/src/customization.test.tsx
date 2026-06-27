@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
 import { render } from "@testing-library/react";
-import {
-  InvoiceTemplate,
-  ReceiptTemplateV2 as ReceiptTemplate,
-} from "./index";
+import { InvoiceTemplate, ReceiptTemplateV2 as ReceiptTemplate } from "./index";
 import { BrandingOptions } from "./types";
 
 // Mock @react-pdf/renderer to avoid rendering complex PDFs in tests
@@ -80,14 +77,18 @@ describe("Document Branding and Customization", () => {
     const { getAllByText } = render(<InvoiceTemplate data={mockInvoiceData} />);
 
     expect(getAllByText("Acme Corp Custom").length).toBeGreaterThan(0);
-    expect(getAllByText("123 Custom St, Design City").length).toBeGreaterThan(0);
+    expect(getAllByText("123 Custom St, Design City").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("should apply branding to ReceiptTemplate", () => {
     const { getAllByText } = render(<ReceiptTemplate data={mockReceiptData} />);
 
     expect(getAllByText("Acme Corp Custom").length).toBeGreaterThan(0);
-    expect(getAllByText("123 Custom St, Design City").length).toBeGreaterThan(0);
+    expect(getAllByText("123 Custom St, Design City").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("should handle missing branding gracefully", () => {

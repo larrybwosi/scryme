@@ -5,8 +5,8 @@ import bwipjs from 'bwip-js';
 // Mock bwip-js
 vi.mock('bwip-js', () => ({
   default: {
-    toCanvas: vi.fn()
-  }
+    toCanvas: vi.fn(),
+  },
 }));
 
 describe('BarcodeService', () => {
@@ -15,14 +15,14 @@ describe('BarcodeService', () => {
 
     // Mock document.createElement for canvas
     const mockCanvas = {
-      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mock-barcode')
+      toDataURL: vi.fn().mockReturnValue('data:image/png;base64,mock-barcode'),
     };
     if (typeof global.document === 'undefined') {
-        (global as any).document = {
-            createElement: vi.fn().mockReturnValue(mockCanvas)
-        };
+      (global as any).document = {
+        createElement: vi.fn().mockReturnValue(mockCanvas),
+      };
     } else {
-        global.document.createElement = vi.fn().mockReturnValue(mockCanvas);
+      global.document.createElement = vi.fn().mockReturnValue(mockCanvas);
     }
   });
 

@@ -1,4 +1,9 @@
-import { Prisma, AuditLogAction, AuditEntityType, PrismaClient } from "@repo/db";
+import {
+  Prisma,
+  AuditLogAction,
+  AuditEntityType,
+  PrismaClient,
+} from "@repo/db";
 
 export async function createAuditLog(
   db: Prisma.TransactionClient | PrismaClient,
@@ -10,7 +15,7 @@ export async function createAuditLog(
     entityId: string;
     description: string;
     details?: any;
-  }
+  },
 ) {
   return (db as any).auditLog.create({
     data: {

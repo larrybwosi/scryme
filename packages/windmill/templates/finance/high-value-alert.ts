@@ -7,7 +7,7 @@ export async function main(
   transactionId: string,
   amount: number,
   currency: string,
-  type: string
+  type: string,
 ) {
   console.log(`[HighValueAlert] Large ${type} detected: ${currency} ${amount}`);
   return { success: true };

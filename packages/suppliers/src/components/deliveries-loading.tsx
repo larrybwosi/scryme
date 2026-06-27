@@ -1,5 +1,5 @@
 // components/supplier-deliveries/deliveries-skeleton.tsx
-import { Card, CardContent, CardHeader } from '@repo/ui/components/ui/card';
+import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";
 
 export const DeliveriesSkeleton = () => {
   return (

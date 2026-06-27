@@ -1,19 +1,23 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
+import { db } from "@repo/db";
 import {
   campaignSchema,
   campaignSegmentSchema,
   campaignWorkflowSchema,
   type CampaignFormValues,
   type CampaignSegmentFormValues,
-  type CampaignWorkflowFormValues
-} from '../../lib/validations';
-import { revalidatePath } from 'next/cache';
+  type CampaignWorkflowFormValues,
+} from "../../lib/validations";
+import { revalidatePath } from "next/cache";
 
 // --- Campaign Actions ---
 
-export async function createCampaign(data: CampaignFormValues, organizationId: string, memberId: string): Promise<any> {
+export async function createCampaign(
+  data: CampaignFormValues,
+  organizationId: string,
+  memberId: string,
+): Promise<any> {
   try {
     const validatedData = campaignSchema.parse(data);
 
@@ -25,27 +29,36 @@ export async function createCampaign(data: CampaignFormValues, organizationId: s
       },
     });
 
-    revalidatePath('/campaigns');
+    revalidatePath("/campaigns");
     return { success: true, data: campaign };
   } catch (error: any) {
-    console.error('Error creating campaign:', error);
-    return { success: false, error: error.message || 'Failed to create campaign' };
+    console.error("Error creating campaign:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to create campaign",
+    };
   }
 }
 
-export async function updateCampaign(id: string, data: Partial<CampaignFormValues>): Promise<any> {
+export async function updateCampaign(
+  id: string,
+  data: Partial<CampaignFormValues>,
+): Promise<any> {
   try {
     const campaign = await db.campaign.update({
       where: { id },
       data,
     });
 
-    revalidatePath('/campaigns');
+    revalidatePath("/campaigns");
     revalidatePath(`/campaigns/${id}`);
     return { success: true, data: campaign };
   } catch (error: any) {
-    console.error('Error updating campaign:', error);
-    return { success: false, error: error.message || 'Failed to update campaign' };
+    console.error("Error updating campaign:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to update campaign",
+    };
   }
 }
 
@@ -58,11 +71,11 @@ export async function getCampaigns(organizationId: string): Promise<any[]> {
         workflow: true,
         createdBy: { include: { user: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   } catch (error) {
-    console.error('Error fetching campaigns:', error);
-    throw new Error('Failed to fetch campaigns');
+    console.error("Error fetching campaigns:", error);
+    throw new Error("Failed to fetch campaigns");
   }
 }
 
@@ -77,23 +90,26 @@ export async function getCampaign(id: string): Promise<any> {
         approvedBy: { include: { user: true } },
         events: {
           take: 50,
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           include: {
             record: true,
             transaction: true,
-          }
-        }
+          },
+        },
       },
     });
   } catch (error) {
-    console.error('Error fetching campaign:', error);
-    throw new Error('Failed to fetch campaign');
+    console.error("Error fetching campaign:", error);
+    throw new Error("Failed to fetch campaign");
   }
 }
 
 // --- Segment Actions ---
 
-export async function createSegment(data: CampaignSegmentFormValues, organizationId: string): Promise<any> {
+export async function createSegment(
+  data: CampaignSegmentFormValues,
+  organizationId: string,
+): Promise<any> {
   try {
     const validatedData = campaignSegmentSchema.parse(data);
     const segment = await db.campaignSegment.create({
@@ -102,7 +118,7 @@ export async function createSegment(data: CampaignSegmentFormValues, organizatio
         organizationId,
       },
     });
-    revalidatePath('/campaigns/segments');
+    revalidatePath("/campaigns/segments");
     return { success: true, data: segment };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -112,13 +128,16 @@ export async function createSegment(data: CampaignSegmentFormValues, organizatio
 export async function getSegments(organizationId: string): Promise<any[]> {
   return await db.campaignSegment.findMany({
     where: { organizationId },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   });
 }
 
 // --- Workflow Actions ---
 
-export async function createWorkflow(data: CampaignWorkflowFormValues, organizationId: string): Promise<any> {
+export async function createWorkflow(
+  data: CampaignWorkflowFormValues,
+  organizationId: string,
+): Promise<any> {
   try {
     const validatedData = campaignWorkflowSchema.parse(data);
     const workflow = await db.campaignWorkflow.create({
@@ -127,20 +146,23 @@ export async function createWorkflow(data: CampaignWorkflowFormValues, organizat
         organizationId,
       },
     });
-    revalidatePath('/campaigns/workflows');
+    revalidatePath("/campaigns/workflows");
     return { success: true, data: workflow };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
 }
 
-export async function updateWorkflow(id: string, data: Partial<CampaignWorkflowFormValues>): Promise<any> {
+export async function updateWorkflow(
+  id: string,
+  data: Partial<CampaignWorkflowFormValues>,
+): Promise<any> {
   try {
     const workflow = await db.campaignWorkflow.update({
       where: { id },
       data,
     });
-    revalidatePath('/campaigns/workflows');
+    revalidatePath("/campaigns/workflows");
     revalidatePath(`/campaigns/workflows/${id}`);
     return { success: true, data: workflow };
   } catch (error: any) {
@@ -151,13 +173,19 @@ export async function updateWorkflow(id: string, data: Partial<CampaignWorkflowF
 export async function getWorkflows(organizationId: string): Promise<any[]> {
   return await db.campaignWorkflow.findMany({
     where: { organizationId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 }
 
 // --- Analytics & Events ---
 
-export async function trackCampaignEvent(campaignId: string, type: string, recordId?: string, metadata?: any, transactionId?: string) {
+export async function trackCampaignEvent(
+  campaignId: string,
+  type: string,
+  recordId?: string,
+  metadata?: any,
+  transactionId?: string,
+) {
   try {
     const event = await db.campaignEvent.create({
       data: {
@@ -166,18 +194,20 @@ export async function trackCampaignEvent(campaignId: string, type: string, recor
         recordId,
         metadata,
         transactionId,
-      }
+      },
     });
 
     // Update campaign summary stats
     const updateData: any = {};
-    if (type === 'SENT') updateData.totalSent = { increment: 1 };
-    if (type === 'OPENED') updateData.totalOpened = { increment: 1 };
-    if (type === 'CLICKED') updateData.totalClicked = { increment: 1 };
-    if (type === 'CONVERTED') updateData.totalConverted = { increment: 1 };
+    if (type === "SENT") updateData.totalSent = { increment: 1 };
+    if (type === "OPENED") updateData.totalOpened = { increment: 1 };
+    if (type === "CLICKED") updateData.totalClicked = { increment: 1 };
+    if (type === "CONVERTED") updateData.totalConverted = { increment: 1 };
 
     if (transactionId) {
-      const transaction = await db.transaction.findUnique({ where: { id: transactionId } });
+      const transaction = await db.transaction.findUnique({
+        where: { id: transactionId },
+      });
       if (transaction) {
         updateData.totalRevenue = { increment: transaction.finalTotal };
       }
@@ -190,7 +220,7 @@ export async function trackCampaignEvent(campaignId: string, type: string, recor
 
     return { success: true, data: event };
   } catch (error: any) {
-    console.error('Error tracking campaign event:', error);
+    console.error("Error tracking campaign event:", error);
     return { success: false, error: error.message };
   }
 }

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useCallback, useMemo } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Loader2,
   Calendar as CalendarIcon,
@@ -23,51 +23,76 @@ import {
   Sparkles,
   ChevronRight,
   Tag,
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
 
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Calendar } from '@repo/ui/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Calendar } from "@repo/ui/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
-import { cn } from '@/lib/utils';
-import { BatchStatus } from '@/types/bakery';
-import { BatchInput, batchSchema } from '@/validations/bakery';
-import { useCreateBatch, useRecipes, useTemplates, useUpdateBatch, useBakers } from '@/hooks/bakery';
-import { useUnits } from '@/lib/units/hooks';
-import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
-import { LocationSelect } from '@/components/common/location-select';
-import { TagInput } from '@repo/ui/components/ui/tag-input';
+import { cn } from "@/lib/utils";
+import { BatchStatus } from "@/types/bakery";
+import { BatchInput, batchSchema } from "@/validations/bakery";
+import {
+  useCreateBatch,
+  useRecipes,
+  useTemplates,
+  useUpdateBatch,
+  useBakers,
+} from "@/hooks/bakery";
+import { useUnits } from "@/lib/units/hooks";
+import { AdvancedUnitSelector } from "@/components/common/units/advance-select";
+import { LocationSelect } from "@/components/common/location-select";
+import { TagInput } from "@repo/ui/components/ui/tag-input";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<BatchStatus, { label: string; color: string; dot: string }> = {
+const STATUS_CONFIG: Record<
+  BatchStatus,
+  { label: string; color: string; dot: string }
+> = {
   [BatchStatus.PLANNED]: {
-    label: 'Planned',
-    color: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100',
-    dot: 'bg-slate-400',
+    label: "Planned",
+    color: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100",
+    dot: "bg-slate-400",
   },
   [BatchStatus.IN_PROGRESS]: {
-    label: 'In Progress',
-    color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50',
-    dot: 'bg-blue-500',
+    label: "In Progress",
+    color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50",
+    dot: "bg-blue-500",
   },
   [BatchStatus.COMPLETED]: {
-    label: 'Completed',
-    color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
-    dot: 'bg-emerald-500',
+    label: "Completed",
+    color:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50",
+    dot: "bg-emerald-500",
   },
   [BatchStatus.CANCELLED]: {
-    label: 'Cancelled',
-    color: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-50',
-    dot: 'bg-red-400',
+    label: "Cancelled",
+    color: "bg-red-50 text-red-700 border-red-200 hover:bg-red-50",
+    dot: "bg-red-400",
   },
 };
 
@@ -92,7 +117,9 @@ function SectionHeader({
       <div className="flex-1 pt-0.5">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{title}</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+            {title}
+          </h3>
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
       </div>
@@ -107,7 +134,10 @@ function FieldHint({ children }: { children: React.ReactNode }) {
         <TooltipTrigger asChild>
           <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
         </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[220px] text-xs leading-relaxed">
+        <TooltipContent
+          side="top"
+          className="max-w-[220px] text-xs leading-relaxed"
+        >
           {children}
         </TooltipContent>
       </Tooltip>
@@ -128,7 +158,14 @@ function FieldLabel({
 }) {
   return (
     <div className="flex items-center gap-1.5 mb-1.5">
-      <Label className={cn('text-sm font-medium', error ? 'text-destructive' : 'text-foreground')}>{children}</Label>
+      <Label
+        className={cn(
+          "text-sm font-medium",
+          error ? "text-destructive" : "text-foreground",
+        )}
+      >
+        {children}
+      </Label>
       {required && <span className="text-destructive text-xs">*</span>}
       {hint && <FieldHint>{hint}</FieldHint>}
       {error && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
@@ -142,7 +179,7 @@ function SectionDivider() {
 
 // ─── Source selector: Recipe vs Template ─────────────────────────────────────
 
-type SourceMode = 'recipe' | 'template';
+type SourceMode = "recipe" | "template";
 
 function SourceSelector({
   mode,
@@ -169,36 +206,66 @@ function SourceSelector({
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
-          onClick={() => onModeChange('recipe')}
+          onClick={() => onModeChange("recipe")}
           className={cn(
-            'flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all',
-            mode === 'recipe'
-              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-              : 'border-input bg-background text-muted-foreground hover:border-accent hover:bg-accent'
+            "flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all",
+            mode === "recipe"
+              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+              : "border-input bg-background text-muted-foreground hover:border-accent hover:bg-accent",
           )}
         >
-          <BookOpen className={cn('h-4 w-4 shrink-0', mode === 'recipe' ? 'text-primary-foreground' : 'text-muted-foreground')} />
+          <BookOpen
+            className={cn(
+              "h-4 w-4 shrink-0",
+              mode === "recipe"
+                ? "text-primary-foreground"
+                : "text-muted-foreground",
+            )}
+          />
           <div>
             <div className="text-sm font-medium leading-none">From Recipe</div>
-            <div className={cn('text-xs mt-1', mode === 'recipe' ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+            <div
+              className={cn(
+                "text-xs mt-1",
+                mode === "recipe"
+                  ? "text-primary-foreground/80"
+                  : "text-muted-foreground",
+              )}
+            >
               Choose a recipe directly
             </div>
           </div>
         </button>
         <button
           type="button"
-          onClick={() => onModeChange('template')}
+          onClick={() => onModeChange("template")}
           className={cn(
-            'flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all',
-            mode === 'template'
-              ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-              : 'border-input bg-background text-muted-foreground hover:border-accent hover:bg-accent'
+            "flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all",
+            mode === "template"
+              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+              : "border-input bg-background text-muted-foreground hover:border-accent hover:bg-accent",
           )}
         >
-          <LayoutTemplate className={cn('h-4 w-4 shrink-0', mode === 'template' ? 'text-primary-foreground' : 'text-muted-foreground')} />
+          <LayoutTemplate
+            className={cn(
+              "h-4 w-4 shrink-0",
+              mode === "template"
+                ? "text-primary-foreground"
+                : "text-muted-foreground",
+            )}
+          />
           <div>
-            <div className="text-sm font-medium leading-none">From Template</div>
-            <div className={cn('text-xs mt-1', mode === 'template' ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+            <div className="text-sm font-medium leading-none">
+              From Template
+            </div>
+            <div
+              className={cn(
+                "text-xs mt-1",
+                mode === "template"
+                  ? "text-primary-foreground/80"
+                  : "text-muted-foreground",
+              )}
+            >
               Pre-fill from saved config
             </div>
           </div>
@@ -206,7 +273,7 @@ function SourceSelector({
       </div>
 
       {/* Selection dropdown */}
-      {mode === 'recipe' ? (
+      {mode === "recipe" ? (
         <Select value={recipeId} onValueChange={onRecipeChange}>
           <SelectTrigger className="w-full h-10 bg-background">
             <SelectValue placeholder="Search and select a recipe…" />
@@ -221,7 +288,7 @@ function SourceSelector({
         </Select>
       ) : (
         <div className="space-y-2">
-          <Select value={templateId || ''} onValueChange={onTemplateChange}>
+          <Select value={templateId || ""} onValueChange={onTemplateChange}>
             <SelectTrigger className="w-full h-10 bg-background">
               <SelectValue placeholder="Choose a saved template…" />
             </SelectTrigger>
@@ -239,7 +306,8 @@ function SourceSelector({
           {templateId && (
             <p className="text-xs text-emerald-600 flex items-center gap-1.5 px-1">
               <Check className="h-3.5 w-3.5" />
-              Template applied — form fields have been pre-filled. You can still edit them.
+              Template applied — form fields have been pre-filled. You can still
+              edit them.
             </p>
           )}
         </div>
@@ -267,7 +335,9 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
   const createBatchMutation = useCreateBatch();
   const updateBatchMutation = useUpdateBatch();
 
-  const [sourceMode, setSourceMode] = useState<SourceMode>(batch?.createdFromTemplateId ? 'template' : 'recipe');
+  const [sourceMode, setSourceMode] = useState<SourceMode>(
+    batch?.createdFromTemplateId ? "template" : "recipe",
+  );
 
   const {
     register,
@@ -278,9 +348,11 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
   } = useForm<any>({
     resolver: zodResolver(batchSchema),
     defaultValues: useMemo(() => {
-      const defaultDate = batch?.scheduledStartAt ? new Date(batch.scheduledStartAt) : new Date();
+      const defaultDate = batch?.scheduledStartAt
+        ? new Date(batch.scheduledStartAt)
+        : new Date();
       return {
-        recipeId: batch?.recipeId || '',
+        recipeId: batch?.recipeId || "",
         plannedQuantity: batch?.plannedQuantity || 1,
         systemUnitId: batch?.systemUnitId || undefined,
         orgUnitId: batch?.orgUnitId || batch?.unitId || undefined,
@@ -288,11 +360,13 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
         leadBakerId: batch?.leadBakerId || undefined,
         assistantBakerIds: batch?.assistantBakerIds || [],
         duration: batch?.duration ? Number(batch.duration) : undefined,
-        notes: batch?.notes || '',
+        notes: batch?.notes || "",
         createdFromTemplateId: batch?.createdFromTemplateId || undefined,
         outputLocationId: batch?.outputLocationId || undefined,
         date: defaultDate,
-        time: batch?.scheduledStartAt ? format(new Date(batch.scheduledStartAt), 'HH:mm') : '09:00',
+        time: batch?.scheduledStartAt
+          ? format(new Date(batch.scheduledStartAt), "HH:mm")
+          : "09:00",
         shelfLifeDays: batch?.shelfLifeDays || undefined,
         tags: batch?.tags || [],
       };
@@ -302,11 +376,15 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
   const watchedValues = useWatch({ control });
 
   const handleBatchUnitChange = useCallback(
-    (value: string | undefined, type: 'system' | 'org') => {
-      setValue('systemUnitId', type === 'system' ? value : undefined, { shouldDirty: true });
-      setValue('orgUnitId', type === 'org' ? value : undefined, { shouldDirty: true });
+    (value: string | undefined, type: "system" | "org") => {
+      setValue("systemUnitId", type === "system" ? value : undefined, {
+        shouldDirty: true,
+      });
+      setValue("orgUnitId", type === "org" ? value : undefined, {
+        shouldDirty: true,
+      });
     },
-    [setValue]
+    [setValue],
   );
 
   const handleTemplateSelect = useCallback(
@@ -314,40 +392,66 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
       const template = templates?.find((t: any) => t.id === templateId);
       if (template) {
         const opt = { shouldDirty: true, shouldValidate: true };
-        setValue('createdFromTemplateId', templateId, opt);
-        setValue('recipeId', template.recipeId, opt);
-        setValue('plannedQuantity', template.quantity, opt);
-        setValue('duration', template.duration ? Number(template.duration) : undefined, opt);
-        if (template.leadBakerId) setValue('leadBakerId', template.leadBakerId, opt);
-        setValue('assistantBakerIds', (template as any).assistantBakerIds || [], opt);
-        if (template.shelfLifeDays) setValue('shelfLifeDays', template.shelfLifeDays, opt);
+        setValue("createdFromTemplateId", templateId, opt);
+        setValue("recipeId", template.recipeId, opt);
+        setValue("plannedQuantity", template.quantity, opt);
+        setValue(
+          "duration",
+          template.duration ? Number(template.duration) : undefined,
+          opt,
+        );
+        if (template.leadBakerId)
+          setValue("leadBakerId", template.leadBakerId, opt);
+        setValue(
+          "assistantBakerIds",
+          (template as any).assistantBakerIds || [],
+          opt,
+        );
+        if (template.shelfLifeDays)
+          setValue("shelfLifeDays", template.shelfLifeDays, opt);
 
         // Handle units from template
         if (template.systemUnitId) {
-          setValue('systemUnitId', template.systemUnitId, opt);
-          setValue('orgUnitId', undefined, opt);
+          setValue("systemUnitId", template.systemUnitId, opt);
+          setValue("orgUnitId", undefined, opt);
         } else if (template.orgUnitId) {
-          setValue('orgUnitId', template.orgUnitId, opt);
-          setValue('systemUnitId', undefined, opt);
+          setValue("orgUnitId", template.orgUnitId, opt);
+          setValue("systemUnitId", undefined, opt);
         } else if ((template as any).unitId) {
           // Fallback for legacy data
-          const isSystem = systemUnits.some((u: any) => u.id === (template as any).unitId);
-          setValue('systemUnitId', isSystem ? (template as any).unitId : undefined, opt);
-          setValue('orgUnitId', !isSystem ? (template as any).unitId : undefined, opt);
+          const isSystem = systemUnits.some(
+            (u: any) => u.id === (template as any).unitId,
+          );
+          setValue(
+            "systemUnitId",
+            isSystem ? (template as any).unitId : undefined,
+            opt,
+          );
+          setValue(
+            "orgUnitId",
+            !isSystem ? (template as any).unitId : undefined,
+            opt,
+          );
         }
       }
     },
-    [templates, setValue, systemUnits]
+    [templates, setValue, systemUnits],
   );
 
   const toggleAssistantBaker = (bakerId: string) => {
     const current = watchedValues.assistantBakerIds || [];
-    const next = current.includes(bakerId) ? current.filter((id: string) => id !== bakerId) : [...current, bakerId];
-    setValue('assistantBakerIds', next, { shouldDirty: true });
+    const next = current.includes(bakerId)
+      ? current.filter((id: string) => id !== bakerId)
+      : [...current, bakerId];
+    setValue("assistantBakerIds", next, { shouldDirty: true });
   };
 
-  const handleFormSubmit = async (data: BatchInput, e?: React.BaseSyntheticEvent) => {
-    const shouldAddAnother = (e?.nativeEvent as any)?.submitter?.name === 'add-another';
+  const handleFormSubmit = async (
+    data: BatchInput,
+    e?: React.BaseSyntheticEvent,
+  ) => {
+    const shouldAddAnother =
+      (e?.nativeEvent as any)?.submitter?.name === "add-another";
 
     try {
       if (isEditing && batch) {
@@ -358,16 +462,20 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
 
       if (shouldAddAnother && !isEditing) {
         // Keep some values for next batch
-        setValue('recipeId', data.recipeId);
-        setValue('plannedQuantity', data.plannedQuantity);
-        setValue('leadBakerId', data.leadBakerId);
-        toast.success('Batch created. Ready for next one.');
+        setValue("recipeId", data.recipeId);
+        setValue("plannedQuantity", data.plannedQuantity);
+        setValue("leadBakerId", data.leadBakerId);
+        toast.success("Batch created. Ready for next one.");
       } else {
-        toast.success(isEditing ? 'Batch updated successfully' : 'Batch created successfully');
+        toast.success(
+          isEditing
+            ? "Batch updated successfully"
+            : "Batch created successfully",
+        );
         onSuccess?.();
       }
     } catch {
-      toast.error('Failed to save batch. Please try again.');
+      toast.error("Failed to save batch. Please try again.");
     }
   };
 
@@ -379,7 +487,9 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
     loadingTemplates;
 
   const activeBakers = bakers.filter((b: any) => b.isActive);
-  const availableAssistants = activeBakers.filter((b: any) => b.id !== watchedValues.leadBakerId);
+  const availableAssistants = activeBakers.filter(
+    (b: any) => b.id !== watchedValues.leadBakerId,
+  );
   const selectedAssistantCount = watchedValues.assistantBakerIds?.length || 0;
 
   const currentStatus = watchedValues.status as BatchStatus;
@@ -399,24 +509,28 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base font-semibold text-foreground leading-none">
-                {isEditing ? `Batch #${batch.batchNumber}` : 'New Production Batch'}
+                {isEditing
+                  ? `Batch #${batch.batchNumber}`
+                  : "New Production Batch"}
               </h2>
               {isEditing && statusConfig && (
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border',
-                    statusConfig.color
+                    "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border",
+                    statusConfig.color,
                   )}
                 >
-                  <span className={cn('w-1.5 h-1.5 rounded-full', statusConfig.dot)} />
+                  <span
+                    className={cn("w-1.5 h-1.5 rounded-full", statusConfig.dot)}
+                  />
                   {statusConfig.label}
                 </span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {isEditing
-                ? 'Update batch parameters, schedule, or personnel.'
-                : 'Fill in the details below to schedule a new production run.'}
+                ? "Update batch parameters, schedule, or personnel."
+                : "Fill in the details below to schedule a new production run."}
             </p>
           </div>
         </div>
@@ -425,18 +539,20 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
           {isEditing && (
             <Select
               value={watchedValues.status}
-              onValueChange={v => setValue('status', v as BatchStatus, { shouldDirty: true })}
+              onValueChange={(v) =>
+                setValue("status", v as BatchStatus, { shouldDirty: true })
+              }
             >
               <SelectTrigger className="h-8 w-[150px] text-xs font-medium border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(BatchStatus).map(s => {
+                {Object.values(BatchStatus).map((s) => {
                   const cfg = STATUS_CONFIG[s];
                   return (
                     <SelectItem key={s} value={s} className="text-xs">
                       <div className="flex items-center gap-2">
-                        <span className={cn('w-2 h-2 rounded-full', cfg.dot)} />
+                        <span className={cn("w-2 h-2 rounded-full", cfg.dot)} />
                         {cfg.label}
                       </div>
                     </SelectItem>
@@ -477,7 +593,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
             ) : (
               <Save className="h-3.5 w-3.5 mr-1.5" />
             )}
-            {isEditing ? 'Save Changes' : 'Create Batch'}
+            {isEditing ? "Save Changes" : "Create Batch"}
           </Button>
         </div>
       </div>
@@ -500,7 +616,9 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
             templates={templates}
             recipeId={watchedValues.recipeId}
             templateId={watchedValues.createdFromTemplateId}
-            onRecipeChange={id => setValue('recipeId', id, { shouldDirty: true })}
+            onRecipeChange={(id) =>
+              setValue("recipeId", id, { shouldDirty: true })
+            }
             onTemplateChange={handleTemplateSelect}
           />
 
@@ -527,22 +645,26 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                   type="number"
                   step="0.01"
                   min="0.01"
-                  {...register('plannedQuantity', { valueAsNumber: true })}
+                  {...register("plannedQuantity", { valueAsNumber: true })}
                   className={cn(
-                    'rounded-none border-0 border-r shadow-none focus-visible:ring-0 bg-background',
-                    errors.plannedQuantity && 'bg-destructive/5'
+                    "rounded-none border-0 border-r shadow-none focus-visible:ring-0 bg-background",
+                    errors.plannedQuantity && "bg-destructive/5",
                   )}
                 />
                 <div className="min-w-[140px] border-0">
                   <AdvancedUnitSelector
-                    value={watchedValues.systemUnitId || watchedValues.orgUnitId}
+                    value={
+                      watchedValues.systemUnitId || watchedValues.orgUnitId
+                    }
                     onValueChange={handleBatchUnitChange}
                     className="rounded-none border-0 shadow-none h-full"
                   />
                 </div>
               </div>
               {errors.plannedQuantity && (
-                <p className="text-xs text-destructive mt-1">{errors.plannedQuantity.message as string}</p>
+                <p className="text-xs text-destructive mt-1">
+                  {errors.plannedQuantity.message as string}
+                </p>
               )}
             </div>
 
@@ -552,10 +674,14 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                 Output Location
               </FieldLabel>
               <LocationSelect
-                value={watchedValues.outputLocationId || ''}
-                onValueChange={v => setValue('outputLocationId', v, { shouldDirty: true })}
+                value={watchedValues.outputLocationId || ""}
+                onValueChange={(v) =>
+                  setValue("outputLocationId", v, { shouldDirty: true })
+                }
               />
-              <p className="text-xs text-muted-foreground mt-1">Optional — leave blank to assign later</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Optional — leave blank to assign later
+              </p>
             </div>
           </div>
 
@@ -574,7 +700,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                 Quality & Batch Notes
               </FieldLabel>
               <Textarea
-                {...register('notes')}
+                {...register("notes")}
                 placeholder="e.g. Oven 2 runs hot — reduce temp by 10°C. Check texture at 22 min."
                 className="min-h-[130px] resize-none text-sm leading-relaxed"
               />
@@ -583,11 +709,15 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                <FieldLabel hint="Add keywords to categorize and search for this batch later.">Tags</FieldLabel>
+                <FieldLabel hint="Add keywords to categorize and search for this batch later.">
+                  Tags
+                </FieldLabel>
               </div>
               <TagInput
                 tags={watchedValues.tags || []}
-                onChange={tags => setValue('tags', tags, { shouldDirty: true })}
+                onChange={(tags) =>
+                  setValue("tags", tags, { shouldDirty: true })
+                }
                 placeholder="e.g. rush-order, vip-client, gluten-free"
               />
             </div>
@@ -600,12 +730,16 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Schedule</h3>
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                Schedule
+              </h3>
             </div>
 
             <div className="space-y-4">
               <div>
-                <FieldLabel hint="The date this batch is scheduled to begin production.">Production Date</FieldLabel>
+                <FieldLabel hint="The date this batch is scheduled to begin production.">
+                  Production Date
+                </FieldLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -614,14 +748,18 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                       className="w-full justify-start font-normal bg-background h-10 text-sm border-input"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {watchedValues.date ? format(watchedValues.date, 'PPP') : 'Select date'}
+                      {watchedValues.date
+                        ? format(watchedValues.date, "PPP")
+                        : "Select date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={watchedValues.date}
-                      onSelect={d => setValue('date', d || new Date(), { shouldDirty: true })}
+                      onSelect={(d) =>
+                        setValue("date", d || new Date(), { shouldDirty: true })
+                      }
                     />
                   </PopoverContent>
                 </Popover>
@@ -629,10 +767,16 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <FieldLabel hint="Time of day the batch should begin (24-hour format).">Start Time</FieldLabel>
+                  <FieldLabel hint="Time of day the batch should begin (24-hour format).">
+                    Start Time
+                  </FieldLabel>
                   <div className="relative">
                     <Clock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input type="time" {...register('time')} className="pl-9 bg-background h-10 text-sm border-input" />
+                    <Input
+                      type="time"
+                      {...register("time")}
+                      className="pl-9 bg-background h-10 text-sm border-input"
+                    />
                   </div>
                 </div>
                 <div>
@@ -645,7 +789,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                       type="number"
                       min={1}
                       placeholder="mins"
-                      {...register('duration', { valueAsNumber: true })}
+                      {...register("duration", { valueAsNumber: true })}
                       className="pl-9 bg-background h-10 text-sm border-input"
                     />
                   </div>
@@ -660,7 +804,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                   type="number"
                   min={1}
                   placeholder="e.g. 5"
-                  {...register('shelfLifeDays', { valueAsNumber: true })}
+                  {...register("shelfLifeDays", { valueAsNumber: true })}
                   className="bg-background h-10 text-sm border-input"
                 />
               </div>
@@ -671,9 +815,13 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <ChefHat className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Personnel</h3>
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                Personnel
+              </h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">Assign the baker responsible and any supporting staff.</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Assign the baker responsible and any supporting staff.
+            </p>
 
             <div className="space-y-4">
               <div>
@@ -681,8 +829,10 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                   Lead Baker
                 </FieldLabel>
                 <Select
-                  value={watchedValues.leadBakerId || ''}
-                  onValueChange={v => setValue('leadBakerId', v, { shouldDirty: true })}
+                  value={watchedValues.leadBakerId || ""}
+                  onValueChange={(v) =>
+                    setValue("leadBakerId", v, { shouldDirty: true })
+                  }
                 >
                   <SelectTrigger className="bg-background h-10 text-sm border-input">
                     <SelectValue placeholder="Assign a lead baker…" />
@@ -702,7 +852,10 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                   <Users className="inline h-3.5 w-3.5 mr-1 text-muted-foreground" />
                   Assistant Bakers
                   {selectedAssistantCount > 0 && (
-                    <Badge variant="secondary" className="ml-2 text-xs font-medium py-0 h-4">
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 text-xs font-medium py-0 h-4"
+                    >
                       {selectedAssistantCount}
                     </Badge>
                   )}
@@ -714,33 +867,42 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                       <Users className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
                       <p className="text-xs text-muted-foreground">
                         {watchedValues.leadBakerId
-                          ? 'No other active bakers available.'
-                          : 'Select a lead baker first.'}
+                          ? "No other active bakers available."
+                          : "Select a lead baker first."}
                       </p>
                     </div>
                   ) : (
                     <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
                       {availableAssistants.map((baker: any) => {
-                        const isSelected = watchedValues.assistantBakerIds?.includes(baker.id);
+                        const isSelected =
+                          watchedValues.assistantBakerIds?.includes(baker.id);
                         return (
                           <button
                             key={baker.id}
                             type="button"
                             onClick={() => toggleAssistantBaker(baker.id)}
                             className={cn(
-                              'flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm transition-colors',
-                              isSelected ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'
+                              "flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm transition-colors",
+                              isSelected
+                                ? "bg-primary text-primary-foreground"
+                                : "text-foreground hover:bg-accent",
                             )}
                           >
                             <div
                               className={cn(
-                                'flex h-4 w-4 items-center justify-center rounded border flex-shrink-0 transition-colors',
-                                isSelected ? 'bg-primary-foreground border-primary-foreground' : 'border-input'
+                                "flex h-4 w-4 items-center justify-center rounded border flex-shrink-0 transition-colors",
+                                isSelected
+                                  ? "bg-primary-foreground border-primary-foreground"
+                                  : "border-input",
                               )}
                             >
-                              {isSelected && <Check className="h-3 w-3 text-primary" />}
+                              {isSelected && (
+                                <Check className="h-3 w-3 text-primary" />
+                              )}
                             </div>
-                            <span className="font-medium truncate">{baker.name}</span>
+                            <span className="font-medium truncate">
+                              {baker.name}
+                            </span>
                           </button>
                         );
                       })}
@@ -755,7 +917,13 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
 
       {/* ── FOOTER (mobile only) ───────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end gap-3 px-6 py-4 border-t bg-background sm:hidden z-20">
-        <Button type="button" variant="outline" onClick={onCancel} size="sm" className="flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          size="sm"
+          className="flex-1"
+        >
           <Undo2 className="h-4 w-4 mr-2" />
           Cancel
         </Button>
@@ -765,8 +933,12 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
           disabled={isLoading || !isDirty}
           className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
         >
-          {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-          {isEditing ? 'Save' : 'Create'}
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          {isEditing ? "Save" : "Create"}
         </Button>
       </div>
     </form>

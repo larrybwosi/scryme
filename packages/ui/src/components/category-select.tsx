@@ -1,10 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Skeleton } from './ui/skeleton';
-import { Alert, AlertDescription } from './ui/alert';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { AlertCircle, Tag, Plus, Search, X } from 'lucide-react';
+import React, { useState, useMemo } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
+import { Alert, AlertDescription } from "./ui/alert";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { AlertCircle, Tag, Plus, Search, X } from "lucide-react";
 
 interface Category {
   id: string;
@@ -28,7 +34,7 @@ interface CategorySelectProps {
 export const CategorySelect: React.FC<CategorySelectProps> = ({
   value,
   onValueChange,
-  placeholder = 'Select a category',
+  placeholder = "Select a category",
   disabled = false,
   required = false,
   excludeCategory,
@@ -37,24 +43,28 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   error,
   onCreateCategory,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
   // Filter categories based on search query and exclusion
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
 
-    let filtered = excludeCategory ? categories.filter(category => category.id !== excludeCategory) : categories;
+    let filtered = excludeCategory
+      ? categories.filter((category) => category.id !== excludeCategory)
+      : categories;
 
     if (searchQuery.trim()) {
-      filtered = filtered.filter(category => category.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      filtered = filtered.filter((category) =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
     }
 
     return filtered;
   }, [categories, excludeCategory, searchQuery]);
 
   // Get selected category for display
-  const selectedCategory = categories?.find(cat => cat.id === value);
+  const selectedCategory = categories?.find((cat) => cat.id === value);
 
   if (isLoading) {
     return (
@@ -68,7 +78,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load categories. Please try again later.</AlertDescription>
+        <AlertDescription>
+          Failed to load categories. Please try again later.
+        </AlertDescription>
       </Alert>
     );
   }
@@ -128,16 +140,16 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             <Input
               placeholder="Search categories..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="h-8 pl-8 pr-8"
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 // Prevent select from closing when typing
                 e.stopPropagation();
               }}
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3 w-3" />
@@ -149,7 +161,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         {/* Category list */}
         <div className="max-h-[300px] overflow-y-auto">
           {filteredCategories.length > 0 ? (
-            filteredCategories.map(category => (
+            filteredCategories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 <div className="flex items-center gap-3">
                   <div
@@ -164,7 +176,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             <div className="px-2 py-6 text-center text-sm text-muted-foreground">
               <Search className="h-8 w-8 mx-auto mb-2 opacity-40" />
               <p>No categories found</p>
-              {searchQuery && <p className="text-xs mt-1">Try a different search term</p>}
+              {searchQuery && (
+                <p className="text-xs mt-1">Try a different search term</p>
+              )}
             </div>
           )}
         </div>
@@ -174,7 +188,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           <div className="border-t mt-1 pt-1">
             <div
               className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors"
-              onClick={e => {
+              onClick={(e) => {
                 e.stopPropagation();
                 onCreateCategory();
                 setIsOpen(false);
@@ -184,7 +198,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 <div className="h-3 w-3 rounded-sm border border-dashed border-muted-foreground/40 flex items-center justify-center">
                   <Plus className="h-2 w-2 text-muted-foreground" />
                 </div>
-                <span className="font-medium text-muted-foreground">Create new category</span>
+                <span className="font-medium text-muted-foreground">
+                  Create new category
+                </span>
               </div>
             </div>
           </div>

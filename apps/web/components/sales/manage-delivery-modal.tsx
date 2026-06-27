@@ -164,8 +164,7 @@ export function ManageDeliveryModal({
                       transaction.fulfillments.map((f: any) => (
                         <div
                           key={f.id}
-                          className="bg-white border border-zinc-200 rounded-xl p-4 space-y-4 shadow-sm"
-                        >
+                          className="bg-white border border-zinc-200 rounded-xl p-4 space-y-4 shadow-sm">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div
@@ -174,8 +173,7 @@ export function ManageDeliveryModal({
                                   f.status === "DELIVERED"
                                     ? "bg-emerald-50 text-emerald-600"
                                     : "bg-blue-50 text-blue-600",
-                                )}
-                              >
+                                )}>
                                 <Truck className="w-4 h-4" />
                               </div>
                               <div>
@@ -196,8 +194,7 @@ export function ManageDeliveryModal({
                                   : f.status === "SHIPPED"
                                     ? "bg-blue-50 text-blue-700 border-blue-200"
                                     : "bg-zinc-50",
-                              )}
-                            >
+                              )}>
                               {f.status}
                             </Badge>
                           </div>
@@ -224,8 +221,7 @@ export function ManageDeliveryModal({
                                 className="h-8 text-[11px] flex-1"
                                 onClick={() =>
                                   handleStatusUpdate(f.id, "SHIPPED")
-                                }
-                              >
+                                }>
                                 Mark as Shipped
                               </Button>
                             )}
@@ -236,8 +232,7 @@ export function ManageDeliveryModal({
                                 className="h-8 text-[11px] flex-1"
                                 onClick={() =>
                                   handleStatusUpdate(f.id, "DELIVERED")
-                                }
-                              >
+                                }>
                                 Mark as Delivered
                               </Button>
                             )}
@@ -250,8 +245,7 @@ export function ManageDeliveryModal({
                                   size="sm"
                                   variant="outline"
                                   className="h-8 text-[11px] flex-1 gap-1.5"
-                                  onClick={() => handleReconcile(f.id)}
-                                >
+                                  onClick={() => handleReconcile(f.id)}>
                                   <ClipboardCheck className="w-3.5 h-3.5" />{" "}
                                   Record Proof
                                 </Button>
@@ -260,8 +254,7 @@ export function ManageDeliveryModal({
                               <Button
                                 size="sm"
                                 className="h-8 text-[11px] flex-1 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                onClick={() => handleApprove(f.id)}
-                              >
+                                onClick={() => handleApprove(f.id)}>
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Approve
                                 Proof
                               </Button>
@@ -273,8 +266,7 @@ export function ManageDeliveryModal({
                                 size="sm"
                                 variant="outline"
                                 className="h-8 text-[11px] flex-1 gap-1.5"
-                                onClick={() => handleReconcile(f.id)}
-                              >
+                                onClick={() => handleReconcile(f.id)}>
                                 <ClipboardCheck className="w-3.5 h-3.5" />{" "}
                                 Reconcile
                               </Button>
@@ -283,8 +275,7 @@ export function ManageDeliveryModal({
                             {f.isReconciled && (
                               <Badge
                                 variant="outline"
-                                className="h-8 flex-1 justify-center bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5"
-                              >
+                                className="h-8 flex-1 justify-center bg-emerald-50 text-emerald-700 border-emerald-200 gap-1.5">
                                 <CheckCircle2 className="w-3.5 h-3.5" />{" "}
                                 Reconciled
                               </Badge>
@@ -306,8 +297,7 @@ export function ManageDeliveryModal({
                     <Button
                       className="w-full gap-2 bg-zinc-900 text-white hover:bg-zinc-800"
                       onClick={handleCreateFulfillment}
-                      disabled={isCreating}
-                    >
+                      disabled={isCreating}>
                       <Plus className="w-4 h-4" />
                       {isCreating ? "Creating..." : "Initialize New Delivery"}
                     </Button>

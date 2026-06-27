@@ -30,8 +30,17 @@ import {
   User,
   Tag,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import { cn } from "@repo/ui/lib/utils";
+import { toast } from "sonner";
 import {
   adjustStock,
   updateValue,
@@ -115,7 +124,8 @@ export function AuditStockModal({
     try {
       if (activeTab === "quantity") {
         if (!selectedLocation) {
-          alert("Please select a location");
+          toast.error("Please select a location");
+          setIsSubmitting(false);
           return;
         }
         await adjustStock({
@@ -212,20 +222,23 @@ export function AuditStockModal({
 
               <TabsContent value="quantity" className="space-y-6 mt-0">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Location</Label>
-                  <select
-                    className="w-full p-2 border rounded-md bg-white text-sm"
+                  <Label className="text-sm font-medium">
+                    Location <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
                     value={selectedLocation}
-                    onChange={e => setSelectedLocation(e.target.value)}>
-                    <option value="" disabled>
-                      Select Location
-                    </option>
-                    {locations.map(l => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                      </option>
-                    ))}
-                  </select>
+                    onValueChange={setSelectedLocation}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select Location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map(l => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -344,10 +357,17 @@ export function AuditStockModal({
                     Cancel
                   </Button>
                   <Button
-                    className="bg-orange-500 hover:bg-orange-600 text-white min-w-[80px]"
+                    className="bg-orange-500 hover:bg-orange-600 text-white min-w-[100px]"
                     onClick={handleSave}
                     disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save"}
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
                 </div>
               </div>

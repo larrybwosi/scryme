@@ -1,111 +1,111 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { usePosStore } from "@/store/store"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@repo/ui/components/ui/dialog"
-import { Textarea } from "@repo/ui/components/ui/textarea"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { DollarSign, ArrowUp, ArrowDown, Lock, Unlock } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
-import { useCashDrawer } from "@/hooks/use-cash-drawer"
-import { DoorOpen, RefreshCcw } from "lucide-react"
+import { useState } from 'react';
+import { usePosStore } from '@/store/store';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@repo/ui/components/ui/dialog';
+import { Textarea } from '@repo/ui/components/ui/textarea';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { DollarSign, ArrowUp, ArrowDown, Lock, Unlock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
+import { useCashDrawer } from '@/hooks/use-cash-drawer';
+import { DoorOpen, RefreshCcw } from 'lucide-react';
 import posthog from 'posthog-js';
 
 export default function CashDrawerPage() {
-  const settings = usePosStore((state) => state.settings)
-  const cashDrawers = usePosStore((state) => state.cashDrawers)
-  const activeCashDrawerId = usePosStore((state) => state.activeCashDrawerId)
-  const openCashDrawer = usePosStore((state) => state.openCashDrawer)
-  const closeCashDrawer = usePosStore((state) => state.closeCashDrawer)
-  const addCashTransaction = usePosStore((state) => state.addCashTransaction)
+  const settings = usePosStore(state => state.settings);
+  const cashDrawers = usePosStore(state => state.cashDrawers);
+  const activeCashDrawerId = usePosStore(state => state.activeCashDrawerId);
+  const openCashDrawer = usePosStore(state => state.openCashDrawer);
+  const closeCashDrawer = usePosStore(state => state.closeCashDrawer);
+  const addCashTransaction = usePosStore(state => state.addCashTransaction);
 
-  const { openPhysicalDrawer, isOpening } = useCashDrawer()
+  const { openPhysicalDrawer, isOpening } = useCashDrawer();
 
-  const [isOpenDrawerDialogOpen, setIsOpenDrawerDialogOpen] = useState(false)
-  const [isCloseDrawerDialogOpen, setIsCloseDrawerDialogOpen] = useState(false)
-  const [isCashInDialogOpen, setIsCashInDialogOpen] = useState(false)
-  const [isCashOutDialogOpen, setIsCashOutDialogOpen] = useState(false)
+  const [isOpenDrawerDialogOpen, setIsOpenDrawerDialogOpen] = useState(false);
+  const [isCloseDrawerDialogOpen, setIsCloseDrawerDialogOpen] = useState(false);
+  const [isCashInDialogOpen, setIsCashInDialogOpen] = useState(false);
+  const [isCashOutDialogOpen, setIsCashOutDialogOpen] = useState(false);
 
-  const [openingBalance, setOpeningBalance] = useState("")
-  const [closingBalance, setClosingBalance] = useState("")
-  const [cashAmount, setCashAmount] = useState("")
-  const [cashNotes, setCashNotes] = useState("")
+  const [openingBalance, setOpeningBalance] = useState('');
+  const [closingBalance, setClosingBalance] = useState('');
+  const [cashAmount, setCashAmount] = useState('');
+  const [cashNotes, setCashNotes] = useState('');
 
-  const activeDrawer = cashDrawers.find((d) => d.id === activeCashDrawerId)
+  const activeDrawer = cashDrawers.find(d => d.id === activeCashDrawerId);
   const closedDrawers = cashDrawers
-    .filter((d) => d.status === "closed")
-    .sort((a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime())
+    .filter(d => d.status === 'closed')
+    .sort((a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime());
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
       currency: settings.currency,
       minimumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const handleOpenDrawer = () => {
-    const amount = Number.parseFloat(openingBalance)
+    const amount = Number.parseFloat(openingBalance);
     if (!isNaN(amount) && amount >= 0) {
-      openCashDrawer(amount)
-      posthog.capture("cash_drawer_opened", { opening_balance: amount });
-      setOpeningBalance("")
-      setIsOpenDrawerDialogOpen(false)
+      openCashDrawer(amount);
+      posthog.capture('cash_drawer_opened', { opening_balance: amount });
+      setOpeningBalance('');
+      setIsOpenDrawerDialogOpen(false);
     }
-  }
+  };
 
   const handleCloseDrawer = () => {
-    const amount = Number.parseFloat(closingBalance)
+    const amount = Number.parseFloat(closingBalance);
     if (!isNaN(amount) && amount >= 0) {
       // const stats = getDrawerStats(activeDrawer);
       closeCashDrawer(amount);
-      // trackEvent("cash_drawer_closed", { 
-      //   closing_balance: amount, 
+      // trackEvent("cash_drawer_closed", {
+      //   closing_balance: amount,
       //   expected_balance: stats.expected,
       //   difference: amount - stats.expected
       // });
-      setClosingBalance("")
-      setIsCloseDrawerDialogOpen(false)
+      setClosingBalance('');
+      setIsCloseDrawerDialogOpen(false);
     }
-  }
+  };
 
   const handleCashIn = () => {
-    const amount = Number.parseFloat(cashAmount)
+    const amount = Number.parseFloat(cashAmount);
     if (!isNaN(amount) && amount > 0) {
-      addCashTransaction("cash-in", amount, cashNotes)
-      posthog.capture("cash_in_out", { type: "cash-in", amount });
-      setCashAmount("")
-      setCashNotes("")
-      setIsCashInDialogOpen(false)
+      addCashTransaction('cash-in', amount, cashNotes);
+      posthog.capture('cash_in_out', { type: 'cash-in', amount });
+      setCashAmount('');
+      setCashNotes('');
+      setIsCashInDialogOpen(false);
     }
-  }
+  };
 
   const handleCashOut = () => {
-    const amount = Number.parseFloat(cashAmount)
+    const amount = Number.parseFloat(cashAmount);
     if (!isNaN(amount) && amount > 0) {
-      addCashTransaction("cash-out", amount, cashNotes)
-      posthog.capture("cash_in_out", { type: "cash-out", amount });
-      setCashAmount("")
-      setCashNotes("")
-      setIsCashOutDialogOpen(false)
+      addCashTransaction('cash-out', amount, cashNotes);
+      posthog.capture('cash_in_out', { type: 'cash-out', amount });
+      setCashAmount('');
+      setCashNotes('');
+      setIsCashOutDialogOpen(false);
     }
-  }
+  };
 
   const getDrawerStats = (drawer: typeof activeDrawer) => {
-    if (!drawer) return { sales: 0, cashIn: 0, cashOut: 0, refunds: 0, expected: 0 }
+    if (!drawer) return { sales: 0, cashIn: 0, cashOut: 0, refunds: 0, expected: 0 };
 
-    const sales = drawer.transactions.filter((t) => t.type === "sale").reduce((sum, t) => sum + t.amount, 0)
-    const cashIn = drawer.transactions.filter((t) => t.type === "cash-in").reduce((sum, t) => sum + t.amount, 0)
-    const cashOut = drawer.transactions.filter((t) => t.type === "cash-out").reduce((sum, t) => sum + t.amount, 0)
-    const refunds = drawer.transactions.filter((t) => t.type === "refund").reduce((sum, t) => sum + t.amount, 0)
-    const expected = drawer.openingBalance + sales + cashIn - cashOut - refunds
+    const sales = drawer.transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.amount, 0);
+    const cashIn = drawer.transactions.filter(t => t.type === 'cash-in').reduce((sum, t) => sum + t.amount, 0);
+    const cashOut = drawer.transactions.filter(t => t.type === 'cash-out').reduce((sum, t) => sum + t.amount, 0);
+    const refunds = drawer.transactions.filter(t => t.type === 'refund').reduce((sum, t) => sum + t.amount, 0);
+    const expected = drawer.openingBalance + sales + cashIn - cashOut - refunds;
 
-    return { sales, cashIn, cashOut, refunds, expected }
-  }
+    return { sales, cashIn, cashOut, refunds, expected };
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -136,7 +136,7 @@ export default function CashDrawerPage() {
                     min="0"
                     step="0.01"
                     value={openingBalance}
-                    onChange={(e) => setOpeningBalance(e.target.value)}
+                    onChange={e => setOpeningBalance(e.target.value)}
                     placeholder="0.00"
                   />
                 </div>
@@ -170,7 +170,7 @@ export default function CashDrawerPage() {
                     min="0"
                     step="0.01"
                     value={closingBalance}
-                    onChange={(e) => setClosingBalance(e.target.value)}
+                    onChange={e => setClosingBalance(e.target.value)}
                     placeholder="0.00"
                   />
                   <p className="text-sm text-muted-foreground">
@@ -270,14 +270,13 @@ export default function CashDrawerPage() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openPhysicalDrawer()}
-                        disabled={isOpening}
-                      >
-                         {isOpening ? <RefreshCcw className="w-4 h-4 mr-2 animate-spin" /> : <DoorOpen className="w-4 h-4 mr-2" />}
-                         Open Drawer
+                      <Button variant="outline" size="sm" onClick={() => openPhysicalDrawer()} disabled={isOpening}>
+                        {isOpening ? (
+                          <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <DoorOpen className="w-4 h-4 mr-2" />
+                        )}
+                        Open Drawer
                       </Button>
                       <Dialog open={isCashInDialogOpen} onOpenChange={setIsCashInDialogOpen}>
                         <DialogTrigger asChild>
@@ -299,7 +298,7 @@ export default function CashDrawerPage() {
                                 min="0"
                                 step="0.01"
                                 value={cashAmount}
-                                onChange={(e) => setCashAmount(e.target.value)}
+                                onChange={e => setCashAmount(e.target.value)}
                                 placeholder="0.00"
                               />
                             </div>
@@ -308,7 +307,7 @@ export default function CashDrawerPage() {
                               <Textarea
                                 id="cash-in-notes"
                                 value={cashNotes}
-                                onChange={(e) => setCashNotes(e.target.value)}
+                                onChange={e => setCashNotes(e.target.value)}
                                 placeholder="Reason for cash in..."
                                 rows={3}
                               />
@@ -343,7 +342,7 @@ export default function CashDrawerPage() {
                                 min="0"
                                 step="0.01"
                                 value={cashAmount}
-                                onChange={(e) => setCashAmount(e.target.value)}
+                                onChange={e => setCashAmount(e.target.value)}
                                 placeholder="0.00"
                               />
                             </div>
@@ -352,7 +351,7 @@ export default function CashDrawerPage() {
                               <Textarea
                                 id="cash-out-notes"
                                 value={cashNotes}
-                                onChange={(e) => setCashNotes(e.target.value)}
+                                onChange={e => setCashNotes(e.target.value)}
                                 placeholder="Reason for cash out..."
                                 rows={3}
                               />
@@ -382,13 +381,13 @@ export default function CashDrawerPage() {
                         .map((transaction, index) => (
                           <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
                             <div className="flex items-center gap-3">
-                              {transaction.type === "sale" || transaction.type === "cash-in" ? (
+                              {transaction.type === 'sale' || transaction.type === 'cash-in' ? (
                                 <ArrowUp className="w-4 h-4 text-green-600" />
                               ) : (
                                 <ArrowDown className="w-4 h-4 text-red-600" />
                               )}
                               <div>
-                                <div className="font-medium capitalize">{transaction.type.replace("-", " ")}</div>
+                                <div className="font-medium capitalize">{transaction.type.replace('-', ' ')}</div>
                                 <div className="text-sm text-muted-foreground">
                                   {new Date(transaction.timestamp).toLocaleTimeString()}
                                   {transaction.notes && ` - ${transaction.notes}`}
@@ -397,12 +396,12 @@ export default function CashDrawerPage() {
                             </div>
                             <div
                               className={`font-semibold ${
-                                transaction.type === "sale" || transaction.type === "cash-in"
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                                transaction.type === 'sale' || transaction.type === 'cash-in'
+                                  ? 'text-green-600'
+                                  : 'text-red-600'
                               }`}
                             >
-                              {transaction.type === "sale" || transaction.type === "cash-in" ? "+" : "-"}
+                              {transaction.type === 'sale' || transaction.type === 'cash-in' ? '+' : '-'}
                               {formatCurrency(transaction.amount)}
                             </div>
                           </div>
@@ -429,8 +428,8 @@ export default function CashDrawerPage() {
               </CardContent>
             </Card>
           ) : (
-            closedDrawers.map((drawer) => {
-              const stats = getDrawerStats(drawer)
+            closedDrawers.map(drawer => {
+              const stats = getDrawerStats(drawer);
               return (
                 <Card key={drawer.id}>
                   <CardHeader>
@@ -438,17 +437,17 @@ export default function CashDrawerPage() {
                       <div>
                         <CardTitle className="text-lg">{drawer.employeeName}</CardTitle>
                         <CardDescription>
-                          {new Date(drawer.openedAt).toLocaleDateString()} •{" "}
-                          {new Date(drawer.openedAt).toLocaleTimeString()} -{" "}
+                          {new Date(drawer.openedAt).toLocaleDateString()} •{' '}
+                          {new Date(drawer.openedAt).toLocaleTimeString()} -{' '}
                           {drawer.closedAt && new Date(drawer.closedAt).toLocaleTimeString()}
                         </CardDescription>
                       </div>
                       <Badge
                         variant={
-                          drawer.difference === 0 ? "secondary" : drawer.difference! > 0 ? "default" : "destructive"
+                          drawer.difference === 0 ? 'secondary' : drawer.difference! > 0 ? 'default' : 'destructive'
                         }
                       >
-                        {drawer.difference === 0 ? "Balanced" : drawer.difference! > 0 ? "Overage" : "Shortage"}
+                        {drawer.difference === 0 ? 'Balanced' : drawer.difference! > 0 ? 'Overage' : 'Shortage'}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -476,9 +475,9 @@ export default function CashDrawerPage() {
                         <div className="flex justify-between">
                           <span className="text-sm font-medium">Difference</span>
                           <span
-                            className={`text-sm font-bold ${drawer.difference! > 0 ? "text-green-600" : "text-red-600"}`}
+                            className={`text-sm font-bold ${drawer.difference! > 0 ? 'text-green-600' : 'text-red-600'}`}
                           >
-                            {drawer.difference! > 0 ? "+" : ""}
+                            {drawer.difference! > 0 ? '+' : ''}
                             {formatCurrency(drawer.difference || 0)}
                           </span>
                         </div>
@@ -486,11 +485,11 @@ export default function CashDrawerPage() {
                     )}
                   </CardContent>
                 </Card>
-              )
+              );
             })
           )}
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

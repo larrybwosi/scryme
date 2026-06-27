@@ -35,7 +35,7 @@ export function PrescriptionDialog({ open, onOpenChange }: PrescriptionDialogPro
         prescriptionId,
         doctorName,
         instructions: notes,
-      }
+      },
     }));
     onOpenChange(false);
   };
@@ -48,9 +48,7 @@ export function PrescriptionDialog({ open, onOpenChange }: PrescriptionDialogPro
             <FileText className="w-5 h-5 text-primary" />
             Prescription Details
           </DialogTitle>
-          <DialogDescription>
-            Enter the prescription details for this order.
-          </DialogDescription>
+          <DialogDescription>Enter the prescription details for this order.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">

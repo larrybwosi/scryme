@@ -49,7 +49,7 @@ export const useScanner = () => {
       const unlistenStatus = await listen<string>('scanner-status', event => {
         const status = event.payload;
         const { setIsConnected } = useScannerStore.getState();
-        
+
         if (status.includes('Connected') || status.includes('Listening')) {
           setIsConnected(true);
         }

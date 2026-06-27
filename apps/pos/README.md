@@ -34,6 +34,7 @@
 ### Steps
 
 1. **Install Dependencies**
+
    ```bash
    pnpm install
    ```
@@ -73,13 +74,13 @@ pnpm --filter pos tauri signer generate -w src-tauri/pos-updater.key
 
 Add these secrets to your GitHub repository settings under **Secrets and variables > Actions**:
 
-| Secret Name | Description |
-| ----------- | ----------- |
-| `POS_TAURI_SIGNING_PRIVATE_KEY` | The content of the generated `.key` file (private key). |
-| `POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The password used when generating the key (if any). |
-| `POS_TAURI_PUBLIC_KEY` | The public key string displayed after generation. |
-| `SENTRY_DSN` | The Sentry DSN for error tracking. |
-| `POSTHOG_API_KEY` | The PostHog API key for analytics. |
+| Secret Name                              | Description                                             |
+| ---------------------------------------- | ------------------------------------------------------- |
+| `POS_TAURI_SIGNING_PRIVATE_KEY`          | The content of the generated `.key` file (private key). |
+| `POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | The password used when generating the key (if any).     |
+| `POS_TAURI_PUBLIC_KEY`                   | The public key string displayed after generation.       |
+| `SENTRY_DSN`                             | The Sentry DSN for error tracking.                      |
+| `POSTHOG_API_KEY`                        | The PostHog API key for analytics.                      |
 
 > **Note**: These keys are specific to the POS application. The Bakery application uses its own set of keys prefixed with `BAKERY_` (e.g., `BAKERY_TAURI_PUBLIC_KEY`).
 
@@ -88,7 +89,9 @@ Add these secrets to your GitHub repository settings under **Secrets and variabl
 ## 🔧 Configuration
 
 ### Onboarding
+
 On first launch, you will be prompted for an **API Key**. This registers the device to your organization and downloads the necessary catalog and settings.
 
 ### Hardware Setup
+
 Go to **Settings > Printer** to configure your thermal printer. Supports USB and Network (IP) printing.

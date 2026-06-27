@@ -15,7 +15,7 @@ export class PettyCashUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async createFund(organizationId: string, dto: CreatePettyCashFundDto) {
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       const fund = await tx.pettyCashFund.create({
         data: {
           name: dto.name,
@@ -47,7 +47,7 @@ export class PettyCashUseCase {
     dto: TopUpPettyCashFundDto,
     memberId: string,
   ) {
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       const fund = await tx.pettyCashFund.findFirst({
         where: { id: fundId, organizationId },
       });

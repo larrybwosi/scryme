@@ -1,13 +1,26 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@repo/ui/components/ui/card';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
-import { Separator } from '@repo/ui/components/ui/separator';
-import { Switch } from '@repo/ui/components/ui/switch';
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@repo/ui/components/ui/card";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Separator } from "@repo/ui/components/ui/separator";
+import { Switch } from "@repo/ui/components/ui/switch";
 import {
   Settings,
   Hash,
@@ -30,7 +43,7 @@ import {
   Plus,
   Trash2,
   Edit,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,16 +51,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@repo/ui/components/ui/dialog';
-import { useBakerySettingsManagement } from '@/hooks/bakery';
-import { useUnits } from '@/lib/units/hooks';
-import { toast } from 'sonner';
-import sdk from '@/lib/sdk';
-import { getSDK } from '@repo/sdk/src/index';
-import { invoke } from '@tauri-apps/api/core';
-import { isTauri } from '@/lib/sdk';
+} from "@repo/ui/components/ui/dialog";
+import { useBakerySettingsManagement } from "@/hooks/bakery";
+import { useUnits } from "@/lib/units/hooks";
+import { toast } from "sonner";
+import sdk from "@/lib/sdk";
+import { getSDK } from "@repo/sdk/src/index";
+import { invoke } from "@tauri-apps/api/core";
+import { isTauri } from "@/lib/sdk";
 
-type SettingsTab = 'operational' | 'sync' | 'security' | 'notifications' | 'branding' | 'units';
+type SettingsTab =
+  | "operational"
+  | "sync"
+  | "security"
+  | "notifications"
+  | "branding"
+  | "units";
 
 export default function SettingsPage() {
   const {
@@ -60,39 +79,44 @@ export default function SettingsPage() {
     isUpdating,
   } = useBakerySettingsManagement();
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>('operational');
+  const [activeTab, setActiveTab] = useState<SettingsTab>("operational");
   const [isTestingKey, setIsTestingKey] = useState(false);
   const [keyTested, setKeyTested] = useState(false);
   const [isValidatingApi, setIsValidatingApi] = useState(false);
   const [apiTested, setApiTested] = useState(false);
 
   const [localAdminForm, setLocalAdminForm] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
   const [isUpdatingLocalAdmin, setIsUpdatingLocalAdmin] = useState(false);
 
   // Local state for form management
   const [formData, setFormData] = useState<any>({
-    batchPrefix: settings?.batchPrefix || 'BAT',
-    batchSeparator: settings?.batchSeparator || '-',
-    batchDateFormat: settings?.batchDateFormat || 'YYYYMMDD',
-    batchSequence: settings?.batchSequence || '4',
+    batchPrefix: settings?.batchPrefix || "BAT",
+    batchSeparator: settings?.batchSeparator || "-",
+    batchDateFormat: settings?.batchDateFormat || "YYYYMMDD",
+    batchSequence: settings?.batchSequence || "4",
     autoApproveBatches: settings?.autoApproveBatches || false,
     lowStockAlerts: !!settings?.lowStockAlerts,
-    timezone: settings?.timezone || 'UTC',
-    apiKey: (settings as any)?.apiKey || '',
-    apiEndpointUrl: (settings as any)?.apiEndpointUrl || '',
-    defaultBakerId: settings?.defaultBakerId || '',
+    timezone: settings?.timezone || "UTC",
+    apiKey: (settings as any)?.apiKey || "",
+    apiEndpointUrl: (settings as any)?.apiEndpointUrl || "",
+    defaultBakerId: settings?.defaultBakerId || "",
     autoCreateDailyBatches: settings?.autoCreateDailyBatches || false,
     expiryWarningDays: settings?.expiryWarningDays || 3,
-    authMode: settings?.authMode || 'SSO',
+    authMode: settings?.authMode || "SSO",
     scrymeReportEnabled: settings?.scrymeReportEnabled || false,
     scrymeReportDay: settings?.scrymeReportDay ?? 1,
-    scrymeReportTime: settings?.scrymeReportTime || '08:00',
-    scrymeReportSections: settings?.scrymeReportSections || { batches: true, waste: true, yields: true, top_recipes: true },
-    scrymeReportChannel: settings?.scrymeReportChannel || 'production-reports',
+    scrymeReportTime: settings?.scrymeReportTime || "08:00",
+    scrymeReportSections: settings?.scrymeReportSections || {
+      batches: true,
+      waste: true,
+      yields: true,
+      top_recipes: true,
+    },
+    scrymeReportChannel: settings?.scrymeReportChannel || "production-reports",
   });
 
   const [brandingData, setBrandingData] = useState(branding);
@@ -101,44 +125,50 @@ export default function SettingsPage() {
   React.useEffect(() => {
     if (settings) {
       setFormData({
-        batchPrefix: settings.batchPrefix || 'BAT',
-        batchSeparator: settings.batchSeparator || '-',
-        batchDateFormat: settings.batchDateFormat || 'YYYYMMDD',
-        batchSequence: settings.batchSequence || '4',
+        batchPrefix: settings.batchPrefix || "BAT",
+        batchSeparator: settings.batchSeparator || "-",
+        batchDateFormat: settings.batchDateFormat || "YYYYMMDD",
+        batchSequence: settings.batchSequence || "4",
         autoApproveBatches: settings.autoApproveBatches || false,
         lowStockAlerts: !!settings.lowStockAlerts,
-        timezone: settings.timezone || 'UTC',
-        apiKey: (settings as any)?.apiKey || '',
-        apiEndpointUrl: (settings as any)?.apiEndpointUrl || '',
-        defaultBakerId: settings.defaultBakerId || '',
+        timezone: settings.timezone || "UTC",
+        apiKey: (settings as any)?.apiKey || "",
+        apiEndpointUrl: (settings as any)?.apiEndpointUrl || "",
+        defaultBakerId: settings.defaultBakerId || "",
         autoCreateDailyBatches: settings.autoCreateDailyBatches || false,
         expiryWarningDays: settings.expiryWarningDays || 3,
-        authMode: settings.authMode || 'SSO',
+        authMode: settings.authMode || "SSO",
         scrymeReportEnabled: settings.scrymeReportEnabled || false,
         scrymeReportDay: settings.scrymeReportDay ?? 1,
-        scrymeReportTime: settings.scrymeReportTime || '08:00',
-        scrymeReportSections: settings.scrymeReportSections || { batches: true, waste: true, yields: true, top_recipes: true },
-        scrymeReportChannel: settings.scrymeReportChannel || 'production-reports',
+        scrymeReportTime: settings.scrymeReportTime || "08:00",
+        scrymeReportSections: settings.scrymeReportSections || {
+          batches: true,
+          waste: true,
+          yields: true,
+          top_recipes: true,
+        },
+        scrymeReportChannel:
+          settings.scrymeReportChannel || "production-reports",
       });
     }
   }, [settings]);
 
   const handleTestKey = async () => {
     if (!formData.apiKey) {
-      toast.error('Please enter an Access Key');
+      toast.error("Please enter an Access Key");
       return;
     }
     setIsTestingKey(true);
     try {
       const tempSdk = getSDK({
         apiKey: formData.apiKey,
-        baseURL: isTauri() ? (formData.apiEndpointUrl || undefined) : undefined
+        baseURL: isTauri() ? formData.apiEndpointUrl || undefined : undefined,
       });
-      await tempSdk.client.get('/bakery');
+      await tempSdk.client.get("/bakery");
       setKeyTested(true);
-      toast.success('Access Key validated');
+      toast.success("Access Key validated");
     } catch (error) {
-      toast.error('Invalid Access Key');
+      toast.error("Invalid Access Key");
       setKeyTested(false);
     } finally {
       setIsTestingKey(false);
@@ -147,7 +177,7 @@ export default function SettingsPage() {
 
   const handleTestApi = async () => {
     if (!formData.apiEndpointUrl) {
-      toast.error('Please enter an API Endpoint URL');
+      toast.error("Please enter an API Endpoint URL");
       return;
     }
     setIsValidatingApi(true);
@@ -155,19 +185,19 @@ export default function SettingsPage() {
       const response = await fetch(`${formData.apiEndpointUrl}/health/ping`);
       if (response.ok) {
         const data = await response.json();
-        if (data.message === 'pong') {
+        if (data.message === "pong") {
           setApiTested(true);
-          toast.success('API Endpoint is valid and reachable');
+          toast.success("API Endpoint is valid and reachable");
         } else {
-          throw new Error('Invalid response');
+          throw new Error("Invalid response");
         }
       } else {
         setApiTested(false);
-        toast.error('API Endpoint returned an error');
+        toast.error("API Endpoint returned an error");
       }
     } catch (error) {
       setApiTested(false);
-      toast.error('Could not connect to API Endpoint');
+      toast.error("Could not connect to API Endpoint");
     } finally {
       setIsValidatingApi(false);
     }
@@ -184,10 +214,10 @@ export default function SettingsPage() {
   const handleTestReport = async () => {
     setIsTestingReport(true);
     try {
-      await sdk.client.post('/bakery/settings/test-report');
-      toast.success('Test report triggered. Check Scryme Chat.');
+      await sdk.client.post("/bakery/settings/test-report");
+      toast.success("Test report triggered. Check Scryme Chat.");
     } catch (error) {
-      toast.error('Failed to trigger test report');
+      toast.error("Failed to trigger test report");
     } finally {
       setIsTestingReport(false);
     }
@@ -200,35 +230,38 @@ export default function SettingsPage() {
 
       if (isTauri() && formData.apiEndpointUrl) {
         sdk.client.setBaseURL(formData.apiEndpointUrl);
-        localStorage.setItem('bakery_api_url', formData.apiEndpointUrl);
+        localStorage.setItem("bakery_api_url", formData.apiEndpointUrl);
       }
 
       if (formData.apiKey) {
-        localStorage.removeItem('bakery_local_mode');
+        localStorage.removeItem("bakery_local_mode");
       }
       setBranding(brandingData);
-      toast.success('Settings updated successfully');
+      toast.success("Settings updated successfully");
     } catch (error) {
-      toast.error('Failed to update settings');
+      toast.error("Failed to update settings");
     }
   };
 
   const handleUpdateLocalAdmin = async () => {
-    if (localAdminForm.password && localAdminForm.password !== localAdminForm.confirmPassword) {
-      toast.error('Passwords do not match');
+    if (
+      localAdminForm.password &&
+      localAdminForm.password !== localAdminForm.confirmPassword
+    ) {
+      toast.error("Passwords do not match");
       return;
     }
 
     setIsUpdatingLocalAdmin(true);
     try {
-      await invoke('update_local_admin', {
+      await invoke("update_local_admin", {
         email: localAdminForm.email || null,
         password: localAdminForm.password || null,
       });
-      toast.success('Local admin credentials updated');
-      setLocalAdminForm({ email: '', password: '', confirmPassword: '' });
+      toast.success("Local admin credentials updated");
+      setLocalAdminForm({ email: "", password: "", confirmPassword: "" });
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update credentials');
+      toast.error(error.message || "Failed to update credentials");
     } finally {
       setIsUpdatingLocalAdmin(false);
     }
@@ -236,8 +269,12 @@ export default function SettingsPage() {
 
   const generatePreview = () => {
     const dateStr =
-      formData.batchDateFormat === 'YYYYMMDD' ? '20260225' : formData.batchDateFormat === 'YYMM' ? '2602' : '';
-    const seqStr = '1'.padStart(parseInt(formData.batchSequence), '0');
+      formData.batchDateFormat === "YYYYMMDD"
+        ? "20260225"
+        : formData.batchDateFormat === "YYMM"
+          ? "2602"
+          : "";
+    const seqStr = "1".padStart(parseInt(formData.batchSequence), "0");
     const parts = [formData.batchPrefix, dateStr, seqStr].filter(Boolean);
     return parts.join(formData.batchSeparator);
   };
@@ -266,66 +303,66 @@ export default function SettingsPage() {
         <div className="space-y-1">
           <Button
             variant="ghost"
-            onClick={() => setActiveTab('operational')}
+            onClick={() => setActiveTab("operational")}
             className={`w-full justify-start gap-2 ${
-              activeTab === 'operational'
-                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-                : 'text-slate-500'
+              activeTab === "operational"
+                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50"
+                : "text-slate-500"
             }`}
           >
             <Settings className="h-4 w-4" /> Operational
           </Button>
           <Button
             variant="ghost"
-            onClick={() => setActiveTab('sync')}
+            onClick={() => setActiveTab("sync")}
             className={`w-full justify-start gap-2 ${
-              activeTab === 'sync'
-                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-                : 'text-slate-500'
+              activeTab === "sync"
+                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50"
+                : "text-slate-500"
             }`}
           >
             <Cloud className="h-4 w-4" /> Cloud Sync
           </Button>
           <Button
             variant="ghost"
-            onClick={() => setActiveTab('security')}
+            onClick={() => setActiveTab("security")}
             className={`w-full justify-start gap-2 ${
-              activeTab === 'security'
-                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-                : 'text-slate-500'
+              activeTab === "security"
+                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50"
+                : "text-slate-500"
             }`}
           >
             <Shield className="h-4 w-4" /> Security
           </Button>
           <Button
             variant="ghost"
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => setActiveTab("notifications")}
             className={`w-full justify-start gap-2 ${
-              activeTab === 'notifications'
-                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-                : 'text-slate-500'
+              activeTab === "notifications"
+                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50"
+                : "text-slate-500"
             }`}
           >
             <Bell className="h-4 w-4" /> Notifications
           </Button>
           <Button
             variant="ghost"
-            onClick={() => setActiveTab('branding')}
+            onClick={() => setActiveTab("branding")}
             className={`w-full justify-start gap-2 ${
-              activeTab === 'branding'
-                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-                : 'text-slate-500'
+              activeTab === "branding"
+                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50"
+                : "text-slate-500"
             }`}
           >
             <Palette className="h-4 w-4" /> Branding
           </Button>
           <Button
             variant="ghost"
-            onClick={() => setActiveTab('units')}
+            onClick={() => setActiveTab("units")}
             className={`w-full justify-start gap-2 ${
-              activeTab === 'units'
-                ? 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50'
-                : 'text-slate-500'
+              activeTab === "units"
+                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50"
+                : "text-slate-500"
             }`}
           >
             <Scale className="h-4 w-4" /> Units & Measures
@@ -334,19 +371,25 @@ export default function SettingsPage() {
 
         {/* Content Area */}
         <div className="md:col-span-2 space-y-6">
-          {activeTab === 'sync' && (
+          {activeTab === "sync" && (
             <Card className="border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-amber-500">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <Cloud className="h-5 w-5 text-amber-500" />
                   Server & Synchronization
                 </CardTitle>
-                <CardDescription>Configure your connection to the Scryme cloud for backups and AI features.</CardDescription>
+                <CardDescription>
+                  Configure your connection to the Scryme cloud for backups and
+                  AI features.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isTauri() && (
                   <div className="space-y-2">
-                    <Label htmlFor="api-url" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="api-url"
+                      className="flex items-center gap-2"
+                    >
                       <Globe className="h-4 w-4" /> API Endpoint URL
                     </Label>
                     <div className="flex gap-2">
@@ -355,8 +398,11 @@ export default function SettingsPage() {
                           id="api-url"
                           type="url"
                           value={formData.apiEndpointUrl}
-                          onChange={e => {
-                            setFormData({ ...formData, apiEndpointUrl: e.target.value });
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              apiEndpointUrl: e.target.value,
+                            });
                             setApiTested(false);
                           }}
                           placeholder="https://api.scryme.app/api/v2"
@@ -373,12 +419,17 @@ export default function SettingsPage() {
                         disabled={isValidatingApi || !formData.apiEndpointUrl}
                         className="shrink-0"
                       >
-                        {isValidatingApi ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3 mr-2" />}
+                        {isValidatingApi ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Zap className="h-3 w-3 mr-2" />
+                        )}
                         Test
                       </Button>
                     </div>
                     <p className="text-[10px] text-slate-500">
-                      The base URL for all Scryme API requests. Default is Scryme Cloud.
+                      The base URL for all Scryme API requests. Default is
+                      Scryme Cloud.
                     </p>
                     <Separator className="my-2" />
                   </div>
@@ -394,7 +445,7 @@ export default function SettingsPage() {
                         id="api-key"
                         type="password"
                         value={formData.apiKey}
-                        onChange={e => {
+                        onChange={(e) => {
                           setFormData({ ...formData, apiKey: e.target.value });
                           setKeyTested(false);
                         }}
@@ -412,19 +463,24 @@ export default function SettingsPage() {
                       disabled={isTestingKey || !formData.apiKey}
                       className="shrink-0"
                     >
-                      {isTestingKey ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3 mr-2" />}
+                      {isTestingKey ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Zap className="h-3 w-3 mr-2" />
+                      )}
                       Test
                     </Button>
                   </div>
                   <p className="text-[10px] text-slate-500">
-                    Data will be automatically synced to the server once a valid key is provided.
+                    Data will be automatically synced to the server once a valid
+                    key is provided.
                   </p>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {activeTab === 'operational' && (
+          {activeTab === "operational" && (
             <>
               {/* Batch Identification Section */}
               <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
@@ -433,7 +489,10 @@ export default function SettingsPage() {
                     <Hash className="h-5 w-5 text-amber-500" />
                     Batch Identification
                   </CardTitle>
-                  <CardDescription>Define the convention for automatically generated batch numbers.</CardDescription>
+                  <CardDescription>
+                    Define the convention for automatically generated batch
+                    numbers.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -442,7 +501,12 @@ export default function SettingsPage() {
                       <Input
                         id="prefix"
                         value={formData.batchPrefix}
-                        onChange={e => setFormData({ ...formData, batchPrefix: e.target.value.toUpperCase() })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            batchPrefix: e.target.value.toUpperCase(),
+                          })
+                        }
                         placeholder="BAT"
                       />
                     </div>
@@ -451,7 +515,12 @@ export default function SettingsPage() {
                       <Input
                         id="separator"
                         value={formData.batchSeparator}
-                        onChange={e => setFormData({ ...formData, batchSeparator: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            batchSeparator: e.target.value,
+                          })
+                        }
                         maxLength={1}
                       />
                     </div>
@@ -462,7 +531,9 @@ export default function SettingsPage() {
                       <Label>Date Format</Label>
                       <Select
                         value={formData.batchDateFormat}
-                        onValueChange={val => setFormData({ ...formData, batchDateFormat: val })}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, batchDateFormat: val })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -478,7 +549,9 @@ export default function SettingsPage() {
                       <Label>Sequence Length</Label>
                       <Select
                         value={formData.batchSequence}
-                        onValueChange={val => setFormData({ ...formData, batchSequence: val })}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, batchSequence: val })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -510,28 +583,45 @@ export default function SettingsPage() {
                     <Layers className="h-5 w-5 text-blue-500" />
                     Production Logic
                   </CardTitle>
-                  <CardDescription>Configure automation and validation rules for manufacturing.</CardDescription>
+                  <CardDescription>
+                    Configure automation and validation rules for manufacturing.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">Auto-Approve Batches</Label>
-                      <p className="text-sm text-slate-500">Skip the 'Planned' state and move directly to execution.</p>
+                      <p className="text-sm text-slate-500">
+                        Skip the 'Planned' state and move directly to execution.
+                      </p>
                     </div>
                     <Switch
                       checked={formData.autoApproveBatches}
-                      onCheckedChange={checked => setFormData({ ...formData, autoApproveBatches: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          autoApproveBatches: checked,
+                        })
+                      }
                     />
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">Daily Auto-Batching</Label>
-                      <p className="text-sm text-slate-500">Automatically generate batches from active templates daily.</p>
+                      <p className="text-sm text-slate-500">
+                        Automatically generate batches from active templates
+                        daily.
+                      </p>
                     </div>
                     <Switch
                       checked={formData.autoCreateDailyBatches}
-                      onCheckedChange={checked => setFormData({ ...formData, autoCreateDailyBatches: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          autoCreateDailyBatches: checked,
+                        })
+                      }
                     />
                   </div>
                   <Separator />
@@ -542,15 +632,19 @@ export default function SettingsPage() {
                       </Label>
                       <Select
                         value={formData.defaultBakerId}
-                        onValueChange={val => setFormData({ ...formData, defaultBakerId: val })}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, defaultBakerId: val })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select default baker" />
                         </SelectTrigger>
                         <SelectContent>
-                          {bakers?.map(baker => (
+                          {bakers?.map((baker) => (
                             <SelectItem key={baker.id} value={baker.id}>
-                              {baker.name || baker.member?.user?.name || 'Unnamed Baker'}
+                              {baker.name ||
+                                baker.member?.user?.name ||
+                                "Unnamed Baker"}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -560,15 +654,26 @@ export default function SettingsPage() {
                       <Label className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" /> Timezone
                       </Label>
-                      <Select value={formData.timezone} onValueChange={val => setFormData({ ...formData, timezone: val })}>
+                      <Select
+                        value={formData.timezone}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, timezone: val })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="UTC">UTC</SelectItem>
-                          <SelectItem value="Africa/Nairobi">Nairobi (EAT)</SelectItem>
-                          <SelectItem value="Europe/London">London (GMT/BST)</SelectItem>
-                          <SelectItem value="America/New_York">New York (ET)</SelectItem>
+                          <SelectItem value="Africa/Nairobi">
+                            Nairobi (EAT)
+                          </SelectItem>
+                          <SelectItem value="Europe/London">
+                            London (GMT/BST)
+                          </SelectItem>
+                          <SelectItem value="America/New_York">
+                            New York (ET)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -578,7 +683,7 @@ export default function SettingsPage() {
             </>
           )}
 
-          {activeTab === 'security' && (
+          {activeTab === "security" && (
             <div className="space-y-6">
               <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                 <CardHeader>
@@ -586,40 +691,51 @@ export default function SettingsPage() {
                     <Fingerprint className="h-5 w-5 text-indigo-500" />
                     Access Control
                   </CardTitle>
-                  <CardDescription>Manage how bakers authenticate with the bakery terminals.</CardDescription>
+                  <CardDescription>
+                    Manage how bakers authenticate with the bakery terminals.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label>Authentication Mode</Label>
                     <Select
                       value={formData.authMode}
-                      onValueChange={val => setFormData({ ...formData, authMode: val as any })}
+                      onValueChange={(val) =>
+                        setFormData({ ...formData, authMode: val as any })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="SSO">Dashboard Single Sign-On</SelectItem>
-                        <SelectItem value="CARD_PIN">Staff Card & PIN</SelectItem>
+                        <SelectItem value="SSO">
+                          Dashboard Single Sign-On
+                        </SelectItem>
+                        <SelectItem value="CARD_PIN">
+                          Staff Card & PIN
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-slate-500 mt-2">
-                      {formData.authMode === 'SSO'
-                        ? 'Bakers will be logged in automatically using their existing dashboard session.'
-                        : 'Bakers must tap their NFC card and enter their PIN to access the terminal.'}
+                      {formData.authMode === "SSO"
+                        ? "Bakers will be logged in automatically using their existing dashboard session."
+                        : "Bakers must tap their NFC card and enter their PIN to access the terminal."}
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              {localStorage.getItem('bakery_local_mode') === 'true' && (
+              {localStorage.getItem("bakery_local_mode") === "true" && (
                 <Card className="border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-amber-500">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
                       <Shield className="h-5 w-5 text-amber-500" />
                       Local Admin Credentials
                     </CardTitle>
-                    <CardDescription>Update the email and password for the local administrative account.</CardDescription>
+                    <CardDescription>
+                      Update the email and password for the local administrative
+                      account.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -629,7 +745,12 @@ export default function SettingsPage() {
                         type="email"
                         placeholder="admin@bakery.local"
                         value={localAdminForm.email}
-                        onChange={(e) => setLocalAdminForm({ ...localAdminForm, email: e.target.value })}
+                        onChange={(e) =>
+                          setLocalAdminForm({
+                            ...localAdminForm,
+                            email: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -640,17 +761,29 @@ export default function SettingsPage() {
                           type="password"
                           placeholder="••••••••"
                           value={localAdminForm.password}
-                          onChange={(e) => setLocalAdminForm({ ...localAdminForm, password: e.target.value })}
+                          onChange={(e) =>
+                            setLocalAdminForm({
+                              ...localAdminForm,
+                              password: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm Password</Label>
+                        <Label htmlFor="confirm-password">
+                          Confirm Password
+                        </Label>
                         <Input
                           id="confirm-password"
                           type="password"
                           placeholder="••••••••"
                           value={localAdminForm.confirmPassword}
-                          onChange={(e) => setLocalAdminForm({ ...localAdminForm, confirmPassword: e.target.value })}
+                          onChange={(e) =>
+                            setLocalAdminForm({
+                              ...localAdminForm,
+                              confirmPassword: e.target.value,
+                            })
+                          }
                         />
                       </div>
                     </div>
@@ -660,9 +793,16 @@ export default function SettingsPage() {
                       size="sm"
                       className="bg-amber-600 hover:bg-amber-700"
                       onClick={handleUpdateLocalAdmin}
-                      disabled={isUpdatingLocalAdmin || (!localAdminForm.email && !localAdminForm.password)}
+                      disabled={
+                        isUpdatingLocalAdmin ||
+                        (!localAdminForm.email && !localAdminForm.password)
+                      }
                     >
-                      {isUpdatingLocalAdmin ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                      {isUpdatingLocalAdmin ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
                       Update Admin Credentials
                     </Button>
                   </CardFooter>
@@ -671,190 +811,280 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeTab === 'notifications' && (
+          {activeTab === "notifications" && (
             <div className="space-y-6">
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-rose-500" />
-                  Alerting & Notifications
-                </CardTitle>
-                <CardDescription>Configure system alerts for stock and quality control.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Low Stock Alerts</Label>
-                    <p className="text-sm text-slate-500">Notify operators when ingredient levels fall below reorder points.</p>
-                  </div>
-                  <Switch
-                    checked={formData.lowStockAlerts}
-                    onCheckedChange={checked => setFormData({ ...formData, lowStockAlerts: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label htmlFor="expiryWarning">Expiry Warning Window (Days)</Label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      id="expiryWarning"
-                      type="number"
-                      className="w-24"
-                      value={formData.expiryWarningDays}
-                      onChange={e =>
-                        setFormData({ ...formData, expiryWarningDays: parseInt(e.target.value) || 0 })
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Bell className="h-5 w-5 text-rose-500" />
+                    Alerting & Notifications
+                  </CardTitle>
+                  <CardDescription>
+                    Configure system alerts for stock and quality control.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Low Stock Alerts</Label>
+                      <p className="text-sm text-slate-500">
+                        Notify operators when ingredient levels fall below
+                        reorder points.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.lowStockAlerts}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, lowStockAlerts: checked })
                       }
                     />
-                    <span className="text-sm text-slate-500">Days before expiration to show 'Near Expiry' warnings.</span>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Cloud className="h-5 w-5 text-indigo-500" />
-                  Scryme Chat Production Reports
-                </CardTitle>
-                <CardDescription>Configure weekly production reports sent to Scryme Chat.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Enable Weekly Reports</Label>
-                    <p className="text-sm text-slate-500">Send a summary of production activity every week.</p>
-                  </div>
-                  <Switch
-                    checked={formData.scrymeReportEnabled}
-                    onCheckedChange={checked => setFormData({ ...formData, scrymeReportEnabled: checked })}
-                  />
-                </div>
-
-                {formData.scrymeReportEnabled && (
-                  <>
-                    <Separator />
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Delivery Day</Label>
-                        <Select
-                          value={formData.scrymeReportDay.toString()}
-                          onValueChange={val => setFormData({ ...formData, scrymeReportDay: parseInt(val) })}
-                        >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">Sunday</SelectItem>
-                            <SelectItem value="1">Monday</SelectItem>
-                            <SelectItem value="2">Tuesday</SelectItem>
-                            <SelectItem value="3">Wednesday</SelectItem>
-                            <SelectItem value="4">Thursday</SelectItem>
-                            <SelectItem value="5">Friday</SelectItem>
-                            <SelectItem value="6">Saturday</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Delivery Time (HH:MM)</Label>
-                        <Input
-                          type="time"
-                          value={formData.scrymeReportTime}
-                          onChange={e => setFormData({ ...formData, scrymeReportTime: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Target Channel Slug</Label>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="expiryWarning">
+                      Expiry Warning Window (Days)
+                    </Label>
+                    <div className="flex items-center gap-4">
                       <Input
-                        value={formData.scrymeReportChannel || ''}
-                        onChange={e => setFormData({ ...formData, scrymeReportChannel: e.target.value })}
-                        placeholder="production-reports"
+                        id="expiryWarning"
+                        type="number"
+                        className="w-24"
+                        value={formData.expiryWarningDays}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            expiryWarningDays: parseInt(e.target.value) || 0,
+                          })
+                        }
                       />
-                      <p className="text-[10px] text-slate-500">The channel in Scryme Chat where the report will be posted.</p>
+                      <span className="text-sm text-slate-500">
+                        Days before expiration to show 'Near Expiry' warnings.
+                      </span>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                    <div className="space-y-3">
-                      <Label>Report Sections</Label>
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Cloud className="h-5 w-5 text-indigo-500" />
+                    Scryme Chat Production Reports
+                  </CardTitle>
+                  <CardDescription>
+                    Configure weekly production reports sent to Scryme Chat.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Enable Weekly Reports</Label>
+                      <p className="text-sm text-slate-500">
+                        Send a summary of production activity every week.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.scrymeReportEnabled}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          scrymeReportEnabled: checked,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {formData.scrymeReportEnabled && (
+                    <>
+                      <Separator />
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="section-batches"
-                            checked={formData.scrymeReportSections?.batches}
-                            onCheckedChange={checked => setFormData({
-                              ...formData,
-                              scrymeReportSections: { ...formData.scrymeReportSections, batches: checked }
-                            })}
-                          />
-                          <Label htmlFor="section-batches" className="text-sm">Batch Summary</Label>
+                        <div className="space-y-2">
+                          <Label>Delivery Day</Label>
+                          <Select
+                            value={formData.scrymeReportDay.toString()}
+                            onValueChange={(val) =>
+                              setFormData({
+                                ...formData,
+                                scrymeReportDay: parseInt(val),
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">Sunday</SelectItem>
+                              <SelectItem value="1">Monday</SelectItem>
+                              <SelectItem value="2">Tuesday</SelectItem>
+                              <SelectItem value="3">Wednesday</SelectItem>
+                              <SelectItem value="4">Thursday</SelectItem>
+                              <SelectItem value="5">Friday</SelectItem>
+                              <SelectItem value="6">Saturday</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="section-waste"
-                            checked={formData.scrymeReportSections?.waste}
-                            onCheckedChange={checked => setFormData({
-                              ...formData,
-                              scrymeReportSections: { ...formData.scrymeReportSections, waste: checked }
-                            })}
+                        <div className="space-y-2">
+                          <Label>Delivery Time (HH:MM)</Label>
+                          <Input
+                            type="time"
+                            value={formData.scrymeReportTime}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                scrymeReportTime: e.target.value,
+                              })
+                            }
                           />
-                          <Label htmlFor="section-waste" className="text-sm">Waste Analysis</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="section-yields"
-                            checked={formData.scrymeReportSections?.yields}
-                            onCheckedChange={checked => setFormData({
-                              ...formData,
-                              scrymeReportSections: { ...formData.scrymeReportSections, yields: checked }
-                            })}
-                          />
-                          <Label htmlFor="section-yields" className="text-sm">Production Yields</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="section-top_recipes"
-                            checked={formData.scrymeReportSections?.top_recipes}
-                            onCheckedChange={checked => setFormData({
-                              ...formData,
-                              scrymeReportSections: { ...formData.scrymeReportSections, top_recipes: checked }
-                            })}
-                          />
-                          <Label htmlFor="section-top_recipes" className="text-sm">Top Recipes</Label>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">Test Configuration</p>
-                        <p className="text-xs text-slate-500">Send a sample report to Scryme Chat immediately.</p>
+                      <div className="space-y-2">
+                        <Label>Target Channel Slug</Label>
+                        <Input
+                          value={formData.scrymeReportChannel || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              scrymeReportChannel: e.target.value,
+                            })
+                          }
+                          placeholder="production-reports"
+                        />
+                        <p className="text-[10px] text-slate-500">
+                          The channel in Scryme Chat where the report will be
+                          posted.
+                        </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleTestReport}
-                        disabled={isTestingReport}
-                      >
-                        {isTestingReport ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
-                        Send Test Report
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+
+                      <div className="space-y-3">
+                        <Label>Report Sections</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="section-batches"
+                              checked={formData.scrymeReportSections?.batches}
+                              onCheckedChange={(checked) =>
+                                setFormData({
+                                  ...formData,
+                                  scrymeReportSections: {
+                                    ...formData.scrymeReportSections,
+                                    batches: checked,
+                                  },
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="section-batches"
+                              className="text-sm"
+                            >
+                              Batch Summary
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="section-waste"
+                              checked={formData.scrymeReportSections?.waste}
+                              onCheckedChange={(checked) =>
+                                setFormData({
+                                  ...formData,
+                                  scrymeReportSections: {
+                                    ...formData.scrymeReportSections,
+                                    waste: checked,
+                                  },
+                                })
+                              }
+                            />
+                            <Label htmlFor="section-waste" className="text-sm">
+                              Waste Analysis
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="section-yields"
+                              checked={formData.scrymeReportSections?.yields}
+                              onCheckedChange={(checked) =>
+                                setFormData({
+                                  ...formData,
+                                  scrymeReportSections: {
+                                    ...formData.scrymeReportSections,
+                                    yields: checked,
+                                  },
+                                })
+                              }
+                            />
+                            <Label htmlFor="section-yields" className="text-sm">
+                              Production Yields
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="section-top_recipes"
+                              checked={
+                                formData.scrymeReportSections?.top_recipes
+                              }
+                              onCheckedChange={(checked) =>
+                                setFormData({
+                                  ...formData,
+                                  scrymeReportSections: {
+                                    ...formData.scrymeReportSections,
+                                    top_recipes: checked,
+                                  },
+                                })
+                              }
+                            />
+                            <Label
+                              htmlFor="section-top_recipes"
+                              className="text-sm"
+                            >
+                              Top Recipes
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Test Configuration
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Send a sample report to Scryme Chat immediately.
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleTestReport}
+                          disabled={isTestingReport}
+                        >
+                          {isTestingReport ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Zap className="h-4 w-4 mr-2" />
+                          )}
+                          Send Test Report
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
 
-          {activeTab === 'units' && <UnitsSettingsSection />}
+          {activeTab === "units" && <UnitsSettingsSection />}
 
-          {activeTab === 'branding' && (
+          {activeTab === "branding" && (
             <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <Palette className="h-5 w-5 text-emerald-500" />
                   Visual Customisation
                 </CardTitle>
-                <CardDescription>Personalise the terminal experience with your bakery's branding.</CardDescription>
+                <CardDescription>
+                  Personalise the terminal experience with your bakery's
+                  branding.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -863,7 +1093,12 @@ export default function SettingsPage() {
                     <Input
                       id="bakeryName"
                       value={brandingData.name}
-                      onChange={e => setBrandingData({ ...brandingData, name: e.target.value })}
+                      onChange={(e) =>
+                        setBrandingData({
+                          ...brandingData,
+                          name: e.target.value,
+                        })
+                      }
                       placeholder="e.g. Scryme Bakery"
                     />
                   </div>
@@ -872,7 +1107,12 @@ export default function SettingsPage() {
                     <Input
                       id="logoUrl"
                       value={brandingData.logoUrl}
-                      onChange={e => setBrandingData({ ...brandingData, logoUrl: e.target.value })}
+                      onChange={(e) =>
+                        setBrandingData({
+                          ...brandingData,
+                          logoUrl: e.target.value,
+                        })
+                      }
                       placeholder="https://..."
                     />
                   </div>
@@ -886,19 +1126,25 @@ export default function SettingsPage() {
                         type="color"
                         className="w-12 h-10 p-1"
                         value={brandingData.colors.primary}
-                        onChange={e =>
+                        onChange={(e) =>
                           setBrandingData({
                             ...brandingData,
-                            colors: { ...brandingData.colors, primary: e.target.value },
+                            colors: {
+                              ...brandingData.colors,
+                              primary: e.target.value,
+                            },
                           })
                         }
                       />
                       <Input
                         value={brandingData.colors.primary}
-                        onChange={e =>
+                        onChange={(e) =>
                           setBrandingData({
                             ...brandingData,
-                            colors: { ...brandingData.colors, primary: e.target.value },
+                            colors: {
+                              ...brandingData.colors,
+                              primary: e.target.value,
+                            },
                           })
                         }
                       />
@@ -911,19 +1157,25 @@ export default function SettingsPage() {
                         type="color"
                         className="w-12 h-10 p-1"
                         value={brandingData.colors.secondary}
-                        onChange={e =>
+                        onChange={(e) =>
                           setBrandingData({
                             ...brandingData,
-                            colors: { ...brandingData.colors, secondary: e.target.value },
+                            colors: {
+                              ...brandingData.colors,
+                              secondary: e.target.value,
+                            },
                           })
                         }
                       />
                       <Input
                         value={brandingData.colors.secondary}
-                        onChange={e =>
+                        onChange={(e) =>
                           setBrandingData({
                             ...brandingData,
-                            colors: { ...brandingData.colors, secondary: e.target.value },
+                            colors: {
+                              ...brandingData.colors,
+                              secondary: e.target.value,
+                            },
                           })
                         }
                       />
@@ -936,19 +1188,25 @@ export default function SettingsPage() {
                         type="color"
                         className="w-12 h-10 p-1"
                         value={brandingData.colors.accent}
-                        onChange={e =>
+                        onChange={(e) =>
                           setBrandingData({
                             ...brandingData,
-                            colors: { ...brandingData.colors, accent: e.target.value },
+                            colors: {
+                              ...brandingData.colors,
+                              accent: e.target.value,
+                            },
                           })
                         }
                       />
                       <Input
                         value={brandingData.colors.accent}
-                        onChange={e =>
+                        onChange={(e) =>
                           setBrandingData({
                             ...brandingData,
-                            colors: { ...brandingData.colors, accent: e.target.value },
+                            colors: {
+                              ...brandingData.colors,
+                              accent: e.target.value,
+                            },
                           })
                         }
                       />
@@ -961,11 +1219,24 @@ export default function SettingsPage() {
 
           {/* Footer Actions */}
           <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-end gap-3 p-4">
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+            >
               <Undo2 className="h-4 w-4 mr-2" /> Reset
             </Button>
-            <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={handleSave} disabled={isUpdating}>
-              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+            <Button
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={handleSave}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
               Save All Settings
             </Button>
           </div>
@@ -982,18 +1253,18 @@ function UnitsSettingsSection() {
     createMutation,
     updateMutation,
     deleteMutation,
-    loading
+    loading,
   } = useUnits();
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
   const [unitForm, setUnitForm] = useState({
-    name: '',
-    symbol: '',
-    type: 'MASS',
-    baseSystemUnitId: '',
+    name: "",
+    symbol: "",
+    type: "MASS",
+    baseSystemUnitId: "",
     conversionFactor: 1,
-    description: '',
+    description: "",
   });
 
   const handleSaveUnit = async () => {
@@ -1006,12 +1277,12 @@ function UnitsSettingsSection() {
       setIsAdding(false);
       setEditingUnit(null);
       setUnitForm({
-        name: '',
-        symbol: '',
-        type: 'MASS',
-        baseSystemUnitId: '',
+        name: "",
+        symbol: "",
+        type: "MASS",
+        baseSystemUnitId: "",
         conversionFactor: 1,
-        description: '',
+        description: "",
       });
     } catch (error) {
       // toast handled in hook
@@ -1024,14 +1295,19 @@ function UnitsSettingsSection() {
       name: unit.name,
       symbol: unit.symbol,
       type: unit.type,
-      baseSystemUnitId: unit.baseSystemUnitId || '',
+      baseSystemUnitId: unit.baseSystemUnitId || "",
       conversionFactor: unit.conversionFactor || 1,
-      description: unit.description || '',
+      description: unit.description || "",
     });
     setIsAdding(true);
   };
 
-  if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
+  if (loading)
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
 
   return (
     <div className="space-y-6">
@@ -1042,9 +1318,18 @@ function UnitsSettingsSection() {
               <Scale className="h-5 w-5 text-indigo-500" />
               Custom Units
             </CardTitle>
-            <CardDescription>Manage organization-specific units and their conversions.</CardDescription>
+            <CardDescription>
+              Manage organization-specific units and their conversions.
+            </CardDescription>
           </div>
-          <Button size="sm" onClick={() => { setIsAdding(true); setEditingUnit(null); }} className="bg-indigo-600 hover:bg-indigo-700">
+          <Button
+            size="sm"
+            onClick={() => {
+              setIsAdding(true);
+              setEditingUnit(null);
+            }}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
             <Plus className="h-4 w-4 mr-2" /> Add Unit
           </Button>
         </CardHeader>
@@ -1057,21 +1342,37 @@ function UnitsSettingsSection() {
             ) : (
               <div className="grid gap-4">
                 {orgUnits.map((unit) => (
-                  <div key={unit.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <div
+                    key={unit.id}
+                    className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800"
+                  >
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold">{unit.name}</span>
-                        <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-xs font-mono">{unit.symbol}</span>
+                        <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 rounded text-xs font-mono">
+                          {unit.symbol}
+                        </span>
                       </div>
                       <p className="text-xs text-slate-500">
-                        Type: {unit.type} • 1 {unit.symbol} = {unit.conversionFactor} {systemUnits.find(s => s.id === unit.baseSystemUnitId)?.symbol || 'base units'}
+                        Type: {unit.type} • 1 {unit.symbol} ={" "}
+                        {unit.conversionFactor}{" "}
+                        {systemUnits.find((s) => s.id === unit.baseSystemUnitId)
+                          ?.symbol || "base units"}
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => startEdit(unit)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEdit(unit)}
+                      >
                         <Edit className="h-4 w-4 text-slate-400" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation(unit.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteMutation(unit.id)}
+                      >
                         <Trash2 className="h-4 w-4 text-rose-400" />
                       </Button>
                     </div>
@@ -1086,7 +1387,9 @@ function UnitsSettingsSection() {
       <Dialog open={isAdding} onOpenChange={setIsAdding}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{editingUnit ? 'Edit Unit' : 'New Custom Unit'}</DialogTitle>
+            <DialogTitle>
+              {editingUnit ? "Edit Unit" : "New Custom Unit"}
+            </DialogTitle>
             <DialogDescription>
               Define a new unit of measurement for your bakery.
             </DialogDescription>
@@ -1095,18 +1398,35 @@ function UnitsSettingsSection() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Unit Name</Label>
-                <Input value={unitForm.name} onChange={e => setUnitForm({...unitForm, name: e.target.value})} placeholder="e.g. Flour Bag" />
+                <Input
+                  value={unitForm.name}
+                  onChange={(e) =>
+                    setUnitForm({ ...unitForm, name: e.target.value })
+                  }
+                  placeholder="e.g. Flour Bag"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Symbol</Label>
-                <Input value={unitForm.symbol} onChange={e => setUnitForm({...unitForm, symbol: e.target.value})} placeholder="e.g. f-bag" />
+                <Input
+                  value={unitForm.symbol}
+                  onChange={(e) =>
+                    setUnitForm({ ...unitForm, symbol: e.target.value })
+                  }
+                  placeholder="e.g. f-bag"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={unitForm.type} onValueChange={v => setUnitForm({...unitForm, type: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={unitForm.type}
+                  onValueChange={(v) => setUnitForm({ ...unitForm, type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="MASS">Mass / Weight</SelectItem>
                     <SelectItem value="VOLUME">Volume</SelectItem>
@@ -1116,28 +1436,63 @@ function UnitsSettingsSection() {
               </div>
               <div className="space-y-2">
                 <Label>Base System Unit</Label>
-                <Select value={unitForm.baseSystemUnitId} onValueChange={v => setUnitForm({...unitForm, baseSystemUnitId: v})}>
-                  <SelectTrigger><SelectValue placeholder="Select base unit" /></SelectTrigger>
+                <Select
+                  value={unitForm.baseSystemUnitId}
+                  onValueChange={(v) =>
+                    setUnitForm({ ...unitForm, baseSystemUnitId: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select base unit" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {systemUnits.filter(u => u.type === unitForm.type).map(u => (
-                      <SelectItem key={u.id} value={u.id}>{u.name} ({u.symbol})</SelectItem>
-                    ))}
+                    {systemUnits
+                      .filter((u) => u.type === unitForm.type)
+                      .map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name} ({u.symbol})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Conversion Factor (1 {unitForm.symbol || 'Unit'} = X Base Units)</Label>
-              <Input type="number" value={unitForm.conversionFactor} onChange={e => setUnitForm({...unitForm, conversionFactor: parseFloat(e.target.value) || 0})} />
+              <Label>
+                Conversion Factor (1 {unitForm.symbol || "Unit"} = X Base Units)
+              </Label>
+              <Input
+                type="number"
+                value={unitForm.conversionFactor}
+                onChange={(e) =>
+                  setUnitForm({
+                    ...unitForm,
+                    conversionFactor: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
             </div>
             <div className="space-y-2">
               <Label>Description (Optional)</Label>
-              <Input value={unitForm.description} onChange={e => setUnitForm({...unitForm, description: e.target.value})} placeholder="e.g. Standard 25kg bag of wheat flour" />
+              <Input
+                value={unitForm.description}
+                onChange={(e) =>
+                  setUnitForm({ ...unitForm, description: e.target.value })
+                }
+                placeholder="e.g. Standard 25kg bag of wheat flour"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsAdding(false)}>Cancel</Button>
-            <Button onClick={handleSaveUnit} className="bg-indigo-600 hover:bg-indigo-700">Save Unit</Button>
+            <Button variant="ghost" onClick={() => setIsAdding(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveUnit}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              Save Unit
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

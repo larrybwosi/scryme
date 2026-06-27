@@ -1,12 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import sdk, { isTauri, isOfflineMode } from '@/lib/sdk';
-import { tauriInvoke } from '@/lib/tauri-bridge';
-import { InventoryAdjustment, InventoryItem, InventoryMovement } from '../types/inventory';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import sdk, { isTauri, isOfflineMode } from "@/lib/sdk";
+import { tauriInvoke } from "@/lib/tauri-bridge";
+import {
+  InventoryAdjustment,
+  InventoryItem,
+  InventoryMovement,
+} from "../types/inventory";
 
 // fallow-ignore-next-line unused-exports
 export const useListInventory = () => {
   return useQuery({
-    queryKey: ['inventory'],
+    queryKey: ["inventory"],
     queryFn: async () => await sdk.inventory.list(),
   });
 };
@@ -16,9 +20,10 @@ export const useCreateInventoryItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<InventoryItem>) => await sdk.client.post('/inventory', data),
+    mutationFn: async (data: Partial<InventoryItem>) =>
+      await sdk.client.post("/inventory", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
 };
@@ -26,7 +31,7 @@ export const useCreateInventoryItem = () => {
 // fallow-ignore-next-line unused-exports
 export const useGetInventoryItem = (inventoryId: string) => {
   return useQuery({
-    queryKey: ['inventory', inventoryId],
+    queryKey: ["inventory", inventoryId],
     queryFn: async () => await sdk.client.get(`/inventory/${inventoryId}`),
     enabled: !!inventoryId,
   });
@@ -37,13 +42,14 @@ export const useUpdateInventoryItem = (inventoryId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<InventoryItem>) => await sdk.client.patch(`/inventory/${inventoryId}`, data),
+    mutationFn: async (data: Partial<InventoryItem>) =>
+      await sdk.client.patch(`/inventory/${inventoryId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['inventory'],
+        queryKey: ["inventory"],
       });
       queryClient.invalidateQueries({
-        queryKey: ['inventory', inventoryId],
+        queryKey: ["inventory", inventoryId],
       });
     },
   });
@@ -54,10 +60,11 @@ export const useDeleteInventoryItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (inventoryId: string) => await sdk.client.delete(`/inventory/${inventoryId}`),
+    mutationFn: async (inventoryId: string) =>
+      await sdk.client.delete(`/inventory/${inventoryId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['inventory'],
+        queryKey: ["inventory"],
       });
     },
   });
@@ -66,8 +73,9 @@ export const useDeleteInventoryItem = () => {
 // fallow-ignore-next-line unused-exports
 export const useListInventoryMovements = (inventoryId: string) => {
   return useQuery({
-    queryKey: ['inventory-movements', inventoryId],
-    queryFn: async () => await sdk.client.get(`/inventory/${inventoryId}/movements`),
+    queryKey: ["inventory-movements", inventoryId],
+    queryFn: async () =>
+      await sdk.client.get(`/inventory/${inventoryId}/movements`),
     enabled: !!inventoryId,
   });
 };
@@ -77,10 +85,11 @@ export const useCreateInventoryMovement = (inventoryId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<InventoryMovement>) => await sdk.client.post(`/inventory/${inventoryId}/movements`, data),
+    mutationFn: async (data: Partial<InventoryMovement>) =>
+      await sdk.client.post(`/inventory/${inventoryId}/movements`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['inventory-movements', inventoryId],
+        queryKey: ["inventory-movements", inventoryId],
       });
     },
   });
@@ -89,21 +98,28 @@ export const useCreateInventoryMovement = (inventoryId: string) => {
 // fallow-ignore-next-line unused-exports
 export const useListInventoryAdjustments = (inventoryId: string) => {
   return useQuery({
-    queryKey: ['inventory-adjustments', inventoryId],
-    queryFn: async () => await sdk.client.get(`/inventory/${inventoryId}/adjustments`),
+    queryKey: ["inventory-adjustments", inventoryId],
+    queryFn: async () =>
+      await sdk.client.get(`/inventory/${inventoryId}/adjustments`),
     enabled: !!inventoryId,
   });
 };
 
 // fallow-ignore-next-line unused-exports
-export const useApproveInventoryAdjustment = (inventoryId: string, adjustmentId: string) => {
+export const useApproveInventoryAdjustment = (
+  inventoryId: string,
+  adjustmentId: string,
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => await sdk.client.post(`/inventory/${inventoryId}/adjustments/${adjustmentId}/approve`),
+    mutationFn: async () =>
+      await sdk.client.post(
+        `/inventory/${inventoryId}/adjustments/${adjustmentId}/approve`,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['inventory-adjustments', inventoryId],
+        queryKey: ["inventory-adjustments", inventoryId],
       });
     },
   });
@@ -114,17 +130,20 @@ export const useRestockInventory = () => {
 
   return useMutation({
     mutationFn: async (data: any) => {
-        if (isTauri() || isOfflineMode()) {
-            return tauriInvoke('restock_inventory', { userId: 'local-user', data });
-        }
-        return sdk.client.post(`/catalog/products/${data?.productId}/variants/${data?.variantId}/restock`, data);
+      if (isTauri() || isOfflineMode()) {
+        return tauriInvoke("restock_inventory", { userId: "local-user", data });
+      }
+      return sdk.client.post(
+        `/catalog/products/${data?.productId}/variants/${data?.variantId}/restock`,
+        data,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['inventory'],
+        queryKey: ["inventory"],
       });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['raw-materials'] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["raw-materials"] });
     },
   });
 };

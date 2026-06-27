@@ -62,7 +62,11 @@ export class BakeryService {
    * ⚡ Bolt: Optimized using database-level aggregation and grouping to avoid O(N) in-memory processing.
    * This reduces memory usage and network overhead, especially for organizations with many batches.
    */
-  async getProductionStats(organizationId: string, startDate: Date, endDate: Date) {
+  async getProductionStats(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const where = {
       organizationId,
       completedAt: {
@@ -89,7 +93,7 @@ export class BakeryService {
       }),
     ]);
 
-    const recipeIds = groups.map((g) => g.recipeId);
+    const recipeIds = groups.map(g => g.recipeId);
 
     // Fetch only necessary recipe details for the recipes found in the batches
     const recipes = await this.prisma.client.recipe.findMany({
@@ -102,15 +106,14 @@ export class BakeryService {
       },
     });
 
-    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+    const recipeMap = new Map(recipes.map(r => [r.id, r]));
 
-    const recipeStats = groups.map((g) => {
+    const recipeStats = groups.map(g => {
       const recipe = recipeMap.get(g.recipeId);
       return {
         name: recipe?.name || "Unknown",
         quantity: Number(g._sum.actualQuantity || 0),
-        unit:
-          recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
+        unit: recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
         waste: Number(g._sum.wasteQuantity || 0),
       };
     });
@@ -129,38 +132,39 @@ export class BakeryService {
 
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    const [batches, recipes, bakers, stockItems, recipesList] = await Promise.all([
-      this.prisma.client.batch.findMany({
-        where: { organizationId },
-        take: 10,
-        orderBy: { scheduledStartAt: "desc" },
-        include: {
-          recipe: { select: { id: true, name: true } },
-          leadBaker: {
-            include: {
-              member: { include: { user: { select: { name: true } } } },
+    const [batches, recipes, bakers, stockItems, recipesList] =
+      await Promise.all([
+        this.prisma.client.batch.findMany({
+          where: { organizationId },
+          take: 10,
+          orderBy: { scheduledStartAt: "desc" },
+          include: {
+            recipe: { select: { id: true, name: true } },
+            leadBaker: {
+              include: {
+                member: { include: { user: { select: { name: true } } } },
+              },
             },
           },
-        },
-      }),
-      this.prisma.client.recipe.count({ where: { organizationId } }),
-      this.prisma.client.bakeryBaker.count({
-        where: { bakerySettings: { organizationId } },
-      }),
-      this.prisma.client.productVariantStock.findMany({
-        where: {
-          organizationId,
-          variant: { product: { type: "RAW_MATERIAL" as any } },
-        },
-        include: {
-          variant: { include: { baseUnit: true, baseOrgUnit: true } },
-        },
-      }),
-      this.prisma.client.recipe.findMany({
-        where: { organizationId },
-        include: { category: true },
-      }),
-    ]);
+        }),
+        this.prisma.client.recipe.count({ where: { organizationId } }),
+        this.prisma.client.bakeryBaker.count({
+          where: { bakerySettings: { organizationId } },
+        }),
+        this.prisma.client.productVariantStock.findMany({
+          where: {
+            organizationId,
+            variant: { product: { type: "RAW_MATERIAL" as any } },
+          },
+          include: {
+            variant: { include: { baseUnit: true, baseOrgUnit: true } },
+          },
+        }),
+        this.prisma.client.recipe.findMany({
+          where: { organizationId },
+          include: { category: true },
+        }),
+      ]);
 
     const lowStockIngredients = stockItems
       .filter(s => Number(s.availableStock) <= Number(s.reorderPoint || 0))
@@ -170,7 +174,9 @@ export class BakeryService {
         sku: s.variant.sku,
         current: Number(s.availableStock),
         reorder: Number(s.reorderPoint || 0),
-        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        max: Number(
+          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
+        ),
         unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
       }));
 
@@ -181,7 +187,8 @@ export class BakeryService {
     });
 
     const totalInventoryValue = stockItems.reduce(
-      (acc, s) => acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
+      (acc, s) =>
+        acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
       0,
     );
 
@@ -193,7 +200,8 @@ export class BakeryService {
       recipesCount: recipes,
       bakersCount: bakers,
       averageRecipeCost: recipesList.length
-        ? recipesList.reduce((acc, r) => acc + Number(r.costPrice || 0), 0) / recipesList.length
+        ? recipesList.reduce((acc, r) => acc + Number(r.costPrice || 0), 0) /
+          recipesList.length
         : 0,
       recipesByCategory,
       totalInventoryValue,
@@ -203,7 +211,9 @@ export class BakeryService {
         name: s.variant.name,
         current: Number(s.availableStock),
         reorder: Number(s.reorderPoint || 0),
-        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        max: Number(
+          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
+        ),
         unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
       })),
       summary: {
@@ -211,10 +221,12 @@ export class BakeryService {
         activeBatches: batches.filter((b: any) => b.status === "IN_PROGRESS")
           .length,
         completedToday: batches.filter((b: any) => {
-            const today = new Date();
-            return b.status === "COMPLETED" &&
-                   b.completedAt &&
-                   b.completedAt.toDateString() === today.toDateString();
+          const today = new Date();
+          return (
+            b.status === "COMPLETED" &&
+            b.completedAt &&
+            b.completedAt.toDateString() === today.toDateString()
+          );
         }).length,
         lowStockItems: lowStockIngredients.length,
       },
@@ -262,7 +274,8 @@ export class BakeryService {
         unitPrice: Number(v.buyingPrice || 0),
         currentStock,
         reorderLevel: v.reorderPoint || 0,
-        maxStock: v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
+        maxStock:
+          v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
         unit: v.baseUnit || v.baseOrgUnit || { symbol: "" },
         category: v.product.category,
         tags: v.tags,
@@ -749,11 +762,13 @@ export class BakeryService {
          * We pre-fetch all stock batches in a single query and aggregate updates
          * to minimize database roundtrips and improve transaction throughput.
          */
-        const stockBatchIds = ingredientConsumptions.map((c: any) => c.stockBatchId);
+        const stockBatchIds = ingredientConsumptions.map(
+          (c: any) => c.stockBatchId,
+        );
         const stockBatches = await tx.stockBatch.findMany({
           where: { id: { in: stockBatchIds } },
         });
-        const stockBatchMap = new Map(stockBatches.map((sb) => [sb.id, sb]));
+        const stockBatchMap = new Map(stockBatches.map(sb => [sb.id, sb]));
 
         const consumptionData = [];
         const movementData = [];
@@ -769,11 +784,14 @@ export class BakeryService {
         for (const consumption of ingredientConsumptions) {
           const stockBatch = stockBatchMap.get(consumption.stockBatchId);
           if (!stockBatch) {
-            throw new NotFoundException(`Stock batch ${consumption.stockBatchId} not found`);
+            throw new NotFoundException(
+              `Stock batch ${consumption.stockBatchId} not found`,
+            );
           }
 
           const qty = new Decimal(consumption.quantity);
-          const currentTotal = stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
+          const currentTotal =
+            stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
           const newTotal = currentTotal.add(qty);
 
           if (stockBatch.currentQuantity.lt(newTotal)) {
@@ -814,7 +832,9 @@ export class BakeryService {
         }
 
         // Batch inserts for consumption records and movements
-        await tx.batchIngredientConsumption.createMany({ data: consumptionData });
+        await tx.batchIngredientConsumption.createMany({
+          data: consumptionData,
+        });
         await tx.stockMovement.createMany({ data: movementData });
 
         // Batch execute all aggregated stock updates concurrently

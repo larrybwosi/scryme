@@ -50,7 +50,7 @@ export class ScrymeService {
       });
 
       // Background sync users for enterprise robust mapping
-      this.syncUsers(organizationId).catch((err) =>
+      this.syncUsers(organizationId).catch(err =>
         this.logger.error(`Initial user sync failed: ${err.message}`),
       );
 
@@ -72,7 +72,9 @@ export class ScrymeService {
     if (!force && config.lastSyncAt) {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       if (config.lastSyncAt > twentyFourHoursAgo) {
-        this.logger.debug(`Skipping automatic Scryme user sync for org ${organizationId}: recently synced`);
+        this.logger.debug(
+          `Skipping automatic Scryme user sync for org ${organizationId}: recently synced`,
+        );
         return;
       }
     }
@@ -224,7 +226,9 @@ export class ScrymeService {
               );
             }
           } catch (err: any) {
-            this.logger.error(`Failed to process Scryme side effects: ${err.message}`);
+            this.logger.error(
+              `Failed to process Scryme side effects: ${err.message}`,
+            );
           }
 
           return { status: "success", message: `Action ${status} processed` };
@@ -275,10 +279,15 @@ export class ScrymeService {
         }
 
         // Send confirmation back to Scryme
-        await this.scrymeClient.updateMessage(workspaceSlug, message.channelSlug || message.channelId, message.id, {
-          content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
-          actions: [],
-        });
+        await this.scrymeClient.updateMessage(
+          workspaceSlug,
+          message.channelSlug || message.channelId,
+          message.id,
+          {
+            content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
+            actions: [],
+          },
+        );
 
         return { status: "success", message: "Windmill job resumed" };
       }

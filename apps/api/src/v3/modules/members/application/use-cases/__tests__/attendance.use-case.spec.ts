@@ -59,7 +59,10 @@ describe("AttendanceUseCase", () => {
       mockPrisma.client.attendanceLog.count.mockResolvedValue(1);
       mockPrisma.client.attendanceLog.findMany.mockResolvedValue(mockLogs);
 
-      const result = await useCase.getAttendanceLogs("org1", { page: 1, limit: 10 });
+      const result = await useCase.getAttendanceLogs("org1", {
+        page: 1,
+        limit: 10,
+      });
 
       expect(result.items).toHaveLength(1);
       expect(result.meta.total).toBe(1);
@@ -74,7 +77,7 @@ describe("AttendanceUseCase", () => {
             member: expect.objectContaining({
               select: expect.objectContaining({
                 user: expect.objectContaining({
-                  select: { name: true }
+                  select: { name: true },
                 }),
               }),
             }),
