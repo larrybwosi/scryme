@@ -54,7 +54,7 @@ export const CustomerFormSchema = z
     deliveryNotes: z.string().optional(),
     pinnedLocation: z.any().optional(),
     tags: z.array(z.string()).optional(),
-    addresses: z.array(AddressFormSchema).optional(),
+    addresses: z.array(AddressFormSchema).optional().nullable(),
 
     // --- NEW FIELDS ---
     isBusiness: z.boolean().optional().default(false), // Trigger for Business Account creation
