@@ -27,15 +27,15 @@ services:
     image: postgres:17-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-scryme}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     networks:
       - scryme-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-scryme}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,15 +44,15 @@ services:
     image: postgres:17-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${ZITADEL_DB_USER:-zitadel}
-      POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD:-zitadel}
-      POSTGRES_DB: ${ZITADEL_DB_NAME:-zitadel}
+      POSTGRES_USER: ${ZITADEL_DB_USER}
+      POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD}
+      POSTGRES_DB: ${ZITADEL_DB_NAME}
     volumes:
       - zitadel_data:/var/lib/postgresql/data
     networks:
       - scryme-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-zitadel} -d $${POSTGRES_DB:-zitadel}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -61,15 +61,15 @@ services:
     image: postgres:17-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${WINDMILL_DB_USER:-windmill}
-      POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD:-windmill}
-      POSTGRES_DB: ${WINDMILL_DB_NAME:-windmill}
+      POSTGRES_USER: ${WINDMILL_DB_USER}
+      POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD}
+      POSTGRES_DB: ${WINDMILL_DB_NAME}
     volumes:
       - windmill_data:/var/lib/postgresql/data
     networks:
       - scryme-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-windmill} -d $${POSTGRES_DB:-windmill}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -93,8 +93,8 @@ services:
     image: rabbitmq:3-management-alpine
     restart: always
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
       - rabbitmq_prod_data:/var/lib/rabbitmq
     networks:
@@ -118,8 +118,8 @@ services:
     image: rustfs/rustfs:latest
     restart: always
     environment:
-      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-admin}
-      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-password}
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
       - RUSTFS_CONSOLE_ENABLE=true
     volumes:
       - rustfs_prod_data:/data
@@ -184,9 +184,9 @@ services:
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
-      - ZITADEL_DATABASE_POSTGRES_USER=${ZITADEL_DB_USER:-zitadel}
-      - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD:-zitadel}
-      - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME:-zitadel}
+      - ZITADEL_DATABASE_POSTGRES_USER=${ZITADEL_DB_USER}
+      - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD}
+      - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME}
       - ZITADEL_DATABASE_POSTGRES_SSL_MODE=disable
     depends_on:
       zitadel-db:
@@ -201,9 +201,9 @@ services:
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
-      - ZITADEL_DATABASE_POSTGRES_USER=${ZITADEL_DB_USER:-zitadel}
-      - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD:-zitadel}
-      - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME:-zitadel}
+      - ZITADEL_DATABASE_POSTGRES_USER=${ZITADEL_DB_USER}
+      - ZITADEL_DATABASE_POSTGRES_PASSWORD=${ZITADEL_DB_PASSWORD}
+      - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME}
       - ZITADEL_DATABASE_POSTGRES_SSL_MODE=disable
       - ZITADEL_EXTERNALDOMAIN=${ZITADEL_DOMAIN:-auth.scryme.local}
       - ZITADEL_EXTERNALPORT=80
@@ -223,7 +223,7 @@ services:
     image: ghcr.io/windmill-labs/windmill:latest
     restart: always
     environment:
-      - DATABASE_URL=postgres://${WINDMILL_DB_USER:-windmill}:${WINDMILL_DB_PASSWORD:-windmill}@windmill-db:5432/${WINDMILL_DB_NAME:-windmill}?sslmode=disable
+      - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=server
     depends_on:
       windmill-db:
@@ -239,7 +239,7 @@ services:
     image: ghcr.io/windmill-labs/windmill:latest
     restart: always
     environment:
-      - DATABASE_URL=postgres://${WINDMILL_DB_USER:-windmill}:${WINDMILL_DB_PASSWORD:-windmill}@windmill-db:5432/${WINDMILL_DB_NAME:-windmill}?sslmode=disable
+      - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=worker
     depends_on:
       - windmill-server
