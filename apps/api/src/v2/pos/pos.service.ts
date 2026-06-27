@@ -1280,7 +1280,7 @@ export class PosService {
       );
     }
 
-    let status = ExpenseStatus.APPROVED;
+    let status: ExpenseStatus = ExpenseStatus.APPROVED;
     if (org.pettyCashAutoApproveThreshold) {
       if (
         amountDecimal.gt(
@@ -1291,7 +1291,9 @@ export class PosService {
       }
     } else if (
       org.expenseApprovalThreshold &&
-      amountDecimal.gte(new Prisma.Decimal(org.expenseApprovalThreshold.toString()))
+      amountDecimal.gte(
+        new Prisma.Decimal(org.expenseApprovalThreshold.toString()),
+      )
     ) {
       status = ExpenseStatus.PENDING;
     }
@@ -1301,7 +1303,7 @@ export class PosService {
     });
     const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
-    return await this.prisma.client.$transaction(async (tx) => {
+    return await this.prisma.client.$transaction(async tx => {
       const expense = await tx.expense.create({
         data: {
           description: validated.description,
@@ -1321,7 +1323,7 @@ export class PosService {
                 approvalDate: new Date(),
               }
             : {}),
-        },
+        } as any,
       });
 
       if (status === ExpenseStatus.APPROVED) {
