@@ -4,15 +4,15 @@ import { PrismaService } from "@/prisma/prisma.service";
 // import { ZitadelService } from "@repo/zitadel/server";
 import { CrmSyncService } from "../../../../crm/infrastructure/services/crm-sync.service";
 
-// vi.mock("@repo/zitadel/server", () => {
-//   return {
-//     ZitadelService: vi.fn().mockImplementation(function() {
-//       return {
-//         getUser: vi.fn().mockResolvedValue({ id: "zit-123" }),
-//       };
-//     }),
-//   };
-// });
+vi.mock("@repo/zitadel/server", () => {
+  return {
+    ZitadelService: vi.fn().mockImplementation(function () {
+      return {
+        getUser: vi.fn().mockResolvedValue({ id: "zit-123" }),
+      };
+    }),
+  };
+});
 
 vi.mock("@repo/windmill/server", () => ({
   emitCustomerCreated: vi.fn().mockResolvedValue({}),
@@ -23,6 +23,7 @@ describe("RegisterCustomerUseCase", () => {
   let prisma: PrismaService;
   let customerRepository: any;
   let crmSyncService: CrmSyncService;
+  let loyaltyService: any;
 
   beforeEach(() => {
     prisma = {
@@ -34,6 +35,7 @@ describe("RegisterCustomerUseCase", () => {
         },
         customer: {
           upsert: vi.fn(),
+          findUnique: vi.fn(),
         },
         address: {
           findFirst: vi.fn(),
@@ -47,10 +49,15 @@ describe("RegisterCustomerUseCase", () => {
       enqueueSyncCustomer: vi.fn().mockResolvedValue({}),
     } as any;
 
+    loyaltyService = {
+      handleCustomerSignup: vi.fn().mockResolvedValue({}),
+    };
+
     useCase = new RegisterCustomerUseCase(
       customerRepository,
       prisma,
       crmSyncService,
+      loyaltyService,
     );
   });
 
@@ -78,5 +85,9 @@ describe("RegisterCustomerUseCase", () => {
     expect(result.name).toBe("John Doe");
     expect(prisma.client.customer.upsert).toHaveBeenCalled();
     expect(crmSyncService.enqueueSyncCustomer).toHaveBeenCalled();
+    expect(loyaltyService.handleCustomerSignup).toHaveBeenCalledWith(
+      organizationId,
+      expect.any(String),
+    );
   });
 });

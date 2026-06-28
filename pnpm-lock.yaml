@@ -83,6 +83,9 @@ importers:
       '@apollo/subgraph':
         specifier: ^2.14.1
         version: 2.14.1(graphql@16.14.2)
+      '@bufbuild/protobuf':
+        specifier: ^2.12.1
+        version: 2.12.1
       '@fastify/cookie':
         specifier: ^11.0.2
         version: 11.0.2
@@ -2489,6 +2492,9 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@bufbuild/protobuf@2.12.1':
+    resolution: {integrity: sha512-BvAMfS6LrgZiryOAZ4pBYucu4wG/Ei/9o9DZ9akbREnMLbPJiom2i8b9C8IsKErQoiKqVhrerzt3kOT/RrzLHg==}
 
   '@bwip-js/browser@4.11.1':
     resolution: {integrity: sha512-PrQhCGF4runk3PXr++VT6DtZqWIqKZit448HgfLSZLUKe5g23ywYl4/VFQU6NMqYgu5D2jYxkY1kv8jCSvLASQ==}
@@ -14520,6 +14526,8 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
     optional: true
+
+  '@bufbuild/protobuf@2.12.1': {}
 
   '@bwip-js/browser@4.11.1': {}
 
