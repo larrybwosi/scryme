@@ -2,6 +2,7 @@ import {
   Injectable,
   Inject,
   NotFoundException,
+  BadRequestException,
   forwardRef,
 } from "@nestjs/common";
 import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
@@ -9,6 +10,7 @@ import { ApiRealtimeService } from "../../../../../common/services/realtime.serv
 import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import { InvoiceUseCase } from "../../../finance/application/use-cases/invoice.use-case";
+import { confirmOrder } from "@repo/shared/actions/transaction/orders";
 
 @Injectable()
 export class UpdateOrderStatusUseCase {
@@ -22,18 +24,42 @@ export class UpdateOrderStatusUseCase {
     private readonly invoiceUseCase: InvoiceUseCase,
   ) {}
 
-  async execute(orderId: string, status: string) {
+  async execute(orderId: string, status: string, memberId?: string) {
     const order = await this.orderRepository.findById(orderId);
     if (!order) {
       throw new NotFoundException("Order not found");
     }
 
     const oldStatus = order.status;
-    order.status = status;
-    const updatedOrder = await this.orderRepository.save(order);
+
+    // Handle stock reservation when moving to CONFIRMED
+    if (status === "CONFIRMED" && oldStatus === "PENDING_CONFIRMATION") {
+      const result = await confirmOrder(
+        order.organizationId,
+        memberId || "SYSTEM",
+        orderId,
+      );
+      if (!result.success) {
+        throw new BadRequestException(result.error || "Failed to confirm order");
+      }
+    } else {
+      order.status = status;
+      await this.orderRepository.save(order);
+    }
+
+    const updatedOrder = await this.orderRepository.findById(orderId);
 
     if (status === "COMPLETED" && oldStatus !== "COMPLETED") {
-      await this.handleOrderCompletion(order);
+      await this.handleOrderCompletion(updatedOrder);
+    }
+
+    // Auto-generate invoice when order is confirmed or processing
+    if (
+      (status === "CONFIRMED" || status === "PROCESSING") &&
+      oldStatus !== "CONFIRMED" &&
+      oldStatus !== "PROCESSING"
+    ) {
+      await this.generateInvoice(updatedOrder);
     }
 
     await this.realtimeService.publish(

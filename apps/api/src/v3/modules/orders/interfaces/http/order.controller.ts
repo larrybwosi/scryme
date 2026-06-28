@@ -118,10 +118,15 @@ export class OrderController {
     description: "Invalid status",
   })
   async updateStatus(
+    @Req() req: any,
     @Param("id") id: string,
     @Body() body: UpdateOrderStatusDto,
   ) {
-    return this.updateOrderStatusUseCase.execute(id, body.status);
+    return this.updateOrderStatusUseCase.execute(
+      id,
+      body.status,
+      req.user?.memberId || req.user?.id,
+    );
   }
 
   @Post("b2b/quotes")

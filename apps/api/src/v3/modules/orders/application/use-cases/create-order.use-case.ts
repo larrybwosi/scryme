@@ -11,7 +11,10 @@ import { WebhookService } from "../../../webhooks/infrastructure/services/webhoo
 import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
 import { emitOrderPlaced } from "@repo/windmill/server";
 import { createOrder } from "@repo/shared/actions/transaction/orders";
-import { type CreateOrderInput } from "@repo/shared/lib/validations/order";
+import {
+  type CreateOrderInput,
+  OrderTransactionStatus,
+} from "@repo/shared/lib/validations/order";
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -29,7 +32,8 @@ export class CreateOrderUseCase {
       customerId: dto.customerId,
       locationId: dto.locationId,
       items: dto.items,
-      type: dto.channel as any, // Map channel to transaction type
+      type: "ONLINE_ORDER", // Force ONLINE_ORDER for e-commerce/mobile
+      status: OrderTransactionStatus.PENDING_CONFIRMATION, // Orders start as pending confirmation
       notes: dto.notes,
     } as CreateOrderInput);
 

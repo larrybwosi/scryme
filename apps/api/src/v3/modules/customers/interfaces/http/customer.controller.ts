@@ -70,7 +70,7 @@ export class CustomerController {
   }
 
   @Post("register")
-  @Permissions("customer:create")
+  @AllowPublic()
   @ApiOperation({
     summary: "Register a new customer (Zitadel)",
     operationId: "Customers_Register",
