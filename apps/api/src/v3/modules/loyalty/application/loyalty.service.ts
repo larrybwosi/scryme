@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { db, LoyaltyTransactionType, VoucherStatus } from "@repo/db";
+import {
+  LoyaltyTransactionType,
+  VoucherStatus,
+  LoyaltyRuleType,
+} from "@repo/db";
 import {
   emitLoyaltyPointsAwarded,
   emitLoyaltyVoucherCreated,
@@ -8,10 +12,38 @@ import {
 
 @Injectable()
 export class LoyaltyService {
-  constructor() {}
+  constructor(private readonly prisma: PrismaService) {}
+
+  async handleCustomerSignup(organizationId: string, customerId: string) {
+    const program = await this.prisma.client.loyaltyProgram.findFirst({
+      where: { organizationId, isActive: true },
+      include: {
+        rules: {
+          where: { ruleType: LoyaltyRuleType.FIXED_POINTS, isActive: true },
+        },
+      },
+    });
+
+    if (!program) return;
+
+    const signupRule = program.rules.find(
+      (r) =>
+        r.name.toLowerCase().includes("signup") ||
+        r.name.toLowerCase().includes("sign up"),
+    );
+    if (signupRule) {
+      await this.awardPoints(
+        customerId,
+        signupRule.pointsValue,
+        organizationId,
+        signupRule.description || "Signup bonus",
+        "SIGNUP",
+      );
+    }
+  }
 
   async calculatePointsForTransaction(transactionId: string) {
-    const transaction = await db.transaction.findUnique({
+    const transaction = await this.prisma.client.transaction.findUnique({
       where: { id: transactionId },
       include: {
         items: {
@@ -117,13 +149,13 @@ export class LoyaltyService {
   ) {
     if (points === 0) return;
 
-    const program = await db.loyaltyProgram.findFirst({
+    const program = await this.prisma.client.loyaltyProgram.findFirst({
       where: { organizationId, isActive: true },
     });
 
     if (!program) return;
 
-    return await db.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       const customer = await tx.customer.update({
         where: { id: customerId },
         data: {
@@ -156,7 +188,7 @@ export class LoyaltyService {
         points,
         balanceAfter: customer.loyaltyPoints,
         description,
-      }).catch(err =>
+      }).catch((err) =>
         console.error("[Loyalty] Failed to emit Windmill event:", err),
       );
 
@@ -169,7 +201,7 @@ export class LoyaltyService {
     rewardId: string,
     organizationId: string,
   ) {
-    const reward = await db.loyaltyReward.findUnique({
+    const reward = await this.prisma.client.loyaltyReward.findUnique({
       where: { id: rewardId },
       include: { program: true },
     });
@@ -177,7 +209,7 @@ export class LoyaltyService {
     if (!reward || !reward.isActive)
       throw new Error("Reward not found or inactive");
 
-    const customer = await db.customer.findUnique({
+    const customer = await this.prisma.client.customer.findUnique({
       where: { id: customerId },
     });
 
@@ -185,7 +217,7 @@ export class LoyaltyService {
       throw new Error("Insufficient points");
     }
 
-    return await db.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async (tx) => {
       // 1. Deduct points
       const updatedCustomer = await tx.customer.update({
         where: { id: customerId },
@@ -244,7 +276,7 @@ export class LoyaltyService {
   }
 
   async getCustomerStatus(customerId: string, organizationId: string) {
-    return await db.customer.findUnique({
+    return await this.prisma.client.customer.findUnique({
       where: { id: customerId },
       select: {
         id: true,
@@ -260,7 +292,7 @@ export class LoyaltyService {
     customerId: string,
     organizationId: string,
   ) {
-    const voucher = await db.loyaltyVoucher.findUnique({
+    const voucher = await this.prisma.client.loyaltyVoucher.findUnique({
       where: { code },
       include: {
         reward: true,
