@@ -136,7 +136,7 @@ export default function SettingsPage() {
     try {
       const tempSdk = getSDK({
         apiKey: formData.apiKey,
-        baseURL: isTauri() ? (sanitizeApiUrl(formData.apiEndpointUrl) || undefined) : undefined
+        baseURL: isTauri() ? (sanitizeApiUrl(formData.apiEndpointUrl) || "") : "/api/v2"
       });
       await tempSdk.client.get('/bakery');
       setKeyTested(true);
