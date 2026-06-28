@@ -87,6 +87,11 @@ export class ShortUrlController {
             .send("Unauthorized: Private document");
         }
       }
+
+      const cacheControl = isPrivate
+        ? "private, no-cache, no-store, must-revalidate"
+        : "public, max-age=31536000, immutable";
+
       const isImage = mimeType.startsWith("image/");
 
       if (isImage) {
@@ -107,7 +112,7 @@ export class ShortUrlController {
         );
 
         res.header("Content-Type", contentType);
-        res.header("Cache-Control", "public, max-age=31536000, immutable");
+        res.header("Cache-Control", cacheControl);
         return res.status(HttpStatus.OK).send(data);
       } else {
         // For non-images, we attempt to use a streaming cache
@@ -118,6 +123,7 @@ export class ShortUrlController {
         }>(fileCacheKey);
 
         res.header("Content-Type", mimeType);
+        res.header("Cache-Control", cacheControl);
         res.header(
           "Content-Disposition",
           `inline; filename="${attachment.fileName || "file"}"`,
