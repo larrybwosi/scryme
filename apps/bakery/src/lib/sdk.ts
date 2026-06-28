@@ -1,6 +1,7 @@
 import { getSDK } from '@repo/sdk/src/index';
 import { invoke } from '@tauri-apps/api/core';
 
+
 // Check if running in Tauri
 export const isTauri = () => {
   return (
@@ -23,6 +24,11 @@ const sdk = getSDK({
     window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
   }
 });
+
+console.log(
+  "SDK initialized with baseURL:",
+  localStorage.getItem("bakery_api_url"),
+);
 
 
 // Load persistent member token if available
