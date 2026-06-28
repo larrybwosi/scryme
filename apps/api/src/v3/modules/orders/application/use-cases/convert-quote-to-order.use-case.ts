@@ -32,7 +32,7 @@ export class ConvertQuoteToOrderUseCase {
 
     // 2. Update Transaction to Order
     const updatedTransaction = await this.prisma.client.transaction.update({
-      where: { id: quoteId },
+      where: { id_organizationId: { id: quoteId, organizationId } },
       data: {
         type: 'SALES_ORDER',
         status: 'PENDING_CONFIRMATION',

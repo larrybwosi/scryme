@@ -53,9 +53,9 @@ export class PrismaOrderRepository implements IOrderRepository {
     };
   }
 
-  async findById(id: string): Promise<Order | null> {
-    const o = await this.prisma.client.transaction.findUnique({
-      where: { id },
+  async findById(id: string, organizationId?: string): Promise<Order | null> {
+    const o = await this.prisma.client.transaction.findFirst({
+      where: { id, organizationId },
       select: {
         id: true,
         number: true,
@@ -137,7 +137,7 @@ export class PrismaOrderRepository implements IOrderRepository {
 
   async save(order: Order): Promise<Order> {
     const o = await this.prisma.client.transaction.upsert({
-      where: { id: order.id },
+      where: { id_organizationId: { id: order.id, organizationId: order.organizationId } },
       update: {
         status: order.status as any,
         finalTotal: order.totalAmount,

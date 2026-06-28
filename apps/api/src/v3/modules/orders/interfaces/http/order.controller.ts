@@ -64,8 +64,8 @@ export class OrderController {
   })
   @ApiResponse({ status: 200, type: OrderResponseDto, description: 'Order status updated' })
   @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: 'Invalid status' })
-  async updateStatus(@Param('id') id: string, @Body() body: UpdateOrderStatusDto) {
-    return this.updateOrderStatusUseCase.execute(id, body.status);
+  async updateStatus(@Req() req: any, @Param('id') id: string, @Body() body: UpdateOrderStatusDto) {
+    return this.updateOrderStatusUseCase.execute(req.organization.id, id, body.status);
   }
 
   @Post('b2b/quotes')
