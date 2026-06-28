@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Lock, User, AlertCircle, Loader2, Zap, ShieldCheck, Activity, Globe, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, AlertCircle, Loader2, Zap, ShieldCheck, Activity, Globe, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/providers/auth-context';
 import { Separator } from '@repo/ui/components/ui/separator';
-import { isOfflineMode } from '@/lib/sdk';
+import { isOfflineMode, isTauri } from '@/lib/sdk';
+import { resetBakeryDevice } from '@/utils/reset';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -218,6 +219,17 @@ export default function LoginPage() {
                 <Globe className="h-3 w-3" />
                 {isLocalMode ? 'Back to Cloud Mode' : 'Use Local Mode'}
               </button>
+
+              {isTauri() && (
+                <button
+                  type="button"
+                  onClick={resetBakeryDevice}
+                  className="mt-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors font-medium flex items-center justify-center gap-2 uppercase tracking-widest"
+                >
+                  <RefreshCw className="h-2.5 w-2.5" />
+                  Reset Device
+                </button>
+              )}
             </CardFooter>
           </form>
         </Card>
