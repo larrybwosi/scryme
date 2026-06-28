@@ -15,7 +15,7 @@ import { CreateUtilityAccountDto } from "../../application/dto/finance.dto";
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
 
-@ApiTags("Finance / Utility Accounts")
+@ApiTags("V3 Finance")
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @Controller("finance/utility-accounts")
