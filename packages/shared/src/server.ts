@@ -32,3 +32,4 @@ export * from "./lib/services/document.service";
 export * from "./lib/services/conversion.service";
 export * from "./actions/api-management";
 export * from "./lib/images";
+export * from "./node-utils";
