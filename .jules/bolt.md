@@ -42,3 +42,7 @@
 ## 2026-06-25 - [Batch Pre-fetching with In-Memory State Sync]
 **Learning:** When replacing N+1 queries with batch pre-fetching in a loop where the database is updated (e.g., decrementing stock), the local in-memory state must be manually synchronized. If multiple lines in the same request affect the same entity (like the same `stockBatch`), failure to update the local object leads to stale data being used for availability validations in subsequent loop iterations, potentially causing over-allocation.
 **Action:** Always manually update local pre-fetched objects after issuing database updates for that entity within the same execution flow.
+
+## 2026-06-27 - [O(N) to O(1) Dashboard Aggregation]
+**Learning:** Fetching full relation arrays (e.g., all recipes) just to calculate average costs or category counts in-memory is a major performance bottleneck for large organizations. Replacing these with Prisma's `aggregate` (`_avg`) and `groupBy` (`_count`) shifts the heavy lifting to the database, reducing network payload and memory usage from $O(N)$ to $O(1)$.
+**Action:** Always prefer database-level aggregations (`aggregate`, `groupBy`) for dashboard summaries and use targeted `select` blocks to fetch only the scalar fields required for the final response.
