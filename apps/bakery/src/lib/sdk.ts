@@ -1,5 +1,6 @@
 import { getSDK } from '@repo/sdk/src/index';
 import { invoke } from '@tauri-apps/api/core';
+import { sanitizeApiUrl } from '@/utils/url';
 
 
 // Check if running in Tauri
@@ -17,7 +18,7 @@ export const isOfflineMode = () => {
 // Initialize SDK with proper baseURL and global error handler
 const sdk = getSDK({
   baseURL: isTauri()
-    ? (localStorage.getItem('bakery_api_url') || import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2')
+    ? sanitizeApiUrl(localStorage.getItem('bakery_api_url') || import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2')
     : '/api/v2',
   onUnauthorized: () => {
     // Trigger a window event that the AuthGuard can listen to
@@ -45,9 +46,10 @@ if (isTauri()) {
   invoke<any>('get_settings', { organizationId: 'local-org' })
     .then((settings) => {
       if (settings?.apiEndpointUrl) {
-        localStorage.setItem('bakery_api_url', settings.apiEndpointUrl);
-        if (sdk.client.getBaseURL() !== settings.apiEndpointUrl) {
-           sdk.client.setBaseURL(settings.apiEndpointUrl);
+        const sanitizedUrl = sanitizeApiUrl(settings.apiEndpointUrl);
+        localStorage.setItem('bakery_api_url', sanitizedUrl);
+        if (sdk.client.getBaseURL() !== sanitizedUrl) {
+           sdk.client.setBaseURL(sanitizedUrl);
         }
       }
     })

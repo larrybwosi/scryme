@@ -10,6 +10,7 @@ import { Key, Globe, Cpu, Loader2, ArrowRight, Save, AlertCircle, ShieldCheck, A
 import { toast } from 'sonner';
 import { tauriInvoke } from '@/lib/tauri-bridge';
 import sdk, { isTauri } from '@/lib/sdk';
+import { sanitizeApiUrl } from '@/utils/url';
 import { Separator } from '@repo/ui/components/ui/separator';
 import { resetBakeryDevice } from '@/utils/reset';
 
@@ -48,16 +49,19 @@ export default function SetupPage() {
     setIsProvisioning(true);
     setProvisionError(null);
     try {
+      const sanitizedApiUrl = showApiUrl ? sanitizeApiUrl(apiUrl) : null;
+
       await tauriInvoke('provision_device_with_token', {
         setupToken,
         macAddress: hardwareInfo?.macAddress || null,
         serialNumber: hardwareInfo?.serialNumber || null,
-        apiUrlOverride: showApiUrl ? apiUrl : null,
+        apiUrlOverride: sanitizedApiUrl,
       });
 
       if (showApiUrl && apiUrl) {
-        sdk.client.setBaseURL(apiUrl);
-        localStorage.setItem('bakery_api_url', apiUrl);
+        const finalUrl = sanitizedApiUrl || sanitizeApiUrl(apiUrl);
+        sdk.client.setBaseURL(finalUrl);
+        localStorage.setItem('bakery_api_url', finalUrl);
       }
 
       const newKey = await tauriInvoke<string>('get_provisioned_api_key');
