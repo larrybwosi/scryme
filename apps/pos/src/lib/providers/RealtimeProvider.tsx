@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { useRealtimeStore } from '@/store/realtimeStore';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePosStore } from '@/store/store';
+import { invoke } from '@tauri-apps/api/core';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function RealtimeInitializer() {
   const initialize = useRealtimeStore((state) => state.initialize);
@@ -15,6 +17,8 @@ export default function RealtimeInitializer() {
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
   const updateProductStock = usePosStore((state) => state.updateProductStock);
   const organizationId = useAuthStore((state) => state.deviceConfig?.orgSlug);
+  const currentLocationId = useAuthStore((state) => state.currentLocation?.id);
+  const queryClient = useQueryClient();
 
   // ── Initialize Realtime once auth is ready ──────────────────────────────────
   useEffect(() => {
@@ -77,15 +81,70 @@ export default function RealtimeInitializer() {
     if (!organizationId) return;
 
     const channel = `organization:${organizationId}:inventory`;
-    const unsub = subscribe(channel, 'stock-update', (data: any) => {
+    const unsubStockUpdate = subscribe(channel, 'stock-update', (data: any) => {
         console.log('[Realtime] Stock update received:', data);
         if (data.productId && typeof data.newStock === 'number') {
             updateProductStock(data.productId, data.newStock);
         }
     });
 
-    return () => unsub();
-  }, [organizationId, subscribe, updateProductStock]);
+    const unsubProductDeleted = subscribe(channel, 'product-deleted', async (data: any) => {
+        console.log('[Realtime] Product deletion received:', data);
+        if (data.productId && currentLocationId) {
+            try {
+                await invoke('delete_local_product_command', {
+                    productId: data.productId,
+                    locationId: currentLocationId
+                });
+                queryClient.invalidateQueries({ queryKey: ['pos-products'] });
+            } catch (err) {
+                console.error('Failed to delete local product:', err);
+            }
+        }
+    });
+
+    return () => {
+        unsubStockUpdate();
+        unsubProductDeleted();
+    };
+  }, [organizationId, subscribe, updateProductStock, currentLocationId, queryClient]);
+
+  // ── Customer & Pricing sync ─────────────────────────────────────────────────
+  useEffect(() => {
+      if (!organizationId) return;
+
+      const pricingChannel = `organization:${organizationId}:pricing`;
+      const customersChannel = `organization:${organizationId}:customers`;
+
+      const unsubPriceListDeleted = subscribe(pricingChannel, 'price-list-deleted', async (data: any) => {
+          console.log('[Realtime] Price list deletion received:', data);
+          if (data.priceListId) {
+              try {
+                  await invoke('delete_local_price_list_command', { id: data.priceListId });
+                  queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+              } catch (err) {
+                  console.error('Failed to delete local price list:', err);
+              }
+          }
+      });
+
+      const unsubCustomerDeleted = subscribe(customersChannel, 'customer-deleted', async (data: any) => {
+          console.log('[Realtime] Customer deletion received:', data);
+          if (data.customerId) {
+              try {
+                  await invoke('delete_local_customer_command', { id: data.customerId });
+                  queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
+              } catch (err) {
+                  console.error('Failed to delete local customer:', err);
+              }
+          }
+      });
+
+      return () => {
+          unsubPriceListDeleted();
+          unsubCustomerDeleted();
+      };
+  }, [organizationId, subscribe, queryClient]);
 
   // ── Cleanup on unmount ─────────────────────────────────────────────────────
   useEffect(() => {
