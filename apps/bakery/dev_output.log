@@ -1,0 +1,38 @@
+
+> bakery@8.0.0 dev /app/apps/bakery
+> vite
+
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+  VITE v8.0.16  ready in 594 ms
+
+  ➜  Local:   http://localhost:5000/
+  ➜  Network: use --host to expose
+1:39:39 PM [vite] http proxy error: /api/v2/bakery/auth/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:39:39 PM [vite] http proxy error: /api/v2/bakery/settings
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:39:39 PM [vite] http proxy error: /api/v2/bakery/auth/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:39:39 PM [vite] http proxy error: /api/v2/bakery/auth/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:39:39 PM [vite] http proxy error: /api/v2/bakery/settings
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:39:39 PM [vite] http proxy error: /api/v2/bakery/auth/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+1:39:40 PM [vite] http proxy error: /api/v2/bakery/settings
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
