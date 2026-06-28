@@ -12,3 +12,8 @@
 **Vulnerability:** The debug request logger in the API entry point was susceptible to leaking sensitive headers (like session cookies) if it used a deny-list approach for redaction.
 **Learning:** Shared redaction utilities often use a deny-list of sensitive keys. While useful for body/query objects, applying them to entire header objects is risky because new or less common sensitive headers (e.g., `Set-Cookie`, `X-Auth-Token`) might be missed. An allow-list approach for logging headers is significantly safer.
 **Prevention:** For diagnostic logging of HTTP headers, always use a strict allow-list of safe headers to log (e.g., `user-agent`, `content-type`, `x-correlation-id`). Pass even the allowed sensitive headers (like `authorization`) through a redaction utility as a second layer of defense.
+
+## 2025-05-17 - Case-Sensitivity in Data Redaction
+**Vulnerability:** The central `redactSensitiveData` utility performed case-sensitive key matching, meaning sensitive fields like `Password` or `Secret-Key` (common in HTTP headers) would bypass redaction if the utility was only configured for lowercase versions.
+**Learning:** Redaction utilities must be case-insensitive by default when handling data from sources with non-standard casing (like HTTP headers or third-party webhooks). Relying on exact string matches creates a bypass vector for data leakage into logs.
+**Prevention:** Always normalize keys to lowercase before comparison in redaction utilities. For performance in recursive traversals, use a `Set` of lowercase sensitive keys.

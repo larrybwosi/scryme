@@ -14,20 +14,20 @@ export function redactSensitiveData(
     "password",
     "pin",
     "token",
-    "clientSecret",
+    "clientsecret",
     "client_secret",
     "secret",
-    "apiKey",
+    "apikey",
     "api_key",
     "access_token",
-    "accessToken",
+    "accesstoken",
     "refresh_token",
-    "refreshToken",
+    "refreshtoken",
     "otp",
     "passcode",
     "cvv",
     "cvc",
-    "cardNumber",
+    "cardnumber",
     "card_number",
     "ssn",
     "dob",
@@ -35,47 +35,60 @@ export function redactSensitiveData(
     "authorization",
     "x-api-key",
     "x-member-token",
+    "x-auth-token",
     "cookie",
+    "set-cookie",
     "signature",
-    "mpesaPassKey",
-    "cardId",
+    "mpesapasskey",
+    "cardid",
     "card_id",
-    "accountNumber",
+    "accountnumber",
     "account_number",
     "secret_key",
     "access_key",
     "client_id",
-    "clientId",
-    "mpesaConsumerKey",
-    "mpesaConsumerSecret",
-    "consumerKey",
-    "consumerSecret",
-    "privateKey",
+    "clientid",
+    "mpesaconsumerkey",
+    "mpesaconsumersecret",
+    "consumerkey",
+    "consumersecret",
+    "privatekey",
     "private_key",
-    "apiSecret",
+    "apisecret",
     "api_secret",
-    "botToken",
+    "bottoken",
     "bot_token",
-    "webhookUrl",
+    "webhookurl",
     "webhook_url",
-    "passwordConfirmation",
+    "passwordconfirmation",
     "password_confirmation",
-    "idToken",
+    "idtoken",
     "id_token",
-    "sessionToken",
+    "sessiontoken",
     "session_token",
-    "mpesaInitiatorPass",
-    "pinHash",
+    "mpesainitiatorpass",
+    "pinhash",
     "pin_hash",
-    "webhookSecret",
+    "webhooksecret",
     "webhook_secret",
+    "bearer",
+    "credentials",
+    "proxy-authorization",
+    "proxy-authenticate",
+    "www-authenticate",
   ],
   depth = 0,
   maxDepth = 5,
+  _lowerSensitiveKeysSet?: Set<string>,
 ): any {
   if (data === null || data === undefined || depth > maxDepth) {
     return data;
   }
+
+  // Use memoized lowercase keys Set for efficiency during recursion
+  const lowerSensitiveKeysSet =
+    _lowerSensitiveKeysSet ||
+    new Set(sensitiveKeys.map((k) => k.toLowerCase()));
 
   // Handle Error objects specifically as they have non-enumerable properties
   if (data instanceof Error) {
@@ -90,7 +103,7 @@ export function redactSensitiveData(
     for (const key of allProps) {
       if (["name", "message", "stack"].includes(key)) continue;
 
-      if (sensitiveKeys.includes(key)) {
+      if (lowerSensitiveKeysSet.has(key.toLowerCase())) {
         redactedError[key] = "[REDACTED]";
       } else {
         redactedError[key] = redactSensitiveData(
@@ -98,6 +111,7 @@ export function redactSensitiveData(
           sensitiveKeys,
           depth + 1,
           maxDepth,
+          lowerSensitiveKeysSet,
         );
       }
     }
@@ -109,7 +123,13 @@ export function redactSensitiveData(
       return `[Array of ${data.length} items]`;
     }
     return data.map((item) =>
-      redactSensitiveData(item, sensitiveKeys, depth + 1, maxDepth),
+      redactSensitiveData(
+        item,
+        sensitiveKeys,
+        depth + 1,
+        maxDepth,
+        lowerSensitiveKeysSet,
+      ),
     );
   }
 
@@ -117,7 +137,7 @@ export function redactSensitiveData(
     const redactedData: any = {};
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
-        if (sensitiveKeys.includes(key)) {
+        if (lowerSensitiveKeysSet.has(key.toLowerCase())) {
           redactedData[key] = "[REDACTED]";
         } else {
           redactedData[key] = redactSensitiveData(
@@ -125,6 +145,7 @@ export function redactSensitiveData(
             sensitiveKeys,
             depth + 1,
             maxDepth,
+            lowerSensitiveKeysSet,
           );
         }
       }
