@@ -30,6 +30,8 @@ import {
   Plus,
   Trash2,
   Edit,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   Dialog,
@@ -45,7 +47,8 @@ import { toast } from 'sonner';
 import sdk from '@/lib/sdk';
 import { getSDK } from '@repo/sdk/src/index';
 import { invoke } from '@tauri-apps/api/core';
-import { isTauri } from '@/lib/sdk';
+import { isTauri, isOfflineMode } from '@/lib/sdk';
+import { resetBakeryDevice } from '@/utils/reset';
 
 type SettingsTab = 'operational' | 'sync' | 'security' | 'notifications' | 'branding' | 'units';
 
@@ -203,11 +206,13 @@ export default function SettingsPage() {
         localStorage.setItem('bakery_api_url', formData.apiEndpointUrl);
       }
 
-      if (formData.apiKey) {
-        localStorage.removeItem('bakery_local_mode');
-      }
       setBranding(brandingData);
       toast.success('Settings updated successfully');
+
+      // Full reload to re-initialize SDK with potentially new API URL or key
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       toast.error('Failed to update settings');
     }
@@ -337,11 +342,20 @@ export default function SettingsPage() {
           {activeTab === 'sync' && (
             <Card className="border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-amber-500">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Cloud className="h-5 w-5 text-amber-500" />
-                  Server & Synchronization
-                </CardTitle>
-                <CardDescription>Configure your connection to the Scryme cloud for backups and AI features.</CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <Cloud className="h-5 w-5 text-amber-500" />
+                      Server & Synchronization
+                    </CardTitle>
+                    <CardDescription>Configure your connection to the Scryme cloud for backups and AI features.</CardDescription>
+                  </div>
+                  {isOfflineMode() && (
+                    <div className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+                      Local Mode Active
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {isTauri() && (
@@ -420,6 +434,40 @@ export default function SettingsPage() {
                     Data will be automatically synced to the server once a valid key is provided.
                   </p>
                 </div>
+
+                {isTauri() && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="pt-2">
+                      <div className="bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-bold text-red-900 dark:text-red-400 uppercase tracking-wider">Danger Zone</h4>
+                            <p className="text-xs text-red-700 dark:text-red-500/80 leading-relaxed">
+                              Resetting the device will clear all provisioned API keys, local sessions, and server configurations. This action cannot be undone.
+                            </p>
+                            <div className="pt-3">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to reset this device? All local configuration will be lost.")) {
+                                    resetBakeryDevice();
+                                  }
+                                }}
+                                className="h-8 gap-2"
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                                Reset & Re-provision Device
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           )}
