@@ -21,6 +21,7 @@
     "studio": "prisma studio"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "latest",
     "@prisma/client-runtime-utils": "7.8.0",
     "@repo/env": "workspace:*",

@@ -85,8 +85,6 @@ module.exports = function modifyWebpackConfig(options) {
       // should be marked as external to avoid Webpack bundling issues.
       "sharp",
       "qrcode",
-      "@react-pdf/renderer",
-      "react",
     ],
 
     resolve: {
