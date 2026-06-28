@@ -377,7 +377,7 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
                 <Text style={styles.totalsValue}>{fmt(tax)}</Text>
               </View>
             )}
-            {discount > 0 && (
+            {discount !== undefined && discount > 0 && (
               <View style={styles.totalsRow}>
                 <Text style={styles.discountLabel}>
                   Discount {discountRate ? `(${discountRate}%)` : ""}

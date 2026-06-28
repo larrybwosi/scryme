@@ -13,6 +13,17 @@ import { ReceiptTemplate as ReceiptV2 } from './templates/v2/ReceiptTemplate';
 
 import { WaybillDocument as WaybillDefault } from './templates/v1/Waybill';
 
+import {
+  TemplateOne,
+  TemplateTwo,
+  TemplateThree,
+  TemplateFour,
+  ReceiptOne,
+  ReceiptTwo,
+  ReceiptThree,
+  ReceiptFour,
+} from './templates/v3';
+
 export type DocumentType = 'INVOICE' | 'RECEIPT' | 'WAYBILL';
 
 export interface TemplateMetadata {
@@ -90,6 +101,38 @@ export const DOCUMENT_REGISTRY: TemplateMetadata[] = [
     type: 'INVOICE',
     component: InvoiceSimple as React.ComponentType<any>
   },
+  {
+    id: 'invoice-v3-1',
+    name: 'V3 Teal Modern',
+    description: 'Modern teal design with a fixed bottom footer band.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateOne as React.ComponentType<any>
+  },
+  {
+    id: 'invoice-v3-2',
+    name: 'V3 Diamond Accent',
+    description: 'Elegant design with diamond icons and sidebar meta info.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateTwo as React.ComponentType<any>
+  },
+  {
+    id: 'invoice-v3-3',
+    name: 'V3 Gray Header',
+    description: 'Clean design with a bold top gray band and badge numbers.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateThree as React.ComponentType<any>
+  },
+  {
+    id: 'invoice-v3-4',
+    name: 'V3 Navy & Yellow',
+    description: 'Bold professional design with navy headers and yellow accents.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateFour as React.ComponentType<any>
+  },
 
   // Receipts
   {
@@ -107,6 +150,38 @@ export const DOCUMENT_REGISTRY: TemplateMetadata[] = [
     version: 'v1.0.0',
     type: 'RECEIPT',
     component: ReceiptDefault as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-1',
+    name: 'V3 Teal Modern Receipt',
+    description: 'Modern teal receipt design.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptOne as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-2',
+    name: 'V3 Diamond Accent Receipt',
+    description: 'Elegant receipt design with diamond icons.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptTwo as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-3',
+    name: 'V3 Gray Header Receipt',
+    description: 'Clean receipt design with gray header band.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptThree as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-4',
+    name: 'V3 Navy & Yellow Receipt',
+    description: 'Bold professional receipt design.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptFour as React.ComponentType<any>
   },
 
   // Waybills

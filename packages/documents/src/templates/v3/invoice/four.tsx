@@ -381,7 +381,7 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
         </View>
 
         {/* ---- Signature ---- */}
-        {signature && (
+        {signature && signature.name && (
           <View style={styles.signatureArea}>
             <Text style={styles.signatureScript}>{signature.name}</Text>
             <Text style={styles.signatureName}>{signature.name.toUpperCase()}</Text>
