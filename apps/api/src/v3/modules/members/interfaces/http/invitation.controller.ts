@@ -29,6 +29,7 @@ import {
 } from "../../application/dto/invitation.dto";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 
 @ApiTags("V3 Member Invitations")
 @ApiBearerAuth()
@@ -40,7 +41,11 @@ export class InvitationController {
   @Get()
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @Permissions("members:read")
-  @ApiOperation({ summary: "List pending invitations" })
+  @ApiOperation({
+    summary: "List pending invitations",
+    operationId: "Invitations_List",
+  })
+  @ApiResponse({ status: 200, type: [InvitationResponseDto], description: "List of invitations" })
   async getInvitations(
     @Request() req: any,
     @Query() query: InvitationQueryDto,
@@ -54,7 +59,11 @@ export class InvitationController {
   @Post()
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @Permissions("members:write")
-  @ApiOperation({ summary: "Create and send an invitation" })
+  @ApiOperation({
+    summary: "Create and send an invitation",
+    operationId: "Invitations_Create",
+  })
+  @ApiResponse({ status: 201, type: InvitationResponseDto })
   async createInvitation(
     @Request() req: any,
     @Body() dto: CreateInvitationDto,
@@ -75,7 +84,11 @@ export class InvitationController {
   @Delete(":id")
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @Permissions("members:write")
-  @ApiOperation({ summary: "Revoke an invitation" })
+  @ApiOperation({
+    summary: "Revoke an invitation",
+    operationId: "Invitations_Revoke",
+  })
+  @ApiResponse({ status: 200, description: "Invitation revoked" })
   async revokeInvitation(@Request() req: any, @Param("id") id: string) {
     const actorId = req.v3Context.memberId;
     return this.invitationUseCase.revokeInvitation(
@@ -87,7 +100,12 @@ export class InvitationController {
 
   @Post("accept")
   @UseGuards(V3AuthGuard)
-  @ApiOperation({ summary: "Accept an invitation" })
+  @ApiOperation({
+    summary: "Accept an invitation",
+    operationId: "Invitations_Accept",
+  })
+  @ApiResponse({ status: 200, description: "Invitation accepted" })
+  @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: "Invalid invitation" })
   async acceptInvitation(
     @Request() req: any,
     @Body() dto: AcceptInvitationDto,
