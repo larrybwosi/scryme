@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Plus, Layers, Edit, Trash2, MoreVertical } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, Layers, Edit, Trash2, MoreVertical, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 import { ZoneDialog } from "./zone-dialog";
 import { deleteZone } from "../../app/actions/locations";
 import { toast } from "sonner";
@@ -24,18 +34,21 @@ interface ZoneListProps {
 }
 
 export function ZoneList({ locationId, zones }: ZoneListProps) {
-  async function onDelete(id: string) {
-    if (
-      confirm(
-        "Are you sure you want to delete this zone? This will fail if it contains units.",
-      )
-    ) {
-      try {
-        await deleteZone(id);
-        toast.success("Zone deleted successfully");
-      } catch (error: any) {
-        toast.error(error.message);
-      }
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [zoneToDelete, setZoneToDelete] = useState<any>(null);
+
+  async function onDelete() {
+    if (!zoneToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteZone(zoneToDelete.id);
+      toast.success("Zone deleted successfully");
+      setZoneToDelete(null);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -106,7 +119,7 @@ export function ZoneList({ locationId, zones }: ZoneListProps) {
                     </ZoneDialog>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
-                      onClick={() => onDelete(zone.id)}>
+                      onClick={() => setZoneToDelete(zone)}>
                       <Trash2 className="mr-2 h-4 w-4" /> Delete Zone
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -116,6 +129,39 @@ export function ZoneList({ locationId, zones }: ZoneListProps) {
           ))
         )}
       </div>
+
+      <AlertDialog
+        open={!!zoneToDelete}
+        onOpenChange={open => !open && !isDeleting && setZoneToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the zone <strong>{zoneToDelete?.name}</strong>.
+              This action cannot be undone and will fail if the zone contains storage units.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={e => {
+                e.preventDefault();
+                onDelete();
+              }}
+              disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Zone"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

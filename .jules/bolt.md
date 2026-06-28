@@ -46,3 +46,6 @@
 ## 2026-06-26 - [Excluding Heavy JSON Fields in Audit Lists]
 **Learning:** Fetching heavy JSON fields (like `details` in `AuditLog`) during list retrieval is a significant performance drain on database I/O and network payload. Since list views usually only show the action summary, these fields should be explicitly excluded via Prisma `select` blocks.
 **Action:** Always use `select` to prune large JSON or relational blobs in list-fetching service methods, ensuring they are only retrieved in detail-fetching methods if actually required.
+## 2026-06-27 - [O(N) to O(1) Dashboard Aggregation]
+**Learning:** Fetching full relation arrays (e.g., all recipes) just to calculate average costs or category counts in-memory is a major performance bottleneck for large organizations. Replacing these with Prisma's `aggregate` (`_avg`) and `groupBy` (`_count`) shifts the heavy lifting to the database, reducing network payload and memory usage from $O(N)$ to $O(1)$.
+**Action:** Always prefer database-level aggregations (`aggregate`, `groupBy`) for dashboard summaries and use targeted `select` blocks to fetch only the scalar fields required for the final response.
