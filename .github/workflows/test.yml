@@ -423,7 +423,6 @@ jobs:
     needs: [filter, lint-typecheck]
     if: |
       github.event_name == 'pull_request' && (
-        needs.filter.outputs.crm == 'true' ||
         needs.filter.outputs.web == 'true' ||
         needs.filter.outputs.packages == 'true' ||
         needs.filter.outputs.workflow == 'true' ||
@@ -458,26 +457,21 @@ jobs:
 
       - name: Build
         run: |
-          APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-            APPS_CHANGED=true
+          WEB_CHANGED=false
+          if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+            WEB_CHANGED=true
           fi
 
           ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             ROOT_CHANGED=true
           fi
 
-          if [ "$APPS_CHANGED" == "true" ]; then
-            FILTER=""
-            if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
-            if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
-            pnpm turbo build $FILTER
-          elif [ "$ROOT_CHANGED" == "true" ]; then
-            echo "Root changes detected and no app changes, building all apps..."
-            pnpm turbo build --filter=crm... --filter=web...
+          if [ "$WEB_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Running verification build for web app..."
+            pnpm turbo build --filter=web...
           else
-            echo "No app changes requiring build-verify detected"
+            echo "No web app changes requiring build-verify detected"
           fi
         env:
           DATABASE_URL: postgresql://localhost:5432/postgres
