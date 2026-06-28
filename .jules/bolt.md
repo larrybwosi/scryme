@@ -42,3 +42,7 @@
 ## 2026-06-25 - [Batch Pre-fetching with In-Memory State Sync]
 **Learning:** When replacing N+1 queries with batch pre-fetching in a loop where the database is updated (e.g., decrementing stock), the local in-memory state must be manually synchronized. If multiple lines in the same request affect the same entity (like the same `stockBatch`), failure to update the local object leads to stale data being used for availability validations in subsequent loop iterations, potentially causing over-allocation.
 **Action:** Always manually update local pre-fetched objects after issuing database updates for that entity within the same execution flow.
+
+## 2026-06-26 - [Excluding Heavy JSON Fields in Audit Lists]
+**Learning:** Fetching heavy JSON fields (like `details` in `AuditLog`) during list retrieval is a significant performance drain on database I/O and network payload. Since list views usually only show the action summary, these fields should be explicitly excluded via Prisma `select` blocks.
+**Action:** Always use `select` to prune large JSON or relational blobs in list-fetching service methods, ensuring they are only retrieved in detail-fetching methods if actually required.
