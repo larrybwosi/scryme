@@ -516,7 +516,7 @@ export class MpesaService {
     }
 
     const unclaimed = await db.unclaimedPayment.findFirst({
-      where: { transId: input.transactionCode },
+      where: { transId: input.transactionCode, organizationId: input.organizationId },
     });
 
     return { success: !!unclaimed, verified: !!unclaimed, unclaimed };
