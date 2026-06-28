@@ -4,12 +4,11 @@ import {
   Text,
   View,
   StyleSheet,
-  render,
   Svg,
   Path,
 } from "@react-pdf/renderer";
 import React from "react";
-import path from "path";
+import { V3DocumentData } from "../types";
 
 // ---- Colors pulled from the reference invoice ----
 const BG = "#EAEAE8";
@@ -37,6 +36,7 @@ const styles = StyleSheet.create({
     color: DARK,
     marginTop: 10,
     letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   brandSlogan: {
     fontSize: 7.5,
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   toLine: { fontSize: 8.5, color: GRAY_TEXT, marginBottom: 2 },
 
-  // ---------- INVOICE title with accent bar ----------
+  // ---------- DOCUMENT title with accent bar ----------
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -81,11 +81,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   accentBar: { width: 6, height: 48, backgroundColor: DARK, marginRight: 18 },
-  invoiceTitle: {
+  documentTitle: {
     fontSize: 38,
     fontFamily: "Helvetica-Bold",
     color: DARK,
     letterSpacing: 1,
+    textTransform: "uppercase",
   },
 
   // ---------- Table ----------
@@ -206,218 +207,139 @@ const styles = StyleSheet.create({
   termsText: { fontSize: 8, color: GRAY_TEXT, lineHeight: 1.6 },
 });
 
-const DiamondIcon = () =>
-  React.createElement(
-    Svg,
-    { width: 22, height: 22, viewBox: "0 0 24 24" },
-    React.createElement(Path, {
-      d: "M6 4 L18 4 L22 9 L12 21 L2 9 Z M2 9 L22 9 M6 4 L9 9 L12 21 M18 4 L15 9 L12 21",
-      stroke: PINK,
-      strokeWidth: 1,
-      fill: "none",
-    }),
+const DiamondIcon = () => (
+  <Svg width={22} height={22} viewBox="0 0 24 24">
+    <Path
+      d="M6 4 L18 4 L22 9 L12 21 L2 9 Z M2 9 L22 9 M6 4 L9 9 L12 21 M18 4 L15 9 L12 21"
+      stroke={PINK}
+      strokeWidth={1}
+      fill="none"
+    />
+  </Svg>
+);
+
+export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
+  const {
+    type,
+    number,
+    date,
+    company,
+    customer,
+    items,
+    subtotal,
+    tax,
+    total,
+    currency,
+    bankDetails,
+    terms,
+  } = data;
+
+  const fmt = (n: number) =>
+    `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* ---- Brand header ---- */}
+        <DiamondIcon />
+        <Text style={styles.brandName}>{company.name}</Text>
+        {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
+
+        <View style={styles.headerRow}>
+          <View style={styles.addressBlock}>
+            {company.address && (
+              <Text style={styles.addressLine}>{company.address}</Text>
+            )}
+            {company.phone && (
+              <Text style={styles.addressLine}>P: {company.phone}</Text>
+            )}
+            {company.website && (
+              <Text style={styles.addressLineReg}>{company.website}</Text>
+            )}
+          </View>
+
+          <View style={styles.metaBlock}>
+            <Text style={styles.metaDate}>{date}</Text>
+            <Text style={styles.metaNo}>NO# {number}</Text>
+            <Text style={styles.toLabel}>TO:</Text>
+            <Text style={styles.toName}>{customer.name}</Text>
+            {customer.address && <Text style={styles.toLine}>{customer.address}</Text>}
+            {customer.phone && <Text style={styles.toLine}>{customer.phone}</Text>}
+            {customer.email && <Text style={styles.toLine}>{customer.email}</Text>}
+            {customer.website && <Text style={styles.toLine}>{customer.website}</Text>}
+          </View>
+        </View>
+
+        {/* ---- DOCUMENT title ---- */}
+        <View style={styles.titleRow}>
+          <View style={styles.accentBar} />
+          <Text style={styles.documentTitle}>{type}</Text>
+        </View>
+
+        {/* ---- Table ---- */}
+        <View style={styles.tableHeader}>
+          <Text style={styles.thQty}>QTY</Text>
+          <Text style={styles.thDesc}>ITEMS DESCRIPTION</Text>
+          <Text style={styles.thPrice}>PRICE</Text>
+          <Text style={styles.thTotal}>TOTAL</Text>
+        </View>
+
+        {items.map((item, idx) => (
+          <View key={idx} style={styles.tableRow}>
+            <Text style={styles.tdQty}>{item.quantity}</Text>
+            <View style={styles.tdDesc}>
+              <Text style={{ fontFamily: "Helvetica-Bold", color: DARK }}>{item.name}</Text>
+              {item.description && <Text>{item.description}</Text>}
+            </View>
+            <Text style={styles.tdPrice}>{fmt(item.unitPrice)}</Text>
+            <Text style={styles.tdTotal}>{fmt(item.total)}</Text>
+          </View>
+        ))}
+
+        {/* ---- Totals ---- */}
+        <View style={styles.totalsSection}>
+          <View style={styles.totalsLabelsRow}>
+            <View style={styles.totalsLabelBlock}>
+              <Text style={styles.totalsLabel}>SUBTOTAL</Text>
+              <Text style={styles.totalsValue}>{fmt(subtotal)}</Text>
+            </View>
+            {tax > 0 && (
+              <View style={styles.totalsLabelBlock}>
+                <Text style={styles.totalsLabel}>TAX</Text>
+                <Text style={styles.totalsValue}>{fmt(tax)}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.totalsDivider} />
+          <Text style={styles.grandTotal}>{fmt(total)}</Text>
+        </View>
+
+        {/* ---- Payment options ---- */}
+        {bankDetails && (
+          <View style={styles.paymentSection}>
+            <Text style={styles.paymentLabel}>PAYMENT OPTIONS</Text>
+            <Text style={styles.bankDetails}>BANK DETAILS</Text>
+            {bankDetails.accountNo && (
+              <Text style={styles.bankAccount}>ACCOUNT NO: {bankDetails.accountNo}</Text>
+            )}
+            {bankDetails.sortCode && (
+              <Text style={styles.bankAccount}>SORT CODE: {bankDetails.sortCode}</Text>
+            )}
+          </View>
+        )}
+
+        <View style={styles.dividerThick} />
+
+        {/* ---- Terms ---- */}
+        {terms && (
+          <>
+            <Text style={styles.termsLabel}>TERMS & CONDITIONS</Text>
+            <Text style={styles.termsText}>{terms}</Text>
+          </>
+        )}
+      </Page>
+    </Document>
   );
+};
 
-const items = [
-  {
-    qty: "1 SET",
-    desc: "Us, cullumquodis nonsequi nonem quae vit ad minust, ipsam intur?",
-    price: 100,
-    total: 100,
-  },
-  {
-    qty: "5 SET",
-    desc: "Dolor aspis aut lant quis nuscid ustiiscid ent ut parios di arcilibus vid miliquo ditior sinus.",
-    price: 100,
-    total: 500,
-  },
-  {
-    qty: "10 SET",
-    desc: "Amquunt explit, veniaeped etum esequiatien sum dolum aut ab ium vera voluptam que peruptaque deliatiunt eumet et ab il ipsamentumquo es atur, vollic.",
-    price: 100,
-    total: 1000,
-  },
-];
-
-const fmt = (n: number) =>
-  `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const InvoiceDocument = () =>
-  React.createElement(
-    Document,
-    null,
-    React.createElement(
-      Page,
-      { size: "A4", style: styles.page },
-
-      // ---- Brand header ----
-      React.createElement(DiamondIcon),
-      React.createElement(Text, { style: styles.brandName }, "YOUR BRAND"),
-      React.createElement(
-        Text,
-        { style: styles.brandSlogan },
-        "YOUR SLOGAN GOES HERE",
-      ),
-
-      React.createElement(
-        View,
-        { style: styles.headerRow },
-        React.createElement(
-          View,
-          { style: styles.addressBlock },
-          React.createElement(
-            Text,
-            { style: styles.addressLine },
-            "YOUR STREET 123",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.addressLine },
-            "YOUR CITY 456",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.addressLine },
-            "P: (123)-456-7890",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.addressLineReg },
-            "www.example.com",
-          ),
-        ),
-
-        React.createElement(
-          View,
-          { style: styles.metaBlock },
-          React.createElement(
-            Text,
-            { style: styles.metaDate },
-            "Friday, February 18, 2024",
-          ),
-          React.createElement(Text, { style: styles.metaNo }, "NO# 123"),
-          React.createElement(Text, { style: styles.toLabel }, "TO:"),
-          React.createElement(Text, { style: styles.toName }, "JAMES SMITH"),
-          React.createElement(
-            Text,
-            { style: styles.toLine },
-            "Your Street 123",
-          ),
-          React.createElement(Text, { style: styles.toLine }, "Your City 456"),
-          React.createElement(Text, { style: styles.toLine }, "(123)-456-7890"),
-          React.createElement(Text, { style: styles.toLine }, "example.com"),
-        ),
-      ),
-
-      // ---- INVOICE title ----
-      React.createElement(
-        View,
-        { style: styles.titleRow },
-        React.createElement(View, { style: styles.accentBar }),
-        React.createElement(Text, { style: styles.invoiceTitle }, "INVOICE"),
-      ),
-
-      // ---- Table ----
-      React.createElement(
-        View,
-        { style: styles.tableHeader },
-        React.createElement(Text, { style: styles.thQty }, "QTY"),
-        React.createElement(
-          Text,
-          { style: styles.thDesc },
-          "ITEMS DISCRIPTION",
-        ),
-        React.createElement(Text, { style: styles.thPrice }, "PRICE"),
-        React.createElement(Text, { style: styles.thTotal }, "TOTAL"),
-      ),
-
-      ...items.map((item, idx) =>
-        React.createElement(
-          View,
-          { key: idx, style: styles.tableRow },
-          React.createElement(Text, { style: styles.tdQty }, item.qty),
-          React.createElement(Text, { style: styles.tdDesc }, item.desc),
-          React.createElement(Text, { style: styles.tdPrice }, fmt(item.price)),
-          React.createElement(Text, { style: styles.tdTotal }, fmt(item.total)),
-        ),
-      ),
-
-      // ---- Totals ----
-      React.createElement(
-        View,
-        { style: styles.totalsSection },
-        React.createElement(
-          View,
-          { style: styles.totalsLabelsRow },
-          React.createElement(
-            View,
-            { style: styles.totalsLabelBlock },
-            React.createElement(
-              Text,
-              { style: styles.totalsLabel },
-              "SUBTOTAL",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.totalsValue },
-              "$1,600.00",
-            ),
-          ),
-          React.createElement(
-            View,
-            { style: styles.totalsLabelBlock },
-            React.createElement(Text, { style: styles.totalsLabel }, "TAX"),
-            React.createElement(Text, { style: styles.totalsValue }, "$160.00"),
-          ),
-        ),
-        React.createElement(View, { style: styles.totalsDivider }),
-        React.createElement(Text, { style: styles.grandTotal }, "$1,600.00"),
-      ),
-
-      // ---- Payment options ----
-      React.createElement(
-        View,
-        { style: styles.paymentSection },
-        React.createElement(
-          Text,
-          { style: styles.paymentLabel },
-          "PAYMENT OPTIONS",
-        ),
-        React.createElement(
-          Text,
-          { style: styles.bankDetails },
-          "BANK DETAILS",
-        ),
-        React.createElement(
-          Text,
-          { style: styles.bankAccount },
-          "ACOUNT NO: 123 456 7890",
-        ),
-      ),
-
-      React.createElement(View, { style: styles.dividerThick }),
-
-      // ---- Terms ----
-      React.createElement(
-        Text,
-        { style: styles.termsLabel },
-        "TERMS & CONDITIONS",
-      ),
-      React.createElement(
-        Text,
-        { style: styles.termsText },
-        "Ariberio ssequasin rest odicil eiunti aute nobis cum sumquodis nos quatus.",
-      ),
-      React.createElement(
-        Text,
-        { style: [styles.termsText, { marginTop: 6 }] },
-        "Fugitiat alique dion aute lum dem aut esi qesci bea doluptam qui niatiumet verrorum quam quae aut.",
-      ),
-    ),
-  );
-
-(async () => {
-  const outPath = path.join(__dirname, "invoice3.pdf");
-  await render(React.createElement(InvoiceDocument), outPath);
-  console.log("PDF written to", outPath);
-})();
+export default TemplateTwo;
