@@ -132,10 +132,22 @@ export class CustomersService {
   async deleteCustomer(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
 
-    // We might need to delete from CRM via SharedCustomerService if it supports it,
-    // but here we are primarily concerned with the local mapping and notifying POS.
-    // Assuming we delete from the local database if applicable, or just send the event.
+    // 1. Delete from our local database (mapping/cache)
+    // We use the shared CustomerService which handles deletion from the database
+    // and cleanup of associated records if any.
+    const result = await SharedCustomerService.deleteCustomer(
+      organizationId,
+      ctx.userId || "api",
+      id,
+    );
 
+    if (!result.success) {
+      throw new InternalServerErrorException(
+        result.message || "Failed to delete customer",
+      );
+    }
+
+    // 2. Publish event to POS
     await this.realtime.publish(
       `organization:${organizationId}:customers`,
       "customer-deleted",

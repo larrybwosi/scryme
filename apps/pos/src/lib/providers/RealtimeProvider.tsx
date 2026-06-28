@@ -90,11 +90,11 @@ export default function RealtimeInitializer() {
 
     const unsubProductDeleted = subscribe(channel, 'product-deleted', async (data: any) => {
         console.log('[Realtime] Product deletion received:', data);
-        if (data.productId && currentLocationId) {
+        if (data.productId) {
             try {
                 await invoke('delete_local_product_command', {
                     productId: data.productId,
-                    locationId: currentLocationId
+                    locationId: currentLocationId || 'standalone'
                 });
                 queryClient.invalidateQueries({ queryKey: ['pos-products'] });
             } catch (err) {
