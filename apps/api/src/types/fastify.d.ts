@@ -1,4 +1,4 @@
-import { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { V2ApiContext } from "@repo/shared/api/v2";
 import { OpenObserveService } from "../common/services/openobserve.service";
 
 declare module "fastify" {

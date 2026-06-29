@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation, ApiBody } from "@nestjs/swagger";
 import { BakeryService } from "./bakery.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 import type { FastifyRequest, FastifyReply } from "fastify";
 
 @ApiTags("Bakery Auth")

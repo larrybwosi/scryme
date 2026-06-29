@@ -9,7 +9,7 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { RealtimeRedisService } from "./realtime-redis.service";
-import { verifyMemberToken } from "@repo/shared/api/v2/services/auth";
+import { verifyMemberToken } from "@repo/shared/api/v2";
 
 @WebSocketGateway({
   cors: {

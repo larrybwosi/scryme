@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { PosService } from "./pos.service";
 import { PosSaleService } from "./pos-sale.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 import { Permissions } from "../../common/decorators/auth.decorator";
 import { FastifyReply } from "fastify";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";

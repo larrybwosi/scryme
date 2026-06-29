@@ -5,7 +5,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import { verifyDocumentToken } from "@repo/shared/api/v2/utils/tokens";
+import { verifyDocumentToken } from "@repo/shared/api/v2";
 
 @Injectable()
 export class PublicService {
