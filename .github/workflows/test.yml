@@ -33,7 +33,6 @@ jobs:
       pkg_notifications: ${{ steps.changes.outputs.pkg_notifications }}
       pkg_sdk: ${{ steps.changes.outputs.pkg_sdk }}
       pkg_shared: ${{ steps.changes.outputs.pkg_shared }}
-      pkg_suppliers: ${{ steps.changes.outputs.pkg_suppliers }}
       pkg_ui: ${{ steps.changes.outputs.pkg_ui }}
       pkg_windmill: ${{ steps.changes.outputs.pkg_windmill }}
       pkg_zitadel: ${{ steps.changes.outputs.pkg_zitadel }}
@@ -83,8 +82,6 @@ jobs:
               - 'packages/sdk/**'
             pkg_shared:
               - 'packages/shared/**'
-            pkg_suppliers:
-              - 'packages/suppliers/**'
             pkg_ui:
               - 'packages/ui/**'
             pkg_windmill:
@@ -259,7 +256,6 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_notifications }}" == "true" ]; then FILTER="$FILTER --filter=@repo/notifications..."; fi
             if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@repo/sdk..."; fi
             if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
-            if [ "${{ needs.filter.outputs.pkg_suppliers }}" == "true" ]; then FILTER="$FILTER --filter=@repo/suppliers..."; fi
             if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
             if [ "${{ needs.filter.outputs.pkg_windmill }}" == "true" ]; then FILTER="$FILTER --filter=@repo/windmill..."; fi
 
