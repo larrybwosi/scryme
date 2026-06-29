@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
-import { useRef } from "react";
 import {
   Users2,
   ShoppingCart,
@@ -85,14 +83,12 @@ function FeatureCard({
   index: number;
 }) {
   const Icon = feature.icon;
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
 
   return (
     <motion.article
-      ref={ref}
       initial={{ opacity: 0, y: 28 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
       transition={{
         delay: (index % 3) * 0.1,
         duration: 0.55,
@@ -145,9 +141,6 @@ function FeatureCard({
 }
 
 export function FeaturesGrid() {
-  const headerRef = useRef(null);
-  const headerInView = useInView(headerRef, { once: true });
-
   return (
     <section
       id="features"
@@ -157,9 +150,9 @@ export function FeaturesGrid() {
       <div className="container mx-auto">
         {/* Header */}
         <motion.div
-          ref={headerRef}
           initial={{ opacity: 0, y: 20 }}
-          animate={headerInView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
