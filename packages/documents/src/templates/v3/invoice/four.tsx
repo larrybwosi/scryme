@@ -1,13 +1,14 @@
-import { Svg, Path,
+import {
   Document,
   Page,
   Text,
   View,
   StyleSheet,
-  render,
+  Svg,
+  Path,
 } from "@react-pdf/renderer";
 import React from "react";
-import path from "path";
+import { V3DocumentData } from "../types";
 
 // ---- Colors pulled from the reference invoice ----
 const DARK_NAVY = "#262B38";
@@ -48,37 +49,38 @@ const styles = StyleSheet.create({
     color: GRAY_TEXT,
     marginTop: 1,
   },
-  invoiceTitle: {
+  documentTitle: {
     fontSize: 26,
     fontFamily: "Helvetica",
     color: DARK,
     letterSpacing: 2,
+    textTransform: "uppercase",
   },
 
-  // ---------- Invoice to ----------
-  invoiceToSection: {
+  // ---------- To ----------
+  toSection: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 22,
   },
-  invoiceToLeft: {},
-  invoiceToBadge: {
+  toLeft: {},
+  toBadge: {
     backgroundColor: LIGHT_BG,
     paddingVertical: 4,
     paddingHorizontal: 10,
     alignSelf: "flex-start",
     marginBottom: 10,
   },
-  invoiceToBadgeText: { fontSize: 8, color: GRAY_TEXT },
-  invoiceToName: {
+  toBadgeText: { fontSize: 8, color: GRAY_TEXT },
+  toName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     color: DARK,
     marginBottom: 4,
   },
-  invoiceToAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
+  toAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
 
-  invoiceToRight: { alignItems: "flex-end" },
+  toRight: { alignItems: "flex-end" },
   metaLine: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
@@ -237,250 +239,165 @@ const styles = StyleSheet.create({
   termsAddr: { fontSize: 7.5, color: GRAY_TEXT },
 });
 
-const ZigzagLogo = () =>
-  React.createElement(
-    Svg,
-    { width: 34, height: 22, viewBox: "0 0 34 22" },
-    React.createElement(Path, {
-      d: "M0 6 L6 1 L12 6 L18 1 L24 6 L30 1 L34 4",
-      stroke: DARK,
-      strokeWidth: 2,
-      fill: "none",
-    }),
-    React.createElement(Path, {
-      d: "M0 12 L6 7 L12 12 L18 7 L24 12 L30 7 L34 10",
-      stroke: DARK,
-      strokeWidth: 2,
-      fill: "none",
-    }),
-    React.createElement(Path, {
-      d: "M0 18 L6 13 L12 18 L18 13 L24 18 L30 13 L34 16",
-      stroke: DARK,
-      strokeWidth: 2,
-      fill: "none",
-    }),
+const ZigzagLogo = () => (
+  <Svg width={34} height={22} viewBox="0 0 34 22">
+    <Path
+      d="M0 6 L6 1 L12 6 L18 1 L24 6 L30 1 L34 4"
+      stroke={DARK}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path
+      d="M0 12 L6 7 L12 12 L18 7 L24 12 L30 7 L34 10"
+      stroke={DARK}
+      strokeWidth={2}
+      fill="none"
+    />
+    <Path
+      d="M0 18 L6 13 L12 18 L18 13 L24 18 L30 13 L34 16"
+      stroke={DARK}
+      strokeWidth={2}
+      fill="none"
+    />
+  </Svg>
+);
+
+export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
+  const {
+    type,
+    number,
+    date,
+    company,
+    customer,
+    items,
+    subtotal,
+    tax,
+    taxRate,
+    total,
+    currency,
+    paymentMethod,
+    bankDetails,
+    terms,
+    signature,
+  } = data;
+
+  const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* ---- Header ---- */}
+        <View style={styles.headerRow}>
+          <View style={styles.brandRow}>
+            <ZigzagLogo />
+            <View style={styles.brandTextBlock}>
+              <Text style={styles.brandName}>{company.name}</Text>
+              {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
+            </View>
+          </View>
+          <Text style={styles.documentTitle}>{type}</Text>
+        </View>
+
+        {/* ---- To / meta ---- */}
+        <View style={styles.toSection}>
+          <View style={styles.toLeft}>
+            <View style={styles.toBadge}>
+              <Text style={styles.toBadgeText}>
+                {type === "invoice" ? "Invoice to:" : "Receipt to:"}
+              </Text>
+            </View>
+            <Text style={styles.toName}>{customer.name}</Text>
+            <Text style={styles.toAddr}>
+              {customer.address}
+              {customer.phone ? `\n${customer.phone}` : ""}
+              {customer.email ? `\n${customer.email}` : ""}
+            </Text>
+          </View>
+          <View style={styles.toRight}>
+            <Text style={styles.metaLine}>
+              {type === "invoice" ? "Invoice #" : "Receipt #"} {number}
+            </Text>
+            <Text style={styles.metaLine}>
+              Date {date}
+            </Text>
+          </View>
+        </View>
+
+        {/* ---- Table ---- */}
+        <View style={styles.tableHeader}>
+          <Text style={styles.thDesc}>ITEM DESCRIPTION</Text>
+          <Text style={styles.thQty}>QTY</Text>
+          <Text style={styles.thPrice}>PRICE</Text>
+          <Text style={styles.thTotal}>TOTAL</Text>
+        </View>
+
+        {items.map((item, idx) => (
+          <View key={idx} style={styles.tableRow}>
+            <View style={styles.tdDesc}>
+               <Text style={{ fontFamily: "Helvetica-Bold" }}>{item.name}</Text>
+               {item.description && <Text style={{ fontSize: 7, color: GRAY_TEXT }}>{item.description}</Text>}
+            </View>
+            <Text style={styles.tdQty}>{String(item.quantity)}</Text>
+            <Text style={styles.tdPrice}>{fmt(item.unitPrice)}</Text>
+            <Text style={styles.tdTotal}>{fmt(item.total)}</Text>
+          </View>
+        ))}
+
+        {/* ---- Totals ---- */}
+        <View style={styles.totalsSection}>
+          <View style={styles.totalsRow}>
+            <Text style={styles.totalsLabel}>SUB TOTAL</Text>
+            <Text style={styles.totalsValue}>{fmt(subtotal)}</Text>
+          </View>
+          {tax > 0 && (
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>TAX {taxRate ? `(${taxRate}%)` : ""}</Text>
+              <Text style={styles.totalsValue}>{fmt(tax)}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* ---- Payment / grand total band ---- */}
+        <View style={styles.bottomBand}>
+          <View style={styles.paymentBlock}>
+            <Text style={styles.paymentLabel}>PAYMENT METHOD</Text>
+            {paymentMethod && (
+              <View style={styles.paymentRow}>
+                <Text style={styles.paymentKey}>{paymentMethod}</Text>
+              </View>
+            )}
+            {bankDetails && (
+              <>
+                <Text style={[styles.paymentKey, { marginTop: 4 }]}>Bank account</Text>
+                <Text style={styles.paymentVal}>{bankDetails.accountNo}</Text>
+              </>
+            )}
+            <Text style={styles.thankYou}>Thank you for business with us!</Text>
+          </View>
+          <View style={styles.grandTotalBlock}>
+            <Text style={styles.grandTotalLabel}>GRAND TOTAL</Text>
+            <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
+          </View>
+        </View>
+
+        {/* ---- Signature ---- */}
+        {signature && signature.name && (
+          <View style={styles.signatureArea}>
+            <Text style={styles.signatureScript}>{signature.name}</Text>
+            <Text style={styles.signatureName}>{signature.name.toUpperCase()}</Text>
+            <Text style={styles.signatureTitle}>{signature.title}</Text>
+          </View>
+        )}
+
+        {/* ---- Terms ---- */}
+        <View style={styles.termsRow}>
+          <Text style={styles.termsLabel}>TERMS:</Text>
+          <Text style={styles.termsText}>{terms}</Text>
+          <Text style={styles.termsAddr}>{company.address}</Text>
+        </View>
+      </Page>
+    </Document>
   );
+};
 
-const items = [
-  { desc: "Lorem ipsum dolor sit amet", qty: 2, price: 20, total: 40 },
-  { desc: "Maecenas dapibus quis lipsum", qty: 1, price: 10, total: 10 },
-  { desc: "Cras ullamcorper odio", qty: 3, price: 25, total: 75 },
-  { desc: "Mauris quam purus", qty: 5, price: 5, total: 25 },
-  { desc: "Vivamus semper vitae leo", qty: 1, price: 90, total: 90 },
-  { desc: "Nullam condimentum ultrices neque", qty: 2, price: 40, total: 80 },
-];
-
-const fmt = (n: number) => `$${n.toFixed(2)}`;
-
-const InvoiceDocument = () =>
-  React.createElement(
-    Document,
-    null,
-    React.createElement(
-      Page,
-      { size: "A4", style: styles.page },
-
-      // ---- Header ----
-      React.createElement(
-        View,
-        { style: styles.headerRow },
-        React.createElement(
-          View,
-          { style: styles.brandRow },
-          React.createElement(ZigzagLogo),
-          React.createElement(
-            View,
-            { style: styles.brandTextBlock },
-            React.createElement(
-              Text,
-              { style: styles.brandName },
-              "BRAND NAME",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.brandSlogan },
-              "Maecenas dapibus quis lipsum",
-            ),
-          ),
-        ),
-        React.createElement(Text, { style: styles.invoiceTitle }, "INVOICE"),
-      ),
-
-      // ---- Invoice to / meta ----
-      React.createElement(
-        View,
-        { style: styles.invoiceToSection },
-        React.createElement(
-          View,
-          { style: styles.invoiceToLeft },
-          React.createElement(
-            View,
-            { style: styles.invoiceToBadge },
-            React.createElement(
-              Text,
-              { style: styles.invoiceToBadgeText },
-              "Invoice to:",
-            ),
-          ),
-          React.createElement(
-            Text,
-            { style: styles.invoiceToName },
-            "Ostin Parker",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.invoiceToAddr },
-            "66 Avenue any street,\nCity name, State, US",
-          ),
-        ),
-        React.createElement(
-          View,
-          { style: styles.invoiceToRight },
-          React.createElement(
-            Text,
-            { style: styles.metaLine },
-            "Invoice # 115662",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.metaLine },
-            "Date  03/12/2022",
-          ),
-        ),
-      ),
-
-      // ---- Table ----
-      React.createElement(
-        View,
-        { style: styles.tableHeader },
-        React.createElement(Text, { style: styles.thDesc }, "ITEM DESCRIPTION"),
-        React.createElement(Text, { style: styles.thQty }, "QTY"),
-        React.createElement(Text, { style: styles.thPrice }, "PRICE"),
-        React.createElement(Text, { style: styles.thTotal }, "TOTAL"),
-      ),
-
-      ...items.map((item, idx) =>
-        React.createElement(
-          View,
-          { key: idx, style: styles.tableRow },
-          React.createElement(Text, { style: styles.tdDesc }, item.desc),
-          React.createElement(Text, { style: styles.tdQty }, String(item.qty)),
-          React.createElement(Text, { style: styles.tdPrice }, fmt(item.price)),
-          React.createElement(Text, { style: styles.tdTotal }, fmt(item.total)),
-        ),
-      ),
-
-      // ---- Totals ----
-      React.createElement(
-        View,
-        { style: styles.totalsSection },
-        React.createElement(
-          View,
-          { style: styles.totalsRow },
-          React.createElement(Text, { style: styles.totalsLabel }, "SUB TOTAL"),
-          React.createElement(Text, { style: styles.totalsValue }, "$320.00"),
-        ),
-        React.createElement(
-          View,
-          { style: styles.totalsRow },
-          React.createElement(Text, { style: styles.totalsLabel }, "TAX (0%)"),
-          React.createElement(Text, { style: styles.totalsValue }, "$0.00"),
-        ),
-      ),
-
-      // ---- Payment / grand total band ----
-      React.createElement(
-        View,
-        { style: styles.bottomBand },
-        React.createElement(
-          View,
-          { style: styles.paymentBlock },
-          React.createElement(
-            Text,
-            { style: styles.paymentLabel },
-            "PAYMENT METHOD",
-          ),
-          React.createElement(
-            View,
-            { style: styles.paymentRow },
-            React.createElement(Text, { style: styles.paymentKey }, "Paypal"),
-            React.createElement(Text, { style: styles.paymentVal }, ""),
-          ),
-          React.createElement(
-            Text,
-            { style: [styles.paymentVal, { marginBottom: 6 }] },
-            "anyemail@domain.com",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.paymentKey },
-            "Bank account",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.paymentVal },
-            "23-554-2785-54",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.thankYou },
-            "Thank you for business with us!",
-          ),
-        ),
-        React.createElement(
-          View,
-          { style: styles.grandTotalBlock },
-          React.createElement(
-            Text,
-            { style: styles.grandTotalLabel },
-            "GRAND TOTAL",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.grandTotalValue },
-            "$320.00",
-          ),
-        ),
-      ),
-
-      // ---- Signature ----
-      React.createElement(
-        View,
-        { style: styles.signatureArea },
-        React.createElement(Text, { style: styles.signatureScript }, "Freeman"),
-        React.createElement(
-          Text,
-          { style: styles.signatureName },
-          "MR. FREEMAN GOAL",
-        ),
-        React.createElement(
-          Text,
-          { style: styles.signatureTitle },
-          "Executive director",
-        ),
-      ),
-
-      // ---- Terms ----
-      React.createElement(
-        View,
-        { style: styles.termsRow },
-        React.createElement(Text, { style: styles.termsLabel }, "TERMS:"),
-        React.createElement(
-          Text,
-          { style: styles.termsText },
-          "Maecenas dapibus quis laoreas. Cras ullamcorper odio vel ante, vel aliquet purus. Mauris quam purus, vel sequam fugiet.",
-        ),
-        React.createElement(
-          Text,
-          { style: styles.termsAddr },
-          "Address line can be here",
-        ),
-      ),
-    ),
-  );
-
-(async () => {
-  const outPath = path.join(__dirname, "invoice4.pdf");
-  await render(React.createElement(InvoiceDocument), outPath);
-  console.log("PDF written to", outPath);
-})();
+export default TemplateFour;

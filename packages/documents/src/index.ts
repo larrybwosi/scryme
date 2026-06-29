@@ -80,6 +80,9 @@ export * from "./templates/v2/StockRequestListTemplate";
 export * from "./templates/v2/AggregatedStockRequestListTemplate";
 export * from "./templates/v2/StockTransferListTemplate";
 
+// V3 Templates
+export * from "./templates/v3";
+
 export * from "./mock-data";
 
 export const DocumentGenerator: any = {

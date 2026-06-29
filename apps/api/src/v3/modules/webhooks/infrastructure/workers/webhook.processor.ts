@@ -2,6 +2,7 @@ import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { WebhookService } from "../services/webhook.service";
 import { PrismaService } from "@/prisma/prisma.service";
+import { isSafeUrl } from "@repo/shared/server";
 
 @Processor("webhooks")
 export class WebhookProcessor extends WorkerHost {
@@ -15,6 +16,20 @@ export class WebhookProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     if (job.name === "deliver") {
       const { subscriptionId, event, payload, url, secret } = job.data;
+
+      // @security Validate URL to prevent SSRF
+      if (!(await isSafeUrl(url))) {
+        const log = await this.webhookService.createLog(
+          subscriptionId,
+          event,
+          payload,
+        );
+        await this.webhookService.updateLog(log.id, {
+          error: "Insecure webhook URL blocked (SSRF protection)",
+          status: "FAILED",
+        });
+        throw new Error("Insecure webhook URL blocked");
+      }
 
       const log = await this.webhookService.createLog(
         subscriptionId,
