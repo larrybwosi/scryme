@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { storageService } from "@repo/shared/storage";
-import { optimizeImage } from "@repo/shared/server";
+import { optimizeImage, isSafeUrl } from "@repo/shared/server";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
 import crypto from "crypto";
@@ -54,6 +54,11 @@ export class ImageService {
         // For Sanity, the user should probably just use Sanity's CDN directly.
         // But if they go through our API:
         const originalUrl = await this.getOriginalUrl(id);
+
+        if (!(await isSafeUrl(originalUrl))) {
+          throw new Error(`Potentially unsafe image URL: ${originalUrl}`);
+        }
+
         const response = await axios.get(originalUrl, {
           responseType: "arraybuffer",
           timeout: 5000,
@@ -69,6 +74,11 @@ export class ImageService {
           60,
           options.organizationId,
         );
+
+        if (!(await isSafeUrl(url))) {
+          throw new Error(`Potentially unsafe image URL: ${url}`);
+        }
+
         const response = await axios.get(url, {
           responseType: "arraybuffer",
           timeout: 5000,
