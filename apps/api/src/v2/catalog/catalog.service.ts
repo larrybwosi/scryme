@@ -15,6 +15,7 @@ export class CatalogService {
     private readonly prisma: PrismaService,
     private readonly supplierService: SupplierService,
     private readonly redis: RedisService,
+    private readonly realtime: ApiRealtimeService,
   ) {}
 
   async getProducts(ctx: V2ApiContext, query: any) {
@@ -218,9 +219,17 @@ export class CatalogService {
 
   async deleteProduct(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.product.delete({
+    const result = await this.prisma.client.product.delete({
       where: { id, organizationId },
     });
+
+    await this.realtime.publish(
+      `organization:${organizationId}:inventory`,
+      "product-deleted",
+      { productId: id },
+    );
+
+    return result;
   }
 
   async getCategories(ctx: V2ApiContext) {
