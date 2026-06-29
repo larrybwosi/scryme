@@ -4,23 +4,20 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
-  render,
 } from "@react-pdf/renderer";
 import React from "react";
-import path from "path";
+import { V3DocumentData } from "../types";
 
 // ---- Colors pulled from the reference invoice ----
 const TEAL = "#1AB8C4";
 const DARK = "#3A3A3A";
 const GRAY_TEXT = "#6B6B6B";
 const LIGHT_ROW = "#F4F6F7";
-const FOOTER_GRAY = "#7B7B7B";
 
 const styles = StyleSheet.create({
   page: {
     paddingTop: 40,
-    paddingBottom: 0,
+    paddingBottom: 80, // Increased to account for fixed footer
     paddingHorizontal: 50,
     fontSize: 9,
     color: DARK,
@@ -63,20 +60,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 25,
   },
-  invoiceToLabel: {
+  toLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
     color: DARK,
     marginBottom: 8,
   },
-  invoiceToText: { fontSize: 8, color: GRAY_TEXT, lineHeight: 1.6 },
+  toText: { fontSize: 8, color: GRAY_TEXT, lineHeight: 1.6 },
   website: { fontSize: 8, color: TEAL, marginTop: 4 },
 
-  invoiceTitle: {
+  documentTitle: {
     fontSize: 34,
     fontFamily: "Helvetica-Bold",
     color: "#BDBDBD",
     letterSpacing: 1,
+    textTransform: "uppercase",
   },
 
   // meta row under INVOICE title (Total due / Date / No.)
@@ -204,7 +202,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#8C8C8C",
     paddingHorizontal: 50,
     paddingVertical: 18,
-    marginTop: 24,
     position: "absolute",
     bottom: 0,
     left: 0,
@@ -223,344 +220,206 @@ const styles = StyleSheet.create({
   footerSite: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#FFFFFF" },
 });
 
-const items = [
-  {
-    name: "Apient vellaci inulles",
-    sub: "Acipsani endelite dolupti faceripame omnimpossit",
-    qty: 2,
-    unit: 750.0,
-    total: 1500.0,
-  },
-  {
-    name: "Maercinda voluptas ut archil",
-    sub: "Doluptame nimo ium rem expe suntus dest aut res",
-    qty: 1,
-    unit: 300.0,
-    total: 300.0,
-  },
-  {
-    name: "Dolomaximin presci aut",
-    sub: "Acipsani endelite doluptione non plant faceriaecus ulparu",
-    qty: 3,
-    unit: 299.0,
-    total: 897.0,
-  },
-  {
-    name: "Reperum expedatiatende",
-    sub: "Vume omnimpossit mo cusaecae sitatiumquam ut quo",
-    qty: 1,
-    unit: 780.0,
-    total: 780.0,
-  },
-  {
-    name: "Dionsedissit iume omnimpossit mo cusaecae",
-    sub: "Feperum exped qui nate officto aliquids reperum expedct",
-    qty: 2,
-    unit: 300.0,
-    total: 600.0,
-  },
-];
+export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
+  const {
+    type,
+    number,
+    date,
+    company,
+    customer,
+    items,
+    subtotal,
+    tax,
+    taxRate,
+    discount,
+    discountRate,
+    total,
+    currency,
+    paymentTerms,
+    paymentInfo,
+    terms,
+    footerText,
+    footerWebsite,
+    signature,
+  } = data;
 
-const fmt = (n: number) =>
-  `$ ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmt = (n: number) =>
+    `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const InvoiceDocument = () =>
-  React.createElement(
-    Document,
-    null,
-    React.createElement(
-      Page,
-      { size: "A4", style: styles.page },
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Header: logo + company info */}
+        <View style={styles.headerRow}>
+          <View style={styles.logoBlock}>
+            <View style={styles.logoCircle}>
+              <Text style={styles.logoCircleText}>
+                {company.name.charAt(0)}
+              </Text>
+            </View>
+            <Text style={styles.logoText}>{company.name}</Text>
+          </View>
+          <View style={styles.companyInfo}>
+            {company.address && <Text>{company.address}</Text>}
+            <Text>
+              {company.phone && `Phone: ${company.phone}`}
+              {company.phone && company.email && "  "}
+              {company.email && `E-mail: ${company.email}`}
+            </Text>
+          </View>
+        </View>
 
-      // Header: logo + company info
-      React.createElement(
-        View,
-        { style: styles.headerRow },
-        React.createElement(
-          View,
-          { style: styles.logoBlock },
-          React.createElement(
-            View,
-            { style: styles.logoCircle },
-            React.createElement(Text, { style: styles.logoCircleText }, "S"),
-          ),
-          React.createElement(Text, { style: styles.logoText }, "example"),
-        ),
-        React.createElement(
-          View,
-          { style: styles.companyInfo },
-          React.createElement(Text, null, "City Name, Street Name 01234"),
-          React.createElement(
-            Text,
-            null,
-            "Phone: 00 123 456 789  Fax: 00 123 456 789",
-          ),
-          React.createElement(Text, null, "E-mail: office@example.com"),
-        ),
-      ),
+        {/* To / Title + meta */}
+        <View style={styles.topSection}>
+          <View>
+            <Text style={styles.toLabel}>
+              {type === "invoice" ? "Invoice to:" : "Receipt to:"}
+            </Text>
+            <View style={styles.toText}>
+              <Text style={{ fontFamily: "Helvetica-Bold", color: DARK }}>{customer.name}</Text>
+              {customer.address && <Text>{customer.address}</Text>}
+              {customer.phone && <Text>{customer.phone}</Text>}
+              {customer.email && <Text>{customer.email}</Text>}
+            </View>
+            {customer.website && (
+              <Text style={styles.website}>{customer.website}</Text>
+            )}
+          </View>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={styles.documentTitle}>{type}</Text>
+          </View>
+        </View>
 
-      // Invoice to / Title + meta
-      React.createElement(
-        View,
-        { style: styles.topSection },
-        React.createElement(
-          View,
-          null,
-          React.createElement(
-            Text,
-            { style: styles.invoiceToLabel },
-            "Invoice to:",
-          ),
-          React.createElement(
-            View,
-            { style: styles.invoiceToText },
-            React.createElement(Text, null, "City Name, Street Name 01234"),
-            React.createElement(
-              Text,
-              null,
-              "Phone: 00 123 456 789  Fax: 00 123 456 789",
-            ),
-            React.createElement(Text, null, "E-mail: office@example.com"),
-          ),
-          React.createElement(
-            Text,
-            { style: styles.website },
-            "www.example.com",
-          ),
-        ),
-        React.createElement(
-          View,
-          { style: { alignItems: "flex-end" } },
-          React.createElement(Text, { style: styles.invoiceTitle }, "INVOICE"),
-        ),
-      ),
+        {/* Meta row: Total Due / Date / No */}
+        <View style={[styles.metaRow, { justifyContent: "flex-end" }]}>
+          <View style={styles.metaBlockFirst}>
+            <Text style={styles.metaLabel}>Total Due:</Text>
+            <Text style={styles.metaValueTeal}>{fmt(total)}</Text>
+          </View>
+          <View style={styles.metaBlock}>
+            <Text style={styles.metaLabel}>
+              {type === "invoice" ? "Invoice Date:" : "Receipt Date:"}
+            </Text>
+            <Text style={styles.metaValue}>{date}</Text>
+          </View>
+          <View style={styles.metaBlock}>
+            <Text style={styles.metaLabel}>
+              {type === "invoice" ? "Invoice No:" : "Receipt No:"}
+            </Text>
+            <Text style={styles.metaValue}>{number}</Text>
+          </View>
+        </View>
 
-      // Meta row: Total Due / Invoice Date / Invoice No
-      React.createElement(
-        View,
-        { style: [styles.metaRow, { justifyContent: "flex-end" }] },
-        React.createElement(
-          View,
-          { style: styles.metaBlockFirst },
-          React.createElement(Text, { style: styles.metaLabel }, "Total Due:"),
-          React.createElement(
-            Text,
-            { style: styles.metaValueTeal },
-            "$ 5,784.70",
-          ),
-        ),
-        React.createElement(
-          View,
-          { style: styles.metaBlock },
-          React.createElement(
-            Text,
-            { style: styles.metaLabel },
-            "Invoice Date:",
-          ),
-          React.createElement(Text, { style: styles.metaValue }, "27.05.2022"),
-        ),
-        React.createElement(
-          View,
-          { style: styles.metaBlock },
-          React.createElement(Text, { style: styles.metaLabel }, "Invoice No:"),
-          React.createElement(Text, { style: styles.metaValue }, "000720"),
-        ),
-      ),
+        {/* Table header */}
+        <View style={[styles.tableHeader, { marginTop: 25 }]}>
+          <Text style={[styles.tableHeaderText, styles.colDesc]}>
+            ITEM DESCRIPTION
+          </Text>
+          <Text style={[styles.tableHeaderText, styles.colQty]}>QUANTITY</Text>
+          <Text style={[styles.tableHeaderText, styles.colUnit]}>
+            UNIT PRICE
+          </Text>
+          <Text style={[styles.tableHeaderText, styles.colTotal]}>TOTAL</Text>
+        </View>
 
-      // Table header
-      React.createElement(
-        View,
-        { style: [styles.tableHeader, { marginTop: 25 }] },
-        React.createElement(
-          Text,
-          { style: [styles.tableHeaderText, styles.colDesc] },
-          "ITEM DESCRIPTION",
-        ),
-        React.createElement(
-          Text,
-          { style: [styles.tableHeaderText, styles.colQty] },
-          "QUANTITY",
-        ),
-        React.createElement(
-          Text,
-          { style: [styles.tableHeaderText, styles.colUnit] },
-          "UNIT PRICE",
-        ),
-        React.createElement(
-          Text,
-          { style: [styles.tableHeaderText, styles.colTotal] },
-          "TOTAL",
-        ),
-      ),
-
-      // Table rows
-      ...items.map((item, idx) =>
-        React.createElement(
-          View,
-          {
-            key: idx,
-            style: [
+        {/* Table rows */}
+        {items.map((item, idx) => (
+          <View
+            key={idx}
+            style={[
               styles.tableRow,
               idx % 2 === 1 ? { backgroundColor: LIGHT_ROW } : {},
-            ],
-          },
-          React.createElement(
-            View,
-            { style: styles.colDesc },
-            React.createElement(Text, { style: styles.itemTitle }, item.name),
-            React.createElement(Text, { style: styles.itemSub }, item.sub),
-          ),
-          React.createElement(
-            Text,
-            { style: [styles.cellText, styles.colQty] },
-            String(item.qty),
-          ),
-          React.createElement(
-            Text,
-            { style: [styles.cellText, styles.colUnit] },
-            fmt(item.unit),
-          ),
-          React.createElement(
-            Text,
-            { style: [styles.cellTotal, styles.colTotal] },
-            fmt(item.total),
-          ),
-        ),
-      ),
+            ]}
+          >
+            <View style={styles.colDesc}>
+              <Text style={styles.itemTitle}>{item.name}</Text>
+              {item.description && (
+                <Text style={styles.itemSub}>{item.description}</Text>
+              )}
+            </View>
+            <Text style={[styles.cellText, styles.colQty]}>
+              {String(item.quantity)}
+            </Text>
+            <Text style={[styles.cellText, styles.colUnit]}>
+              {fmt(item.unitPrice)}
+            </Text>
+            <Text style={[styles.cellTotal, styles.colTotal]}>
+              {fmt(item.total)}
+            </Text>
+          </View>
+        ))}
 
-      // Bottom section: terms+payment | totals
-      React.createElement(
-        View,
-        { style: styles.bottomSection },
-        React.createElement(
-          View,
-          { style: styles.termsBlock },
-          React.createElement(
-            Text,
-            { style: styles.termsLabel },
-            "Terms: 30 days from issue",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.paymentLabel },
-            "Payment Information",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.paymentText },
-            "Sime omnimag natibus es nis eum re prepuditest, tem que numqui doluptas sinvel mod eos rem fuga. Ribus es aliqui il maiori sit unti sit et lam",
-          ),
-        ),
-        React.createElement(
-          View,
-          { style: styles.totalsBlock },
-          React.createElement(
-            View,
-            { style: styles.totalsRow },
-            React.createElement(
-              Text,
-              { style: styles.totalsLabel },
-              "Subtotal",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.totalsValue },
-              "$ 3,477.00",
-            ),
-          ),
-          React.createElement(
-            View,
-            { style: styles.totalsRow },
-            React.createElement(
-              Text,
-              { style: styles.totalsLabel },
-              "Tax Rate 7%",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.totalsValue },
-              "$ 243.39",
-            ),
-          ),
-          React.createElement(
-            View,
-            { style: styles.totalsRow },
-            React.createElement(
-              Text,
-              { style: styles.discountLabel },
-              "Discount 10%",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.discountValue },
-              "-$ 3,47.70",
-            ),
-          ),
-          React.createElement(
-            View,
-            { style: styles.totalDueRow },
-            React.createElement(
-              Text,
-              { style: styles.totalDueLabel },
-              "Total Due:",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.totalDueValue },
-              "$ 5,784.70",
-            ),
-          ),
-        ),
-      ),
+        {/* Bottom section: terms+payment | totals */}
+        <View style={styles.bottomSection}>
+          <View style={styles.termsBlock}>
+            {paymentTerms && (
+              <>
+                <Text style={styles.termsLabel}>Terms: {paymentTerms}</Text>
+              </>
+            )}
+            {paymentInfo && (
+              <>
+                <Text style={styles.paymentLabel}>Payment Information</Text>
+                <Text style={styles.paymentText}>{paymentInfo}</Text>
+              </>
+            )}
+          </View>
+          <View style={styles.totalsBlock}>
+            <View style={styles.totalsRow}>
+              <Text style={styles.totalsLabel}>Subtotal</Text>
+              <Text style={styles.totalsValue}>{fmt(subtotal)}</Text>
+            </View>
+            {tax > 0 && (
+              <View style={styles.totalsRow}>
+                <Text style={styles.totalsLabel}>
+                  Tax {taxRate ? `(${taxRate}%)` : ""}
+                </Text>
+                <Text style={styles.totalsValue}>{fmt(tax)}</Text>
+              </View>
+            )}
+            {discount !== undefined && discount > 0 && (
+              <View style={styles.totalsRow}>
+                <Text style={styles.discountLabel}>
+                  Discount {discountRate ? `(${discountRate}%)` : ""}
+                </Text>
+                <Text style={styles.discountValue}>-{fmt(discount)}</Text>
+              </View>
+            )}
+            <View style={styles.totalDueRow}>
+              <Text style={styles.totalDueLabel}>Total Due:</Text>
+              <Text style={styles.totalDueValue}>{fmt(total)}</Text>
+            </View>
+          </View>
+        </View>
 
-      // Signature
-      React.createElement(
-        View,
-        { style: styles.signatureBlock },
-        React.createElement(Text, { style: styles.signatureName }, "John Doe"),
-        React.createElement(
-          Text,
-          { style: styles.signatureTitle },
-          "Project Director",
-        ),
-      ),
+        {/* Signature */}
+        {signature && (
+          <View style={styles.signatureBlock}>
+            <Text style={styles.signatureName}>{signature.name}</Text>
+            <Text style={styles.signatureTitle}>{signature.title}</Text>
+          </View>
+        )}
 
-      // Thank you
-      React.createElement(
-        Text,
-        { style: styles.thankYou },
-        "Thank you for your business",
-      ),
+        {/* Thank you */}
+        <Text style={styles.thankYou}>Thank you for your business</Text>
 
-      // Footer band
-      React.createElement(
-        View,
-        { style: styles.footer },
-        React.createElement(
-          View,
-          null,
-          React.createElement(
-            Text,
-            { style: styles.footerTitle },
-            "Terms & Conditions",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.footerText },
-            "Sime omnimag natibus es nis eum res aliqui il maiori sit unti sit et lam quam voamplius. Riorte pulcita, quodit dea moenatr untrata rbent. Catilic renium ac fachuides.",
-          ),
-        ),
-        React.createElement(
-          Text,
-          { style: styles.footerSite },
-          "www.example.com",
-        ),
-      ),
-    ),
+        {/* Footer band */}
+        {(terms || footerText || footerWebsite) && (
+          <View style={styles.footer} fixed>
+            <View>
+              <Text style={styles.footerTitle}>Terms & Conditions</Text>
+              <Text style={styles.footerText}>
+                {terms || footerText}
+              </Text>
+            </View>
+            {footerWebsite && (
+              <Text style={styles.footerSite}>{footerWebsite}</Text>
+            )}
+          </View>
+        )}
+      </Page>
+    </Document>
   );
+};
 
-(async () => {
-  const outPath = path.join(__dirname, "invoice.pdf");
-  await render(React.createElement(InvoiceDocument), outPath);
-  console.log("PDF written to", outPath);
-})();
+export default TemplateOne;
