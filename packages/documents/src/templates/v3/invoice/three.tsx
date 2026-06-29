@@ -4,10 +4,9 @@ import {
   Text,
   View,
   StyleSheet,
-  render,
 } from "@react-pdf/renderer";
 import React from "react";
-import path from "path";
+import { V3DocumentData } from "../types";
 
 // ---- Colors pulled from the reference invoice ----
 const DARK = "#2B2B2B";
@@ -15,7 +14,6 @@ const GRAY_TEXT = "#5A5A5A";
 const HEADER_BG = "#E2E4E5";
 const ROW_ALT = "#EBEDEE";
 const SUBTOTAL_BG = "#DCDEDF";
-const LINE = "#2B2B2B";
 
 const styles = StyleSheet.create({
   page: {
@@ -35,32 +33,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 45,
   },
   dateText: { fontSize: 8.5, color: GRAY_TEXT, marginBottom: 6 },
-  invoiceTitle: {
+  documentTitle: {
     fontSize: 32,
     fontFamily: "Helvetica-Bold",
     color: DARK,
     letterSpacing: 1,
     marginBottom: 20,
+    textTransform: "uppercase",
   },
   topRow: { flexDirection: "row", justifyContent: "space-between" },
 
-  clientBlock: {},
-  clientLabel: { fontSize: 9, color: DARK, marginBottom: 2 },
+  companyBlock: {},
+  companyLabel: { fontSize: 9, color: DARK, marginBottom: 2 },
   metaTable: { marginTop: 16 },
   metaRow: { flexDirection: "row", marginBottom: 4 },
   metaKey: { fontSize: 8.5, color: GRAY_TEXT, width: 75 },
   metaColon: { fontSize: 8.5, color: GRAY_TEXT, width: 10 },
   metaVal: { fontSize: 8.5, color: DARK },
 
-  invoiceToBlock: { alignItems: "flex-start", maxWidth: 200 },
-  invoiceToLabel: { fontSize: 9, color: GRAY_TEXT, marginBottom: 4 },
-  invoiceToName: {
+  toBlock: { alignItems: "flex-start", maxWidth: 200 },
+  toLabel: { fontSize: 9, color: GRAY_TEXT, marginBottom: 4 },
+  toName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     color: DARK,
     marginBottom: 8,
   },
-  invoiceToAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
+  toAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
 
   // ---------- Table ----------
   tableSection: { paddingHorizontal: 45, marginTop: 30 },
@@ -211,263 +210,161 @@ const styles = StyleSheet.create({
   footerText: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: DARK },
 });
 
-const items = [
-  { ref: 1, desc: "Logo Design", qty: 1, unit: 120, amount: 120 },
-  { ref: 2, desc: "Flyer Design", qty: 2, unit: 90, amount: 40 },
-  { ref: 3, desc: "Web development", qty: 1, unit: 20, amount: 90 },
-  { ref: 4, desc: "Restaurant logo", qty: 3, unit: 110, amount: 30 },
-  { ref: 5, desc: "Poster Design", qty: 5, unit: 60, amount: 125 },
-  { ref: 6, desc: "T-Shirt Design", qty: 3, unit: 34, amount: 105 },
-  { ref: 7, desc: "Instagram Story Design", qty: 7, unit: 128, amount: 140 },
-  { ref: 8, desc: "Facebook Post Design", qty: 11, unit: 35, amount: 22 },
-];
+export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
+  const {
+    type,
+    number,
+    date,
+    company,
+    customer,
+    items,
+    total,
+    currency,
+    bankDetails,
+    footerWebsite,
+    signature,
+  } = data;
 
-const fmt = (n: number) => `$${n}`;
+  const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const InvoiceDocument = () =>
-  React.createElement(
-    Document,
-    null,
-    React.createElement(
-      Page,
-      { size: "A4", style: styles.page },
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* ---- Top gray band ---- */}
+        <View style={styles.topBand}>
+          <Text style={styles.dateText}>{date}</Text>
+          <Text style={styles.documentTitle}>{type}</Text>
 
-      // ---- Top gray band ----
-      React.createElement(
-        View,
-        { style: styles.topBand },
-        React.createElement(Text, { style: styles.dateText }, "July 10, 20XX"),
-        React.createElement(Text, { style: styles.invoiceTitle }, "INVOICE"),
+          <View style={styles.topRow}>
+            {/* Company block */}
+            <View style={styles.companyBlock}>
+              <Text style={styles.companyLabel}>{company.name}</Text>
+              {company.slogan && <Text style={styles.companyLabel}>{company.slogan}</Text>}
+              <View style={styles.metaTable}>
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaKey}>Date issued</Text>
+                  <Text style={styles.metaColon}>:</Text>
+                  <Text style={styles.metaVal}>{date}</Text>
+                </View>
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaKey}>
+                    {type === "invoice" ? "Invoice No" : "Receipt No"}
+                  </Text>
+                  <Text style={styles.metaColon}>:</Text>
+                  <Text style={styles.metaVal}>{number}</Text>
+                </View>
+              </View>
+            </View>
 
-        React.createElement(
-          View,
-          { style: styles.topRow },
-          // Client block
-          React.createElement(
-            View,
-            { style: styles.clientBlock },
-            React.createElement(
-              Text,
-              { style: styles.clientLabel },
-              "Client Name",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.clientLabel },
-              "Company Name",
-            ),
-            React.createElement(
-              View,
-              { style: styles.metaTable },
-              React.createElement(
-                View,
-                { style: styles.metaRow },
-                React.createElement(
-                  Text,
-                  { style: styles.metaKey },
-                  "Date issued",
-                ),
-                React.createElement(Text, { style: styles.metaColon }, ":"),
-                React.createElement(
-                  Text,
-                  { style: styles.metaVal },
-                  "July 10, 20XX",
-                ),
-              ),
-              React.createElement(
-                View,
-                { style: styles.metaRow },
-                React.createElement(
-                  Text,
-                  { style: styles.metaKey },
-                  "Invoice No",
-                ),
-                React.createElement(Text, { style: styles.metaColon }, ":"),
-                React.createElement(Text, { style: styles.metaVal }, "25637"),
-              ),
-            ),
-          ),
+            {/* To block */}
+            <View style={styles.toBlock}>
+              <Text style={styles.toLabel}>
+                {type === "invoice" ? "Invoice to" : "Receipt to"}
+              </Text>
+              <Text style={styles.toName}>{customer.name}</Text>
+              <Text style={styles.toAddr}>
+                {customer.address}
+                {customer.phone ? `\n${customer.phone}` : ""}
+                {customer.email ? `\n${customer.email}` : ""}
+              </Text>
+            </View>
+          </View>
+        </View>
 
-          // Invoice to block
-          React.createElement(
-            View,
-            { style: styles.invoiceToBlock },
-            React.createElement(
-              Text,
-              { style: styles.invoiceToLabel },
-              "Invoice to",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.invoiceToName },
-              "MATTHEW SMITH",
-            ),
-            React.createElement(
-              Text,
-              { style: styles.invoiceToAddr },
-              "123 Street Name, City Name,\nState, Country, 12345",
-            ),
-          ),
-        ),
-      ),
+        {/* ---- Table ---- */}
+        <View style={styles.tableSection}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.thRef}>REF</Text>
+            <Text style={styles.thDesc}>DESCRIPTION</Text>
+            <Text style={styles.thQty}>QTY</Text>
+            <Text style={styles.thUnit}>UNIT PRICE</Text>
+            <Text style={styles.thAmount}>AMOUNT</Text>
+          </View>
 
-      // ---- Table ----
-      React.createElement(
-        View,
-        { style: styles.tableSection },
-        React.createElement(
-          View,
-          { style: styles.tableHeader },
-          React.createElement(Text, { style: styles.thRef }, "REF"),
-          React.createElement(Text, { style: styles.thDesc }, "DESCRIPTION"),
-          React.createElement(Text, { style: styles.thQty }, "QTY"),
-          React.createElement(Text, { style: styles.thUnit }, "UNLT PRICE"),
-          React.createElement(Text, { style: styles.thAmount }, "AMOUNT"),
-        ),
-
-        ...items.map((item, idx) =>
-          React.createElement(
-            View,
-            {
-              key: idx,
-              style: [
+          {items.map((item, idx) => (
+            <View
+              key={idx}
+              style={[
                 styles.tableRow,
                 idx % 2 === 1 ? { backgroundColor: ROW_ALT } : {},
-              ],
-            },
-            React.createElement(
-              View,
-              { style: styles.tdRef },
-              React.createElement(
-                View,
-                { style: styles.refBadge },
-                React.createElement(
-                  Text,
-                  { style: styles.refBadgeText },
-                  String(item.ref),
-                ),
-              ),
-            ),
-            React.createElement(Text, { style: styles.tdDesc }, item.desc),
-            React.createElement(
-              Text,
-              { style: styles.tdQty },
-              String(item.qty),
-            ),
-            React.createElement(Text, { style: styles.tdUnit }, fmt(item.unit)),
-            React.createElement(
-              Text,
-              { style: styles.tdAmount },
-              fmt(item.amount),
-            ),
-          ),
-        ),
-      ),
+              ]}
+            >
+              <View style={styles.tdRef}>
+                <View style={styles.refBadge}>
+                  <Text style={styles.refBadgeText}>
+                    {String(item.ref || idx + 1)}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.tdDesc}>
+                 <Text style={{ fontFamily: "Helvetica-Bold" }}>{item.name}</Text>
+                 {item.description && <Text style={{ fontSize: 7, color: GRAY_TEXT }}>{item.description}</Text>}
+              </View>
+              <Text style={styles.tdQty}>{String(item.quantity)}</Text>
+              <Text style={styles.tdUnit}>{fmt(item.unitPrice)}</Text>
+              <Text style={styles.tdAmount}>{fmt(item.total)}</Text>
+            </View>
+          ))}
+        </View>
 
-      // ---- Subtotal ----
-      React.createElement(
-        View,
-        { style: styles.subtotalRow },
-        React.createElement(Text, { style: styles.subtotalLabel }, "SUB TOTAL"),
-        React.createElement(
-          View,
-          { style: styles.subtotalValueBox },
-          React.createElement(Text, { style: styles.subtotalValue }, "$741"),
-        ),
-      ),
+        {/* ---- Subtotal ---- */}
+        <View style={styles.subtotalRow}>
+          <Text style={styles.subtotalLabel}>TOTAL</Text>
+          <View style={styles.subtotalValueBox}>
+            <Text style={styles.subtotalValue}>{fmt(total)}</Text>
+          </View>
+        </View>
 
-      // ---- Bottom section: payment to | bank info + signature ----
-      React.createElement(
-        View,
-        { style: styles.bottomSection },
-        React.createElement(
-          View,
-          { style: styles.paymentToBlock },
-          React.createElement(
-            Text,
-            { style: styles.paymentToLabel },
-            "Please make payment to",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.paymentToName },
-            "JAMES SMITH",
-          ),
-          React.createElement(
-            Text,
-            { style: styles.paymentToAddr },
-            "123 Street Name, City\nName, State, Country, 12345",
-          ),
-        ),
+        {/* ---- Bottom section: payment to | bank info + signature ---- */}
+        <View style={styles.bottomSection}>
+          <View style={styles.paymentToBlock}>
+            <Text style={styles.paymentToLabel}>Please make payment to</Text>
+            <Text style={styles.paymentToName}>{company.name}</Text>
+            <Text style={styles.paymentToAddr}>
+              {company.address}
+            </Text>
+          </View>
 
-        React.createElement(
-          View,
-          { style: styles.bankBlock },
-          React.createElement(
-            View,
-            { style: styles.bankRow },
-            React.createElement(Text, { style: styles.bankLabel }, "BANK"),
-            React.createElement(
-              Text,
-              { style: styles.bankSubLabel },
-              "Account No",
-            ),
-            React.createElement(Text, { style: styles.bankColon }, ":"),
-            React.createElement(Text, { style: styles.bankVal }, "638 738 856"),
-          ),
-          React.createElement(
-            View,
-            { style: styles.bankRow },
-            React.createElement(Text, { style: styles.bankLabel }, "INFO"),
-            React.createElement(
-              Text,
-              { style: styles.bankSubLabel },
-              "Sort Code",
-            ),
-            React.createElement(Text, { style: styles.bankColon }, ":"),
-            React.createElement(Text, { style: styles.bankVal }, "84 57 39"),
-          ),
+          <View style={styles.bankBlock}>
+            {bankDetails && (
+              <>
+                <View style={styles.bankRow}>
+                  <Text style={styles.bankLabel}>BANK</Text>
+                  <Text style={styles.bankSubLabel}>Account No</Text>
+                  <Text style={styles.bankColon}>:</Text>
+                  <Text style={styles.bankVal}>{bankDetails.accountNo}</Text>
+                </View>
+                {bankDetails.sortCode && (
+                  <View style={styles.bankRow}>
+                    <Text style={styles.bankLabel}>INFO</Text>
+                    <Text style={styles.bankSubLabel}>Sort Code</Text>
+                    <Text style={styles.bankColon}>:</Text>
+                    <Text style={styles.bankVal}>{bankDetails.sortCode}</Text>
+                  </View>
+                )}
+              </>
+            )}
 
-          React.createElement(
-            View,
-            { style: styles.signatureArea },
-            React.createElement(
-              Text,
-              { style: styles.signatureScript },
-              "Matthew Smith",
-            ),
-            React.createElement(View, { style: styles.signatureLine }),
-            React.createElement(
-              Text,
-              { style: styles.signatureLabel },
-              "Signature",
-            ),
-          ),
-        ),
-      ),
+            {signature && (
+              <View style={styles.signatureArea}>
+                <Text style={styles.signatureScript}>{signature.name}</Text>
+                <View style={styles.signatureLine} />
+                <Text style={styles.signatureLabel}>{signature.title || "Signature"}</Text>
+              </View>
+            )}
+          </View>
+        </View>
 
-      // ---- Footer ----
-      React.createElement(View, { style: styles.footerDivider }),
-      React.createElement(
-        View,
-        { style: styles.footerRow },
-        React.createElement(
-          Text,
-          { style: styles.footerText },
-          "www.example.com",
-        ),
-        React.createElement(
-          Text,
-          { style: styles.footerText },
-          "user@example.com",
-        ),
-        React.createElement(Text, { style: styles.footerText }, "THANK YOU"),
-      ),
-    ),
+        {/* ---- Footer ---- */}
+        <View style={styles.footerDivider} />
+        <View style={styles.footerRow}>
+          <Text style={styles.footerText}>{footerWebsite || company.website || ""}</Text>
+          <Text style={styles.footerText}>{company.email || ""}</Text>
+          <Text style={styles.footerText}>THANK YOU</Text>
+        </View>
+      </Page>
+    </Document>
   );
+};
 
-(async () => {
-  const outPath = path.join(__dirname, "invoice2.pdf");
-  await render(React.createElement(InvoiceDocument), outPath);
-  console.log("PDF written to", outPath);
-})();
+export default TemplateThree;
