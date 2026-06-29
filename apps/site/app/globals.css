@@ -127,10 +127,9 @@
   --color-site-dark-border: var(--site-dark-border);
   --color-site-dark-muted: var(--site-dark-muted);
 
-  /* Convenience aliases used across site components */
-  --color-surface-1: oklch(0.97 0.005 265);
-  --color-surface-2: oklch(0.94 0.008 265);
-  --color-muted: oklch(0.5 0.02 265);
+  /* Convenience surface aliases — noticeably different from background */
+  --color-surface-1: oklch(0.96 0.008 265);
+  --color-surface-2: oklch(0.925 0.012 265);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
