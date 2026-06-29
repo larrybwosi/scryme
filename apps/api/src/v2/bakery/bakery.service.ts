@@ -609,8 +609,8 @@ export class BakeryService {
     const { actualQuantity, wasteQuantity, ingredientConsumptions, notes } =
       data;
 
-    const batch = await this.prisma.client.batch.findUnique({
-      where: { id },
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id, organizationId },
       include: { recipe: { include: { producesVariant: true } } },
     });
 
@@ -623,7 +623,7 @@ export class BakeryService {
     return await this.prisma.client.$transaction(async (tx) => {
       // 1. Update batch status
       const updatedBatch = await tx.batch.update({
-        where: { id, organizationId },
+        where: { id_organizationId: { id, organizationId } },
         data: {
           actualQuantity: grossQuantity,
           status: "COMPLETED" as any,
@@ -638,8 +638,8 @@ export class BakeryService {
       // 2. Process Ingredient Consumptions
       if (ingredientConsumptions && ingredientConsumptions.length > 0) {
         for (const consumption of ingredientConsumptions) {
-          const stockBatch = await tx.stockBatch.findUnique({
-            where: { id: consumption.stockBatchId },
+          const stockBatch = await tx.stockBatch.findFirst({
+            where: { id: consumption.stockBatchId, organizationId },
           });
 
           if (!stockBatch)
@@ -663,10 +663,10 @@ export class BakeryService {
             },
           });
 
-          await tx.stockBatch.update({
-            where: { id: consumption.stockBatchId },
+          await tx.stockBatch.updateMany({
+            where: { id: consumption.stockBatchId, organizationId },
             data: {
-              currentQuantity: { decrement: consumption.quantity },
+              currentQuantity: { decrement: consumption.quantity } as any,
             },
           });
 
@@ -683,16 +683,15 @@ export class BakeryService {
             },
           });
 
-          await tx.productVariantStock.update({
+          await tx.productVariantStock.updateMany({
             where: {
-              variantId_locationId: {
-                variantId: stockBatch.variantId,
-                locationId: stockBatch.locationId,
-              },
+              variantId: stockBatch.variantId,
+              locationId: stockBatch.locationId,
+              organizationId,
             },
             data: {
-              currentStock: { decrement: consumption.quantity },
-              availableStock: { decrement: consumption.quantity },
+              currentStock: { decrement: consumption.quantity } as any,
+              availableStock: { decrement: consumption.quantity } as any,
             },
           });
         }
