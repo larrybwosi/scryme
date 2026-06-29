@@ -3,9 +3,9 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { env } from "@repo/env";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
-import { decrypt } from "@repo/shared/api/v2/utils/encryption";
-import { timingSafeMatch } from "@repo/shared/api/v2/utils/crypto";
-import { provisionDeviceV3 } from "@repo/shared/lib/provisioning/v3";
+import { decrypt } from "@repo/shared/api/v2";
+import { timingSafeMatch } from "@repo/shared/api/v2";
+import { provisionDeviceV3 } from "@repo/shared/lib";
 import { RedisService } from "@/redis/redis.service";
 
 @Injectable()

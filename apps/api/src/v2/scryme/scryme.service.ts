@@ -2,7 +2,7 @@ import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeChatApiClient } from "@repo/scryme";
 import * as crypto from "crypto";
-import { makeApprovalDecisionCore } from "@repo/shared/actions/finance/approvals";
+import { makeApprovalDecisionCore } from "@repo/shared/actions";
 import { ScrymeApprovalService } from "./scryme-approval.service";
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { SuppliersModule } from "@repo/suppliers/server";
+import { SuppliersModule } from "@repo/shared/suppliers/server";
 import { CatalogController } from "./catalog.controller";
 import { CatalogService } from "./catalog.service";
 import { FavoritesController } from "./favorites.controller";

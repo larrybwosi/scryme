@@ -46,7 +46,6 @@
     "@repo/plane": "workspace:*",
     "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",
-    "@repo/suppliers": "workspace:*",
     "@repo/windmill": "workspace:*",
     "@upstash/redis": "^1.38.0",
     "ably": "^2.23.0",

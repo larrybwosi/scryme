@@ -14,7 +14,7 @@ import {
   RequirePermission,
 } from "../../common/decorators/auth.decorator";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeApprovalService } from "./scryme-approval.service";
 

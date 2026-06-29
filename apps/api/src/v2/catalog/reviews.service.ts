@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 import { paginate } from "../../v3/common/utils/pagination";
 
 @Injectable()

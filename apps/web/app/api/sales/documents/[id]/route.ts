@@ -72,7 +72,7 @@ export async function GET(
 
   try {
     const { documentService } = await import(
-      "@repo/shared/lib/services/document"
+      "@repo/shared/lib"
     );
     let stream;
     if (type === "receipt") {

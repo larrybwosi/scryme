@@ -1,5 +1,5 @@
 import { Redis as UpstashRedis } from "@upstash/redis";
-import { getIOClient } from "./services/ioredis";
+import { getIOClient } from "../services/ioredis";
 
 // 1. Add 'ttl' to the interface
 interface RedisClient {

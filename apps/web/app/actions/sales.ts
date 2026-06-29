@@ -370,7 +370,7 @@ export async function addPayment(
 
   // Generation of invoice and receipt on payment
   const { documentService } = await import(
-    "@repo/shared/lib/services/document"
+    "@repo/shared/lib"
   );
   try {
     await Promise.all([
@@ -419,7 +419,7 @@ export async function generateDocumentAction(
   }
 
   const { documentService } = await import(
-    "@repo/shared/lib/services/document"
+    "@repo/shared/lib"
   );
 
   if (type === "invoice") {
@@ -563,7 +563,7 @@ export async function createFulfillment(data: {
   revalidatePath("/sales/deliveries");
 
   // Background generation of proof documents
-   const { documentService } = await import('@repo/shared/lib/services/document');
+   const { documentService } = await import('@repo/shared/lib');
   documentService.generateAndAttachProofDocuments({
       transactionId: fulfillment.transactionId,
       fulfillmentId: fulfillment.id,
@@ -590,7 +590,7 @@ export async function createOrderAction(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   if (data.type === "POS_SALE") {
-    const { processSale } = await import("@repo/shared/actions/transaction/process-sale");
+    const { processSale } = await import("@repo/shared/actions");
 
     // Transform OrderForm data to ProcessSaleInput
     const saleData = {
@@ -636,8 +636,8 @@ export async function createOrderAction(data: {
   }
 
   // Import shared logic for QUOTE and SALES_ORDER
-  const { createOrder } = await import("@repo/shared/actions/transaction/orders");
-  const { OrderTransactionStatus } = await import("@repo/shared/lib/validations/order");
+  const { createOrder } = await import("@repo/shared/actions");
+  const { OrderTransactionStatus } = await import("@repo/shared/lib");
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,

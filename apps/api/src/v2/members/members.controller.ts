@@ -12,7 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { MembersService } from "./members.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 import { Permissions, AllowPublic } from "../../common/decorators/auth.decorator";
 
 @ApiTags("Members")

@@ -2,24 +2,18 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PosSaleService } from "../pos-sale.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { BadRequestException } from "@nestjs/common";
-import * as sharedActions from "@repo/shared/actions/transaction/process-sale";
-import * as sharedValidations from "@repo/shared/lib/validations/sale";
+import * as sharedActions from "@repo/shared/actions";
+import * as sharedValidations from "@repo/shared/lib";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@repo/shared/lib/validations/sale", () => ({
+vi.mock("@repo/shared/lib", () => ({
   ProcessSaleInputSchema: { safeParse: vi.fn() },
-}));
-vi.mock("@repo/shared/actions/transaction/process-sale", () => ({
-  processSale: vi.fn(),
-}));
-vi.mock("@repo/shared/actions/organization/mpesa-trigger", () => ({
-  triggerStkPush: vi.fn(),
-}));
-vi.mock("@repo/shared/actions/transaction/orders", () => ({
-  createOrder: vi.fn(),
-}));
-vi.mock("@repo/shared/lib/validations/order", () => ({
   CreateOrderInputSchema: { safeParse: vi.fn() },
+}));
+vi.mock("@repo/shared/actions", () => ({
+  processSale: vi.fn(),
+  triggerStkPush: vi.fn(),
+  createOrder: vi.fn(),
 }));
 
 describe("PosSaleService", () => {
