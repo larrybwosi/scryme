@@ -1,0 +1,9 @@
+import React from "react";
+import TemplateThree from "../invoice/three";
+import { V3DocumentData } from "../types";
+
+export const ReceiptThree = (props: { data: V3DocumentData }) => {
+  return <TemplateThree {...props} data={{ ...props.data, type: "receipt" }} />;
+};
+
+export default ReceiptThree;
