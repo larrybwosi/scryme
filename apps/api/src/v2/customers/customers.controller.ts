@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Param } from "@nestjs/common";
+import { Controller, Get, Post, Body, Query, Param, Delete } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { CustomersService } from "./customers.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
