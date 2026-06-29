@@ -73,3 +73,4 @@ https://nextjs.org/telemetry
   274 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> & {
   digest: '430745173'
 }
+✓ Compiled in 4.1s
