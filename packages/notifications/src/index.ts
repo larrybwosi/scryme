@@ -2,7 +2,7 @@ import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
 import { ScrymeChatApiClient } from "@repo/scryme";
-import { isSafeUrl } from "@repo/shared/server";
+import { isSafeUrl } from "./security";
 
 // Register helpers for report construction
 Handlebars.registerHelper("table", function (data: any[], options: any) {
@@ -348,3 +348,4 @@ export class NotificationEngine {
 }
 
 export const notificationEngine = new NotificationEngine();
+export { isSafeUrl } from "./security";
