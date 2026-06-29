@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 
 const stats = [
   { value: "500+", label: "Enterprise businesses", sublabel: "across 12 countries" },
@@ -11,12 +10,8 @@ const stats = [
 ];
 
 export function StatsStrip() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
   return (
     <section
-      ref={ref}
       className="py-20"
       style={{ background: "var(--primary)" }}
       aria-label="Platform statistics"
@@ -27,7 +22,8 @@ export function StatsStrip() {
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
               transition={{ delay: i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="text-center"
             >
