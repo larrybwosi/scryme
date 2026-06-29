@@ -56,6 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
            const memberToken = localStorage.getItem('bakery_member_token');
            if (memberToken) {
              sdk.setMemberToken(memberToken);
+
+             // Sync token to Rust if in Tauri
+             if (isTauri()) {
+               const savedUser = localStorage.getItem('bakery_user');
+               if (savedUser) {
+                 const parsed = JSON.parse(savedUser);
+                 tauriInvoke('sync_member_token_command', {
+                   token: memberToken,
+                   memberId: parsed.memberId || parsed.id,
+                 }).catch(console.error);
+               }
+             }
+
              // In a real app, we might want to fetch the actual user profile here
              const savedUser = localStorage.getItem('bakery_user');
              if (savedUser) {
@@ -93,7 +106,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: { cardId: string; pin: string; locationId?: string }) => {
     setIsLoading(true);
     try {
-      const response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
+      let response;
+      if (isTauri()) {
+        response = await tauriInvoke<any>('login_cloud_command', {
+          cardId: credentials.cardId,
+          pin: credentials.pin,
+          locationId: credentials.locationId,
+        });
+      } else {
+        response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
+      }
 
       if (response.token) {
         sdk.setMemberToken(response.token);
@@ -161,7 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       if (!isOfflineMode()) {
-        await sdk.bakery.logout().catch(() => {});
+        if (isTauri()) {
+          await tauriInvoke('logout_cloud_command').catch(() => {});
+        } else {
+          await sdk.bakery.logout().catch(() => {});
+        }
       }
       setUser(null);
       localStorage.removeItem('bakery_user');
