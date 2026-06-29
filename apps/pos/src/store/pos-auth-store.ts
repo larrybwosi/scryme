@@ -1,7 +1,7 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
-import { API_ENDPOINT_DEFAULT } from '@/lib/axios';
+import { API_ENDPOINT_DEFAULT } from '@/lib/api-config';
 
 type LocationType =
   | 'RETAIL_SHOP'

@@ -397,11 +397,12 @@ pub async fn login_cloud_command(
         return Err(BackendError::Auth(format!("Login failed: {} - {}", status, text)));
     }
 
-    let mut json_res: serde_json::Value = serde_json::from_str(&text).map_err(BackendError::Serialization)?;
+    let json_res: serde_json::Value = serde_json::from_str(&text).map_err(BackendError::Serialization)?;
+    let mut data = json_res["data"].clone();
 
     // Store token in state
-    if let Some(token) = json_res["data"]["token"].as_str() {
-        let member: MemberProfile = serde_json::from_value(json_res["data"]["member"].clone()).map_err(BackendError::Serialization)?;
+    if let Some(token) = data["token"].as_str() {
+        let member: MemberProfile = serde_json::from_value(data["member"].clone()).map_err(BackendError::Serialization)?;
 
         let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
         *session_guard = Some(AuthSession {
@@ -410,12 +411,12 @@ pub async fn login_cloud_command(
         });
 
         // Remove token from response sent to frontend
-        if let Some(obj) = json_res["data"].as_object_mut() {
+        if let Some(obj) = data.as_object_mut() {
             obj.remove("token");
         }
     }
 
-    Ok(json_res)
+    Ok(data)
 }
 
 #[tauri::command]
@@ -462,7 +463,13 @@ pub async fn authenticated_api_request(
     }
 
     let json_res: serde_json::Value = res.json().await.map_err(BackendError::Network)?;
-    Ok(json_res)
+
+    // Return only data portion if it's a standard response
+    if json_res["success"].as_bool().unwrap_or(false) && json_res.get("data").is_some() {
+        Ok(json_res["data"].clone())
+    } else {
+        Ok(json_res)
+    }
 }
 
 #[tauri::command]
