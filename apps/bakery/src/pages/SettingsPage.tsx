@@ -48,6 +48,7 @@ import sdk from '@/lib/sdk';
 import { getSDK } from '@repo/sdk/src/index';
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri, isOfflineMode } from '@/lib/sdk';
+import { sanitizeApiUrl } from '@/utils/url';
 import { resetBakeryDevice } from '@/utils/reset';
 
 type SettingsTab = 'operational' | 'sync' | 'security' | 'notifications' | 'branding' | 'units';
@@ -135,7 +136,7 @@ export default function SettingsPage() {
     try {
       const tempSdk = getSDK({
         apiKey: formData.apiKey,
-        baseURL: isTauri() ? (formData.apiEndpointUrl || undefined) : undefined
+        baseURL: isTauri() ? (sanitizeApiUrl(formData.apiEndpointUrl) || "") : "/api/v2"
       });
       await tempSdk.client.get('/bakery');
       setKeyTested(true);
@@ -155,7 +156,8 @@ export default function SettingsPage() {
     }
     setIsValidatingApi(true);
     try {
-      const response = await fetch(`${formData.apiEndpointUrl}/health/ping`);
+      const sanitizedUrl = sanitizeApiUrl(formData.apiEndpointUrl);
+      const response = await fetch(`${sanitizedUrl}/health/ping`);
       if (response.ok) {
         const data = await response.json();
         if (data.message === 'pong') {
@@ -198,12 +200,14 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     try {
-      // Ensure we pass the full settings object to include ID and organizationId
-      await updateSettingsAsync({ ...settings, ...formData });
+      const sanitizedApiUrl = formData.apiEndpointUrl ? sanitizeApiUrl(formData.apiEndpointUrl) : formData.apiEndpointUrl;
 
-      if (isTauri() && formData.apiEndpointUrl) {
-        sdk.client.setBaseURL(formData.apiEndpointUrl);
-        localStorage.setItem('bakery_api_url', formData.apiEndpointUrl);
+      // Ensure we pass the full settings object to include ID and organizationId
+      await updateSettingsAsync({ ...settings, ...formData, apiEndpointUrl: sanitizedApiUrl });
+
+      if (isTauri() && sanitizedApiUrl) {
+        sdk.client.setBaseURL(sanitizedApiUrl);
+        localStorage.setItem('bakery_api_url', sanitizedApiUrl);
       }
 
       setBranding(brandingData);

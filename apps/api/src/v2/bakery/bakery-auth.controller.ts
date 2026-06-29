@@ -102,6 +102,7 @@ export class BakeryAuthController {
     });
   }
 
+  @AllowPublic()
   @Post("sso")
   @ApiOperation({ summary: "SSO login for dashboard users into bakery app" })
   async sso(@v2Context() ctx: V2ApiContext, @Req() req: any, @Res() res: any) {

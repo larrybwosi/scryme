@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { MembersService } from "./members.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
 import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { Permissions } from "../../common/decorators/auth.decorator";
+import { Permissions, AllowPublic } from "../../common/decorators/auth.decorator";
 
 @ApiTags("Members")
 @ApiSecurity("x-api-key")
@@ -78,6 +78,7 @@ export class MembersController {
     return this.membersService.changeMemberPin(ctx, id, pin);
   }
 
+  @AllowPublic()
   @Post("login")
   @ApiOperation({ summary: "Login member via terminal" })
   async login(
