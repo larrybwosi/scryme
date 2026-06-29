@@ -293,15 +293,41 @@ export class BakeryService {
           { producedByRecipe: { isNot: null } },
         ],
       },
-      include: {
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Using 'select' instead of 'include' to fetch only essential scalar fields and relations.
+       * This reduces database I/O, network payload size, and memory usage during serialization.
+       */
+      select: {
+        id: true,
+        productId: true,
+        name: true,
+        sku: true,
+        buyingPrice: true,
+        reorderPoint: true,
+        reorderQty: true,
+        tags: true,
+        updatedAt: true,
         product: {
-          include: {
-            category: true,
+          select: {
+            id: true,
+            name: true,
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         baseUnit: true,
         baseOrgUnit: true,
-        variantStocks: true,
+        variantStocks: {
+          select: {
+            locationId: true,
+            availableStock: true,
+          },
+        },
       },
     });
 
