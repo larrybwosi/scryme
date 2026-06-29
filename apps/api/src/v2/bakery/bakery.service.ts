@@ -129,7 +129,14 @@ export class BakeryService {
 
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
-    const [batches, recipes, bakers, stockItems, recipesList] = await Promise.all([
+    const [
+      batches,
+      recipesCount,
+      bakersCount,
+      stockItems,
+      recipeStats,
+      recipeGroups,
+    ] = await Promise.all([
       this.prisma.client.batch.findMany({
         where: { organizationId },
         take: 10,
@@ -152,36 +159,85 @@ export class BakeryService {
           organizationId,
           variant: { product: { type: "RAW_MATERIAL" as any } },
         },
-        include: {
-          variant: { include: { baseUnit: true, baseOrgUnit: true } },
+        /**
+         * ⚡ Bolt: Optimization
+         * Using select to fetch only essential scalar fields and relations for summary calculations.
+         * This avoids fetching unused heavy fields and relations.
+         */
+        select: {
+          id: true,
+          availableStock: true,
+          reorderPoint: true,
+          reorderQty: true,
+          variant: {
+            select: {
+              name: true,
+              sku: true,
+              buyingPrice: true,
+              baseUnit: { select: { symbol: true } },
+              baseOrgUnit: { select: { symbol: true } },
+            },
+          },
         },
       }),
-      this.prisma.client.recipe.findMany({
+      /**
+       * ⚡ Bolt: Database-level Aggregation
+       * Replacing in-memory reduction with database-level avg to calculate average cost.
+       * Reduces network traffic and memory usage from O(N) to O(1).
+       */
+      this.prisma.client.recipe.aggregate({
         where: { organizationId },
-        include: { category: true },
+        _avg: { costPrice: true },
+      }),
+      /**
+       * ⚡ Bolt: Database-level Grouping
+       * Using groupBy to count recipes per category at the database level.
+       */
+      this.prisma.client.recipe.groupBy({
+        where: { organizationId },
+        by: ["categoryId"],
+        _count: { _all: true },
       }),
     ]);
 
+    // Hydrate category names for the grouped results
+    const categoryIds = recipeGroups
+      .map(g => g.categoryId)
+      .filter((id): id is string => !!id);
+    const categories = await this.prisma.client.bakeryCategory.findMany({
+      where: { id: { in: categoryIds } },
+      select: { id: true, name: true },
+    });
+    const categoryMap = new Map(categories.map(c => [c.id, c.name]));
+
+    const recipesByCategory: Record<string, number> = {};
+    recipeGroups.forEach(g => {
+      const catName = g.categoryId
+        ? categoryMap.get(g.categoryId) || "Uncategorized"
+        : "Uncategorized";
+      recipesByCategory[catName] =
+        (recipesByCategory[catName] || 0) + g._count._all;
+    });
+
     const lowStockIngredients = stockItems
-      .filter(s => Number(s.availableStock) <= Number(s.reorderPoint || 0))
-      .map(s => ({
+      .filter(
+        (s: any) => Number(s.availableStock) <= Number(s.reorderPoint || 0),
+      )
+      .map((s: any) => ({
         id: s.id,
         name: s.variant.name,
         sku: s.variant.sku,
         current: Number(s.availableStock),
         reorder: Number(s.reorderPoint || 0),
-        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        max: Number(
+          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
+        ),
         unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
       }));
 
-    const recipesByCategory: Record<string, number> = {};
-    recipesList.forEach(r => {
-      const catName = r.category?.name || "Uncategorized";
-      recipesByCategory[catName] = (recipesByCategory[catName] || 0) + 1;
-    });
-
     const totalInventoryValue = stockItems.reduce(
-      (acc, s) => acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
+      (acc, s: any) =>
+        acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
       0,
     );
 
@@ -190,20 +246,20 @@ export class BakeryService {
         ...b,
         productionDate: b.scheduledStartAt,
       })),
-      recipesCount: recipes,
-      bakersCount: bakers,
-      averageRecipeCost: recipesList.length
-        ? recipesList.reduce((acc, r) => acc + Number(r.costPrice || 0), 0) / recipesList.length
-        : 0,
+      recipesCount,
+      bakersCount,
+      averageRecipeCost: Number(recipeStats._avg.costPrice || 0),
       recipesByCategory,
       totalInventoryValue,
       lowStockIngredients,
-      stockData: stockItems.slice(0, 10).map(s => ({
+      stockData: stockItems.slice(0, 10).map((s: any) => ({
         id: s.id,
         name: s.variant.name,
         current: Number(s.availableStock),
         reorder: Number(s.reorderPoint || 0),
-        max: Number(s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100)),
+        max: Number(
+          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
+        ),
         unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
       })),
       summary: {

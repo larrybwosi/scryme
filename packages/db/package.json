@@ -21,7 +21,8 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "7.8.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "latest",
     "@prisma/client-runtime-utils": "7.8.0",
     "@repo/env": "workspace:*",
     "dotenv": "^17.2.3",
