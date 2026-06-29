@@ -14,11 +14,14 @@ describe('BakeryService completeBatch IDOR', () => {
       $transaction: vi.fn((cb) => cb(mockPrisma.client)),
       batch: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
       },
       stockBatch: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
         create: vi.fn(),
       },
       batchIngredientConsumption: {
@@ -29,6 +32,7 @@ describe('BakeryService completeBatch IDOR', () => {
       },
       productVariantStock: {
         update: vi.fn(),
+        updateMany: vi.fn(),
         upsert: vi.fn(),
       },
       bakerySettings: {
