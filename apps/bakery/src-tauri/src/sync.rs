@@ -356,6 +356,10 @@ async fn sync_item(
     item: &SyncItem,
     api_key: &str,
 ) -> BackendResult<()> {
+    // Note: If we had a member token available here, we should include it too.
+    // Currently, sync_worker runs in the background and might not have a member session.
+    // We'll rely on the API key for background sync.
+
     // Handle RESTOCK items specifically
     if item.entity_type == "RESTOCK" {
         let restock_data: crate::models::RestockData = serde_json::from_str(&item.payload)
