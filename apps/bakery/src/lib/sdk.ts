@@ -109,7 +109,7 @@ console.log(
 
 
 // Load persistent member token if available
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !isTauri()) {
   const memberToken = localStorage.getItem('bakery_member_token');
   if (memberToken) {
     sdk.setMemberToken(memberToken);
@@ -118,6 +118,13 @@ if (typeof window !== 'undefined') {
 
 // If in Tauri, attempt to load the provisioned API Key from keyring and settings
 if (isTauri()) {
+  // Sync member token to Rust if it's in localStorage (for migration/persistence)
+  const memberToken = localStorage.getItem('bakery_member_token');
+  const memberId = localStorage.getItem('bakery_member_id');
+  if (memberToken && memberId) {
+    tauriInvoke('sync_member_token_command', { token: memberToken, memberId }).catch(console.error);
+  }
+
   // Load settings to check for custom API URL
   invoke<any>('get_settings', { organizationId: 'local-org' })
     .then((settings) => {
@@ -134,15 +141,23 @@ if (isTauri()) {
     .catch(err => console.error('Failed to load settings for API URL', err));
 
   if (!isOfflineMode()) {
-    invoke<string | null>('get_provisioned_api_key')
+    invoke<any>('get_device_config')
+    .then((config) => {
+      if (config?.deviceKey) {
+        sdk.setApiKey(config.deviceKey);
+      } else {
+        // Fallback to old method if needed
+        return invoke<string | null>('get_provisioned_api_key');
+      }
+    })
     .then((apiKey) => {
-      if (apiKey) {
+      if (typeof apiKey === 'string') {
         sdk.setApiKey(apiKey);
       }
     })
-      .catch((err) => {
-        console.error('Failed to load provisioned API Key from keyring', err);
-      });
+    .catch((err) => {
+      console.error('Failed to load provisioned API Key', err);
+    });
   }
 }
 
