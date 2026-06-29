@@ -29,6 +29,11 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_log::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
+            commands::login_cloud_command,
+            commands::logout_cloud_command,
+            commands::sync_member_token_command,
+            commands::authenticated_api_request,
+            commands::update_bakery_api_url,
             commands::get_batches,
             commands::create_batch,
             commands::update_batch,
@@ -90,6 +95,7 @@ pub fn run() {
             };
 
             app.manage(db_pool.clone());
+            app.manage(commands::BakeryAuthState::new());
 
             // Start sync worker
             let base_api_url = if cfg!(debug_assertions) {
