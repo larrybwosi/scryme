@@ -1,4 +1,5 @@
 import { redactSensitiveData } from "../redaction";
+import { describe, it, expect } from "vitest";
 
 describe("redactSensitiveData", () => {
   it("should redact sensitive keys at the top level", () => {
@@ -159,14 +160,32 @@ describe("redactSensitiveData", () => {
   it("should be case-insensitive when redacting keys", () => {
     const data = {
       Password: "mypassword",
+      PASSWORD: "UPPER",
       API_KEY: "key123",
       "X-Member-Token": "token456",
+      "X-AUTH-TOKEN": "token789",
       secret: "lowercasesecret",
+      Nested: {
+        Secret: "hidden",
+      },
     };
     const redacted = redactSensitiveData(data);
     expect(redacted.Password).toBe("[REDACTED]");
+    expect(redacted.PASSWORD).toBe("[REDACTED]");
     expect(redacted.API_KEY).toBe("[REDACTED]");
     expect(redacted["X-Member-Token"]).toBe("[REDACTED]");
+    expect(redacted["X-AUTH-TOKEN"]).toBe("[REDACTED]");
     expect(redacted.secret).toBe("[REDACTED]");
+    expect(redacted.Nested.Secret).toBe("[REDACTED]");
+  });
+
+  it("should redact Sentinel-expanded list", () => {
+    const data = {
+      "Set-Cookie": "session=abc",
+      "Proxy-Authorization": "Basic 123",
+    };
+    const redactedDefault = redactSensitiveData(data);
+    expect(redactedDefault["Set-Cookie"]).toBe("[REDACTED]");
+    expect(redactedDefault["Proxy-Authorization"]).toBe("[REDACTED]");
   });
 });

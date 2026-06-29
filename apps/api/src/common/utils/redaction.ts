@@ -23,7 +23,9 @@ const DEFAULT_SENSITIVE_KEYS = [
   "authorization",
   "x-api-key",
   "x-member-token",
+  "x-auth-token",
   "cookie",
+  "set-cookie",
   "signature",
   "mpesaPassKey",
   "cardId",
@@ -57,6 +59,11 @@ const DEFAULT_SENSITIVE_KEYS = [
   "pin_hash",
   "webhookSecret",
   "webhook_secret",
+  "bearer",
+  "credentials",
+  "proxy-authorization",
+  "proxy-authenticate",
+  "www-authenticate",
 ];
 
 const DEFAULT_SENSITIVE_KEYS_SET = new Set(

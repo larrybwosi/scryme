@@ -1,13 +1,13 @@
-import type { Prisma } from '@repo/db';
+import type { SupplierGetPayload } from '@repo/db';
 
-export type SupplierRecord = Prisma.SupplierGetPayload<{
+export type SupplierRecord = SupplierGetPayload<{
   include: {
     documents: true;
     _count: { select: { products: true } };
   };
 }>;
 
-export type SupplierWithDetails = Prisma.SupplierGetPayload<{
+export type SupplierWithDetails = SupplierGetPayload<{
   include: {
     documents: true;
     products: {

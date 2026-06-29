@@ -57,12 +57,19 @@ export class CheckB2BAvailabilityUseCase {
       },
     });
 
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced O(N*M) lookup with O(N+M) Map.
+     * Indexing the stocks by variantId allows for constant-time lookups
+     * during the mapping phase, which is more efficient for large lists.
+     */
+    const stockMap = new Map(stocks.map((s) => [s.variantId, s.availableStock]));
+
     return dto.variantIds.map((variantId) => {
-      const stock = stocks.find((s) => s.variantId === variantId);
+      const stockQty = stockMap.get(variantId);
       return {
         variantId,
         locationId,
-        availableStock: stock?.availableStock.toNumber() || 0,
+        availableStock: stockQty ? stockQty.toNumber() : 0,
       };
     });
   }
