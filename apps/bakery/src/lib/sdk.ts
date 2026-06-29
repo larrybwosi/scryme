@@ -1,6 +1,7 @@
 import { getSDK } from '@repo/sdk/src/index';
 import { invoke } from '@tauri-apps/api/core';
 import { sanitizeApiUrl } from '@/utils/url';
+import { tauriInvoke } from './tauri-bridge';
 
 
 // Check if running in Tauri
@@ -25,6 +26,81 @@ const sdk = getSDK({
     window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
   }
 });
+
+// If in Tauri, override the client methods to use the Rust backend proxy
+if (isTauri()) {
+  const originalClient = { ...sdk.client };
+
+  sdk.client.get = async <T = any>(url: string, config?: any) => {
+    // If it's a full URL or we're not using the proxy for some reason, fallback
+    if (url.startsWith('http') || config?.useProxy === false) {
+      return originalClient.get(url, config);
+    }
+
+    // Convert params to query string if present
+    let path = url;
+    if (config?.params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(config.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+      const qs = searchParams.toString();
+      if (qs) {
+        path += (path.includes('?') ? '&' : '?') + qs;
+      }
+    }
+
+    return tauriInvoke<T>('authenticated_api_request', {
+      method: 'GET',
+      path,
+    });
+  };
+
+  sdk.client.post = async <T = any>(url: string, data?: any, config?: any) => {
+    if (url.startsWith('http') || config?.useProxy === false) {
+      return originalClient.post(url, data, config);
+    }
+    return tauriInvoke<T>('authenticated_api_request', {
+      method: 'POST',
+      path: url,
+      body: data,
+    });
+  };
+
+  sdk.client.put = async <T = any>(url: string, data?: any, config?: any) => {
+    if (url.startsWith('http') || config?.useProxy === false) {
+      return originalClient.put(url, data, config);
+    }
+    return tauriInvoke<T>('authenticated_api_request', {
+      method: 'PUT',
+      path: url,
+      body: data,
+    });
+  };
+
+  sdk.client.patch = async <T = any>(url: string, data?: any, config?: any) => {
+    if (url.startsWith('http') || config?.useProxy === false) {
+      return originalClient.patch(url, data, config);
+    }
+    return tauriInvoke<T>('authenticated_api_request', {
+      method: 'PATCH',
+      path: url,
+      body: data,
+    });
+  };
+
+  sdk.client.delete = async <T = any>(url: string, config?: any) => {
+    if (url.startsWith('http') || config?.useProxy === false) {
+      return originalClient.delete(url, config);
+    }
+    return tauriInvoke<T>('authenticated_api_request', {
+      method: 'DELETE',
+      path: url,
+    });
+  };
+}
 
 console.log(
   "SDK initialized with baseURL:",
@@ -51,6 +127,8 @@ if (isTauri()) {
         if (sdk.client.getBaseURL() !== sanitizedUrl) {
            sdk.client.setBaseURL(sanitizedUrl);
         }
+        // Update Rust backend too
+        tauriInvoke('update_bakery_api_url', { apiUrl: sanitizedUrl }).catch(console.error);
       }
     })
     .catch(err => console.error('Failed to load settings for API URL', err));

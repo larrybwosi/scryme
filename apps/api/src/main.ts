@@ -25,6 +25,13 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  app.enableCors({
+    origin: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Accept", "Authorization", "x-api-key", "x-member-token", "x-correlation-id"],
+  });
+
   // Request logging for debugging - only in non-production or if explicitly enabled
   if (env.NODE_ENV !== "production" || process.env.ENABLE_REQUEST_LOGGING === "true") {
     app
