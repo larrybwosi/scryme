@@ -121,10 +121,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <RealtimeInitializer/>
       <NotificationToast />
       <ConnectionStatusBanner />
       <QueryClientProvider client={queryClient}>
+        <RealtimeInitializer/>
         <UpdaterProvider checkInterval={60 * 60 * 1000 * 4}>
           <ServerNotificationProvider>
             {children}

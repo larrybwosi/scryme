@@ -471,6 +471,12 @@ pub async fn create_customer_cloud(
     Ok(new_customer)
 }
 
+pub async fn delete_local_customer(app: &AppHandle, _state: &CustomerState, id: &str) -> Result<String> {
+    let pool = get_db_pool(app).await.map_err(|e| anyhow::anyhow!(e))?;
+    sqlx::query("DELETE FROM customers WHERE id = ?1").bind(id).execute(&pool).await?;
+    Ok(id.to_string())
+}
+
 pub async fn update_customer(
     app: AppHandle,
     _state: &CustomerState,

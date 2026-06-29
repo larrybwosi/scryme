@@ -6,10 +6,14 @@ import {
 import { PrismaService } from "@/prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { CustomerService as SharedCustomerService } from "@repo/shared/services/customer";
+import { ApiRealtimeService } from "../../common/services/realtime.service";
 
 @Injectable()
 export class CustomersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtime: ApiRealtimeService,
+  ) {}
 
   async getCustomers(ctx: V2ApiContext, query: any) {
     const q = query.q ?? "";
@@ -123,5 +127,33 @@ export class CustomersService {
       if (error instanceof BadGatewayException) throw error;
       throw new InternalServerErrorException("Failed to create customer");
     }
+  }
+
+  async deleteCustomer(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+
+    // 1. Delete from our local database (mapping/cache)
+    // We use the shared CustomerService which handles deletion from the database
+    // and cleanup of associated records if any.
+    const result = await SharedCustomerService.deleteCustomer(
+      organizationId,
+      ctx.userId || "api",
+      id,
+    );
+
+    if (!result.success) {
+      throw new InternalServerErrorException(
+        result.message || "Failed to delete customer",
+      );
+    }
+
+    // 2. Publish event to POS
+    await this.realtime.publish(
+      `organization:${organizationId}:customers`,
+      "customer-deleted",
+      { customerId: id },
+    );
+
+    return { success: true };
   }
 }

@@ -3,6 +3,7 @@
 import { db, Decimal, PricingMethod, RoundingMethod, PriceApprovalStatus, DiscountType } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
+import { realtimeService } from "@repo/shared/realtime";
 
 export async function getPriceLists() {
   const context = await getServerAuth();
@@ -156,6 +157,12 @@ export async function deletePriceList(id: string) {
   await db.priceList.delete({
     where: { id, organizationId: context.organizationId },
   });
+
+  await realtimeService.publish(
+    `organization:${context.organizationId}:pricing`,
+    "price-list-deleted",
+    { priceListId: id },
+  );
 
   revalidatePath("/inventory/pricelists");
 }
