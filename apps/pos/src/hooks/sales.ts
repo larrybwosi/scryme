@@ -1,5 +1,4 @@
 import { toast } from 'sonner';
-import { isAxiosError } from 'axios';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { ProcessSaleInput } from '@/lib/validation/transactions';
 import { invoke } from '@tauri-apps/api/core';
@@ -10,8 +9,8 @@ import { useEffect, useState } from 'react';
 // --- Types & Enums ---
 
 export const isNetworkError = (error: unknown): boolean => {
-  if (isAxiosError(error)) {
-    return error.code === 'ERR_NETWORK' || !error.response;
+  if (typeof error === 'string') {
+    return error.toLowerCase().includes('network') || error.toLowerCase().includes('failed to fetch');
   }
   return false;
 };
