@@ -117,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
       }
 
+      // In Tauri mode, the token is managed by the Rust backend and might be stripped from the response
       if (response.token) {
         sdk.setMemberToken(response.token);
         localStorage.setItem('bakery_member_token', response.token);
@@ -129,6 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: response.member.role,
         memberId: response.member.id,
       };
+
+      if (isTauri()) {
+        localStorage.setItem('bakery_member_id', userObj.memberId);
+      }
 
       setUser(userObj);
       localStorage.setItem('bakery_user', JSON.stringify(userObj));
@@ -169,6 +174,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: response.member.role,
         memberId: response.member.id,
       };
+
+      if (isTauri()) {
+        localStorage.setItem('bakery_member_id', userObj.memberId);
+      }
 
       setUser(userObj);
       localStorage.setItem('bakery_user', JSON.stringify(userObj));
