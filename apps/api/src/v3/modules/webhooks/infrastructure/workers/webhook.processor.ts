@@ -39,6 +39,10 @@ export class WebhookProcessor extends WorkerHost {
       const signature = this.webhookService.generateSignature(payload, secret);
 
       try {
+        if (!(await isSafeUrl(url))) {
+          throw new Error(`Potentially unsafe webhook URL: ${url}`);
+        }
+
         const response = await fetch(url, {
           method: "POST",
           headers: {
