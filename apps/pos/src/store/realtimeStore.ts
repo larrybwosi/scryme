@@ -1,7 +1,6 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { z } from 'zod';
 import { invoke } from '@tauri-apps/api/core';
-import { isAxiosError } from 'axios';
 import type { AuthOptions, Realtime } from 'ably';
 import type { Socket } from 'socket.io-client';
 import { useAuthStore } from './pos-auth-store';
@@ -146,7 +145,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           } catch (error) {
             authAttempt += 1;
             set({ authRetryCount: authAttempt });
-            const errorMessage = isAxiosError(error) ? error.response?.data?.message || error.message : error instanceof Error ? error.message : 'Failed to fetch Ably auth token';
+            const errorMessage = typeof error === 'string' ? error : error instanceof Error ? error.message : 'Failed to fetch Ably auth token';
 
             if (authAttempt >= BACKOFF_MAX_RETRIES) {
               set({ status: 'error', error: errorMessage });

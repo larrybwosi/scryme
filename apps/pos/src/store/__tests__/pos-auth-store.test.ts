@@ -3,7 +3,7 @@ import { useAuthStore } from '../pos-auth-store';
 import { mockInvoke } from '@/test/mocks/tauri';
 
 // Mock API_ENDPOINT
-vi.mock('@/lib/axios', () => ({
+vi.mock('@/lib/api-config', () => ({
   API_ENDPOINT: 'http://localhost:3000',
   API_ENDPOINT_DEFAULT: 'http://localhost:3000',
 }));
