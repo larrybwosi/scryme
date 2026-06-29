@@ -4,6 +4,8 @@ import {
   Text,
   View,
   StyleSheet,
+  Svg,
+  Path,
   render,
 } from "@react-pdf/renderer";
 import React from "react";
@@ -270,7 +272,7 @@ const items = [
   { desc: "Nullam condimentum ultrices neque", qty: 2, price: 40, total: 80 },
 ];
 
-const fmt = (n) => `$${n.toFixed(2)}`;
+const fmt = (n: number) => `$${n.toFixed(2)}`;
 
 const InvoiceDocument = () =>
   React.createElement(
