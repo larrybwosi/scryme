@@ -151,7 +151,7 @@ export function FeaturesGrid() {
   return (
     <section
       id="features"
-      className="py-24 bg-background"
+      className="py-24 bg-surface-1"
       aria-labelledby="features-heading"
     >
       <div className="container mx-auto">
