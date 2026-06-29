@@ -4,37 +4,120 @@ use bcrypt::verify;
 use chrono::Utc;
 use keyring::Entry;
 use sqlx::SqlitePool;
-use tauri::State;
+use tauri::{AppHandle, State};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use reqwest::header::HeaderValue;
+use log::{info, error};
 
 // --- Data Types for Auth State ---
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MemberProfile {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    pub role: Option<String>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct DeviceConfig {
+    pub base_url: String,
+    pub location_id: String,
+    pub device_key: String,
+    pub org_slug: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SanitizedDeviceConfig {
+    pub location_id: String,
+    pub org_slug: String,
+    pub device_key: String,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct AuthSession {
     pub token: String,
-    pub member_id: String,
+    pub user: MemberProfile,
 }
 
 pub struct BakeryAuthState {
-    pub api_url: Mutex<Option<String>>,
+    pub device_config: Mutex<Option<DeviceConfig>>,
+    pub base_url_override: Mutex<Option<String>>,
     pub session: Mutex<Option<AuthSession>>,
     pub client: reqwest::Client,
 }
 
+const KEYRING_SERVICE: &str = "scryme-bakery";
+const KEYRING_USER: &str = "device-config";
+
 impl BakeryAuthState {
     pub fn new() -> Self {
+        // Try keyring first, then file
+        let initial_config = Self::load_from_keyring().or_else(Self::load_from_file);
+
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
             .unwrap_or_default();
 
         Self {
-            api_url: Mutex::new(None),
+            device_config: Mutex::new(initial_config),
+            base_url_override: Mutex::new(None),
             session: Mutex::new(None),
             client,
         }
+    }
+
+    fn get_config_path() -> Option<std::path::PathBuf> {
+        let proj_dirs = directories::ProjectDirs::from("com", "scryme", "bakery")?;
+        let config_dir = proj_dirs.config_dir();
+        if !config_dir.exists() {
+            let _ = std::fs::create_dir_all(config_dir);
+        }
+        Some(config_dir.join("device.json"))
+    }
+
+    fn load_from_file() -> Option<DeviceConfig> {
+        let path = Self::get_config_path()?;
+        let content = std::fs::read_to_string(path).ok()?;
+        serde_json::from_str(&content).ok()
+    }
+
+    async fn save_to_file_async(config: &DeviceConfig) -> Result<(), String> {
+        let path = Self::get_config_path().ok_or("Could not determine config path")?;
+        let json = serde_json::to_string(config).map_err(|e| e.to_string())?;
+        tokio::fs::write(&path, json)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    fn load_from_keyring() -> Option<DeviceConfig> {
+        let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER).ok()?;
+        let password = entry.get_password().ok()?;
+        serde_json::from_str(&password).ok()
+    }
+
+    async fn save_to_keyring_async(config: &DeviceConfig) -> Result<(), String> {
+        // 1. Try Keyring
+        let keyring_result: Result<(), String> = {
+            let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER).map_err(|e| e.to_string())?;
+            let json = serde_json::to_string(config).map_err(|e| e.to_string())?;
+            entry.set_password(&json).map_err(|e| e.to_string())?;
+            Ok(())
+        };
+
+        if let Err(e) = keyring_result {
+            eprintln!("[AuthStore] Keyring save failed: {}. Falling back to file.", e);
+        }
+
+        // 2. ALWAYS Save to File as Backup
+        Self::save_to_file_async(config).await?;
+
+        Ok(())
     }
 
     pub fn build_request(
@@ -42,21 +125,26 @@ impl BakeryAuthState {
         method: reqwest::Method,
         path: &str,
     ) -> BackendResult<reqwest::RequestBuilder> {
-        let base_url = {
-            let url_guard = self.api_url.lock().map_err(|_| BackendError::Internal("Failed to lock api_url".to_string()))?;
-            url_guard.clone().unwrap_or_else(|| {
+        let (base_url, device_key, location_id, org_slug) = {
+            let override_guard = self.base_url_override.lock().map_err(|_| BackendError::Internal("Failed to lock base url override".to_string()))?;
+            let config_guard = self.device_config.lock().map_err(|_| BackendError::Internal("Failed to lock device config".to_string()))?;
+
+            let url = if let Some(over) = override_guard.as_ref() {
+                over.clone()
+            } else if let Some(config) = config_guard.as_ref() {
+                config.base_url.clone()
+            } else {
                 if cfg!(debug_assertions) {
                     "http://localhost:3002/api/v2".to_string()
                 } else {
                     "https://api.scryme.app/api/v2".to_string()
                 }
-            })
-        };
+            };
 
-        let api_key = {
-            let entry = Entry::new("scryme-bakery", "device-api-key")
-                .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
-            entry.get_password().ok()
+            let key = config_guard.as_ref().map(|c| c.device_key.clone());
+            let loc_id = config_guard.as_ref().map(|c| c.location_id.clone());
+            let slug = config_guard.as_ref().map(|c| c.org_slug.clone());
+            (url, key, loc_id, slug)
         };
 
         let token = {
@@ -76,7 +164,7 @@ impl BakeryAuthState {
 
         let mut request_builder = self.client.request(method, &full_url);
 
-        if let Some(key) = api_key {
+        if let Some(key) = device_key {
             let mut key_val = HeaderValue::from_str(&key).map_err(|e| BackendError::Internal(e.to_string()))?;
             key_val.set_sensitive(true);
             request_builder = request_builder.header("X-API-KEY", key_val);
@@ -86,6 +174,20 @@ impl BakeryAuthState {
             let mut val = HeaderValue::from_str(&t).map_err(|e| BackendError::Internal(e.to_string()))?;
             val.set_sensitive(true);
             request_builder = request_builder.header("X-MEMBER-TOKEN", val);
+        }
+
+        if let Some(loc) = location_id {
+            if !loc.is_empty() {
+                let val = HeaderValue::from_str(&loc).map_err(|e| BackendError::Internal(e.to_string()))?;
+                request_builder = request_builder.header("X-LOCATION-ID", val);
+            }
+        }
+
+        if let Some(slug) = org_slug {
+            if !slug.is_empty() {
+                let val = HeaderValue::from_str(&slug).map_err(|e| BackendError::Internal(e.to_string()))?;
+                request_builder = request_builder.header("X-ORG-SLUG", val);
+            }
         }
 
         Ok(request_builder)
@@ -133,7 +235,11 @@ pub async fn sync_member_token_command(
     let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
     *session_guard = Some(AuthSession {
         token,
-        member_id,
+        user: MemberProfile {
+            id: member_id,
+            name: String::new(),
+            role: None,
+        },
     });
     Ok(())
 }
@@ -159,6 +265,7 @@ pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
 
 #[tauri::command]
 pub async fn provision_device_with_token(
+    state: State<'_, BakeryAuthState>,
     setup_token: String,
     mac_address: Option<String>,
     serial_number: Option<String>,
@@ -203,29 +310,48 @@ pub async fn provision_device_with_token(
 
     let result: serde_json::Value = response.json().await.map_err(BackendError::Network)?;
     
-    println!("Provisioning API response: {:?}", result);
-
     let api_key = result["data"]["apiKey"]
         .as_str()
         .ok_or_else(|| BackendError::Internal("No API Key returned from server".to_string()))?;
 
-    let entry = Entry::new("scryme-bakery", "device-api-key")
-        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
+    let org_slug = result["data"]["organization"]["slug"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
 
-    entry
-        .set_password(api_key)
-        .map_err(|e| BackendError::Internal(format!("Failed to store API Key: {}", e)))?;
+    let location_id = result["data"]["locationId"]
+        .as_str()
+        .or_else(|| result["data"]["location"]["id"].as_str())
+        .unwrap_or_default()
+        .to_string();
+
+    let new_config = DeviceConfig {
+        base_url: api_url,
+        location_id,
+        device_key: api_key.to_string(),
+        org_slug,
+    };
+
+    BakeryAuthState::save_to_keyring_async(&new_config).await.map_err(|e| BackendError::Internal(e))?;
+
+    let mut config_guard = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    *config_guard = Some(new_config);
 
     Ok(())
 }
 
 #[tauri::command]
 pub async fn get_provisioned_api_key() -> BackendResult<Option<String>> {
-    let entry = Entry::new("scryme-bakery", "device-api-key")
-        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
+    let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER).map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
 
     match entry.get_password() {
-        Ok(pw) => Ok(Some(pw)),
+        Ok(pw) => {
+            if let Ok(config) = serde_json::from_str::<DeviceConfig>(&pw) {
+                Ok(Some(config.device_key))
+            } else {
+                Ok(None)
+            }
+        },
         Err(keyring::Error::NoEntry) => Ok(None),
         Err(e) => Err(BackendError::Internal(format!(
             "Failed to retrieve API Key: {}",
@@ -236,8 +362,7 @@ pub async fn get_provisioned_api_key() -> BackendResult<Option<String>> {
 
 #[tauri::command]
 pub async fn clear_provisioned_api_key() -> BackendResult<()> {
-    let entry = Entry::new("scryme-bakery", "device-api-key")
-        .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
+    let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER).map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
 
     match entry.delete_credential() {
         Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
@@ -272,20 +397,25 @@ pub async fn login_cloud_command(
         return Err(BackendError::Auth(format!("Login failed: {} - {}", status, text)));
     }
 
-    let json_res: serde_json::Value = serde_json::from_str(&text).map_err(BackendError::Serialization)?;
+    let mut json_res: serde_json::Value = serde_json::from_str(&text).map_err(BackendError::Serialization)?;
 
     // Store token in state
     if let Some(token) = json_res["data"]["token"].as_str() {
-        if let Some(member_id) = json_res["data"]["member"]["id"].as_str() {
-            let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-            *session_guard = Some(AuthSession {
-                token: token.to_string(),
-                member_id: member_id.to_string(),
-            });
+        let member: MemberProfile = serde_json::from_value(json_res["data"]["member"].clone()).map_err(BackendError::Serialization)?;
+
+        let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+        *session_guard = Some(AuthSession {
+            token: token.to_string(),
+            user: member,
+        });
+
+        // Remove token from response sent to frontend
+        if let Some(obj) = json_res["data"].as_object_mut() {
+            obj.remove("token");
         }
     }
 
-    Ok(json_res["data"].clone())
+    Ok(json_res)
 }
 
 #[tauri::command]
@@ -332,13 +462,7 @@ pub async fn authenticated_api_request(
     }
 
     let json_res: serde_json::Value = res.json().await.map_err(BackendError::Network)?;
-
-    // Unwrap standard response if it exists
-    if json_res["success"] == true && !json_res["data"].is_null() {
-        Ok(json_res["data"].clone())
-    } else {
-        Ok(json_res)
-    }
+    Ok(json_res)
 }
 
 #[tauri::command]
@@ -346,7 +470,76 @@ pub async fn update_bakery_api_url(
     state: State<'_, BakeryAuthState>,
     api_url: String,
 ) -> BackendResult<()> {
-    let mut url_guard = state.api_url.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-    *url_guard = Some(api_url);
+    {
+        let mut override_guard = state.base_url_override.lock().map_err(|_| BackendError::Internal("Lock error on override".to_string()))?;
+        *override_guard = Some(api_url.clone());
+    }
+
+    let config_to_save = {
+        let mut config_guard = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error on config".to_string()))?;
+        if let Some(config) = config_guard.as_mut() {
+            config.base_url = api_url;
+            Some(config.clone())
+        } else {
+            None
+        }
+    };
+
+    if let Some(config) = config_to_save {
+        BakeryAuthState::save_to_keyring_async(&config).await.map_err(|e| BackendError::Internal(e))?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_device_config(
+    state: State<'_, BakeryAuthState>,
+    base_url: String,
+    location_id: String,
+    device_key: String,
+    org_slug: String,
+) -> BackendResult<()> {
+    let new_config = DeviceConfig {
+        base_url,
+        location_id,
+        device_key,
+        org_slug,
+    };
+
+    BakeryAuthState::save_to_keyring_async(&new_config).await.map_err(|e| BackendError::Internal(e))?;
+
+    let mut config = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    *config = Some(new_config);
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_device_config(
+    state: State<'_, BakeryAuthState>,
+) -> BackendResult<Option<SanitizedDeviceConfig>> {
+    let config_guard = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    Ok(config_guard.as_ref().map(|c| SanitizedDeviceConfig {
+        location_id: c.location_id.clone(),
+        org_slug: c.org_slug.clone(),
+        device_key: c.device_key.clone(),
+    }))
+}
+
+#[tauri::command]
+pub async fn reset_device_config(state: State<'_, BakeryAuthState>) -> BackendResult<()> {
+    let entry = Entry::new(KEYRING_SERVICE, KEYRING_USER).map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
+    let _ = entry.delete_credential();
+
+    if let Some(path) = BakeryAuthState::get_config_path() {
+        if path.exists() {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+
+    *state.device_config.lock().unwrap() = None;
+    *state.session.lock().unwrap() = None;
+
     Ok(())
 }
