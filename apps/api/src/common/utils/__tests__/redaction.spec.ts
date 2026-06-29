@@ -157,19 +157,25 @@ describe("redactSensitiveData", () => {
     expect(redacted.config.db.password).toBe("[REDACTED]");
   });
 
-  it("should redact keys regardless of casing", () => {
+  it("should be case-insensitive when redacting keys", () => {
     const data = {
-      Password: "Title",
+      Password: "mypassword",
       PASSWORD: "UPPER",
-      "X-AUTH-TOKEN": "token123",
+      API_KEY: "key123",
+      "X-Member-Token": "token456",
+      "X-AUTH-TOKEN": "token789",
+      secret: "lowercasesecret",
       Nested: {
-        Secret: "hidden"
-      }
+        Secret: "hidden",
+      },
     };
     const redacted = redactSensitiveData(data);
     expect(redacted.Password).toBe("[REDACTED]");
     expect(redacted.PASSWORD).toBe("[REDACTED]");
+    expect(redacted.API_KEY).toBe("[REDACTED]");
+    expect(redacted["X-Member-Token"]).toBe("[REDACTED]");
     expect(redacted["X-AUTH-TOKEN"]).toBe("[REDACTED]");
+    expect(redacted.secret).toBe("[REDACTED]");
     expect(redacted.Nested.Secret).toBe("[REDACTED]");
   });
 

@@ -13,6 +13,10 @@
 **Learning:** Shared redaction utilities often use a deny-list of sensitive keys. While useful for body/query objects, applying them to entire header objects is risky because new or less common sensitive headers (e.g., `Set-Cookie`, `X-Auth-Token`) might be missed. An allow-list approach for logging headers is significantly safer.
 **Prevention:** For diagnostic logging of HTTP headers, always use a strict allow-list of safe headers to log (e.g., `user-agent`, `content-type`, `x-correlation-id`). Pass even the allowed sensitive headers (like `authorization`) through a redaction utility as a second layer of defense.
 
+## 2026-06-29 - Case-Insensitive Redaction in Logging Utility
+**Vulnerability:** The `redactSensitiveData` utility used case-sensitive matching for sensitive keys. This allowed sensitive data (like `Password` or `API_KEY`) to leak into logs if the keys didn't exactly match the lowercase entries in the deny-list.
+**Learning:** Security utilities that rely on key matching must be case-insensitive to account for different naming conventions (PascalCase, camelCase, UPPER_CASE) and potential manual overrides. Relying on case-sensitive `includes()` or `hasOwnProperty()` is insufficient for security-critical redaction.
+**Prevention:** Always normalize keys (e.g., `.toLowerCase()`) before performing lookups in sensitive data filters. Use efficient data structures like `Set` for these lookups to maintain performance while ensuring comprehensive coverage.
 ## 2025-05-17 - Case-Sensitivity in Data Redaction
 **Vulnerability:** The central `redactSensitiveData` utility performed case-sensitive key matching, meaning sensitive fields like `Password` or `Secret-Key` (common in HTTP headers) would bypass redaction if the utility was only configured for lowercase versions.
 **Learning:** Redaction utilities must be case-insensitive by default when handling data from sources with non-standard casing (like HTTP headers or third-party webhooks). Relying on exact string matches creates a bypass vector for data leakage into logs.
