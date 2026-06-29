@@ -8,6 +8,7 @@ import { RedisService } from "../../redis/redis.service";
 import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
 import { SupplierService } from "@repo/suppliers/server";
 import { ProductType } from "@repo/db";
+import { ApiRealtimeService } from "../../common/services/realtime.service";
 
 @Injectable()
 export class CatalogService {
