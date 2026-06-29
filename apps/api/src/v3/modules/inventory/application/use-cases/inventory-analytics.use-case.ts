@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { SupplierService } from "@repo/suppliers/server";
+import { SupplierService } from "@repo/shared/suppliers/server";
 
 @Injectable()
 export class GetSupplierLeadTimeUseCase {

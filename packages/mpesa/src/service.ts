@@ -1,6 +1,6 @@
 import { db, Payment, UnclaimedPayment } from '@repo/db';
 import { realtimeService } from '@repo/shared/realtime';
-import { decrypt } from '@repo/shared/api/v2/utils/encryption';
+import { decrypt } from '@repo/shared/api/v2';
 import { MpesaClient } from './client';
 import { MpesaTriggerInput, MpesaCallbackPayload, MpesaC2BPayload, MpesaCredentials } from './types';
 import {

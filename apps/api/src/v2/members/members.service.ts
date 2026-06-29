@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { createMemberToken } from "@repo/shared/api/v2/services/auth";
+import { type V2ApiContext } from "@repo/shared/api/v2";
+import { createMemberToken } from "@repo/shared/api/v2";
 import { MemberRole, Status } from "@repo/db";
 import * as argon2 from "argon2";
 

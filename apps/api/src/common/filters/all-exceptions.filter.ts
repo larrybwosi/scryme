@@ -6,7 +6,7 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { FastifyReply } from "fastify";
-import { ApiError } from "@repo/shared/api/v2/errors";
+import { ApiError } from "@repo/shared/api/v2";
 import { env } from "@repo/env";
 import { OpenObserveService } from "../services/openobserve.service";
 import { redactSensitiveData } from "../utils/redaction";

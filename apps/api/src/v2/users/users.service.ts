@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../redis/redis.service";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 
 const CACHE_TTL = 600;
 

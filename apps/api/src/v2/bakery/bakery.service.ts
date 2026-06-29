@@ -7,11 +7,11 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { AuthService } from "../../auth/auth.service";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 import {
   validateDeviceKey,
   createMemberToken,
-} from "@repo/shared/api/v2/services/auth";
+} from "@repo/shared/api/v2";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";

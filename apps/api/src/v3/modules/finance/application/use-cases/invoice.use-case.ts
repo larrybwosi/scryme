@@ -10,7 +10,7 @@ import {
   InvoiceItemDto,
 } from "../dto/invoice.dto";
 import { DocumentService } from "@/common/documents/document.service";
-import { navariService } from "@repo/suppliers/server";
+import { navariService } from "@repo/shared/suppliers/server";
 import { Mappers } from "@repo/documents/server";
 
 @Injectable()
@@ -397,7 +397,7 @@ export class InvoiceUseCase {
 
       // Generate and save if it's linked to a transaction but no valid attachment exists
       const { documentService: sharedDocService } = await import(
-        "@repo/shared/lib/services/document"
+        "@repo/shared/lib"
       );
       const attachment = await sharedDocService.generateAndSaveInvoice(
         invoice.transactionId,
@@ -473,7 +473,7 @@ export class InvoiceUseCase {
 
     // Generate and save
     const { documentService: sharedDocService } = await import(
-      "@repo/shared/lib/services/document"
+      "@repo/shared/lib"
     );
     const attachment = await sharedDocService.generateAndSaveReceipt(
       transactionId,

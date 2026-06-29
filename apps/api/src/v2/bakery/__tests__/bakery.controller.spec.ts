@@ -3,7 +3,7 @@ import { BakeryController } from "../bakery.controller";
 import { BakeryService } from "../bakery.service";
 import { BakeryReportService } from "../reports/bakery-report.service";
 import { PrismaService } from "@/prisma/prisma.service";
-import { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { V2ApiContext } from "@repo/shared/api/v2";
 
 describe("BakeryController", () => {
   let controller: BakeryController;
