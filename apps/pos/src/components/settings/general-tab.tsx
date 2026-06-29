@@ -32,7 +32,7 @@ import { LocationSwitchDialog } from './location-switch-dialog';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useUpdater } from '@/lib/providers/UpdateProvider';
-import axios from 'axios';
+import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 
 // ─── Update Status UI Helpers ────────────────────────────────────────────────
@@ -87,8 +87,11 @@ function ConnectionTestCard() {
     setIsTesting(true);
     setStatus('IDLE');
     try {
-      const response = await axios.get(`${apiUrl}/api/v2/health/ping`, { timeout: 5000 });
-      if (response.data?.message === 'pong') {
+      const response = await invoke<any>('authenticated_api_request', {
+        method: 'GET',
+        path: 'api/v2/health/ping',
+      });
+      if (response?.message === 'pong') {
         setStatus('SUCCESS');
         toast.success('Connection to Scryme API successful');
       } else {
@@ -96,7 +99,7 @@ function ConnectionTestCard() {
       }
     } catch (err: any) {
       setStatus('ERROR');
-      toast.error(`Connection failed: ${err.message || 'Unknown error'}`);
+      toast.error(`Connection failed: ${err || 'Unknown error'}`);
     } finally {
       setIsTesting(false);
       setLastTested(new Date().toLocaleTimeString());
