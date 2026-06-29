@@ -58,3 +58,13 @@ pub async fn get_customers_by_ids_command(
 ) -> Result<Vec<models::PosCustomer>, String> {
     Ok(customer_store::get_customers_by_ids(&app, &state, ids).await)
 }
+
+#[tauri::command]
+pub async fn delete_local_customer_command(
+    app: AppHandle,
+    state: State<'_, CustomerState>,
+    id: String,
+) -> Result<String, String> {
+    customer_store::delete_local_customer(&app, &state, &id).await
+        .map_err(|e| e.to_string())
+}

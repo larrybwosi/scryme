@@ -387,3 +387,20 @@ pub async fn get_all_pricing(app: &AppHandle, _state: &PricingState) -> PosPrici
 
     PosPricingData { lists, items, allocations }
 }
+
+pub async fn delete_local_price_list(app: &AppHandle, _state: &PricingState, id: &str) -> Result<String> {
+    let pool = get_db_pool(app).await.map_err(|e| anyhow::anyhow!(e))?;
+    let mut tx = pool.begin().await?;
+
+    // 1. Delete associated price items
+    sqlx::query("DELETE FROM price_items WHERE price_list_id = ?1").bind(id).execute(&mut *tx).await?;
+
+    // 2. Delete associated customer allocations
+    sqlx::query("DELETE FROM customer_allocations WHERE price_list_id = ?1").bind(id).execute(&mut *tx).await?;
+
+    // 3. Delete the price list itself
+    sqlx::query("DELETE FROM price_lists WHERE id = ?1").bind(id).execute(&mut *tx).await?;
+
+    tx.commit().await?;
+    Ok(id.to_string())
+}

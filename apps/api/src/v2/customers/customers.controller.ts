@@ -30,4 +30,10 @@ export class CustomersController {
   async createCustomer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.customersService.createCustomer(ctx, body);
   }
+
+  @Delete(":id")
+  @ApiOperation({ summary: "Delete a customer" })
+  async deleteCustomer(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
+    return this.customersService.deleteCustomer(ctx, id);
+  }
 }
