@@ -12,3 +12,8 @@
 **Vulnerability:** The debug request logger in the API entry point was susceptible to leaking sensitive headers (like session cookies) if it used a deny-list approach for redaction.
 **Learning:** Shared redaction utilities often use a deny-list of sensitive keys. While useful for body/query objects, applying them to entire header objects is risky because new or less common sensitive headers (e.g., `Set-Cookie`, `X-Auth-Token`) might be missed. An allow-list approach for logging headers is significantly safer.
 **Prevention:** For diagnostic logging of HTTP headers, always use a strict allow-list of safe headers to log (e.g., `user-agent`, `content-type`, `x-correlation-id`). Pass even the allowed sensitive headers (like `authorization`) through a redaction utility as a second layer of defense.
+
+## 2026-06-29 - SSRF Vulnerability in Webhook and Image Services
+**Vulnerability:** Outbound HTTP requests in the `WebhookProcessor` and `ImageService` were fetching user-provided URLs without IP-level validation, allowing for Server-Side Request Forgery (SSRF).
+**Learning:** Validating only the hostname or protocol is insufficient for SSRF protection as it doesn't account for hostnames that resolve to internal or reserved IP addresses (e.g., `169.254.169.254` for cloud metadata). A robust check must resolve the hostname and verify the resulting IP.
+**Prevention:** Always resolve destination hostnames using `dns.lookup` and validate the resolved IP against a blocklist of private, loopback, and metadata ranges before initiating any outbound HTTP request. Centralize this logic in an `isSafeUrl` utility.

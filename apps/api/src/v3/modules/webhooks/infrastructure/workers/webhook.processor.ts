@@ -2,6 +2,7 @@ import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { WebhookService } from "../services/webhook.service";
 import { PrismaService } from "@/prisma/prisma.service";
+import { isSafeUrl } from "@repo/shared/server";
 
 @Processor("webhooks")
 export class WebhookProcessor extends WorkerHost {
@@ -24,6 +25,10 @@ export class WebhookProcessor extends WorkerHost {
       const signature = this.webhookService.generateSignature(payload, secret);
 
       try {
+        if (!(await isSafeUrl(url))) {
+          throw new Error(`Potentially unsafe webhook URL: ${url}`);
+        }
+
         const response = await fetch(url, {
           method: "POST",
           headers: {
