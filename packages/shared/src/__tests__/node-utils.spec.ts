@@ -1,10 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { isSafeUrl } from "../node-utils";
+import dns from "dns";
+
+vi.mock("dns", () => ({
+  default: {
+    lookup: vi.fn(),
+  },
+}));
 
 describe("isSafeUrl", () => {
+  const mockLookup = dns.lookup as any;
+
   it("should allow safe public URLs", async () => {
-    expect(await isSafeUrl("https://google.com")).toBe(true);
-    expect(await isSafeUrl("https://github.com")).toBe(true);
+    mockLookup.mockImplementation((hostname: string, cb: any) => {
+      cb(null, { address: "93.184.216.34" }); // example.com
+    });
+
+    expect(await isSafeUrl("https://example.com/webhook")).toBe(true);
+    expect(await isSafeUrl("http://google.com/api")).toBe(true);
   });
 
   it("should block non-http/https protocols", async () => {
@@ -14,30 +27,59 @@ describe("isSafeUrl", () => {
   });
 
   it("should block loopback addresses", async () => {
-    expect(await isSafeUrl("http://localhost")).toBe(false);
-    expect(await isSafeUrl("http://127.0.0.1")).toBe(false);
+    mockLookup.mockImplementation((hostname: string, cb: any) => {
+      cb(null, { address: "127.0.0.1" });
+    });
+    expect(await isSafeUrl("http://localhost:3000")).toBe(false);
+    expect(await isSafeUrl("http://127.0.0.1:3000")).toBe(false);
+    expect(await isSafeUrl("http://127.0.0.2")).toBe(false);
+
+    mockLookup.mockImplementation((hostname: string, cb: any) => {
+      cb(null, { address: "::1" });
+    });
     expect(await isSafeUrl("http://[::1]")).toBe(false);
-    expect(await isSafeUrl("http://127.0.0.2")).toBe(false); // dns.lookup should resolve
   });
 
   it("should block private IPv4 ranges", async () => {
-    expect(await isSafeUrl("http://10.0.0.1")).toBe(false);
-    expect(await isSafeUrl("http://172.16.0.1")).toBe(false);
-    expect(await isSafeUrl("http://172.31.255.255")).toBe(false);
-    expect(await isSafeUrl("http://192.168.1.1")).toBe(false);
-  });
+    const privateIps = [
+      "10.0.0.1",
+      "172.16.0.1",
+      "172.31.255.255",
+      "192.168.1.1",
+      "169.254.169.254", // link-local/metadata
+      "0.0.0.0",
+    ];
 
-  it("should block link-local and metadata addresses", async () => {
-    expect(await isSafeUrl("http://169.254.169.254")).toBe(false);
+    for (const ip of privateIps) {
+      mockLookup.mockImplementation((hostname: string, cb: any) => {
+        cb(null, { address: ip });
+      });
+      expect(await isSafeUrl(`http://some-internal-host.local`)).toBe(false);
+      expect(await isSafeUrl(`http://${ip}`)).toBe(false);
+    }
   });
 
   it("should block private IPv6 ranges", async () => {
-    expect(await isSafeUrl("http://[fc00::1]")).toBe(false);
-    expect(await isSafeUrl("http://[fe80::1]")).toBe(false);
+    const privateIps = ["fc00::1", "fc00::", "fe80::1"];
+
+    for (const ip of privateIps) {
+      mockLookup.mockImplementation((hostname: string, cb: any) => {
+        cb(null, { address: ip });
+      });
+      expect(await isSafeUrl(`http://some-internal-host.local`)).toBe(false);
+      expect(await isSafeUrl(`http://[${ip}]`)).toBe(false);
+    }
   });
 
   it("should block invalid URLs", async () => {
     expect(await isSafeUrl("not-a-url")).toBe(false);
     expect(await isSafeUrl("http://")).toBe(false);
+  });
+
+  it("should return false if DNS lookup fails", async () => {
+    mockLookup.mockImplementation((hostname: string, cb: any) => {
+      cb(new Error("DNS Error"));
+    });
+    expect(await isSafeUrl("https://non-existent-domain.test")).toBe(false);
   });
 });

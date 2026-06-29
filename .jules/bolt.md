@@ -49,3 +49,11 @@
 ## 2026-06-27 - [O(N) to O(1) Dashboard Aggregation]
 **Learning:** Fetching full relation arrays (e.g., all recipes) just to calculate average costs or category counts in-memory is a major performance bottleneck for large organizations. Replacing these with Prisma's `aggregate` (`_avg`) and `groupBy` (`_count`) shifts the heavy lifting to the database, reducing network payload and memory usage from $O(N)$ to $O(1)$.
 **Action:** Always prefer database-level aggregations (`aggregate`, `groupBy`) for dashboard summaries and use targeted `select` blocks to fetch only the scalar fields required for the final response.
+
+## 2026-06-28 - [Batched Pre-fetching for Integrity Checks]
+**Learning:** Background integrity checks that iterate over large datasets (like all variants in an organization) are prone to N+1 query bottlenecks. Process variants in batches (e.g., 100) and pre-fetch all related relational data (stocks, batches) in parallel using the 'in' operator. This reduces database roundtrips from O(N) to O(N/batchSize).
+**Action:** Always use batched pre-fetching and in-memory reconciliation for analytical or integrity services that process multiple root entities.
+
+## 2026-06-28 - [O(N*M) to O(N+M) with Map-based Indexing]
+**Learning:** Using '.find()' inside a '.map()' loop to associate data from two lists creates an O(N*M) complexity bottleneck. Indexing the secondary list into a Map (e.g., Map<id, record>) before the loop reduces complexity to O(N+M), providing constant-time lookups.
+**Action:** Replace nested loops or search operations within mappings with Map-based indexing for any collection processing involving more than a few items.

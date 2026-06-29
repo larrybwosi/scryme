@@ -17,6 +17,20 @@ export class WebhookProcessor extends WorkerHost {
     if (job.name === "deliver") {
       const { subscriptionId, event, payload, url, secret } = job.data;
 
+      // @security Validate URL to prevent SSRF
+      if (!(await isSafeUrl(url))) {
+        const log = await this.webhookService.createLog(
+          subscriptionId,
+          event,
+          payload,
+        );
+        await this.webhookService.updateLog(log.id, {
+          error: "Insecure webhook URL blocked (SSRF protection)",
+          status: "FAILED",
+        });
+        throw new Error("Insecure webhook URL blocked");
+      }
+
       const log = await this.webhookService.createLog(
         subscriptionId,
         event,

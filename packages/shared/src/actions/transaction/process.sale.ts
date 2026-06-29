@@ -135,12 +135,12 @@ export async function processSale(
   } = validatedData;
 
   try {
-    const orgData = await db.organization.findUnique({
+    const orgData = (await db.organization.findUnique({
       where: { id: organizationId },
       select: {
         settings: true,
       },
-    });
+    })) as any;
 
     const allowNegativeStock = orgData?.settings?.negativeStock ?? false;
     const inventoryPolicy = orgData?.settings?.inventoryPolicy ?? "FEFO";
@@ -214,7 +214,7 @@ export async function processSale(
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of cartItems) {
-          const variant = variantsMap.get(item.variantId);
+          const variant = variantsMap.get(item.variantId) as any;
           if (!variant) {
             throw new Error(
               `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
