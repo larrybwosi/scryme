@@ -4,11 +4,10 @@ use bcrypt::verify;
 use chrono::Utc;
 use keyring::Entry;
 use sqlx::SqlitePool;
-use tauri::{AppHandle, State};
+use tauri::{State};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use reqwest::header::HeaderValue;
-use log::{info, error};
 
 // --- Data Types for Auth State ---
 

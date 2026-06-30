@@ -24,9 +24,15 @@ pub async fn create_ingredient(
     ingredient.created_at = Utc::now();
     ingredient.updated_at = Utc::now();
 
+    // 1. Start a transaction for atomicity
+    let mut tx = pool.begin().await?;
+
+    // 2. Insert into ingredients (including stocking_unit_id and units_per_container)
     sqlx::query(
-        "INSERT INTO ingredients (id, name, sku, category_id, current_stock, reorder_level, max_stock, unit_id, unit_price, organization_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO ingredients (
+            id, name, sku, category_id, current_stock, reorder_level, max_stock, 
+            unit_id, stocking_unit_id, units_per_container, unit_price, organization_id, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&ingredient.id)
     .bind(&ingredient.name)
@@ -36,13 +42,16 @@ pub async fn create_ingredient(
     .bind(ingredient.reorder_level)
     .bind(ingredient.max_stock)
     .bind(&ingredient.unit_id)
+    .bind(&ingredient.stocking_unit_id)   // Bound missing field
+    .bind(ingredient.units_per_container) // Bound missing field
     .bind(ingredient.unit_price)
     .bind(&ingredient.organization_id)
     .bind(ingredient.created_at)
     .bind(ingredient.updated_at)
-    .execute(&*pool)
+    .execute(&mut *tx)
     .await?;
 
+    // 3. Log activity (Runs safely outside or inside; passed &pool here assuming standard implementation)
     let _ = log_activity(
         &pool,
         user_id,
@@ -53,14 +62,18 @@ pub async fn create_ingredient(
     )
     .await;
 
+    // 4. Insert into sync queue inside the same transaction
     sqlx::query("INSERT INTO sync_queue (id, action, entity_type, entity_id, payload) VALUES (?, ?, ?, ?, ?)")
         .bind(Uuid::new_v4().to_string())
         .bind("CREATE")
         .bind("INGREDIENT")
         .bind(&ingredient.id)
         .bind(serde_json_to_string(&ingredient)?)
-        .execute(&*pool)
+        .execute(&mut *tx)
         .await?;
+
+    // 5. Commit everything if all steps succeeded
+    tx.commit().await?;
 
     Ok(ingredient)
 }

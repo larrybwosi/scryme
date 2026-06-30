@@ -61,6 +61,8 @@ pub struct Ingredient {
     pub unit_id: Option<String>,
     pub unit_price: f64,
     pub last_restocked: Option<DateTime<Utc>>,
+    pub stocking_unit_id: Option<String>,
+    pub units_per_container: Option<f64>,
     #[serde(default)]
     pub total_used: f64,
     #[serde(default)]
