@@ -38,6 +38,12 @@ export class InventoryService {
       if (variantId) where.variantId = variantId;
       if (productId) where.productId = productId;
 
+      if (lowStock === "true") {
+        where.availableStock = {
+          lte: this.prisma.client.productVariantStock.fields.reorderPoint,
+        };
+      }
+
       const result = await paginate(
         this.prisma.client.productVariantStock,
         { offset: Number(offset), limit: Number(limit) },
@@ -78,8 +84,8 @@ export class InventoryService {
         },
       );
 
-      // Data Shaping and Low Stock Filtering
-      let shaped = result.data.map((s: any) => ({
+      // Data Shaping
+      const shaped = result.data.map((s: any) => ({
         stockId: s.id,
         productId: s.productId,
         productName: s.product?.name,
@@ -96,10 +102,6 @@ export class InventoryService {
             ? Number(s.availableStock) <= Number(s.reorderPoint)
             : false,
       }));
-
-      if (lowStock === "true") {
-        shaped = shaped.filter((item: any) => item.isLowStock);
-      }
 
       return {
         data: shaped,
