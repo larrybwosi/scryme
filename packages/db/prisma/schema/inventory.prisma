@@ -158,6 +158,8 @@ model ProductVariant {
 
   serialNumbers       SerialNumber[]
   qcTemplates         QCTemplate[] @relation("VariantQCTemplates")
+  serviceMaterials    ServiceMaterial[]
+  consumedInBookings  BookingConsumedMaterial[]
 
   @@unique([productId, sku])
   @@unique([productId, barcode])
@@ -430,6 +432,7 @@ model InventoryLocation {
 
   // Stock Reconciliation Relations
   stockReconciliations      StockReconciliation[]
+  serviceBookings           ServiceBooking[]
 
   // API Key Relations
   apiKeys                   ApiKey[]

@@ -20,6 +20,7 @@ import { StandalonePosModule } from "./modules/standalone-pos/standalone-pos.mod
 import { CrmIntegrationsModule } from "./modules/crm-integrations/crm-integrations.module";
 import { UnitsModule } from "./modules/units/units.module";
 import { StrapiModule } from "./modules/strapi/strapi.module";
+import { ServicesModule } from "./modules/services/services.module";
 
 export const V3_SUB_MODULES = [
   V3CommonModule,
@@ -43,6 +44,7 @@ export const V3_SUB_MODULES = [
   CrmIntegrationsModule,
   UnitsModule,
   StrapiModule,
+  ServicesModule,
 ];
 
 @Module({
