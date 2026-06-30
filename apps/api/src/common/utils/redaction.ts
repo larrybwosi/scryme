@@ -102,7 +102,17 @@ function redactRecursive(
   depth: number,
   maxDepth: number,
 ): any {
-  if (data === null || data === undefined || depth > maxDepth) {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (depth > maxDepth) {
+    if (Array.isArray(data)) {
+      return `[Array(${data.length})]`;
+    }
+    if (typeof data === "object") {
+      return "[Object]";
+    }
     return data;
   }
 
