@@ -1733,6 +1733,9 @@ importers:
       '@repo/scryme':
         specifier: workspace:*
         version: link:../scryme
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: ^1.15.2
         version: 1.16.1
