@@ -127,8 +127,15 @@ if (isTauri()) {
   // Sync member token to Rust if it's in localStorage (for migration/persistence)
   const memberToken = localStorage.getItem('bakery_member_token');
   const memberId = localStorage.getItem('bakery_member_id');
+  const savedUser = localStorage.getItem('bakery_user');
+
   if (memberToken && memberId) {
     tauriInvoke('sync_member_token_command', { token: memberToken, memberId }).catch(console.error);
+    if (savedUser) {
+      try {
+        tauriInvoke('restore_member_session', { member: JSON.parse(savedUser) }).catch(console.error);
+      } catch (e) {}
+    }
   }
 
   // Load settings to check for custom API URL

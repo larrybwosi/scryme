@@ -34,6 +34,8 @@ pub fn run() {
             commands::sync_member_token_command,
             commands::authenticated_api_request,
             commands::update_bakery_api_url,
+            commands::restore_member_session,
+            commands::switch_active_member,
             commands::get_batches,
             commands::create_batch,
             commands::update_batch,
