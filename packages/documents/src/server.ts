@@ -73,16 +73,16 @@ export async function generateQRCode(text: string): Promise<string> {
  */
 
 type TransactionWithDetails = Transaction & {
-  location?: InventoryLocation & { address?: any };
-  organization?: Organization & {
+  location?: (InventoryLocation & { address?: any }) | null;
+  organization?: (Organization & {
     settings?: any;
     invoiceConfig?: InvoiceConfig | null;
     receiptConfig?: ReceiptConfig | null;
     waybillConfig?: WaybillConfig | null;
     address?: any;
-  };
-  customer?: Customer & { addresses?: Address[] };
-  member?: Member & { user?: Pick<User, 'name'> | null };
+  }) | null;
+  customer?: (Customer & { addresses?: Address[] }) | null;
+  member?: (Member & { user?: Pick<User, 'name'> | null }) | null;
   items?: TransactionItem[];
   payments?: Payment[];
   fulfillments?: (Fulfillment & { shippingAddress?: Address | null; driver?: any })[];
