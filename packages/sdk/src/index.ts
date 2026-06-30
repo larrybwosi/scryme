@@ -18,13 +18,25 @@ export const getSDK = (config: SDKConfig) => {
       if (
         response.data &&
         response.data.success === true &&
-        response.data.data !== undefined &&
-        (response.data.timestamp || response.data.meta)
+        response.data.data !== undefined
       ) {
-        return {
-          ...response,
-          data: response.data.data,
-        };
+        const metadata = response.data.meta || response.data.metadata;
+        if (metadata) {
+          return {
+            ...response,
+            data: {
+              data: response.data.data,
+              metadata,
+            },
+          };
+        }
+
+        if (response.data.timestamp) {
+          return {
+            ...response,
+            data: response.data.data,
+          };
+        }
       }
       return response;
     },
