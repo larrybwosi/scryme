@@ -24,6 +24,5 @@ export * from "../generated/client";
 import { Prisma } from "../generated/client";
 export const Decimal = Prisma.Decimal;
 
-export type SupplierGetPayload<
-  S extends boolean | Prisma.SupplierDefaultArgs = Prisma.SupplierDefaultArgs,
-> = Prisma.SupplierGetPayload<S>;
+export type SupplierGetPayload<S = any> = any;
+export type SupplierDefaultArgs = any;

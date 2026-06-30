@@ -201,12 +201,12 @@ export const Mappers = {
       branding: resolveBranding(organization),
       dateRangeText,
       activeFiltersText,
-      transactions: transactions.map(t => ({
+      transactions: transactions.map((t: any) => ({
         number: t.number,
         date: new Date(t.createdAt).toLocaleDateString(),
         customerName: t.customer?.name || 'N/A',
         total: Number(t.finalTotal),
-        paymentInfo: t.payments?.map((p: Payment) => `${p.method} (${p.status})`).join(', ') || 'N/A',
+        paymentInfo: t.payments?.map((p: any) => `${p.method} (${p.status})`).join(', ') || 'N/A',
         items: (t.items || []).map((item: TransactionItem) => ({
           productName: item.productName,
           variantName: item.variantName,
