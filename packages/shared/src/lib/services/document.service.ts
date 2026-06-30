@@ -156,6 +156,7 @@ export class DocumentService {
         },
         location: true,
         payments: true,
+        member: { include: { user: { select: { name: true } } } },
       },
     });
 
@@ -163,7 +164,7 @@ export class DocumentService {
 
     const template = transaction.organization?.settings?.defaultInvoiceTemplate;
     const DocumentComponent = getInvoiceTemplate(template);
-    const documentData = Mappers.toInvoiceData(transaction);
+    const documentData = Mappers.toInvoiceData(transaction as any);
 
     let qrCode = "";
     try {
@@ -246,7 +247,7 @@ export class DocumentService {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const documentData = Mappers.toReceiptData(transaction);
+    const documentData = Mappers.toReceiptData(transaction as any);
     const stream = await DocumentGenerator.renderToStream(
       React.createElement(ReceiptTemplateV2, { data: documentData }),
     );
