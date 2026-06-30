@@ -121,6 +121,10 @@ services:
       dockerfile: apps/api/Dockerfile
     image: scryme-api:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_HOST=redis
@@ -157,6 +161,10 @@ services:
         - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
     image: scryme-web:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
