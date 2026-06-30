@@ -159,10 +159,10 @@ export default function BatchManager() {
     const term = localSearchTerm.toLowerCase();
     return batches.filter(batch => {
       const matchesSearch =
-        batch.name.toLowerCase().includes(term) ||
-        batch.recipe.name.toLowerCase().includes(term) ||
-        batch.batchNumber.toLowerCase().includes(term) ||
-        batch.tags?.some(tag => tag.toLowerCase().includes(term));
+        (batch.name?.toLowerCase().includes(term) ?? false) ||
+        (batch.recipe?.name?.toLowerCase().includes(term) ?? false) ||
+        (batch.batchNumber?.toLowerCase().includes(term) ?? false) ||
+        (batch.tags?.some(tag => tag.toLowerCase().includes(term)) ?? false);
       return matchesSearch;
     });
   }, [batches, localSearchTerm]);
@@ -248,21 +248,34 @@ export default function BatchManager() {
 
   const handleSmartCreate = async (data: any) => {
     try {
-      const scheduledDate = data.scheduledDate && isValid(new Date(data.scheduledDate)) ? new Date(data.scheduledDate) : new Date();
+      const scheduledDate =
+        data.scheduledDate && isValid(new Date(data.scheduledDate)) ? new Date(data.scheduledDate) : new Date();
       const recipe = recipes.find(r => r.id === data.recipeId);
+
+      if (!recipe) {
+        toast.error('Selected recipe not found');
+        return;
+      }
+
       await createBatchMutation.mutateAsync({
-        batchId: data.batchId,
         recipeId: data.recipeId,
         plannedQuantity: data.quantity,
+        systemUnitId: recipe.systemUnitId,
+        orgUnitId: recipe.orgUnitId,
         date: scheduledDate,
         time: format(scheduledDate, 'HH:mm'),
-        leadBakerId: data.leadBakerId,
+        leadBakerId: data.leadBakerId === 'none' ? undefined : data.leadBakerId,
+        assistantBakerIds: data.assistantBakerIds || [],
         recipeMultiplier: data.multiplier || 1.0,
-        notes: `Smart Provision run for ${recipe?.name}`,
+        notes: data.notes || `Smart Provision run for ${recipe.name}`,
       } as any);
       toast.success('Production run scheduled');
       setIsSmartWizardOpen(false);
-    } catch (err) { console.error(err); }
+    } catch (err: any) {
+      console.error('Smart Provision failed:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to schedule production run';
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -353,17 +366,30 @@ export default function BatchManager() {
                   </TableCell>
                   <TableCell className="py-5">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-mono text-xs font-bold text-foreground/90 tracking-tight">{batch.batchNumber}</span>
-                      <span className="text-[11px] text-muted-foreground/80 font-semibold">{batch.recipe.name}</span>
+                      <span className="font-mono text-xs font-bold text-foreground/90 tracking-tight">
+                        {batch.batchNumber || 'N/A'}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground/80 font-semibold">
+                        {batch.recipe?.name || 'Unknown Recipe'}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('text-[9px] uppercase font-bold tracking-widest border-none px-2.5 py-1 rounded-full shadow-sm', getStatusStyles(batch.status))}>
-                      {batch.status.replace('_', ' ')}
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-[9px] uppercase font-bold tracking-widest border-none px-2.5 py-1 rounded-full shadow-sm',
+                        getStatusStyles(batch.status)
+                      )}
+                    >
+                      {(batch.status || '').replace('_', ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-bold tabular-nums text-sm">
-                    {batch.plannedQuantity} <span className="text-[10px] text-muted-foreground/50 font-medium uppercase tracking-tighter ml-0.5">{batch.unit.symbol}</span>
+                    {batch.plannedQuantity}{' '}
+                    <span className="text-[10px] text-muted-foreground/50 font-medium uppercase tracking-tighter ml-0.5">
+                      {batch.unit?.symbol || ''}
+                    </span>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground/90 font-medium">
                     <div className="flex items-center gap-2">
@@ -487,7 +513,7 @@ export default function BatchManager() {
                 </div>
                 <div className="flex flex-col items-end">
                    <span className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest mb-1">Target Quantity</span>
-                   <span className="font-bold text-lg">{qualityCheckBatch?.plannedQuantity} {qualityCheckBatch?.unit.symbol}</span>
+                   <span className="font-bold text-lg">{qualityCheckBatch?.plannedQuantity} {qualityCheckBatch?.unit?.symbol || ''}</span>
                 </div>
              </div>
 

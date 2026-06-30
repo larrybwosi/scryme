@@ -49,38 +49,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(JSON.parse(savedUser));
         }
       } else {
+        const memberToken = localStorage.getItem('bakery_member_token');
+        if (memberToken) {
+          sdk.setMemberToken(memberToken);
+        }
+
         const status = await sdk.bakery.getAuthStatus();
         setHasDeviceKey(status.hasDeviceKey);
 
         if (status.hasMemberToken) {
-           const memberToken = localStorage.getItem('bakery_member_token');
-           if (memberToken) {
-             sdk.setMemberToken(memberToken);
+          // Sync token to Rust if in Tauri
+          if (isTauri() && memberToken) {
+            const savedUser = localStorage.getItem('bakery_user');
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser);
+              tauriInvoke('sync_member_token_command', {
+                token: memberToken,
+                memberId: parsed.memberId || parsed.id,
+              }).catch(console.error);
+            }
+          }
 
-             // Sync token to Rust if in Tauri
-             if (isTauri()) {
-               const savedUser = localStorage.getItem('bakery_user');
-               if (savedUser) {
-                 const parsed = JSON.parse(savedUser);
-                 tauriInvoke('sync_member_token_command', {
-                   token: memberToken,
-                   memberId: parsed.memberId || parsed.id,
-                 }).catch(console.error);
-               }
-             }
-
-             // In a real app, we might want to fetch the actual user profile here
-             const savedUser = localStorage.getItem('bakery_user');
-             if (savedUser) {
-               setUser(JSON.parse(savedUser));
-             } else {
-               setUser({
-                 id: 'remote-user',
-                 name: 'Remote Baker',
-                 email: 'remote@bakery.com'
-               });
-             }
-           }
+          // In a real app, we might want to fetch the actual user profile here
+          const savedUser = localStorage.getItem('bakery_user');
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+          } else {
+            setUser({
+              id: 'remote-user',
+              name: 'Remote Baker',
+              email: 'remote@bakery.com',
+            });
+          }
+        } else {
+          // Token is invalid or expired
+          setUser(null);
+          localStorage.removeItem('bakery_user');
+          localStorage.removeItem('bakery_member_token');
         }
       }
     } catch (error) {

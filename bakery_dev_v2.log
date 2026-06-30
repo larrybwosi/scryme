@@ -1,0 +1,31 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> bakery@8.1.0 dev /app/apps/bakery
+> vite
+
+[vite:react-swc] We recommend switching to `@vitejs/plugin-react` for improved performance as no swc plugins are used. More information at https://vite.dev/rolldown
+
+  VITE v8.0.16  ready in 646 ms
+
+  ➜  Local:   http://localhost:5000/
+  ➜  Network: use --host to expose
+7:27:18 AM [vite] http proxy error: /api/v2/bakery/auth/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+7:27:18 AM [vite] http proxy error: /api/v2/bakery/settings
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+7:27:18 AM [vite] http proxy error: /api/v2/bakery/auth/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+7:27:19 AM [vite] http proxy error: /api/v2/bakery/settings
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)
+7:28:22 AM [vite] (client) hmr update /src/index.css, /src/components/bakery/BatchManager.tsx
+7:29:45 AM [vite] (client) hmr update /src/index.css, /src/components/bakery/SmartProductionWizard.tsx
+7:30:04 AM [vite] (client) hmr update /src/index.css, /src/layouts/DashboardLayout.tsx, /src/pages/OverviewPage.tsx, /src/pages/LoginPage.tsx, /src/lib/providers/organization-context.tsx, /src/pages/SetupPage.tsx, /src/lib/providers/auth-context.tsx, /src/pages/SettingsPage.tsx, /src/components/bakery/PartnerManager.tsx, /src/components/bakery/DeliveryTracker.tsx, /src/components/bakery/BatchForm.tsx, /src/components/bakery/IngredientReceive.tsx, /src/components/bakery/BulkRestock.tsx, /src/components/bakery/IngredientForm.tsx and 18 more
+7:30:35 AM [vite] (client) hmr update /src/lib/providers/auth-context.tsx, /src/index.css
