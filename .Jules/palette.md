@@ -32,3 +32,7 @@
 ## 2026-06-28 - [Standardized Deletion UX in Location Zones]
 **Learning:** Using native `confirm()` for destructive actions felt disjointed from the rest of the application's design system. Additionally, the lack of a loading state during the asynchronous deletion process could lead to user uncertainty or double-clicks.
 **Action:** Replace native `confirm()` with themed `AlertDialog`. Implement `isDeleting` state to show a `Loader2` spinner and disable action buttons during the deletion process to provide immediate, consistent feedback.
+
+## 2026-06-29 - [Standardized Deletion UX in Driver Table]
+**Learning:** The Driver Table was using native `confirm()` for destructive actions, which was inconsistent with the rest of the application's design system and lacked accessibility features. Additionally, there was no visual feedback during the asynchronous deletion process.
+**Action:** Replace native `confirm()` with themed `AlertDialog`. Implement `isDeleting` state to show a `Loader2` spinner and disable action buttons during the deletion process. Wrap icon-only dropdown triggers in `Tooltip` and provide a descriptive `aria-label` for screen readers.

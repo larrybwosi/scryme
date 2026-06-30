@@ -34,3 +34,7 @@
 **Vulnerability:** The `redactSensitiveData` utility leaked raw objects and arrays when they exceeded the `maxDepth` limit, as the recursion would stop and return the remaining data as-is without further inspection.
 **Learning:** Security-critical recursion must never "fail open" by returning raw data when limits are reached. If a data structure is too deep to inspect, it must be considered potentially sensitive and replaced with a placeholder.
 **Prevention:** Ensure recursive sanitization utilities return a safe placeholder (e.g., `[Object]` or `[Array]`) when the recursion depth limit is exceeded, rather than returning the original data.
+## 2026-06-30 - Sensitive Data Leakage at Redaction Depth Limit
+**Vulnerability:** The `redactSensitiveData` utility returned raw data when the recursion depth exceeded `maxDepth`. This allowed sensitive keys nested deeper than the limit to be leaked in plaintext to logs.
+**Learning:** Recursion limits in security-sensitive utilities must fail closed or return a safe placeholder. Returning the original data as a fallback bypasses the security purpose of the utility.
+**Prevention:** Always return a redaction placeholder or a truncated/safe representation when a recursion or iteration limit is reached in data processing utilities designed for security.

@@ -57,3 +57,10 @@
 ## 2026-06-28 - [O(N*M) to O(N+M) with Map-based Indexing]
 **Learning:** Using '.find()' inside a '.map()' loop to associate data from two lists creates an O(N*M) complexity bottleneck. Indexing the secondary list into a Map (e.g., Map<id, record>) before the loop reduces complexity to O(N+M), providing constant-time lookups.
 **Action:** Replace nested loops or search operations within mappings with Map-based indexing for any collection processing involving more than a few items.
+
+## 2026-06-30 - [Targeted Select vs Include in Order Paths]
+**Learning:** Broad 'include' statements in critical paths like B2B Quote generation fetch unnecessary relational data (e.g., full Product or InventoryLocation objects) when only scalar fields (e.g., 'product.name') are needed. Switching to a targeted 'select' block reduces database I/O and serialization time.
+**Action:** Always include primary and foreign IDs (e.g., 'id', 'productId') in 'select' blocks even if not immediately used, to maintain entity integrity and prevent downstream breakage or TypeScript issues.
+## 2026-06-29 - [Excluding Heavy JSON in Template Lists]
+**Learning:** Fetching full `InvoiceTemplate` records just to list available templates in a UI dropdown or management table is a significant performance drain due to the large `templateData` JSON field (containing full layout/styles). Excluding this field via a Prisma `select` block reduces the payload by ~80-90%.
+**Action:** Always use `select` to prune large JSON blobs or relation arrays in any 'GetList' or 'GetTemplates' style service methods, ensuring they are only retrieved in 'GetById' or 'Export' methods where the full data is actually required.
