@@ -1,5 +1,11 @@
 # crm
 
+## 6.2.0
+
+### Minor Changes
+
+- 5e8ab87: Update
+
 ## 6.1.0
 
 ### Minor Changes
