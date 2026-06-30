@@ -2,12 +2,21 @@ import type { Metadata } from "next";
 import { DollarSign, FileText, TrendingUp, CreditCard, Repeat, BarChart2, Lock, Globe } from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
+import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
 export const metadata: Metadata = {
-  title: "Finance & Accounting — Scryme",
+  title: "Automated Finance & Accounting for Businesses",
   description:
     "Scryme Finance automates bookkeeping, invoicing, and financial reporting for retail and wholesale businesses — no accountant required for day-to-day operations.",
+  alternates: {
+    canonical: "/products/finance",
+  },
+  openGraph: {
+    title: "Scryme Finance — Automated Bookkeeping",
+    description: "Connect POS, inventory, and CRM for automated Posting. Close your month in hours, not days.",
+    url: "https://scryme.co/products/finance",
+  },
 };
 
 const capabilities = [
@@ -22,8 +31,52 @@ const capabilities = [
 ];
 
 export default function FinancePage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Scryme Finance",
+    description: "Scryme Finance automates bookkeeping, invoicing, and financial reporting for retail and wholesale businesses — no accountant required for day-to-day operations.",
+    brand: {
+      "@type": "Brand",
+      name: "Scryme",
+    },
+    offers: {
+      "@type": "Offer",
+      url: "https://scryme.co/products/finance",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://scryme.co",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: "https://scryme.co/products",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Finance",
+        item: "https://scryme.co/products/finance",
+      },
+    ],
+  };
+
   return (
     <main>
+      <StructuredData data={structuredData} />
+      <StructuredData data={breadcrumbData} />
       <ProductHero
         eyebrow="Scryme Finance"
         title="Books that balance themselves"

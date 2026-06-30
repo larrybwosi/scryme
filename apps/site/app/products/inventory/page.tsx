@@ -2,12 +2,21 @@ import type { Metadata } from "next";
 import { Package, Truck, AlertTriangle, BarChart2, RefreshCw, Globe, Lock, Layers } from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
+import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
 export const metadata: Metadata = {
-  title: "Inventory Management — Scryme",
+  title: "Multi-Location Inventory Management Software",
   description:
     "Scryme Inventory gives multi-location businesses real-time stock visibility, automated reorder triggers, and intelligent demand forecasting.",
+  alternates: {
+    canonical: "/products/inventory",
+  },
+  openGraph: {
+    title: "Scryme Inventory — Real-time Stock Control",
+    description: "Track every SKU across warehouses and stores. Eliminate stockouts with data-driven reorder automation.",
+    url: "https://scryme.co/products/inventory",
+  },
 };
 
 const capabilities = [
@@ -22,8 +31,52 @@ const capabilities = [
 ];
 
 export default function InventoryPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Scryme Inventory",
+    description: "Scryme Inventory gives multi-location businesses real-time stock visibility, automated reorder triggers, and intelligent demand forecasting.",
+    brand: {
+      "@type": "Brand",
+      name: "Scryme",
+    },
+    offers: {
+      "@type": "Offer",
+      url: "https://scryme.co/products/inventory",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://scryme.co",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: "https://scryme.co/products",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "Inventory",
+        item: "https://scryme.co/products/inventory",
+      },
+    ],
+  };
+
   return (
     <main>
+      <StructuredData data={structuredData} />
+      <StructuredData data={breadcrumbData} />
       <ProductHero
         eyebrow="Scryme Inventory"
         title="Real-time stock control across every location"
