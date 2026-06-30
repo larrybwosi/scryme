@@ -8,6 +8,7 @@ import {
   CreateInvoiceDto,
   UpdateInvoiceDto,
   InvoiceItemDto,
+  InvoiceConfigDto,
 } from "../dto/invoice.dto";
 import { DocumentService } from "@/common/documents/document.service";
 import { navariService } from "@repo/shared/suppliers/server";
@@ -322,7 +323,19 @@ export class InvoiceUseCase {
     return { ...updatedInvoice, complianceData };
   }
 
-  async handleKRACompliance(organizationId: string, invoice: any) {
+  async handleKRACompliance(
+    organizationId: string,
+    invoice: {
+      id: string;
+      customerName: string | null;
+      kraPin: string | null;
+      netTotal: number;
+      totalTaxes: number;
+      grandTotal: number;
+      etrMode: boolean;
+      items: { itemName: string; quantity: number; rate: number; amount: number }[];
+    },
+  ) {
     const org = await this.prisma.client.organization.findUnique({
       where: { id: organizationId },
       include: { settings: true },
@@ -341,7 +354,7 @@ export class InvoiceUseCase {
           totalTaxes: Number(invoice.totalTaxes || 0),
           grandTotal: Number(invoice.grandTotal || 0),
           etrMode: Boolean(invoice.etrMode),
-          items: (invoice.items || []).map((i: any) => ({
+          items: (invoice.items || []).map((i) => ({
             description: String(i.itemName || "Item"),
             quantity: Number(i.quantity || 0),
             price: Number(i.rate || 0),
@@ -356,8 +369,10 @@ export class InvoiceUseCase {
 
         return result;
       } catch (error) {
-        console.error("Navari ETR Generation failed:", error.message);
-        return { error: error.message, status: "FAILED" };
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        console.error("Navari ETR Generation failed:", errorMessage);
+        return { error: errorMessage, status: "FAILED" };
       }
     }
     return null;
@@ -370,9 +385,27 @@ export class InvoiceUseCase {
         transaction: {
           include: {
             attachments: true,
+            items: true,
+            customer: { include: { addresses: true } },
+            organization: {
+              include: {
+                settings: true,
+                invoiceConfig: true,
+              },
+            },
+            location: true,
+            payments: true,
+            member: { include: { user: { select: { name: true } } } },
           },
         },
-        organization: true,
+        organization: {
+          include: {
+            settings: true,
+            invoiceConfig: true,
+          },
+        },
+        items: true,
+        template: true,
       },
     });
 
@@ -385,7 +418,7 @@ export class InvoiceUseCase {
         : new Date(invoice.updatedAt);
 
       const existingDoc = invoice.transaction?.attachments?.find(
-        a =>
+        (a) =>
           a.description === "Invoice" &&
           new Date(a.uploadedAt) >= referenceDate,
       );
@@ -410,32 +443,7 @@ export class InvoiceUseCase {
     }
 
     // Standalone invoices fallback (not linked to a transaction)
-    const standaloneInvoice = await this.prisma.client.invoice.findUnique({
-      where: { id: invoiceId },
-      include: {
-        items: true,
-        organization: {
-          include: {
-            settings: true,
-            invoiceConfig: true,
-          },
-        },
-        template: true,
-      },
-    });
-
-    const invoiceData = Mappers.toInvoiceData(
-      {
-        ...standaloneInvoice,
-        number: standaloneInvoice.id.substring(0, 8).toUpperCase(),
-        subtotal: standaloneInvoice.netTotal,
-        taxTotal: standaloneInvoice.totalTaxes,
-        finalTotal: standaloneInvoice.grandTotal,
-        createdAt: standaloneInvoice.postingDate,
-        payments: [{ amount: standaloneInvoice.amountPaid }],
-      },
-      {},
-    );
+    const invoiceData = Mappers.toInvoiceData(invoice as any, {});
 
     return this.documentService.generateInvoicePDF(invoiceData);
   }
@@ -445,6 +453,7 @@ export class InvoiceUseCase {
       where: { id: transactionId },
       include: {
         attachments: true,
+        items: true,
         member: { include: { user: { select: { name: true } } } },
         location: true,
         customer: { include: { addresses: true } },
@@ -461,7 +470,7 @@ export class InvoiceUseCase {
     if (!transaction) throw new NotFoundException("Transaction not found");
 
     const existingDoc = transaction.attachments?.find(
-      a =>
+      (a) =>
         a.description === "Receipt" &&
         new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
     );
@@ -538,12 +547,12 @@ export class InvoiceUseCase {
     return config;
   }
 
-  async updateInvoiceConfig(organizationId: string, data: any) {
+  async updateInvoiceConfig(organizationId: string, dto: InvoiceConfigDto) {
     return await this.prisma.client.invoiceConfig.upsert({
       where: { organizationId },
-      update: data,
+      update: dto,
       create: {
-        ...data,
+        ...dto,
         organizationId,
       },
     });

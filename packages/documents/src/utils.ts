@@ -1,30 +1,31 @@
+import { Organization, InvoiceConfig, ReceiptConfig, WaybillConfig } from "@repo/db";
 import { BrandingOptions, CurrencySettings } from "./types";
 
 /**
  * Resolves branding options based on a hierarchy of configurations.
  */
 export function resolveBranding(
-  organization: any,
-  config: any = {},
+  organization?: Partial<Organization> | null,
+  config: Partial<InvoiceConfig | ReceiptConfig | WaybillConfig> | null = {},
 ): BrandingOptions {
   const showLogo = config?.showLogo ?? true;
-  const logoUrl = showLogo ? config.logoUrl || organization?.logo : null;
+  const logoUrl = showLogo ? config?.logoUrl || organization?.logo : null;
 
   return {
-    companyName: config.companyName || organization?.name || "Organization",
+    companyName: config?.companyName || organization?.name || "Organization",
     companyAddress:
-      config.companyAddress || formatAddress(organization?.address),
-    companyPhone: config.companyPhone || organization?.phone,
-    companyEmail: config.companyEmail || organization?.email,
-    companyWebsite: config.companyWebsite || organization?.website || "",
-    companyTagline: config.companyTagline || organization?.description || "",
-    logoUrl,
+      config?.companyAddress || formatAddress(organization?.address),
+    companyPhone: config?.companyPhone || organization?.phone || undefined,
+    companyEmail: config?.companyEmail || organization?.email || undefined,
+    companyWebsite: (config as any)?.companyWebsite || (organization as any)?.website || "",
+    companyTagline: (config as any)?.companyTagline || organization?.description || "",
+    logoUrl: logoUrl || undefined,
     showLogo,
     primaryColor:
-      config.primaryColor || organization?.primaryColor || "#2563eb",
-    showPoweredBy: config.showPoweredBy ?? true,
-    watermarkText: config.watermarkText,
-    customFields: config.customFields,
+      config?.primaryColor || (organization as any)?.primaryColor || "#2563eb",
+    showPoweredBy: (config as any)?.showPoweredBy ?? true,
+    watermarkText: (config as any)?.watermarkText,
+    customFields: (config as any)?.customFields,
   };
 }
 
@@ -33,7 +34,7 @@ export function resolveBranding(
  */
 export function resolveCurrencySettings(
   transaction: any,
-  organization: any,
+  organization?: Partial<Organization> & { settings?: any } | null,
 ): CurrencySettings {
   const defaultCurrency = organization?.settings?.defaultCurrency || "USD";
   const defaultLocale =
@@ -87,7 +88,7 @@ export function formatAddress(input: any): string {
 
   const target =
     input.address && typeof input.address === "object" ? input.address : input;
-  const data = typeof target === "object" ? target : input;
+  const data = (typeof target === "object" ? target : input) as Record<string, any>;
 
   if (!data || typeof data !== "object") return String(input);
 
