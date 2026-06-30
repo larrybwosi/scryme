@@ -335,7 +335,7 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
               width: 220,
               borderBottomWidth: 1,
               borderBottomColor: LINE_COLOR,
-              my: 4,
+              marginVertical: 4,
             }}
           />
 
@@ -349,7 +349,7 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
               width: 220,
               borderBottomWidth: 1,
               borderBottomColor: LINE_COLOR,
-              my: 4,
+              marginVertical: 4,
             }}
           />
         </View>
