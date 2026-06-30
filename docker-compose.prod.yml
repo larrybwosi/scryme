@@ -34,6 +34,10 @@ services:
       - postgres_prod_data:/var/lib/postgresql/data
     networks:
       - scryme-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -78,11 +82,15 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    command: redis-server --save 60 1 --loglevel warning
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_prod_data:/data
     networks:
       - scryme-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -262,6 +270,10 @@ services:
       dockerfile: apps/api/Dockerfile
     image: scryme-api:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_HOST: redis
@@ -305,6 +317,10 @@ services:
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-crm:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -334,6 +350,10 @@ services:
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-web:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -358,6 +378,10 @@ services:
       dockerfile: apps/bakery/Dockerfile
     image: scryme-bakery:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     environment:
       VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
       NODE_ENV: production
