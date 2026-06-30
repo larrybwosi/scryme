@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@repo/db": "workspace:*",
+    "@repo/shared": "workspace:*",
     "@repo/scryme": "workspace:*",
     "axios": "^1.15.2",
     "clsx": "^2.1.1",

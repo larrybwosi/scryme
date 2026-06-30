@@ -72,7 +72,7 @@ export class CustomerService {
       return {
         success: true,
         data: {
-          customers: customers.map((c) => {
+          customers: customers.map((c: any) => {
             const crmData = (c.crmRecord?.data as Record<string, any>) || {};
             const { firstName, lastName } = this.splitName(c.name);
             return {
@@ -139,12 +139,12 @@ export class CustomerService {
 
       // Calculate balance
       const totalInvoiced = customer.invoices.reduce(
-        (acc, inv) => acc + inv.grandTotal,
+        (acc: number, inv: any) => acc + inv.grandTotal,
         0,
       );
       const totalPaidInvoices = customer.invoices
-        .filter((inv) => inv.status === "PAID")
-        .reduce((acc, inv) => acc + inv.grandTotal, 0);
+        .filter((inv: any) => inv.status === "PAID")
+        .reduce((acc: number, inv: any) => acc + inv.grandTotal, 0);
 
       const balance = totalInvoiced - totalPaidInvoices;
 

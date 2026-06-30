@@ -1,7 +1,7 @@
 import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
-import { isSafeUrl } from "./security";
+import { isSafeUrl } from "@repo/shared/server";
 
 // Register helpers for report construction
 Handlebars.registerHelper("table", function (data: any[], options: any) {

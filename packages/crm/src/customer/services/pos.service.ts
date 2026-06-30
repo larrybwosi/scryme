@@ -33,7 +33,7 @@ export class PosCustomerService {
       },
     });
 
-    const mappedData = customers.map((c) => ({
+    const mappedData = customers.map((c: any) => ({
       id: c.id,
       name: c.name,
       email: c.email,
@@ -68,7 +68,7 @@ export class PosCustomerService {
       take: 20,
     });
 
-    return customers.map((c) => ({
+    return customers.map((c: any) => ({
       id: c.id,
       name: c.name,
       email: c.email,
