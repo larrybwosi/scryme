@@ -134,7 +134,9 @@ if (isTauri()) {
     if (savedUser) {
       try {
         tauriInvoke('restore_member_session', { member: JSON.parse(savedUser) }).catch(console.error);
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to restore member session', e);
+      }
     }
   }
 

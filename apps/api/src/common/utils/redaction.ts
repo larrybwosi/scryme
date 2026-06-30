@@ -107,7 +107,13 @@ function redactRecursive(
   }
 
   if (depth > maxDepth) {
-    return "[REDACTED (Max Depth Exceeded)]";
+    if (Array.isArray(data)) {
+      return `[Array(${data.length})]`;
+    }
+    if (typeof data === "object" && data !== null) {
+      return "[Object]";
+    }
+    return data;
   }
 
   // Handle Error objects specifically as they have non-enumerable properties
