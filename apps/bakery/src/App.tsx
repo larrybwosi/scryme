@@ -17,6 +17,7 @@ import DeliveriesPage from './pages/DeliveriesPage'
 import LoginPage from './pages/LoginPage'
 import SetupPage from './pages/SetupPage'
 import { BakeryAuthGuard } from '@/components/bakery/BakeryAuthGuard'
+import { useSessionActivityListener } from '@/hooks/use-session-activity'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,30 +28,38 @@ const queryClient = new QueryClient({
   },
 })
 
+function AppContent() {
+  useSessionActivityListener();
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/setup" element={<SetupPage />} />
+        <Route element={<BakeryAuthGuard><DashboardLayout /></BakeryAuthGuard>}>
+          <Route path="/" element={<OverviewPage />} />
+          <Route path="/recipes" element={<RecipesPage />} />
+          <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/batches" element={<BatchesPage />} />
+          <Route path="/ingredients" element={<IngredientsPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/bakers" element={<BakersPage />} />
+          <Route path="/deliveries" element={<DeliveriesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <OrganizationProvider>
         <AuthProvider>
           <DeleteConfirmationProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/setup" element={<SetupPage />} />
-                <Route element={<BakeryAuthGuard><DashboardLayout /></BakeryAuthGuard>}>
-                  <Route path="/" element={<OverviewPage />} />
-                  <Route path="/recipes" element={<RecipesPage />} />
-                  <Route path="/templates" element={<TemplatesPage />} />
-                  <Route path="/batches" element={<BatchesPage />} />
-                  <Route path="/ingredients" element={<IngredientsPage />} />
-                  <Route path="/categories" element={<CategoriesPage />} />
-                  <Route path="/bakers" element={<BakersPage />} />
-                  <Route path="/deliveries" element={<DeliveriesPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </BrowserRouter>
+            <AppContent />
           </DeleteConfirmationProvider>
         </AuthProvider>
       </OrganizationProvider>

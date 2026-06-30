@@ -46,7 +46,8 @@ pub struct AuthSession {
 pub struct BakeryAuthState {
     pub device_config: Mutex<Option<DeviceConfig>>,
     pub base_url_override: Mutex<Option<String>>,
-    pub session: Mutex<Option<AuthSession>>,
+    pub sessions: Mutex<std::collections::HashMap<String, AuthSession>>, // member_id -> AuthSession
+    pub active_member_id: Mutex<Option<String>>,
     pub client: reqwest::Client,
 }
 
@@ -66,7 +67,8 @@ impl BakeryAuthState {
         Self {
             device_config: Mutex::new(initial_config),
             base_url_override: Mutex::new(None),
-            session: Mutex::new(None),
+            sessions: Mutex::new(std::collections::HashMap::new()),
+            active_member_id: Mutex::new(None),
             client,
         }
     }
@@ -148,8 +150,13 @@ impl BakeryAuthState {
         };
 
         let token = {
-            let session_guard = self.session.lock().map_err(|_| BackendError::Internal("Failed to lock session".to_string()))?;
-            session_guard.as_ref().map(|s| s.token.clone())
+            let active_id_guard = self.active_member_id.lock().map_err(|_| BackendError::Internal("Failed to lock active id".to_string()))?;
+            if let Some(id) = active_id_guard.as_ref() {
+                let sessions_guard = self.sessions.lock().map_err(|_| BackendError::Internal("Failed to lock sessions".to_string()))?;
+                sessions_guard.get(id).map(|s| s.token.clone())
+            } else {
+                None
+            }
         };
 
         let full_url = if path.starts_with("http") {
@@ -232,15 +239,46 @@ pub async fn sync_member_token_command(
     token: String,
     member_id: String,
 ) -> BackendResult<()> {
-    let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-    *session_guard = Some(AuthSession {
+    let mut active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    let mut sessions_guard = state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+
+    sessions_guard.insert(member_id.clone(), AuthSession {
         token,
         user: MemberProfile {
-            id: member_id,
+            id: member_id.clone(),
             name: String::new(),
             role: None,
         },
     });
+
+    *active_id_guard = Some(member_id);
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn restore_member_session(
+    state: State<'_, BakeryAuthState>,
+    member: MemberProfile,
+) -> BackendResult<()> {
+    let mut active_id = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    *active_id = Some(member.id);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn switch_active_member(
+    state: State<'_, BakeryAuthState>,
+    member_id: String,
+) -> BackendResult<()> {
+    let mut active_id = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    let sessions = state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+
+    if !sessions.contains_key(&member_id) {
+        return Err(BackendError::Auth("Member not checked in".to_string()));
+    }
+
+    *active_id = Some(member_id);
     Ok(())
 }
 
@@ -404,11 +442,15 @@ pub async fn login_cloud_command(
     if let Some(token) = data["token"].as_str() {
         let member: MemberProfile = serde_json::from_value(data["member"].clone()).map_err(BackendError::Serialization)?;
 
-        let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-        *session_guard = Some(AuthSession {
+        let mut active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+        let mut sessions_guard = state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+
+        sessions_guard.insert(member.id.clone(), AuthSession {
             token: token.to_string(),
-            user: member,
+            user: member.clone(),
         });
+
+        *active_id_guard = Some(member.id);
 
         // Remove token from response sent to frontend
         if let Some(obj) = data.as_object_mut() {
@@ -423,12 +465,24 @@ pub async fn login_cloud_command(
 pub async fn logout_cloud_command(
     state: State<'_, BakeryAuthState>,
 ) -> BackendResult<()> {
-    // Best effort notify server
-    let request = state.build_request(reqwest::Method::POST, "/bakery/auth/logout")?;
-    let _ = request.send().await;
+    let active_id = {
+        let active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+        active_id_guard.clone()
+    };
 
-    let mut session_guard = state.session.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-    *session_guard = None;
+    // Best effort notify server
+    if let Ok(request) = state.build_request(reqwest::Method::POST, "/bakery/auth/logout") {
+        let _ = request.send().await;
+    }
+
+    if let Some(id) = active_id {
+        let mut active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+        let mut sessions_guard = state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+
+        sessions_guard.remove(&id);
+        *active_id_guard = sessions_guard.keys().next().cloned();
+    }
+
     Ok(())
 }
 
@@ -546,7 +600,8 @@ pub async fn reset_device_config(state: State<'_, BakeryAuthState>) -> BackendRe
     }
 
     *state.device_config.lock().unwrap() = None;
-    *state.session.lock().unwrap() = None;
+    state.sessions.lock().unwrap().clear();
+    *state.active_member_id.lock().unwrap() = None;
 
     Ok(())
 }
