@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 token: memberToken,
                 memberId: parsed.memberId || parsed.id,
               }).catch(console.error);
+              tauriInvoke('restore_member_session', { member: parsed }).catch(console.error);
             }
           }
 

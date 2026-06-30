@@ -91,6 +91,13 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             }
         }
 
+        // Periodic categories sync
+        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+            if let Err(e) = sync_categories(&client, &api_base_url, &pool, &api_key).await {
+                log::warn!("Categories sync failed: {}", e);
+            }
+        }
+
         // Two-way sync for Recipes and Batches
         if let Ok(Some(api_key)) = get_api_key(&pool).await {
             if let Err(e) = sync_recipes_and_batches(&client, &api_base_url, &pool, &api_key).await {
@@ -222,6 +229,40 @@ async fn sync_units(
     Ok(())
 }
 
+async fn sync_categories(
+    client: &reqwest::Client,
+    api_base_url: &str,
+    pool: &SqlitePool,
+    api_key: &str,
+) -> BackendResult<()> {
+    let url = format!("{}/bakery/categories", api_base_url);
+    let res = client.get(&url).header("X-API-KEY", api_key).send().await?;
+
+    if res.status().is_success() {
+        let categories: Vec<crate::models::BakeryCategory> = res.json().await?;
+        for category in categories {
+            sqlx::query(
+                "INSERT INTO bakery_categories (id, name, description, organization_id, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    description = excluded.description,
+                    updated_at = excluded.updated_at"
+            )
+            .bind(&category.id)
+            .bind(&category.name)
+            .bind(&category.description)
+            .bind(&category.organization_id)
+            .bind(category.created_at)
+            .bind(category.updated_at)
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
 async fn sync_recipes_and_batches(
     client: &reqwest::Client,
     api_base_url: &str,
@@ -328,11 +369,17 @@ async fn get_api_key(pool: &SqlitePool) -> BackendResult<Option<String>> {
     }
 
     // 2. Try to get from keyring (provisioned devices)
-    let entry = Entry::new("scryme-bakery", "device-api-key")
+    let entry = Entry::new("scryme-bakery", "device-config")
         .map_err(|e| BackendError::Internal(format!("Keyring error: {}", e)))?;
 
     match entry.get_password() {
-        Ok(pw) => Ok(Some(pw)),
+        Ok(pw) => {
+             if let Ok(config) = serde_json::from_str::<crate::commands::DeviceConfig>(&pw) {
+                Ok(Some(config.device_key))
+            } else {
+                Ok(None)
+            }
+        },
         Err(keyring::Error::NoEntry) => Ok(None),
         Err(e) => Err(BackendError::Internal(format!(
             "Failed to retrieve API Key from keyring: {}",
