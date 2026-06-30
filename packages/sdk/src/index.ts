@@ -18,13 +18,25 @@ export const getSDK = (config: SDKConfig) => {
       if (
         response.data &&
         response.data.success === true &&
-        response.data.data !== undefined &&
-        (response.data.timestamp || response.data.meta)
+        response.data.data !== undefined
       ) {
-        return {
-          ...response,
-          data: response.data.data,
-        };
+        const metadata = response.data.meta || response.data.metadata;
+        if (metadata) {
+          return {
+            ...response,
+            data: {
+              data: response.data.data,
+              metadata,
+            },
+          };
+        }
+
+        if (response.data.timestamp) {
+          return {
+            ...response,
+            data: response.data.data,
+          };
+        }
       }
       return response;
     },
@@ -42,11 +54,18 @@ export const getSDK = (config: SDKConfig) => {
       setBaseURL: (url: string) => {
         client.defaults.baseURL = url;
       },
-      get: <T = any>(url: string, config?: any) => client.get<T>(url, config).then((r: AxiosResponse<T>) => r.data),
-      post: <T = any>(url: string, data?: any, config?: any) => client.post<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
-      put: <T = any>(url: string, data?: any, config?: any) => client.put<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
-      patch: <T = any>(url: string, data?: any, config?: any) => client.patch<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
-      delete: <T = any>(url: string, config?: any) => client.delete<T>(url, config).then((r: AxiosResponse<T>) => r.data),
+      get: <T = any>(url: string, config?: any) =>
+        client.get<T>(url, config).then((r: AxiosResponse<T>) => r.data),
+      post: <T = any>(url: string, data?: any, config?: any) =>
+        client.post<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
+      put: <T = any>(url: string, data?: any, config?: any) =>
+        client.put<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
+      patch: <T = any>(url: string, data?: any, config?: any) =>
+        client
+          .patch<T>(url, data, config)
+          .then((r: AxiosResponse<T>) => r.data),
+      delete: <T = any>(url: string, config?: any) =>
+        client.delete<T>(url, config).then((r: AxiosResponse<T>) => r.data),
     },
     setApiKey: (key: string) => {
       client.defaults.headers.common["x-api-key"] = key;
@@ -57,30 +76,43 @@ export const getSDK = (config: SDKConfig) => {
     auth: {
       getAuthStatus: () => sdk.client.get("/auth/status"),
       logout: () => sdk.client.post("/auth/logout"),
-      terminalLogin: (cardId: string, pin: string, locationId?: string) => sdk.client.post("/members/login", { cardId, pin, locationId }),
+      terminalLogin: (cardId: string, pin: string, locationId?: string) =>
+        sdk.client.post("/members/login", { cardId, pin, locationId }),
     },
     catalog: {
-      getProducts: (params?: any) => sdk.client.get("/catalog/products", { params }),
+      getProducts: (params?: any) =>
+        sdk.client.get("/catalog/products", { params }),
       createProduct: (data: any) => sdk.client.post("/catalog/products", data),
       getProduct: (id: string) => sdk.client.get(`/catalog/products/${id}`),
-      updateProduct: (id: string, data: any) => sdk.client.patch(`/catalog/products/${id}`, data),
-      deleteProduct: (id: string) => sdk.client.delete(`/catalog/products/${id}`),
-      getVariants: (params?: any) => sdk.client.get("/catalog/variants", { params }),
-      getCategories: (params?: any) => sdk.client.get("/catalog/categories", { params }),
-      createCategory: (data: any) => sdk.client.post("/catalog/categories", data),
+      updateProduct: (id: string, data: any) =>
+        sdk.client.patch(`/catalog/products/${id}`, data),
+      deleteProduct: (id: string) =>
+        sdk.client.delete(`/catalog/products/${id}`),
+      getVariants: (params?: any) =>
+        sdk.client.get("/catalog/variants", { params }),
+      getCategories: (params?: any) =>
+        sdk.client.get("/catalog/categories", { params }),
+      createCategory: (data: any) =>
+        sdk.client.post("/catalog/categories", data),
       getCategory: (id: string) => sdk.client.get(`/catalog/categories/${id}`),
-      updateCategory: (id: string, data: any) => sdk.client.patch(`/catalog/categories/${id}`, data),
-      deleteCategory: (id: string) => sdk.client.delete(`/catalog/categories/${id}`),
+      updateCategory: (id: string, data: any) =>
+        sdk.client.patch(`/catalog/categories/${id}`, data),
+      deleteCategory: (id: string) =>
+        sdk.client.delete(`/catalog/categories/${id}`),
     },
     inventory: {
       getInventory: (params?: any) => sdk.client.get("/inventory", { params }),
       list: (params?: any) => sdk.client.get("/inventory", { params }),
     },
     pos: {
-      getLocations: (params?: any) => sdk.client.get("/pos/locations", { params }),
-      listLocations: (params?: any) => sdk.client.get("/pos/locations", { params }),
-      registerPettyCash: (orgSlug: string, data: any) => sdk.client.post(`/${orgSlug}/pos/petty-cash`, data),
-      getPettyCashFunds: (orgSlug: string) => sdk.client.get(`/${orgSlug}/pos/petty-cash/funds`),
+      getLocations: (params?: any) =>
+        sdk.client.get("/pos/locations", { params }),
+      listLocations: (params?: any) =>
+        sdk.client.get("/pos/locations", { params }),
+      registerPettyCash: (orgSlug: string, data: any) =>
+        sdk.client.post(`/${orgSlug}/pos/petty-cash`, data),
+      getPettyCashFunds: (orgSlug: string) =>
+        sdk.client.get(`/${orgSlug}/pos/petty-cash/funds`),
     },
     bakery: {
       getAuthStatus: () => sdk.client.get("/bakery/auth/status"),
@@ -92,56 +124,108 @@ export const getSDK = (config: SDKConfig) => {
       getIngredientRecords: () => sdk.client.get("/bakery/ingredients/records"),
       getRecipes: () => sdk.client.get("/bakery/recipes"),
       getRecipe: (id: string) => sdk.client.get(`/bakery/recipes/${id}`),
-      createRecipe: (data: CreateRecipeInput) => sdk.client.post("/bakery/recipes", data),
-      updateRecipe: (id: string, data: Partial<CreateRecipeInput>) => sdk.client.patch(`/bakery/recipes/${id}`, data),
+      createRecipe: (data: CreateRecipeInput) =>
+        sdk.client.post("/bakery/recipes", data),
+      updateRecipe: (id: string, data: Partial<CreateRecipeInput>) =>
+        sdk.client.patch(`/bakery/recipes/${id}`, data),
       deleteRecipe: (id: string) => sdk.client.delete(`/bakery/recipes/${id}`),
-      duplicateRecipe: (id: string) => sdk.client.post(`/bakery/recipes/${id}/duplicate`),
-      generateRecipeAi: (prompt: string) => sdk.client.post("/bakery/recipes/generate", { prompt }),
-      getBatches: (params?: { status?: BatchStatus; recipeId?: string }) => sdk.client.get("/bakery/batches", { params }),
+      duplicateRecipe: (id: string) =>
+        sdk.client.post(`/bakery/recipes/${id}/duplicate`),
+      generateRecipeAi: (prompt: string) =>
+        sdk.client.post("/bakery/recipes/generate", { prompt }),
+      getBatches: (params?: { status?: BatchStatus; recipeId?: string }) =>
+        sdk.client.get("/bakery/batches", { params }),
       getBatch: (id: string) => sdk.client.get(`/bakery/batches/${id}`),
-      getBatchTraceability: (id: string) => sdk.client.get(`/bakery/batches/${id}/traceability`),
-      createBatch: (data: CreateBatchInput) => sdk.client.post("/bakery/batches", data),
-      updateBatch: (id: string, data: Partial<CreateBatchInput> & { status?: BatchStatus }) => sdk.client.patch(`/bakery/batches/${id}`, data),
+      getBatchTraceability: (id: string) =>
+        sdk.client.get(`/bakery/batches/${id}/traceability`),
+      createBatch: (data: CreateBatchInput) =>
+        sdk.client.post("/bakery/batches", data),
+      updateBatch: (
+        id: string,
+        data: Partial<CreateBatchInput> & { status?: BatchStatus },
+      ) => sdk.client.patch(`/bakery/batches/${id}`, data),
       deleteBatch: (id: string) => sdk.client.delete(`/bakery/batches/${id}`),
-      startBatch: (id: string) => sdk.client.post(`/bakery/batches/${id}/start`),
-      completeBatch: (id: string, data: CompleteBatchInput) => sdk.client.post(`/bakery/batches/${id}/complete`, data),
-      cancelBatch: (id: string) => sdk.client.post(`/bakery/batches/${id}/cancel`),
-      duplicateBatch: (id: string) => sdk.client.post(`/bakery/batches/${id}/duplicate`),
+      startBatch: (id: string) =>
+        sdk.client.post(`/bakery/batches/${id}/start`),
+      completeBatch: (id: string, data: CompleteBatchInput) =>
+        sdk.client.post(`/bakery/batches/${id}/complete`, data),
+      cancelBatch: (id: string) =>
+        sdk.client.post(`/bakery/batches/${id}/cancel`),
+      duplicateBatch: (id: string) =>
+        sdk.client.post(`/bakery/batches/${id}/duplicate`),
       getTemplates: () => sdk.client.get("/bakery/templates"),
-      createTemplate: (data: CreateTemplateInput) => sdk.client.post("/bakery/templates", data),
-      updateTemplate: (id: string, data: Partial<CreateTemplateInput>) => sdk.client.patch(`/bakery/templates/${id}`, data),
-      deleteTemplate: (id: string) => sdk.client.delete(`/bakery/templates/${id}`),
-      duplicateTemplate: (id: string) => sdk.client.post(`/bakery/templates/${id}/duplicate`),
-      createBatchFromTemplate: (id: string) => sdk.client.post(`/bakery/templates/${id}/create-batch`),
+      createTemplate: (data: CreateTemplateInput) =>
+        sdk.client.post("/bakery/templates", data),
+      updateTemplate: (id: string, data: Partial<CreateTemplateInput>) =>
+        sdk.client.patch(`/bakery/templates/${id}`, data),
+      deleteTemplate: (id: string) =>
+        sdk.client.delete(`/bakery/templates/${id}`),
+      duplicateTemplate: (id: string) =>
+        sdk.client.post(`/bakery/templates/${id}/duplicate`),
+      createBatchFromTemplate: (id: string) =>
+        sdk.client.post(`/bakery/templates/${id}/create-batch`),
       getCategories: () => sdk.client.get("/bakery/categories"),
       getCategory: (id: string) => sdk.client.get(`/bakery/categories/${id}`),
-      createCategory: (data: { name: string; description?: string | null }) => sdk.client.post("/bakery/categories", data),
-      updateCategory: (id: string, data: { name?: string; description?: string | null }) => sdk.client.put(`/bakery/categories/${id}`, data),
-      deleteCategory: (id: string) => sdk.client.delete(`/bakery/categories/${id}`),
+      createCategory: (data: { name: string; description?: string | null }) =>
+        sdk.client.post("/bakery/categories", data),
+      updateCategory: (
+        id: string,
+        data: { name?: string; description?: string | null },
+      ) => sdk.client.put(`/bakery/categories/${id}`, data),
+      deleteCategory: (id: string) =>
+        sdk.client.delete(`/bakery/categories/${id}`),
       getSettings: () => sdk.client.get("/bakery/settings"),
-      updateSettings: (data: BakerySettingsUpdate) => sdk.client.put("/bakery/settings", data),
+      updateSettings: (data: BakerySettingsUpdate) =>
+        sdk.client.put("/bakery/settings", data),
       getBakers: () => sdk.client.get("/bakery/bakers"),
-      addBaker: (data: AddBakerInput) => sdk.client.post("/bakery/bakers", data),
-      updateBaker: (id: string, data: Partial<AddBakerInput>) => sdk.client.patch(`/bakery/bakers/${id}`, data),
+      addBaker: (data: AddBakerInput) =>
+        sdk.client.post("/bakery/bakers", data),
+      updateBaker: (id: string, data: Partial<AddBakerInput>) =>
+        sdk.client.patch(`/bakery/bakers/${id}`, data),
       removeBaker: (id: string) => sdk.client.delete(`/bakery/bakers/${id}`),
       getPartners: () => sdk.client.get("/bakery/partners"),
-      createPartner: (data: CreateDeliveryPartnerInput) => sdk.client.post("/bakery/partners", data),
+      createPartner: (data: CreateDeliveryPartnerInput) =>
+        sdk.client.post("/bakery/partners", data),
       getPartner: (id: string) => sdk.client.get(`/bakery/partners/${id}`),
-      updatePartner: (id: string, data: Partial<CreateDeliveryPartnerInput>) => sdk.client.patch(`/bakery/partners/${id}`, data),
-      adjustPartnerWallet: (id: string, data: { amount: number; type?: WalletTransactionType; notes?: string | null }) => sdk.client.post(`/bakery/partners/${id}/wallet/adjust`, data),
-      dispatchDelivery: (data: { transactionId: string; partnerId: string; driverId?: string | null; notes?: string | null }) => sdk.client.post("/bakery/deliveries/dispatch", data),
-      reconcileDelivery: (data: { fulfillmentId: string; status: DeliveryStatus; notes?: string | null }) => sdk.client.post("/bakery/deliveries/reconcile", data),
+      updatePartner: (id: string, data: Partial<CreateDeliveryPartnerInput>) =>
+        sdk.client.patch(`/bakery/partners/${id}`, data),
+      adjustPartnerWallet: (
+        id: string,
+        data: {
+          amount: number;
+          type?: WalletTransactionType;
+          notes?: string | null;
+        },
+      ) => sdk.client.post(`/bakery/partners/${id}/wallet/adjust`, data),
+      dispatchDelivery: (data: {
+        transactionId: string;
+        partnerId: string;
+        driverId?: string | null;
+        notes?: string | null;
+      }) => sdk.client.post("/bakery/deliveries/dispatch", data),
+      reconcileDelivery: (data: {
+        fulfillmentId: string;
+        status: DeliveryStatus;
+        notes?: string | null;
+      }) => sdk.client.post("/bakery/deliveries/reconcile", data),
       getActiveDeliveries: () => sdk.client.get("/bakery/deliveries/active"),
-      receiveIngredients: (data: ReceiveIngredientsInput) => sdk.client.post("/bakery/ingredients/receive", data),
-      createIngredient: (data: any) => sdk.client.post("/bakery/ingredients", data),
-      updateIngredient: (id: string, data: any) => sdk.client.patch(`/bakery/ingredients/${id}`, data),
-      deleteIngredient: (id: string) => sdk.client.delete(`/bakery/ingredients/${id}`),
+      receiveIngredients: (data: ReceiveIngredientsInput) =>
+        sdk.client.post("/bakery/ingredients/receive", data),
+      createIngredient: (data: any) =>
+        sdk.client.post("/bakery/ingredients", data),
+      updateIngredient: (id: string, data: any) =>
+        sdk.client.patch(`/bakery/ingredients/${id}`, data),
+      deleteIngredient: (id: string) =>
+        sdk.client.delete(`/bakery/ingredients/${id}`),
     },
     workflows: {
       getAvailable: () => sdk.client.get("/workflows/available"),
-      provision: (data: { path: string; settings: any }) => sdk.client.post("/workflows/provision", data),
-      trigger: (data: { path: string; inputs: any }) => sdk.client.post("/workflows/trigger", data),
-      getHistory: (params?: { path?: string }) => sdk.client.get("/workflows/history", { params }),
+      provision: (data: { path: string; settings: any }) =>
+        sdk.client.post("/workflows/provision", data),
+      trigger: (data: { path: string; inputs: any }) =>
+        sdk.client.post("/workflows/trigger", data),
+      getHistory: (params?: { path?: string }) =>
+        sdk.client.get("/workflows/history", { params }),
     },
   };
 

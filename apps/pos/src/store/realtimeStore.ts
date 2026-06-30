@@ -1,9 +1,8 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { z } from 'zod';
 import { invoke } from '@tauri-apps/api/core';
-import { isAxiosError } from 'axios';
-import { AuthOptions, ErrorInfo, Realtime } from 'ably';
-import { io, Socket } from 'socket.io-client';
+import type { AuthOptions, Realtime } from 'ably';
+import type { Socket } from 'socket.io-client';
 import { useAuthStore } from './pos-auth-store';
 
 const RealtimeConfigSchema = z.object({
@@ -74,50 +73,55 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
     if (provider === 'socketio') {
       const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002';
 
-      const socket = io(socketUrl, {
-        transports: ['websocket'],
-        autoConnect: false,
-      });
+      const initSocket = async () => {
+        const { io } = await import('socket.io-client');
+        const socket = io(socketUrl, {
+          transports: ['websocket'],
+          autoConnect: false,
+        });
 
-      socket.on('connect', () => {
-        set({ connectionState: 'connected', status: 'success' });
-        invoke('update_network_status_command', { isOnline: true }).catch(console.error);
+        socket.on('connect', () => {
+          set({ connectionState: 'connected', status: 'success' });
+          invoke('update_network_status_command', { isOnline: true }).catch(console.error);
 
-        const authStore = useAuthStore.getState();
-        const locationId = authStore.currentLocation?.id;
-        const member = authStore.currentMember;
-        if (locationId && member) {
-            socket.emit('presence:enter', {
-                channel: `presence:${locationId}`,
-                metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() }
-            });
-        }
-      });
-
-      socket.on('disconnect', () => {
-        set({ connectionState: 'disconnected' });
-        invoke('update_network_status_command', { isOnline: false }).catch(console.error);
-      });
-
-      socket.on('connect_error', (error) => {
-        set({ connectionState: 'failed', status: 'error', error: error.message });
-      });
-
-      const fetchToken = async () => {
-          try {
-              const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
-              const parsed = RealtimeConfigSchema.parse(response);
-              set({ paymentChannel: parsed.data.metadata.paymentChannel });
-
-              socket.auth = { token: parsed.data.tokenRequest.token };
-              socket.connect();
-          } catch (error) {
-              set({ status: 'error', error: 'Failed to fetch auth token' });
+          const authStore = useAuthStore.getState();
+          const locationId = authStore.currentLocation?.id;
+          const member = authStore.currentMember;
+          if (locationId && member) {
+              socket.emit('presence:enter', {
+                  channel: `presence:${locationId}`,
+                  metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() }
+              });
           }
+        });
+
+        socket.on('disconnect', () => {
+          set({ connectionState: 'disconnected' });
+          invoke('update_network_status_command', { isOnline: false }).catch(console.error);
+        });
+
+        socket.on('connect_error', (error) => {
+          set({ connectionState: 'failed', status: 'error', error: error.message });
+        });
+
+        const fetchToken = async () => {
+            try {
+                const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
+                const parsed = RealtimeConfigSchema.parse(response);
+                set({ paymentChannel: parsed.data.metadata.paymentChannel });
+
+                socket.auth = { token: parsed.data.tokenRequest.token };
+                socket.connect();
+            } catch (error) {
+                set({ status: 'error', error: 'Failed to fetch auth token' });
+            }
+        };
+
+        fetchToken();
+        set({ socketClient: socket });
       };
 
-      fetchToken();
-      set({ socketClient: socket });
+      initSocket();
 
     } else {
       let authAttempt = 0;
@@ -141,11 +145,12 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           } catch (error) {
             authAttempt += 1;
             set({ authRetryCount: authAttempt });
-            const errorMessage = isAxiosError(error) ? error.response?.data?.message || error.message : error instanceof Error ? error.message : 'Failed to fetch Ably auth token';
+            const errorMessage = typeof error === 'string' ? error : error instanceof Error ? error.message : 'Failed to fetch Ably auth token';
 
             if (authAttempt >= BACKOFF_MAX_RETRIES) {
               set({ status: 'error', error: errorMessage });
-              callback(new ErrorInfo(errorMessage, 40_001, 401), null);
+              // Create a compatible error object without importing ErrorInfo as a value
+              callback({ message: errorMessage, code: 40001, statusCode: 401 } as any, null);
               return;
             }
             await sleep(jitteredBackoff(authAttempt));
@@ -153,32 +158,37 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         }
       };
 
-      const client = new Realtime({
-        authCallback,
-        autoConnect: true,
-      });
+      const initAbly = async () => {
+        const { Realtime } = await import('ably');
+        const client = new Realtime({
+          authCallback,
+          autoConnect: true,
+        });
 
-      client.connection.on(stateChange => {
-        const state = stateChange.current as RealtimeConnectionState;
-        set({ connectionState: state });
+        client.connection.on(stateChange => {
+          const state = stateChange.current as RealtimeConnectionState;
+          set({ connectionState: state });
 
-        if (state === 'connected') {
-          invoke('update_network_status_command', { isOnline: true }).catch(console.error);
-          const authStore = useAuthStore.getState();
-          const locationId = authStore.currentLocation?.id;
-          const member = authStore.currentMember;
+          if (state === 'connected') {
+            invoke('update_network_status_command', { isOnline: true }).catch(console.error);
+            const authStore = useAuthStore.getState();
+            const locationId = authStore.currentLocation?.id;
+            const member = authStore.currentMember;
 
-          if (locationId && member) {
-            const presenceChannel = client.channels.get(`presence:${locationId}`);
-            presenceChannel.presence.enter({ id: member.id, name: member.name, lastSeen: new Date().toISOString() });
+            if (locationId && member) {
+              const presenceChannel = client.channels.get(`presence:${locationId}`);
+              presenceChannel.presence.enter({ id: member.id, name: member.name, lastSeen: new Date().toISOString() });
+            }
+          } else if (['disconnected', 'suspended', 'failed', 'closed'].includes(state)) {
+            invoke('update_network_status_command', { isOnline: false }).catch(console.error);
           }
-        } else if (['disconnected', 'suspended', 'failed', 'closed'].includes(state)) {
-          invoke('update_network_status_command', { isOnline: false }).catch(console.error);
-        }
-        window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state, reason: stateChange.reason } }));
-      });
+          window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state, reason: stateChange.reason } }));
+        });
 
-      set({ ablyClient: client });
+        set({ ablyClient: client });
+      };
+
+      initAbly();
     }
   },
 

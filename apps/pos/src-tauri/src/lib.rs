@@ -402,6 +402,8 @@ pub fn run() {
             customer_manager::search_customers_command,
             customer_manager::get_customers_by_ids_command,
             customer_manager::create_customer_command,
+            customer_manager::update_customer_command,
+            customer_manager::delete_local_customer_command,
             sale_manager::process_sale_command,
             #[cfg(not(feature = "standalone"))]
             sale_manager::sync_sales_command,
@@ -410,6 +412,7 @@ pub fn run() {
             pricing_manager::sync_pricing_command,
             pricing_manager::resolve_price_batch_command,
             pricing_manager::get_pos_pricing_command,
+            pricing_manager::delete_local_price_list_command,
             printer_manager::print_network_receipt,
             printer_manager::print_system_receipt,
             printer_manager::print_usb,

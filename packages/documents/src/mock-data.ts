@@ -79,7 +79,7 @@ export function getMockInvoiceTransaction(orgDetails?: any) {
 
 export function getMockInvoiceData(orgDetails?: any) {
   const transaction = getMockInvoiceTransaction(orgDetails);
-  return Mappers.toInvoiceData(transaction);
+  return Mappers.toInvoiceData(transaction as any);
 }
 
 export function getMockReceiptData(orgDetails?: any) {

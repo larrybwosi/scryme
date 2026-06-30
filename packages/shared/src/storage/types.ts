@@ -34,4 +34,5 @@ export interface StorageProvider {
     parts: { ETag: string; PartNumber: number }[],
     organizationId?: string,
   ): Promise<StorageUploadResult>;
+  getDownloadStream?(url: string): Promise<any>;
 }

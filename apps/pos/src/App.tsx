@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import SetupPage from '@/pages/set-up';
 import CheckinPage from '@/pages/checkin';
 import { useAuth, useSessionActivityListener } from '@/hooks/use-auth';
@@ -8,34 +8,51 @@ import { usePosStore } from '@/store/store';
 import { initializeNetworkRole } from '@/lib/kds';
 import posthog from 'posthog-js';
 import AppLayout from '@/components/app.layout';
-import { HistoryPage } from '@/pages/history-page';
-import AnalyticsPage from '@/pages/analytics-page';
-import CustomersPage from '@/pages/customers-page';
-import ManageTablesPage from '@/pages/manage-tables-page';
-import CashDrawerPage from '@/pages/cash-drawer-page';
-import PettyCashPage from '@/pages/petty-cash-page';
-import TillManagementPage from '@/pages/till-management-page';
-import ReceiptSettingsPage from '@/pages/receipt-settings-page';
-import PendingTransactionsPage from '@/pages/pending-transactions';
-import CreateOrderPage from '@/pages/create-order';
-import { POS } from '@/pages/pos';
-import { SupermarketPOS } from '@/pages/supermarket-pos';
-import SettingsPage from '@/pages/settings-page';
-import CustomerDisplay from '@/pages/customer-display';
-import PricingViewPage from '@/pages/pricing-view-page';
-import NotFound from '@/pages/not-found';
-import ShiftManager from './components/shift-manager';
-import StockDeliveryPage from './pages/stock-acceptance';
-import StockTransferCreate from './pages/stock-transfers';
-import StockRequestCreate from './pages/stock-requests';
-import KDSPage from './pages/kitchen-display';
-import HubOverviewPage from './pages/hub-overview';
-import ProductManagementPage from './pages/product-management';
-import StandaloneSetup from './pages/standalone-setup';
-import BarcodePrintingPage from './pages/barcode-printing-page';
-import LogsPage from './pages/logs-page';
 import { AutoShiftModal } from './components/shift/auto-shift-modal';
 import { IdleTimer } from './components/auth/idle-timer';
+
+// Lazy load pages to reduce initial bundle size and allow variant-based code splitting
+const HistoryPage = lazy(() => import('@/pages/history-page').then(m => ({ default: m.HistoryPage })));
+const AnalyticsPage = lazy(() => import('@/pages/analytics-page'));
+const CustomersPage = lazy(() => import('@/pages/customers-page'));
+const ManageTablesPage = import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || !import.meta.env.VITE_BUSINESS_MODE
+  ? lazy(() => import('@/pages/manage-tables-page'))
+  : () => null;
+const CashDrawerPage = lazy(() => import('@/pages/cash-drawer-page'));
+const PettyCashPage = lazy(() => import('@/pages/petty-cash-page'));
+const TillManagementPage = lazy(() => import('@/pages/till-management-page'));
+const ReceiptSettingsPage = lazy(() => import('@/pages/receipt-settings-page'));
+const PendingTransactionsPage = lazy(() => import('@/pages/pending-transactions'));
+const CreateOrderPage = lazy(() => import('@/pages/create-order'));
+const POS = lazy(() => import('@/pages/pos').then(m => ({ default: m.POS })));
+const SupermarketPOS = import.meta.env.VITE_BUSINESS_MODE === 'supermarket' || !import.meta.env.VITE_BUSINESS_MODE
+  ? lazy(() => import('@/pages/supermarket-pos').then(m => ({ default: m.SupermarketPOS })))
+  : () => null;
+const SettingsPage = lazy(() => import('@/pages/settings-page'));
+const CustomerDisplay = lazy(() => import('@/pages/customer-display'));
+const PricingViewPage = lazy(() => import('@/pages/pricing-view-page'));
+const NotFound = lazy(() => import('@/pages/not-found'));
+const ShiftManager = lazy(() => import('./components/shift-manager'));
+const StockDeliveryPage = lazy(() => import('./pages/stock-acceptance'));
+const StockTransferCreate = lazy(() => import('./pages/stock-transfers'));
+const StockRequestCreate = lazy(() => import('./pages/stock-requests'));
+const KDSPage = import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || !import.meta.env.VITE_BUSINESS_MODE
+  ? lazy(() => import('./pages/kitchen-display'))
+  : () => null;
+const HubOverviewPage = import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || !import.meta.env.VITE_BUSINESS_MODE
+  ? lazy(() => import('./pages/hub-overview'))
+  : () => null;
+const ProductManagementPage = lazy(() => import('./pages/product-management'));
+const StandaloneSetup = lazy(() => import('./pages/standalone-setup'));
+const BarcodePrintingPage = lazy(() => import('./pages/barcode-printing-page'));
+const LogsPage = lazy(() => import('./pages/logs-page'));
+
+// Loading component for Suspense
+const PageLoader = () => (
+  <div className="h-full w-full flex items-center justify-center bg-zinc-950/50">
+    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+  </div>
+);
 
 // Layout wrapper component that uses AppLayout
 const LayoutWrapper = () => {
@@ -84,30 +101,32 @@ const AppRoutes = () => {
   if (businessMode === 'supermarket') {
     console.log('Rendering SupermarketPOS', { isAuthenticated, currentMember });
     return (
-      <>
+      <Suspense fallback={<PageLoader />}>
         <IdleTimer />
         <AutoShiftModal />
         <Routes>
           <Route index path="/" element={<SupermarketPOS />} />
           <Route path="*" element={<SupermarketPOS />} />
         </Routes>
-      </>
+      </Suspense>
     );
   }
 
   // If KDS device, boot directly to KDS page
   if (deviceType === 'KDS') {
     return (
-      <Routes>
-        <Route index path="/" element={<KDSPage />} />
-        <Route path="/setup" element={<SetupPage />} />
-        <Route path="*" element={<KDSPage />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route index path="/" element={<KDSPage />} />
+          <Route path="/setup" element={<SetupPage />} />
+          <Route path="*" element={<KDSPage />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   return (
-    <>
+    <Suspense fallback={<PageLoader />}>
     <IdleTimer />
     <AutoShiftModal />
     <Routes>
@@ -138,8 +157,8 @@ const AppRoutes = () => {
           </>
         )}
 
-        {/* Restaurant/Hub and Spoke routes */}
-        {businessMode === 'restaurant' && (
+        {/* Restaurant/Hub and Spoke routes - Build-time conditional inclusion */}
+        {(import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || !import.meta.env.VITE_BUSINESS_MODE) && businessMode === 'restaurant' && (
           <>
             <Route path="/kds" element={<KDSPage />} />
             <Route path="/hub-overview" element={<HubOverviewPage />} />
@@ -160,7 +179,7 @@ const AppRoutes = () => {
       <Route path="/customer" element={<CustomerDisplay />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
-    </>
+    </Suspense>
   );
 };
 
@@ -183,9 +202,15 @@ const DynamicRenderer = () => {
     return () => window.removeEventListener('member-switched', handleMemberSwitched);
   }, [swapUserCart]);
 
+  const storeBusinessType = usePosStore(state => state.settings.businessType);
+  const businessMode = import.meta.env.VITE_BUSINESS_MODE || storeBusinessType || 'retail';
+  const isRestaurant = businessMode === 'restaurant';
+
   useEffect(() => {
-    initializeNetworkRole();
-    fetchTables();
+    if (isRestaurant) {
+      initializeNetworkRole();
+      fetchTables();
+    }
     posthog.capture('app_started');
     // Hide and remove the splashscreen from index.html
     const splash = document.getElementById('splash-root');

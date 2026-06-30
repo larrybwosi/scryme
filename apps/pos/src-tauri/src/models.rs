@@ -183,10 +183,11 @@ pub struct PosCustomer {
     pub phone: Option<String>,
 
     // Backend fields
-    #[serde(rename = "type")]
+    #[serde(alias = "type")]
     pub customer_type: Option<String>, // "B2B" or "B2C" usually
-    #[serde(rename = "jobTitle")]
+    #[serde(alias = "jobTitle")]
     pub company: Option<String>,
+    pub business_account_id: Option<String>,
     pub loyalty_points: Option<f64>,
 
     // Computed/Frontend helper fields
@@ -194,6 +195,9 @@ pub struct PosCustomer {
     pub primary_address: Option<String>,
 
     pub updated_at: Option<String>,
+
+    pub gender: Option<String>,
+    pub date_of_birth: Option<String>,
 
     // Pharmacy features
     pub medical_history: Option<String>,

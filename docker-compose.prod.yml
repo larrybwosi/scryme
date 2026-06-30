@@ -153,10 +153,42 @@ services:
       - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_HOST:-mail.scryme.local}`)"
       - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
 
+  loki:
+    image: grafana/loki:latest
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki_prod_data:/tmp/loki
+    networks:
+      - scryme-prod-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3100/ready",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/promtail/config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - scryme-prod-network
+
   # --- AUTHENTICATION (ZITADEL) ---
   zitadel-setup:
-    image: zitadel/zitadel:latest
-    command: 'setup'
+    image: ghcr.io/zitadel/zitadel:latest
+    command: "setup"
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -171,9 +203,9 @@ services:
       - scryme-prod-network
 
   zitadel:
-    image: zitadel/zitadel:latest
+    image: ghcr.io/zitadel/zitadel:latest
     restart: always
-    command: 'start-noprint'
+    command: "start-noprint"
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -193,6 +225,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.zitadel.rule=Host(`${ZITADEL_DOMAIN:-auth.scryme.local}`)"
       - "traefik.http.services.zitadel.loadbalancer.server.port=8080"
+      - "traefik.http.services.zitadel.loadbalancer.server.scheme=h2c"
 
   # --- AUTOMATION (WINDMILL) ---
   windmill-server:
@@ -236,6 +269,8 @@ services:
       RABBITMQ_URL: ${RABBITMQ_URL}
       PORT: 4000
       NODE_ENV: production
+      REALTIME_PROVIDER: socketio
+      SOCKET_URL: http://api:4000
       ZITADEL_API_URL: http://${ZITADEL_DOMAIN:-auth.scryme.local}
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       ZITADEL_ORG_ID: ${ZITADEL_ORG_ID}
@@ -251,12 +286,15 @@ services:
         condition: service_healthy
       traefik:
         condition: service_started
+      zitadel:
+        condition: service_started
     networks:
       - scryme-prod-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
       - "traefik.http.services.api.loadbalancer.server.port=4000"
+      - "logging_job=api"
 
   crm:
     build:
@@ -270,6 +308,8 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      NEXT_PUBLIC_REALTIME_PROVIDER: socketio
+      NEXT_PUBLIC_SOCKET_URL: http://${API_DOMAIN:-api.scryme.local}
       PORT: 3001
       NODE_ENV: production
       ZITADEL_API_URL: http://${ZITADEL_DOMAIN:-auth.scryme.local}
@@ -283,6 +323,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
       - "traefik.http.services.crm.loadbalancer.server.port=3001"
+      - "logging_job=crm"
 
   web:
     build:
@@ -296,6 +337,8 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      NEXT_PUBLIC_REALTIME_PROVIDER: socketio
+      NEXT_PUBLIC_SOCKET_URL: http://${API_DOMAIN:-api.scryme.local}
       PORT: 3000
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -307,6 +350,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
+      - "logging_job=web"
 
   bakery:
     build:
@@ -325,24 +369,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
       - "traefik.http.services.bakery.loadbalancer.server.port=3003"
-
-  pos:
-    build:
-      context: .
-      dockerfile: apps/pos/Dockerfile
-    image: scryme-pos:latest
-    restart: always
-    environment:
-      VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
-      NODE_ENV: production
-    depends_on:
-      - api
-    networks:
-      - scryme-prod-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pos.rule=Host(`${POS_DOMAIN:-pos.scryme.local}`)"
-      - "traefik.http.services.pos.loadbalancer.server.port=3004"
+      - "logging_job=bakery"
 
 volumes:
   postgres_prod_data:
@@ -351,6 +378,7 @@ volumes:
   redis_prod_data:
   rabbitmq_prod_data:
   rustfs_prod_data:
+  loki_prod_data:
 
 networks:
   scryme-prod-network:

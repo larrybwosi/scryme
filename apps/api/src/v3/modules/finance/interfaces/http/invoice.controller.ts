@@ -24,7 +24,7 @@ import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
 import * as Fastify from "fastify";
 
-@ApiTags("Finance / Invoices")
+@ApiTags("V3 Finance")
 @ApiBearerAuth()
 @Controller("finance/invoices")
 export class InvoiceController {

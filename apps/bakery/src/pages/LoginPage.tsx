@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Lock, User, AlertCircle, Loader2, Zap, ShieldCheck, Activity, Globe, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, AlertCircle, Loader2, Zap, ShieldCheck, Activity, Globe, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/providers/auth-context';
-import { LocationSelect } from '@/components/common/location-select';
 import { Separator } from '@repo/ui/components/ui/separator';
-import { isOfflineMode } from '@/lib/sdk';
+import { isOfflineMode, isTauri } from '@/lib/sdk';
+import { resetBakeryDevice } from '@/utils/reset';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,7 +20,6 @@ export default function LoginPage() {
 
   const [cardId, setCardId] = useState('');
   const [pin, setPin] = useState('');
-  const [locationId, setLocationId] = useState<string>('');
   const [showPin, setShowPin] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -32,17 +31,12 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!locationId && !isLocalMode) {
-      toast.error('Please select a production location');
-      return;
-    }
-
     setIsLoggingIn(true);
     try {
       if (isLocalMode) {
         await loginLocal(localEmail, localPassword);
       } else {
-        await login({ cardId, pin, locationId });
+        await login({ cardId, pin });
       }
       toast.success('Authenticated successfully');
       navigate(from, { replace: true });
@@ -146,15 +140,6 @@ export default function LoginPage() {
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="location" className="text-sm font-medium text-gray-700">Production Location</Label>
-                    <LocationSelect
-                      value={locationId}
-                      onValueChange={setLocationId}
-                      placeholder="Select kitchen location"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="card-id" className="text-sm font-medium text-gray-700">Baker ID</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
@@ -234,6 +219,17 @@ export default function LoginPage() {
                 <Globe className="h-3 w-3" />
                 {isLocalMode ? 'Back to Cloud Mode' : 'Use Local Mode'}
               </button>
+
+              {isTauri() && (
+                <button
+                  type="button"
+                  onClick={resetBakeryDevice}
+                  className="mt-2 text-[10px] text-gray-400 hover:text-red-500 transition-colors font-medium flex items-center justify-center gap-2 uppercase tracking-widest"
+                >
+                  <RefreshCw className="h-2.5 w-2.5" />
+                  Reset Device
+                </button>
+              )}
             </CardFooter>
           </form>
         </Card>

@@ -15,7 +15,27 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const themeConfig = usePosStore((state) => state.settings.themeConfig)
   const checkLowStockAlerts = usePosStore((state) => state.checkLowStockAlerts)
 
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: (failureCount, error: any) => {
+          const errorMsg = error?.toString() || '';
+          if (
+            errorMsg.includes('401') ||
+            errorMsg.includes('403') ||
+            errorMsg.toLowerCase().includes('unauthorized') ||
+            errorMsg.toLowerCase().includes('forbidden')
+          ) {
+            return false;
+          }
+          return failureCount < 3;
+        },
+      },
+      mutations: {
+        retry: false,
+      }
+    }
+  }))
 
   useEffect(() => {
     const root = document.documentElement
@@ -101,10 +121,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <RealtimeInitializer/>
       <NotificationToast />
       <ConnectionStatusBanner />
       <QueryClientProvider client={queryClient}>
+        <RealtimeInitializer/>
         <UpdaterProvider checkInterval={60 * 60 * 1000 * 4}>
           <ServerNotificationProvider>
             {children}

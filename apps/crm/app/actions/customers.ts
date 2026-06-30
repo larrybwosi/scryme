@@ -3,6 +3,7 @@
 import { db } from '@repo/db';
 import { customerSchema, type CustomerFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
+import { realtimeService } from '@repo/shared/realtime';
 
 export async function createCustomer(data: CustomerFormValues, organizationId: string): Promise<any> {
   try {
@@ -45,9 +46,22 @@ export async function updateCustomer(id: string, data: CustomerFormValues): Prom
 
 export async function deleteCustomer(id: string): Promise<any> {
   try {
+    const customer = await db.customer.findUnique({
+      where: { id },
+      select: { organizationId: true },
+    });
+
     await db.customer.delete({
       where: { id },
     });
+
+    if (customer?.organizationId) {
+      await realtimeService.publish(
+        `organization:${customer.organizationId}:customers`,
+        'customer-deleted',
+        { customerId: id }
+      );
+    }
 
     revalidatePath('/customers');
     revalidatePath('/contacts');

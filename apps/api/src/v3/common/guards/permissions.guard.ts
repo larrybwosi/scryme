@@ -35,16 +35,20 @@ export class PermissionsGuard implements CanActivate {
       request = context.switchToHttp().getRequest();
     }
 
+    const v3Context = request.v3Context;
     const user = request.user;
-    const organization = request.organization;
+    const organization = request.organization || v3Context?.organization;
 
-    if (!user || !organization) {
-      throw new ForbiddenException("User or Organization not identified");
+    if (!organization || (!user && !v3Context?.memberId)) {
+      throw new ForbiddenException(
+        "User/Member or Organization not identified",
+      );
     }
 
     const permissions = await this.getMemberPermissions(
-      user.id,
       organization.id,
+      user?.id,
+      v3Context?.memberId,
     );
 
     const hasPermission = requiredPermissions.every((permission) =>
@@ -59,10 +63,11 @@ export class PermissionsGuard implements CanActivate {
   }
 
   private async getMemberPermissions(
-    userId: string,
     organizationId: string,
+    userId?: string,
+    memberId?: string,
   ): Promise<string[]> {
-    const cacheKey = `permissions:${organizationId}:${userId}`;
+    const cacheKey = `permissions:${organizationId}:${memberId || userId}`;
     const cached = await this.redis.get<string[]>(cacheKey);
 
     if (cached) {
@@ -70,13 +75,20 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const member = await this.prisma.client.member.findUnique({
-      where: {
-        organizationId_userId: {
-          organizationId,
-          userId,
-        },
-      },
+      where: memberId
+        ? { id: memberId, organizationId }
+        : {
+            organizationId_userId: {
+              organizationId,
+              userId: userId!,
+            },
+          },
       include: {
+        organization: {
+          include: {
+            settings: true,
+          },
+        },
         customRoles: true,
         roleGroups: {
           include: {
@@ -88,7 +100,20 @@ export class PermissionsGuard implements CanActivate {
 
     if (!member) return [];
 
+    if (member.role === "OWNER") {
+      const allPermissions = ["*"];
+      await this.redis.setex(cacheKey, 3600, allPermissions);
+      return allPermissions;
+    }
+
     let permissions: string[] = [];
+
+    if (
+      member.role === "ADMIN" &&
+      member.organization.settings?.adminsCanManageStaff
+    ) {
+      permissions.push("members:*");
+    }
 
     // Add permissions from custom roles
     member.customRoles.forEach((role) => {

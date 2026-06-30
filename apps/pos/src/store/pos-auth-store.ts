@@ -1,7 +1,7 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
-import { API_ENDPOINT_DEFAULT } from '@/lib/axios';
+import { API_ENDPOINT_DEFAULT } from '@/lib/api-config';
 
 type LocationType =
   | 'RETAIL_SHOP'
@@ -98,7 +98,7 @@ interface PosAuthActions {
 }
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const STORAGE_KEY = 'pos-auth-storage-v3';
+const STORAGE_KEY = 'pos-auth-storage-v2';
 
 const initialState: PosAuthState = {
   isConfigured: false,
@@ -203,10 +203,9 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
       applyApiUrl: async () => {
         const { rawApiUrl } = get();
-        // Sanitize URL: remove trailing /api/v2, /api/v3, and trailing slashes
+        // Sanitize URL: remove trailing /api/v2 and trailing slashes
         const sanitizedUrl = rawApiUrl
           .replace(/\/api\/v2\/?$/, '')
-          .replace(/\/api\/v3\/?$/, '')
           .replace(/\/+$/, '');
 
         set({ apiUrl: sanitizedUrl });
@@ -412,11 +411,18 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         if (!state?.sessionUpdatedAt) return;
 
         const now = Date.now();
+        // Session expires after 1 hour of inactivity.
         const isExpired = now - state.sessionUpdatedAt > ONE_HOUR_MS;
 
         if (isExpired) {
-          console.log('Session expired. Clearing member data.');
-          state.sessionUpdatedAt = null;
+          console.log('Session expired upon rehydration. Clearing member data.');
+          if (state.currentMember) {
+            state.currentMember = null;
+            state.isRestoredSession = false;
+            state.sessionUpdatedAt = null;
+            // Note: We don't clear all checkedInMembers here to allow easy re-login,
+            // but we clear the active session.
+          }
         }
       },
     }

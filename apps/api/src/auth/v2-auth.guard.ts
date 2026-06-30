@@ -10,13 +10,13 @@ import { RedisService } from "../redis/redis.service";
 import { ZitadelCustomerService } from "../zitadel/zitadel-customer.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { ROLE_PERMISSIONS } from "@repo/shared/api/v2/types/permissions";
+import { V2ApiContext } from "@repo/shared/api/v2";
+import { ROLE_PERMISSIONS } from "@repo/shared/api/v2";
 import {
   validateDeviceKey,
   verifyMemberToken,
-} from "@repo/shared/api/v2/services/auth";
-import { verifyZitadelJwt } from "@repo/shared/api/v2/services/zitadel/jwks";
+} from "@repo/shared/api/v2";
+import { verifyZitadelJwt } from "@repo/shared/api/v2";
 import { ALLOW_PUBLIC_KEY } from "../common/decorators/auth.decorator";
 import { OpenObserveService } from "../common/services/openobserve.service";
 import { FastifyRequest } from "fastify";

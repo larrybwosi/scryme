@@ -135,12 +135,12 @@ export async function processSale(
   } = validatedData;
 
   try {
-    const orgData = await db.organization.findUnique({
+    const orgData = (await db.organization.findUnique({
       where: { id: organizationId },
       select: {
         settings: true,
       },
-    });
+    })) as any;
 
     const allowNegativeStock = orgData?.settings?.negativeStock ?? false;
     const inventoryPolicy = orgData?.settings?.inventoryPolicy ?? "FEFO";
@@ -210,12 +210,11 @@ export async function processSale(
 
         // --- 2. Line Items & Stock Logic ---
         let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: any[] =
-          [];
+        const transactionItemsCreateData: any[] = [];
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of cartItems) {
-          const variant = variantsMap.get(item.variantId);
+          const variant = variantsMap.get(item.variantId) as any;
           if (!variant) {
             throw new Error(
               `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
@@ -243,8 +242,7 @@ export async function processSale(
 
           // C. Stock Allocation using Service
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
-          const allocationsCreateData: any[] =
-            [];
+          const allocationsCreateData: any[] = [];
 
           if (enableStockTracking) {
             const selectedSellingUnit = item.sellingUnitId
@@ -325,8 +323,7 @@ export async function processSale(
         ));
 
         // --- 5. Payment Logic ---
-        const paymentRecordsCreateData: any[] =
-          [];
+        const paymentRecordsCreateData: any[] = [];
         let totalPaidAmount = new Prisma.Decimal(0);
 
         for (const paymentSplit of payments) {
@@ -366,7 +363,10 @@ export async function processSale(
           });
 
           // Link to unclaimed payment if reference is provided
-          if (paymentSplit.method === PaymentMethod.MPESA && paymentSplit.reference) {
+          if (
+            paymentSplit.method === PaymentMethod.MPESA &&
+            paymentSplit.reference
+          ) {
             const unclaimed = await tx.unclaimedPayment.findUnique({
               where: { transId: paymentSplit.reference },
             });
@@ -377,7 +377,7 @@ export async function processSale(
                 data: {
                   claimed: true,
                   claimedAt: new Date(),
-                  claimedByUserId: memberId || 'system',
+                  claimedByUserId: memberId || "system",
                 },
               });
             }
@@ -712,15 +712,18 @@ export async function processSale(
     });
 
     // --- 11. Document Generation ---
-    const { documentService } = await import(
-      "../../lib/services/document.service"
-    );
+    const { documentService } =
+      await import("../../lib/services/document.service");
     documentService
       .generateAndSaveInvoice(result.id, organizationId, memberId || null)
-      .catch(err => console.error("Failed to auto-generate POS invoice:", err));
+      .catch((err) =>
+        console.error("Failed to auto-generate POS invoice:", err),
+      );
     documentService
       .generateAndSaveReceipt(result.id, organizationId, memberId || null)
-      .catch(err => console.error("Failed to auto-generate POS receipt:", err));
+      .catch((err) =>
+        console.error("Failed to auto-generate POS receipt:", err),
+      );
 
     // --- 12. Real-time Notification ---
     realtimeService
@@ -733,7 +736,9 @@ export async function processSale(
         customerName: completeTransaction?.customer?.name || "Walk-in Customer",
         createdAt: result.createdAt,
       })
-      .catch((err) => console.error("Failed to publish real-time update:", err));
+      .catch((err) =>
+        console.error("Failed to publish real-time update:", err),
+      );
 
     return {
       success: true,

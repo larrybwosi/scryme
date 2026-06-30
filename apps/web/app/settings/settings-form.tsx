@@ -49,13 +49,14 @@ const settingsSchema = z.object({
   country: z.string().min(1, "Country is required"),
   lowStockThreshold: z.number().min(0).default(10),
   negativeStock: z.boolean().default(false),
+  adminsCanManageStaff: z.boolean().default(false),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
 
-type SectionId = "profile" | "localization" | "inventory";
+type SectionId = "profile" | "localization" | "inventory" | "security";
 
 const NAV_SECTIONS: {
   id: SectionId;
@@ -76,6 +77,11 @@ const NAV_SECTIONS: {
     id: "inventory",
     label: "Inventory Policies",
     icon: <Warehouse className="w-4 h-4" />,
+  },
+  {
+    id: "security",
+    label: "Security & Access",
+    icon: <AlertCircle className="w-4 h-4" />,
   },
 ];
 
@@ -239,6 +245,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
       country: initialData?.settings?.country || "Kenya",
       lowStockThreshold: initialData?.settings?.lowStockThreshold || 10,
       negativeStock: initialData?.settings?.negativeStock || false,
+      adminsCanManageStaff: initialData?.settings?.adminsCanManageStaff || false,
     },
   });
 
@@ -686,6 +693,55 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                     active sales flows.
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Security section ── */}
+          {activeSection === "security" && (
+            <div className="space-y-8">
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-zinc-900">
+                      Access Control
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Manage permissions and security policies for your
+                      organization
+                    </p>
+                  </div>
+                  <Badge className="text-xs bg-zinc-900 text-white border-zinc-900 font-medium">
+                    Security
+                  </Badge>
+                </div>
+
+                <div className="divide-y divide-zinc-100">
+                  <PolicyRow
+                    title="Allow Admins to Manage Staff"
+                    description="When enabled, users with the ADMIN role can add, update, and remove staff members. By default, only the OWNER can perform these actions."
+                    risk="medium"
+                  >
+                    <Switch
+                      checked={form.watch("adminsCanManageStaff")}
+                      onCheckedChange={(val) =>
+                        form.setValue("adminsCanManageStaff", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  </PolicyRow>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-zinc-100 border border-zinc-200">
+                <Info className="w-4 h-4 text-zinc-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Enabling certain administrative permissions for non-owners
+                  distributes management tasks but should be granted only to
+                  trusted individuals.
+                </p>
               </div>
             </div>
           )}

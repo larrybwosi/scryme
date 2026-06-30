@@ -8,7 +8,7 @@ import {
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
 import { ably } from "@repo/shared/ably";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 
 @ApiTags("Realtime")
 @Controller("realtime")

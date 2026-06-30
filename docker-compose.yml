@@ -1,13 +1,13 @@
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -22,7 +22,7 @@ services:
     image: redis:alpine
     restart: always
     ports:
-      - '6379:6379'
+      - "6379:6379"
     networks:
       - scryme-network
     healthcheck:
@@ -35,8 +35,8 @@ services:
     image: rabbitmq:3-management-alpine
     restart: always
     ports:
-      - '5672:5672'
-      - '15672:15672'
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - scryme-network
     healthcheck:
@@ -76,6 +76,44 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.local}`)"
+      - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki_data:/tmp/loki
+    networks:
+      - scryme-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3100/ready",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/promtail/config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - scryme-network
 
   api:
     build:
@@ -88,11 +126,13 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
+      - REALTIME_PROVIDER=socketio
+      - SOCKET_URL=http://api:4000
       - ZITADEL_API_URL=${ZITADEL_API_URL}
       - ZITADEL_ORG_ID=${ZITADEL_ORG_ID}
       - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID}
     ports:
-      - '3002:4000'
+      - "3002:4000"
     depends_on:
       db:
         condition: service_healthy
@@ -102,31 +142,11 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
-
-  crm:
-    build:
-      context: .
-      dockerfile: apps/crm/Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-    image: scryme-crm:latest
-    restart: always
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - PORT=3001
-      - ZITADEL_API_URL=${ZITADEL_API_URL}
-      - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
-    ports:
-      - '3001:3001'
-    depends_on:
-      db:
-        condition: service_healthy
-      api:
-        condition: service_started
-    networks:
-      - scryme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
+      - "traefik.http.services.api.loadbalancer.server.port=4000"
+      - "logging_job=api"
 
   web:
     build:
@@ -140,9 +160,11 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=socketio
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://api.scryme.local}
       - PORT=3000
     ports:
-      - '3000:3000'
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -150,42 +172,16 @@ services:
         condition: service_started
     networks:
       - scryme-network
-
-  bakery:
-    build:
-      context: .
-      dockerfile: apps/bakery/Dockerfile
-    image: scryme-bakery:latest
-    restart: always
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
-    ports:
-      - '3003:3003'
-    depends_on:
-      api:
-        condition: service_started
-    networks:
-      - scryme-network
-
-  pos:
-    build:
-      context: .
-      dockerfile: apps/pos/Dockerfile
-    image: scryme-pos:latest
-    restart: always
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
-    ports:
-      - '3004:3004'
-    depends_on:
-      api:
-        condition: service_started
-    networks:
-      - scryme-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
+      - "logging_job=web"
 
 volumes:
   postgres_data:
   rustfs_data:
+  loki_data:
 
 networks:
   scryme-network:

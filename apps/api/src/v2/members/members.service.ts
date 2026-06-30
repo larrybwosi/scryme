@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { createMemberToken } from "@repo/shared/api/v2/services/auth";
+import { type V2ApiContext } from "@repo/shared/api/v2";
+import { createMemberToken } from "@repo/shared/api/v2";
 import { MemberRole, Status } from "@repo/db";
 import * as argon2 from "argon2";
 
@@ -223,5 +223,22 @@ export class MembersService {
       },
       restoredSession: !!activeLog,
     };
+  }
+
+  async getMemberStatus(ctx: V2ApiContext, id: string) {
+    const { organizationId } = ctx;
+    const member = await this.prisma.client.member.findFirst({
+      where: { id, organizationId },
+      select: {
+        id: true,
+        status: true,
+        isCheckedIn: true,
+        lastCheckInTime: true,
+        currentCheckInLocationId: true,
+      },
+    });
+
+    if (!member) throw new NotFoundException("Member not found");
+    return member;
   }
 }
