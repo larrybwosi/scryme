@@ -183,6 +183,13 @@ model Organization {
   // Loyalty Program
   loyaltyPrograms LoyaltyProgram[]
 
+  // Service Module Relations
+  serviceCategories ServiceCategory[]
+  services          Service[]
+  serviceResources  ServiceResource[]
+  serviceBookings   ServiceBooking[]
+  bookingVerificationCodes BookingVerificationCode[]
+
   standaloneDevices StandaloneDevice[]
 
   qcTemplates        QCTemplate[]
@@ -333,6 +340,10 @@ model Member {
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
   bakeryRoles BakeryBaker[]
+
+  // Service Module Relations
+  serviceAssignments ServiceStaffAssignment[]
+  bookingAssignments BookingStaff[]
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
   approvedExpenses         Expense[]          @relation("ExpenseApprover")
