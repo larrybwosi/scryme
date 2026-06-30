@@ -277,6 +277,11 @@ const styles = StyleSheet.create({
     height: 15,
     marginBottom: 2,
   },
+  customerAddress: {
+    fontSize: 9,
+    color: MUTED_GRAY,
+    marginTop: 2,
+  },
 
   // ---------- Permanent Footer Matrix ----------
   footerContainer: {
