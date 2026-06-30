@@ -12,7 +12,7 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
-import { User, Truck, Phone, Mail, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { User, Truck, Phone, Mail, MoreHorizontal, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { Button } from "@repo/ui/components/ui/button";
 import { deleteDriver } from "../../app/actions/drivers";
 import { toast } from "sonner";
@@ -48,14 +63,25 @@ interface Driver {
 }
 
 export function DriverTable({ data }: { data: Driver[] }) {
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this driver?")) {
-      const result = await deleteDriver(id);
+  const [driverToDelete, setDriverToDelete] = React.useState<Driver | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const handleDelete = async () => {
+    if (!driverToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteDriver(driverToDelete.id);
       if (result.success) {
         toast.success("Driver deleted successfully");
+        setDriverToDelete(null);
       } else {
         toast.error(result.error || "Failed to delete driver");
       }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -163,11 +189,20 @@ export function DriverTable({ data }: { data: Driver[] }) {
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            aria-label="More actions"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>More actions</TooltipContent>
+                    </Tooltip>
                     <DropdownMenuContent align="end" className="w-[160px]">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem asChild>
@@ -179,7 +214,7 @@ export function DriverTable({ data }: { data: Driver[] }) {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600 cursor-pointer"
-                        onClick={() => handleDelete(driver.id)}
+                        onClick={() => setDriverToDelete(driver)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Driver
@@ -192,6 +227,42 @@ export function DriverTable({ data }: { data: Driver[] }) {
           )}
         </TableBody>
       </Table>
+
+      <AlertDialog
+        open={!!driverToDelete}
+        onOpenChange={open => !open && !isDeleting && setDriverToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the driver{" "}
+              <span className="font-semibold text-gray-900">
+                {driverToDelete?.name}
+              </span>{" "}
+              and all associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Driver"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
