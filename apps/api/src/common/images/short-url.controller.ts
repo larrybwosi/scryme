@@ -12,6 +12,7 @@ import { ImageService } from "./image.service";
 import { AllowPublic } from "../decorators/auth.decorator";
 import { PrismaService } from "../../prisma/prisma.service";
 import { storageService } from "@repo/shared/storage";
+import { isSafeUrl } from "@repo/shared/server";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
 
@@ -100,8 +101,10 @@ export class ShortUrlController {
         const quality = q ? parseInt(q, 10) : undefined;
         const format = fm;
 
+        // For RustFS/S3, we need the fileName as the key
+        const storageKey = attachment.fileName || attachmentId;
         const { data, contentType } = await this.imageService.optimizeImage(
-          attachmentId,
+          storageKey,
           {
             width,
             height,
@@ -134,11 +137,17 @@ export class ShortUrlController {
           return res.status(HttpStatus.OK).send(buffer);
         }
 
+        // For RustFS/S3, we need the fileName as the key, not the attachmentId (CUID)
+        const storageKey = attachment.fileName || attachmentId;
         const signedUrl = await storageService.getSignedUrl(
-          attachmentId,
+          storageKey,
           60,
           organizationId,
         );
+
+        if (!(await isSafeUrl(signedUrl))) {
+          throw new Error(`Potentially unsafe storage URL: ${signedUrl}`);
+        }
 
         // Fetch the file to stream it AND potentially cache it
         const response = await axios.get(signedUrl, {

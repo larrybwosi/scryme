@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import React from "react";
 import { V3DocumentData } from "../types";
 
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
+export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -264,7 +264,14 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
     currency,
     paymentInfo,
     terms,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
+    signature,
   } = data;
+
+  const activeColor = primaryColor || DARK_BG;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -273,11 +280,17 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* ==================== UPPER DARK MATRIX HEADER ==================== */}
-        <View style={styles.upperBlock}>
+        <View style={[styles.upperBlock, { backgroundColor: activeColor }]}>
           <View style={styles.topBrandRow}>
             <View style={styles.brandLeft}>
-              <Text style={styles.companyName}>{company.name}</Text>
-              <Text style={styles.companySlogan}>SLOGAN HERE</Text>
+              {company.logo ? (
+                <Image src={company.logo} style={{ width: 80, height: 40, marginBottom: 10, objectFit: 'contain' }} />
+              ) : (
+                <>
+                  <Text style={styles.companyName}>{company.name}</Text>
+                  {company.slogan && <Text style={styles.companySlogan}>{company.slogan}</Text>}
+                </>
+              )}
             </View>
             <View style={styles.brandRight}>
               <Text style={styles.hugeTitle}>
@@ -304,21 +317,42 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
 
             {/* Document Registry Metadata */}
             <View style={styles.invoiceMetaDataBlock}>
-              <Text style={styles.metaNumberLabel}>Invoice No.</Text>
-              <Text style={styles.metaNumberValue}>#{number}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <View>
+                  <Text style={styles.metaNumberLabel}>{type === 'invoice' ? 'Invoice' : 'Receipt'} No.</Text>
+                  <Text style={styles.metaNumberValue}>#{number}</Text>
+                </View>
+                {qrCode && (
+                  <Image src={qrCode} style={{ width: 40, height: 40 }} />
+                )}
+              </View>
 
               <View style={styles.kvRow}>
-                <Text style={styles.kvKey}>Invoice Date</Text>
+                <Text style={styles.kvKey}>Date</Text>
                 <Text style={styles.kvValue}>: {date}</Text>
               </View>
-              <View style={styles.kvRow}>
-                <Text style={styles.kvKey}>Issue Date</Text>
-                <Text style={styles.kvValue}>: {date}</Text>
-              </View>
-              <View style={styles.kvRow}>
-                <Text style={styles.kvKey}>Account No.</Text>
-                <Text style={styles.kvValue}>: 000000</Text>
-              </View>
+              {(kraPin || kraControlCode || kraReceiptNumber) && (
+                <View style={{ marginTop: 5 }}>
+                  {kraPin && (
+                    <View style={styles.kvRow}>
+                      <Text style={styles.kvKey}>KRA PIN</Text>
+                      <Text style={styles.kvValue}>: {kraPin}</Text>
+                    </View>
+                  )}
+                  {kraControlCode && (
+                    <View style={styles.kvRow}>
+                      <Text style={styles.kvKey}>Ctrl Code</Text>
+                      <Text style={styles.kvValue}>: {kraControlCode}</Text>
+                    </View>
+                  )}
+                  {kraReceiptNumber && (
+                    <View style={styles.kvRow}>
+                      <Text style={styles.kvKey}>Receipt No</Text>
+                      <Text style={styles.kvValue}>: {kraReceiptNumber}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -373,14 +407,14 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
           ))}
 
           {/* Unified Sub Total Ribbon Section */}
-          <View style={styles.subtotalRowContainer}>
+          <View style={[styles.subtotalRowContainer, { backgroundColor: activeColor }]}>
             <Text style={styles.subtotalLabel}>Sub Total</Text>
             <Text style={styles.subtotalValue}>{fmt(subtotal || total)}</Text>
           </View>
 
           {/* Bottom Grid Layout (Info Panel + Signature Block) */}
           <View style={styles.bottomFlexLayout}>
-            <View style={styles.termsAndPaymentPane}>
+            <View style={[styles.termsAndPaymentPane, { backgroundColor: activeColor }]}>
               <Text style={styles.paneTitle}>Payment Method :</Text>
               <Text style={styles.paneText}>
                 {paymentInfo || "Method 1 > Method 2 > Method 3"}
@@ -393,11 +427,23 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
               </Text>
             </View>
 
-            <View style={styles.signaturePane}>
-              <View style={styles.signatureGraphicPlaceholder}>
-                <Text style={styles.signatureLineText}>Company Signature</Text>
-              </View>
-              <Text style={styles.signatureLabelText}>Company signature</Text>
+            <View style={[styles.signaturePane, { backgroundColor: activeColor }]}>
+              {signature ? (
+                <>
+                  {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
+                  <View style={styles.signatureGraphicPlaceholder}>
+                    <Text style={styles.signatureLineText}>{signature.name}</Text>
+                  </View>
+                  <Text style={styles.signatureLabelText}>{signature.title}</Text>
+                </>
+              ) : (
+                <>
+                  <View style={styles.signatureGraphicPlaceholder}>
+                    <Text style={styles.signatureLineText}>Company Signature</Text>
+                  </View>
+                  <Text style={styles.signatureLabelText}>Company signature</Text>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -406,4 +452,4 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
   );
 };
 
-export default TemplateFour;
+export default TemplateEight;

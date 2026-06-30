@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import React from "react";
 import { V3DocumentData } from "../types";
 
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
+export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -249,7 +249,14 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
     currency,
     paymentInfo,
     terms,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
+    signature,
   } = data;
+
+  const activeColor = primaryColor || ACCENT_ORANGE;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -284,7 +291,7 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
 
           {/* Large Vertical Rotated Document Type */}
           <View style={styles.verticalTitleContainer}>
-            <Text style={styles.verticalTitle}>
+            <Text style={[styles.verticalTitle, { color: activeColor }]}>
               {type ? type.toUpperCase() : "INVOICE"}
             </Text>
           </View>
@@ -316,23 +323,28 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
         <View style={styles.rightColumn}>
           {/* Main Brand Header */}
           <View style={styles.headerBlock}>
-            <Text style={styles.mainTitle}>{company.name}</Text>
-            <Text style={styles.subtitle}>Lorem Ipsum Dolor</Text>
+            {company.logo ? (
+              <Image src={company.logo} style={{ width: 80, height: 40, marginBottom: 10, objectFit: 'contain' }} />
+            ) : (
+              <Text style={[styles.mainTitle, { color: activeColor }]}>{company.name}</Text>
+            )}
+            {company.slogan && <Text style={styles.subtitle}>{company.slogan}</Text>}
           </View>
 
           {/* Metadata Block */}
           <View style={styles.metaRow}>
             <View style={styles.metaGroup}>
-              <Text style={styles.metaLabel}>Invoice No</Text>
+              <Text style={styles.metaLabel}>{type === 'invoice' ? 'Invoice No' : 'Receipt No'}</Text>
               <Text style={styles.metaValue}>#{number}</Text>
             </View>
             <View style={styles.metaGroup}>
-              <Text style={styles.metaLabel}>Acc No</Text>
-              <Text style={styles.metaValue}>#ABCD1234</Text>
+              <Text style={styles.metaLabel}>Date</Text>
+              <Text style={styles.metaValue}>{date}</Text>
             </View>
             <View style={styles.metaGroup}>
-              <Text style={styles.metaLabel}>Due Date</Text>
-              <Text style={styles.metaValue}>{date}</Text>
+              {qrCode && (
+                <Image src={qrCode} style={{ width: 40, height: 40 }} />
+              )}
             </View>
           </View>
 
@@ -412,9 +424,25 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
             </View>
           </View>
 
+          {/* KRA Compliance Data */}
+          {(kraPin || kraControlCode || kraReceiptNumber) && (
+            <View style={{ marginBottom: 15, paddingHorizontal: 5 }}>
+              {kraPin && <Text style={{ fontSize: 8 }}>KRA PIN: {kraPin}</Text>}
+              {kraControlCode && <Text style={{ fontSize: 8 }}>Control Code: {kraControlCode}</Text>}
+              {kraReceiptNumber && <Text style={{ fontSize: 8 }}>Receipt No: {kraReceiptNumber}</Text>}
+            </View>
+          )}
+
           {/* Thank You & Terms Section */}
           <View style={{ marginTop: "auto" }}>
-            <Text style={styles.thankYouText}>Thank You</Text>
+            {signature && (
+              <View style={{ alignItems: 'flex-end', marginBottom: 15 }}>
+                {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{signature.name}</Text>
+                <Text style={{ fontSize: 8 }}>{signature.title}</Text>
+              </View>
+            )}
+            <Text style={[styles.thankYouText, { color: activeColor }]}>Thank You</Text>
             <View style={styles.horizontalRule} />
 
             <View style={styles.termsBlock}>
@@ -431,4 +459,4 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
   );
 };
 
-export default TemplateOne;
+export default TemplateFive;

@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import React from "react";
 import { V3DocumentData } from "../types";
 
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
+export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -327,7 +327,13 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
     total,
     currency,
     signature,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
   } = data;
+
+  const activeColor = primaryColor || DEEP_TEAL;
 
   const fmt = (n: number) =>
     `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -338,23 +344,28 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
         {/* ================= BRANDING HEADER ================= */}
         <View style={styles.headerRow}>
           <View style={styles.logoContainer}>
-            <View style={styles.logoIcon}>
-              <View style={styles.logoInnerCircle} />
-            </View>
-            <View style={styles.logoTextGroup}>
-              <Text style={styles.logoMainText}>Your</Text>
-              <Text style={styles.logoMainText}>Example</Text>
-              <Text style={styles.logoSubText}>Logo here</Text>
-            </View>
+            {company.logo ? (
+              <Image src={company.logo} style={{ width: 80, height: 40, objectFit: 'contain' }} />
+            ) : (
+              <>
+                <View style={[styles.logoIcon, { borderColor: activeColor }]}>
+                  <View style={[styles.logoInnerCircle, { backgroundColor: activeColor }]} />
+                </View>
+                <View style={styles.logoTextGroup}>
+                  <Text style={[styles.logoMainText, { color: activeColor }]}>{company.name}</Text>
+                  <Text style={styles.logoSubText}>{company.slogan || 'Logo here'}</Text>
+                </View>
+              </>
+            )}
           </View>
 
           <View style={styles.headerRight}>
-            <Text style={styles.mainTitle}>
+            <Text style={[styles.mainTitle, { color: activeColor }]}>
               {type
                 ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
                 : "Invoice"}
             </Text>
-            <Text style={styles.companyWebsite}>www.example.com</Text>
+            {company.website && <Text style={styles.companyWebsite}>{company.website}</Text>}
           </View>
         </View>
 
@@ -386,7 +397,10 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
           </View>
 
           <View style={styles.metaBlock}>
-            {/* Elegant Vector Barcode Simulation */}
+            {qrCode ? (
+              <Image src={qrCode} style={{ width: 60, height: 60, marginBottom: 10 }} />
+            ) : (
+            /* Elegant Vector Barcode Simulation */
             <View style={styles.barcodeContainer}>
               <View style={styles.barcodeLineThick} />
               <View style={styles.barcodeLineThin} />
@@ -400,27 +414,42 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
               <View style={styles.barcodeLineMedium} />
               <View style={styles.barcodeLineThick} />
             </View>
+            )}
 
-            <Text style={styles.metaInvoiceNoLabel}>Invoice No.</Text>
+            <Text style={styles.metaInvoiceNoLabel}>{type === 'invoice' ? 'Invoice' : 'Receipt'} No.</Text>
             <Text style={styles.metaInvoiceNoValue}>#{number}</Text>
 
             <View style={styles.metaRow}>
-              <Text style={styles.metaRowLabel}>Invoice Date :</Text>
+              <Text style={styles.metaRowLabel}>Date :</Text>
               <Text style={styles.metaRowValue}>{date}</Text>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaRowLabel}>Issue Date :</Text>
-              <Text style={styles.metaRowValue}>{date}</Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaRowLabel}>Account No :</Text>
-              <Text style={styles.metaRowValue}>01234567</Text>
-            </View>
+            {(kraPin || kraControlCode || kraReceiptNumber) && (
+              <View style={{ marginTop: 5 }}>
+                {kraPin && (
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaRowLabel}>KRA PIN :</Text>
+                    <Text style={styles.metaRowValue}>{kraPin}</Text>
+                  </View>
+                )}
+                {kraControlCode && (
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaRowLabel}>Control Code :</Text>
+                    <Text style={styles.metaRowValue}>{kraControlCode}</Text>
+                  </View>
+                )}
+                {kraReceiptNumber && (
+                  <View style={styles.metaRow}>
+                    <Text style={styles.metaRowLabel}>Receipt No :</Text>
+                    <Text style={styles.metaRowValue}>{kraReceiptNumber}</Text>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
         </View>
 
         {/* ================= PRIMARY LINE ITEMS TABLE ================= */}
-        <View style={styles.tableHeader}>
+        <View style={[styles.tableHeader, { backgroundColor: activeColor }]}>
           <Text style={[styles.tableHeaderCell, styles.colNo]}>No.</Text>
           <Text style={[styles.tableHeaderCell, styles.colDesc]}>
             Item Description
@@ -485,7 +514,7 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
               </View>
             )}
 
-            <View style={styles.grandTotalRow}>
+            <View style={[styles.grandTotalRow, { backgroundColor: activeColor }]}>
               <Text style={styles.grandTotalLabel}>Grand Total =</Text>
               <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
             </View>
@@ -493,15 +522,18 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
         </View>
 
         {/* ================= SIGN-OFF COMPONENT ================= */}
-        <View style={styles.signatureSection}>
-          <Text style={styles.signatureName}>
-            {signature?.name || "Henry Wotton"}
-          </Text>
-          <Text style={styles.signatureTitle}>
-            {signature?.title || "Manager"}
-          </Text>
-          <View style={styles.signatureLinePlaceholder} />
-        </View>
+        {signature && (
+          <View style={styles.signatureSection}>
+            {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
+            <Text style={styles.signatureName}>
+              {signature.name}
+            </Text>
+            <Text style={styles.signatureTitle}>
+              {signature.title}
+            </Text>
+            <View style={[styles.signatureLinePlaceholder, { borderBottomColor: activeColor }]} />
+          </View>
+        )}
 
         {/* ================= METRIC FOOTER BAR ================= */}
         <View style={styles.footerContainer} fixed>
@@ -544,4 +576,4 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
   );
 };
 
-export default TemplateThree;
+export default TemplateSeven;

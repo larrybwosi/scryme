@@ -18,10 +18,18 @@ import {
   TemplateTwo,
   TemplateThree,
   TemplateFour,
+  TemplateFive,
+  TemplateSix,
+  TemplateSeven,
+  TemplateEight,
   ReceiptOne,
   ReceiptTwo,
   ReceiptThree,
   ReceiptFour,
+  ReceiptFive,
+  ReceiptSix,
+  ReceiptSeven,
+  ReceiptEight,
 } from './templates/v3';
 
 export type DocumentType = 'INVOICE' | 'RECEIPT' | 'WAYBILL';
@@ -133,6 +141,38 @@ export const DOCUMENT_REGISTRY: TemplateMetadata[] = [
     type: 'INVOICE',
     component: TemplateFour as React.ComponentType<any>
   },
+  {
+    id: 'invoice-v3-5',
+    name: 'V3 Compact Modern',
+    description: 'Compact and efficient layout for smaller transactions.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateFive as React.ComponentType<any>
+  },
+  {
+    id: 'invoice-v3-6',
+    name: 'V3 Elegant Serif',
+    description: 'A sophisticated design with serif fonts.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateSix as React.ComponentType<any>
+  },
+  {
+    id: 'invoice-v3-7',
+    name: 'V3 Bold Corporate',
+    description: 'A heavy-hitting corporate layout.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateSeven as React.ComponentType<any>
+  },
+  {
+    id: 'invoice-v3-8',
+    name: 'V3 Clean Professional',
+    description: 'A no-nonsense professional layout.',
+    version: 'v3.0.0',
+    type: 'INVOICE',
+    component: TemplateEight as React.ComponentType<any>
+  },
 
   // Receipts
   {
@@ -182,6 +222,38 @@ export const DOCUMENT_REGISTRY: TemplateMetadata[] = [
     version: 'v3.0.0',
     type: 'RECEIPT',
     component: ReceiptFour as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-5',
+    name: 'V3 Compact Modern Receipt',
+    description: 'Compact modern receipt design.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptFive as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-6',
+    name: 'V3 Elegant Serif Receipt',
+    description: 'Sophisticated receipt design.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptSix as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-7',
+    name: 'V3 Bold Corporate Receipt',
+    description: 'Heavy-hitting corporate receipt.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptSeven as React.ComponentType<any>
+  },
+  {
+    id: 'receipt-v3-8',
+    name: 'V3 Clean Professional Receipt',
+    description: 'No-nonsense professional receipt.',
+    version: 'v3.0.0',
+    type: 'RECEIPT',
+    component: ReceiptEight as React.ComponentType<any>
   },
 
   // Waybills

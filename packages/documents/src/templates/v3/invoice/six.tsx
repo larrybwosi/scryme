@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import React from "react";
 import { V3DocumentData } from "../types";
 
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
+export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -238,7 +238,15 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
     total,
     currency,
     terms,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
+    bankDetails,
+    signature,
   } = data;
+
+  const activeColor = primaryColor || CHARCOAL;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -249,27 +257,34 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
         {/* ================= HEADER SECTION ================= */}
         <View style={styles.headerContainer}>
           <View style={styles.headerLeft}>
-            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11 }}>
-              {company.name}
-            </Text>
-            <Text style={styles.companyName}>Company Name</Text>
+            {company.logo ? (
+              <Image src={company.logo} style={{ width: 60, height: 60, marginBottom: 10, objectFit: 'contain' }} />
+            ) : (
+              <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, color: activeColor }}>
+                {company.name}
+              </Text>
+            )}
+            <Text style={styles.companyName}>{company.slogan || 'Company Name'}</Text>
 
             <Text style={styles.metaText}>
-              {type ? type : "Invoice"} No &nbsp; : &nbsp; {number}
+              {type === 'invoice' ? 'Invoice' : 'Receipt'} No &nbsp; : &nbsp; {number}
             </Text>
             <Text style={styles.dateText}>{date}</Text>
           </View>
 
           <View style={styles.headerRight}>
-            <Text style={styles.mainTitle}>
+            <Text style={[styles.mainTitle, { color: activeColor }]}>
               {type
                 ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
                 : "Invoice"}
             </Text>
-            <Text style={styles.invoiceToLabel}>Invoice to</Text>
+            <Text style={styles.invoiceToLabel}>{type === 'invoice' ? 'Invoice to' : 'Receipt to'}</Text>
             <Text style={styles.customerName}>{customer.name}</Text>
             {customer.address && (
               <Text style={styles.customerAddress}>{customer.address}</Text>
+            )}
+            {qrCode && (
+              <Image src={qrCode} style={{ width: 60, height: 60, marginTop: 10 }} />
             )}
           </View>
         </View>
@@ -358,28 +373,46 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
         <View style={styles.bottomContainer}>
           <View style={styles.bottomLeftBlock}>
             {/* Payment Method */}
-            <View style={styles.accentSectionHeader}>
+            <View style={[styles.accentSectionHeader, { borderLeftColor: activeColor }]}>
               <Text style={styles.accentSectionTitle}>Payment Method</Text>
             </View>
-            <Text
-              style={[
-                styles.bankLabel,
-                { fontSize: 10, marginBottom: 6, fontFamily: "Helvetica-Bold" },
-              ]}
-            >
-              Bank Details
-            </Text>
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankLabel}>Account No :</Text>
-              <Text style={styles.bankValue}>638 738 856</Text>
-            </View>
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankLabel}>Sort Code :</Text>
-              <Text style={styles.bankValue}>84 57 39</Text>
-            </View>
+            {bankDetails && (
+              <>
+                <Text
+                  style={[
+                    styles.bankLabel,
+                    { fontSize: 10, marginBottom: 6, fontFamily: "Helvetica-Bold" },
+                  ]}
+                >
+                  Bank Details
+                </Text>
+                <View style={styles.bankDetailsRow}>
+                  <Text style={styles.bankLabel}>Account No :</Text>
+                  <Text style={styles.bankValue}>{bankDetails.accountNo}</Text>
+                </View>
+                {bankDetails.sortCode && (
+                  <View style={styles.bankDetailsRow}>
+                    <Text style={styles.bankLabel}>Sort Code :</Text>
+                    <Text style={styles.bankValue}>{bankDetails.sortCode}</Text>
+                  </View>
+                )}
+              </>
+            )}
+
+            {/* KRA Compliance */}
+            {(kraPin || kraControlCode || kraReceiptNumber) && (
+              <View style={{ marginTop: 15 }}>
+                 <View style={[styles.accentSectionHeader, { borderLeftColor: activeColor }]}>
+                    <Text style={styles.accentSectionTitle}>Compliance info</Text>
+                  </View>
+                  {kraPin && <Text style={{ fontSize: 9 }}>KRA PIN: {kraPin}</Text>}
+                  {kraControlCode && <Text style={{ fontSize: 9 }}>Control Code: {kraControlCode}</Text>}
+                  {kraReceiptNumber && <Text style={{ fontSize: 9 }}>Receipt No: {kraReceiptNumber}</Text>}
+              </View>
+            )}
 
             {/* Payment Terms */}
-            <View style={[styles.accentSectionHeader, { marginTop: 20 }]}>
+            <View style={[styles.accentSectionHeader, { marginTop: 20, borderLeftColor: activeColor }]}>
               <Text style={styles.accentSectionTitle}>Payment Terms</Text>
             </View>
             <Text style={styles.termsParagraph}>
@@ -390,10 +423,15 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
 
           {/* Signature Graphic Block */}
           <View style={styles.bottomRightBlock}>
-            <View style={styles.signatureLine}>
-              <Text style={styles.signatureGraphic}>Robert William</Text>
-            </View>
-            <Text style={styles.signatureLabel}>Signature</Text>
+            {signature && (
+              <>
+                {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
+                <View style={styles.signatureLine}>
+                  <Text style={styles.signatureGraphic}>{signature.name}</Text>
+                </View>
+                <Text style={styles.signatureLabel}>{signature.title}</Text>
+              </>
+            )}
           </View>
         </View>
       </Page>
@@ -401,4 +439,4 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
   );
 };
 
-export default TemplateTwo;
+export default TemplateSix;
