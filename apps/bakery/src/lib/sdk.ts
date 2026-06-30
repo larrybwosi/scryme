@@ -19,12 +19,18 @@ export const isOfflineMode = () => {
 // Initialize SDK with proper baseURL and global error handler
 const sdk = getSDK({
   baseURL: isTauri()
-    ? sanitizeApiUrl(localStorage.getItem('bakery_api_url') || import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2')
+    ? sanitizeApiUrl(
+        (typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null) ||
+          import.meta.env.VITE_API_URL ||
+          'https://api.scryme.app/api/v2'
+      )
     : '/api/v2',
   onUnauthorized: () => {
     // Trigger a window event that the AuthGuard can listen to
-    window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
-  }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
+    }
+  },
 });
 
 // If in Tauri, override the client methods to use the Rust backend proxy
