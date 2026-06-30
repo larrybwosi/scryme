@@ -102,8 +102,12 @@ function redactRecursive(
   depth: number,
   maxDepth: number,
 ): any {
-  if (data === null || data === undefined || depth > maxDepth) {
+  if (data === null || data === undefined) {
     return data;
+  }
+
+  if (depth > maxDepth) {
+    return "[REDACTED (Max Depth Exceeded)]";
   }
 
   // Handle Error objects specifically as they have non-enumerable properties
