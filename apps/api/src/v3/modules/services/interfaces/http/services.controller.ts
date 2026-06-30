@@ -24,6 +24,7 @@ import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-r
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { ServiceManagementService } from "../../application/services/service-management.service";
 import { BookingService } from "../../application/services/booking.service";
+import { ServiceAnalyticsService } from "../../application/services/service-analytics.service";
 import {
   CreateServiceDto,
   CreateServiceCategoryDto,
@@ -40,6 +41,7 @@ export class ServicesController {
   constructor(
     private readonly serviceManagement: ServiceManagementService,
     private readonly bookingService: BookingService,
+    private readonly analyticsService: ServiceAnalyticsService,
   ) {}
 
   @Post("categories")
@@ -113,6 +115,46 @@ export class ServicesController {
     @Param("id") id: string,
     @Body() dto: CompleteBookingDto
   ) {
-    return this.bookingService.completeBooking(req.organization.id, id, dto);
+    return this.bookingService.completeBooking(req.organization.id, id, req.user.id, dto);
+  }
+
+  @Post("register-customer-app")
+  @Permissions("services:manage")
+  @ApiOperation({ summary: "Register a customer-facing application" })
+  async registerCustomerApp(@Req() req: any, @Body() dto: { name: string }) {
+      return this.serviceManagement.registerCustomerApp(req.organization.id, dto.name);
+  }
+
+  @Get("analytics/utilization")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get resource utilization analytics" })
+  async getUtilization(
+      @Req() req: any,
+      @Query("startDate") startDate: string,
+      @Query("endDate") endDate: string
+  ) {
+      return this.analyticsService.getResourceUtilization(req.organization.id, new Date(startDate), new Date(endDate));
+  }
+
+  @Get("analytics/performance")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get staff performance analytics" })
+  async getPerformance(
+      @Req() req: any,
+      @Query("startDate") startDate: string,
+      @Query("endDate") endDate: string
+  ) {
+      return this.analyticsService.getStaffPerformance(req.organization.id, new Date(startDate), new Date(endDate));
+  }
+
+  @Get("analytics/funnel")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get booking conversion funnel analytics" })
+  async getFunnel(
+      @Req() req: any,
+      @Query("startDate") startDate: string,
+      @Query("endDate") endDate: string
+  ) {
+      return this.analyticsService.getBookingConversionFunnel(req.organization.id, new Date(startDate), new Date(endDate));
   }
 }

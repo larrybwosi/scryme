@@ -188,6 +188,8 @@ model Organization {
   services          Service[]
   serviceResources  ServiceResource[]
   serviceBookings   ServiceBooking[]
+  bookingRecurrences BookingRecurrence[]
+  staffShifts       StaffShift[]
   bookingVerificationCodes BookingVerificationCode[]
 
   standaloneDevices StandaloneDevice[]
@@ -341,8 +343,13 @@ model Member {
 
   bakeryRoles BakeryBaker[]
 
+  // Cal.com Integration
+  calComId       String?
+  calComApiKey   String? // Encrypted
+
   // Service Module Relations
   serviceAssignments ServiceStaffAssignment[]
+  staffShifts        StaffShift[]
   bookingAssignments BookingStaff[]
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")

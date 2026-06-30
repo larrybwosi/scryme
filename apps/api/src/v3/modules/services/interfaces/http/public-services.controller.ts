@@ -6,15 +6,19 @@ import {
   Param,
   UseInterceptors,
   Req,
+  UseGuards,
 } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
+  ApiBearerAuth,
 } from "@nestjs/swagger";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { ServiceManagementService } from "../../application/services/service-management.service";
 import { BookingService } from "../../application/services/booking.service";
 import { OtpService } from "../../application/services/otp.service";
+import { PrismaService } from "@/prisma/prisma.service";
 import {
   RequestOtpDto,
   VerifyOtpDto,
@@ -29,6 +33,7 @@ export class PublicServicesController {
     private readonly serviceManagement: ServiceManagementService,
     private readonly bookingService: BookingService,
     private readonly otpService: OtpService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -68,5 +73,22 @@ export class PublicServicesController {
         notes: dto.notes,
         customerContact: verification.email || verification.phoneNumber || undefined
     } as any);
+  }
+
+  @Get("me/bookings")
+  @UseGuards(V3AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get my bookings (authenticated customer)" })
+  async getMyBookings(@Req() req: any) {
+      if (!req.customer) {
+          throw new Error("Customer context required");
+      }
+      return this.prisma.serviceBooking.findMany({
+          where: {
+              organizationId: req.organization.id,
+              customerId: req.customer.id
+          },
+          include: { service: true }
+      });
   }
 }
