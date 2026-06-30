@@ -85,10 +85,25 @@ export class RequestB2BQuoteUseCase {
         id: { in: variantIds },
         product: { organizationId },
       },
-      include: {
-        product: true,
+      // ⚡ Bolt Optimization: Replace broad include with targeted select to reduce database I/O
+      // and network payload by only fetching fields required for validation and quote generation.
+      select: {
+        id: true,
+        sku: true,
+        name: true,
+        buyingPrice: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         variantStocks: {
           where: { locationId },
+          select: {
+            id: true,
+            availableStock: true,
+          },
         },
       },
     });
