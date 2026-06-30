@@ -188,4 +188,32 @@ describe("redactSensitiveData", () => {
     expect(redactedDefault["Set-Cookie"]).toBe("[REDACTED]");
     expect(redactedDefault["Proxy-Authorization"]).toBe("[REDACTED]");
   });
+
+  it("should not leak sensitive data beyond maxDepth", () => {
+    const deepData = {
+      l1: {
+        l2: {
+          l3: {
+            l4: {
+              l5: {
+                l6: {
+                  password: "leaked",
+                  array: [1, 2, 3],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    // Default maxDepth is 5. l6 is at depth 6.
+    const redacted = redactSensitiveData(deepData);
+    expect(redacted.l1.l2.l3.l4.l5.l6).toBe("[Object]");
+
+    const withArray = {
+      l1: { l2: { l3: { l4: { l5: { l6: [1, 2, 3] } } } } },
+    };
+    const redactedArray = redactSensitiveData(withArray);
+    expect(redactedArray.l1.l2.l3.l4.l5.l6).toBe("[Array(3)]");
+  });
 });
