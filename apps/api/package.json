@@ -45,6 +45,7 @@
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/mpesa": "workspace:*",
+    "@repo/notifications": "workspace:*",
     "@repo/plane": "workspace:*",
     "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",
