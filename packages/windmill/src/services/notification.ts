@@ -1,6 +1,7 @@
 import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
+import { isSafeUrl } from "./security";
 
 // Register helpers for report construction
 Handlebars.registerHelper("table", function (data: any[], options: any) {
@@ -200,6 +201,11 @@ export class NotificationEngine {
       return;
     }
 
+    // @security Validate URL to prevent SSRF
+    if (!(await isSafeUrl(url))) {
+      throw new Error(`Insecure webhook URL blocked: ${url}`);
+    }
+
     await axios.post(
       url,
       {
@@ -244,6 +250,12 @@ export class NotificationEngine {
       return;
     }
 
+    const url = `https://discord.com/api/v10/channels/${channelId}/messages`;
+    // @security Validate URL to prevent SSRF
+    if (!(await isSafeUrl(url))) {
+      throw new Error(`Insecure Discord URL blocked: ${url}`);
+    }
+
     let embeds = [];
     try {
       // Try to parse finalContent as JSON for complex embeds
@@ -262,7 +274,7 @@ export class NotificationEngine {
     }
 
     await axios.post(
-      `https://discord.com/api/v10/channels/${channelId}/messages`,
+      url,
       {
         embeds,
       },

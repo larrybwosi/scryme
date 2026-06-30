@@ -29,3 +29,8 @@
 **Vulnerability:** The V3 Webhooks module and the shared NotificationEngine were delivering payloads to user-provided URLs without validating if they pointed to internal/private network resources.
 **Learning:** Outbound requests to URLs provided by users or stored in configurations are primary targets for SSRF attacks. Relying on simple string checks for "localhost" is insufficient as attackers can use DNS-resolved IPs (e.g., `127.0.0.1`, `10.0.0.1`) or IPv6 loopback addresses to bypass filters and access internal metadata services or APIs.
 **Prevention:** Always use a robust URL validation utility like `isSafeUrl` (implemented in `@repo/shared/server`) that resolves the hostname via DNS and verifies that the resulting IP address does not fall within private, loopback, or reserved ranges. Apply this validation to all modules performing outbound HTTP(S) requests to external endpoints.
+
+## 2026-06-30 - SSRF Vulnerability in Windmill Notification Service
+**Vulnerability:** The `NotificationEngine` in `@repo/windmill` was delivering payloads to user-provided webhooks and Discord channels without validating if the destination URLs pointed to internal or private network resources.
+**Learning:** Even internal-only or secondary notification services can be leveraged for SSRF if they perform outbound HTTP requests based on organization-level configurations. Relying on "known" platforms like Discord is insufficient if the URL template itself can be manipulated or if generic webhooks are supported.
+**Prevention:** Always apply the `isSafeUrl` validation pattern (which includes protocol restriction and DNS-resolved IP range checks) to all modules performing outbound HTTP(S) requests, ensuring consistent protection across the monorepo.
