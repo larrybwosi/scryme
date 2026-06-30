@@ -129,9 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const userObj = {
-        id: response.member.user.id,
-        name: response.member.user.name,
-        email: response.member.user.email,
+        id: response.member.id,
+        name: response.member.name,
+        email: response.member.email,
         role: response.member.role,
         memberId: response.member.id,
       };
