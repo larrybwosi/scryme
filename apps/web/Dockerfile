@@ -38,8 +38,10 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install all dependencies securely
-RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
+# Install all dependencies securely using cache mounts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
 
 # Copy full source code
 COPY --from=pruner /app/out/full/ .
@@ -54,7 +56,10 @@ ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 RUN pnpm turbo run generate
 
 # Build the Web app
-RUN pnpm turbo build --filter=web...
+# Limit memory and concurrency to reduce resource consumption
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+RUN --mount=type=cache,id=turbo,target=/app/.turbo \
+    pnpm turbo build --filter=web... --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
