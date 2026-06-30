@@ -27,7 +27,7 @@ import {
   emitMemberRoleChanged,
   emitEvent,
 } from "@repo/windmill/server";
-import { createMemberToken } from "@repo/shared/api/v2/services/auth";
+import { createMemberToken } from "@repo/shared/api/v2";
 
 @Injectable()
 export class MemberUseCase {
@@ -473,6 +473,24 @@ export class MemberUseCase {
           organizationId,
           entityId: id,
           entityType: AuditEntityType.MEMBER,
+        },
+        // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+        // and network payload size by excluding the large 'details' JSON field.
+        select: {
+          id: true,
+          organizationId: true,
+          memberId: true,
+          actorName: true,
+          actorEmail: true,
+          action: true,
+          entityType: true,
+          entityId: true,
+          description: true,
+          ipAddress: true,
+          userAgent: true,
+          status: true,
+          severity: true,
+          performedAt: true,
         },
         orderBy: { id: "desc" }, // Switched from createdAt to id as id usually correlates with time and avoids TS error
         skip,

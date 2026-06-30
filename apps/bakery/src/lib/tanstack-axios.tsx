@@ -1,4 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
+import { isTauri } from './sdk';
+import { tauriInvoke } from './tauri-bridge';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ReactNode } from 'react';
@@ -144,22 +146,40 @@ class ApiClient {
     );
   }
 
+  private async request<T = any>(config: { method: string; path: string; data?: any }): Promise<T> {
+    if (isTauri()) {
+       return tauriInvoke<T>('authenticated_api_request', {
+         method: config.method,
+         path: config.path,
+         body: config.data
+       });
+    }
+
+    const { method, path, data } = config;
+    const axiosMethod = method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
+
+    if (axiosMethod === 'get' || axiosMethod === 'delete') {
+      return this.axiosInstance[axiosMethod](path).then(res => res.data);
+    }
+    return this.axiosInstance[axiosMethod](path, data).then(res => res.data);
+  }
+
   // Locations Service
   locations = {
     list: async (organizationId: string) =>
-      this.axiosInstance.get(`/${organizationId}/locations`).then(res => res.data),
+      this.request({ method: 'GET', path: `/${organizationId}/locations` }),
     create: async (organizationId: string, data: Partial<InventoryLocation>): Promise<ApiResponse<InventoryLocation>> =>
-      this.axiosInstance.post(`/${organizationId}/locations`, data).then(res => res.data),
+      this.request({ method: 'POST', path: `/${organizationId}/locations`, data }),
     get: async (organizationId: string, locationId: string): Promise<ApiResponse<InventoryLocation>> =>
-      this.axiosInstance.get(`/${organizationId}/locations/${locationId}`).then(res => res),
+      this.request({ method: 'GET', path: `/${organizationId}/locations/${locationId}` }),
     update: async (
       organizationId: string,
       locationId: string,
       data: Partial<InventoryLocation>
     ): Promise<ApiResponse<InventoryLocation>> =>
-      this.axiosInstance.patch(`/${organizationId}/locations/${locationId}`, data).then(res => res.data),
+      this.request({ method: 'PATCH', path: `/${organizationId}/locations/${locationId}`, data }),
     delete: async (organizationId: string, locationId: string): Promise<ApiResponse<void>> =>
-      this.axiosInstance.delete(`/${organizationId}/locations/${locationId}`).then(res => res.data),
+      this.request({ method: 'DELETE', path: `/${organizationId}/locations/${locationId}` }),
   };
 }
 

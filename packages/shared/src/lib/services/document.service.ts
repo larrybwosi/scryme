@@ -97,23 +97,25 @@ export class DocumentService {
 
     // 4. Send OTP to customer if they have contact info
     if (transaction.customer?.email) {
-        try {
-            await notificationEngine.notify({
-                organizationId,
-                templateName: "DELIVERY_OTP",
-                data: {
-                    otp,
-                    customerName: transaction.customer.name,
-                    orderNumber: transaction.number,
-                },
-                recipients: {
-                    userIds: (transaction.customer as any).userId ? [(transaction.customer as any).userId] : []
-                },
-                channels: ["EMAIL"]
-            });
-        } catch (e) {
-            console.error("Failed to send OTP email:", e);
-        }
+      try {
+        await notificationEngine.notify({
+          organizationId,
+          templateName: "DELIVERY_OTP",
+          data: {
+            otp,
+            customerName: transaction.customer.name,
+            orderNumber: transaction.number,
+          },
+          recipients: {
+            userIds: (transaction.customer as any).userId
+              ? [(transaction.customer as any).userId]
+              : [],
+          },
+          channels: ["EMAIL"],
+        });
+      } catch (e) {
+        console.error("Failed to send OTP email:", e);
+      }
     }
 
     return { otp };
@@ -154,6 +156,7 @@ export class DocumentService {
         },
         location: true,
         payments: true,
+        member: { include: { user: { select: { name: true } } } },
       },
     });
 
@@ -161,7 +164,7 @@ export class DocumentService {
 
     const template = transaction.organization?.settings?.defaultInvoiceTemplate;
     const DocumentComponent = getInvoiceTemplate(template);
-    const documentData = Mappers.toInvoiceData(transaction);
+    const documentData = Mappers.toInvoiceData(transaction as any);
 
     let qrCode = "";
     try {
@@ -233,16 +236,18 @@ export class DocumentService {
         organization: {
           include: {
             settings: true,
+            receiptConfig: true,
           },
         },
         location: true,
         payments: true,
+        member: { include: { user: { select: { name: true } } } },
       },
     });
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const documentData = Mappers.toReceiptData(transaction);
+    const documentData = Mappers.toReceiptData(transaction as any);
     const stream = await DocumentGenerator.renderToStream(
       React.createElement(ReceiptTemplateV2, { data: documentData }),
     );
@@ -279,8 +284,8 @@ export class DocumentService {
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
     const chunks: any[] = [];
     return new Promise((resolve, reject) => {
-      stream.on("data", chunk => chunks.push(chunk));
-      stream.on("error", err => reject(err));
+      stream.on("data", (chunk) => chunks.push(chunk));
+      stream.on("error", (err) => reject(err));
       stream.on("end", () => resolve(Buffer.concat(chunks)));
     });
   }

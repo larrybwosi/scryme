@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["api", "bakery", "crm", "web", "pos"]
+  targets = ["api", "bakery", "crm", "web"]
 }
 
 variable "REPO_LOWER" {
@@ -24,19 +24,6 @@ target "api" {
   tags = [
     "ghcr.io/${REPO_LOWER}/api:latest",
     "ghcr.io/${REPO_LOWER}/api:${VERSION}"
-  ]
-  args = {
-    NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL
-    BETTER_AUTH_SECRET = BETTER_AUTH_SECRET
-  }
-}
-
-target "pos" {
-  context = "."
-  dockerfile = "apps/pos/Dockerfile"
-  tags = [
-    "ghcr.io/${REPO_LOWER}/pos:latest",
-    "ghcr.io/${REPO_LOWER}/pos:${VERSION}"
   ]
   args = {
     NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL

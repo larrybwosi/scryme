@@ -10,10 +10,12 @@ import {
 import { ProductPageClient } from "./product-page-client";
 import { notFound } from "next/navigation";
 
-export default async function ProductPage(props: {
+export default async function ProductPage({
+  params,
+}: {
   params: Promise<{ id: string }>;
 }) {
-  const params = await props.params;
+  const { id } = await params;
   const [
     product,
     categories,
@@ -22,7 +24,7 @@ export default async function ProductPage(props: {
     systemUnits,
     organizationUnits,
   ] = await Promise.all([
-    getProduct(params.id),
+    getProduct(id),
     getCategories(),
     getSuppliers(),
     getInventoryLocations(),

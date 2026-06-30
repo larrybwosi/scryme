@@ -45,6 +45,7 @@ export function BulkRestock({ open, onOpenChange }: BulkRestockProps) {
   const { systemUnits, orgUnits } = useUnits();
   const { mutateAsync: restockInventory, isPending: isSubmitting } = useRestockInventory();
 
+  console.log('ingredients', ingredients);
   const addEntry = () => {
     setEntries([...entries, {
       id: Math.random().toString(36).substr(2, 9),

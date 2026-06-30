@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, forwardRef, Inject } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 import { StockMovementReportService } from "../../v3/modules/inventory/application/services/stock-movement-report.service";
 
 @Injectable()

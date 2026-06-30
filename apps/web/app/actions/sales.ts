@@ -93,6 +93,7 @@ export async function getTransactions(params: {
           user: true,
         },
       },
+      attachments: true,
       _count: {
         select: { items: true },
       },
@@ -369,7 +370,7 @@ export async function addPayment(
 
   // Generation of invoice and receipt on payment
   const { documentService } = await import(
-    "@repo/shared/lib/services/document"
+    "@repo/shared/lib"
   );
   try {
     await Promise.all([
@@ -399,8 +400,26 @@ export async function generateDocumentAction(
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
+  const transaction = await db.transaction.findUnique({
+    where: { id: transactionId, organizationId: auth.organizationId },
+    include: { attachments: true },
+  });
+
+  if (!transaction) throw new Error("Transaction not found");
+
+  // Check if an up-to-date document already exists
+  const existingDoc = transaction.attachments?.find(
+    a =>
+      a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
+      new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+  );
+
+  if (existingDoc) {
+    return { success: true, alreadyExists: true };
+  }
+
   const { documentService } = await import(
-    "@repo/shared/lib/services/document"
+    "@repo/shared/lib"
   );
 
   if (type === "invoice") {
@@ -417,6 +436,7 @@ export async function generateDocumentAction(
     );
   }
 
+  revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${transactionId}`);
   return { success: true };
 }
@@ -543,7 +563,7 @@ export async function createFulfillment(data: {
   revalidatePath("/sales/deliveries");
 
   // Background generation of proof documents
-   const { documentService } = await import('@repo/shared/lib/services/document');
+   const { documentService } = await import('@repo/shared/lib');
   documentService.generateAndAttachProofDocuments({
       transactionId: fulfillment.transactionId,
       fulfillmentId: fulfillment.id,
@@ -570,7 +590,7 @@ export async function createOrderAction(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   if (data.type === "POS_SALE") {
-    const { processSale } = await import("@repo/shared/actions/transaction/process-sale");
+    const { processSale } = await import("@repo/shared/actions");
 
     // Transform OrderForm data to ProcessSaleInput
     const saleData = {
@@ -616,8 +636,8 @@ export async function createOrderAction(data: {
   }
 
   // Import shared logic for QUOTE and SALES_ORDER
-  const { createOrder } = await import("@repo/shared/actions/transaction/orders");
-  const { OrderTransactionStatus } = await import("@repo/shared/lib/validations/order");
+  const { createOrder } = await import("@repo/shared/actions");
+  const { OrderTransactionStatus } = await import("@repo/shared/lib");
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,

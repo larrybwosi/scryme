@@ -126,10 +126,10 @@ export async function createOrder(
     const { customerId, businessAccountId, locationId } = orderData;
 
     // 2. --- Fetch Organization Settings & Data ---
-    const orgData = await db.organization.findUnique({
+    const orgData = (await db.organization.findUnique({
       where: { id: organizationId },
       select: { settings: true },
-    });
+    })) as any;
 
     const inventoryPolicy = orgData?.settings?.inventoryPolicy ?? "FEFO";
     const allowNegativeStock = orgData?.settings?.negativeStock ?? false;
@@ -219,7 +219,7 @@ export async function createOrder(
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
-          const variant = variantsMap.get(item.variantId);
+          const variant = allVariants.find((v) => v.id === item.variantId) as any;
           if (!variant) {
             throw new Error(
               `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
@@ -690,10 +690,10 @@ export async function confirmOrder(
 
   try {
     // 1. Fetch Organization Settings for Inventory Policy (FEFO vs LIFO)
-    const orgData = await db.organization.findUnique({
+    const orgData = (await db.organization.findUnique({
       where: { id: organizationId },
       select: { settings: true },
-    });
+    })) as any;
     const inventoryPolicy = orgData?.settings?.inventoryPolicy ?? "FEFO";
 
     const confirmedTransaction = await db.$transaction(
@@ -807,7 +807,7 @@ export async function confirmOrder(
         for (const [variantId, totalBaseNeeded] of Array.from(
           baseQuantitiesToCommit.entries(),
         )) {
-          const pool = stockPoolMap.get(variantId);
+          const pool = stockPoolMap.get(variantId) as any;
           const variantName =
             order.items.find((i) => i.variantId === variantId)?.variantName ||
             "Unknown";
@@ -1110,7 +1110,7 @@ export async function cancelOrder(
           for (const [variantId, quantity] of Array.from(
             variantBaseQuantities.entries(),
           )) {
-            const stock = stockMap.get(variantId);
+            const stock = stockMap.get(variantId) as any;
             if (!stock) {
               console.warn(
                 `Stock record not found for variant ${variantId} during cancellation.`,

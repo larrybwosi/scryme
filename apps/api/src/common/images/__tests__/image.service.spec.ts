@@ -16,6 +16,7 @@ vi.mock("@repo/shared/server", () => ({
     data: Buffer.from("optimized"),
     info: { format: "webp" },
   }),
+  isSafeUrl: vi.fn().mockResolvedValue(true),
 }));
 
 describe("ImageService", () => {

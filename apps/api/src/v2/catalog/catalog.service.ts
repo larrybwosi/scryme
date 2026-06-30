@@ -5,9 +5,10 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../redis/redis.service";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { SupplierService } from "@repo/suppliers/server";
+import type { V2ApiContext } from "@repo/shared/api/v2";
+import { SupplierService } from "@repo/shared/suppliers/server";
 import { ProductType } from "@repo/db";
+import { ApiRealtimeService } from "../../common/services/realtime.service";
 
 @Injectable()
 export class CatalogService {
@@ -15,6 +16,7 @@ export class CatalogService {
     private readonly prisma: PrismaService,
     private readonly supplierService: SupplierService,
     private readonly redis: RedisService,
+    private readonly realtime: ApiRealtimeService,
   ) {}
 
   async getProducts(ctx: V2ApiContext, query: any) {
@@ -218,9 +220,17 @@ export class CatalogService {
 
   async deleteProduct(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.product.delete({
+    const result = await this.prisma.client.product.delete({
       where: { id, organizationId },
     });
+
+    await this.realtime.publish(
+      `organization:${organizationId}:inventory`,
+      "product-deleted",
+      { productId: id },
+    );
+
+    return result;
   }
 
   async getCategories(ctx: V2ApiContext) {

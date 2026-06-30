@@ -6,11 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Key, Globe, Cpu, Loader2, ArrowRight, Save, AlertCircle, ShieldCheck, Activity } from 'lucide-react';
+import { Key, Globe, Cpu, Loader2, ArrowRight, Save, AlertCircle, ShieldCheck, Activity, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { tauriInvoke } from '@/lib/tauri-bridge';
 import sdk, { isTauri } from '@/lib/sdk';
+import { sanitizeApiUrl } from '@/utils/url';
 import { Separator } from '@repo/ui/components/ui/separator';
+import { resetBakeryDevice } from '@/utils/reset';
 
 export default function SetupPage() {
   const navigate = useNavigate();
@@ -47,16 +49,19 @@ export default function SetupPage() {
     setIsProvisioning(true);
     setProvisionError(null);
     try {
+      const sanitizedApiUrl = showApiUrl ? sanitizeApiUrl(apiUrl) : null;
+
       await tauriInvoke('provision_device_with_token', {
         setupToken,
         macAddress: hardwareInfo?.macAddress || null,
         serialNumber: hardwareInfo?.serialNumber || null,
-        apiUrlOverride: showApiUrl ? apiUrl : null,
+        apiUrlOverride: sanitizedApiUrl,
       });
 
       if (showApiUrl && apiUrl) {
-        sdk.client.setBaseURL(apiUrl);
-        localStorage.setItem('bakery_api_url', apiUrl);
+        const finalUrl = sanitizedApiUrl || sanitizeApiUrl(apiUrl);
+        sdk.client.setBaseURL(finalUrl);
+        localStorage.setItem('bakery_api_url', finalUrl);
       }
 
       const newKey = await tauriInvoke<string>('get_provisioned_api_key');
@@ -201,6 +206,17 @@ export default function SetupPage() {
                   </>
                 )}
               </Button>
+              {isTauri() && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={resetBakeryDevice}
+                  className="w-full h-10 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 gap-2"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Clear Data & Reset Device
+                </Button>
+              )}
             </CardFooter>
           </form>
         </Card>

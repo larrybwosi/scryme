@@ -18,7 +18,7 @@ import {
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
 
-@ApiTags("Finance / Petty Cash")
+@ApiTags("V3 Finance")
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @Controller("finance/petty-cash")

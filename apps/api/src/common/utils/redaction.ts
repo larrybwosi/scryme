@@ -1,3 +1,75 @@
+const DEFAULT_SENSITIVE_KEYS = [
+  "password",
+  "pin",
+  "token",
+  "clientSecret",
+  "client_secret",
+  "secret",
+  "apiKey",
+  "api_key",
+  "access_token",
+  "accessToken",
+  "refresh_token",
+  "refreshToken",
+  "otp",
+  "passcode",
+  "cvv",
+  "cvc",
+  "cardNumber",
+  "card_number",
+  "ssn",
+  "dob",
+  "birthday",
+  "authorization",
+  "x-api-key",
+  "x-member-token",
+  "x-auth-token",
+  "cookie",
+  "set-cookie",
+  "signature",
+  "mpesaPassKey",
+  "cardId",
+  "card_id",
+  "accountNumber",
+  "account_number",
+  "secret_key",
+  "access_key",
+  "client_id",
+  "clientId",
+  "mpesaConsumerKey",
+  "mpesaConsumerSecret",
+  "consumerKey",
+  "consumerSecret",
+  "privateKey",
+  "private_key",
+  "apiSecret",
+  "api_secret",
+  "botToken",
+  "bot_token",
+  "webhookUrl",
+  "webhook_url",
+  "passwordConfirmation",
+  "password_confirmation",
+  "idToken",
+  "id_token",
+  "sessionToken",
+  "session_token",
+  "mpesaInitiatorPass",
+  "pinHash",
+  "pin_hash",
+  "webhookSecret",
+  "webhook_secret",
+  "bearer",
+  "credentials",
+  "proxy-authorization",
+  "proxy-authenticate",
+  "www-authenticate",
+];
+
+const DEFAULT_SENSITIVE_KEYS_SET = new Set(
+  DEFAULT_SENSITIVE_KEYS.map((key) => key.toLowerCase()),
+);
+
 /**
  * Recursively redacts sensitive data from an object.
  *
@@ -7,73 +79,40 @@
  *
  * @security This utility is critical for preventing accidental exposure of
  * credentials, secrets, and PII in server logs and external monitoring tools.
+ * This implementation is case-insensitive and uses a Set for O(1) lookups.
  */
 export function redactSensitiveData(
   data: any,
-  sensitiveKeys: string[] = [
-    "password",
-    "pin",
-    "token",
-    "clientSecret",
-    "client_secret",
-    "secret",
-    "apiKey",
-    "api_key",
-    "access_token",
-    "accessToken",
-    "refresh_token",
-    "refreshToken",
-    "otp",
-    "passcode",
-    "cvv",
-    "cvc",
-    "cardNumber",
-    "card_number",
-    "ssn",
-    "dob",
-    "birthday",
-    "authorization",
-    "x-api-key",
-    "x-member-token",
-    "cookie",
-    "signature",
-    "mpesaPassKey",
-    "cardId",
-    "card_id",
-    "accountNumber",
-    "account_number",
-    "secret_key",
-    "access_key",
-    "client_id",
-    "clientId",
-    "mpesaConsumerKey",
-    "mpesaConsumerSecret",
-    "consumerKey",
-    "consumerSecret",
-    "privateKey",
-    "private_key",
-    "apiSecret",
-    "api_secret",
-    "botToken",
-    "bot_token",
-    "webhookUrl",
-    "webhook_url",
-    "passwordConfirmation",
-    "password_confirmation",
-    "idToken",
-    "id_token",
-    "sessionToken",
-    "session_token",
-    "mpesaInitiatorPass",
-    "pinHash",
-    "pin_hash",
-    "webhookSecret",
-    "webhook_secret",
-  ],
+  sensitiveKeys: string[] = DEFAULT_SENSITIVE_KEYS,
   depth = 0,
   maxDepth = 5,
 ): any {
-  if (data === null || data === undefined || depth > maxDepth) {
+  // Performance optimization: Use pre-calculated Set if using default keys.
+  const sensitiveKeysSet =
+    sensitiveKeys === DEFAULT_SENSITIVE_KEYS
+      ? DEFAULT_SENSITIVE_KEYS_SET
+      : new Set(sensitiveKeys.map((key) => key.toLowerCase()));
+
+  return redactRecursive(data, sensitiveKeysSet, depth, maxDepth);
+}
+
+function redactRecursive(
+  data: any,
+  sensitiveKeysSet: Set<string>,
+  depth: number,
+  maxDepth: number,
+): any {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (depth > maxDepth) {
+    if (Array.isArray(data)) {
+      return `[Array(${data.length})]`;
+    }
+    if (typeof data === "object" && data !== null) {
+      return "[Object]";
+    }
     return data;
   }
 
@@ -81,7 +120,7 @@ export function redactSensitiveData(
   if (data instanceof Error) {
     const redactedError: any = {
       name: data.name,
-      message: data.message, // Consider if message needs string-based redaction
+      message: data.message,
       stack: data.stack,
     };
 
@@ -90,12 +129,12 @@ export function redactSensitiveData(
     for (const key of allProps) {
       if (["name", "message", "stack"].includes(key)) continue;
 
-      if (sensitiveKeys.includes(key)) {
+      if (sensitiveKeysSet.has(key.toLowerCase())) {
         redactedError[key] = "[REDACTED]";
       } else {
-        redactedError[key] = redactSensitiveData(
+        redactedError[key] = redactRecursive(
           (data as any)[key],
-          sensitiveKeys,
+          sensitiveKeysSet,
           depth + 1,
           maxDepth,
         );
@@ -109,7 +148,7 @@ export function redactSensitiveData(
       return `[Array of ${data.length} items]`;
     }
     return data.map((item) =>
-      redactSensitiveData(item, sensitiveKeys, depth + 1, maxDepth),
+      redactRecursive(item, sensitiveKeysSet, depth + 1, maxDepth),
     );
   }
 
@@ -117,12 +156,12 @@ export function redactSensitiveData(
     const redactedData: any = {};
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
-        if (sensitiveKeys.includes(key)) {
+        if (sensitiveKeysSet.has(key.toLowerCase())) {
           redactedData[key] = "[REDACTED]";
         } else {
-          redactedData[key] = redactSensitiveData(
+          redactedData[key] = redactRecursive(
             data[key],
-            sensitiveKeys,
+            sensitiveKeysSet,
             depth + 1,
             maxDepth,
           );
