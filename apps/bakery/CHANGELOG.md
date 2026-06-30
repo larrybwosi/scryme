@@ -1,5 +1,11 @@
 # bakery
 
+## 8.1.0
+
+### Minor Changes
+
+- a398a08: bump
+
 ## 8.0.0
 
 ### Major Changes
