@@ -149,6 +149,11 @@ export class CreateBookingDto {
   @ApiPropertyOptional({ description: "Custom fields", type: 'object' })
   @IsOptional()
   customFields?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: "Recurrence rule (RRULE string)" })
+  @IsOptional()
+  @IsString()
+  recurrenceRule?: string;
 }
 
 export class CompleteBookingDto {

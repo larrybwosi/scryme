@@ -96,4 +96,20 @@ export class ServiceManagementService {
         where: { organizationId: orgId }
     });
   }
+
+  async registerCustomerApp(orgId: string, name: string) {
+      const crypto = require('crypto');
+      const clientId = `client_${crypto.randomBytes(8).toString('hex')}`;
+      const clientSecret = crypto.randomBytes(32).toString('hex');
+
+      return this.prisma.v3ApiClient.create({
+          data: {
+              organizationId: orgId,
+              name,
+              clientId,
+              clientSecret, // In production, this should be hashed
+              scopes: ["read", "write", "customer"],
+          }
+      });
+  }
 }
