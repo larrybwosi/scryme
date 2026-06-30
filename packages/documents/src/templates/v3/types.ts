@@ -70,4 +70,12 @@ export interface V3DocumentData {
   footerWebsite?: string;
 
   signature?: V3Signature;
+
+  // KRA Compliance
+  kraPin?: string;
+  kraControlCode?: string;
+  kraReceiptNumber?: string;
+
+  // Branding
+  primaryColor?: string;
 }
