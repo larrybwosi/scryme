@@ -5,7 +5,7 @@ import { HttpStatus } from "@nestjs/common";
 // Mocks
 vi.mock("@repo/shared/storage", () => ({
   storageService: {
-    getSignedUrl: vi.fn().mockResolvedValue("http://signed.url"),
+    getSignedUrl: vi.fn().mockResolvedValue("https://safe-url.com/file.pdf"),
   },
 }));
 
@@ -41,7 +41,7 @@ describe("ShortUrlController", () => {
       },
     };
     mockRedis = {
-      get: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
       setex: vi.fn(),
     };
     mockImageService = {
@@ -58,11 +58,16 @@ describe("ShortUrlController", () => {
       fileName: "test.pdf",
       isPublic: true,
     };
-    mockRedis.get.mockResolvedValueOnce(mockAttachment); // Metadata cache
-    mockRedis.get.mockResolvedValueOnce({
+
+    mockRedis.get.mockImplementation((key: string) => {
+      if (key === "attachment:short123") return Promise.resolve(mockAttachment);
+      if (key === "org_settings:org-1") return Promise.resolve({ forcePrivateAttachments: false });
+      if (key === "file_content:att-1") return Promise.resolve({
         content: Buffer.from("cached content").toString("base64"),
         mimeType: "application/pdf"
-    }); // File content cache
+      });
+      return Promise.resolve(null);
+    });
 
     const res = {
       header: vi.fn(),

@@ -377,7 +377,7 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             <Text style={styles.clientTitle}>Director</Text>
 
             <Text style={styles.infoLabel}>Address</Text>
-            <Text style={styles.customerAddress}>
+            <Text style={styles.infoValue}>
               {customer.address || "Example Street, City 55555, State"}
             </Text>
 

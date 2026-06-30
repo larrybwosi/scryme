@@ -350,7 +350,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               width: 220,
               borderBottomWidth: 1,
               borderBottomColor: LINE_COLOR,
-              my: 4,
+              marginVertical: 4,
             }}
           />
 
@@ -364,7 +364,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               width: 220,
               borderBottomWidth: 1,
               borderBottomColor: LINE_COLOR,
-              my: 4,
+              marginVertical: 4,
             }}
           />
         </View>

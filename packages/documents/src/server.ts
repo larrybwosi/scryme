@@ -448,7 +448,7 @@ export const Mappers = {
       org = tx.organization;
       config = type === 'invoice' ? org?.invoiceConfig : org?.receiptConfig;
 
-      items = (tx.items || []).map(item => ({
+      items = (tx.items || []).map((item: any) => ({
         name: item.productName || 'Item',
         description: item.variantName || '',
         quantity: Number(item.quantity || 0),
@@ -486,7 +486,7 @@ export const Mappers = {
       org = inv.organization;
       config = type === 'invoice' ? org?.invoiceConfig : org?.receiptConfig;
 
-      items = (inv.items || []).map(item => ({
+      items = (inv.items || []).map((item: any) => ({
         name: item.itemName || 'Item',
         description: '',
         quantity: Number(item.quantity || 0),
