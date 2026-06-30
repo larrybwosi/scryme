@@ -1,5 +1,11 @@
 # crm
 
+## 6.1.0
+
+### Minor Changes
+
+- a398a08: bump
+
 ## 6.0.0
 
 ### Major Changes
