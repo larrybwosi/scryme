@@ -9,6 +9,11 @@ vi.mock("@repo/shared/storage", () => ({
   },
 }));
 
+vi.mock("@repo/shared/server", () => ({
+  isSafeUrl: vi.fn().mockResolvedValue(true),
+  optimizeImage: vi.fn(),
+}));
+
 vi.mock("axios", () => ({
   default: {
     get: vi.fn().mockResolvedValue({
