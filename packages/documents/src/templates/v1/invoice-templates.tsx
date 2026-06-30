@@ -39,6 +39,15 @@ export function getInvoiceTemplate(template?: string | null) {
   if (template && template in INVOICE_TEMPLATES) {
     return INVOICE_TEMPLATES[template as InvoiceTemplateType];
   }
+
+  // Support for V3 templates via registry
+  const { isV3Template } = require('../../utils');
+  if (isV3Template(template)) {
+    const { getTemplateById } = require('../../registry');
+    const v3Template = getTemplateById(template!);
+    if (v3Template) return v3Template.component;
+  }
+
   return INVOICE_TEMPLATES.default;
 }
 
