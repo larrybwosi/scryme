@@ -29,3 +29,8 @@
 **Vulnerability:** The V3 Webhooks module and the shared NotificationEngine were delivering payloads to user-provided URLs without validating if they pointed to internal/private network resources.
 **Learning:** Outbound requests to URLs provided by users or stored in configurations are primary targets for SSRF attacks. Relying on simple string checks for "localhost" is insufficient as attackers can use DNS-resolved IPs (e.g., `127.0.0.1`, `10.0.0.1`) or IPv6 loopback addresses to bypass filters and access internal metadata services or APIs.
 **Prevention:** Always use a robust URL validation utility like `isSafeUrl` (implemented in `@repo/shared/server`) that resolves the hostname via DNS and verifies that the resulting IP address does not fall within private, loopback, or reserved ranges. Apply this validation to all modules performing outbound HTTP(S) requests to external endpoints.
+
+## 2026-06-30 - Sensitive Data Leakage at Redaction Depth Limit
+**Vulnerability:** The `redactSensitiveData` utility returned raw data when the recursion depth exceeded `maxDepth`. This allowed sensitive keys nested deeper than the limit to be leaked in plaintext to logs.
+**Learning:** Recursion limits in security-sensitive utilities must fail closed or return a safe placeholder. Returning the original data as a fallback bypasses the security purpose of the utility.
+**Prevention:** Always return a redaction placeholder or a truncated/safe representation when a recursion or iteration limit is reached in data processing utilities designed for security.
