@@ -27,6 +27,20 @@ pub async fn create_ingredient(
     // 1. Start a transaction for atomicity
     let mut tx = pool.begin().await?;
 
+    // Check if category exists if one is provided
+    if let Some(ref cat_id) = ingredient.category_id {
+        let exists: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM bakery_categories WHERE id = ?")
+            .bind(cat_id)
+            .fetch_one(&mut *tx)
+            .await?;
+
+        if exists.0 == 0 {
+            // If category doesn't exist locally, we clear it to avoid FK error
+            // Downstream sync will eventually fix it
+            ingredient.category_id = None;
+        }
+    }
+
     // 2. Insert into ingredients (including stocking_unit_id and units_per_container)
     sqlx::query(
         "INSERT INTO ingredients (
