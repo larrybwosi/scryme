@@ -14,9 +14,7 @@ const commonOptions: Options = {
     "dotenv",
     "pg",
     "@prisma/adapter-pg",
-    "@prisma/client-runtime-utils",
-    "../generated/client",
-    "../generated/browser"
+    "@prisma/client-runtime-utils"
   ],
 };
 
