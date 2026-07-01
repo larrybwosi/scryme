@@ -914,10 +914,21 @@ export class BakeryService {
   }
 
   async addBaker(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
     const settings = await this.getSettings(ctx);
+    const { memberId, specialties, isActive } = data;
+
+    // Security: Verify that the member belongs to the same organization
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+    });
+    if (!member) throw new BadRequestException('Member not found in this organization');
+
     return this.prisma.client.bakeryBaker.create({
       data: {
-        ...data,
+        memberId,
+        specialties,
+        isActive: isActive !== undefined ? isActive : true,
         bakerySettingsId: settings.id,
       },
     });
@@ -930,9 +941,14 @@ export class BakeryService {
     });
     if (!baker) throw new NotFoundException('Baker not found');
 
+    const { specialties, isActive } = data;
+
     return this.prisma.client.bakeryBaker.update({
       where: { id },
-      data,
+      data: {
+        specialties,
+        isActive: isActive !== undefined ? isActive : undefined,
+      },
     });
   }
 
