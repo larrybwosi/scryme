@@ -100,7 +100,22 @@ export function EnhancedDocumentSettings({
     }
   };
 
-  const getMockDataForType = (type: DocumentType) => {
+  const getMockDataForType = (type: DocumentType, templateId?: string) => {
+    const { isV3Template } = require("@repo/documents/server");
+    const isV3 = isV3Template(templateId);
+
+    if (isV3 && (type === "INVOICE" || type === "RECEIPT")) {
+      const { getMockV3Data } = require("@repo/documents/server");
+      return getMockV3Data(
+        type === "INVOICE" ? "invoice" : "receipt",
+        {
+          ...organization,
+          invoiceConfig,
+          receiptConfig,
+        }
+      );
+    }
+
     let config: any;
     if (type === "INVOICE") config = invoiceConfig;
     else if (type === "RECEIPT") config = receiptConfig;
@@ -462,7 +477,7 @@ export function EnhancedDocumentSettings({
                   className="border-none"
                   showToolbar={true}>
                   <previewTemplate.component
-                    data={getMockDataForType(selectedType)}
+                    data={getMockDataForType(selectedType, previewTemplate.id)}
                     qrCode="https://via.placeholder.com/150"
                   />
                 </PDFViewer>
