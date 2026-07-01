@@ -182,6 +182,8 @@ export interface ReceiptConfig {
   showPaymentMethod: boolean;
   showItemSku: boolean;
   showItemNotes: boolean;
+  showItemDiscounts: boolean;
+  showItemTax: boolean;
 
   // Codes
   showBarcode: boolean;
@@ -190,7 +192,7 @@ export interface ReceiptConfig {
   qrCodeCustomUrl?: string;
 
   // Visuals
-  template: 'standard' | 'minimal' | 'modern';
+  template: 'standard' | 'minimal' | 'modern' | 'fine-dining' | 'pharmacy' | 'retail' | 'wholesale';
   showBorder: boolean;
   borderColor?: string;
 
@@ -216,12 +218,44 @@ export interface ReceiptConfig {
   showLegalDisclaimer: boolean;
   legalDisclaimerText: string;
 
+  // Enterprise Custom Fields
+  customFields: { label: string; value: string; enabled: boolean }[];
+  showLocationHeader: boolean;
+  locationNameOverride?: string;
+
   // Localization
   currency: string;
   locale: string;
   currencyPosition: 'before' | 'after';
   thousandsSeparator: string;
   decimalSeparator: string;
+  labels: {
+    receipt: string;
+    date: string;
+    cashier: string;
+    customer: string;
+    item: string;
+    qty: string;
+    price: string;
+    total: string;
+    subtotal: string;
+    tax: string;
+    discount: string;
+    savings: string;
+    paymentMethod: string;
+    change: string;
+    servedBy: string;
+    vat: string;
+    tin: string;
+    type: string;
+    branch: string;
+    reg: string;
+    amount: string;
+    items: string;
+  };
+
+  // Section Reordering
+  sectionOrder: string[];
 
   // Print Automation (High-Traffic)
   printCopies: number;
@@ -684,6 +718,8 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   showPaymentMethod: true,
   showItemSku: false,
   showItemNotes: true,
+  showItemDiscounts: false,
+  showItemTax: false,
 
   // Codes
   showBarcode: true,
@@ -718,12 +754,46 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   showLegalDisclaimer: false,
   legalDisclaimerText: '',
 
+  // Enterprise Custom Fields
+  customFields: [
+    { label: 'KRA PIN', value: '', enabled: false },
+    { label: 'KRA ETR', value: '', enabled: false },
+  ],
+  showLocationHeader: false,
+
   // Localization
   currency: 'USD',
   locale: 'en-US',
   currencyPosition: 'before',
   thousandsSeparator: ',',
   decimalSeparator: '.',
+  labels: {
+    receipt: 'RECEIPT',
+    date: 'DATE',
+    cashier: 'CASHIER',
+    customer: 'CUSTOMER',
+    item: 'ITEM',
+    qty: 'QTY',
+    price: 'PRICE',
+    total: 'TOTAL',
+    subtotal: 'SUBTOTAL',
+    tax: 'TAX',
+    discount: 'DISCOUNT',
+    savings: 'SAVINGS',
+    paymentMethod: 'PAYMENT METHOD',
+    change: 'CHANGE',
+    servedBy: 'SERVED BY',
+    vat: 'VAT',
+    tin: 'TIN',
+    type: 'TYPE',
+    branch: 'BRANCH',
+    reg: 'REG',
+    amount: 'AMT',
+    items: 'ITEMS',
+  },
+
+  // Section Reordering
+  sectionOrder: ['header', 'meta', 'items', 'totals', 'footer', 'codes'],
 
   // Print Automation
   printCopies: 1,
