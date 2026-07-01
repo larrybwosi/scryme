@@ -29,6 +29,9 @@ describe("InventoryService", () => {
                 updateMany: vi.fn(),
                 deleteMany: vi.fn(),
                 count: vi.fn(),
+                fields: {
+                  reorderPoint: "reorderPoint",
+                },
               },
             },
           },
@@ -73,6 +76,27 @@ describe("InventoryService", () => {
       expect(item.availableStock).toBe(10);
       expect(item.isLowStock).toBe(false);
     });
+
+    it("should filter by low stock at the database level", async () => {
+      const ctx = { organizationId: "org-1" } as any;
+      const query = { lowStock: "true" };
+
+      (prisma.client.productVariantStock.findMany as any).mockResolvedValue([]);
+      (prisma.client.productVariantStock.count as any).mockResolvedValue(0);
+
+      await service.getInventory(ctx, query);
+
+      expect(prisma.client.productVariantStock.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            availableStock: {
+              lte: expect.anything(),
+            },
+          }),
+        }),
+      );
+    });
+
   describe("getInventoryItem (IDOR Check)", () => {
     it("should throw NotFoundException if item belongs to a different organization", async () => {
       const ctx = { organizationId: "my-org" } as any;
