@@ -7,6 +7,7 @@ FROM node:22-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm safely via npm (aligned with version 10.34.1)
@@ -84,6 +85,9 @@ RUN chmod +x ./entrypoint.sh
 USER nextjs
 
 EXPOSE 3001
+
+HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/ || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "apps/crm/server.js"]
