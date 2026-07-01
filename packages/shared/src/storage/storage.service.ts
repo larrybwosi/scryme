@@ -2,6 +2,7 @@ import { StorageProvider } from "./types";
 import { SanityStorageProvider } from "./sanity.provider";
 import { RustfsStorageProvider } from "./rustfs.provider";
 import { env } from "@repo/env";
+import { isSafeUrl } from "../node-utils";
 
 export class StorageService implements StorageProvider {
   private provider: StorageProvider;
@@ -104,6 +105,12 @@ export class StorageService implements StorageProvider {
   }
 
   async getDownloadStream(url: string) {
+    // @security SSRF Protection: Validate the URL before making any outbound request,
+    // even if handled by a provider implementation.
+    if (!(await isSafeUrl(url))) {
+      throw new Error("Potentially unsafe download URL blocked");
+    }
+
     if (this.provider.getDownloadStream) {
       return this.provider.getDownloadStream(url);
     }

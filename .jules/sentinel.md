@@ -38,3 +38,8 @@
 **Vulnerability:** The `redactSensitiveData` utility returned raw data when the recursion depth exceeded `maxDepth`. This allowed sensitive keys nested deeper than the limit to be leaked in plaintext to logs.
 **Learning:** Recursion limits in security-sensitive utilities must fail closed or return a safe placeholder. Returning the original data as a fallback bypasses the security purpose of the utility.
 **Prevention:** Always return a redaction placeholder or a truncated/safe representation when a recursion or iteration limit is reached in data processing utilities designed for security.
+
+## 2026-07-01 - SSRF Vulnerability in Storage Download Streams
+**Vulnerability:** `StorageService.getDownloadStream` performed outbound requests to arbitrary URLs using a default `axios` implementation without validating if the URLs pointed to internal or private resources.
+**Learning:** Even internal helper methods in storage services can be vectors for SSRF if they perform outbound requests based on URLs that might originate from external data sources (like attachment records). Security checks must be applied at the common entry point of such methods to ensure all execution paths (provider-specific or default) are covered.
+**Prevention:** Always validate outbound URLs using a robust utility like `isSafeUrl` before performing any network requests. For complex services with multiple providers, place the validation at the highest possible level (e.g., the service entry point) to ensure consistent protection across all implementations.
