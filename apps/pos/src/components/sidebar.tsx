@@ -187,8 +187,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             ];
             if (isStandalone && excludedInStandalone.includes(item.id)) return null;
 
-            const restaurantOnly = ['kitchen-display', 'hub-overview', 'manage-table'];
-            if (businessMode !== 'restaurant' && restaurantOnly.includes(item.id)) return null;
+            if (businessMode !== 'restaurant' && (item.id === 'hub-overview' || item.id === 'manage-table')) return null;
+            if (!['restaurant', 'bar'].includes(businessMode) && item.id === 'kitchen-display') return null;
 
             return (
               <Button

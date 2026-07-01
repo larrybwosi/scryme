@@ -37,7 +37,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       const qrData = JSON.stringify({
         orderNumber: order.orderNumber,
         total: order.total,
-        date: format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm'),
+        date: format(new Date(order.createdAt), "dd MMM yyyy 'at' hh:mm a"),
       });
 
       QRCode.toDataURL(qrData, { width: 200, margin: 1 })
@@ -128,8 +128,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             <Badge className={cn('capitalize', getStatusColor(order.status))}>{order.status}</Badge>
           </DialogTitle>
           <DialogDescription>
-            Order placed on {new Date(order.createdAt).toLocaleDateString()} at{' '}
-            {new Date(order.createdAt).toLocaleTimeString()}
+            Order placed on {format(new Date(order.createdAt), "dd MMM yyyy 'at' hh:mm a")}
           </DialogDescription>
         </DialogHeader>
 
