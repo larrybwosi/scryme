@@ -8,6 +8,7 @@ const tabs = [
   { label: "Overview", href: "/finance" },
   { label: "Expenses", href: "/finance/expenses" },
   { label: "Purchases", href: "/finance/purchases" },
+  { label: "Petty Cash", href: "/finance/petty-cash" },
   { label: "Utilities", href: "/finance/utilities" },
   { label: "Approvals", href: "/finance/approvals" },
   { label: "Settings", href: "/finance/settings" },
