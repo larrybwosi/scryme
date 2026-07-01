@@ -63,9 +63,9 @@ export class PrismaOrderRepository implements IOrderRepository {
     };
   }
 
-  async findById(id: string): Promise<Order | null> {
-    const o = await this.prisma.client.transaction.findUnique({
-      where: { id },
+  async findById(id: string, organizationId: string): Promise<Order | null> {
+    const o = await this.prisma.client.transaction.findFirst({
+      where: { id, organizationId },
       select: {
         id: true,
         number: true,
