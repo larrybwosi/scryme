@@ -205,20 +205,20 @@ export function PettyCashClient({
                 <div>
                   <p className="text-[10px] font-bold uppercase text-zinc-400 mb-1">Current Balance</p>
                   <p className="text-2xl font-bold text-zinc-900">
-                    {fund.currencyCode} {Number(fund.amount).toLocaleString()}
+                    {fund.currencyCode} {Number(fund.amount || 0).toLocaleString()}
                   </p>
                 </div>
                 <Badge variant="secondary" className="bg-white border-zinc-200">
-                  Float: {Number(fund.floatAmount).toLocaleString()}
+                  Float: {Number(fund.floatAmount || 0).toLocaleString()}
                 </Badge>
               </div>
               <div className="h-1.5 w-full bg-zinc-200 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     "h-full transition-all",
-                    (fund.amount / fund.floatAmount) < 0.2 ? "bg-red-500" : "bg-[#34A853]"
+                    (Number(fund.amount || 0) / Number(fund.floatAmount || 1)) < 0.2 ? "bg-red-500" : "bg-[#34A853]"
                   )}
-                  style={{ width: `${Math.min(100, (fund.amount / fund.floatAmount) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (Number(fund.amount || 0) / Number(fund.floatAmount || 1)) * 100)}%` }}
                 />
               </div>
             </div>
@@ -420,7 +420,7 @@ export function PettyCashClient({
                       "text-sm font-bold",
                       tx.type === "TOP_UP" ? "text-green-600" : "text-red-600"
                     )}>
-                      {tx.type === "TOP_UP" ? "+" : "-"}{selectedFund?.currencyCode} {Number(tx.amount).toLocaleString()}
+                      {tx.type === "TOP_UP" ? "+" : "-"}{selectedFund?.currencyCode} {Number(tx.amount || 0).toLocaleString()}
                     </div>
                   </div>
                 ))}

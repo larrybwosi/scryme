@@ -24,7 +24,8 @@ export default async function PettyCashPage() {
     getInventoryLocations(),
   ]);
 
-  const staff = staffResponse.success ? staffResponse.data : [];
+  const staff =
+    staffResponse.success && staffResponse.data ? staffResponse.data : [];
 
   return (
     <div className="w-full space-y-6">
