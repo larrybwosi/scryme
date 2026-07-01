@@ -4,7 +4,7 @@
   "globalPassThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET", "NEXT_PUBLIC_API_URL"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
@@ -22,12 +22,15 @@
       "cache": false
     },
     "dev": {
+      "dependsOn": ["generate"],
       "cache": false,
       "persistent": true
     },
     "generate": {
       "dependsOn": ["^generate"],
-      "cache": false
+      "inputs": ["prisma/schema/**", "prisma.config.ts"],
+      "outputs": ["generated/**"],
+      "cache": true
     },
     "lint": {
       "dependsOn": ["^generate"]
