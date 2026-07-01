@@ -3,6 +3,27 @@ import { RustfsStorageProvider } from './rustfs.provider';
 import { SanityStorageProvider } from './sanity.provider';
 import { StorageService } from './storage.service';
 import * as S3 from '@aws-sdk/client-s3';
+import { isSafeUrl } from '../node-utils';
+import axios from 'axios';
+
+// Mock env
+vi.mock('@repo/env', () => ({
+  env: new Proxy({}, {
+    get: (target, prop) => process.env[prop as string] || (prop === 'RUSTFS_REGION' ? 'us-east-1' : undefined)
+  })
+}));
+
+// Mock node-utils
+vi.mock('../node-utils', () => ({
+  isSafeUrl: vi.fn().mockResolvedValue(true),
+}));
+
+// Mock axios
+vi.mock('axios', () => ({
+  default: {
+    get: vi.fn().mockResolvedValue({ data: 'mock stream' }),
+  },
+}));
 
 // Mock AWS SDK
 vi.mock('@aws-sdk/client-s3', () => {
@@ -143,6 +164,42 @@ describe('Storage Providers', () => {
         // Test with prefix
         const res2 = await service.upload(mockFile, 'dealio-file2.txt', 'text/plain');
         expect(res2.id).toBe('dealio-file2.txt');
+    });
+
+    describe('getDownloadStream', () => {
+      it('should block unsafe URLs', async () => {
+        const service = new StorageService();
+        (isSafeUrl as any).mockResolvedValueOnce(false);
+
+        await expect(service.getDownloadStream('http://internal-service')).rejects.toThrow(
+          'Potentially unsafe download URL blocked',
+        );
+        expect(axios.get).not.toHaveBeenCalled();
+      });
+
+      it('should block unsafe URLs even if provider has implementation', async () => {
+        const service = new StorageService();
+        // Force provider to have getDownloadStream
+        (service as any).provider.getDownloadStream = vi.fn();
+        (isSafeUrl as any).mockResolvedValueOnce(false);
+
+        await expect(service.getDownloadStream('http://internal-service')).rejects.toThrow(
+          'Potentially unsafe download URL blocked',
+        );
+        expect((service as any).provider.getDownloadStream).not.toHaveBeenCalled();
+      });
+
+      it('should allow safe URLs', async () => {
+        const service = new StorageService();
+        (isSafeUrl as any).mockResolvedValueOnce(true);
+        const mockUrl = 'https://public-bucket.com/file.pdf';
+
+        const result = await service.getDownloadStream(mockUrl);
+
+        expect(result).toBe('mock stream');
+        expect(isSafeUrl).toHaveBeenCalledWith(mockUrl);
+        expect(axios.get).toHaveBeenCalledWith(mockUrl, { responseType: 'stream' });
+      });
     });
   });
 });
