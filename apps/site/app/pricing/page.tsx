@@ -3,9 +3,17 @@ import Link from "next/link";
 import { CheckCircle2, Minus, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Pricing — Scryme",
+  title: "Pricing — Simple, Transparent Plans for Every Business",
   description:
-    "Simple, transparent pricing for every stage of your business. Start free, scale as you grow.",
+    "Explore Scryme pricing plans. Start with a 30-day free trial. Scale from independent retail to enterprise wholesale with our flexible CRM, POS, and Inventory modules.",
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: "Pricing — Scryme",
+    description: "Simple, transparent pricing for every stage of your business. Start free, scale as you grow.",
+    url: "https://scryme.co/pricing",
+  },
 };
 
 const plans = [
