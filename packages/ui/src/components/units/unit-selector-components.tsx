@@ -8,14 +8,14 @@
 import * as React from 'react';
 import { useState, useMemo, useCallback } from 'react';
 import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { cn } from '@repo/ui/lib/utils';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '.@repo/ui/components/ui/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '.@repo/ui/components/ui/ui/popover';
+import { Button } from '.@repo/ui/components/ui/ui/button';
+import { Badge } from '.@repo/ui/components/ui/ui/badge';
+import { Input } from '.@repo/ui/components/ui/ui/input';
+import { Label } from '.@repo/ui/components/ui/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.@repo/ui/components/ui/ui/select';
 
 import {
   type UnitType,
@@ -23,7 +23,7 @@ import {
   type SystemUnit,
   type OrganizationUnit,
   type AnyUnit,
-} from '../../lib/units/utilities';
+} from '@repo/ui/lib/units/utilities';
 
 // ============================================================================
 // BASIC UNIT SELECTOR (Combobox with Search)

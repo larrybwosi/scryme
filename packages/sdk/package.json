@@ -8,7 +8,8 @@
     "build": "echo \"Workspace build skipped\"",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
+    "dev": "tsup --watch"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

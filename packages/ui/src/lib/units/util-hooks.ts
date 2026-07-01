@@ -19,7 +19,7 @@ import {
   type SystemUnit,
   type OrganizationUnit,
   type AnyUnit,
-} from './utilities';
+} from '@repo/ui/components/ui/utilities';
 import axios from 'axios';
 
 // ============================================================================

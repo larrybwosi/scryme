@@ -1,7 +1,7 @@
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Skeleton } from './ui/skeleton';
-import { Alert, AlertDescription } from './ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/ui/select';
+import { Skeleton } from '@repo/ui/components/ui/ui/skeleton';
+import { Alert, AlertDescription } from '@repo/ui/components/ui/ui/alert';
 import { AlertCircle, Users } from 'lucide-react';
 
 interface Supplier {

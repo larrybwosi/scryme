@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/index.tsx",
     "./globals.css": "./src/globals.css",
-    "./components/*": "./src/components/*.ts",
+    "./components/*": "./src/components/*.tsx",
     "./lib/*": "./src/lib/*.ts",
     "./hooks/*": "./src/hooks/*.ts"
   },
@@ -58,7 +58,7 @@
     "build": "echo \"Workspace build skipped\"",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\"",
+    "dev": "tsup --watch",
     "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "types": "./src/index.ts",

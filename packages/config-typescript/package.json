@@ -2,10 +2,17 @@
   "name": "@repo/typescript-config",
   "version": "0.0.0",
   "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     "./base.json": "./base.json",
     "./nextjs.json": "./nextjs.json",
     "./tsup": "./tsup.config.ts"
+  },
+  "scripts": {
+    "lint": "echo \"no lint script defined\"",
+    "type-check": "echo \"no type-check script defined\""
   },
   "dependencies": {
     "tsup": "^8.5.1",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '.@repo/ui/components/ui/lib/utils';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 export interface PaginationProps {

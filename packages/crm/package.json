@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "echo \"Workspace build skipped\"",
-    "dev": "tsc --watch",
+    "dev": "tsup --watch",
     "test": "jest --passWithNoTests",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",

@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { Check, ChevronsUpDown, MapPin, Loader2, LogOut } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { Button } from './ui/button';
+import { cn } from '.@repo/ui/components/ui/lib/utils';
+import { Button } from '@repo/ui/components/ui/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -12,8 +12,8 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from './ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+} from '@repo/ui/components/ui/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/ui/popover';
 import { useMemo, useState } from 'react';
 
 // --- Types ---

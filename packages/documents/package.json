@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "echo \"Workspace build skipped\"",
-    "dev": "tsc --watch",
+    "dev": "tsup --watch",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
     "test": "vitest run",

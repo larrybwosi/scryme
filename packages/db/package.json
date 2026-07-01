@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    ".": "./src/client.ts",
+    "./client": "./src/browser.ts"
   },
   "scripts": {
     "db:migrate:deploy": "prisma migrate deploy",
@@ -20,7 +20,7 @@
     "prebuild": "npm run generate",
     "predev": "npm run generate",
     "studio": "prisma studio",
-    "build": "prisma generate",
+    "build": "npm run generate",
     "build:dist": "tsup src/client.ts src/browser.ts --format esm,cjs"
   },
   "dependencies": {

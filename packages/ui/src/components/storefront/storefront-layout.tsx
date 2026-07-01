@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '@repo/ui/lib/utils';
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
