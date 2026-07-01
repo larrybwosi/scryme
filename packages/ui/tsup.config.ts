@@ -1,4 +1,7 @@
 import { defineConfig, type Options } from "tsup";
+import { execSync } from "node:child_process";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const commonOptions: Options = {
   format: ["esm"],
@@ -8,6 +11,7 @@ const commonOptions: Options = {
   sourcemap: true,
   splitting: false,
   treeshake: true,
+  inject: ["./tsup-shim.js"],
   external: [
     "react",
     "react-dom",
@@ -57,5 +61,24 @@ export default defineConfig([
         "src/hooks/**/*.ts"
     ],
     bundle: false,
+    onSuccess: async () => {
+      try {
+        const filesWithUseClient = execSync('grep -rle "\\"use client\\"" src', { cwd: process.cwd() }).toString().split('\n').filter(Boolean);
+        for (const file of filesWithUseClient) {
+          const distFile = path.join('dist', file.replace('src/', '').replace(/\.tsx?$/, '.js'));
+          try {
+            const content = await fs.readFile(distFile, 'utf-8');
+            if (!content.includes('"use client"')) {
+              await fs.writeFile(distFile, `"use client";\n${content}`);
+              console.log(`Added "use client" to ${distFile}`);
+            }
+          } catch (err) {
+            // Skip if file doesn't exist in dist
+          }
+        }
+      } catch (err) {
+        // grep might fail if no files found
+      }
+    }
   }
 ]);
