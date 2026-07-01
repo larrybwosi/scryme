@@ -22,6 +22,7 @@ import {
 } from "../../application/dto/invoice.dto";
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
+import { AllowPublic } from "@/common/decorators/auth.decorator";
 import * as Fastify from "fastify";
 
 @ApiTags("V3 Finance")
@@ -118,6 +119,7 @@ export class InvoiceController {
 
 @ApiTags("Public Invoices")
 @Controller("public-invoices")
+@AllowPublic()
 export class PublicInvoiceController {
   constructor(private readonly invoiceUseCase: InvoiceUseCase) {}
 
