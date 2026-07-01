@@ -38,3 +38,8 @@
 **Vulnerability:** The `redactSensitiveData` utility returned raw data when the recursion depth exceeded `maxDepth`. This allowed sensitive keys nested deeper than the limit to be leaked in plaintext to logs.
 **Learning:** Recursion limits in security-sensitive utilities must fail closed or return a safe placeholder. Returning the original data as a fallback bypasses the security purpose of the utility.
 **Prevention:** Always return a redaction placeholder or a truncated/safe representation when a recursion or iteration limit is reached in data processing utilities designed for security.
+
+## 2026-07-01 - SSRF Bypass via IPv4-Mapped IPv6 Addresses
+**Vulnerability:** The `isSafeIp` utility used for SSRF protection failed to detect restricted IPv4 addresses when provided in their IPv6-mapped format (e.g., `::ffff:127.0.0.1`).
+**Learning:** Node.js networking utilities correctly identify these addresses as IPv6, but security filters that only check for specific IPv6 loopback patterns (like `::1`) will miss the embedded restricted IPv4 address. Attackers can use this to bypass SSRF protections that don't account for dual-stack address representations.
+**Prevention:** Always check for and normalize IPv4-mapped IPv6 addresses (starting with `::ffff:`) by extracting the IPv4 portion and recursively validating it against the restricted IP blocklist. Ensure this logic is consistently applied across all shared security utilities.
