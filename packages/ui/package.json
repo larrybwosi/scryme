@@ -4,12 +4,27 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.tsx",
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
     "./globals.css": "./src/globals.css",
-    "./components/*": "./src/components/*.tsx",
-    "./components/storefront/*": "./src/components/storefront/*.tsx",
-    "./lib/*": "./src/lib/*.ts",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./components/*": {
+      "types": "./src/components/*",
+      "import": "./src/components/*",
+      "default": "./dist/components/*.js"
+    },
+    "./lib/*": {
+      "types": "./src/lib/*",
+      "import": "./src/lib/*",
+      "default": "./dist/lib/*.js"
+    },
+    "./hooks/*": {
+      "types": "./src/hooks/*",
+      "import": "./src/hooks/*",
+      "default": "./dist/hooks/*.js"
+    }
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
@@ -48,6 +63,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.0.0",
     "tailwindcss": "^4.2.1",
+    "tsup": "^8.5.1",
     "typescript-eslint": "^8.61.0"
   },
   "peerDependencies": {
@@ -55,9 +71,13 @@
     "react-dom": "^19.2.6"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "echo \"Build skipped for workspace development\"",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
-  }
+    "dev": "echo \"no dev needed\"",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
+  },
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts"
 }

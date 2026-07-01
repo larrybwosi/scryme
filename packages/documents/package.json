@@ -4,18 +4,39 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./templates/v1/*": "./src/templates/v1/*.tsx",
-    "./templates/v2/*": "./src/templates/v2/*.tsx"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "import": "./src/client.ts",
+      "default": "./dist/client.js"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./src/server.ts",
+      "default": "./dist/server.js"
+    },
+    "./templates/v1/*": {
+      "types": "./src/templates/v1/*",
+      "import": "./src/templates/v1/*",
+      "default": "./dist/templates/v1/*.js"
+    },
+    "./templates/v2/*": {
+      "types": "./src/templates/v2/*",
+      "import": "./src/templates/v2/*",
+      "default": "./dist/templates/v2/*.js"
+    }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "echo \"Build skipped for workspace development\"",
     "dev": "tsc --watch",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.2.1",
@@ -31,6 +52,10 @@
     "@types/react": "^19.2.14",
     "@vitest/coverage-v8": "^3.0.7",
     "jsdom": "^26.0.0",
+    "tsup": "^8.5.1",
     "vitest": "^3.0.7"
-  }
+  },
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts"
 }

@@ -19,7 +19,8 @@
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "preserveSymlinks": false,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "target": "ESNext"
   },
   "exclude": [
     "node_modules",

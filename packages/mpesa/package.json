@@ -6,15 +6,24 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./src/server.ts",
+      "default": "./dist/server.js"
+    }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "echo \"Build skipped for workspace development\"",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
+    "dev": "echo \"no dev needed\"",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -28,6 +37,8 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.19.33",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.2"
-  }
+    "ts-jest": "^29.1.2",
+    "tsup": "^8.5.1"
+  },
+  "module": "./src/index.ts"
 }

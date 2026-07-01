@@ -6,7 +6,9 @@
   "types": "./src/index.ts",
   "type": "module",
   "scripts": {
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "build": "echo \"Build skipped for workspace development\"",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -15,6 +17,8 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^22.19.19"
-  }
+    "@types/node": "^22.19.19",
+    "tsup": "^8.5.1"
+  },
+  "module": "./src/index.ts"
 }

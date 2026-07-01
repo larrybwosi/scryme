@@ -4,8 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/client.ts",
-    "./client": "./src/browser.ts"
+    ".": {
+      "types": "./src/client.ts",
+      "import": "./src/client.ts",
+      "default": "./dist/client.js"
+    },
+    "./client": {
+      "types": "./src/browser.ts",
+      "import": "./src/browser.ts",
+      "default": "./dist/browser.js"
+    }
   },
   "scripts": {
     "db:migrate:deploy": "prisma migrate deploy",
@@ -19,7 +27,9 @@
     "type-check": "tsc --noEmit",
     "prebuild": "npm run generate",
     "predev": "npm run generate",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "build": "echo \"Build skipped for workspace development\"",
+    "build:dist": "tsup src/client.ts src/browser.ts --format esm,cjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
