@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/client.js",
+  "types": "./src/client.ts",
   "exports": {
     ".": {
       "types": "./src/client.ts",
@@ -16,11 +18,12 @@
     }
   },
   "scripts": {
+    "build": "tsup",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx src/seed.ts",
-    "dev": "tsup src/* --watch",
+    "dev": "tsup --watch",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint . --ignore-pattern generated --max-warnings 0",
