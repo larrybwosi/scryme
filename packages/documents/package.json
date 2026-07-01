@@ -4,34 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
-    "./client": {
-      "types": "./src/client.ts",
-      "import": "./src/client.ts",
-      "default": "./dist/client.js"
-    },
-    "./server": {
-      "types": "./src/server.ts",
-      "import": "./src/server.ts",
-      "default": "./dist/server.js"
-    },
-    "./templates/v1/*": {
-      "types": "./src/templates/v1/*",
-      "import": "./src/templates/v1/*",
-      "default": "./dist/templates/v1/*.js"
-    },
-    "./templates/v2/*": {
-      "types": "./src/templates/v2/*",
-      "import": "./src/templates/v2/*",
-      "default": "./dist/templates/v2/*.js"
-    }
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./templates/v1/*": "./src/templates/v1/*.ts",
+    "./templates/v2/*": "./src/templates/v2/*.ts"
   },
   "scripts": {
-    "build": "echo \"Build skipped for workspace development\"",
+    "build": "echo \"Workspace build skipped\"",
     "dev": "tsc --watch",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",

@@ -1,24 +1,23 @@
 {
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
-    "target": "es2017",
     "noEmit": false,
+    "baseUrl": ".",
     "paths": {
+      "@/*": [
+        "./src/*"
+      ],
       "@repo/ui/*": [
         "./src/*"
       ]
-    },
-    "skipLibCheck": true,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "strict": false,
-    "types": [
-      "node"
-    ],
-    "rootDir": "src",
-    "outDir": "dist"
+    }
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tsup.config.ts"
   ]
 }

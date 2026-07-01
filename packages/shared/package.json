@@ -1,109 +1,33 @@
 {
   "name": "@repo/shared",
   "version": "0.1.0",
-  "main": "./dist/index.js",
+  "main": "./src/index.ts",
   "types": "./src/index.ts",
   "type": "module",
   "private": true,
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
-    "./ably": {
-      "types": "./src/ably/index.ts",
-      "import": "./src/ably/index.ts",
-      "default": "./dist/ably.js"
-    },
-    "./ably/client": {
-      "types": "./src/ably/client.ts",
-      "import": "./src/ably/client.ts",
-      "default": "./dist/ably/client.js"
-    },
-    "./axios": {
-      "types": "./src/axios/index.ts",
-      "import": "./src/axios/index.ts",
-      "default": "./dist/axios.js"
-    },
-    "./constants": {
-      "types": "./src/constants/index.ts",
-      "import": "./src/constants/index.ts",
-      "default": "./dist/constants.js"
-    },
-    "./integrations": {
-      "types": "./src/integrations/index.ts",
-      "import": "./src/integrations/index.ts",
-      "default": "./dist/integrations.js"
-    },
-    "./redis": {
-      "types": "./src/redis/index.ts",
-      "import": "./src/redis/index.ts",
-      "default": "./dist/redis.js"
-    },
-    "./utils": {
-      "types": "./src/utils/index.ts",
-      "import": "./src/utils/index.ts",
-      "default": "./dist/utils.js"
-    },
-    "./realtime": {
-      "types": "./src/realtime/index.ts",
-      "import": "./src/realtime/index.ts",
-      "default": "./dist/realtime.js"
-    },
-    "./realtime/client": {
-      "types": "./src/realtime/client.tsx",
-      "import": "./src/realtime/client.tsx",
-      "default": "./dist/realtime/client.js"
-    },
-    "./storage": {
-      "types": "./src/storage/index.ts",
-      "import": "./src/storage/index.ts",
-      "default": "./dist/storage.js"
-    },
-    "./api/v2": {
-      "types": "./src/api/v2/index.ts",
-      "import": "./src/api/v2/index.ts",
-      "default": "./dist/api/v2.js"
-    },
-    "./lib": {
-      "types": "./src/lib/index.ts",
-      "import": "./src/lib/index.ts",
-      "default": "./dist/lib.js"
-    },
-    "./actions": {
-      "types": "./src/actions/index.ts",
-      "import": "./src/actions/index.ts",
-      "default": "./dist/actions.js"
-    },
-    "./services/openloyalty": {
-      "types": "./src/services/openloyalty/index.ts",
-      "import": "./src/services/openloyalty/index.ts",
-      "default": "./dist/services/openloyalty.js"
-    },
-    "./services/customer": {
-      "types": "./src/services/customer/index.ts",
-      "import": "./src/services/customer/index.ts",
-      "default": "./dist/services/customer.js"
-    },
-    "./suppliers": {
-      "types": "./src/suppliers/index.ts",
-      "import": "./src/suppliers/index.ts",
-      "default": "./dist/suppliers.js"
-    },
-    "./suppliers/server": {
-      "types": "./src/suppliers/server.ts",
-      "import": "./src/suppliers/server.ts",
-      "default": "./dist/suppliers/server.js"
-    },
-    "./server": {
-      "types": "./src/server/index.ts",
-      "import": "./src/server/index.ts",
-      "default": "./dist/server.js"
-    }
+    ".": "./src/index.ts",
+    "./ably": "./src/ably/index.ts",
+    "./ably/client": "./src/ably/client.ts",
+    "./axios": "./src/axios/index.ts",
+    "./constants": "./src/constants/index.ts",
+    "./integrations": "./src/integrations/index.ts",
+    "./redis": "./src/redis/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./realtime": "./src/realtime/index.ts",
+    "./realtime/client": "./src/realtime/client.tsx",
+    "./storage": "./src/storage/index.ts",
+    "./api/v2": "./src/api/v2/index.ts",
+    "./lib": "./src/lib/index.ts",
+    "./actions": "./src/actions/index.ts",
+    "./services/openloyalty": "./src/services/openloyalty/index.ts",
+    "./services/customer": "./src/services/customer/index.ts",
+    "./suppliers": "./src/suppliers/index.ts",
+    "./suppliers/server": "./src/suppliers/server.ts",
+    "./server": "./src/server/index.ts"
   },
   "scripts": {
-    "build": "echo \"Build skipped for workspace development\"",
+    "build": "echo \"Workspace build skipped\"",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",

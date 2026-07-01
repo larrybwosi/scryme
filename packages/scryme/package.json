@@ -6,7 +6,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "echo \"Build skipped for workspace development\"",
+    "build": "echo \"Workspace build skipped\"",
     "type-check": "tsc --noEmit",
     "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
@@ -21,10 +21,6 @@
   },
   "module": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   }
 }

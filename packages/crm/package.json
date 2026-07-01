@@ -3,27 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
-    "./client": {
-      "types": "./src/client.ts",
-      "import": "./src/client.ts",
-      "default": "./dist/client.js"
-    },
-    "./server": {
-      "types": "./src/server.ts",
-      "import": "./src/server.ts",
-      "default": "./dist/server.js"
-    }
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "echo \"Build skipped for workspace development\"",
+    "build": "echo \"Workspace build skipped\"",
     "dev": "tsc --watch",
     "test": "jest --passWithNoTests",
     "lint": "eslint . --max-warnings 0",

@@ -6,19 +6,11 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
-    "./server": {
-      "types": "./src/server.ts",
-      "import": "./src/server.ts",
-      "default": "./dist/server.js"
-    }
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "echo \"Build skipped for workspace development\"",
+    "build": "echo \"Workspace build skipped\"",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",

@@ -1166,7 +1166,14 @@ importers:
 
   packages/config-prettier: {}
 
-  packages/config-typescript: {}
+  packages/config-typescript:
+    dependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.15)(tsx@4.21.0)(typescript@5.7.3)(yaml@2.9.0)
+      typescript:
+        specifier: 5.7.3
+        version: 5.7.3
 
   packages/crm:
     dependencies:
@@ -1397,9 +1404,6 @@ importers:
       '@repo/scryme':
         specifier: workspace:*
         version: link:../scryme
-      '@repo/typescript-config':
-        specifier: workspace:^
-        version: link:../config-typescript
       axios:
         specifier: ^1.6.2
         version: 1.16.1
@@ -1410,6 +1414,9 @@ importers:
         specifier: ^7.0.13
         version: 7.0.13
     devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:^
+        version: link:../config-typescript
       '@types/node':
         specifier: ^25.6.0
         version: 25.9.1

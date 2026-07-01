@@ -4,27 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./dist/index.js"
-    },
+    ".": "./src/index.ts",
     "./globals.css": "./src/globals.css",
-    "./components/*": {
-      "types": "./src/components/*",
-      "import": "./src/components/*",
-      "default": "./dist/components/*.js"
-    },
-    "./lib/*": {
-      "types": "./src/lib/*",
-      "import": "./src/lib/*",
-      "default": "./dist/lib/*.js"
-    },
-    "./hooks/*": {
-      "types": "./src/hooks/*",
-      "import": "./src/hooks/*",
-      "default": "./dist/hooks/*.js"
-    }
+    "./components/*": "./src/components/*.ts",
+    "./lib/*": "./src/lib/*.ts",
+    "./hooks/*": "./src/hooks/*.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
@@ -71,7 +55,7 @@
     "react-dom": "^19.2.6"
   },
   "scripts": {
-    "build": "echo \"Build skipped for workspace development\"",
+    "build": "echo \"Workspace build skipped\"",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
     "dev": "echo \"no dev needed\"",
