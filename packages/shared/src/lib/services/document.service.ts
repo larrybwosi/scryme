@@ -84,7 +84,7 @@ export class DocumentService {
             memberId,
             transactionId,
             fulfillmentId,
-            fileName: dnFileName,
+            fileName: dnUpload.id, // Store the final storage ID/filename
             fileUrl: dnUpload.url,
             shortCode,
             shortUrl,
@@ -207,7 +207,7 @@ export class DocumentService {
         organizationId,
         memberId: effectiveMemberId,
         transactionId,
-        fileName,
+        fileName: upload.id, // Store the final storage ID/filename
         fileUrl: upload.url,
         shortCode,
         shortUrl,
@@ -302,7 +302,7 @@ export class DocumentService {
         organizationId,
         memberId: effectiveMemberId,
         transactionId,
-        fileName,
+        fileName: upload.id, // Store the final storage ID/filename
         fileUrl: upload.url,
         shortCode,
         shortUrl,
