@@ -48,6 +48,14 @@ import {
   Settings2,
   BadgeCheck,
   Layers,
+  HeartPulse,
+  Coffee,
+  Warehouse,
+  Minus,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
+  Type,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
@@ -254,10 +262,80 @@ const RECEIPT_TABS = [
   { value: 'branding', label: 'Branding', icon: Palette },
   { value: 'style', label: 'Style', icon: Layout },
   { value: 'content', label: 'Content', icon: FileText },
+  { value: 'enterprise', label: 'Enterprise', icon: Building2 },
+  { value: 'localization', label: 'Localization', icon: Globe },
+  { value: 'sections', label: 'Sections', icon: Layers },
   { value: 'compliance', label: 'Legal', icon: BadgeCheck },
   { value: 'print', label: 'Print', icon: Printer },
-  { value: 'extras', label: 'Extras', icon: Layers },
 ];
+
+const INDUSTRY_TEMPLATES = [
+  { id: 'standard', name: 'Standard Retail', icon: Store },
+  { id: 'fine-dining', name: 'Fine Dining', icon: Utensils },
+  { id: 'pharmacy', name: 'Pharmacy', icon: HeartPulse },
+  { id: 'modern', name: 'Modern / Cafe', icon: Coffee },
+  { id: 'wholesale', name: 'Wholesale / B2B', icon: Warehouse },
+  { id: 'minimal', name: 'Minimalist', icon: Minus },
+];
+
+const INDUSTRY_PRESETS: Record<string, Partial<ReceiptConfig>> = {
+  standard: {
+    template: 'standard',
+    showItemSku: false,
+    showItemNotes: true,
+    dividerStyle: 'dashed',
+  },
+  'fine-dining': {
+    template: 'fine-dining',
+    showCashier: true,
+    showOrderType: true,
+    textAlignment: 'center',
+    fontFamily: 'serif',
+    titleFontSize: 18,
+    headerFontSize: 12,
+    bodyFontSize: 10,
+    dividerStyle: 'solid',
+    showItemNotes: true,
+  },
+  pharmacy: {
+    template: 'pharmacy',
+    showItemSku: true,
+    showTaxNumber: true,
+    showVatNumber: true,
+    showSignatureLine: true,
+    signatureLineText: 'Pharmacist Signature',
+    showItemTax: true,
+    dividerStyle: 'solid',
+  },
+  modern: {
+    template: 'modern',
+    textAlignment: 'left',
+    fontFamily: 'sans',
+    primaryColor: '#000000',
+    borderColor: '#e5e7eb',
+    padding: 12,
+    itemSpacing: 6,
+    dividerStyle: 'dotted',
+  },
+  wholesale: {
+    template: 'wholesale',
+    paperSize: 'Letter',
+    showItemSku: true,
+    showTaxBreakdown: true,
+    showDiscountBreakdown: true,
+    showCompanyRegNumber: true,
+    dividerStyle: 'solid',
+  },
+  minimal: {
+    template: 'minimal',
+    showLogo: false,
+    showAddress: false,
+    showPhone: false,
+    showOrderType: false,
+    padding: 0,
+    dividerStyle: 'solid',
+  },
+};
 
 function ReceiptSettings({
   config,
@@ -268,6 +346,24 @@ function ReceiptSettings({
 }) {
   const [tab, setTab] = useState('branding');
 
+  const moveSection = (index: number, direction: 'up' | 'down') => {
+    const currentOrder = config.sectionOrder || ['header', 'meta', 'items', 'totals', 'footer', 'codes'];
+    const newOrder = [...currentOrder];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newOrder.length) return;
+    [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+    updateConfig('sectionOrder', newOrder);
+  };
+
+  const applyIndustryPreset = (id: string) => {
+    const preset = INDUSTRY_PRESETS[id];
+    if (preset) {
+      Object.entries(preset).forEach(([key, value]) => {
+        updateConfig(key as keyof ReceiptConfig, value);
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800/80 px-4 py-3">
@@ -276,6 +372,26 @@ function ReceiptSettings({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {tab === 'branding' && (
           <>
+            <Section title="Industry Templates" icon={Layers} description="One-click presets for your business">
+              <div className="grid grid-cols-2 gap-2">
+                {INDUSTRY_TEMPLATES.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => applyIndustryPreset(t.id)}
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
+                      config.template === t.id
+                        ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
+                        : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                    )}
+                  >
+                    <t.icon className="w-4 h-4 shrink-0" />
+                    <span className="text-[11px] font-medium leading-tight">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            </Section>
+
             <Section title="Logo & Brand Identity" icon={Palette} description="Visual branding on printed receipts">
               <ToggleRow label="Show Logo" checked={config.showLogo} onChange={v => updateConfig('showLogo', v)} />
               {config.showLogo && (
@@ -491,28 +607,6 @@ function ReceiptSettings({
               </div>
             </Section>
 
-            <Section title="Templates & Presets" icon={Layers} description="Overall visual style">
-              <div className="grid grid-cols-3 gap-2">
-                {['standard', 'modern', 'minimal'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => updateConfig('template', t)}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
-                      config.template === t
-                        ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
-                        : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
-                    )}
-                  >
-                    <div className="w-full aspect-[3/4] rounded-md bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center">
-                      <Layout className="w-5 h-5 opacity-20" />
-                    </div>
-                    <span className="text-[10px] font-medium capitalize">{t}</span>
-                  </button>
-                ))}
-              </div>
-            </Section>
-
             <Section title="Colors & Borders" icon={Palette} description="Enterprise brand colors">
               <ToggleRow
                 label="Show Outer Border"
@@ -652,6 +746,12 @@ function ReceiptSettings({
                 checked={config.showItemNotes}
                 onChange={v => updateConfig('showItemNotes', v)}
               />
+              <ToggleRow
+                label="Item Discounts"
+                checked={config.showItemDiscounts}
+                onChange={v => updateConfig('showItemDiscounts', v)}
+              />
+              <ToggleRow label="Item Tax" checked={config.showItemTax} onChange={v => updateConfig('showItemTax', v)} />
             </Section>
 
             <Section title="Totals & Breakdown" icon={CreditCard} description="Financial summary section">
@@ -715,7 +815,274 @@ function ReceiptSettings({
                 )}
               </div>
             </Section>
+
+            <Section title="Codes & Social" icon={QrCode} description="Digital links and handles">
+              <ToggleRow
+                label="Show QR Code"
+                checked={config.showQrCode}
+                onChange={v => updateConfig('showQrCode', v)}
+              />
+              {config.showQrCode && (
+                <div className="mt-3 space-y-3 ml-1">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                      QR Destination
+                    </Label>
+                    <Select value={config.qrCodeTarget} onValueChange={v => updateConfig('qrCodeTarget', v)}>
+                      <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="order-link">Order Tracking</SelectItem>
+                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="review-link">Review Page</SelectItem>
+                        <SelectItem value="survey">Survey</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {config.qrCodeTarget !== 'order-link' && (
+                    <Input
+                      value={config.qrCodeCustomUrl || ''}
+                      onChange={e => updateConfig('qrCodeCustomUrl', e.target.value)}
+                      placeholder="https://..."
+                      className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    />
+                  )}
+                </div>
+              )}
+              <ToggleRow
+                label="Show Barcode"
+                checked={config.showBarcode}
+                onChange={v => updateConfig('showBarcode', v)}
+              />
+              <ToggleRow
+                label="Show Social Media"
+                checked={config.showSocialMedia}
+                onChange={v => updateConfig('showSocialMedia', v)}
+              />
+              {config.showSocialMedia && (
+                <Input
+                  value={config.socialMediaHandle}
+                  onChange={e => updateConfig('socialMediaHandle', e.target.value)}
+                  placeholder="@yourhandle"
+                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                />
+              )}
+            </Section>
           </>
+        )}
+
+        {tab === 'enterprise' && (
+          <>
+            <Section title="Multi-Location" icon={Building2} description="Global vs local branding">
+              <ToggleRow
+                label="Show Location Header"
+                description="Print branch/location name at the top"
+                checked={config.showLocationHeader}
+                onChange={v => updateConfig('showLocationHeader', v)}
+              />
+              {config.showLocationHeader && (
+                <div className="mt-3 space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    Location Name Override
+                  </Label>
+                  <Input
+                    value={config.locationNameOverride || ''}
+                    onChange={e => updateConfig('locationNameOverride', e.target.value)}
+                    placeholder="Main Branch, Downtown..."
+                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  />
+                </div>
+              )}
+            </Section>
+
+            <Section title="Custom Enterprise Fields" icon={Building2} description="Regional tax and legal fields">
+              <div className="space-y-4">
+                {(config.customFields || []).map((field, idx) => (
+                  <div key={idx} className="p-3 rounded-lg border border-zinc-800 bg-zinc-950/50 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GripVertical className="w-3.5 h-3.5 text-zinc-600" />
+                        <span className="text-[11px] font-semibold text-zinc-300">Field #{idx + 1}</span>
+                      </div>
+                      <Switch
+                        checked={field.enabled}
+                        onCheckedChange={v => {
+                          const newFields = [...(config.customFields || [])];
+                          newFields[idx].enabled = v;
+                          updateConfig('customFields', newFields);
+                        }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                          Label
+                        </Label>
+                        <Input
+                          value={field.label}
+                          onChange={e => {
+                            const newFields = [...(config.customFields || [])];
+                            newFields[idx].label = e.target.value;
+                            updateConfig('customFields', newFields);
+                          }}
+                          className="h-8 text-[11px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                          Value
+                        </Label>
+                        <Input
+                          value={field.value}
+                          onChange={e => {
+                            const newFields = [...(config.customFields || [])];
+                            newFields[idx].value = e.target.value;
+                            updateConfig('customFields', newFields);
+                          }}
+                          className="h-8 text-[11px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateConfig('customFields', [...(config.customFields || []), { label: '', value: '', enabled: true }])}
+                  className="w-full h-8 text-[11px] border-dashed border-zinc-700 bg-zinc-900/30"
+                >
+                  + Add Custom Field
+                </Button>
+              </div>
+            </Section>
+
+            <Section title="Customer Engagement" icon={Users} description="Loyalty and feedback programs">
+              <ToggleRow
+                label="Loyalty Points"
+                checked={config.showLoyaltyPoints}
+                onChange={v => updateConfig('showLoyaltyPoints', v)}
+              />
+              <ToggleRow
+                label="Loyalty Balance"
+                checked={config.showLoyaltyBalance}
+                onChange={v => updateConfig('showLoyaltyBalance', v)}
+              />
+              <ToggleRow
+                label="Next Visit Promo"
+                checked={config.showNextVisitPromo}
+                onChange={v => updateConfig('showNextVisitPromo', v)}
+              />
+              {config.showNextVisitPromo && (
+                <Input
+                  value={config.nextVisitPromoText}
+                  onChange={e => updateConfig('nextVisitPromoText', e.target.value)}
+                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                />
+              )}
+              <ToggleRow
+                label="Survey QR"
+                checked={config.showSurveyQr}
+                onChange={v => updateConfig('showSurveyQr', v)}
+              />
+              {config.showSurveyQr && (
+                <Input
+                  value={config.surveyUrl}
+                  onChange={e => updateConfig('surveyUrl', e.target.value)}
+                  placeholder="https://survey..."
+                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                />
+              )}
+            </Section>
+          </>
+        )}
+
+        {tab === 'localization' && (
+          <Section title="Label Customization" icon={Type} description="Translate all receipt text">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {Object.entries(config.labels || {}).map(([key, value]) => (
+                <div key={key} className="space-y-1.5">
+                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                    {key.replace(/([A-Z])/g, ' $1')}
+                  </Label>
+                  <Input
+                    value={value}
+                    onChange={e => {
+                      const newLabels = { ...config.labels, [key]: e.target.value };
+                      updateConfig('labels', newLabels);
+                    }}
+                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-zinc-800 grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                  Currency
+                </Label>
+                <Input
+                  value={config.currency}
+                  onChange={e => updateConfig('currency', e.target.value)}
+                  className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
+                  Locale
+                </Label>
+                <Input
+                  value={config.locale}
+                  onChange={e => updateConfig('locale', e.target.value)}
+                  className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                />
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {tab === 'sections' && (
+          <Section title="Receipt Layout Order" icon={Layers} description="Drag and drop sections to reorder">
+            <div className="space-y-2">
+              {(config.sectionOrder || ['header', 'meta', 'items', 'totals', 'footer', 'codes']).map((section, idx) => (
+                <div
+                  key={section}
+                  className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-900/50 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center text-[10px] font-mono text-zinc-500">
+                      {idx + 1}
+                    </div>
+                    <span className="text-[12px] font-medium text-zinc-200 capitalize">{section}</span>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-zinc-500 hover:text-white"
+                      disabled={idx === 0}
+                      onClick={() => moveSection(idx, 'up')}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-zinc-500 hover:text-white"
+                      disabled={idx === config.sectionOrder.length - 1}
+                      onClick={() => moveSection(idx, 'down')}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-[11px] text-zinc-500 italic">
+              * Rearrange how sections appear on the physical print-out.
+            </p>
+          </Section>
         )}
 
         {tab === 'compliance' && (
@@ -809,33 +1176,6 @@ function ReceiptSettings({
                 />
               )}
             </Section>
-
-            <Section title="Localization" icon={Globe} description="Currency and number formatting">
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                    Currency
-                  </Label>
-                  <Input
-                    value={config.currency}
-                    onChange={e => updateConfig('currency', e.target.value)}
-                    placeholder="USD"
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                    Locale
-                  </Label>
-                  <Input
-                    value={config.locale}
-                    onChange={e => updateConfig('locale', e.target.value)}
-                    placeholder="en-US"
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
-                  />
-                </div>
-              </div>
-            </Section>
           </>
         )}
 
@@ -878,105 +1218,6 @@ function ReceiptSettings({
               </Select>
             </div>
           </Section>
-        )}
-
-        {tab === 'extras' && (
-          <>
-            <Section title="QR Code & Barcode" icon={QrCode} description="Digital links and scanning">
-              <ToggleRow
-                label="Show QR Code"
-                checked={config.showQrCode}
-                onChange={v => updateConfig('showQrCode', v)}
-              />
-              {config.showQrCode && (
-                <div className="mt-3 space-y-3 ml-1">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">
-                      QR Destination
-                    </Label>
-                    <Select value={config.qrCodeTarget} onValueChange={v => updateConfig('qrCodeTarget', v)}>
-                      <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="order-link">Order Tracking</SelectItem>
-                        <SelectItem value="website">Website</SelectItem>
-                        <SelectItem value="review-link">Review Page</SelectItem>
-                        <SelectItem value="survey">Survey</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {config.qrCodeTarget !== 'order-link' && (
-                    <Input
-                      value={config.qrCodeCustomUrl || ''}
-                      onChange={e => updateConfig('qrCodeCustomUrl', e.target.value)}
-                      placeholder="https://..."
-                      className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
-                    />
-                  )}
-                </div>
-              )}
-              <ToggleRow
-                label="Show Barcode"
-                checked={config.showBarcode}
-                onChange={v => updateConfig('showBarcode', v)}
-              />
-            </Section>
-
-            <Section title="Customer Engagement" icon={Users} description="Loyalty and feedback programs">
-              <ToggleRow
-                label="Loyalty Points"
-                checked={config.showLoyaltyPoints}
-                onChange={v => updateConfig('showLoyaltyPoints', v)}
-              />
-              <ToggleRow
-                label="Loyalty Balance"
-                checked={config.showLoyaltyBalance}
-                onChange={v => updateConfig('showLoyaltyBalance', v)}
-              />
-              <ToggleRow
-                label="Next Visit Promo"
-                checked={config.showNextVisitPromo}
-                onChange={v => updateConfig('showNextVisitPromo', v)}
-              />
-              {config.showNextVisitPromo && (
-                <Input
-                  value={config.nextVisitPromoText}
-                  onChange={e => updateConfig('nextVisitPromoText', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
-                />
-              )}
-              <ToggleRow
-                label="Survey QR"
-                checked={config.showSurveyQr}
-                onChange={v => updateConfig('showSurveyQr', v)}
-              />
-              {config.showSurveyQr && (
-                <Input
-                  value={config.surveyUrl}
-                  onChange={e => updateConfig('surveyUrl', e.target.value)}
-                  placeholder="https://survey..."
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
-                />
-              )}
-            </Section>
-
-            <Section title="Social Media" icon={Globe} description="Social handles on receipt">
-              <ToggleRow
-                label="Show Social Media"
-                checked={config.showSocialMedia}
-                onChange={v => updateConfig('showSocialMedia', v)}
-              />
-              {config.showSocialMedia && (
-                <Input
-                  value={config.socialMediaHandle}
-                  onChange={e => updateConfig('socialMediaHandle', e.target.value)}
-                  placeholder="@yourhandle"
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
-                />
-              )}
-            </Section>
-          </>
         )}
       </div>
     </div>
