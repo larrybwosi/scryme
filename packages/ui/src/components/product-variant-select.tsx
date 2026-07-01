@@ -3,10 +3,10 @@
 import { Check, ChevronsUpDown, Loader2, Package, AlertCircle } from 'lucide-react';
 import { FC, useMemo, useState } from 'react';
 
-import { cn } from '.@repo/ui/components/ui/lib/utils';
-import { Button } from '@repo/ui/components/ui/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/ui/popover';
+import { cn } from '@repo/ui/components/ui/lib/utils';
+import { Button } from '@repo/ui/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
 
 // --- Types ---
 

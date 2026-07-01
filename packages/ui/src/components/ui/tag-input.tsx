@@ -5,7 +5,7 @@ import { X, Plus } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
-import { cn } from '.@repo/ui/components/ui/lib/utils';
+import { cn } from '@repo/ui/components/ui/lib/utils';
 
 interface TagInputProps {
   placeholder?: string;

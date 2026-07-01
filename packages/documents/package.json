@@ -4,14 +4,34 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./templates/v1/*": "./src/templates/v1/*.ts",
-    "./templates/v2/*": "./src/templates/v2/*.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./templates/v1/*": {
+      "types": "./dist/templates/v1/*.d.ts",
+      "import": "./dist/templates/v1/*.js",
+      "require": "./dist/templates/v1/*.cjs"
+    },
+    "./templates/v2/*": {
+      "types": "./dist/templates/v2/*.d.ts",
+      "import": "./dist/templates/v2/*.js",
+      "require": "./dist/templates/v2/*.cjs"
+    }
   },
   "scripts": {
-    "build": "echo \"Workspace build skipped\"",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "dev": "tsup --watch",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
@@ -35,7 +55,7 @@
     "tsup": "^8.5.1",
     "vitest": "^3.0.7"
   },
-  "types": "./src/index.ts",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts"
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js"
 }

@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@repo/ui/components/ui/ui/alert-dialog';
+} from '@repo/ui/components/ui/alert-dialog';
 import { AlertTriangle, ShieldAlert, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { ReactNode } from 'react';
 

@@ -4,7 +4,7 @@ export function createTsupConfig(options: Options = {}) {
   return defineConfig({
     entry: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts", "!src/**/*.test.ts", "!src/**/*.test.tsx", "!src/**/*.spec.ts", "!src/**/*.spec.tsx"],
     format: ["esm", "cjs"],
-    dts: false,
+    dts: false, // We use tsc for declarations as it is more reliable for complex types
     sourcemap: true,
     clean: true,
     minify: false,

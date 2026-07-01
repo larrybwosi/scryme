@@ -16,7 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "3.9.0",
     "@repo/auth": "workspace:*",
-    "@repo/db": "workspace:^",
+    "@repo/db": "workspace:*",
     "@repo/plane": "workspace:*",
     "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",

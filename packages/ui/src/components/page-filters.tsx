@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useDebounceValue } from 'usehooks-ts';
-import { cn } from '.@repo/ui/components/ui/lib/utils';
+import { cn } from '@repo/ui/components/ui/lib/utils';
 import {
   ChevronDown,
   Search,
@@ -22,11 +22,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuGroup,
-} from '@repo/ui/components/ui/ui/dropdown-menu';
-import { Button } from '@repo/ui/components/ui/ui/button';
-import { Input } from '@repo/ui/components/ui/ui/input';
-import { Badge } from '@repo/ui/components/ui/ui/badge';
-import { Separator } from '@repo/ui/components/ui/ui/separator';
+} from '@repo/ui/components/ui/dropdown-menu';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Separator } from '@repo/ui/components/ui/separator';
 
 // --- Types ---
 

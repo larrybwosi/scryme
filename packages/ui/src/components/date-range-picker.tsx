@@ -4,10 +4,10 @@ import * as React from "react"
 import { CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 
-import { cn } from ".@repo/ui/components/ui/lib/utils"
-import { Button } from "@repo/ui/components/ui/ui/button"
-import { Calendar } from "@repo/ui/components/ui/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/ui/ui/popover"
+import { cn } from "@repo/ui/components/ui/lib/utils"
+import { Button } from "@repo/ui/components/ui/button"
+import { Calendar } from "@repo/ui/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/ui/popover"
 
 interface DatePickerWithRangeProps {
   className?: string
@@ -65,6 +65,6 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
  * TEMP ALIAS — The design system already provides `DatePickerWithRange`.
  * Re-export it as `DateRangePicker` so existing imports keep working.
  *
- *   import { DateRangePicker } from "@repo/ui/components/ui/ui/date-range-picker";
+ *   import { DateRangePicker } from "@repo/ui/components/ui/date-range-picker";
  */
 export { DatePickerWithRange as DateRangePicker }

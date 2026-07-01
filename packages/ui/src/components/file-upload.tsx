@@ -1,4 +1,4 @@
-import { cn } from ".@repo/ui/components/ui/lib/utils";
+import { cn } from "@repo/ui/components/ui/lib/utils";
 import { useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { MotionDiv, MotionP } from "@repo/ui/components/ui/motion";

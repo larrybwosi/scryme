@@ -37,3 +37,4 @@ apps/web/.env
 .turbo
 tsconfig.tsbuildinfo
 .tsbuildinfo
+tsup.config.bundled_*

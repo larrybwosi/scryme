@@ -1,38 +1,114 @@
 {
   "name": "@repo/shared",
   "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./ably": "./src/ably/index.ts",
-    "./ably/client": "./src/ably/client.ts",
-    "./axios": "./src/axios/index.ts",
-    "./constants": "./src/constants/index.ts",
-    "./integrations": "./src/integrations/index.ts",
-    "./redis": "./src/redis/index.ts",
-    "./utils": "./src/utils/index.ts",
-    "./realtime": "./src/realtime/index.ts",
-    "./realtime/client": "./src/realtime/client.tsx",
-    "./storage": "./src/storage/index.ts",
-    "./api/v2": "./src/api/v2/index.ts",
-    "./lib": "./src/lib/index.ts",
-    "./actions": "./src/actions/index.ts",
-    "./services/openloyalty": "./src/services/openloyalty/index.ts",
-    "./services/customer": "./src/services/customer/index.ts",
-    "./suppliers": "./src/suppliers/index.ts",
-    "./suppliers/server": "./src/suppliers/server.ts",
-    "./server": "./src/server/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./ably": {
+      "types": "./dist/ably.d.ts",
+      "import": "./dist/ably.js",
+      "require": "./dist/ably.cjs"
+    },
+    "./ably/client": {
+      "types": "./dist/ably/client.d.ts",
+      "import": "./dist/ably/client.js",
+      "require": "./dist/ably/client.cjs"
+    },
+    "./axios": {
+      "types": "./dist/axios.d.ts",
+      "import": "./dist/axios.js",
+      "require": "./dist/axios.cjs"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
+    },
+    "./integrations": {
+      "types": "./dist/integrations.d.ts",
+      "import": "./dist/integrations.js",
+      "require": "./dist/integrations.cjs"
+    },
+    "./redis": {
+      "types": "./dist/redis.d.ts",
+      "import": "./dist/redis.js",
+      "require": "./dist/redis.cjs"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs"
+    },
+    "./realtime": {
+      "types": "./dist/realtime.d.ts",
+      "import": "./dist/realtime.js",
+      "require": "./dist/realtime.cjs"
+    },
+    "./realtime/client": {
+      "types": "./dist/realtime/client.d.ts",
+      "import": "./dist/realtime/client.js",
+      "require": "./dist/realtime/client.cjs"
+    },
+    "./storage": {
+      "types": "./dist/storage.d.ts",
+      "import": "./dist/storage.js",
+      "require": "./dist/storage.cjs"
+    },
+    "./api/v2": {
+      "types": "./dist/api/v2.d.ts",
+      "import": "./dist/api/v2.js",
+      "require": "./dist/api/v2.cjs"
+    },
+    "./lib": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js",
+      "require": "./dist/lib.cjs"
+    },
+    "./actions": {
+      "types": "./dist/actions.d.ts",
+      "import": "./dist/actions.js",
+      "require": "./dist/actions.cjs"
+    },
+    "./services/openloyalty": {
+      "types": "./dist/services/openloyalty.d.ts",
+      "import": "./dist/services/openloyalty.js",
+      "require": "./dist/services/openloyalty.cjs"
+    },
+    "./services/customer": {
+      "types": "./dist/services/customer.d.ts",
+      "import": "./dist/services/customer.js",
+      "require": "./dist/services/customer.cjs"
+    },
+    "./suppliers": {
+      "types": "./dist/suppliers.d.ts",
+      "import": "./dist/suppliers.js",
+      "require": "./dist/suppliers.cjs"
+    },
+    "./suppliers/server": {
+      "types": "./dist/suppliers/server.d.ts",
+      "import": "./dist/suppliers/server.js",
+      "require": "./dist/suppliers/server.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    }
   },
   "scripts": {
-    "build": "echo \"Workspace build skipped\"",
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
     "dev": "tsup --watch",
-    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
+    "build:dist": "NODE_OPTIONS=--max-old-space-size=4096 tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1067.0",
@@ -84,5 +160,5 @@
     "tsup": "^8.5.1",
     "vitest": "^4.1.8"
   },
-  "module": "./src/index.ts"
+  "module": "./dist/index.js"
 }

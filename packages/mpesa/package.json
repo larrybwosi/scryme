@@ -1,16 +1,24 @@
 {
   "name": "@repo/mpesa",
   "version": "0.1.0",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    }
   },
   "scripts": {
-    "build": "echo \"Workspace build skipped\"",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
@@ -32,5 +40,5 @@
     "ts-jest": "^29.1.2",
     "tsup": "^8.5.1"
   },
-  "module": "./src/index.ts"
+  "module": "./dist/index.js"
 }
