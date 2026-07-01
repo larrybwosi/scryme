@@ -2,14 +2,23 @@ import type { Metadata } from "next";
 import { ShoppingCart, Monitor, Wifi, BarChart2, Package, Receipt, Shield, Repeat2 } from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
+import { StructuredData } from "@/components/seo/structured-data";
 import { PosCheckoutMock } from "@/components/products/pos/pos-checkout-mock";
 import { PosOfflineMock } from "@/components/products/pos/pos-offline-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
 export const metadata: Metadata = {
-  title: "Point of Sale — Scryme",
+  title: "Offline-First POS System for Retail & Wholesale",
   description:
-    "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support.",
+    "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support. Keep selling even without internet.",
+  alternates: {
+    canonical: "/products/pos",
+  },
+  openGraph: {
+    title: "Scryme POS — Native Desktop Point of Sale",
+    description: "A fast, reliable checkout experience that never depends on the internet. Built with Tauri and React.",
+    url: "https://scryme.co/products/pos",
+  },
 };
 
 const capabilities = [
@@ -24,8 +33,52 @@ const capabilities = [
 ];
 
 export default function PosPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Scryme POS",
+    description: "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support.",
+    brand: {
+      "@type": "Brand",
+      name: "Scryme",
+    },
+    offers: {
+      "@type": "Offer",
+      url: "https://scryme.co/products/pos",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://scryme.co",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: "https://scryme.co/products",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "POS",
+        item: "https://scryme.co/products/pos",
+      },
+    ],
+  };
+
   return (
     <main>
+      <StructuredData data={structuredData} />
+      <StructuredData data={breadcrumbData} />
       <ProductHero
         eyebrow="Scryme POS"
         title="A desktop POS that keeps selling — even offline"

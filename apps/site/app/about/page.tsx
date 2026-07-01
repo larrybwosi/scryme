@@ -3,9 +3,17 @@ import Link from "next/link";
 import { ArrowRight, Globe, Users, TrendingUp, Award } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About — Scryme",
+  title: "About Us — Our Mission to Empower Global Commerce",
   description:
-    "Scryme was founded to give independent and growing businesses the same ERP capabilities that enterprise conglomerates take for granted.",
+    "Scryme was founded to give independent and growing businesses the same ERP capabilities that enterprise conglomerates take for granted. Learn about our story and leadership.",
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Scryme",
+    description: "Learn about the mission and team behind the enterprise platform built for businesses that can't afford to stop.",
+    url: "https://scryme.co/about",
+  },
 };
 
 const values = [

@@ -2,15 +2,24 @@ import type { Metadata } from "next";
 import { Users, GitBranch, BarChart2, Bell, Mail, Zap, Lock, Globe } from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
+import { StructuredData } from "@/components/seo/structured-data";
 import { CrmPipelineMock } from "@/components/products/crm/crm-pipeline-mock";
 import { CrmContactMock } from "@/components/products/crm/crm-contact-mock";
 import { CrmAnalyticsMock } from "@/components/products/crm/crm-analytics-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
 export const metadata: Metadata = {
-  title: "CRM — Scryme",
+  title: "Cloud CRM Software for Growing Sales Teams",
   description:
     "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
+  alternates: {
+    canonical: "/products/crm",
+  },
+  openGraph: {
+    title: "Scryme CRM — Visual Pipeline & Sales Automation",
+    description: "Close more deals with a pipeline built for scale. AI-assisted follow-ups, deal scoring, and revenue forecasting.",
+    url: "https://scryme.co/products/crm",
+  },
 };
 
 const capabilities = [
@@ -25,8 +34,52 @@ const capabilities = [
 ];
 
 export default function CrmPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Scryme CRM",
+    description: "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
+    brand: {
+      "@type": "Brand",
+      name: "Scryme",
+    },
+    offers: {
+      "@type": "Offer",
+      url: "https://scryme.co/products/crm",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    },
+  };
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://scryme.co",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: "https://scryme.co/products",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: "CRM",
+        item: "https://scryme.co/products/crm",
+      },
+    ],
+  };
+
   return (
     <main>
+      <StructuredData data={structuredData} />
+      <StructuredData data={breadcrumbData} />
       <ProductHero
         eyebrow="Scryme CRM"
         title="Close more deals with a pipeline built for scale"
