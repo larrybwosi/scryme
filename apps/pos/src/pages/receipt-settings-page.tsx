@@ -1636,7 +1636,11 @@ export default function ReceiptSettingsPage() {
 
   // Determine if kitchen ticket is applicable for this business type
   const businessConfig = getBusinessConfig(settings.businessType);
-  const hasKitchenDisplay = businessConfig.features.kitchenDisplay;
+  const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+  const hasKitchenDisplay =
+    businessConfig.features.kitchenDisplay &&
+    (['restaurant', 'bar'].includes(businessMode) ||
+      ['restaurant', 'bar'].includes(settings.businessType));
 
   const [mode, setMode] = useState<'receipt' | 'kitchen'>('receipt');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');

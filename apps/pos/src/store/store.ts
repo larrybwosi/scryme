@@ -711,7 +711,7 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   itemSpacing: 2,
 
   // Content Granularity
-  dateFormat: 'yyyy-MM-dd HH:mm',
+  dateFormat: "dd MMM yyyy 'at' hh:mm a",
   showCashier: true,
   showCustomerName: true,
   showOrderType: true,
