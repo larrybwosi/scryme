@@ -102,7 +102,16 @@ export class ShortUrlController {
         const format = fm;
 
         // For RustFS/S3, we need the fileName as the key
-        const storageKey = attachment.fileName || attachmentId;
+        let storageKey = attachment.fileName || attachmentId;
+
+        // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
+        if (
+          process.env.STORAGE_PROVIDER === "rustfs" &&
+          !storageKey.startsWith("dealio-")
+        ) {
+          storageKey = `dealio-${storageKey}`;
+        }
+
         const { data, contentType } = await this.imageService.optimizeImage(
           storageKey,
           {
@@ -138,7 +147,17 @@ export class ShortUrlController {
         }
 
         // For RustFS/S3, we need the fileName as the key, not the attachmentId (CUID)
-        const storageKey = attachment.fileName || attachmentId;
+        let storageKey = attachment.fileName || attachmentId;
+
+        // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
+        // This handles legacy records or cases where the prefix was missed in the DB.
+        if (
+          process.env.STORAGE_PROVIDER === "rustfs" &&
+          !storageKey.startsWith("dealio-")
+        ) {
+          storageKey = `dealio-${storageKey}`;
+        }
+
         const signedUrl = await storageService.getSignedUrl(
           storageKey,
           60,
