@@ -30,6 +30,31 @@ import {
   WaybillConfig
 } from '@repo/db';
 
+import {
+  resolveBranding,
+  resolveCurrencySettings,
+  formatCurrency,
+  formatAddress,
+  isV3Template,
+} from "./utils";
+
+export {
+  resolveBranding,
+  resolveCurrencySettings,
+  formatCurrency,
+  formatAddress,
+  isV3Template,
+} from "./utils";
+
+export {
+  getTemplateById,
+  getTemplatesByType,
+} from "./registry";
+
+export {
+  getMockV3Data,
+} from "./mock-data";
+
 /**
  * Generates a verification hash for an invoice.
  */
@@ -46,20 +71,6 @@ export function generateVerificationHash(data: {
     .substring(0, 16)
     .toUpperCase();
 }
-
-import {
-  resolveBranding,
-  resolveCurrencySettings,
-  formatCurrency,
-  formatAddress,
-} from "./utils";
-
-export {
-  resolveBranding,
-  resolveCurrencySettings,
-  formatCurrency,
-  formatAddress,
-};
 
 /**
  * Generates a QR code as a data URL.
