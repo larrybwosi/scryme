@@ -56,8 +56,8 @@ ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 RUN pnpm turbo run generate
 
 # Build the Web app
-# Limit memory and concurrency to reduce resource consumption
-ENV NODE_OPTIONS="--max-old-space-size=1536"
+# Updated memory allocation to 4GB (4096MB)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=web... --concurrency=1
 
