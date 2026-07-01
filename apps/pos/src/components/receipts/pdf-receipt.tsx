@@ -167,7 +167,7 @@ export const PDFReceipt = ({
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.label}>Date:</Text>
-          <Text>{format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm')}</Text>
+          <Text>{format(new Date(order.createdAt), "dd MMM yyyy 'at' hh:mm a")}</Text>
         </View>
         {order.customerName && (
           <View style={styles.infoRow}>

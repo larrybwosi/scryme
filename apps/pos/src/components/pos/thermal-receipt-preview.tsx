@@ -168,7 +168,7 @@ export function ThermalReceiptPreview({
             )}
             <div className="flex justify-between">
               <span>{labels.date}:</span>
-              <span>{format(new Date(order.createdAt), 'dd/MM/yy HH:mm')}</span>
+              <span>{format(new Date(order.createdAt), "dd MMM yyyy 'at' hh:mm a")}</span>
             </div>
             {config.showOrderType && (
               <div className="flex justify-between">
