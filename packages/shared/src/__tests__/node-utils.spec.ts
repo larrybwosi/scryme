@@ -71,6 +71,21 @@ describe("isSafeUrl", () => {
     }
   });
 
+  it("should block IPv4-mapped IPv6 addresses for private ranges", async () => {
+    const mappedIps = [
+      "::ffff:127.0.0.1",
+      "::ffff:10.0.0.1",
+      "::ffff:169.254.169.254",
+    ];
+
+    for (const ip of mappedIps) {
+      mockLookup.mockImplementation((hostname: string, cb: any) => {
+        cb(null, { address: ip });
+      });
+      expect(await isSafeUrl(`http://[${ip}]`)).toBe(false);
+    }
+  });
+
   it("should block invalid URLs", async () => {
     expect(await isSafeUrl("not-a-url")).toBe(false);
     expect(await isSafeUrl("http://")).toBe(false);

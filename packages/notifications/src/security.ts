@@ -85,6 +85,12 @@ function isSafeIp(ip: string): boolean {
   if (net.isIPv6(ip)) {
     const normalizedIp = ip.toLowerCase();
 
+    // Handle IPv4-mapped IPv6 addresses (::ffff:1.2.3.4)
+    if (normalizedIp.startsWith("::ffff:")) {
+      const ipv4 = ip.split(":").pop();
+      return ipv4 ? isSafeIp(ipv4) : false;
+    }
+
     // ::/128 (Unspecified) & ::1/128 (Loopback)
     if (
       normalizedIp === "::" ||
