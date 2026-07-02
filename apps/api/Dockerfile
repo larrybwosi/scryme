@@ -93,7 +93,7 @@ USER nestjs
 EXPOSE 4000
 
 HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/v2/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-4000}/api/v2/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/main"]

@@ -83,6 +83,6 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 3003
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3003/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3003}/ || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
