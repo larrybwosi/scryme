@@ -2,6 +2,7 @@ import { StockBatchEntity } from "../entities/stock-batch.entity";
 
 export interface IStockBatchRepository {
   findById(id: string): Promise<StockBatchEntity | null>;
+  findByIds(ids: string[]): Promise<StockBatchEntity[]>;
   findByBatchNumber(
     batchNumber: string,
     organizationId: string,
