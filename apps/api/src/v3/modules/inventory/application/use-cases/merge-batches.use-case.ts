@@ -32,6 +32,7 @@ export class MergeBatchesUseCase {
     // eliminating the N+1 query pattern where findById was called for each batch ID.
     const rawBatches = await this.stockBatchRepository.findByIds(batchIds);
     const batchesMap = new Map(rawBatches.map((b) => [b.id, b]));
+    // Map ensures we preserve input order and handle missing IDs (as nulls) for validation.
     const batches = batchIds.map((id) => batchesMap.get(id) || null);
 
     // Validation
@@ -42,7 +43,9 @@ export class MergeBatchesUseCase {
 
     for (const batch of batches) {
       if (!batch || batch.organizationId !== organizationId) {
-        throw new NotFoundException(`Batch ${batch.id} not found`);
+        throw new NotFoundException(
+          `Batch ${batchIds[batches.indexOf(batch)] || "unknown"} not found`,
+        );
       }
       if (batch.variantId !== firstBatch.variantId) {
         throw new BadRequestException(
@@ -52,11 +55,11 @@ export class MergeBatchesUseCase {
     }
 
     const totalQuantity = batches.reduce(
-      (sum, b) => sum + b.currentQuantity,
+      (sum, b) => sum + (b?.currentQuantity || 0),
       0,
     );
 
-    return this.prisma.client.$transaction(async tx => {
+    return this.prisma.client.$transaction(async (tx) => {
       // 1. Create the merged target batch
       const mergedBatch = await tx.stockBatch.create({
         data: {
@@ -71,39 +74,29 @@ export class MergeBatchesUseCase {
         },
       });
 
-      // 2. Deplete and link source batches
-      for (const batch of batches) {
-        await tx.stockBatch.update({
-          where: { id: batch.id },
-          data: {
-            currentQuantity: 0,
-            // We could add a 'mergedIntoId' field if we wanted explicit back-link in schema,
-            // but we can use movements for now or add it to schema.
-          },
-        });
+      // OPTIMIZATION (Bolt ⚡): Use updateMany and createMany to perform bulk database writes,
+      // replacing the sequential loop that issued N updates and N creates.
+      // This reduces database write roundtrips from 2N to 2.
 
-        // Link in genealogy (parent-child)
-        // Since we have children/parent relation, merged batch is parent of the source batches?
-        // Actually it's the other way around: merged batch's parents are the source batches.
-        // But our schema has parentId (singular).
-        // For merge (many-to-one), we might need a join table or a different approach for "genealogy".
-        // Let's use the parentId on the source batches to point to the merged batch as their "successor".
-        // Wait, 'parent' usually means origin.
-        // Let's just create movements for now as they are the primary audit trail.
+      // 2. Deplete source batches
+      await tx.stockBatch.updateMany({
+        where: { id: { in: batchIds } },
+        data: { currentQuantity: 0 },
+      });
 
-        await tx.stockMovement.create({
-          data: {
-            organizationId,
-            variantId: batch.variantId,
-            stockBatchId: batch.id,
-            quantity: batch.currentQuantity,
-            fromLocationId: batch.locationId,
-            toLocationId: targetLocationId,
-            movementType: "ADJUSTMENT_OUT",
-            memberId,
-          },
-        });
-      }
+      // 3. Create audit trail (movements)
+      const movements = batches.map((batch) => ({
+        organizationId,
+        variantId: batch!.variantId,
+        stockBatchId: batch!.id,
+        quantity: batch!.currentQuantity,
+        fromLocationId: batch!.locationId,
+        toLocationId: targetLocationId,
+        movementType: "ADJUSTMENT_OUT" as const,
+        memberId,
+      }));
+
+      await tx.stockMovement.createMany({ data: movements });
 
       await tx.stockMovement.create({
         data: {

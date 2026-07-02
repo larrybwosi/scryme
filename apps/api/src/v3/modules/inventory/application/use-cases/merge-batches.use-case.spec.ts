@@ -19,9 +19,10 @@ describe("MergeBatchesUseCase", () => {
         $transaction: vi.fn((cb) => cb(prisma.client)),
         stockBatch: {
           create: vi.fn().mockResolvedValue({ id: "merged-1" }),
-          update: vi.fn().mockResolvedValue({}),
+          updateMany: vi.fn().mockResolvedValue({ count: 3 }),
         },
         stockMovement: {
+          createMany: vi.fn().mockResolvedValue({ count: 3 }),
           create: vi.fn().mockResolvedValue({}),
         },
       },
@@ -38,7 +39,7 @@ describe("MergeBatchesUseCase", () => {
     useCase = module.get<MergeBatchesUseCase>(MergeBatchesUseCase);
   });
 
-  it("should merge multiple batches with a single repository call", async () => {
+  it("should merge multiple batches with single read and bulk writes", async () => {
     const orgId = "org-1";
     const batchIds = ["b1", "b2", "b3"];
 
@@ -48,8 +49,12 @@ describe("MergeBatchesUseCase", () => {
 
     await useCase.execute(orgId, "m1", batchIds, "loc-target");
 
-    // This confirms 1 call for all batch IDs, replacing the N calls pattern
+    // Verify optimized read
     expect(repository.findByIds).toHaveBeenCalledTimes(1);
     expect(repository.findByIds).toHaveBeenCalledWith(batchIds);
+
+    // Verify optimized writes
+    expect(prisma.client.stockBatch.updateMany).toHaveBeenCalledTimes(1);
+    expect(prisma.client.stockMovement.createMany).toHaveBeenCalledTimes(1);
   });
 });
