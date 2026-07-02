@@ -24,12 +24,15 @@
     "@types/node": "^25.9.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "tsup": "^8.5.1"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "dev": "tsc --watch"
-  }
+    "dev": "tsup --watch",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
+  },
+  "module": "./src/index.ts"
 }

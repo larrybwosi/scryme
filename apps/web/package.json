@@ -14,12 +14,12 @@
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "@react-pdf/renderer": "^4.5.1",
-    "@repo/auth": "workspace:^",
+    "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/sdk": "workspace:*",
-    "@repo/shared": "workspace:^",
+    "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/windmill": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "16.2.6",
-    "@repo/auth": "workspace:^",
+    "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",

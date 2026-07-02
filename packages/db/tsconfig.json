@@ -1,8 +1,9 @@
 {
   "extends": "@repo/typescript-config/base.json",
-  "include": ["next-env.d.ts", "src/**/*.ts", "generated/**/*.ts", "tsup.config.ts"],
-  "exclude": ["node_modules", "dist"],
   "compilerOptions": {
-    "strictNullChecks": true
-  }
+    "noEmit": false,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "tsup.config.ts", "generated", "**/*.bundled_*"]
 }

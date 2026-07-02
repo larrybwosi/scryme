@@ -1,19 +1,9 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "lib": ["ESNext", "DOM"],
-    "rootDir": "src",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "types": ["jest", "node"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "noEmit": false,
+    "skipLibCheck": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "tsup.config.ts", "generated", "**/*.bundled_*"]
 }

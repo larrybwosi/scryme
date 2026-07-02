@@ -7,15 +7,16 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
-    "./templates/v1/*": "./src/templates/v1/*.tsx",
-    "./templates/v2/*": "./src/templates/v2/*.tsx"
+    "./templates/v1/*": "./src/templates/v1/*.ts",
+    "./templates/v2/*": "./src/templates/v2/*.ts"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
+    "dev": "tsup --watch",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.2.1",
@@ -31,6 +32,10 @@
     "@types/react": "^19.2.14",
     "@vitest/coverage-v8": "^3.0.7",
     "jsdom": "^26.0.0",
+    "tsup": "^8.5.1",
     "vitest": "^3.0.7"
-  }
+  },
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts"
 }

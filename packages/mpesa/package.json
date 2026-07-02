@@ -10,11 +10,12 @@
     "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
+    "dev": "tsup --watch",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -28,6 +29,8 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.19.33",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.2"
-  }
+    "ts-jest": "^29.1.2",
+    "tsup": "^8.5.1"
+  },
+  "module": "./src/index.ts"
 }

@@ -67,7 +67,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-pdf/renderer": "latest",
     "@redfernelec/tauri-plugin-hid-api": "^0.2.3",
-    "@repo/ui": "workspace:^",
+    "@repo/ui": "workspace:*",
     "@sentry/browser": "^10.40.0",
     "@skipperndt/plugin-machine-uid": "^0.1.3",
     "@tailwindcss/vite": "^4.1.18",

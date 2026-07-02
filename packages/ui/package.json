@@ -7,7 +7,6 @@
     ".": "./src/index.tsx",
     "./globals.css": "./src/globals.css",
     "./components/*": "./src/components/*.tsx",
-    "./components/storefront/*": "./src/components/storefront/*.tsx",
     "./lib/*": "./src/lib/*.ts",
     "./hooks/*": "./src/hooks/*.ts"
   },
@@ -48,6 +47,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.0.0",
     "tailwindcss": "^4.2.1",
+    "tsup": "^8.5.1",
     "typescript-eslint": "^8.61.0"
   },
   "peerDependencies": {
@@ -55,9 +55,13 @@
     "react-dom": "^19.2.6"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
-  }
+    "dev": "tsup --watch",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
+  },
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts"
 }

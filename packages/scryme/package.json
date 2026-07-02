@@ -6,8 +6,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "tsc",
-    "type-check": "tsc --noEmit"
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
+    "type-check": "tsc --noEmit",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "axios": "^1.6.2"
@@ -15,6 +17,11 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.0.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0"
+  },
+  "module": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
   }
 }

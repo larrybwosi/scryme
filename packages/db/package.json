@@ -3,30 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "./dist/client.js",
-  "types": "./src/client.ts",
   "exports": {
-    ".": {
-      "types": "./src/client.ts",
-      "import": "./dist/client.js"
-    },
-    "./client": {
-      "types": "./src/browser.ts",
-      "import": "./dist/browser.js"
-    }
+    ".": "./src/client.ts",
+    "./client": "./src/browser.ts"
   },
   "scripts": {
-    "build": "tsup",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "tsx src/seed.ts",
-    "dev": "tsup --watch",
+    "dev": "tsup src/* --watch",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint . --ignore-pattern generated --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "studio": "prisma studio"
+    "prebuild": "npm run generate",
+    "predev": "npm run generate",
+    "studio": "prisma studio",
+    "build": "prisma generate && tsup src/client.ts src/browser.ts --format esm,cjs",
+    "build:dist": "tsup src/client.ts src/browser.ts --format esm,cjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -46,5 +41,8 @@
     "tsup": "^8.5.1",
     "tsx": "4.21.0",
     "typescript-eslint": "^8.61.0"
-  }
+  },
+  "main": "./src/client.ts",
+  "types": "./src/client.ts",
+  "module": "./src/client.ts"
 }

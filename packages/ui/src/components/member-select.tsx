@@ -5,9 +5,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Skeleton } from "./ui/skeleton";
-import { Alert, AlertDescription } from "./ui/alert";
+} from "@repo/ui/components/ui/ui/select";
+import { Skeleton } from "@repo/ui/components/ui/ui/skeleton";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/ui/alert";
 import { AlertCircle, User } from "lucide-react";
 
 interface Member {

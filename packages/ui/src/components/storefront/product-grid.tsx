@@ -1,6 +1,6 @@
 import React from 'react';
-import { ProductCard } from './product-card';
-import { cn } from '../../lib/utils';
+import { ProductCard } from '@repo/ui/components/ui/product-card';
+import { cn } from '@repo/ui/lib/utils';
 
 interface ProductGridProps {
   products: any[];

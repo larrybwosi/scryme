@@ -5,8 +5,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "scripts": {
-    "lint": "echo \"no lint script defined\"",
-    "type-check": "echo \"no type-check script defined\""
+  "exports": {
+    "./base.json": "./base.json",
+    "./nextjs.json": "./nextjs.json",
+    "./tsup": "./tsup.config.ts"
+  },
+  "dependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "5.7.3"
   }
 }

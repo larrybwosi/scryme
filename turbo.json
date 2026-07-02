@@ -1,12 +1,25 @@
 {
   "$schema": "https://v2-10-0.turborepo.dev/schema.json",
   "concurrency": "2",
-  "globalPassThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET", "NEXT_PUBLIC_API_URL"],
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "NEXT_PUBLIC_API_URL"
+  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "generate"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**"
+      ]
     },
     "db:migrate:dev": {
       "cache": false,
@@ -22,24 +35,37 @@
       "cache": false
     },
     "dev": {
-      "dependsOn": ["generate"],
       "cache": false,
       "persistent": true
     },
     "generate": {
-      "dependsOn": ["^generate"],
-      "inputs": ["prisma/schema/**", "prisma.config.ts"],
-      "outputs": ["generated/**"],
-      "cache": true
+      "dependsOn": [
+        "^generate"
+      ],
+      "cache": false
     },
     "lint": {
-      "dependsOn": ["^generate"]
+      "dependsOn": [
+        "^generate"
+      ]
     },
     "type-check": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "build:dist": {
+      "dependsOn": [
+        "^build:dist"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     }
   }
 }

@@ -3,28 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./dist/index.js"
-    },
-    "./client": {
-      "types": "./src/client.ts",
-      "import": "./dist/client.js"
-    },
-    "./server": {
-      "types": "./src/server.ts",
-      "import": "./dist/server.js"
-    }
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup",
     "dev": "tsup --watch",
     "test": "jest --passWithNoTests",
     "lint": "eslint . --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
@@ -51,5 +41,8 @@
     "ts-jest": "^29.4.9",
     "tsup": "^8.5.1",
     "typescript-eslint": "^8.59.3"
-  }
+  },
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts"
 }
