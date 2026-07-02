@@ -1,7 +1,5 @@
 #[cfg(not(debug_assertions))]
 use better_posthog::events::capture;
-#[cfg(not(debug_assertions))]
-use dotenvy_macro::dotenv;
 use log::error;
 pub mod escpos_builder;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
@@ -99,13 +97,13 @@ pub fn run() {
 
     #[cfg(not(debug_assertions))]
     let _posthog_guard = better_posthog::init(better_posthog::ClientOptions {
-        api_key: Some(dotenv!("POSTHOG_API_KEY").into()),
+        api_key: Some(env!("POSTHOG_API_KEY").into()),
         ..Default::default()
     });
 
     #[cfg(not(debug_assertions))]
     let client = sentry::init((
-        dotenv!("SENTRY_DSN"),
+        env!("SENTRY_DSN"),
         sentry::ClientOptions {
             release: sentry::release_name!(),
             auto_session_tracking: true,
@@ -404,6 +402,8 @@ pub fn run() {
             customer_manager::search_customers_command,
             customer_manager::get_customers_by_ids_command,
             customer_manager::create_customer_command,
+            customer_manager::update_customer_command,
+            customer_manager::delete_local_customer_command,
             sale_manager::process_sale_command,
             #[cfg(not(feature = "standalone"))]
             sale_manager::sync_sales_command,
@@ -412,6 +412,7 @@ pub fn run() {
             pricing_manager::sync_pricing_command,
             pricing_manager::resolve_price_batch_command,
             pricing_manager::get_pos_pricing_command,
+            pricing_manager::delete_local_price_list_command,
             printer_manager::print_network_receipt,
             printer_manager::print_system_receipt,
             printer_manager::print_usb,

@@ -39,7 +39,7 @@ jest.mock('@repo/db', () => ({
   },
 }));
 
-jest.mock('@repo/shared/api/v2/utils/encryption', () => ({
+jest.mock('@repo/shared/api/v2', () => ({
   decrypt: jest.fn((val) => Promise.resolve(val)),
 }));
 

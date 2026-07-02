@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, {
+  useState,
+  useEffect,
+  useTransition,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Table,
   TableBody,
@@ -40,6 +46,57 @@ interface LocationStockTableProps {
   totalCount: number;
 }
 
+// Memoized table row component to prevent rerendering all rows
+const StockTableRow = React.memo(function StockTableRow({
+  item,
+  pendingChanges,
+  onStockChange,
+}: {
+  item: StockItem;
+  pendingChanges: Record<string, number>;
+  onStockChange: (variantId: string, value: string) => void;
+}) {
+  const isChanged = pendingChanges[item.variantId] !== undefined;
+  const displayValue = isChanged
+    ? pendingChanges[item.variantId]
+    : item.currentStock === 0
+      ? ""
+      : item.currentStock;
+
+  return (
+    <TableRow className="hover:bg-gray-50/50">
+      <TableCell>
+        <div className="flex flex-col">
+          <span className="font-medium text-sm text-[#1D1D1F]">
+            {item.name}
+            {item.variantName !== "Default" && ` - ${item.variantName}`}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <span className="text-[10px] text-gray-400 font-mono tracking-tighter uppercase">
+          {item.sku}
+        </span>
+      </TableCell>
+      <TableCell className="text-center">
+        <span className="text-sm font-medium">{item.currentStock}</span>
+      </TableCell>
+      <TableCell className="text-right">
+        <Input
+          type="number"
+          placeholder="0"
+          className={cn(
+            "h-8 text-right font-medium",
+            isChanged && "border-blue-500 bg-blue-50 ring-1 ring-blue-500",
+          )}
+          value={displayValue}
+          onChange={e => onStockChange(item.variantId, e.target.value)}
+        />
+      </TableCell>
+    </TableRow>
+  );
+});
+
 export function LocationStockTable({
   locationId,
   initialData,
@@ -50,7 +107,13 @@ export function LocationStockTable({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  // Get values from search params once
+  const currentSearch = searchParams.get("search") || "";
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const currentSortBy = searchParams.get("sortBy");
+  const currentSortOrder = searchParams.get("sortOrder");
+
+  const [search, setSearch] = useState(currentSearch);
   const [debouncedSearch] = useDebounce(search, 500);
 
   const [pendingChanges, setPendingChanges] = useState<Record<string, number>>(
@@ -58,20 +121,40 @@ export function LocationStockTable({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (debouncedSearch) {
-      params.set("search", debouncedSearch);
-      params.set("page", "1");
-    } else {
-      params.delete("search");
-    }
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
-  }, [debouncedSearch, pathname, router, searchParams]);
+  // Memoized URL update function
+  const updateURL = useCallback(
+    (params: Record<string, string | null>) => {
+      const newParams = new URLSearchParams(searchParams.toString());
 
-  const handleStockChange = (variantId: string, value: string) => {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === null) {
+          newParams.delete(key);
+        } else {
+          newParams.set(key, value);
+        }
+      });
+
+      const queryString = newParams.toString();
+      const newURL = queryString ? `${pathname}?${queryString}` : pathname;
+
+      startTransition(() => {
+        router.push(newURL, { scroll: false });
+      });
+    },
+    [pathname, router, searchParams],
+  );
+
+  // Update URL when debounced search changes
+  useEffect(() => {
+    if (debouncedSearch === currentSearch) return;
+
+    updateURL({
+      search: debouncedSearch || null,
+      page: debouncedSearch ? "1" : null,
+    });
+  }, [debouncedSearch, currentSearch, updateURL]);
+
+  const handleStockChange = useCallback((variantId: string, value: string) => {
     if (value === "") {
       setPendingChanges(prev => {
         const next = { ...prev };
@@ -82,43 +165,40 @@ export function LocationStockTable({
     }
 
     const numValue = parseFloat(value);
-    if (isNaN(numValue)) {
-      return;
-    }
+    if (isNaN(numValue)) return;
 
     setPendingChanges(prev => ({
       ...prev,
       [variantId]: numValue,
     }));
-  };
+  }, []);
 
-  const handleSort = (column: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const currentSort = params.get("sortBy");
-    const currentOrder = params.get("sortOrder");
+  const handleSort = useCallback(
+    (column: string) => {
+      const newOrder =
+        currentSortBy === column && currentSortOrder === "asc" ? "desc" : "asc";
 
-    if (currentSort === column) {
-      params.set("sortOrder", currentOrder === "asc" ? "desc" : "asc");
-    } else {
-      params.set("sortBy", column);
-      params.set("sortOrder", "asc");
-    }
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
-  };
+      updateURL({
+        sortBy: column,
+        sortOrder: newOrder,
+      });
+    },
+    [currentSortBy, currentSortOrder, updateURL],
+  );
 
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", page.toString());
-    startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    });
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      updateURL({ page: page.toString() });
+    },
+    [updateURL],
+  );
 
-  const hasChanges = Object.keys(pendingChanges).length > 0;
+  const hasChanges = useMemo(
+    () => Object.keys(pendingChanges).length > 0,
+    [pendingChanges],
+  );
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!hasChanges) return;
 
     setIsSubmitting(true);
@@ -142,14 +222,35 @@ export function LocationStockTable({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [hasChanges, pendingChanges, locationId]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setPendingChanges({});
-  };
+  }, []);
 
-  const currentPage = parseInt(searchParams.get("page") || "1");
   const totalPages = Math.ceil(totalCount / 50);
+
+  // Memoize the rows to prevent recreation on every render
+  const tableRows = useMemo(
+    () =>
+      initialData.length === 0 ? (
+        <TableRow>
+          <TableCell colSpan={4} className="h-32 text-center text-gray-500">
+            No products found.
+          </TableCell>
+        </TableRow>
+      ) : (
+        initialData.map(item => (
+          <StockTableRow
+            key={item.variantId}
+            item={item}
+            pendingChanges={pendingChanges}
+            onStockChange={handleStockChange}
+          />
+        ))
+      ),
+    [initialData, pendingChanges, handleStockChange],
+  );
 
   return (
     <div className="space-y-4">
@@ -215,65 +316,7 @@ export function LocationStockTable({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {initialData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="h-32 text-center text-gray-500">
-                  No products found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              initialData.map(item => {
-                const isChanged = pendingChanges[item.variantId] !== undefined;
-                const displayValue = isChanged
-                  ? pendingChanges[item.variantId]
-                  : item.currentStock === 0
-                    ? ""
-                    : item.currentStock;
-
-                return (
-                  <TableRow key={item.variantId} className="hover:bg-gray-50/50">
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm text-[#1D1D1F]">
-                          {item.name}
-                          {item.variantName !== "Default" &&
-                            ` - ${item.variantName}`}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-[10px] text-gray-400 font-mono tracking-tighter uppercase">
-                        {item.sku}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className="text-sm font-medium">
-                        {item.currentStock}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        className={cn(
-                          "h-8 text-right font-medium",
-                          isChanged &&
-                            "border-blue-500 bg-blue-50 ring-1 ring-blue-500",
-                        )}
-                        value={displayValue}
-                        onChange={e =>
-                          handleStockChange(item.variantId, e.target.value)
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
+          <TableBody>{tableRows}</TableBody>
         </Table>
       </div>
 

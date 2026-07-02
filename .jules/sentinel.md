@@ -1,131 +1,40 @@
-# Sentinel Security Journal 🛡️
+## 2025-05-14 - Sensitive Data Leakage in Global Exception Logs
+**Vulnerability:** The global `AllExceptionsFilter` was logging raw `Error` objects directly to server logs and OpenObserve, bypassing the redaction utility for `instanceof Error` cases.
+**Learning:** `Error` objects frequently encapsulate sensitive context (e.g., database query parameters, request bodies, or internal configurations) in non-enumerable properties that standard loggers might still capture. Bypassing redaction for `Error` instances creates a significant risk of PII or secret exposure in monitoring tools.
+**Prevention:** Ensure the central redaction utility explicitly handles `Error` objects by using `Object.getOwnPropertyNames` to find and redact sensitive metadata before any exception is passed to a logging service. Always redact before logging, never after.
 
-## 2025-05-15 - [Secured Public Upload Endpoint]
-**Vulnerability:** The `/api/upload` endpoint in the NestJS API was marked with `@Public()`, allowing anyone to upload files to the server without authentication. Additionally, the Next.js proxy route for this endpoint did not perform its own session validation.
+## 2025-05-15 - Authorization Bypass in Realtime WebSocket Gateways
+**Vulnerability:** The V2 and V3 Realtime Gateways allowed clients to join any channel or publish arbitrary data to any channel without organization-level authorization checks.
+**Learning:** WebSocket gateways in NestJS operate outside the standard global HTTP guards. Even if a connection is authenticated, individual event handlers (like `@SubscribeMessage("publish")`) can be exploited to inject data into other tenants' channels if they don't explicitly validate the channel ownership against the socket's authenticated context.
+**Prevention:** Always verify authentication tokens in `handleConnection` and attach the payload to the socket object. Implement a centralized `validateChannelAccess` method and apply it to every sensitive message handler (`join`, `publish`, `presence`) to ensure strict multi-tenant isolation.
 
-**Learning:** It's easy to overlook decorators like `@Public()` during development, especially for utility endpoints like file uploads. Proxy routes must also enforce security policies rather than blindly forwarding requests.
+## 2025-05-16 - Sensitive Data Leakage in Request Logging
+**Vulnerability:** The debug request logger in the API entry point was susceptible to leaking sensitive headers (like session cookies) if it used a deny-list approach for redaction.
+**Learning:** Shared redaction utilities often use a deny-list of sensitive keys. While useful for body/query objects, applying them to entire header objects is risky because new or less common sensitive headers (e.g., `Set-Cookie`, `X-Auth-Token`) might be missed. An allow-list approach for logging headers is significantly safer.
+**Prevention:** For diagnostic logging of HTTP headers, always use a strict allow-list of safe headers to log (e.g., `user-agent`, `content-type`, `x-correlation-id`). Pass even the allowed sensitive headers (like `authorization`) through a redaction utility as a second layer of defense.
 
-**Prevention:**
-- Regularly audit all endpoints marked as `@Public()`.
-- Ensure all proxy routes in the Next.js application validate sessions using `getServerAuth()` before forwarding requests to the internal API.
-- Sanitize all user-provided data, including filenames, even when using unique identifiers like UUIDs.
-- When proxying `multipart/form-data` requests, avoid forwarding the `Content-Type` header to let the backend `fetch` generate the correct multipart boundary.
+## 2026-06-29 - SSRF Vulnerability in Webhook and Image Services
+**Vulnerability:** Outbound HTTP requests in the `WebhookProcessor` and `ImageService` were fetching user-provided URLs without IP-level validation, allowing for Server-Side Request Forgery (SSRF).
+**Learning:** Validating only the hostname or protocol is insufficient for SSRF protection as it doesn't account for hostnames that resolve to internal or reserved IP addresses (e.g., `169.254.169.254` for cloud metadata). A robust check must resolve the hostname and verify the resulting IP.
+**Prevention:** Always resolve destination hostnames using `dns.lookup` and validate the resolved IP against a blocklist of private, loopback, and metadata ranges before initiating any outbound HTTP request. Centralize this logic in an `isSafeUrl` utility.
+## 2026-06-29 - Case-Insensitive Redaction in Logging Utility
+**Vulnerability:** The `redactSensitiveData` utility used case-sensitive matching for sensitive keys. This allowed sensitive data (like `Password` or `API_KEY`) to leak into logs if the keys didn't exactly match the lowercase entries in the deny-list.
+**Learning:** Security utilities that rely on key matching must be case-insensitive to account for different naming conventions (PascalCase, camelCase, UPPER_CASE) and potential manual overrides. Relying on case-sensitive `includes()` or `hasOwnProperty()` is insufficient for security-critical redaction.
+**Prevention:** Always normalize keys (e.g., `.toLowerCase()`) before performing lookups in sensitive data filters. Use efficient data structures like `Set` for these lookups to maintain performance while ensuring comprehensive coverage.
+## 2025-05-17 - Case-Sensitivity in Data Redaction
+**Vulnerability:** The central `redactSensitiveData` utility performed case-sensitive key matching, meaning sensitive fields like `Password` or `Secret-Key` (common in HTTP headers) would bypass redaction if the utility was only configured for lowercase versions.
+**Learning:** Redaction utilities must be case-insensitive by default when handling data from sources with non-standard casing (like HTTP headers or third-party webhooks). Relying on exact string matches creates a bypass vector for data leakage into logs.
+**Prevention:** Always normalize keys to lowercase before comparison in redaction utilities. For performance in recursive traversals, use a `Set` of lowercase sensitive keys.
+## 2026-06-28 - SSRF Vulnerability in Webhooks and Notifications
+**Vulnerability:** The V3 Webhooks module and the shared NotificationEngine were delivering payloads to user-provided URLs without validating if they pointed to internal/private network resources.
+**Learning:** Outbound requests to URLs provided by users or stored in configurations are primary targets for SSRF attacks. Relying on simple string checks for "localhost" is insufficient as attackers can use DNS-resolved IPs (e.g., `127.0.0.1`, `10.0.0.1`) or IPv6 loopback addresses to bypass filters and access internal metadata services or APIs.
+**Prevention:** Always use a robust URL validation utility like `isSafeUrl` (implemented in `@repo/shared/server`) that resolves the hostname via DNS and verifies that the resulting IP address does not fall within private, loopback, or reserved ranges. Apply this validation to all modules performing outbound HTTP(S) requests to external endpoints.
 
-## 2026-06-10 - [Security Hardening: Logging, Errors, and JWT]
-**Vulnerability:** 1) Generic `Error` objects in the global exception filter leaked raw system messages to clients. 2) The API logged full request bodies including sensitive fields like `password`, `pin`, and `clientSecret`. 3) JWT operations in V3 auth didn't explicitly specify an algorithm.
-
-**Learning:** Logging middlewares are a common source of accidental credential leakage. Global exception filters must be environment-aware to prevent exposing stack traces or internal logic via generic Error messages.
-
-**Prevention:**
-- Use a recursive redaction utility for all request/response logging.
-- Ensure global exception filters return generic messages for unhandled non-HttpExceptions in production.
-- Always explicitly specify JWT algorithms to prevent algorithm-switching attacks.
-
-## 2026-06-20 - [Global Rate Limiting and Enhanced Redaction]
-**Vulnerability:** 1) ThrottlerModule was configured but not registered as a global guard, leaving endpoints unprotected by default. 2) Sensitive data redaction list was missing modern identifiers like 'apiKey' and 'access_token'. 3) V3 Auth bootstrap was blocked by global V2AuthGuard.
-
-**Learning:** Having a security module (like Throttler) configured in the imports is not enough; it must be registered as an APP_GUARD to provide baseline protection for all endpoints.
-
-**Prevention:**
-- Always register ThrottlerGuard globally and use @SkipThrottle() for the few endpoints that need it.
-- Maintain a comprehensive redaction list that includes all variations of credentials used in the app (apiKey, api_key, token, secret, etc.).
-- When adding global guards, ensure authentication bootstrap endpoints (like token exchange) are explicitly marked as @AllowPublic() to prevent lockouts.
-## 2026-06-11 - [Mitigated Authentication DoS and Brute-force Risks]
-**Vulnerability:** 1) The API lacked global rate limiting, exposing all endpoints to brute-force and DoS attacks. 2) The `V3AuthService` PIN validation performed an $O(N)$ operation by iterating through all active members and executing `bcrypt.compare` on each, which is computationally expensive and highly exploitable for DoS.
-
-**Learning:** Authentication loops that involve heavy cryptographic operations must be avoided or strictly rate-limited. Relying on per-endpoint guards is error-prone; global defaults should always favor security.
-
-**Prevention:**
-- Enable `ThrottlerGuard` globally to provide a baseline defense for all endpoints.
-- Avoid $O(N)$ cryptographic loops in authentication logic. Store salts or use search-optimized hashing strategies if direct lookups are needed, or ensure strict rate limits are applied specifically to these endpoints.
-
-## 2026-06-15 - [Hardened Image Optimization Pipeline]
-**Vulnerability:** The `ImageService` was vulnerable to SSRF and DoS. It fetched images from arbitrary URLs provided in the `id` parameter when in Sanity mode and lacked timeouts or size limits on external requests, allowing for network probing and memory exhaustion.
-
-**Learning:** Image optimization services that fetch external assets are prime targets for SSRF. Trusting "IDs" without strict format validation can lead to unintended proxying of internal resources.
-
-**Prevention:**
-- Strictly validate external asset identifiers using regex (e.g., Sanity's `image-[hash]-[dimensions]-[extension]` format).
-- Always enforce `timeout` and `maxContentLength` on outbound HTTP requests for asset fetching to prevent DoS.
-- Reject raw URLs in parameters that expect specific asset IDs.
-
-## 2026-06-17 - [Strict Validation and Outbound DoS Protections]
-**Vulnerability:** 1) `ImageService` arbitrary URL fallback was still accessible if loose ID validation failed, leading to SSRF. 2) GitHub update checks in `BakeryService` and Slack API calls in `SlackProvider` lacked timeouts and size limits, exposing the server to DoS via resource exhaustion.
-
-**Learning:** "Trust but verify" isn't enough for ID parameters that influence outbound requests; use strict, exclusive validation (allow-listing). Furthermore, *all* outbound HTTP requests must be bounded by timeouts and size limits to prevent the server from becoming a victim of upstream "Slowloris" or large payload attacks.
-
-**Prevention:**
-- Never fallback to raw parameter values when constructing outbound request URLs.
-- Standardize on a set of defensive `axios` request configuration (timeouts, maxContentLength) for all internal services.
-- Ensure test suites for security-critical services (like `ImageService`) explicitly import test globals (like `describe`, `it`) for compatibility with modern Vitest environments.
-
-## 2026-06-21 - [Hardened M-Pesa Integration and Outbound Request Security]
-**Vulnerability:** 1) `MpesaController` endpoints were vulnerable to IDOR as they trusted `organizationId` from request parameters/body without validating ownership. 2) `ShortUrlController`, `ScrymeChatApiClient`, and `MpesaClient` lacked `timeout` and `maxContentLength` on outbound requests, exposing the service to DoS.
-
-**Learning:** Multi-tenant security must be enforced at the API boundary by deriving the tenant ID from the authenticated session context rather than client-supplied parameters. Furthermore, the DoS protection pattern for `axios` must be applied consistently to *all* external API clients, not just image services.
-
-**Prevention:**
-- Always use the `@v2Context()` decorator to retrieve `organizationId` and `memberId` for sensitive operations.
-- Enforce mandatory `timeout` and `maxContentLength` on all `axios` calls to prevent resource exhaustion from malicious or slow upstream responses.
-## 2026-06-18 - [Hardened PIN Validation and Comprehensive Redaction]
-**Vulnerability:** 1) `V3AuthService` PIN validation was vulnerable to DoS by iterating through an unbounded list of members and performing `bcrypt.compare` on each. 2) The `redactSensitiveData` utility lacked protection for PII and financial data (SSN, Card Numbers, DOB).
-
-**Learning:** Documented vulnerabilities (like the PIN DoS) require strict enforcement (e.g., `take` in Prisma and loop counters) to be truly mitigated. Redaction lists should proactively include standard PII/PCI identifiers beyond just authentication tokens.
-
-**Prevention:**
-- Always enforce hard limits (`take`) on database queries that feed into cryptographic loops.
-- Use a comprehensive, standardized redaction list that includes `cardNumber`, `cvc`, `ssn`, and `dob` to ensure compliance with privacy standards across all logs.
-
-## 2026-06-25 - [DoS Mitigation for Outbound Notification Webhooks]
-**Vulnerability:** The `NotificationEngine` in both `notifications` and `windmill` packages lacked `timeout` and `maxContentLength` on outbound `axios` calls to external webhooks and the Discord API. A slow or malicious endpoint could cause the notification worker to hang or consume excessive memory.
-
-**Learning:** External integration points, especially user-configurable webhooks, are critical DoS vectors. Furthermore, duplicated logic across packages (like `notifications` and `windmill`) requires coordinated hardening to ensure comprehensive protection.
-
-**Prevention:**
-- Standardize all outbound HTTP requests with a defensive default configuration (10s timeout, 1MB payload limit unless otherwise required).
-- Identify and consolidate (or parallel-harden) duplicated service logic to prevent security gaps in secondary packages.
-
-## 2026-06-26 - [Consistent Outbound Request Hardening and Redaction Coverage]
-**Vulnerability:** 1) The `@repo/plane` package lacked the standard `timeout` and `maxContentLength` protections applied to other API clients, exposing the service to DoS. 2) The `redactSensitiveData` utility was missing camelCase variants (`accessToken`, `refreshToken`) and integration-specific credentials (M-Pesa, private keys).
-
-**Learning:** In a monorepo, security hardening patterns applied to core services must be systematically audited across all workspace packages. Secondary or integration-specific packages often lag behind global security standards.
-
-**Prevention:**
-- When implementing a new security pattern (like `axios` hardening), use workspace-wide searches to ensure all clients are updated.
-- Proactively expand redaction lists to include all naming conventions (camelCase, snake_case) and provider-specific credential keys used in the codebase.
-
-## 2026-06-27 - [Hardened PIN Authentication and O(1) Lookup]
-**Vulnerability:** `V3AuthCoreService` performed an $O(N)$ loop of `bcrypt.compare` operations on all active members during PIN-based login. This created a high-severity DoS vector for large organizations and allowed for unbounded brute-force attempts.
-
-**Learning:** Simple capping of search results (as seen in previous PRs) causes functional regressions for large tenants. A robust fix combines $O(1)$ database lookups (using `cardId`) with Redis-based rate limiting to eliminate the computational cost and mitigate brute-force risks simultaneously.
-
-**Prevention:**
-- Always prefer unique identifiers (like `cardId`, `badgeId`, or `email`) for initial lookups to ensure authentication logic is $O(1)$ relative to the number of users.
-- Implement per-organization or per-device rate limiting for all PIN/password validation endpoints to protect against DoS and brute-force attacks.
-- Synchronize security hardening across duplicated or similar services (e.g., `V3AuthService` and `V3AuthCoreService`) to prevent architectural gaps.
-
-## 2026-06-23 - [Hardened Scryme Integration and Fixed Internal Fetch Loopback]
-**Vulnerability:** 1) Insecure Direct Object Reference (IDOR) in `ScrymeApprovalService` endpoints (`notify`, etc.) where `requestId` was not checked against the requester's `organizationId`. 2) Authentication bypass via internal HTTP `fetch` calls using `PUBLIC_API_URL` to trigger side effects from webhooks. 3) Missing authorization on sensitive workspace provisioning endpoints.
-
-**Learning:** Internal loopbacks via HTTP `fetch` are both a performance anti-pattern and a security risk, as they often attempt to bypass global guards or rely on "trusted" internal URLs. Additionally, Prisma's `findUnique` is strictly for primary keys or unique indices; adding additional filters like `organizationId` requires `findFirst` to avoid runtime failures.
-
-**Prevention:**
-- Always inject services directly for internal communication instead of calling the API via HTTP.
-- Ensure every database lookup for multi-tenant data includes the `organizationId` filter.
-- Use `findFirst` for lookups involving both a primary key and a tenant ID.
-- Fail-securely for webhooks in production if signature verification secrets are missing.
-
-## 2026-06-24 - [Enforced Windmill Webhook Signature Verification]
-**Vulnerability:** The `WindmillCallbackController` in V3 API exposed public endpoints for automation callbacks (approvals, batch disposal, etc.) without any authentication or signature verification. An attacker could spoof callbacks to approve unauthorized expenses or manipulate inventory status.
-
-**Learning:** Replicating V2 patterns (like M-Pesa or Scryme) in V3 often misses critical security middlewares or manual checks if not explicitly included in the new architecture's decorators.
-
-**Prevention:**
-- Always implement HMAC-SHA256 signature verification for any webhook or callback endpoint.
-- Use `crypto.timingSafeEqual` for signature comparisons to prevent timing attacks.
-- Enforce strict "fail-secure" behavior in production: reject requests if the verification secret is missing from the configuration.
-
-## 2026-06-25 - [Hardened Scryme Webhook Signature Verification]
-**Vulnerability:** The Scryme webhook handler used a standard string comparison (`!==`) to verify HMAC signatures, which is vulnerable to timing attacks. An attacker could potentially brute-force the signature by measuring response times.
-**Learning:** Even when using strong cryptographic hashes like SHA-256, the comparison of the resulting digests must also be cryptographically secure. Constant-time comparison is essential for all signature and token validations.
-**Prevention:** Always use `crypto.timingSafeEqual` for comparing signatures, tokens, or any sensitive cryptographic digests. Ensure that length checks are performed before the constant-time comparison to avoid Node.js runtime errors while maintaining security.
+## 2025-05-18 - Sensitive Data Leakage at Recursion Depth Limit
+**Vulnerability:** The `redactSensitiveData` utility leaked raw objects and arrays when they exceeded the `maxDepth` limit, as the recursion would stop and return the remaining data as-is without further inspection.
+**Learning:** Security-critical recursion must never "fail open" by returning raw data when limits are reached. If a data structure is too deep to inspect, it must be considered potentially sensitive and replaced with a placeholder.
+**Prevention:** Ensure recursive sanitization utilities return a safe placeholder (e.g., `[Object]` or `[Array]`) when the recursion depth limit is exceeded, rather than returning the original data.
+## 2026-06-30 - Sensitive Data Leakage at Redaction Depth Limit
+**Vulnerability:** The `redactSensitiveData` utility returned raw data when the recursion depth exceeded `maxDepth`. This allowed sensitive keys nested deeper than the limit to be leaked in plaintext to logs.
+**Learning:** Recursion limits in security-sensitive utilities must fail closed or return a safe placeholder. Returning the original data as a fallback bypasses the security purpose of the utility.
+**Prevention:** Always return a redaction placeholder or a truncated/safe representation when a recursion or iteration limit is reached in data processing utilities designed for security.

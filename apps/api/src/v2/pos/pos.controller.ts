@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { PosService } from "./pos.service";
 import { PosSaleService } from "./pos-sale.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { type V2ApiContext } from "@repo/shared/api/v2";
 import { Permissions } from "../../common/decorators/auth.decorator";
 import { FastifyReply } from "fastify";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe";
@@ -26,6 +26,7 @@ import {
   CreateStockRequestSchema,
   CreateStockTransferSchema,
   ShiftSyncSchema,
+  RegisterPettyCashSchema,
 } from "./pos.schema";
 
 @ApiTags("POS")
@@ -303,5 +304,28 @@ export class PosController {
   @UsePipes(new ZodValidationPipe(CreateStockTransferSchema))
   async createStockTransfer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.createStockTransfer(ctx, body);
+  }
+
+  @Post("petty-cash")
+  @ApiOperation({ summary: "Register a new petty cash expense" })
+  @UsePipes(new ZodValidationPipe(RegisterPettyCashSchema))
+  async registerPettyCash(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.registerPettyCash(ctx, body);
+  }
+
+  @Get("petty-cash/funds")
+  @ApiOperation({ summary: "List available petty cash funds" })
+  async getPettyCashFunds(@v2Context() ctx: V2ApiContext) {
+    return this.posService.getPettyCashFunds(ctx);
+  }
+
+  @Get("petty-cash/transactions")
+  @ApiOperation({ summary: "List recent petty cash transactions" })
+  async getPettyCashTransactions(
+    @v2Context() ctx: V2ApiContext,
+    @Query("limit") limit?: string,
+  ) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 10;
+    return this.posService.getPettyCashTransactions(ctx, parsedLimit);
   }
 }

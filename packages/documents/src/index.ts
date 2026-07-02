@@ -32,6 +32,7 @@ import { createElement, ReactElement } from "react";
 
 export * from "./types";
 export * from "./registry";
+export * from "./server";
 
 // V1 Templates
 export * from "./templates/v1/invoice";
@@ -78,6 +79,9 @@ export * from "./templates/v2/StockTransferTemplate";
 export * from "./templates/v2/StockRequestListTemplate";
 export * from "./templates/v2/AggregatedStockRequestListTemplate";
 export * from "./templates/v2/StockTransferListTemplate";
+
+// V3 Templates
+export * from "./templates/v3";
 
 export * from "./mock-data";
 

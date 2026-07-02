@@ -5,15 +5,6 @@ import { useAuthStore } from '@/store/pos-auth-store';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { mockInvoke } from '@/test/mocks/tauri';
 
-// Mock axios
-vi.mock('@/lib/axios', () => ({
-  apiClient: {
-    post: vi.fn(),
-  },
-  API_ENDPOINT: 'http://localhost:3000',
-  API_ENDPOINT_DEFAULT: 'http://localhost:3000',
-}));
-
 // Mock toast
 vi.mock('sonner', () => ({
   toast: {

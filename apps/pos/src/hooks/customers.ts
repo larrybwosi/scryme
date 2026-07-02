@@ -104,3 +104,26 @@ export const useCreateCustomer = () => {
     },
   });
 };
+
+export const useUpdateCustomer = () => {
+  const queryClient = useQueryClient();
+  const { currentMember } = useAuthStore();
+  const memberId = currentMember?.id;
+
+  return useMutation<PosCustomer, Error, any>({
+    mutationFn: async data => {
+      const { id, ...rest } = data;
+      const res = await invoke<PosCustomer>('update_customer_command', {
+        id,
+        data: {
+          ...rest,
+          memberId,
+        },
+      });
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
+    },
+  });
+};

@@ -17,8 +17,6 @@ import { useCashDrawer } from "@/hooks/use-cash-drawer";
 export default function PettyCashPage() {
   const { openPhysicalDrawer } = useCashDrawer();
   const { currentLocation } = useAuth();
-  const { currentMember } = useAuthStore();
-  const memberId = currentMember?.id;
   const orgSlug = useAuthStore((state) => state.deviceConfig?.orgSlug);
   const currency = usePosStore((state) => state.settings.currency);
 
@@ -45,7 +43,7 @@ export default function PettyCashPage() {
       setIsLoadingFunds(true);
       const response = await invoke<any>("authenticated_api_request", {
         method: "GET",
-        path: `api/v3/${orgSlug}/pos/petty-cash/funds`,
+        path: `api/v2/pos/petty-cash/funds`,
       });
       setFunds(response.data || []);
     } catch (error) {
@@ -61,7 +59,7 @@ export default function PettyCashPage() {
       setIsLoadingTransactions(true);
       const response = await invoke<any>("authenticated_api_request", {
         method: "GET",
-        path: `api/v3/${orgSlug}/pos/petty-cash/transactions`,
+        path: `api/v2/pos/petty-cash/transactions`,
         query: { limit: 10 },
       });
       setTransactions(response.data || []);
@@ -116,7 +114,6 @@ export default function PettyCashPage() {
         description,
         paymentMethod: "CASH",
         receiptUrl,
-        memberId,
       };
 
       await invoke("register_petty_cash_command", {

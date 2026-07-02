@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { toast } from 'sonner';
 
@@ -16,20 +16,18 @@ export interface UnclaimedPayment {
 }
 
 export const useMpesaSearch = (query: string) => {
-  const { currentLocation, apiUrl } = useAuthStore();
+  const { currentLocation } = useAuthStore();
   const organizationId = currentLocation?.organizationId;
 
   return useQuery({
     queryKey: ['mpesa-unclaimed', organizationId, query],
     queryFn: async () => {
       if (!organizationId || query.length < 3) return [];
-      const response = await axios.get(
-        `${apiUrl}/api/v2/payments/mpesa/search-unclaimed`,
-        {
-          params: { q: query },
-        },
-      );
-      return response.data as UnclaimedPayment[];
+      const response = await invoke<UnclaimedPayment[]>('authenticated_api_request', {
+        method: 'GET',
+        path: `api/v2/payments/mpesa/search-unclaimed?q=${encodeURIComponent(query)}`,
+      });
+      return response;
     },
     enabled: !!organizationId && query.length >= 3,
   });
@@ -37,7 +35,7 @@ export const useMpesaSearch = (query: string) => {
 
 export const useMpesaClaim = () => {
   const queryClient = useQueryClient();
-  const { currentMember, apiUrl } = useAuthStore();
+  const { currentMember } = useAuthStore();
   const memberId = currentMember?.id;
 
   return useMutation({
@@ -45,14 +43,15 @@ export const useMpesaClaim = () => {
       unclaimedPaymentId: string;
       transactionId: string;
     }) => {
-      const response = await axios.post(
-        `${apiUrl}/api/v2/payments/mpesa/claim`,
-        {
+      const response = await invoke<any>('authenticated_api_request', {
+        method: 'POST',
+        path: 'api/v2/payments/mpesa/claim',
+        body: {
           ...params,
           memberId,
         },
-      );
-      return response.data;
+      });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mpesa-unclaimed'] });
@@ -60,26 +59,27 @@ export const useMpesaClaim = () => {
     },
     onError: (error: any) => {
       toast.error('Failed to claim payment', {
-        description: error?.response?.data?.message || error.message,
+        description: error || 'Unknown error',
       });
     },
   });
 };
 
 export const useMpesaVerifySafaricom = () => {
-  const { apiUrl, currentMember } = useAuthStore();
+  const { currentMember } = useAuthStore();
   const memberId = currentMember?.id;
 
   return useMutation({
     mutationFn: async (params: { transactionCode: string }) => {
-      const response = await axios.post(
-        `${apiUrl}/api/v2/payments/mpesa/verify-safaricom`,
-        {
+      const response = await invoke<any>('authenticated_api_request', {
+        method: 'POST',
+        path: 'api/v2/payments/mpesa/verify-safaricom',
+        body: {
           ...params,
           memberId,
         },
-      );
-      return response.data;
+      });
+      return response;
     },
     onSuccess: (data) => {
       if (data.verified) {
@@ -92,7 +92,7 @@ export const useMpesaVerifySafaricom = () => {
     },
     onError: (error: any) => {
       toast.error('Safaricom verification failed', {
-        description: error?.response?.data?.message || error.message,
+        description: error || 'Unknown error',
       });
     },
   });

@@ -33,11 +33,12 @@ export const useBatches = (filters?: any) => {
           metadata: { total: data.length, page: 1, limit: 100, totalPages: 1 },
         };
       }
-      const resp = (await sdk.bakery.getBatches(
-        filters,
-      )) as BakeryBatchListResponse;
+      const resp = await sdk.bakery.getBatches(filters);
       return {
-        data: resp.data as unknown as FormattedBatch[],
+        data: (Array.isArray(resp)
+          ? resp
+          : resp?.data || []) as unknown as FormattedBatch[],
+        metadata: !Array.isArray(resp) ? resp?.metadata || resp?.meta : undefined,
       };
     },
   });
@@ -95,7 +96,9 @@ export const useRecipes = () => {
         return tauriInvoke<Recipe[]>("get_recipes");
       }
       const data = await sdk.bakery.getRecipes();
-      return data as unknown as Recipe[];
+      return (Array.isArray(data)
+        ? data
+        : data?.data || []) as unknown as Recipe[];
     },
   });
 };
@@ -158,7 +161,9 @@ export const useTemplates = () => {
         return tauriInvoke<Template[]>("get_templates");
       }
       const data = await sdk.bakery.getTemplates();
-      return data as unknown as Template[];
+      return (Array.isArray(data)
+        ? data
+        : data?.data || []) as unknown as Template[];
     },
   });
 };
@@ -187,7 +192,9 @@ export const useBakers = () => {
         return tauriInvoke<BakeryBaker[]>("get_bakers");
       }
       const data = await sdk.bakery.getBakers();
-      return data as unknown as BakeryBaker[];
+      return (Array.isArray(data)
+        ? data
+        : data?.data || []) as unknown as BakeryBaker[];
     },
   });
 };
@@ -225,7 +232,9 @@ export const useBakeryCategories = () => {
         return tauriInvoke<BakeryCategory[]>("get_categories");
       }
       const data = await sdk.bakery.getCategories();
-      return data as unknown as BakeryCategory[];
+      return (Array.isArray(data)
+        ? data
+        : data?.data || []) as unknown as BakeryCategory[];
     },
   });
 };

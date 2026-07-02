@@ -2,6 +2,7 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "exports": {
     ".": "./src/client.ts",
     "./client": "./src/browser.ts"
@@ -21,7 +22,8 @@
     "studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "latest",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "7.8.0",
     "@prisma/client-runtime-utils": "7.8.0",
     "@repo/env": "workspace:*",
     "dotenv": "^17.2.3",
@@ -32,7 +34,7 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/pg": "^8.20.0",
-    "prisma": "latest",
+    "prisma": "7.8.0",
     "rimraf": "^5.0.5",
     "tsup": "^8.5.1",
     "tsx": "4.21.0",

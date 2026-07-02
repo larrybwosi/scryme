@@ -1,4 +1,5 @@
 import { redactSensitiveData } from "../redaction";
+import { describe, it, expect } from "vitest";
 
 describe("redactSensitiveData", () => {
   it("should redact sensitive keys at the top level", () => {
@@ -154,5 +155,65 @@ describe("redactSensitiveData", () => {
     expect(redacted.secret_key).toBe("[REDACTED]");
     expect(redacted.config.apiKey).toBe("[REDACTED]");
     expect(redacted.config.db.password).toBe("[REDACTED]");
+  });
+
+  it("should be case-insensitive when redacting keys", () => {
+    const data = {
+      Password: "mypassword",
+      PASSWORD: "UPPER",
+      API_KEY: "key123",
+      "X-Member-Token": "token456",
+      "X-AUTH-TOKEN": "token789",
+      secret: "lowercasesecret",
+      Nested: {
+        Secret: "hidden",
+      },
+    };
+    const redacted = redactSensitiveData(data);
+    expect(redacted.Password).toBe("[REDACTED]");
+    expect(redacted.PASSWORD).toBe("[REDACTED]");
+    expect(redacted.API_KEY).toBe("[REDACTED]");
+    expect(redacted["X-Member-Token"]).toBe("[REDACTED]");
+    expect(redacted["X-AUTH-TOKEN"]).toBe("[REDACTED]");
+    expect(redacted.secret).toBe("[REDACTED]");
+    expect(redacted.Nested.Secret).toBe("[REDACTED]");
+  });
+
+  it("should redact Sentinel-expanded list", () => {
+    const data = {
+      "Set-Cookie": "session=abc",
+      "Proxy-Authorization": "Basic 123",
+    };
+    const redactedDefault = redactSensitiveData(data);
+    expect(redactedDefault["Set-Cookie"]).toBe("[REDACTED]");
+    expect(redactedDefault["Proxy-Authorization"]).toBe("[REDACTED]");
+  });
+
+  it("should not leak sensitive data beyond maxDepth", () => {
+    const deepData = {
+      l1: {
+        l2: {
+          l3: {
+            l4: {
+              l5: {
+                l6: {
+                  password: "leaked",
+                  array: [1, 2, 3],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    // Default maxDepth is 5. l6 is at depth 6.
+    const redacted = redactSensitiveData(deepData);
+    expect(redacted.l1.l2.l3.l4.l5.l6).toBe("[Object]");
+
+    const withArray = {
+      l1: { l2: { l3: { l4: { l5: { l6: [1, 2, 3] } } } } },
+    };
+    const redactedArray = redactSensitiveData(withArray);
+    expect(redactedArray.l1.l2.l3.l4.l5.l6).toBe("[Array(3)]");
   });
 });

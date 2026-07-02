@@ -11,6 +11,13 @@ vi.mock("@repo/shared/storage", () => ({
     getSignedUrl: vi.fn(),
   },
 }));
+vi.mock("@repo/shared/server", () => ({
+  optimizeImage: vi.fn().mockResolvedValue({
+    data: Buffer.from("optimized"),
+    info: { format: "webp" },
+  }),
+  isSafeUrl: vi.fn().mockResolvedValue(true),
+}));
 
 describe("ImageService", () => {
   let service: ImageService;
@@ -18,9 +25,9 @@ describe("ImageService", () => {
 
   beforeEach(async () => {
     mockRedisService = {
-      get: vi.fn(),
-      getBuffer: vi.fn(),
-      setex: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+      getBuffer: vi.fn().mockResolvedValue(null),
+      setex: vi.fn().mockResolvedValue("OK"),
     };
 
     const module: TestingModule = await Test.createTestingModule({

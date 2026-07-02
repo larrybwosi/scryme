@@ -198,7 +198,7 @@ export async function deleteSupplier(id: string): Promise<any> {
 export async function addProductToSupplier(data: {
   supplierId: string;
   productId: string;
-  variantId?: string;
+  variantId: string;
   costPrice: number;
   supplierSku?: string;
 }): Promise<any> {
@@ -216,6 +216,50 @@ export async function addProductToSupplier(data: {
       supplierSku: data.supplierSku,
     },
   });
+
+  revalidatePath(`/inventory/supplier/${data.supplierId}`);
+  return ps;
+}
+
+export async function addVariantsToSupplier(
+  data: {
+    supplierId: string;
+    productId: string;
+    variants: Array<{
+      variantId: string;
+      costPrice: number;
+      supplierSku?: string;
+    }>;
+  },
+): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const ps = await db.$transaction(
+    data.variants.map(v =>
+      db.productSupplier.upsert({
+        where: {
+          variantId_supplierId: {
+            variantId: v.variantId,
+            supplierId: data.supplierId,
+          },
+        },
+        update: {
+          costPrice: new Decimal(v.costPrice),
+          supplierSku: v.supplierSku,
+        },
+        create: {
+          supplierId: data.supplierId,
+          productId: data.productId,
+          variantId: v.variantId,
+          costPrice: new Decimal(v.costPrice),
+          supplierSku: v.supplierSku,
+        },
+      }),
+    ),
+  );
 
   revalidatePath(`/inventory/supplier/${data.supplierId}`);
   return ps;

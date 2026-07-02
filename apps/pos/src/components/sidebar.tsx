@@ -37,9 +37,11 @@ import { useAuthStore } from '@/store/pos-auth-store';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Button } from '@repo/ui/components/ui/button';
-import { ScanOrderDialog } from './scan-order-dialog';
-import { ShortcutsHelpDialog } from './shortcuts-help-dialog';
 import { useUiStore } from '@/store/ui-store';
+import { lazy, Suspense } from 'react';
+
+const ScanOrderDialog = lazy(() => import('./scan-order-dialog').then(m => ({ default: m.ScanOrderDialog })));
+const ShortcutsHelpDialog = lazy(() => import('./shortcuts-help-dialog').then(m => ({ default: m.ShortcutsHelpDialog })));
 
 const routeMap: Record<string, string> = {
   order: '/',
@@ -378,8 +380,10 @@ export function Sidebar({ onCheckout }: SidebarProps) {
         </div>
       </div>
 
-      <ScanOrderDialog open={isScanOpen} onOpenChange={setIsScanOpen} />
-      <ShortcutsHelpDialog open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />
+      <Suspense fallback={null}>
+        {isScanOpen && <ScanOrderDialog open={isScanOpen} onOpenChange={setIsScanOpen} />}
+        {isShortcutsOpen && <ShortcutsHelpDialog open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />}
+      </Suspense>
     </>
   );
 }

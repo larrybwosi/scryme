@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { RedisService } from "../../redis/redis.service";
-import { PresenceMember } from "@repo/shared/realtime/types";
+import { PresenceMember } from "@repo/shared/realtime";
 
 @Injectable()
 export class RealtimeRedisService {

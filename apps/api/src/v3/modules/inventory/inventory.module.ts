@@ -1,5 +1,5 @@
 import { Module, Global, forwardRef } from "@nestjs/common";
-import { SuppliersModule } from "@repo/suppliers/server";
+import { SuppliersModule } from "@repo/shared/suppliers/server";
 import { InventoryController } from "./interfaces/http/inventory.controller";
 import { InventoryResolver } from "./interfaces/graphql/inventory.resolver";
 import { GetInventoryUseCase } from "./application/use-cases/get-inventory.use-case";

@@ -65,7 +65,7 @@ export const useListCategories = () => {
     queryKey: ['categories'],
     queryFn: async () => await paths.list(),
   });
-  return { data: data?.data || [], isLoading, error, refetch };
+  return { data: data?.categories || [], isLoading, error, refetch };
 };
 
 export const useCreateCategory = () => {

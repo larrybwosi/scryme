@@ -7,12 +7,13 @@ import {
   Delete,
   Param,
   Query,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { MembersService } from "./members.service";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { Permissions } from "../../common/decorators/auth.decorator";
+import { type V2ApiContext } from "@repo/shared/api/v2";
+import { Permissions, AllowPublic } from "../../common/decorators/auth.decorator";
 
 @ApiTags("Members")
 @ApiSecurity("x-api-key")
@@ -77,6 +78,7 @@ export class MembersController {
     return this.membersService.changeMemberPin(ctx, id, pin);
   }
 
+  @AllowPublic()
   @Post("login")
   @ApiOperation({ summary: "Login member via terminal" })
   async login(
@@ -89,5 +91,12 @@ export class MembersController {
       body.pin,
       body.locationId,
     );
+  }
+
+  @Get("attendance/me/status")
+  @ApiOperation({ summary: "Get status of the current member" })
+  async getMyStatus(@v2Context() ctx: V2ApiContext) {
+    if (!ctx.memberId) throw new UnauthorizedException("Member context required");
+    return this.membersService.getMemberStatus(ctx, ctx.memberId);
   }
 }

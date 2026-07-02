@@ -49,3 +49,13 @@ pub async fn resolve_price_batch_command(
 pub async fn get_pos_pricing_command(app: AppHandle, state: State<'_, PricingState>) -> Result<models::PosPricingData, String> {
     Ok(pricing_store::get_all_pricing(&app, &state).await)
 }
+
+#[tauri::command]
+pub async fn delete_local_price_list_command(
+    app: AppHandle,
+    state: State<'_, PricingState>,
+    id: String,
+) -> Result<String, String> {
+    pricing_store::delete_local_price_list(&app, &state, &id).await
+        .map_err(|e| e.to_string())
+}

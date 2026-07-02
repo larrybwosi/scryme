@@ -3,7 +3,7 @@ import { StockRequestPriority } from "@repo/db";
 
 export const CheckInSchema = z.object({
   cardId: z.string().min(1, "Card ID is required"),
-  locationId: z.string().min(1, "Location ID is required"),
+  locationId: z.string().optional(),
   pin: z.string().min(4, "PIN must be at least 4 digits"),
 });
 
@@ -108,4 +108,12 @@ export const ShiftSyncSchema = z.object({
   opening_cash_details: z.any().optional(),
   closing_cash_details: z.any().optional(),
   closing_operator_id: z.string().optional().nullable(),
+});
+
+export const RegisterPettyCashSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive(),
+  paymentMethod: z.string().min(1),
+  pettyCashFundId: z.string().optional(),
+  receiptUrl: z.string().optional(),
 });

@@ -15,7 +15,7 @@ import {
   RequirePermission,
   AllowPublic,
 } from "../../common/decorators/auth.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 
 @ApiTags("Units")
 @Controller("units")
