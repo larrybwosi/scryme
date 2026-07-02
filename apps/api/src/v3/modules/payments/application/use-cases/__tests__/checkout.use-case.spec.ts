@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("@repo/mpesa/server", () => ({
+vi.mock("@repo/shared/mpesa/server", () => ({
   MpesaService: vi.fn(),
 }));
 
