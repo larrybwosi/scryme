@@ -47,3 +47,8 @@
 **Vulnerability:** The `isSafeIp` utility used for SSRF protection failed to detect restricted IPv4 addresses when provided in their IPv6-mapped format (e.g., `::ffff:127.0.0.1`).
 **Learning:** Node.js networking utilities correctly identify these addresses as IPv6, but security filters that only check for specific IPv6 loopback patterns (like `::1`) will miss the embedded restricted IPv4 address. Attackers can use this to bypass SSRF protections that don't account for dual-stack address representations.
 **Prevention:** Always check for and normalize IPv4-mapped IPv6 addresses (starting with `::ffff:`) by extracting the IPv4 portion and recursively validating it against the restricted IP blocklist. Ensure this logic is consistently applied across all shared security utilities.
+
+## 2026-07-02 - SSRF Bypass via Multi-IP Hostnames
+**Vulnerability:** The `isSafeUrl` utility only validated the first IP address returned by `dns.lookup`. An attacker could use a hostname resolving to both a safe and an unsafe IP to bypass the check.
+**Learning:** Security utilities performing DNS-based validation must account for hostnames resolving to multiple IP addresses. Validating only the first returned address is insufficient as the application's HTTP client might choose a different (unsafe) IP from the resolved list.
+**Prevention:** Always use `dns.lookup` with the `{ all: true }` option and iterate through all resolved IP addresses to ensure every single one is safe before allowing the request.
