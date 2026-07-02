@@ -103,8 +103,27 @@
     },
     "./node-utils": {
       "types": "./src/node-utils.ts",
-      "import": "./dist/node-utils.js",
-      "require": "./dist/node-utils.cjs"
+      "import": "./dist/node-utils.js"
+    },
+    "./mpesa": {
+      "types": "./src/mpesa/index.ts",
+      "import": "./dist/mpesa/index.js"
+    },
+    "./mpesa/server": {
+      "types": "./src/mpesa/server.ts",
+      "import": "./dist/mpesa/server.js"
+    },
+    "./crm": {
+      "types": "./src/crm/index.ts",
+      "import": "./dist/crm/index.js"
+    },
+    "./crm/client": {
+      "types": "./src/crm/client.ts",
+      "import": "./dist/crm/client.js"
+    },
+    "./crm/server": {
+      "types": "./src/crm/server.ts",
+      "import": "./dist/crm/server.js"
     }
   },
   "scripts": {

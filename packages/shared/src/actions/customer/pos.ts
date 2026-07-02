@@ -1,5 +1,5 @@
 import 'server-only';
-import { PosCustomerService } from '../services/pos.service';
+import { PosCustomerService } from '../../services/customer/pos.service';
 import { CreateCustomerData } from '../validations/pos';
 import { PrismaClient } from '@repo/db';
 
