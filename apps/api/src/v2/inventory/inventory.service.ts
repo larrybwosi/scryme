@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "../../common/services/realtime.service";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 import { paginate } from "../../v3/common/utils/pagination";
 
 @Injectable()
@@ -31,18 +31,12 @@ export class InventoryService {
 
     try {
       const where: any = {
-        variant: {
-          product: {
-            organizationId,
-          },
-        },
+        organizationId,
       };
 
       if (locationId) where.locationId = locationId;
       if (variantId) where.variantId = variantId;
-      if (productId) {
-        where.variant = { ...where.variant, productId };
-      }
+      if (productId) where.productId = productId;
 
       const result = await paginate(
         this.prisma.client.productVariantStock,
@@ -60,18 +54,18 @@ export class InventoryService {
             availableStock: true,
             reorderPoint: true,
             reorderQty: true,
+            productId: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
             variant: {
               select: {
                 id: true,
                 name: true,
                 sku: true,
-                productId: true,
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
               },
             },
             location: {
@@ -87,8 +81,8 @@ export class InventoryService {
       // Data Shaping and Low Stock Filtering
       let shaped = result.data.map((s: any) => ({
         stockId: s.id,
-        productId: s.variant?.product?.id,
-        productName: s.variant?.product?.name,
+        productId: s.productId,
+        productName: s.product?.name,
         variantId: s.variant?.id,
         variantName: s.variant?.name,
         sku: s.variant?.sku,

@@ -11,13 +11,13 @@ import {
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { PrismaService } from "@/prisma/prisma.service";
 import { v2Context } from "@/common/decorators/v2-context.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 import { Permissions } from "@/common/decorators/auth.decorator";
 import {
   createDeviceSetupTokenCore as createDeviceSetupToken,
   getDeviceSetupTokensCore as listSetupTokens,
   revokeSetupTokenCore as revokeSetupToken,
-} from "@repo/shared/lib/provisioning/common";
+} from "@repo/shared/lib";
 
 @ApiTags("Admin - Setup Tokens")
 @ApiSecurity("x-api-key")

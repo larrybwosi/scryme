@@ -178,8 +178,8 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
   const batchCalculation = useMemo<BatchCalculation | null>(() => {
     if (!selectedRecipe || quantity <= 0) return null;
 
-    const multiplier = quantity / Number(selectedRecipe.yieldQuantity);
-    const materials = selectedRecipe.ingredients.map(ing => {
+    const multiplier = quantity / (Number(selectedRecipe.yieldQuantity) || 1);
+    const materials = (selectedRecipe.ingredients || []).map(ing => {
       const recipeRequired = Number(ing.quantity) * multiplier;
       const ingredientId = ing.ingredientVariant?.id || ing.ingredientVariantId || '';
       const inventoryItem = ingredientId ? inventoryMap.get(ingredientId) : undefined;
@@ -396,7 +396,7 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
                       {filteredRecipes.map(recipe => {
                         const variant = recipe.producesVariant;
                         const isSelected = selectedRecipe?.id === recipe.id;
-                        const allAvailable = recipe.ingredients.every(ing => {
+                        const allAvailable = (recipe.ingredients || []).every(ing => {
                           const id = ing.ingredientVariant?.id || ing.ingredientVariantId || '';
                           const inv = id ? inventoryMap.get(id) : undefined;
                           const available = Number(inv?.currentStock || inv?.totalQuantity || 0);

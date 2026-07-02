@@ -33,7 +33,6 @@ jobs:
       pkg_notifications: ${{ steps.changes.outputs.pkg_notifications }}
       pkg_sdk: ${{ steps.changes.outputs.pkg_sdk }}
       pkg_shared: ${{ steps.changes.outputs.pkg_shared }}
-      pkg_suppliers: ${{ steps.changes.outputs.pkg_suppliers }}
       pkg_ui: ${{ steps.changes.outputs.pkg_ui }}
       pkg_windmill: ${{ steps.changes.outputs.pkg_windmill }}
       pkg_zitadel: ${{ steps.changes.outputs.pkg_zitadel }}
@@ -83,8 +82,6 @@ jobs:
               - 'packages/sdk/**'
             pkg_shared:
               - 'packages/shared/**'
-            pkg_suppliers:
-              - 'packages/suppliers/**'
             pkg_ui:
               - 'packages/ui/**'
             pkg_windmill:
@@ -259,10 +256,8 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_notifications }}" == "true" ]; then FILTER="$FILTER --filter=@repo/notifications..."; fi
             if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@repo/sdk..."; fi
             if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
-            if [ "${{ needs.filter.outputs.pkg_suppliers }}" == "true" ]; then FILTER="$FILTER --filter=@repo/suppliers..."; fi
             if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
             if [ "${{ needs.filter.outputs.pkg_windmill }}" == "true" ]; then FILTER="$FILTER --filter=@repo/windmill..."; fi
-            if [ "${{ needs.filter.outputs.pkg_zitadel }}" == "true" ]; then FILTER="$FILTER --filter=@repo/zitadel..."; fi
 
             if [ -n "$FILTER" ]; then
               echo "Running lint and type-check for changed packages..."
@@ -424,7 +419,6 @@ jobs:
     needs: [filter, lint-typecheck]
     if: |
       github.event_name == 'pull_request' && (
-        needs.filter.outputs.crm == 'true' ||
         needs.filter.outputs.web == 'true' ||
         needs.filter.outputs.packages == 'true' ||
         needs.filter.outputs.workflow == 'true' ||
@@ -459,26 +453,21 @@ jobs:
 
       - name: Build
         run: |
-          APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-            APPS_CHANGED=true
+          WEB_CHANGED=false
+          if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+            WEB_CHANGED=true
           fi
 
           ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             ROOT_CHANGED=true
           fi
 
-          if [ "$APPS_CHANGED" == "true" ]; then
-            FILTER=""
-            if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
-            if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
-            pnpm turbo build $FILTER
-          elif [ "$ROOT_CHANGED" == "true" ]; then
-            echo "Root changes detected and no app changes, building all apps..."
-            pnpm turbo build --filter=crm... --filter=web...
+          if [ "$WEB_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Running verification build for web app..."
+            pnpm turbo build --filter=web...
           else
-            echo "No app changes requiring build-verify detected"
+            echo "No web app changes requiring build-verify detected"
           fi
         env:
           DATABASE_URL: postgresql://localhost:5432/postgres

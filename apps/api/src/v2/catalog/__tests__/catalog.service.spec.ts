@@ -19,21 +19,22 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-// Mock @repo/shared/api/v2/types
-vi.mock("@repo/shared/api/v2/types/context", () => ({
+// Mock @repo/shared/api/v2
+vi.mock("@repo/shared/api/v2", () => ({
   V2ApiContext: {},
 }));
 
-// Mock @repo/suppliers
-vi.mock("@repo/suppliers", () => ({
+// Mock @repo/shared/suppliers
+vi.mock("@repo/shared/suppliers", () => ({
   SupplierService: vi.fn(),
 }));
 
 import { CatalogService } from "../catalog.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../../redis/redis.service";
-import { SupplierService } from "@repo/suppliers/server";
-import { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { SupplierService } from "@repo/shared/suppliers/server";
+import { V2ApiContext } from "@repo/shared/api/v2";
+import { ApiRealtimeService } from "../../../common/services/realtime.service";
 
 describe("CatalogService", () => {
   let service: CatalogService;
@@ -59,14 +60,16 @@ describe("CatalogService", () => {
           useValue: { client: mockDb },
         },
         {
-          provide: SupplierService,
-          useValue: {},
-        },
-        {
           provide: RedisService,
           useValue: {
             get: vi.fn(),
             setex: vi.fn(),
+          },
+        },
+        {
+          provide: ApiRealtimeService,
+          useValue: {
+            publish: vi.fn(),
           },
         },
       ],

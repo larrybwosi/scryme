@@ -1,11 +1,11 @@
 import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import type { V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { processSale } from "@repo/shared/actions/transaction/process-sale";
-import { triggerStkPush } from "@repo/shared/actions/organization/mpesa-trigger";
-import { createOrder } from "@repo/shared/actions/transaction/orders";
-import { ProcessSaleInputSchema } from "@repo/shared/lib/validations/sale";
-import { CreateOrderInputSchema } from "@repo/shared/lib/validations/order";
+import type { V2ApiContext } from "@repo/shared/api/v2";
+import { processSale } from "@repo/shared/actions";
+import { triggerStkPush } from "@repo/shared/actions";
+import { createOrder } from "@repo/shared/actions";
+import { ProcessSaleInputSchema } from "@repo/shared/lib";
+import { CreateOrderInputSchema } from "@repo/shared/lib";
 
 @Injectable()
 export class PosSaleService {

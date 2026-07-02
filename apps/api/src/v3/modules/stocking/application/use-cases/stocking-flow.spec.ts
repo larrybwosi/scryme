@@ -122,6 +122,7 @@ describe("Stocking Flow Verification", () => {
       productVariantStock: {
         upsert: vi.fn(),
         findUnique: vi.fn(),
+        findMany: vi.fn(),
         update: vi.fn(),
       },
       purchaseItem: {
@@ -314,9 +315,9 @@ describe("Stocking Flow Verification", () => {
       status: StockTransferStatus.PENDING_APPROVAL,
       items: [{ id: "tri-1", variantId: "v1", requestedQuantity: 5 }],
     });
-    mockTx.productVariantStock.findUnique.mockResolvedValue({
-      availableStock: 10,
-    });
+    mockTx.productVariantStock.findMany.mockResolvedValue([
+      { variantId: "v1", availableStock: 10 },
+    ]);
     mockTx.stockTransfer.update.mockImplementation(({ data }: any) => ({
       id: "tr-1",
       transferNumber: "TR-1",
@@ -346,7 +347,7 @@ describe("Stocking Flow Verification", () => {
       ],
     });
     mockTx.stockBatch.findMany.mockResolvedValue([
-      { id: "batch-v1", currentQuantity: 10 },
+      { id: "batch-v1", variantId: "v1", currentQuantity: 10 },
     ]);
 
     await stockTransferUseCase.ship(mockOrgId, mockMemberId, "tr-1", shipDto);

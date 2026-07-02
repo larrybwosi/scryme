@@ -15,6 +15,7 @@ import {
 } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
+import { realtimeService } from "@repo/shared/realtime";
 
 async function getDefaultPieceUnit(organizationId: string): Promise<{
   systemUnitId?: string;
@@ -416,6 +417,12 @@ export async function deleteProduct(id: string): Promise<any> {
   await db.product.delete({
     where: { id, organizationId: context.organizationId },
   });
+
+  await realtimeService.publish(
+    `organization:${context.organizationId}:inventory`,
+    "product-deleted",
+    { productId: id },
+  );
 
   revalidatePath("/inventory");
 }

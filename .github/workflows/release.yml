@@ -126,6 +126,20 @@ jobs:
         with:
           version: 9
 
+      - name: Install System Dependencies (Linux Only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libglib2.0-dev \
+            libudev-dev \
+            libpcsclite
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
@@ -138,6 +152,8 @@ jobs:
           VITE_BUSINESS_MODE: ${{ matrix.variant }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: ./apps/pos
           tagName: v${{ needs.set-version.outputs.version }}
@@ -174,6 +190,19 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 9
+
+      - name: Install System Dependencies (Linux Only)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libglib2.0-dev \
+            libudev-dev
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -213,8 +242,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Convert repository name to lowercase
+        id: repo-lower
         run: |
-          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+          echo "repo_lower=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
       - name: Get current version
         id: get-version
@@ -224,6 +254,9 @@ jobs:
 
       - name: Build and push Docker images
         uses: docker/bake-action@v7
+        env:
+          REPO_LOWER: ${{ steps.repo-lower.outputs.repo_lower }}
+          VERSION: ${{ steps.get-version.outputs.version }}
         with:
           files: |
             ./docker-bake.hcl
@@ -232,5 +265,3 @@ jobs:
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
-            REPO_LOWER=${{ env.REPO_LOWER }}
-            VERSION=${{ steps.get-version.outputs.version }}

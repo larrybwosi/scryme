@@ -43,6 +43,14 @@ export default function CustomersPage() {
       .slice(0, 2)
   }
 
+  const [editingCustomer, setEditingCustomer] = useState<any>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+
+  const handleEditCustomer = (customer: any) => {
+    setEditingCustomer(customer)
+    setIsEditOpen(true)
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -66,6 +74,17 @@ export default function CustomersPage() {
       </div>
 
       <AddCustomerSheet open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+
+      {editingCustomer && (
+        <AddCustomerSheet
+          open={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open)
+            if (!open) setEditingCustomer(null)
+          }}
+          customer={editingCustomer}
+        />
+      )}
 
       {/* Search */}
       <div className="relative max-w-sm">
@@ -167,9 +186,11 @@ export default function CustomersPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Edit className="w-3.5 h-3.5" />
-                  </Button>
+                  {!(customer.businessAccountId || customer.customerType?.toLowerCase() === 'business' || customer.customerType === 'B2B') && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditCustomer(customer)}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Button>

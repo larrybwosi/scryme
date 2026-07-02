@@ -294,7 +294,7 @@ test.describe('Supermarket POS Flow', () => {
         version: 0
       };
 
-      localStorage.setItem('pos-auth-storage-v3', JSON.stringify(authState));
+      localStorage.setItem('pos-auth-storage-v2', JSON.stringify(authState));
       localStorage.setItem('dealio-pos-storage-v1', JSON.stringify(posState));
 
       // Inject some CSS to hide potential blocking overlays that aren't critical for the test

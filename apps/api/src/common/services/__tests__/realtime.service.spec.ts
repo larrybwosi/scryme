@@ -4,7 +4,7 @@ import { RealtimeGateway } from '../../../v2/realtime/realtime.gateway';
 import { V3RealtimeGateway } from '../../../v3/common/realtime/v3-realtime.gateway';
 import { RealtimeRedisService } from '../../../v2/realtime/realtime-redis.service';
 import { ably } from '@repo/shared/ably';
-import { createDelta } from '@repo/shared/realtime/delta';
+import { createDelta } from '@repo/shared/realtime';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 vi.mock('@repo/shared/ably', () => ({
@@ -17,7 +17,7 @@ vi.mock('@repo/shared/ably', () => ({
   },
 }));
 
-vi.mock('@repo/shared/realtime/delta', () => ({
+vi.mock('@repo/shared/realtime', () => ({
   createDelta: vi.fn(),
 }));
 

@@ -73,17 +73,18 @@ export default async function TransactionsPage(props: {
       - max-w-7xl (optional) keeps your dashboard content tight and readable
     */
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <PageHeader
-        title="Transactions"
-        subtitle="Manage sales, quotes, and orders"
-        icon={<ReceiptText className="w-7 h-7" />}
-        action={{
-          label: "New Order",
-          href: "/sales/new",
-          icon: <Plus className="w-4 h-4" />,
-        }}
-      />
-
+      <Suspense>
+        <PageHeader
+          title="Transactions"
+          subtitle="Manage sales, quotes, and orders"
+          icon={<ReceiptText className="w-7 h-7" />}
+          action={{
+            label: "New Order",
+            href: "/sales/new",
+            icon: <Plus className="w-4 h-4" />,
+          }}
+        />
+      </Suspense>
       <FilterBar />
 
       <Suspense key={suspenseKey} fallback={<TableFallback />}>

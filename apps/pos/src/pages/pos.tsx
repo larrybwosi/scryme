@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import posthog from 'posthog-js';
-import { BarcodeScannerDialog } from '../components/barcode-scanner-dialog';
 import { usePosProducts } from '@/hooks/products';
 import { useNavigate } from 'react-router';
 import { Badge } from '@repo/ui/components/ui/badge';
@@ -29,11 +28,15 @@ import { ProductCard } from '@/components/pos/product-card';
 import { ProductListItem } from '@/components/pos/product-list-item';
 import { useDebounce } from 'use-debounce';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
-import PendingOrdersList from '@/components/orders-list';
 import { useScanner } from '@/hooks/use-scanner';
 import { toast } from 'sonner';
-import { TableSelectorDialog } from '@/components/pos/table-selector-dialog';
 import { Kbd } from '@/components/ui/kbd';
+import { lazy, Suspense } from 'react';
+
+// Lazy load dialogs and non-critical components
+const BarcodeScannerDialog = lazy(() => import('../components/barcode-scanner-dialog').then(m => ({ default: m.BarcodeScannerDialog })));
+const TableSelectorDialog = lazy(() => import('@/components/pos/table-selector-dialog').then(m => ({ default: m.TableSelectorDialog })));
+const PendingOrdersList = lazy(() => import('@/components/orders-list'));
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import {
   Pagination,
@@ -395,7 +398,11 @@ export function POS() {
 
   return (
     <div className="flex flex-col h-full bg-muted/5">
-      {businessConfig.features.showOrdersList && <PendingOrdersList />}
+      {businessConfig.features.showOrdersList && (
+        <Suspense fallback={null}>
+          <PendingOrdersList />
+        </Suspense>
+      )}
 
       {/* --- Filter Bar (Header) --- */}
       <div className="flex flex-col gap-3 p-3 bg-background border-b z-10 shadow-sm shrink-0">
@@ -809,13 +816,19 @@ export function POS() {
         )}
       </div>
 
-      <TableSelectorDialog
-        open={showTableSelector}
-        onOpenChange={setShowTableSelector}
-        onSelectTable={(num, guests) => setTableNumber(num, guests)}
-      />
+      <Suspense fallback={null}>
+        {showTableSelector && (
+          <TableSelectorDialog
+            open={showTableSelector}
+            onOpenChange={setShowTableSelector}
+            onSelectTable={(num, guests) => setTableNumber(num, guests)}
+          />
+        )}
 
-      <BarcodeScannerDialog open={showBarcodeScanner} onOpenChange={setShowBarcodeScanner} />
+        {showBarcodeScanner && (
+          <BarcodeScannerDialog open={showBarcodeScanner} onOpenChange={setShowBarcodeScanner} />
+        )}
+      </Suspense>
 
       <AlertDialog open={!!unknownBarcode} onOpenChange={(open) => !open && setUnknownBarcode(null)}>
         <AlertDialogContent>

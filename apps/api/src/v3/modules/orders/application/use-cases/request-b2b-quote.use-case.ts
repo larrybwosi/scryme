@@ -85,10 +85,25 @@ export class RequestB2BQuoteUseCase {
         id: { in: variantIds },
         product: { organizationId },
       },
-      include: {
-        product: true,
+      // ⚡ Bolt Optimization: Replace broad include with targeted select to reduce database I/O
+      // and network payload by only fetching fields required for validation and quote generation.
+      select: {
+        id: true,
+        sku: true,
+        name: true,
+        buyingPrice: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         variantStocks: {
           where: { locationId },
+          select: {
+            id: true,
+            availableStock: true,
+          },
         },
       },
     });
@@ -101,6 +116,22 @@ export class RequestB2BQuoteUseCase {
 
     const itemsData = [];
 
+    // ⚡ Bolt Optimization: Use batched pricing resolution to prevent N+1 database queries.
+    // This resolves all variant prices in a single set of optimized queries.
+    const resolvedPrices = await this.pricingResolver.resolveBatchVariantPrices(
+      {
+        items: Array.from(aggregatedItems.entries()).map(
+          ([variantId, quantity]) => ({
+            variantId,
+            quantity,
+          }),
+        ),
+        organizationId,
+        customerId: dto.customerId,
+        businessAccountId: dto.businessAccountId,
+      },
+    );
+
     for (const [variantId, totalQuantity] of aggregatedItems) {
       const variant = variants.find(v => v.id === variantId)!;
       const stock = variant.variantStocks[0];
@@ -112,13 +143,8 @@ export class RequestB2BQuoteUseCase {
       }
 
       // 3. Resolve Pricing
-      const { unitPrice } = await this.pricingResolver.resolveVariantPrice({
-        variantId: variantId,
-        organizationId,
-        customerId: dto.customerId,
-        businessAccountId: dto.businessAccountId,
-        quantity: totalQuantity,
-      });
+      const resolvedPrice = resolvedPrices.get(variantId);
+      const unitPrice = resolvedPrice?.unitPrice || 0;
 
       const subtotal = unitPrice * totalQuantity;
 
