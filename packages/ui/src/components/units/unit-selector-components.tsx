@@ -9,13 +9,13 @@ import * as React from 'react';
 import { useState, useMemo, useCallback } from 'react';
 import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
-import { Button } from '@repo/ui/components/ui/button';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Input } from '@repo/ui/components/ui/input';
-import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '.@repo/ui/components/ui/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '.@repo/ui/components/ui/ui/popover';
+import { Button } from '.@repo/ui/components/ui/ui/button';
+import { Badge } from '.@repo/ui/components/ui/ui/badge';
+import { Input } from '.@repo/ui/components/ui/ui/input';
+import { Label } from '.@repo/ui/components/ui/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.@repo/ui/components/ui/ui/select';
 
 import {
   type UnitType,

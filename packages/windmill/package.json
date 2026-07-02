@@ -2,20 +2,12 @@
   "name": "@repo/windmill",
   "version": "0.1.0",
   "private": true,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./server": {
-      "types": "./dist/server.d.ts",
-      "import": "./dist/server.js",
-      "require": "./dist/server.cjs"
-    }
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
@@ -42,5 +34,5 @@
     "dev": "tsup --watch",
     "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
-  "module": "./dist/index.js"
+  "module": "./src/index.ts"
 }

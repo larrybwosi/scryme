@@ -4,8 +4,5 @@
   "private": true,
   "files": [
     "index.json"
-  ],
-  "devDependencies": {
-    "tsup": "^8.5.1"
-  }
+  ]
 }

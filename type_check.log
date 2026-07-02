@@ -1,0 +1,214 @@
+ WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+• turbo 2.10.0
+
+   • Packages in scope: @repo/auth, @repo/crm, @repo/db, @repo/documents, @repo/env, @repo/eslint-config, @repo/mpesa, @repo/notifications, @repo/plane, @repo/prettier-config, @repo/scryme, @repo/sdk, @repo/shared, @repo/typescript-config, @repo/ui, @repo/windmill, api, bakery, crm, pos, web
+   • Running type-check in 21 packages
+   • Remote caching disabled
+
+@repo/typescript-config:type-check: cache hit, replaying logs e38536f542b5d4ad
+@repo/typescript-config:type-check: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/typescript-config:type-check:
+@repo/typescript-config:type-check: > @repo/typescript-config@0.0.0 type-check /app/packages/config-typescript
+@repo/typescript-config:type-check: > echo "no type-check script defined"
+@repo/typescript-config:type-check:
+@repo/typescript-config:type-check: no type-check script defined
+@repo/eslint-config:type-check: cache hit, replaying logs 0aaf586c422a882e
+@repo/eslint-config:type-check: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/eslint-config:type-check:
+@repo/eslint-config:type-check: > @repo/eslint-config@0.0.0 type-check /app/packages/config-eslint
+@repo/eslint-config:type-check: > echo "no type-check script defined"
+@repo/eslint-config:type-check:
+@repo/eslint-config:type-check: no type-check script defined
+@repo/sdk:type-check: cache hit, replaying logs 2567c22758150852
+@repo/sdk:type-check: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/sdk:type-check:
+@repo/sdk:type-check: > @repo/sdk@0.1.0 type-check /app/packages/sdk
+@repo/sdk:type-check: > tsc --noEmit
+@repo/sdk:type-check:
+@repo/scryme:build: cache hit, replaying logs 99aaf3a2928cb3a8
+@repo/scryme:build: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/scryme:build:
+@repo/scryme:build: > @repo/scryme@0.1.0 build /app/packages/scryme
+@repo/scryme:build: > echo "Workspace build skipped"
+@repo/scryme:build:
+@repo/scryme:build: Workspace build skipped
+@repo/scryme:type-check: cache hit, replaying logs cbe8b6f1088e92cc
+@repo/scryme:type-check: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/scryme:type-check:
+@repo/scryme:type-check: > @repo/scryme@0.1.0 type-check /app/packages/scryme
+@repo/scryme:type-check: > tsc --noEmit
+@repo/scryme:type-check:
+@repo/env:type-check: cache hit, replaying logs 960abd296f814f7d
+@repo/env:type-check: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/env:type-check:
+@repo/env:type-check: > @repo/env@1.0.0 type-check /app/packages/env
+@repo/env:type-check: > tsc --noEmit
+@repo/env:type-check:
+@repo/plane:build: cache hit, replaying logs 6ce899e362e119f3
+@repo/ui:type-check: cache miss, executing 2ad841c738302d49
+@repo/plane:build: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/plane:build:
+@repo/plane:build: > @repo/plane@1.0.0 build /app/packages/plane
+@repo/plane:build: > echo "Workspace build skipped"
+@repo/plane:build:
+@repo/plane:build: Workspace build skipped
+@repo/env:build: cache hit, replaying logs e4ff22ce44b15738
+@repo/env:build: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/env:build:
+@repo/env:build: > @repo/env@1.0.0 build /app/packages/env
+@repo/env:build: > echo "Workspace build skipped"
+@repo/env:build:
+@repo/env:build: Workspace build skipped
+@repo/ui:build: cache hit, replaying logs 0542d35fd2686fa8
+@repo/ui:build: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/ui:build:
+@repo/ui:build: > @repo/ui@0.1.0 build /app/packages/ui
+@repo/ui:build: > echo "Workspace build skipped"
+@repo/ui:build:
+@repo/ui:build: Workspace build skipped
+@repo/sdk:build: cache hit, replaying logs 251928c1721e656b
+@repo/sdk:build: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/sdk:build:
+@repo/sdk:build: > @repo/sdk@0.1.0 build /app/packages/sdk
+@repo/sdk:build: > echo "Workspace build skipped"
+@repo/sdk:build:
+@repo/sdk:build: Workspace build skipped
+@repo/db:build: cache miss, executing da6dc379570799fa
+@repo/ui:type-check: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/db:build: ../..                                    |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+@repo/ui:type-check:
+@repo/ui:type-check: > @repo/ui@0.1.0 type-check /app/packages/ui
+@repo/ui:type-check: > tsc --noEmit
+@repo/ui:type-check:
+@repo/db:build:
+@repo/db:build: > @repo/db@1.0.0 prebuild /app/packages/db
+@repo/db:build: > npm run generate
+@repo/db:build:
+@repo/db:build: npm warn Unknown env config "verify-deps-before-run". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+@repo/db:build: npm warn Unknown env config "npm-globalconfig". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+@repo/db:build: npm warn Unknown env config "_jsr-registry". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+@repo/db:build:
+@repo/db:build: > @repo/db@1.0.0 generate
+@repo/db:build: > prisma generate
+@repo/db:build:
+@repo/db:build: Loaded Prisma config from prisma.config.ts.
+@repo/db:build:
+@repo/db:build: Prisma schema loaded from prisma/schema.
+@repo/ui:type-check: src/components/category-select.tsx(2,79): error TS2307: Cannot find module '@repo/ui/components/ui/ui/select' or its corresponding type declarations.
+@repo/ui:type-check: src/components/category-select.tsx(3,26): error TS2307: Cannot find module '@repo/ui/components/ui/ui/skeleton' or its corresponding type declarations.
+@repo/ui:type-check: src/components/category-select.tsx(4,41): error TS2307: Cannot find module '@repo/ui/components/ui/ui/alert' or its corresponding type declarations.
+@repo/ui:type-check: src/components/category-select.tsx(5,23): error TS2307: Cannot find module '@repo/ui/components/ui/ui/input' or its corresponding type declarations.
+@repo/ui:type-check: src/components/category-select.tsx(6,24): error TS2307: Cannot find module '@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/category-select.tsx(131,25): error TS7006: Parameter 'e' implicitly has an 'any' type.
+@repo/ui:type-check: src/components/category-select.tsx(133,26): error TS7006: Parameter 'e' implicitly has an 'any' type.
+@repo/ui:type-check: src/components/confirm-delete.tsx(12,8): error TS2307: Cannot find module '@repo/ui/components/ui/ui/alert-dialog' or its corresponding type declarations.
+@repo/ui:type-check: src/components/customer-select.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/customer-select.tsx(7,24): error TS2307: Cannot find module '@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/customer-select.tsx(16,8): error TS2307: Cannot find module '@repo/ui/components/ui/ui/command' or its corresponding type declarations.
+@repo/ui:type-check: src/components/customer-select.tsx(17,57): error TS2307: Cannot find module '@repo/ui/components/ui/ui/popover' or its corresponding type declarations.
+@repo/ui:type-check: src/components/data-pagination.tsx(2,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/date-range-picker.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/date-range-picker.tsx(8,24): error TS2307: Cannot find module '@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/date-range-picker.tsx(9,26): error TS2307: Cannot find module '@repo/ui/components/ui/ui/calendar' or its corresponding type declarations.
+@repo/ui:type-check: src/components/date-range-picker.tsx(10,57): error TS2307: Cannot find module '@repo/ui/components/ui/ui/popover' or its corresponding type declarations.
+@repo/ui:type-check: src/components/file-upload.tsx(1,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/file-upload.tsx(4,36): error TS2307: Cannot find module '@repo/ui/components/ui/motion' or its corresponding type declarations.
+@repo/ui:type-check: src/components/following-pointer.tsx(4,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/location-select.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/location-select.tsx(6,24): error TS2307: Cannot find module '@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/location-select.tsx(15,8): error TS2307: Cannot find module '@repo/ui/components/ui/ui/command' or its corresponding type declarations.
+@repo/ui:type-check: src/components/location-select.tsx(16,57): error TS2307: Cannot find module '@repo/ui/components/ui/ui/popover' or its corresponding type declarations.
+@repo/ui:type-check: src/components/member-select.tsx(8,8): error TS2307: Cannot find module '@repo/ui/components/ui/ui/select' or its corresponding type declarations.
+@repo/ui:type-check: src/components/member-select.tsx(9,26): error TS2307: Cannot find module '@repo/ui/components/ui/ui/skeleton' or its corresponding type declarations.
+@repo/ui:type-check: src/components/member-select.tsx(10,41): error TS2307: Cannot find module '@repo/ui/components/ui/ui/alert' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(25,8): error TS2307: Cannot find module '@repo/ui/components/ui/ui/dropdown-menu' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(26,24): error TS2307: Cannot find module '@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(27,23): error TS2307: Cannot find module '@repo/ui/components/ui/ui/input' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(28,23): error TS2307: Cannot find module '@repo/ui/components/ui/ui/badge' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(29,27): error TS2307: Cannot find module '@repo/ui/components/ui/ui/separator' or its corresponding type declarations.
+@repo/ui:type-check: src/components/page-filters.tsx(155,27): error TS7006: Parameter 'e' implicitly has an 'any' type.
+@repo/ui:type-check: src/components/page-filters.tsx(297,25): error TS7006: Parameter 'e' implicitly has an 'any' type.
+@repo/ui:type-check: src/components/product-variant-select.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/product-variant-select.tsx(7,24): error TS2307: Cannot find module '@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/product-variant-select.tsx(8,93): error TS2307: Cannot find module '@repo/ui/components/ui/ui/command' or its corresponding type declarations.
+@repo/ui:type-check: src/components/product-variant-select.tsx(9,57): error TS2307: Cannot find module '@repo/ui/components/ui/ui/popover' or its corresponding type declarations.
+@repo/ui:type-check: src/components/storefront/product-grid.tsx(2,29): error TS2307: Cannot find module '@repo/ui/components/ui/product-card' or its corresponding type declarations.
+@repo/ui:type-check: src/components/supplier-select.tsx(2,79): error TS2307: Cannot find module '@repo/ui/components/ui/ui/select' or its corresponding type declarations.
+@repo/ui:type-check: src/components/supplier-select.tsx(3,26): error TS2307: Cannot find module '@repo/ui/components/ui/ui/skeleton' or its corresponding type declarations.
+@repo/ui:type-check: src/components/supplier-select.tsx(4,41): error TS2307: Cannot find module '@repo/ui/components/ui/ui/alert' or its corresponding type declarations.
+@repo/ui:type-check: src/components/tax-rate-select.tsx(10,8): error TS2307: Cannot find module '@repo/ui/components/ui/ui/select' or its corresponding type declarations.
+@repo/ui:type-check: src/components/tax-rate-select.tsx(11,26): error TS2307: Cannot find module '@repo/ui/components/ui/ui/skeleton' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/accordion.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/alert-dialog.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/alert.tsx(4,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/avatar.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/badge.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/breadcrumb.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/button-group.tsx(4,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/button.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/calendar.tsx(15,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/card.tsx(3,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/carousel.tsx(9,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/chart.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/checkbox.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/combobox.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/command.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/context-menu.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/dialog.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/drawer.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/dropdown-menu.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/empty.tsx(3,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/field.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/form.tsx(16,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/hover-card.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/input-group.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/input-otp.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/input.tsx(3,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/item.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/kbd.tsx(1,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/label.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/menubar.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/native-select.tsx(4,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/navigation-menu.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/pagination.tsx(8,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/popover.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/progress.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/radio-group.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/resizable.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/scroll-area.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/select.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/separator.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/sheet.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/sidebar.tsx(8,29): error TS2307: Cannot find module '.@repo/ui/components/ui/hooks/use-mobile' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/sidebar.tsx(9,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/skeleton.tsx(1,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/slider.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/spinner.tsx(3,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/switch.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/table.tsx(5,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/tabs.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/tag-input.tsx(8,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/textarea.tsx(3,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/toggle-group.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/toggle.tsx(7,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/ui/tooltip.tsx(6,20): error TS2307: Cannot find module '.@repo/ui/components/ui/lib/utils' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(12,93): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/command' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(13,57): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/popover' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(14,24): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/button' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(15,23): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/badge' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(16,23): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/input' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(17,23): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/label' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(18,79): error TS2307: Cannot find module '.@repo/ui/components/ui/ui/select' or its corresponding type declarations.
+@repo/ui:type-check: src/components/units/unit-selector-components.tsx(404,55): error TS7006: Parameter 'v' implicitly has an 'any' type.
+@repo/ui:type-check: src/lib/units/util-hooks.ts(22,8): error TS2307: Cannot find module '@repo/ui/components/ui/utilities' or its corresponding type declarations.
+@repo/ui:type-check:  ELIFECYCLE  Command failed with exit code 1.
+@repo/db:type-check: cache miss, executing f0766679d33fbefd
+ ERROR  @repo/ui#type-check: command (/app/packages/ui) /home/jules/.local/share/pnpm/.tools/pnpm/10.34.1/bin/pnpm run type-check exited (1)
+
+ Tasks:    10 successful, 13 total
+Cached:    10 cached, 13 total
+  Time:    8.254s
+Failed:    @repo/ui#type-check
+
+ ERROR  run failed: command  exited (1)

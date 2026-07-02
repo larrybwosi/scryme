@@ -1,8 +1,9 @@
 {
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
-    "noEmit": false
+    "noEmit": false,
+    "skipLibCheck": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "tsup.config.ts", "generated"]
+  "exclude": ["node_modules", "dist", "tsup.config.ts", "**/*.bundled_*"]
 }

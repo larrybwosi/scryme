@@ -4,27 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./globals.css": "./dist/globals.css",
-    "./components/*": {
-      "types": "./dist/components/*.d.ts",
-      "import": "./dist/components/*.js",
-      "require": "./dist/components/*.cjs"
-    },
-    "./lib/*": {
-      "types": "./dist/lib/*.d.ts",
-      "import": "./dist/lib/*.js",
-      "require": "./dist/lib/*.cjs"
-    },
-    "./hooks/*": {
-      "types": "./dist/hooks/*.d.ts",
-      "import": "./dist/hooks/*.js",
-      "require": "./dist/hooks/*.cjs"
-    }
+    ".": "./src/index.tsx",
+    "./globals.css": "./src/globals.css",
+    "./components/*": "./src/components/*.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./hooks/*": "./src/hooks/*.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
@@ -77,7 +61,7 @@
     "dev": "tsup --watch",
     "build:dist": "tsc -p tsconfig.json --emitDeclarationOnly --declaration --outDir dist && tsup"
   },
-  "types": "./dist/index.d.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js"
+  "types": "./src/index.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts"
 }

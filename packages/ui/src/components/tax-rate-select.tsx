@@ -7,8 +7,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@repo/ui/components/ui/select';
-import { Skeleton } from '@repo/ui/components/ui/skeleton';
+} from '@repo/ui/components/ui/ui/select';
+import { Skeleton } from '@repo/ui/components/ui/ui/skeleton';
 
 interface TaxRate {
   id: string;

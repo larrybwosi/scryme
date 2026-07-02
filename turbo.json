@@ -9,8 +9,11 @@
   "tasks": {
     "build": {
       "dependsOn": [
-        "^build",
-        "generate"
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
       ],
       "outputs": [
         "dist/**",
@@ -48,7 +51,6 @@
     },
     "type-check": {
       "dependsOn": [
-        "^generate",
         "^build"
       ]
     },
