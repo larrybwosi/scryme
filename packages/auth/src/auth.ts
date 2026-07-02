@@ -5,7 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins";
 import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
-import { getRedisClient } from "@repo/shared";
+import { getRedisClient } from "@repo/shared/redis";
 
 export const auth = betterAuth({
   ...(authOptions as any),
