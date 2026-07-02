@@ -1,6 +1,6 @@
 import "server-only";
 import { Prisma, PrismaClient, CrmFieldType } from "@repo/db";
-import { CreateRecordInput, ActivityLogger, CachingProvider } from "../types";
+import { CreateRecordInput, ActivityLogger, CachingProvider } from "../types/crm";
 
 type PrismaOrTx = PrismaClient | Prisma.TransactionClient;
 
