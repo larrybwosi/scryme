@@ -1,7 +1,7 @@
 import { defineConfig, type Options } from "tsup";
 
 const commonOptions: Options = {
-  format: ["esm"],
+  format: ["esm", "cjs"],
   dts: false,
   clean: true,
   minify: true,
@@ -14,7 +14,7 @@ const commonOptions: Options = {
     "dotenv",
     "pg",
     "@prisma/adapter-pg",
-    "@prisma/client-runtime-utils"
+    "@prisma/client-runtime-utils",
   ],
 };
 
