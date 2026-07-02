@@ -36,3 +36,7 @@
 ## 2026-06-29 - [Standardized Deletion UX in Driver Table]
 **Learning:** The Driver Table was using native `confirm()` for destructive actions, which was inconsistent with the rest of the application's design system and lacked accessibility features. Additionally, there was no visual feedback during the asynchronous deletion process.
 **Action:** Replace native `confirm()` with themed `AlertDialog`. Implement `isDeleting` state to show a `Loader2` spinner and disable action buttons during the deletion process. Wrap icon-only dropdown triggers in `Tooltip` and provide a descriptive `aria-label` for screen readers.
+
+## 2026-06-30 - [Leveraging Shared Confirmation Providers in Bakery]
+**Learning:** While implementing custom `AlertDialog` states provides full control, it often exceeds PR line limits and duplicates logic already present in shared providers. The Bakery app has a `DeleteConfirmationProvider` that encapsulates the `AlertDialog` logic into a simple async hook.
+**Action:** Before implementing custom confirmation state, check for existing context-based confirmation providers (like `useDeleteConfirmation`). Use these to reduce boilerplate and keep PRs focused and under the line limit. Always add `aria-label` to icon-only triggers.
