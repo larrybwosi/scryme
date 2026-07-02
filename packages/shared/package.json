@@ -8,83 +8,103 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./ably": {
       "types": "./src/ably/index.ts",
-      "import": "./dist/ably.js"
+      "import": "./dist/ably.js",
+      "require": "./dist/ably.cjs"
     },
     "./ably/client": {
       "types": "./src/ably/client.ts",
-      "import": "./dist/ably/client.js"
+      "import": "./dist/ably/client.js",
+      "require": "./dist/ably/client.cjs"
     },
     "./axios": {
       "types": "./src/axios/index.ts",
-      "import": "./dist/axios.js"
+      "import": "./dist/axios.js",
+      "require": "./dist/axios.cjs"
     },
     "./constants": {
       "types": "./src/constants/index.ts",
-      "import": "./dist/constants.js"
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
     },
     "./integrations": {
       "types": "./src/integrations/index.ts",
-      "import": "./dist/integrations.js"
+      "import": "./dist/integrations.js",
+      "require": "./dist/integrations.cjs"
     },
     "./redis": {
       "types": "./src/redis/index.ts",
-      "import": "./dist/redis.js"
+      "import": "./dist/redis.js",
+      "require": "./dist/redis.cjs"
     },
     "./utils": {
       "types": "./src/utils/index.ts",
-      "import": "./dist/utils.js"
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs"
     },
     "./realtime": {
       "types": "./src/realtime/index.ts",
-      "import": "./dist/realtime.js"
+      "import": "./dist/realtime.js",
+      "require": "./dist/realtime.cjs"
     },
     "./realtime/client": {
       "types": "./src/realtime/client.tsx",
-      "import": "./dist/realtime/client.js"
+      "import": "./dist/realtime/client.js",
+      "require": "./dist/realtime/client.cjs"
     },
     "./storage": {
       "types": "./src/storage/index.ts",
-      "import": "./dist/storage.js"
+      "import": "./dist/storage.js",
+      "require": "./dist/storage.cjs"
     },
     "./api/v2": {
       "types": "./src/api/v2/index.ts",
-      "import": "./dist/api/v2.js"
+      "import": "./dist/api/v2.js",
+      "require": "./dist/api/v2.cjs"
     },
     "./lib": {
       "types": "./src/lib/index.ts",
-      "import": "./dist/lib.js"
+      "import": "./dist/lib.js",
+      "require": "./dist/lib.cjs"
     },
     "./actions": {
       "types": "./src/actions/index.ts",
-      "import": "./dist/actions.js"
+      "import": "./dist/actions.js",
+      "require": "./dist/actions.cjs"
     },
     "./services/openloyalty": {
       "types": "./src/services/openloyalty/index.ts",
-      "import": "./dist/services/openloyalty.js"
+      "import": "./dist/services/openloyalty.js",
+      "require": "./dist/services/openloyalty.cjs"
     },
     "./services/customer": {
       "types": "./src/services/customer/index.ts",
-      "import": "./dist/services/customer.js"
+      "import": "./dist/services/customer.js",
+      "require": "./dist/services/customer.cjs"
     },
     "./suppliers": {
       "types": "./src/suppliers/index.ts",
-      "import": "./dist/suppliers.js"
+      "import": "./dist/suppliers.js",
+      "require": "./dist/suppliers.cjs"
     },
     "./suppliers/server": {
       "types": "./src/suppliers/server.ts",
-      "import": "./dist/suppliers/server.js"
+      "import": "./dist/suppliers/server.js",
+      "require": "./dist/suppliers/server.cjs"
     },
     "./server": {
       "types": "./src/server/index.ts",
-      "import": "./dist/server.js"
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
     },
     "./node-utils": {
       "types": "./src/node-utils.ts",
-      "import": "./dist/node-utils.js"
+      "import": "./dist/node-utils.js",
+      "require": "./dist/node-utils.cjs"
     }
   },
   "scripts": {
