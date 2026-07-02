@@ -6,8 +6,8 @@ import {
   InternalServerErrorException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { type V2ApiContext } from "@repo/shared/api/v2/types/context";
-import { provisionDeviceV2 } from "@repo/shared/lib/provisioning/v2";
+import { type V2ApiContext } from "@repo/shared/api/v2";
+import { provisionDeviceV2 } from "@repo/shared/lib";
 import { z } from "zod";
 
 const ProvisionSchema = z.object({

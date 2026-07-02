@@ -27,8 +27,9 @@ export async function GET(
       organizationId: auth.organizationId,
     },
     include: {
+      attachments: true,
       fulfillments: {
-        include: { shippingAddress: true }
+        include: { shippingAddress: true },
       },
       customer: {
         include: {
@@ -50,18 +51,43 @@ export async function GET(
     return new NextResponse("Not Found", { status: 404 });
   }
 
+  // Check if an up-to-date document already exists
+  const existingDoc = transaction.attachments?.find(
+    a =>
+      a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
+      new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+  );
+
+  if (existingDoc?.fileUrl && type !== "delivery-note") {
+    const { storageService } = await import("@repo/shared/storage");
+    const stream = await storageService.getDownloadStream(existingDoc.fileUrl);
+
+    return new NextResponse(stream as any, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${type}-${transaction.number}.pdf"`,
+      },
+    });
+  }
+
   try {
+    const { documentService } = await import(
+      "@repo/shared/lib"
+    );
     let stream;
     if (type === "receipt") {
-      const documentData = Mappers.toReceiptData(transaction);
-      stream = await renderToStream(
-        createElement(
-          ReceiptTemplateV2 as any,
-          { data: documentData } as any,
-        ) as any,
+      const attachment = await documentService.generateAndSaveReceipt(
+        transaction.id,
+        transaction.organizationId,
+        auth.memberId || null,
       );
+      const { storageService } = await import("@repo/shared/storage");
+      stream = await storageService.getDownloadStream(attachment.fileUrl!);
     } else if (type === "delivery-note") {
-      const documentData = Mappers.toDeliveryNoteData(transaction, transaction.fulfillments[0]);
+      const documentData = Mappers.toDeliveryNoteData(
+        transaction,
+        transaction.fulfillments[0],
+      );
       stream = await renderToStream(
         createElement(
           DeliveryNoteDocument as any,
@@ -69,24 +95,13 @@ export async function GET(
         ) as any,
       );
     } else {
-      const selectedTemplate =
-        template || transaction.organization?.settings?.defaultInvoiceTemplate;
-      const DocumentComponent = getInvoiceTemplate(selectedTemplate);
-      const documentData = Mappers.toInvoiceData(transaction);
-
-      let qrCode = "";
-      try {
-        qrCode = await QRCode.toDataURL(transaction.number);
-      } catch (err) {
-        console.error("Failed to generate QR code", err);
-      }
-
-      stream = await renderToStream(
-        createElement(
-          DocumentComponent as any,
-          { data: documentData, qrCode } as any,
-        ) as any,
+      const attachment = await documentService.generateAndSaveInvoice(
+        transaction.id,
+        transaction.organizationId,
+        auth.memberId || null,
       );
+      const { storageService } = await import("@repo/shared/storage");
+      stream = await storageService.getDownloadStream(attachment.fileUrl!);
     }
 
     return new NextResponse(stream as any, {

@@ -49,25 +49,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(JSON.parse(savedUser));
         }
       } else {
+        const memberToken = localStorage.getItem('bakery_member_token');
+        if (memberToken) {
+          sdk.setMemberToken(memberToken);
+        }
+
         const status = await sdk.bakery.getAuthStatus();
         setHasDeviceKey(status.hasDeviceKey);
 
         if (status.hasMemberToken) {
-           const memberToken = localStorage.getItem('bakery_member_token');
-           if (memberToken) {
-             sdk.setMemberToken(memberToken);
-             // In a real app, we might want to fetch the actual user profile here
-             const savedUser = localStorage.getItem('bakery_user');
-             if (savedUser) {
-               setUser(JSON.parse(savedUser));
-             } else {
-               setUser({
-                 id: 'remote-user',
-                 name: 'Remote Baker',
-                 email: 'remote@bakery.com'
-               });
-             }
-           }
+          // Sync token to Rust if in Tauri
+          if (isTauri() && memberToken) {
+            const savedUser = localStorage.getItem('bakery_user');
+            if (savedUser) {
+              const parsed = JSON.parse(savedUser);
+              tauriInvoke('sync_member_token_command', {
+                token: memberToken,
+                memberId: parsed.memberId || parsed.id,
+              }).catch(console.error);
+              tauriInvoke('restore_member_session', { member: parsed }).catch(console.error);
+            }
+          }
+
+          // In a real app, we might want to fetch the actual user profile here
+          const savedUser = localStorage.getItem('bakery_user');
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+          } else {
+            setUser({
+              id: 'remote-user',
+              name: 'Remote Baker',
+              email: 'remote@bakery.com',
+            });
+          }
+        } else {
+          // Token is invalid or expired
+          setUser(null);
+          localStorage.removeItem('bakery_user');
+          localStorage.removeItem('bakery_member_token');
         }
       }
     } catch (error) {
@@ -93,20 +112,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: { cardId: string; pin: string; locationId?: string }) => {
     setIsLoading(true);
     try {
-      const response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
+      let response;
+      if (isTauri()) {
+        response = await tauriInvoke<any>('login_cloud_command', {
+          cardId: credentials.cardId,
+          pin: credentials.pin,
+          locationId: credentials.locationId,
+        });
+      } else {
+        response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
+      }
 
+      // In Tauri mode, the token is managed by the Rust backend and might be stripped from the response
       if (response.token) {
         sdk.setMemberToken(response.token);
         localStorage.setItem('bakery_member_token', response.token);
       }
 
       const userObj = {
-        id: response.member.user.id,
-        name: response.member.user.name,
-        email: response.member.user.email,
+        id: response.member.id,
+        name: response.member.name,
+        email: response.member.email,
         role: response.member.role,
         memberId: response.member.id,
       };
+
+      if (isTauri()) {
+        localStorage.setItem('bakery_member_id', userObj.memberId);
+      }
 
       setUser(userObj);
       localStorage.setItem('bakery_user', JSON.stringify(userObj));
@@ -148,6 +181,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         memberId: response.member.id,
       };
 
+      if (isTauri()) {
+        localStorage.setItem('bakery_member_id', userObj.memberId);
+      }
+
       setUser(userObj);
       localStorage.setItem('bakery_user', JSON.stringify(userObj));
     } catch (error: any) {
@@ -161,7 +198,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       if (!isOfflineMode()) {
-        await sdk.bakery.logout().catch(() => {});
+        if (isTauri()) {
+          await tauriInvoke('logout_cloud_command').catch(() => {});
+        } else {
+          await sdk.bakery.logout().catch(() => {});
+        }
       }
       setUser(null);
       localStorage.removeItem('bakery_user');

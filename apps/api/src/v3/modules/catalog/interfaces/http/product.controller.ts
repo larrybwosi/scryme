@@ -99,17 +99,17 @@ export class ProductController {
     });
   }
 
-  @Patch("suppliers/:supplierId/products/:productId")
+  @Patch("suppliers/:supplierId/variants/:variantId")
   @Permissions("catalog:product:update")
   @ApiOperation({
-    summary: "Update supplier product details and trigger price recalculation",
-    operationId: "Catalog_UpdateSupplierProduct",
+    summary: "Update supplier variant details and trigger price recalculation",
+    operationId: "Catalog_UpdateSupplierVariant",
   })
-  @ApiResponse({ status: 200, description: "Supplier product updated" })
-  async updateSupplierProduct(
+  @ApiResponse({ status: 200, description: "Supplier variant updated" })
+  async updateSupplierVariant(
     @Req() req: any,
     @Param("supplierId") supplierId: string,
-    @Param("productId") productId: string,
+    @Param("variantId") variantId: string,
     @Body() body: UpdateSupplierProductDto,
   ) {
     const organizationId = req.organization.id;
@@ -117,24 +117,16 @@ export class ProductController {
     const result = await this.prisma.client.$transaction(async (tx) => {
       // If setting as preferred, unset any existing preferred supplier for this variant
       if (body.isPreferred === true) {
-        // Find the variantId first if not provided in request (it's in the DB)
-        const current = await tx.productSupplier.findUnique({
-          where: { productId_supplierId: { productId, supplierId } },
-          select: { variantId: true },
+        await tx.productSupplier.updateMany({
+          where: { variantId, isPreferred: true },
+          data: { isPreferred: false },
         });
-
-        if (current?.variantId) {
-          await tx.productSupplier.updateMany({
-            where: { variantId: current.variantId, isPreferred: true },
-            data: { isPreferred: false },
-          });
-        }
       }
 
       const updated = await tx.productSupplier.update({
         where: {
-          productId_supplierId: {
-            productId,
+          variantId_supplierId: {
+            variantId,
             supplierId,
           },
         },

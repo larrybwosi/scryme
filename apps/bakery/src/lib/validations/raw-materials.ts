@@ -1,50 +1,63 @@
 import { z } from 'zod';
 
-export const createRawMaterialSchema = z.object({
-  // Product details
-  name: z.string().min(1, 'Product name is required'),
-  categoryId: z.string().min(1, 'Invalid category ID'),
-  description: z.string().optional().nullable(),
+export const createRawMaterialSchema = z
+  .object({
+    // Product details
+    name: z.string().min(1, "Product name is required"),
+    categoryId: z.string().min(1, "Invalid category ID"),
+    description: z.string().optional().nullable(),
 
-  // Default variant details
-  sku: z.string().min(1, 'SKU is required').optional(),
-  buyingPrice: z.coerce.number().min(0).default(0),
-  reorderPoint: z.coerce.number().int().min(0).default(5),
+    // Default variant details
+    sku: z.string().min(1, "SKU is required").optional(),
+    buyingPrice: z.coerce.number().min(0).default(0),
+    reorderLevel: z.coerce.number().int().min(0).default(5),
 
-  // Base Unit (Mutually Exclusive)
-  baseUnitId: z.string().optional(),
-  baseOrgUnitId: z.string().optional(),
+    // Base Unit (Mutually Exclusive)
+    baseUnitId: z.string().optional(),
+    baseOrgUnitId: z.string().optional(),
 
-  // Stocking Unit (Optional, Mutually Exclusive)
-  stockingUnitId: z.string().optional(),
-  stockingOrgUnitId: z.string().optional(),
-  unitsPerContainer: z.coerce.number().min(0).optional(),
+    // Stocking Unit (Optional, Mutually Exclusive)
+    stockingUnitId: z.string().optional(),
+    stockingOrgUnitId: z.string().optional(),
+    unitsPerContainer: z.coerce.number().min(0).optional(),
 
-  // Optional Initial Stock
-  initialStock: z.coerce.number().int().min(0).optional().nullable(),
-  initialStockLocationId: z.string().optional(),
-
-}).refine(data => {
-  // Enforce mutual exclusion for unit IDs
-  return (data.baseUnitId && !data.baseOrgUnitId) || (!data.baseUnitId && data.baseOrgUnitId);
-}, {
-  message: 'Either a baseUnitId (system unit) or a baseOrgUnitId (organization unit) must be provided, but not both.',
-  path: ['baseUnitId'],
-}).refine(data => {
-  // If initialStock is provided (and > 0), locationId must also be provided.
-  if (data.initialStock && data.initialStock > 0) {
-    return !!data.initialStockLocationId;
-  }
-  // If initialStockLocationId is provided, initialStock > 0 must be provided.
-  if (data.initialStockLocationId) {
-    return data.initialStock && data.initialStock > 0;
-  }
-  // If neither is provided, or stock is 0, it's valid.
-  return true;
-}, {
-  message: 'If providing initialStock > 0, initialStockLocationId is required, and vice-versa.',
-  path: ['initialStock'],
-});
+    // Optional Initial Stock
+    initialStock: z.coerce.number().int().min(0).optional().nullable(),
+    initialStockLocationId: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // Enforce mutual exclusion for unit IDs
+      return (
+        (data.baseUnitId && !data.baseOrgUnitId) ||
+        (!data.baseUnitId && data.baseOrgUnitId)
+      );
+    },
+    {
+      message:
+        "Either a baseUnitId (system unit) or a baseOrgUnitId (organization unit) must be provided, but not both.",
+      path: ["baseUnitId"],
+    },
+  )
+  .refine(
+    (data) => {
+      // If initialStock is provided (and > 0), locationId must also be provided.
+      if (data.initialStock && data.initialStock > 0) {
+        return !!data.initialStockLocationId;
+      }
+      // If initialStockLocationId is provided, initialStock > 0 must be provided.
+      if (data.initialStockLocationId) {
+        return data.initialStock && data.initialStock > 0;
+      }
+      // If neither is provided, or stock is 0, it's valid.
+      return true;
+    },
+    {
+      message:
+        "If providing initialStock > 0, initialStockLocationId is required, and vice-versa.",
+      path: ["initialStock"],
+    },
+  );
 
 // Assuming CreateRawMaterialInput type
 export type CreateRawMaterialInput = z.infer<typeof createRawMaterialSchema>;
@@ -63,7 +76,7 @@ export const updateRawMaterialSchema = z.object({
   // Fields for the ProductVariant model
   sku: z.string().min(1).optional(),
   buyingPrice: z.coerce.number().min(0).optional(),
-  reorderPoint: z.coerce.number().int().min(0).optional(),
+  reorderLevel: z.coerce.number().int().min(0).optional(),
 
   // Updated unit fields for the update schema
   baseUnitId: z.string().optional(),

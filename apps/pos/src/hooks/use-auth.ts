@@ -146,35 +146,61 @@ export function useAuth() {
 export const useSessionActivityListener = () => {
   const refreshSession = useAuthStore(state => state.refreshSession);
   const currentMember = useAuthStore(state => state.currentMember);
+  const deviceConfig = useAuthStore(state => state.deviceConfig);
   const clearMemberSession = useAuthStore(state => state.clearMemberSession);
 
   // Periodic session check (refresh mechanism)
   useEffect(() => {
-    if (!currentMember) return;
+    if (!currentMember || !deviceConfig?.orgSlug) return;
 
     const checkSession = async () => {
       try {
         // We can use authenticated_api_request to ping and verify token
         const response = await invoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: 'members/attendance/me/status',
+          path: `api/v2/members/attendance/me/status`,
         });
 
-        if (!response.success || !response.data?.isCheckedIn) {
-          console.warn('Session invalid or expired, clearing session');
+        // The API returns { success: true, data: { isCheckedIn: true, ... } }
+        if (response.success && response.data?.isCheckedIn) {
+          // Session is valid, update the local activity timer
+          refreshSession();
+        } else {
+          console.warn('Session invalid or expired according to server, clearing session');
           clearMemberSession();
+          toast.error('Session Expired', {
+            description: 'Your session has expired. Please check in again.',
+          });
         }
-      } catch (error) {
-        console.error('Failed to verify session:', error);
-        // If it's a network error, we might not want to log out immediately,
-        // but if it's a 401/403, we should. Rust backend handles status codes.
+      } catch (error: any) {
+        const errorMsg = error?.toString() || '';
+        console.error('Failed to verify session:', errorMsg);
+
+        // If it's a definitive authentication error (401/Unauthorized or 403/Forbidden),
+        // we must clear the session and redirect to check-in.
+        if (
+          errorMsg.includes('401') ||
+          errorMsg.includes('403') ||
+          errorMsg.toLowerCase().includes('unauthorized') ||
+          errorMsg.toLowerCase().includes('forbidden')
+        ) {
+          console.error('Authentication failed, logging out...');
+          clearMemberSession();
+          toast.error('Authentication Failed', {
+            description: 'Please check in again to continue.',
+          });
+        }
       }
     };
 
-    const interval = setInterval(checkSession, 5 * 60 * 1000); // Every 5 minutes
+    // Run check on mount to ensure we have a valid session immediately
+    checkSession();
+
+    // Check every 2 minutes for better stability and to proactively handle expirations
+    const interval = setInterval(checkSession, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [currentMember, clearMemberSession]);
+  }, [currentMember, deviceConfig, clearMemberSession, refreshSession]);
 
   // Throttled function to prevent too many state updates.
   // It will only fire once every 5 seconds max, even if the user is typing furiously.

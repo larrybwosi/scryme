@@ -48,13 +48,13 @@ export const useCreateRawMaterial = () => {
           sku: data.sku,
           categoryId: data.categoryId,
           unitPrice: data.buyingPrice,
-          reorderLevel: data.reorderPoint,
+          reorderLevel: data.reorderLevel,
           unitId: data.baseUnitId || data.baseOrgUnitId,
           stockingUnitId: data.stockingUnitId || data.stockingOrgUnitId,
           unitsPerContainer: data.unitsPerContainer,
           organizationId: 'local-org',
           currentStock: 0,
-          maxStock: (data.reorderPoint || 0) * 2,
+          maxStock: (data.reorderLevel || 0) * 2,
         };
         return tauriInvoke('create_ingredient', { userId: 'local-user', ingredient: ingredientData });
       }
@@ -80,7 +80,7 @@ interface GeneratedRawMaterial {
   description?: string;
   sku?: string;
   buyingPrice: number;
-  reorderPoint: number;
+  reorderLevel: number;
   baseUnitId: string;
 }
 
@@ -156,7 +156,7 @@ export const useUpdateRawMaterial = () => {
           sku: data.sku,
           categoryId: data.categoryId,
           unitPrice: data.buyingPrice,
-          reorderLevel: data.reorderPoint,
+          reorderLevel: data.reorderLevel,
           unitId: data.baseUnitId || data.baseOrgUnitId,
           stockingUnitId: data.stockingUnitId || data.stockingOrgUnitId,
           unitsPerContainer: data.unitsPerContainer,

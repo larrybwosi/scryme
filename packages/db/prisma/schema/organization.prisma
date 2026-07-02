@@ -604,6 +604,8 @@ model OrganizationSettings {
   defaultWaybillTemplate  String  @default("default")
   forcePrivateAttachments Boolean @default(false)
 
+  adminsCanManageStaff    Boolean @default(false)
+
   // --- Expense Settings ---
   mileageRate            Decimal @default(0) @db.Decimal(19, 4)
 

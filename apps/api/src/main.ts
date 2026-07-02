@@ -4,12 +4,12 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
-import { ValidationPipe } from "@nestjs/common";
+import { ValidationPipe, RequestMethod } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
 import { AppModule } from "./app.module";
-import { validateEncryptionKey } from "@repo/shared/api/v2/utils/encryption";
+import { validateEncryptionKey } from "@repo/shared/api/v2";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
 import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
@@ -25,41 +25,48 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  app.enableCors({
+    origin: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    credentials: true,
+    allowedHeaders: [
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-api-key",
+      "x-member-token",
+      "x-correlation-id",
+    ],
+  });
+
   // Request logging for debugging - only in non-production or if explicitly enabled
-  if (env.NODE_ENV !== "production" || process.env.ENABLE_REQUEST_LOGGING === "true") {
+  if (
+    env.NODE_ENV !== "production" ||
+    process.env.ENABLE_REQUEST_LOGGING === "true"
+  ) {
+    // ANSI color codes for Next.js-style colored terminal output
+    const colors = {
+      reset: "\x1b[0m",
+      dim: "\x1b[2m",
+      green: "\x1b[32m",
+      yellow: "\x1b[33m",
+      red: "\x1b[31m",
+      cyan: "\x1b[36m",
+      gray: "\x1b[90m",
+    };
+
+    const statusColor = (statusCode: number) => {
+      if (statusCode >= 500) return colors.red;
+      if (statusCode >= 400) return colors.yellow;
+      if (statusCode >= 300) return colors.cyan;
+      return colors.green;
+    };
+
     app
       .getHttpAdapter()
       .getInstance()
       .addHook("onRequest", (request, reply, done) => {
         (request as any).startTime = Date.now();
-        const { method, url, headers, body, query } = request;
-
-        // Log incoming request
-        console.log({
-          timestamp: new Date().toISOString(),
-          type: "INCOMING_REQUEST",
-          method,
-          url,
-          headers: {
-            "user-agent": headers["user-agent"],
-            "content-type": headers["content-type"],
-            "x-api-key": headers["x-api-key"] ? "[REDACTED]" : undefined,
-            "x-member-token": headers["x-member-token"]
-              ? "[REDACTED]"
-              : undefined,
-            authorization: headers.authorization ? "[REDACTED]" : undefined,
-            // Only add other headers if they are safe or explicitly needed for debugging
-            "x-correlation-id": headers["x-correlation-id"],
-          },
-          query: Object.keys(query || {}).length
-            ? redactSensitiveData(query)
-            : undefined,
-          body:
-            body && Object.keys(body as any).length
-              ? redactSensitiveData(body)
-              : undefined,
-        });
-
         done();
       });
 
@@ -69,14 +76,14 @@ async function bootstrap() {
       .addHook("onResponse", (request, reply, done) => {
         const startTime = (request as any).startTime || Date.now();
         const duration = Date.now() - startTime;
-        console.log({
-          timestamp: new Date().toISOString(),
-          type: "REQUEST_COMPLETED",
-          method: request.method,
-          url: request.url,
-          statusCode: reply.statusCode,
-          duration: `${duration}ms`,
-        });
+        const { method, url } = request;
+        const statusCode = reply.statusCode;
+
+        // Next.js-style single-line log, e.g. "GET /api/v2/users 200 in 45ms"
+        console.log(
+          `${colors.dim}${method}${colors.reset} ${url} ${statusColor(statusCode)}${statusCode}${colors.reset} ${colors.gray}in ${duration}ms${colors.reset}`,
+        );
+
         done();
       });
   }
@@ -86,7 +93,9 @@ async function bootstrap() {
   await app.register(fastifyMultipart as any);
 
   // Global Configuration
-  app.setGlobalPrefix("api");
+  app.setGlobalPrefix("api", {
+    exclude: [{ path: "s/:shortCode", method: RequestMethod.GET }],
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

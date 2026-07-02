@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
-import { V2ApiContext } from "@repo/shared/api/v2/types/context";
+import { V2ApiContext } from "@repo/shared/api/v2";
 
 export const v2Context = createParamDecorator(
   (data: keyof V2ApiContext | undefined, ctx: ExecutionContext) => {

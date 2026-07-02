@@ -64,8 +64,8 @@ export async function POST(req: Request) {
       data: {
         id: attachment.id,
         fileName: attachment.fileName || "file",
-        url: attachment.fileUrl || "",
-        fileUrl: attachment.fileUrl || "",
+        url: attachment.shortUrl || attachment.fileUrl || "",
+        fileUrl: attachment.shortUrl || attachment.fileUrl || "",
         shortUrl: attachment.shortUrl || "",
         mimeType: attachment.mimeType,
         sizeBytes: attachment.sizeBytes || 0,

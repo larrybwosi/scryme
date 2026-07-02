@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Request,
+  UseInterceptors,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -37,10 +38,12 @@ import {
   CreateCrmRelationshipDto,
   CreateCrmAssociationDto,
 } from "../../application/dto/crm-relationships.dto";
+import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 
 @ApiTags("V3 CRM")
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
+@UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/crm")
 export class CrmController {
   constructor(

@@ -54,7 +54,7 @@ export class UploadController {
     });
 
     return res.send({
-      url: result.url,
+      url: attachment.shortUrl,
       shortUrl: attachment.shortUrl,
       id: attachment.id,
     });

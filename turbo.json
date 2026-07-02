@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turborepo.dev/schema.json",
+  "$schema": "https://v2-10-0.turborepo.dev/schema.json",
   "concurrency": "2",
   "globalPassThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET", "NEXT_PUBLIC_API_URL"],
   "tasks": {

@@ -30,7 +30,6 @@ export const tauriInvoke = async <T>(command: string, args?: Record<string, any>
   }
 
   try {
-    console.log(`Invoking Tauri command: ${command} with args:`, args);
     return await invoke<T>(command, args);
   } catch (error) {
     console.error(`Tauri invoke error [${command}]:`, error);

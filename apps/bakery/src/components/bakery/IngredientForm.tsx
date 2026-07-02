@@ -11,7 +11,7 @@ import { useCreateRawMaterial, useUpdateRawMaterial } from '@/lib/hooks/raw-mate
 import { useUnits } from '@/lib/units/hooks';
 import { CreateRawMaterialInput } from '@/lib/validations/raw-materials';
 import { TagInput } from '@repo/ui/components/ui/tag-input';
-import { Loader2, Box, DollarSign, Scale, AlignLeft, Edit, Tag } from 'lucide-react';
+import { Loader2, Box, DollarSign, Scale, AlignLeft, Edit, Tag, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -20,6 +20,13 @@ interface IngredientFormDialogProps {
   onOpenChange: (open: boolean) => void;
   ingredient?: any | null; // Pass the ingredient to edit, or null for creating
 }
+
+// Extended form type definition to accept reorderLevel
+type ExtendedRawMaterialInput = CreateRawMaterialInput & { 
+  categoryId: string; 
+  tags?: string[];
+  reorderLevel?: number;
+};
 
 export function IngredientFormDialog({ open, onOpenChange, ingredient }: IngredientFormDialogProps) {
   const createRawMaterial = useCreateRawMaterial();
@@ -38,7 +45,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
     setValue,
     control,
     reset,
-  } = useForm<CreateRawMaterialInput & { categoryId: string; tags?: string[] }>();
+  } = useForm<ExtendedRawMaterialInput>();
 
   // Populate form when editing
   useEffect(() => {
@@ -46,6 +53,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
       reset({
         name: ingredient.name,
         buyingPrice: ingredient.unitPrice ? Number(ingredient.unitPrice) : undefined,
+        reorderLevel: ingredient.reorderLevel ? Number(ingredient.reorderLevel) : undefined,
         description: ingredient.description || '',
         categoryId: ingredient.category?.id || '',
         tags: ingredient.tags || [],
@@ -65,6 +73,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
       reset({
         name: '',
         buyingPrice: undefined,
+        reorderLevel: undefined,
         description: '',
         categoryId: '',
         tags: [],
@@ -73,12 +82,13 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
       setSelectedUnitType('system');
       setSelectedStockingUnitId(undefined);
     }
-  }, [open, ingredient, reset]);
+  }
+  , [open, ingredient, reset]);
 
   const isEditing = !!ingredient;
   const isPending = createRawMaterial.isPending || updateRawMaterial.isPending;
 
-  const onSubmit = async (data: CreateRawMaterialInput & { categoryId: string }) => {
+  const onSubmit = async (data: ExtendedRawMaterialInput) => {
     try {
       const formData = {
         ...data,
@@ -153,7 +163,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
                 <Label htmlFor="name" className="text-xs text-slate-600">Material Name *</Label>
                 <Input id="name" {...register('name', { required: 'Required' })} placeholder="e.g. Bread Flour" disabled={isPending} className={cn('h-9', errors.name && 'border-red-500')} />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-xs text-slate-600">Classification Group</Label>
                 <CategorySelect onValueChange={value => setValue('categoryId', value)} value={categoryIdValue} placeholder="Select category" />
               </div>
@@ -162,6 +172,15 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                   <Input id="buyingPrice" type="number" step="0.01" {...register('buyingPrice', { valueAsNumber: true, min: 0 })} placeholder="0.00" disabled={isPending} className="pl-8 h-9" />
+                </div>
+              </div>
+              
+              {/* Reorder Level Field */}
+              <div className="space-y-1.5">
+                <Label htmlFor="reorderLevel" className="text-xs text-slate-600">Reorder Level (Threshold)</Label>
+                <div className="relative">
+                  <AlertTriangle className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <Input id="reorderLevel" type="number" step="0.01" {...register('reorderLevel', { valueAsNumber: true, min: 0 })} placeholder="e.g. 10" disabled={isPending} className="pl-8 h-9" />
                 </div>
               </div>
             </div>

@@ -52,10 +52,10 @@ export class NavariService {
     }
 
     // 2. Organization Check
-    const org = await db.organization.findUnique({
+    const org = (await db.organization.findUnique({
       where: { id: organizationId },
       include: { settings: true },
-    });
+    })) as any;
 
     if (!org) throw new Error("Organization not found");
 

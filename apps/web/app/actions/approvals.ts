@@ -15,7 +15,7 @@ import {
 import {
   submitForApprovalCore,
   makeApprovalDecisionCore,
-} from "@repo/shared/actions/finance/approvals";
+} from "@repo/shared/actions";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();

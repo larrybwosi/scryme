@@ -1,5 +1,27 @@
 # web
 
+## 5.2.0
+
+### Minor Changes
+
+- 5e8ab87: Update
+
+## 5.1.0
+
+### Minor Changes
+
+- a398a08: bump
+
+## 5.0.0
+
+### Major Changes
+
+- 20512d3: nothing
+
+### Minor Changes
+
+- 20512d3: nothing much
+
 ## 4.1.0
 
 ### Minor Changes

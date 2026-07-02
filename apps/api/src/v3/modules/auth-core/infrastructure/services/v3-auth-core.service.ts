@@ -3,9 +3,9 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { env } from "@repo/env";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
-import { decrypt } from "@repo/shared/api/v2/utils/encryption";
-import { timingSafeMatch } from "@repo/shared/api/v2/utils/crypto";
-import { provisionDeviceV3 } from "@repo/shared/lib/provisioning/v3";
+import { decrypt } from "@repo/shared/api/v2";
+import { timingSafeMatch } from "@repo/shared/api/v2";
+import { provisionDeviceV3 } from "@repo/shared/lib";
 import { RedisService } from "@/redis/redis.service";
 
 @Injectable()
@@ -85,6 +85,15 @@ export class V3AuthCoreService {
     memberId: string,
   ) {
     payload.memberId = memberId;
+
+    const member = await this.prisma.client.member.findUnique({
+      where: { id: memberId },
+      select: { userId: true },
+    });
+    if (member) {
+      payload.userId = member.userId;
+    }
+
     payload.type = "v3_hybrid";
     const registry = await this.prisma.client.deviceRegistry.findFirst({
       where: { apiKeyId: clientId },

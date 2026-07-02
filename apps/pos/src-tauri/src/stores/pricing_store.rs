@@ -298,45 +298,69 @@ pub async fn resolve_price(
     is_base_unit: bool,
 ) -> Option<f64> {
     let pool = get_db_pool(app).await.ok()?;
-
-    // 1. Get applicable price lists
-    let mut list_ids = HashSet::new();
-    if let Some(cid) = &customer_id {
-        if let Ok(rows) = sqlx::query("SELECT price_list_id FROM customer_allocations WHERE customer_id = ?1").bind(cid).fetch_all(&pool).await {
-            for row in rows { list_ids.insert(row.get::<String, _>("price_list_id")); }
-        }
-    }
-    if let Ok(rows) = sqlx::query("SELECT id FROM price_lists WHERE is_global = 1 AND is_active = 1").fetch_all(&pool).await {
-        for row in rows { list_ids.insert(row.get::<String, _>("id")); }
-    }
-
-    if list_ids.is_empty() { return None; }
-
-    // 2. Fetch and filter sorted lists
     let now = Utc::now().to_rfc3339();
-    let placeholders = vec!["?"; list_ids.len()].join(",");
-    let query_str = format!("SELECT * FROM price_lists WHERE id IN ({}) AND is_active = 1 ORDER BY priority DESC", placeholders);
-    let mut query = sqlx::query(&query_str);
-    for id in &list_ids { query = query.bind(id); }
 
-    let Ok(rows) = query.fetch_all(&pool).await else { return None; };
+    // 1. Try Customer-Specific Lists First (Customer Preference)
+    if let Some(cid) = customer_id.as_ref().filter(|id| !id.is_empty()) {
+        let customer_query = r#"
+            SELECT pl.* FROM price_lists pl
+            JOIN customer_allocations ca ON ca.price_list_id = pl.id
+            WHERE ca.customer_id = ?1 AND pl.is_active = 1
+            ORDER BY pl.priority DESC
+        "#;
 
-    for row in rows {
-        let id: String = row.get("id");
-        let valid_from: Option<String> = row.get("valid_from");
-        let valid_to: Option<String> = row.get("valid_to");
-
-        if let Some(from) = valid_from { if from > now { continue; } }
-        if let Some(to) = valid_to { if to < now { continue; } }
-
-        // 3. Find matching item
-        let item_query = "SELECT price FROM price_items WHERE price_list_id = ?1 AND variant_id = ?2 AND (selling_unit_id = ?3 OR (selling_unit_id IS NULL AND ?4 = 1))";
-        if let Ok(Some(item_row)) = sqlx::query(item_query).bind(&id).bind(&variant_id).bind(&unit_id).bind(is_base_unit).fetch_optional(&pool).await {
-            let price_str: String = item_row.get("price");
-            return price_str.parse::<f64>().ok();
+        if let Ok(rows) = sqlx::query(customer_query).bind(cid).fetch_all(&pool).await {
+            for row in rows {
+                if let Some(price) = check_list_and_resolve(&pool, &row, &now, &variant_id, &unit_id, is_base_unit).await {
+                    return Some(price);
+                }
+            }
         }
     }
 
+    // 2. Try Global Lists (Organization-wide Promotions)
+    let global_query = r#"
+        SELECT * FROM price_lists
+        WHERE is_global = 1 AND is_active = 1
+        ORDER BY priority DESC
+    "#;
+
+    if let Ok(rows) = sqlx::query(global_query).fetch_all(&pool).await {
+        for row in rows {
+            if let Some(price) = check_list_and_resolve(&pool, &row, &now, &variant_id, &unit_id, is_base_unit).await {
+                return Some(price);
+            }
+        }
+    }
+
+    None
+}
+
+async fn check_list_and_resolve(
+    pool: &SqlitePool,
+    row: &sqlx::sqlite::SqliteRow,
+    now: &str,
+    variant_id: &str,
+    unit_id: &Option<String>,
+    is_base_unit: bool,
+) -> Option<f64> {
+    let id: String = row.get("id");
+    let valid_from: Option<String> = row.get("valid_from");
+    let valid_to: Option<String> = row.get("valid_to");
+
+    if let Some(from) = valid_from { if from.as_str() > now { return None; } }
+    if let Some(to) = valid_to { if to.as_str() < now { return None; } }
+
+    let item_query = "SELECT price FROM price_items WHERE price_list_id = ?1 AND variant_id = ?2 AND (selling_unit_id = ?3 OR (selling_unit_id IS NULL AND ?4 = 1))";
+    if let Ok(Some(item_row)) = sqlx::query(item_query)
+        .bind(&id)
+        .bind(variant_id)
+        .bind(unit_id)
+        .bind(is_base_unit)
+        .fetch_optional(pool).await {
+        let price_str: String = item_row.get("price");
+        return price_str.parse::<f64>().ok();
+    }
     None
 }
 
@@ -362,4 +386,21 @@ pub async fn get_all_pricing(app: &AppHandle, _state: &PricingState) -> PosPrici
     }
 
     PosPricingData { lists, items, allocations }
+}
+
+pub async fn delete_local_price_list(app: &AppHandle, _state: &PricingState, id: &str) -> Result<String> {
+    let pool = get_db_pool(app).await.map_err(|e| anyhow::anyhow!(e))?;
+    let mut tx = pool.begin().await?;
+
+    // 1. Delete associated price items
+    sqlx::query("DELETE FROM price_items WHERE price_list_id = ?1").bind(id).execute(&mut *tx).await?;
+
+    // 2. Delete associated customer allocations
+    sqlx::query("DELETE FROM customer_allocations WHERE price_list_id = ?1").bind(id).execute(&mut *tx).await?;
+
+    // 3. Delete the price list itself
+    sqlx::query("DELETE FROM price_lists WHERE id = ?1").bind(id).execute(&mut *tx).await?;
+
+    tx.commit().await?;
+    Ok(id.to_string())
 }

@@ -47,9 +47,18 @@ const supplierSchema = z.object({
 
 type SupplierFormValues = z.infer<typeof supplierSchema>;
 
+const slugify = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
 export function RegisterSupplierModal() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCodeCustomized, setIsCodeCustomized] = useState(false);
   const router = useRouter();
 
   const form = useForm<SupplierFormValues>({
@@ -112,6 +121,16 @@ export function RegisterSupplierModal() {
                       <Input
                         placeholder="Acme Inc"
                         {...field}
+                        onChange={e => {
+                          field.onChange(e);
+                          if (!isCodeCustomized) {
+                            const slug = slugify(e.target.value);
+                            form.setValue(
+                              "code",
+                              slug ? `SUP-${slug.toUpperCase()}` : "",
+                            );
+                          }
+                        }}
                         className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
                       />
                     </FormControl>
@@ -131,6 +150,10 @@ export function RegisterSupplierModal() {
                       <Input
                         placeholder="ACM-001"
                         {...field}
+                        onChange={e => {
+                          field.onChange(e);
+                          setIsCodeCustomized(true);
+                        }}
                         className="h-11 rounded-xl bg-gray-50/50 border-gray-200 font-mono"
                       />
                     </FormControl>

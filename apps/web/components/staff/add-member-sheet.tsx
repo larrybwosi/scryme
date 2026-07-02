@@ -23,13 +23,28 @@ import {
 import { MemberRole } from "@repo/db/client";
 import { addStaffMember } from "../../app/actions/staff";
 import { toast } from "sonner";
-import { Eye, EyeOff, RefreshCw, Copy, Check, Loader2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Copy,
+  Check,
+  Loader2,
+  Download,
+} from "lucide-react";
 
 export function AddMemberSheet({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(true);
+  const [lastMember, setLastMember] = useState<{
+    name: string;
+    email: string;
+    password: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -68,19 +83,40 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
       });
       setShowPassword(false);
       setCopied(false);
+      setSuccess(false);
+      setIsNewUser(true);
+      setLastMember(null);
     }
   };
 
   const handleCopyPassword = async () => {
-    if (!formData.password) return;
+    const password = success ? lastMember?.password : formData.password;
+    if (!password) return;
     try {
-      await navigator.clipboard.writeText(formData.password);
+      await navigator.clipboard.writeText(password);
       setCopied(true);
       toast.success("Password copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast.error("Failed to copy password");
     }
+  };
+
+  const downloadCredentials = () => {
+    if (!lastMember) return;
+    const passwordText = isNewUser
+      ? lastMember.password
+      : "Use your existing account password";
+    const content = `Name: ${lastMember.name}\nEmail: ${lastMember.email}\nPassword: ${passwordText}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `credentials-${lastMember.email}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,7 +127,13 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
 
     if (result.success) {
       toast.success("Staff member added successfully");
-      handleOpenChange(false);
+      setLastMember({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      setIsNewUser((result as any).isNewUser);
+      setSuccess(true);
     } else {
       toast.error(result.error || "Failed to add staff member");
     }
@@ -103,13 +145,103 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="sm:max-w-[450px]">
         <SheetHeader>
-          <SheetTitle>Add Staff Member</SheetTitle>
+          <SheetTitle>
+            {success ? "Member Added Successfully" : "Add Staff Member"}
+          </SheetTitle>
           <SheetDescription>
-            Add a new member to your organization. They will be able to log in
-            with the provided email and password.
+            {success
+              ? "The new staff member has been added. You can now download their credentials or copy the password."
+              : "Add a new member to your organization. They will be able to log in with the provided email and password."}
           </SheetDescription>
         </SheetHeader>
-        <form onSubmit={handleSubmit} className="space-y-6 py-6">
+
+        {success ? (
+          <div className="space-y-6 py-8">
+            <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl space-y-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-emerald-600 uppercase font-bold tracking-wider">
+                  Name
+                </Label>
+                <p className="text-sm font-medium text-emerald-900">
+                  {lastMember?.name}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-emerald-600 uppercase font-bold tracking-wider">
+                  Email
+                </Label>
+                <p className="text-sm font-medium text-emerald-900">
+                  {lastMember?.email}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-emerald-600 uppercase font-bold tracking-wider">
+                  Password
+                </Label>
+                {isNewUser ? (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-mono font-medium text-emerald-900 flex-1 truncate">
+                      {showPassword
+                        ? lastMember?.password
+                        : "••••••••••••"}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
+                        onClick={handleCopyPassword}
+                      >
+                        {copied ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm italic text-emerald-700">
+                    User already has an account. Please use their existing
+                    password.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={downloadCredentials}
+                className="w-full gap-2 bg-zinc-900 text-white"
+              >
+                <Download size={16} />
+                Download Credentials (.txt)
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                className="w-full border-zinc-200"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6 py-6">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <Input
@@ -144,6 +276,7 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="OWNER">Owner</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
                 <SelectItem value="MANAGER">Manager</SelectItem>
                 <SelectItem value="EMPLOYEE">Employee</SelectItem>
@@ -222,6 +355,7 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
             </Button>
           </SheetFooter>
         </form>
+        )}
       </SheetContent>
     </Sheet>
   );
