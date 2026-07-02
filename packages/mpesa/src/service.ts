@@ -431,6 +431,7 @@ export class MpesaService {
       where: {
         saleNumber: transaction.number,
         status: 'PENDING',
+        ...(organizationId ? { organizationId } : {}),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -450,6 +451,7 @@ export class MpesaService {
       where: {
         billRefNumber: transaction.number,
         claimed: false,
+        ...(organizationId ? { organizationId } : {}),
       },
     });
 
@@ -487,7 +489,7 @@ export class MpesaService {
     }
 
     const unclaimed = await db.unclaimedPayment.findFirst({
-      where: { transId: input.transactionCode },
+      where: { transId: input.transactionCode, organizationId: input.organizationId },
     });
 
     return { success: !!unclaimed, verified: !!unclaimed, unclaimed };

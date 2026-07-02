@@ -47,3 +47,8 @@
 **Vulnerability:** The `isSafeIp` utility used for SSRF protection failed to detect restricted IPv4 addresses when provided in their IPv6-mapped format (e.g., `::ffff:127.0.0.1`).
 **Learning:** Node.js networking utilities correctly identify these addresses as IPv6, but security filters that only check for specific IPv6 loopback patterns (like `::1`) will miss the embedded restricted IPv4 address. Attackers can use this to bypass SSRF protections that don't account for dual-stack address representations.
 **Prevention:** Always check for and normalize IPv4-mapped IPv6 addresses (starting with `::ffff:`) by extracting the IPv4 portion and recursively validating it against the restricted IP blocklist. Ensure this logic is consistently applied across all shared security utilities.
+
+## 2025-05-19 - IDOR Vulnerability in M-Pesa Payment Module
+**Vulnerability:** The `MpesaService.validate` and `verifyPayment` methods were performing lookups for `UnclaimedPayment` and `MpesaPaymentRequest` using only transaction identifiers, allowing cross-tenant data access.
+**Learning:** In a multi-tenant architecture, identifiers that are unique within a single provider (like M-Pesa transaction codes) are not sufficient for secure authorization. Failing to include the `organizationId` in database queries allows an authenticated user from one organization to probe or claim transactions belonging to another.
+**Prevention:** Always scope database lookups for sensitive entities using the authenticated `organizationId`. Use explicit unit tests to verify that `where` clauses in repositories and services include the necessary tenant isolation filters.

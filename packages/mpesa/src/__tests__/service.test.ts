@@ -182,6 +182,80 @@ describe('MpesaService', () => {
     });
   });
 
+  describe('security - multi-tenant isolation', () => {
+    it('validate should NOT return unclaimed payments from other organizations (IDOR)', async () => {
+      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
+      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue({
+        id: 'unclaimed_456',
+        transId: 'REC999',
+        organizationId: 'other_org',
+      });
+
+      const result = await service.validate({
+        transactionCode: 'REC999',
+        organizationId: 'my_org',
+      });
+
+      // This is expected to FAIL before the fix because validate doesn't filter by organizationId for unclaimed
+      expect(db.unclaimedPayment.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            organizationId: 'my_org',
+          }),
+        }),
+      );
+    });
+
+    it('verifyPayment should NOT return unclaimed payments from other organizations', async () => {
+      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
+      (db.transaction.findFirst as jest.Mock).mockResolvedValue({
+        id: 'tx_123',
+        number: 'ORD-123',
+        organizationId: 'my_org',
+        paymentStatus: 'UNPAID',
+      });
+      (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue(null);
+      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue({
+        transId: 'REC456',
+        organizationId: 'other_org',
+      });
+
+      await service.verifyPayment('tx_123', 'my_org');
+
+      expect(db.unclaimedPayment.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            organizationId: 'my_org',
+          }),
+        }),
+      );
+    });
+
+    it('verifyPayment should NOT return payment requests from other organizations', async () => {
+      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
+      (db.transaction.findFirst as jest.Mock).mockResolvedValue({
+        id: 'tx_123',
+        number: 'ORD-123',
+        organizationId: 'my_org',
+        paymentStatus: 'UNPAID',
+      });
+      (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue({
+        status: 'PENDING',
+        organizationId: 'other_org',
+      });
+
+      await service.verifyPayment('tx_123', 'my_org');
+
+      expect(db.mpesaPaymentRequest.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            organizationId: 'my_org',
+          }),
+        }),
+      );
+    });
+  });
+
   describe('handleStkCallback', () => {
     it('should scope payment update by organizationId', async () => {
       const payload = {
