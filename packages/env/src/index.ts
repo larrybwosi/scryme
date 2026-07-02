@@ -7,7 +7,7 @@ const isBrowser = typeof window !== "undefined";
 const isNextJs =
   (!isBrowser &&
     typeof process !== "undefined" &&
-    !!process.env.NEXT_RUNTIME) ||
+    (!!process.env.NEXT_RUNTIME || !!process.env.NEXT_PHASE)) ||
   !!process.env.__NEXT_PRIVATE_ORIGIN;
 const isNestJs = !isBrowser && !isNextJs;
 
@@ -247,17 +247,27 @@ function parseEnv() {
   }
 
   if (isNestJs) {
-    const parsed = serverSchema.safeParse(raw);
-    if (!parsed.success && process.env.NODE_ENV !== "test") {
+    const parsedServer = serverSchema.safeParse(raw);
+    if (!parsedServer.success && process.env.NODE_ENV !== "test") {
       console.error(
-        "❌ Invalid environment variables:",
-        parsed.error.flatten().fieldErrors,
+        "❌ Invalid server environment variables:",
+        parsedServer.error.flatten().fieldErrors,
       );
-      throw new Error("Invalid environment variables");
+      throw new Error("Invalid server environment variables");
     }
+
+    const parsedClient = clientSchema.safeParse(raw);
+    if (!parsedClient.success && process.env.NODE_ENV !== "test") {
+      console.error(
+        "❌ Invalid client environment variables:",
+        parsedClient.error.flatten().fieldErrors,
+      );
+      throw new Error("Invalid client environment variables");
+    }
+
     return {
-      ...(parsed.data ?? {}),
-      ...clientSchema.parse({}),
+      ...(parsedServer.data ?? {}),
+      ...(parsedClient.data ?? {}),
     } as z.infer<typeof serverSchema> & z.infer<typeof clientSchema>;
   }
 

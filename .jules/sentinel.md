@@ -52,3 +52,7 @@
 **Vulnerability:** The `MpesaService.validate` and `verifyPayment` methods were performing lookups for `UnclaimedPayment` and `MpesaPaymentRequest` using only transaction identifiers, allowing cross-tenant data access.
 **Learning:** In a multi-tenant architecture, identifiers that are unique within a single provider (like M-Pesa transaction codes) are not sufficient for secure authorization. Failing to include the `organizationId` in database queries allows an authenticated user from one organization to probe or claim transactions belonging to another.
 **Prevention:** Always scope database lookups for sensitive entities using the authenticated `organizationId`. Use explicit unit tests to verify that `where` clauses in repositories and services include the necessary tenant isolation filters.
+## 2026-07-02 - SSRF Bypass via Multi-IP Hostnames
+**Vulnerability:** The `isSafeUrl` utility only validated the first IP address returned by `dns.lookup`. An attacker could use a hostname resolving to both a safe and an unsafe IP to bypass the check.
+**Learning:** Security utilities performing DNS-based validation must account for hostnames resolving to multiple IP addresses. Validating only the first returned address is insufficient as the application's HTTP client might choose a different (unsafe) IP from the resolved list.
+**Prevention:** Always use `dns.lookup` with the `{ all: true }` option and iterate through all resolved IP addresses to ensure every single one is safe before allowing the request.
