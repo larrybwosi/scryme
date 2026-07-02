@@ -45,13 +45,54 @@ export class BakeryService {
           },
         },
       },
-      include: {
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Replacing broad 'include' with targeted 'select' to reduce over-fetching.
+       * Reduces database I/O, network payload size, and serialization overhead.
+       */
+      select: {
+        id: true,
+        quantity: true,
+        movementType: true,
+        createdAt: true,
+        notes: true,
         variant: {
-          include: { product: true },
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
         },
-        fromLocation: true,
-        toLocation: true,
-        member: { include: { user: true } },
+        fromLocation: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        toLocation: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        member: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: 100,
