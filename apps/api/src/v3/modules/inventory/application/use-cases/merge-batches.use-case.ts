@@ -30,7 +30,9 @@ export class MergeBatchesUseCase {
 
     // OPTIMIZATION (Bolt ⚡): Use findByIds to fetch all batches in a single database roundtrip,
     // eliminating the N+1 query pattern where findById was called for each batch ID.
-    const batches = await this.stockBatchRepository.findByIds(batchIds);
+    const rawBatches = await this.stockBatchRepository.findByIds(batchIds);
+    const batchesMap = new Map(rawBatches.map((b) => [b.id, b]));
+    const batches = batchIds.map((id) => batchesMap.get(id) || null);
 
     // Validation
     const firstBatch = batches[0];
