@@ -64,6 +64,10 @@ const DEFAULT_SENSITIVE_KEYS = [
   "proxy-authorization",
   "proxy-authenticate",
   "www-authenticate",
+  "pass",
+  "session",
+  "secret-token",
+  "api-token",
 ];
 
 const DEFAULT_SENSITIVE_KEYS_SET = new Set(
