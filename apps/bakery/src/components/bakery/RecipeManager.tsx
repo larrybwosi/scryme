@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useRecipes, useDeleteRecipe } from '@/hooks/bakery';
+import { useDeleteConfirmation } from '@/lib/providers/delete-modal';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@repo/ui/components/ui/card';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
@@ -46,6 +47,7 @@ export default function RecipeManager() {
   const { data: recipes = [], isLoading, error } = useRecipes();
   const deleteRecipeMutation = useDeleteRecipe();
   const formatCurrency = useFormattedCurrency();
+  const { confirmDelete } = useDeleteConfirmation();
 
   const filteredRecipes = useMemo(() => {
     return recipes.filter(
@@ -55,10 +57,17 @@ export default function RecipeManager() {
     );
   }, [recipes, searchTerm]);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this formula?')) {
+  const handleDelete = async (recipe: Recipe) => {
+    const confirmed = await confirmDelete({
+      entityType: 'recipe',
+      entityName: recipe.name,
+      description: `This will permanently delete the formula "${recipe.name}". This action cannot be undone.`,
+      confirmText: 'Delete Formula',
+    });
+
+    if (confirmed) {
       try {
-        await deleteRecipeMutation.mutateAsync(id);
+        await deleteRecipeMutation.mutateAsync(recipe.id);
         toast.success('Formula deleted successfully');
       } catch (err) {
         toast.error('Failed to delete formula');
@@ -210,6 +219,7 @@ export default function RecipeManager() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => handleViewRecipe(recipe)}
+                            aria-label={`View ${recipe.name}`}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -218,6 +228,7 @@ export default function RecipeManager() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => handleEdit(recipe)}
+                            aria-label={`Edit ${recipe.name}`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -225,7 +236,8 @@ export default function RecipeManager() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDelete(recipe.id)}
+                            onClick={() => handleDelete(recipe)}
+                            aria-label={`Delete ${recipe.name}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -304,17 +316,30 @@ export default function RecipeManager() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/10 p-2 flex justify-end gap-1 border-t border-border/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewRecipe(recipe)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleViewRecipe(recipe)}
+                      aria-label={`View ${recipe.name}`}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(recipe)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleEdit(recipe)}
+                      aria-label={`Edit ${recipe.name}`}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive"
-                      onClick={() => handleDelete(recipe.id)}
+                      onClick={() => handleDelete(recipe)}
+                      aria-label={`Delete ${recipe.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

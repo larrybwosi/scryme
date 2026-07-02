@@ -1,7 +1,7 @@
 import { defineConfig, type Options } from "tsup";
 
 const commonOptions: Options = {
-  format: ["esm"],
+  format: ["esm", "cjs"],
   dts: false,
   clean: false, // Handled by separate clean script or first entry
   minify: true,
@@ -24,6 +24,7 @@ const commonOptions: Options = {
     "@nestjs/common",
     "@repo/documents",
     "@repo/notifications",
+    "@repo/windmill",
     "@repo/scryme",
     "@sanity/client",
     "@tanstack/react-query",
@@ -42,7 +43,7 @@ const commonOptions: Options = {
     "sonner",
     "tailwind-merge",
     "zod",
-    "zustand"
+    "zustand",
   ],
 };
 
@@ -69,6 +70,11 @@ export default defineConfig([
       "suppliers/server": "src/suppliers/server.ts",
       server: "src/server/index.ts",
       "node-utils": "src/node-utils.ts",
+      "mpesa/index": "src/mpesa/index.ts",
+      "mpesa/server": "src/mpesa/server.ts",
+      "crm/index": "src/crm/index.ts",
+      "crm/client": "src/crm/client.ts",
+      "crm/server": "src/crm/server.ts",
     },
   },
   {
@@ -78,13 +84,13 @@ export default defineConfig([
       "realtime/client": "src/realtime/client.tsx",
     },
     onSuccess: async () => {
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
-      const files = ['dist/ably/client.js', 'dist/realtime/client.js'];
+      const fs = await import("node:fs/promises");
+      const path = await import("node:path");
+      const files = ["dist/ably/client.js", "dist/realtime/client.js"];
       for (const file of files) {
         const filePath = path.join(process.cwd(), file);
         try {
-          const content = await fs.readFile(filePath, 'utf-8');
+          const content = await fs.readFile(filePath, "utf-8");
           if (!content.includes('"use client"')) {
             await fs.writeFile(filePath, `"use client";\n${content}`);
             console.log(`Added "use client" to ${file}`);
@@ -93,6 +99,6 @@ export default defineConfig([
           console.error(`Error processing ${file}:`, err);
         }
       }
-    }
+    },
   },
 ]);

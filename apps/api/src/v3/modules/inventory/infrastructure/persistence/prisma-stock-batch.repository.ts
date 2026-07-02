@@ -61,6 +61,29 @@ export class PrismaStockBatchRepository implements IStockBatchRepository {
     return batch ? this.mapToEntity(batch) : null;
   }
 
+  async findByIds(ids: string[]): Promise<StockBatchEntity[]> {
+    const batches = await this.prisma.client.stockBatch.findMany({
+      where: { id: { in: ids } },
+      include: {
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        variant: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+          },
+        },
+      },
+    });
+    return batches.map((b) => this.mapToEntity(b));
+  }
+
   async findByBatchNumber(
     batchNumber: string,
     organizationId: string,

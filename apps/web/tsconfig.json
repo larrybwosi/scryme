@@ -9,7 +9,8 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@repo/shared": ["../../packages/shared/src"]
     }
   },
   "include": [

@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CheckoutDto, CheckoutResponseDto } from "../dto/checkout.dto";
-import { MpesaService } from "@repo/mpesa/server";
+import { MpesaService } from "@repo/shared/mpesa/server";
 import { emitOrderPlaced } from "@repo/windmill/server";
 import { Decimal } from "decimal.js";
 
