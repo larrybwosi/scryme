@@ -350,18 +350,16 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         <View style={styles.headerRow}>
           <View style={styles.logoContainer}>
             {company.logo ? (
-              <Image src={company.logo} style={{ width: 80, height: 40, objectFit: 'contain' }} />
+              <Image src={company.logo} style={{ width: 100, height: 50, marginRight: 15, objectFit: 'contain' }} />
             ) : (
-              <>
-                <View style={[styles.logoIcon, { borderColor: activeColor }]}>
-                  <View style={[styles.logoInnerCircle, { backgroundColor: activeColor }]} />
-                </View>
-                <View style={styles.logoTextGroup}>
-                  <Text style={[styles.logoMainText, { color: activeColor }]}>{company.name}</Text>
-                  <Text style={styles.logoSubText}>{company.slogan || 'Logo here'}</Text>
-                </View>
-              </>
+              <View style={[styles.logoIcon, { borderColor: activeColor }]}>
+                <View style={[styles.logoInnerCircle, { backgroundColor: activeColor }]} />
+              </View>
             )}
+            <View style={styles.logoTextGroup}>
+              <Text style={[styles.logoMainText, { color: activeColor }]}>{company.name}</Text>
+              <Text style={styles.logoSubText}>{company.slogan || 'Business Slogan'}</Text>
+            </View>
           </View>
 
           <View style={styles.headerRight}>
