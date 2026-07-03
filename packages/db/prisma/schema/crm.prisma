@@ -223,6 +223,16 @@ enum CrmFollowUpPriority {
   @@map("CrmFollowUpPriority")
 }
 
+enum CrmFollowUpType {
+  CALL
+  MEETING
+  EMAIL
+  PREPARATION
+  OTHER
+
+  @@map("CrmFollowUpType")
+}
+
 model CrmFollowUp {
   id               String       @id @default(cuid())
   recordId         String
@@ -236,9 +246,19 @@ model CrmFollowUp {
   dueDate          DateTime
   priority         CrmFollowUpPriority @default(MEDIUM)
   status           CrmFollowUpStatus   @default(PENDING)
+  type             CrmFollowUpType     @default(OTHER)
 
   assignedToId     String?
   assignedTo       Member?      @relation("CrmFollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  locationId       String?
+  location         InventoryLocation? @relation("LocationFollowUps", fields: [locationId], references: [id], onDelete: SetNull)
+
+  // Enterprise options
+  isRecurring       Boolean  @default(false)
+  recurringInterval String?  // e.g. "DAILY", "WEEKLY", "MONTHLY"
+  reminderSent      Boolean  @default(false)
+  escalationSent    Boolean  @default(false)
 
   completedAt      DateTime?
 
@@ -248,5 +268,6 @@ model CrmFollowUp {
   @@index([recordId])
   @@index([organizationId])
   @@index([assignedToId])
+  @@index([locationId])
   @@map("crm_follow_ups")
 }
