@@ -1,7 +1,11 @@
 {
   "$schema": "https://v2-10-0.turborepo.dev/schema.json",
   "concurrency": "2",
-  "globalPassThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET", "NEXT_PUBLIC_API_URL"],
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "NEXT_PUBLIC_API_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build", "generate"],
@@ -21,8 +25,18 @@
     "db:seed": {
       "cache": false
     },
+    "db:build": {
+      "cache": true
+    },
+    "shared:build": {
+      "cache": true
+    },
+    "auth:build": {
+      "cache": true
+    },
+
     "dev": {
-      "dependsOn": ["generate"],
+      "dependsOn": ["generate", "auth:build", "shared:build", "db:build"],
       "cache": false,
       "persistent": true
     },
