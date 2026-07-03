@@ -12,6 +12,8 @@
   "dependencies": {
     "@repo/db": "workspace:*",
     "@repo/scryme": "workspace:*",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "axios": "^1.15.2",
     "clsx": "^2.1.1",
     "handlebars": "^4.7.9",

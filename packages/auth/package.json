@@ -35,7 +35,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.6.0",
-    "tsup": "^8.5.1"
+    "tsup": "^8.5.1",
     "next": "16.2.10"
   }
 }

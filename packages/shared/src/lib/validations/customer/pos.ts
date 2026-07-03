@@ -22,7 +22,7 @@ export const createCustomerSchema = z.object({
     .optional(),
 });
 
-export type CreateCustomerData = {
+export type CreatePosCustomerData = {
   name: string;
   email?: string;
   phone?: string;
