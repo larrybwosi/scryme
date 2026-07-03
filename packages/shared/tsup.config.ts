@@ -64,7 +64,6 @@ export default defineConfig([
       "api/v2": "src/api/v2/index.ts",
       lib: "src/lib/index.ts",
       actions: "src/actions/index.ts",
-      "services/openloyalty": "src/services/openloyalty/index.ts",
       "services/customer": "src/services/customer/index.ts",
       suppliers: "src/suppliers/index.ts",
       "suppliers/server": "src/suppliers/server.ts",

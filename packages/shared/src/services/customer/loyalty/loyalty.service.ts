@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma, Prisma } from "@repo/db";
 import { Decimal } from "decimal.js";
-import { OpenLoyaltyClient } from "../../../services/openloyalty";
 
 export type LoyaltyActionType =
   | "EARNED"
@@ -362,103 +361,6 @@ export class LoyaltyService {
         referral.id,
         `Referral bonus from program ${referral.program.name}`,
       );
-    }
-  }
-
-  // PORTED FROM LoyaltyEngine (Open Loyalty Integration)
-
-  /**
-   * Submits a purchase transaction to Open Loyalty.
-   */
-  static async submitPurchaseToExternal(
-    customerId: string,
-    transactionId: string,
-    totalAmountMicros: number,
-    items: { sku: string; name: string; quantity: number; price: number }[],
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      if (!customerId || items.length === 0) {
-        return { success: false, error: "Invalid transaction payload." };
-      }
-
-      const grossValue = totalAmountMicros / 1_000_000;
-
-      await OpenLoyaltyClient.submitTransaction(
-        customerId,
-        transactionId,
-        grossValue,
-        items,
-      );
-
-      return { success: true };
-    } catch (error) {
-      console.error(
-        "[LoyaltyService] Failed to submit purchase to Open Loyalty:",
-        error,
-      );
-      return {
-        success: false,
-        error: "Failed to sync transaction with loyalty engine.",
-      };
-    }
-  }
-
-  /**
-   * Delegates manual point adjustments, compensations, or deductions to Open Loyalty.
-   */
-  static async adjustPointsExternal(
-    customerId: string,
-    pointsDelta: number,
-    actionType: LoyaltyActionType,
-    notes?: string,
-  ): Promise<{ success: boolean; error?: string }> {
-    if (pointsDelta === 0) return { success: true };
-
-    try {
-      const reason = notes ? `${actionType} - ${notes}` : actionType;
-
-      if (pointsDelta > 0) {
-        await OpenLoyaltyClient.addPoints(customerId, pointsDelta, reason);
-      } else {
-        await OpenLoyaltyClient.deductPoints(
-          customerId,
-          Math.abs(pointsDelta),
-          reason,
-        );
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error(
-        "[LoyaltyService] Failed to apply points via Open Loyalty:",
-        error,
-      );
-      return {
-        success: false,
-        error: "Failed to push point adjustment to Loyalty Engine.",
-      };
-    }
-  }
-
-  /**
-   * Fetches the customer's point history from Open Loyalty.
-   */
-  static async getExternalTransactions(
-    customerId: string,
-  ): Promise<{ success: boolean; data?: any[]; error?: string }> {
-    try {
-      const transactions =
-        await OpenLoyaltyClient.getCustomerTransactions(customerId);
-      return { success: true, data: transactions };
-    } catch (error) {
-      console.error(
-        "[LoyaltyService] Failed to fetch customer transactions:",
-        error,
-      );
-      return {
-        success: false,
-        error: "Failed to retrieve transaction history.",
-      };
     }
   }
 }
