@@ -251,11 +251,10 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         {/* ---- Brand header ---- */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View>
-            {company.logo ? (
-              <Image src={company.logo} style={{ width: 60, height: 60, objectFit: 'contain' }} />
-            ) : (
-              <DiamondIcon color={activeColor} />
+            {company.logo && (
+              <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 10, objectFit: 'contain' }} />
             )}
+            {!company.logo && <DiamondIcon color={activeColor} />}
             <Text style={styles.brandName}>{company.name}</Text>
             {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
           </View>
@@ -263,7 +262,6 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
             <Image src={qrCode} style={{ width: 60, height: 60 }} />
           )}
         </View>
-        {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
 
         <View style={styles.headerRow}>
           <View style={styles.addressBlock}>

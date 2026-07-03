@@ -297,7 +297,7 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
             {company.logo ? (
-              <Image src={company.logo} style={{ width: 40, height: 40, objectFit: 'contain' }} />
+              <Image src={company.logo} style={{ width: 60, height: 60, objectFit: 'contain' }} />
             ) : (
               <ZigzagLogo />
             )}

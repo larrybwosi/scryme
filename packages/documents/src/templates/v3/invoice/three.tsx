@@ -246,10 +246,10 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             {/* Company block */}
             <View style={styles.companyBlock}>
               {company.logo && (
-                <Image src={company.logo} style={{ width: 50, height: 50, marginBottom: 10, objectFit: 'contain' }} />
+                <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 15, objectFit: 'contain' }} />
               )}
-              <Text style={[styles.companyLabel, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.name}</Text>
-              {company.slogan && <Text style={[styles.companyLabel, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.slogan}</Text>}
+              <Text style={[styles.companyLabel, { fontSize: 12, fontFamily: 'Helvetica-Bold' }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.name}</Text>
+              {company.slogan && <Text style={[styles.companyLabel, { marginTop: 2 }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.slogan}</Text>}
               <View style={styles.metaTable}>
                 <View style={styles.metaRow}>
                   <Text style={[styles.metaKey, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>Date issued</Text>
