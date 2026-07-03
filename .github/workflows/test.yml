@@ -373,6 +373,7 @@ jobs:
         run: |
           FILTER=""
           if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            pnpm turbo build --filter=pos...
             pnpm --filter pos test:frontend
           fi
 
@@ -400,7 +401,9 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter pos exec playwright install --with-deps
       - name: Run E2E tests
-        run: pnpm --filter pos test:e2e
+        run: |
+          pnpm turbo build --filter=pos...
+          pnpm --filter pos test:e2e
         env:
           POSTHOG_API_KEY: mock
           SENTRY_DSN: mock
