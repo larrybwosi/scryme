@@ -313,6 +313,7 @@ export async function addPayment(
     chequeDate?: Date;
     bankName?: string;
     attachments?: {
+      id?: string;
       fileName: string;
       fileUrl: string;
       mimeType: string;
@@ -343,7 +344,11 @@ export async function addPayment(
       attachments: data.attachments
         ? {
             create: data.attachments.map(att => ({
-              ...att,
+              id: att.id,
+              fileName: att.fileName,
+              fileUrl: att.fileUrl,
+              mimeType: att.mimeType,
+              sizeBytes: att.sizeBytes,
               isPublic: true,
               organizationId: auth.organizationId!,
               memberId: auth.memberId!,
@@ -709,7 +714,7 @@ export async function reconcileFulfillment(
     notes?: string;
     receivedBy?: string;
     otp?: string;
-    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
+    attachments?: { id?: string; fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
@@ -737,7 +742,12 @@ export async function reconcileFulfillment(
         deliveredAt: new Date(),
         attachments: data.attachments ? {
           create: data.attachments.map(att => ({
-            ...att,
+            id: att.id,
+            fileName: att.fileName,
+            fileUrl: att.fileUrl,
+            mimeType: att.mimeType,
+            sizeBytes: att.sizeBytes,
+            description: att.description,
             isPublic: true,
             organizationId: auth.organizationId!,
             memberId: auth.memberId!,
