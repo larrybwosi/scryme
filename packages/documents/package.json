@@ -8,7 +8,8 @@
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
     "./templates/v1/*": "./src/templates/v1/*.tsx",
-    "./templates/v2/*": "./src/templates/v2/*.tsx"
+    "./templates/v2/*": "./src/templates/v2/*.tsx",
+    "./templates/v3/*": "./src/templates/v3/*.tsx"
   },
   "scripts": {
     "build": "tsc",
