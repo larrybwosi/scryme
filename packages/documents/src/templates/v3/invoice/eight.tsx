@@ -283,14 +283,11 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         <View style={[styles.upperBlock, { backgroundColor: activeColor }]}>
           <View style={styles.topBrandRow}>
             <View style={styles.brandLeft}>
-              {company.logo ? (
-                <Image src={company.logo} style={{ width: 80, height: 40, marginBottom: 10, objectFit: 'contain' }} />
-              ) : (
-                <>
-                  <Text style={styles.companyName}>{company.name}</Text>
-                  {company.slogan && <Text style={styles.companySlogan}>{company.slogan}</Text>}
-                </>
+              {company.logo && (
+                <Image src={company.logo} style={{ width: 100, height: 50, marginBottom: 10, objectFit: 'contain' }} />
               )}
+              <Text style={styles.companyName}>{company.name}</Text>
+              {company.slogan && <Text style={styles.companySlogan}>{company.slogan}</Text>}
             </View>
             <View style={styles.brandRight}>
               <Text style={styles.hugeTitle}>

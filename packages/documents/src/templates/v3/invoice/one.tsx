@@ -260,7 +260,7 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         <View style={styles.headerRow}>
           <View style={styles.logoBlock}>
             {company.logo ? (
-              <Image src={company.logo} style={{ width: 40, height: 40, marginRight: 8, objectFit: 'contain' }} />
+              <Image src={company.logo} style={{ width: 60, height: 60, marginRight: 12, objectFit: 'contain' }} />
             ) : (
               <View style={[styles.logoCircle, { backgroundColor: activeColor }]}>
                 <Text style={styles.logoCircleText}>
@@ -268,7 +268,10 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
                 </Text>
               </View>
             )}
-            <Text style={styles.logoText}>{company.name}</Text>
+            <View>
+              <Text style={styles.logoText}>{company.name}</Text>
+              {company.slogan && <Text style={{ fontSize: 8, color: GRAY_TEXT, marginTop: 2 }}>{company.slogan}</Text>}
+            </View>
           </View>
           <View style={styles.companyInfo}>
             {company.address && <Text>{company.address}</Text>}
