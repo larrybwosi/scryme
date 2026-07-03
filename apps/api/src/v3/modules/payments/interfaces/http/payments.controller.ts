@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Param, Req, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
-import { MpesaService } from "@repo/mpesa/server";
+import { MpesaService } from "@repo/shared/mpesa/server";
 import type { FastifyRequest } from "fastify";
 import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
