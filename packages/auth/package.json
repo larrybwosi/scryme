@@ -21,6 +21,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "auth:build": "tsup",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
     "dev": "tsup --watch"
