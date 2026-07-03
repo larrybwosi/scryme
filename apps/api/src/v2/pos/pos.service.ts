@@ -36,6 +36,7 @@ import {
   RecordPaymentSchema,
   ShiftSyncSchema,
   RegisterPettyCashSchema,
+  RegisterBarcodeSchema,
 } from "./pos.schema";
 import { Decimal } from "decimal.js";
 import { RedisService } from "@/redis/redis.service";
@@ -1401,5 +1402,54 @@ export class PosService {
       orderBy: { createdAt: "desc" },
       take: limit,
     });
+  }
+
+  async registerBarcode(ctx: V2ApiContext, body: any) {
+    const validated = this.validate<any>(RegisterBarcodeSchema, body);
+    const { variantId, barcode } = validated;
+
+    // Check if variant exists and belongs to the organization
+    const variant = await this.prisma.client.productVariant.findFirst({
+      where: {
+        id: variantId,
+        product: { organizationId: ctx.organizationId },
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException("Product variant not found");
+    }
+
+    // Check if barcode is already used by another variant in the same organization
+    const existing = await this.prisma.client.productVariant.findFirst({
+      where: {
+        barcode,
+        product: { organizationId: ctx.organizationId },
+        id: { not: variantId },
+      },
+    });
+
+    if (existing) {
+      throw new BadRequestException("Barcode is already in use by another product");
+    }
+
+    const updated = await this.prisma.client.productVariant.update({
+      where: { id: variantId },
+      data: { barcode },
+    });
+
+    await this.prisma.client.actionAuditLog.create({
+      data: {
+        organizationId: ctx.organizationId,
+        memberId: ctx.memberId || null,
+        action: "REGISTER_BARCODE",
+        resourceType: "PRODUCT_VARIANT",
+        resourceId: variantId,
+        approved: true,
+        metadata: { barcode },
+      },
+    });
+
+    return updated;
   }
 }
