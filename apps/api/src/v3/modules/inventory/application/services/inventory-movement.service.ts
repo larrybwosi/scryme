@@ -119,34 +119,45 @@ export class InventoryMovementService {
     fromLoc?: string,
     toLoc?: string,
   ) {
-    const locationIds = [fromLoc, toLoc].filter(Boolean) as string[];
+    // ⚡ Bolt Optimization: Deduplicate location IDs and parallelize checks.
+    // Replaced sequential loop with Promise.all to reduce total execution time.
+    const uniqueLocationIds = Array.from(
+      new Set([fromLoc, toLoc].filter(Boolean) as string[]),
+    );
 
-    for (const locationId of locationIds) {
-      const stock = await tx.productVariantStock.findUnique({
-        where: { variantId_locationId: { variantId, locationId } },
-      });
+    await Promise.all(
+      uniqueLocationIds.map(async (locationId) => {
+        // ⚡ Bolt Optimization: Parallelize stock lookup and batch summation.
+        // Used Prisma's '_sum' aggregate to shift calculation to the database,
+        // reducing network payload and memory usage from O(N) to O(1) per location.
+        const [stock, batchAgg] = await Promise.all([
+          tx.productVariantStock.findUnique({
+            where: { variantId_locationId: { variantId, locationId } },
+            select: { currentStock: true },
+          }),
+          tx.stockBatch.aggregate({
+            where: {
+              organizationId,
+              variantId,
+              locationId,
+              currentQuantity: { gt: 0 },
+            },
+            _sum: {
+              currentQuantity: true,
+            },
+          }),
+        ]);
 
-      const batches = await tx.stockBatch.findMany({
-        where: {
-          organizationId,
-          variantId,
-          locationId,
-          currentQuantity: { gt: 0 },
-        },
-      });
+        const totalBatchQty = batchAgg._sum.currentQuantity?.toNumber() || 0;
+        const currentStock = Number(stock?.currentStock || 0);
 
-      const totalBatchQty = batches.reduce(
-        (acc: number, b: any) => acc + Number(b.currentQuantity),
-        0,
-      );
-      const currentStock = Number(stock?.currentStock || 0);
-
-      if (Math.abs(totalBatchQty - currentStock) > 0.001) {
-        this.logger.error(
-          `[Integrity Alert] Stock mismatch for variant ${variantId} at location ${locationId}. Stock: ${currentStock}, Batches: ${totalBatchQty}`,
-        );
-        // In highly strict enterprise systems, we might block the transaction here.
-      }
-    }
+        if (Math.abs(totalBatchQty - currentStock) > 0.001) {
+          this.logger.error(
+            `[Integrity Alert] Stock mismatch for variant ${variantId} at location ${locationId}. Stock: ${currentStock}, Batches: ${totalBatchQty}`,
+          );
+          // In highly strict enterprise systems, we might block the transaction here.
+        }
+      }),
+    );
   }
 }
