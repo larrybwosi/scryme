@@ -257,14 +257,13 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         {/* ================= HEADER SECTION ================= */}
         <View style={styles.headerContainer}>
           <View style={styles.headerLeft}>
-            {company.logo ? (
-              <Image src={company.logo} style={{ width: 60, height: 60, marginBottom: 10, objectFit: 'contain' }} />
-            ) : (
-              <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, color: activeColor }}>
-                {company.name}
-              </Text>
+            {company.logo && (
+              <Image src={company.logo} style={{ width: 100, height: 50, marginBottom: 10, objectFit: 'contain' }} />
             )}
-            <Text style={styles.companyName}>{company.slogan || 'Company Name'}</Text>
+            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, color: activeColor }}>
+              {company.name}
+            </Text>
+            {company.slogan && <Text style={styles.companyName}>{company.slogan}</Text>}
 
             <Text style={styles.metaText}>
               {type === 'invoice' ? 'Invoice' : 'Receipt'} No &nbsp; : &nbsp; {number}

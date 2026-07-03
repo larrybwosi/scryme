@@ -323,11 +323,10 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         <View style={styles.rightColumn}>
           {/* Main Brand Header */}
           <View style={styles.headerBlock}>
-            {company.logo ? (
-              <Image src={company.logo} style={{ width: 80, height: 40, marginBottom: 10, objectFit: 'contain' }} />
-            ) : (
-              <Text style={[styles.mainTitle, { color: activeColor }]}>{company.name}</Text>
+            {company.logo && (
+              <Image src={company.logo} style={{ width: 120, height: 60, marginBottom: 10, objectFit: 'contain' }} />
             )}
+            <Text style={[styles.mainTitle, { color: activeColor }]}>{company.name}</Text>
             {company.slogan && <Text style={styles.subtitle}>{company.slogan}</Text>}
           </View>
 
