@@ -1,6 +1,6 @@
 import { MpesaService } from '../service';
 import { db } from '@repo/db';
-import { realtimeService } from '../realtime';
+import { realtimeService } from '../../realtime';
 import { MpesaClient } from '../client';
 
 jest.mock('@repo/db', () => ({
@@ -39,11 +39,11 @@ jest.mock('@repo/db', () => ({
   },
 }));
 
-jest.mock('../api/v2', () => ({
+jest.mock('../../api/v2', () => ({
   decrypt: jest.fn((val) => Promise.resolve(val)),
 }));
 
-jest.mock('../realtime', () => ({
+jest.mock('../../realtime', () => ({
   realtimeService: {
     publish: jest.fn(),
   },
@@ -296,6 +296,52 @@ describe('MpesaService', () => {
     it('should throw ForbiddenException for unauthorized IPs', () => {
       process.env.NODE_ENV = 'production';
       expect(() => service.validateWebhookIp('1.1.1.1')).toThrow();
+    });
+  });
+
+  describe('claimPayment', () => {
+    it('should scope UnclaimedPayment and Transaction lookups to organizationId', async () => {
+      const unclaimedPaymentId = 'unclaimed_123';
+      const transactionId = 'tx_123';
+      const organizationId = 'org_123';
+      const memberId = 'mem_123';
+
+      const mockUnclaimed = {
+        id: unclaimedPaymentId,
+        organizationId,
+        amount: 100,
+        claimed: false,
+        transId: 'REC123',
+        msisdn: '254712345678',
+      };
+
+      const mockTransaction = {
+        id: transactionId,
+        organizationId,
+        number: 'ORD-123',
+      };
+
+      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue(mockUnclaimed);
+      (db.transaction.findFirst as jest.Mock).mockResolvedValue(mockTransaction);
+      (db.payment.create as jest.Mock).mockResolvedValue({ id: 'pay_123' });
+      (db.unclaimedPayment.update as jest.Mock).mockResolvedValue({});
+      (db.transaction.update as jest.Mock).mockResolvedValue({ ...mockTransaction, finalTotal: 1000, totalPaid: 0 });
+
+      await service.claimPayment(organizationId, unclaimedPaymentId, transactionId, memberId);
+
+      expect(db.unclaimedPayment.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: unclaimedPaymentId, organizationId }
+      }));
+      expect(db.transaction.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: transactionId, organizationId }
+      }));
+    });
+
+    it('should throw error if unclaimed payment belongs to another organization', async () => {
+      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.claimPayment('org_123', 'unclaimed_456', 'tx_123', 'mem_123'))
+        .rejects.toThrow('Unclaimed payment not found');
     });
   });
 });

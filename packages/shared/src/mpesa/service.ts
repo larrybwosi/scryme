@@ -521,17 +521,18 @@ export class MpesaService {
 
   /**
    * Claims an unclaimed payment and links it to a transaction.
+   * @security Multi-tenant isolation is enforced by scoping lookups to organizationId.
    */
   async claimPayment(organizationId: string, unclaimedPaymentId: string, transactionId: string, memberId: string) {
-    const unclaimed = await db.unclaimedPayment.findUnique({
-      where: { id: unclaimedPaymentId },
+    const unclaimed = await db.unclaimedPayment.findFirst({
+      where: { id: unclaimedPaymentId, organizationId },
     });
 
     if (!unclaimed) throw new Error('Unclaimed payment not found');
     if (unclaimed.claimed) throw new Error('Payment already claimed');
 
-    const transaction = await db.transaction.findUnique({
-      where: { id: transactionId },
+    const transaction = await db.transaction.findFirst({
+      where: { id: transactionId, organizationId },
     });
 
     if (!transaction) throw new Error('Transaction not found');
