@@ -8,7 +8,7 @@ export interface TwentyCrmClientConfig {
   apiKey: string;
 }
 
-export interface CreatePosCustomerData {
+interface CreatePosCustomerData {
   name: string;
   email?: string;
   phone?: string;

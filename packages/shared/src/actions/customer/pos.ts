@@ -1,6 +1,6 @@
 import 'server-only';
 import { PosCustomerService } from '../../services/customer/pos.service';
-import { CreateCustomerData } from '../validations/pos';
+import { CreateCustomerData } from '../../lib/validations/customer/pos';
 import { PrismaClient } from '@repo/db';
 
 export function createPosCustomerActions(prisma: PrismaClient) {

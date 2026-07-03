@@ -65,7 +65,7 @@ export type AddressFormValues = z.infer<typeof AddressFormSchema>;
 export const LoyaltyAdjustmentSchema = z.object({
   customerId: z.string().cuid('Invalid customer ID.'),
   pointsChange: z.coerce
-    .number({ invalid_type_error: 'Points change must be a number.' })
+    .number({ message: 'Points change must be a number.' })
     .int('Points must be a whole number.')
     .refine(val => val !== 0, 'Points change cannot be zero.'),
   notes: z.string().max(500, 'Notes cannot exceed 500 characters.').optional(),
