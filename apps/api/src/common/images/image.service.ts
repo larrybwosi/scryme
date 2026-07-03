@@ -81,7 +81,7 @@ export class ImageService {
 
         const response = await axios.get(url, {
           responseType: "arraybuffer",
-          timeout: 5000,
+          timeout: 10000, // Increased timeout
           maxContentLength: 10 * 1024 * 1024,
         });
         if (!response.data) throw new Error("No data received from upstream");
@@ -158,7 +158,12 @@ export class ImageService {
         process.env.SANITY_DATASET || process.env.NEXT_PUBLIC_SANITY_DATASET;
       return `https://cdn.sanity.io/images/${projectId}/${dataset}/${assetId}-${dimensions}.${extension}`;
     } else {
-      return await storageService.getSignedUrl(id, 60, organizationId);
+      // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
+      let storageKey = id;
+      if (providerType === "rustfs" && !storageKey.startsWith("dealio-")) {
+        storageKey = `dealio-${storageKey}`;
+      }
+      return await storageService.getSignedUrl(storageKey, 60, organizationId);
     }
   }
 }
