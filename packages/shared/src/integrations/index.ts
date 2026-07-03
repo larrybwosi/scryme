@@ -38,3 +38,5 @@ export interface BaseIntegrationService<TConfig, TSyncResult = any> {
    */
   disconnect(organizationId: string): Promise<void>;
 }
+
+export * from "./plane";

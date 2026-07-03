@@ -12,7 +12,7 @@ import {
 } from "../dto/department.dto";
 import { AuditLogAction, AuditEntityType } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/scryme";
-import { PlaneApiClient } from "@repo/plane";
+import { PlaneApiClient } from "@repo/shared";
 import { Logger } from "@nestjs/common";
 
 @Injectable()
