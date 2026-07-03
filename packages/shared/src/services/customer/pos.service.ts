@@ -1,20 +1,7 @@
 import "server-only";
 import { PrismaClient } from "@repo/db";
 
-export interface CreatePosCustomerData {
-  name: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-  address?: {
-    street1: string;
-    street2?: string;
-    city: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  };
-}
+import { CreatePosCustomerData } from "../../lib/validations/customer/pos";
 
 export class PosCustomerService {
   constructor(private prisma: PrismaClient) {}
