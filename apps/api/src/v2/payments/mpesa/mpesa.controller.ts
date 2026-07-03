@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MpesaService } from '@repo/mpesa/server';
 import type { MpesaTriggerInput } from '@repo/mpesa/server';
 import type { FastifyRequest } from 'fastify';
-import { AllowPublic } from '../../../common/decorators/auth.decorator';
+import { AllowPublic, RequirePermission } from '../../../common/decorators/auth.decorator';
 import { v2Context } from '../../../common/decorators/v2-context.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
 
@@ -13,6 +13,7 @@ export class MpesaController {
   constructor(private readonly mpesaService: MpesaService) {}
 
   @Post('stkpush')
+  @RequirePermission('sale:create')
   @ApiOperation({ summary: 'Initiate M-Pesa STK Push' })
   @ApiResponse({ status: 200, description: 'STK Push initiated successfully' })
   async initiateStkPush(@v2Context() ctx: V2ApiContext, @Body() input: MpesaTriggerInput & { userId?: string }) {
@@ -52,6 +53,7 @@ export class MpesaController {
   }
 
   @Get('verify/:transactionId')
+  @RequirePermission('sale:read:location')
   @ApiOperation({ summary: 'Verify M-Pesa Payment Status' })
   @ApiResponse({ status: 200, description: 'Payment status retrieved' })
   async verifyPayment(@v2Context() ctx: V2ApiContext, @Param('transactionId') transactionId: string) {
