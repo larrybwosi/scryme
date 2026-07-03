@@ -150,6 +150,47 @@ export class LoyaltyService {
   }
 
   /**
+   * Adjusts points for a customer from an external source or manual action.
+   */
+  static async adjustPointsExternal(
+    customerId: string,
+    points: number,
+    type: LoyaltyActionType = "MANUAL_ADJUSTMENT",
+    description: string = "Manual adjustment",
+  ) {
+    const customer = await (prisma as any).customer.findUnique({
+      where: { id: customerId },
+      select: { organizationId: true, loyaltyPoints: true },
+    });
+
+    if (!customer) return;
+
+    const program = await (prisma as any).loyaltyProgram.findFirst({
+      where: { organizationId: customer.organizationId, isActive: true },
+    });
+
+    if (!program) return;
+
+    const updatedCustomer = await (prisma as any).customer.update({
+      where: { id: customerId },
+      data: { loyaltyPoints: { increment: points } },
+    });
+
+    await (prisma as any).loyaltyTransaction.create({
+      data: {
+        programId: program.id,
+        customerId,
+        organizationId: customer.organizationId,
+        type: type === "MANUAL_ADJUSTMENT" ? "ADJUSTED" : "EARNED",
+        points,
+        balanceAfter: updatedCustomer.loyaltyPoints,
+        referenceType: "EXTERNAL",
+        description,
+      },
+    });
+  }
+
+  /**
    * Accrues points for a customer and records the transaction.
    */
   static async accruePoints(
