@@ -56,3 +56,8 @@
 **Vulnerability:** The `isSafeUrl` utility only validated the first IP address returned by `dns.lookup`. An attacker could use a hostname resolving to both a safe and an unsafe IP to bypass the check.
 **Learning:** Security utilities performing DNS-based validation must account for hostnames resolving to multiple IP addresses. Validating only the first returned address is insufficient as the application's HTTP client might choose a different (unsafe) IP from the resolved list.
 **Prevention:** Always use `dns.lookup` with the `{ all: true }` option and iterate through all resolved IP addresses to ensure every single one is safe before allowing the request.
+
+## 2025-05-20 - IDOR Vulnerability in M-Pesa and Delivery Utilities
+**Vulnerability:** Scoped lookups for `UnclaimedPayment`, `Transaction`, and `Fulfillment` were using `findUnique` with only the record ID, bypassing `organizationId` checks in multi-tenant environments.
+**Learning:** Prisma's `findUnique` only enforces multi-field uniqueness if a composite unique index (`@@unique`) exists. In this codebase, many models lack `@@unique([id, organizationId])`, so `where: { id, organizationId }` in `findUnique` is often invalid or ignored in favor of just `id`. This allows an authenticated user to access records from other tenants if they know or guess the ID.
+**Prevention:** Always use `findFirst` instead of `findUnique` when performing tenant-scoped lookups for models that do not have a composite unique index on `[id, organizationId]`. Explicitly include `organizationId` in the `where` clause of every sensitive lookup.
