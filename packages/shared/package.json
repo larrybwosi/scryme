@@ -36,6 +36,11 @@
       "import": "./dist/integrations.js",
       "require": "./dist/integrations.cjs"
     },
+    "./integrations/plane": {
+      "types": "./src/integrations/plane/index.ts",
+      "import": "./dist/integrations/plane.js",
+      "require": "./dist/integrations/plane.cjs"
+    },
     "./redis": {
       "types": "./src/redis/index.ts",
       "import": "./dist/redis.js",
