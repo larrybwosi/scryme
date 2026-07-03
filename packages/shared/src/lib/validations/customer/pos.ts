@@ -1,23 +1,27 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Schema for the search term to ensure safety
 export const searchSchema = z.string().min(1).trim();
 
 // Schema for creating a new customer with structured address data
 export const createCustomerSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  phone: z.string().min(3, 'Phone number is too short').optional().or(z.literal('')),
+  name: z.string().min(1, "Name is required"),
+  email: z.email("Invalid email address").optional().or(z.literal("")),
+  phone: z
+    .string()
+    .min(3, "Phone number is too short")
+    .optional()
+    .or(z.literal("")),
   notes: z.string().optional(),
   // Optional structured address object
   address: z
     .object({
-      street1: z.string().min(1, 'Street is required'),
+      street1: z.string().min(1, "Street is required"),
       street2: z.string().optional(),
-      city: z.string().min(1, 'City is required'),
+      city: z.string().min(1, "City is required"),
       state: z.string().optional(),
       postalCode: z.string().optional(),
-      country: z.string().default('Kenya'), // Default or required based on your needs
+      country: z.string().default("Kenya"), // Default or required based on your needs
     })
     .optional(),
 });
