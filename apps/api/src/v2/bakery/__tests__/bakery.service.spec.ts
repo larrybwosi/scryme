@@ -13,13 +13,25 @@ describe("BakeryService", () => {
         findMany: vi.fn(),
         aggregate: vi.fn(),
         groupBy: vi.fn(),
+        count: vi.fn(),
       },
       recipe: {
         count: vi.fn(),
         findMany: vi.fn(),
+        aggregate: vi.fn(),
+        groupBy: vi.fn(),
+      },
+      productVariantStock: {
+        findMany: vi.fn(),
+        fields: {
+          reorderPoint: "reorderPoint",
+        },
       },
       bakeryBaker: {
         count: vi.fn(),
+      },
+      bakeryCategory: {
+        findMany: vi.fn(),
       },
     },
   };
@@ -41,6 +53,76 @@ describe("BakeryService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  describe("getBakeryOverview", () => {
+    it("should return correct overview data", async () => {
+      const mockCtx = { organizationId: "org-1" } as any;
+
+      mockPrisma.client.batch.findMany.mockResolvedValue([
+        {
+          id: "b1",
+          batchNumber: "BAT-1",
+          status: "PLANNED",
+          scheduledStartAt: new Date(),
+          recipe: { id: "r1", name: "Bread" },
+          leadBaker: { member: { user: { name: "John" } } },
+        },
+      ]);
+      mockPrisma.client.recipe.count.mockResolvedValue(5);
+      mockPrisma.client.bakeryBaker.count.mockResolvedValue(2);
+      mockPrisma.client.productVariantStock.findMany
+        // inventoryValueData
+        .mockResolvedValueOnce([
+          { availableStock: 10, variant: { buyingPrice: 5 } },
+          { availableStock: 5, variant: { buyingPrice: 20 } },
+        ])
+        // lowStockItemsData
+        .mockResolvedValueOnce([
+          {
+            id: "s1",
+            availableStock: 2,
+            reorderPoint: 5,
+            reorderQty: 10,
+            variant: { name: "Flour", sku: "F-1", baseUnit: { symbol: "kg" } },
+          },
+        ])
+        // stockDataQuery
+        .mockResolvedValueOnce([
+          {
+            id: "s1",
+            availableStock: 2,
+            reorderPoint: 5,
+            reorderQty: 10,
+            variant: { name: "Flour", sku: "F-1", baseUnit: { symbol: "kg" } },
+          },
+        ]);
+
+      mockPrisma.client.recipe.aggregate.mockResolvedValue({ _avg: { costPrice: 15 } });
+      mockPrisma.client.recipe.groupBy.mockResolvedValue([
+        { categoryId: "c1", _count: { _all: 3 } },
+        { categoryId: null, _count: { _all: 2 } },
+      ]);
+      mockPrisma.client.batch.groupBy.mockResolvedValue([
+        { status: "PLANNED", _count: { _all: 10 } },
+        { status: "IN_PROGRESS", _count: { _all: 2 } },
+      ]);
+      mockPrisma.client.batch.count.mockResolvedValue(5);
+      mockPrisma.client.bakeryCategory.findMany.mockResolvedValue([{ id: "c1", name: "Bakery" }]);
+
+      const result = await service.getBakeryOverview(mockCtx);
+
+      expect(result.recipesCount).toBe(5);
+      expect(result.bakersCount).toBe(2);
+      expect(result.totalInventoryValue).toBe(150); // (10*5) + (5*20)
+      expect(result.lowStockIngredients).toHaveLength(1);
+      expect(result.lowStockIngredients[0].name).toBe("Flour");
+      expect(result.recipesByCategory["Bakery"]).toBe(3);
+      expect(result.recipesByCategory["Uncategorized"]).toBe(2);
+      expect(result.summary.totalBatches).toBe(12);
+      expect(result.summary.activeBatches).toBe(2);
+      expect(result.summary.completedToday).toBe(5);
+    });
   });
 
   describe("getProductionStats", () => {

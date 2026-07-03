@@ -170,23 +170,46 @@ export class BakeryService {
 
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const [
       batches,
       recipesCount,
       bakersCount,
-      stockItems,
+      inventoryValueData,
+      lowStockItemsData,
+      stockDataQuery,
       recipeStats,
       recipeGroups,
+      batchStatusGroups,
+      completedTodayCount,
     ] = await Promise.all([
+      /**
+       * ⚡ Bolt: Optimized Batch Query
+       * Using 'select' instead of 'include' to prune unnecessary batch and member fields.
+       */
       this.prisma.client.batch.findMany({
         where: { organizationId },
         take: 10,
         orderBy: { scheduledStartAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          batchNumber: true,
+          status: true,
+          plannedQuantity: true,
+          actualQuantity: true,
+          scheduledStartAt: true,
           recipe: { select: { id: true, name: true } },
           leadBaker: {
-            include: {
-              member: { include: { user: { select: { name: true } } } },
+            select: {
+              id: true,
+              member: {
+                select: {
+                  id: true,
+                  user: { select: { name: true } },
+                },
+              },
             },
           },
         },
@@ -195,16 +218,34 @@ export class BakeryService {
       this.prisma.client.bakeryBaker.count({
         where: { bakerySettings: { organizationId } },
       }),
+      /**
+       * ⚡ Bolt: Lean Query for Inventory Value
+       * Selecting only the fields required for the total value calculation.
+       * This avoids fetching unused heavy fields for the entire raw material catalog.
+       */
       this.prisma.client.productVariantStock.findMany({
         where: {
           organizationId,
           variant: { product: { type: "RAW_MATERIAL" as any } },
         },
-        /**
-         * ⚡ Bolt: Optimization
-         * Using select to fetch only essential scalar fields and relations for summary calculations.
-         * This avoids fetching unused heavy fields and relations.
-         */
+        select: {
+          availableStock: true,
+          variant: { select: { buyingPrice: true } },
+        },
+      }),
+      /**
+       * ⚡ Bolt: Database-level Low Stock Filtering
+       * Moving the filter to the database level using Prisma's field comparison API.
+       * This ensures only records needing attention are fetched, reducing payload and memory usage.
+       */
+      this.prisma.client.productVariantStock.findMany({
+        where: {
+          organizationId,
+          variant: { product: { type: "RAW_MATERIAL" as any } },
+          availableStock: {
+            lte: this.prisma.client.productVariantStock.fields.reorderPoint,
+          },
+        },
         select: {
           id: true,
           availableStock: true,
@@ -214,7 +255,32 @@ export class BakeryService {
             select: {
               name: true,
               sku: true,
-              buyingPrice: true,
+              baseUnit: { select: { symbol: true } },
+              baseOrgUnit: { select: { symbol: true } },
+            },
+          },
+        },
+      }),
+      /**
+       * ⚡ Bolt: Targeted Query for Recent Stock Items
+       * Fetching full details for only the top 10 most recently updated items for the UI list.
+       */
+      this.prisma.client.productVariantStock.findMany({
+        where: {
+          organizationId,
+          variant: { product: { type: "RAW_MATERIAL" as any } },
+        },
+        take: 10,
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          availableStock: true,
+          reorderPoint: true,
+          reorderQty: true,
+          variant: {
+            select: {
+              name: true,
+              sku: true,
               baseUnit: { select: { symbol: true } },
               baseOrgUnit: { select: { symbol: true } },
             },
@@ -239,6 +305,26 @@ export class BakeryService {
         by: ["categoryId"],
         _count: { _all: true },
       }),
+      /**
+       * ⚡ Bolt: Database-level Batch Status Aggregation
+       * Replacing in-memory filtering with groupBy to accurately count total and active batches.
+       */
+      this.prisma.client.batch.groupBy({
+        where: { organizationId },
+        by: ["status"],
+        _count: { _all: true },
+      }),
+      /**
+       * ⚡ Bolt: Database-level Count for Daily Completion
+       * Direct count query for batches completed today to avoid fetching unnecessary records.
+       */
+      this.prisma.client.batch.count({
+        where: {
+          organizationId,
+          status: "COMPLETED" as any,
+          completedAt: { gte: today },
+        },
+      }),
     ]);
 
     // Hydrate category names for the grouped results
@@ -260,27 +346,26 @@ export class BakeryService {
         (recipesByCategory[catName] || 0) + g._count._all;
     });
 
-    const lowStockIngredients = stockItems
-      .filter(
-        (s: any) => Number(s.availableStock) <= Number(s.reorderPoint || 0),
-      )
-      .map((s: any) => ({
-        id: s.id,
-        name: s.variant.name,
-        sku: s.variant.sku,
-        current: Number(s.availableStock),
-        reorder: Number(s.reorderPoint || 0),
-        max: Number(
-          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
-        ),
-        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
-      }));
+    const lowStockIngredients = lowStockItemsData.map((s: any) => ({
+      id: s.id,
+      name: s.variant.name,
+      sku: s.variant.sku,
+      current: Number(s.availableStock),
+      reorder: Number(s.reorderPoint || 0),
+      max: Number(
+        s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
+      ),
+      unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
+    }));
 
-    const totalInventoryValue = stockItems.reduce(
+    const totalInventoryValue = inventoryValueData.reduce(
       (acc, s: any) =>
         acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
       0,
     );
+
+    const totalBatches = batchStatusGroups.reduce((acc, g) => acc + g._count._all, 0);
+    const activeBatches = batchStatusGroups.find(g => g.status === "IN_PROGRESS")?._count._all || 0;
 
     return {
       recentBatches: batches.map(b => ({
@@ -293,7 +378,7 @@ export class BakeryService {
       recipesByCategory,
       totalInventoryValue,
       lowStockIngredients,
-      stockData: stockItems.slice(0, 10).map((s: any) => ({
+      stockData: stockDataQuery.map((s: any) => ({
         id: s.id,
         name: s.variant.name,
         current: Number(s.availableStock),
@@ -304,15 +389,9 @@ export class BakeryService {
         unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
       })),
       summary: {
-        totalBatches: batches.length,
-        activeBatches: batches.filter((b: any) => b.status === "IN_PROGRESS")
-          .length,
-        completedToday: batches.filter((b: any) => {
-            const today = new Date();
-            return b.status === "COMPLETED" &&
-                   b.completedAt &&
-                   b.completedAt.toDateString() === today.toDateString();
-        }).length,
+        totalBatches,
+        activeBatches,
+        completedToday: completedTodayCount,
         lowStockItems: lowStockIngredients.length,
       },
     };
