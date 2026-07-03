@@ -46,6 +46,8 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     'bakery:batch:view',
     'bakery:batch:manage',
     'bakery:template:view',
+    'customer:read:all',
+    'customer:write:all',
   ],
   BAKER: [
     'bakery:recipe:view',
@@ -54,5 +56,11 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     'bakery:template:view',
     'product:view:stock_levels',
   ],
-  STAFF: ['sale:create', 'product:read:all', 'product:view:stock_levels', 'customer:read:all'],
+  STAFF: [
+    'sale:create',
+    'product:read:all',
+    'product:view:stock_levels',
+    'customer:read:all',
+    'customer:write:all',
+  ],
 };
