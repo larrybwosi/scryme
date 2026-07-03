@@ -80,11 +80,12 @@ export class DocumentService {
 
         await db.attachment.create({
           data: {
+            id: dnUpload.id, // Use the storage ID as the attachment ID
             organizationId,
             memberId,
             transactionId,
             fulfillmentId,
-            fileName: dnUpload.id, // Store the final storage ID/filename
+            fileName: dnUpload.id,
             fileUrl: dnUpload.url,
             shortCode,
             shortUrl,
@@ -204,10 +205,11 @@ export class DocumentService {
 
     return await db.attachment.create({
       data: {
+        id: upload.id, // Use the storage ID as the attachment ID
         organizationId,
         memberId: effectiveMemberId,
         transactionId,
-        fileName: upload.id, // Store the final storage ID/filename
+        fileName: upload.id,
         fileUrl: upload.url,
         shortCode,
         shortUrl,
@@ -299,10 +301,11 @@ export class DocumentService {
 
     return await db.attachment.create({
       data: {
+        id: upload.id, // Use the storage ID as the attachment ID
         organizationId,
         memberId: effectiveMemberId,
         transactionId,
-        fileName: upload.id, // Store the final storage ID/filename
+        fileName: upload.id,
         fileUrl: upload.url,
         shortCode,
         shortUrl,

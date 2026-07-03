@@ -95,22 +95,37 @@ export class ShortUrlController {
 
       const isImage = mimeType.startsWith("image/");
 
+      // For RustFS/S3, we need the storage key.
+      // We prioritize the ID if it looks like a UUID/Storage key (contains a dot or is long enough)
+      // Otherwise we fallback to fileName.
+      // Actually, looking at the upload logic, we usually store the storage key in the 'id' field of Attachment.
+      let storageKey = attachmentId;
+
+      // If id is a CUID (starts with c) and fileName exists and looks like a storage key (has extension)
+      // we might need to be careful. But standardizing on 'id' being the storage key is the goal.
+      if (
+        attachmentId.startsWith("c") &&
+        attachment.fileName &&
+        attachment.fileName.includes(".")
+      ) {
+        // Legacy or specific cases where fileName was used for storage key
+        // If fileName contains a dot, it's likely the storage key (e.g. uuid.jpg)
+        storageKey = attachment.fileName;
+      }
+
+      // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
+      if (
+        process.env.STORAGE_PROVIDER === "rustfs" &&
+        !storageKey.startsWith("dealio-")
+      ) {
+        storageKey = `dealio-${storageKey}`;
+      }
+
       if (isImage) {
         const width = w ? parseInt(w, 10) : undefined;
         const height = h ? parseInt(h, 10) : undefined;
         const quality = q ? parseInt(q, 10) : undefined;
         const format = fm;
-
-        // For RustFS/S3, we need the fileName as the key
-        let storageKey = attachment.fileName || attachmentId;
-
-        // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
-        if (
-          process.env.STORAGE_PROVIDER === "rustfs" &&
-          !storageKey.startsWith("dealio-")
-        ) {
-          storageKey = `dealio-${storageKey}`;
-        }
 
         const { data, contentType } = await this.imageService.optimizeImage(
           storageKey,
@@ -144,18 +159,6 @@ export class ShortUrlController {
         if (cachedFile) {
           const buffer = Buffer.from(cachedFile.content, "base64");
           return res.status(HttpStatus.OK).send(buffer);
-        }
-
-        // For RustFS/S3, we need the fileName as the key, not the attachmentId (CUID)
-        let storageKey = attachment.fileName || attachmentId;
-
-        // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
-        // This handles legacy records or cases where the prefix was missed in the DB.
-        if (
-          process.env.STORAGE_PROVIDER === "rustfs" &&
-          !storageKey.startsWith("dealio-")
-        ) {
-          storageKey = `dealio-${storageKey}`;
         }
 
         const signedUrl = await storageService.getSignedUrl(
