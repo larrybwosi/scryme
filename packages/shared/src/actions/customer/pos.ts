@@ -1,6 +1,6 @@
 import 'server-only';
 import { PosCustomerService } from '../../services/customer/pos.service';
-import { CreateCustomerData } from '../validations/pos';
+import { CreatePosCustomerData } from '../../lib/validations/customer/pos';
 import { PrismaClient } from '@repo/db';
 
 export function createPosCustomerActions(prisma: PrismaClient) {
@@ -15,7 +15,7 @@ export function createPosCustomerActions(prisma: PrismaClient) {
       return service.searchPosCustomers(organizationId, rawSearchTerm);
     },
 
-    async createPosCustomer(organizationId: string, rawData: CreateCustomerData, memberId?: string) {
+    async createPosCustomer(organizationId: string, rawData: CreatePosCustomerData, memberId?: string) {
       return service.createPosCustomer(organizationId, rawData, memberId);
     }
   };
