@@ -49,6 +49,7 @@ const formSchema = z.object({
   companyPhone: z.string().optional(),
   companyWebsite: z.string().optional(),
   primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
   logoUrl: z.string().optional(),
   invoiceNumberPrefix: z.string().optional(),
   invoiceNumberSuffix: z.string().optional(),
@@ -97,6 +98,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
       companyPhone: initialConfig?.companyPhone || "",
       companyWebsite: initialConfig?.companyWebsite || "",
       primaryColor: initialConfig?.primaryColor || "#1e3a5f",
+      secondaryColor: initialConfig?.secondaryColor || "#1e3a5f",
       logoUrl: initialConfig?.logoUrl || "",
       invoiceNumberPrefix: initialConfig?.invoiceNumberPrefix || "",
       invoiceNumberSuffix: initialConfig?.invoiceNumberSuffix || "",
@@ -197,6 +199,25 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Brand Primary Color</FormLabel>
+                    <FormControl>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          className="w-12 p-1 h-9"
+                          {...field}
+                        />
+                        <Input {...field} placeholder="#000000" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="secondaryColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand Secondary Color</FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
                         <Input

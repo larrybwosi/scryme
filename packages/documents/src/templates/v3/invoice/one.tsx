@@ -33,21 +33,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   logoBlock: { flexDirection: "row", alignItems: "center" },
-  logoCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: TEAL,
-    marginRight: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoCircleText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontFamily: "Helvetica-Bold",
-  },
-  logoText: { fontSize: 14, fontFamily: "Helvetica-Bold", color: DARK },
+  logoText: { fontSize: 14, fontFamily: "Helvetica-Bold" },
   companyInfo: {
     textAlign: "right",
     fontSize: 8,
@@ -83,7 +69,7 @@ const styles = StyleSheet.create({
   metaBlock: { marginLeft: 28 },
   metaBlockFirst: { marginLeft: 0 },
   metaLabel: { fontSize: 7.5, color: GRAY_TEXT, marginBottom: 4 },
-  metaValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: DARK },
+  metaValue: { fontSize: 10, fontFamily: "Helvetica-Bold" },
   metaValueTeal: { fontSize: 10, fontFamily: "Helvetica-Bold", color: TEAL },
 
   // ---------- Table ----------
@@ -243,12 +229,14 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
     footerWebsite,
     signature,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
   } = data;
 
   const activeColor = primaryColor || TEAL;
+  const activeSecondaryColor = secondaryColor || DARK;
 
   const fmt = (n: number) =>
     `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -259,17 +247,11 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         {/* Header: logo + company info */}
         <View style={styles.headerRow}>
           <View style={styles.logoBlock}>
-            {company.logo ? (
+            {company.logo && (
               <Image src={company.logo} style={{ width: 60, height: 60, marginRight: 12, objectFit: 'contain' }} />
-            ) : (
-              <View style={[styles.logoCircle, { backgroundColor: activeColor }]}>
-                <Text style={styles.logoCircleText}>
-                  {company.name.charAt(0)}
-                </Text>
-              </View>
             )}
             <View>
-              <Text style={styles.logoText}>{company.name}</Text>
+              <Text style={[styles.logoText, { color: activeSecondaryColor }]}>{company.name}</Text>
               {company.slogan && <Text style={{ fontSize: 8, color: GRAY_TEXT, marginTop: 2 }}>{company.slogan}</Text>}
             </View>
           </View>
@@ -290,7 +272,7 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               {type === "invoice" ? "Invoice to:" : "Receipt to:"}
             </Text>
             <View style={styles.toText}>
-              <Text style={{ fontFamily: "Helvetica-Bold", color: DARK }}>{customer.name}</Text>
+              <Text style={{ fontFamily: "Helvetica-Bold", color: activeSecondaryColor }}>{customer.name}</Text>
               {customer.address && <Text>{customer.address}</Text>}
               {customer.phone && <Text>{customer.phone}</Text>}
               {customer.email && <Text>{customer.email}</Text>}
@@ -319,13 +301,13 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
             <Text style={styles.metaLabel}>
               {type === "invoice" ? "Invoice Date:" : "Receipt Date:"}
             </Text>
-            <Text style={styles.metaValue}>{date}</Text>
+            <Text style={[styles.metaValue, { color: activeSecondaryColor }]}>{date}</Text>
           </View>
           <View style={styles.metaBlock}>
             <Text style={styles.metaLabel}>
               {type === "invoice" ? "Invoice No:" : "Receipt No:"}
             </Text>
-            <Text style={styles.metaValue}>{number}</Text>
+            <Text style={[styles.metaValue, { color: activeSecondaryColor }]}>{number}</Text>
           </View>
         </View>
 
