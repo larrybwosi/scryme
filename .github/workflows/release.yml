@@ -268,7 +268,7 @@ jobs:
         with:
           files: |
             ./docker-bake.hcl
-          targets: bakery
+          targets: default
           push: true
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}

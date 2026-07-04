@@ -1,5 +1,6 @@
 export interface BrandingOptions {
   primaryColor?: string;
+  secondaryColor?: string;
   logoUrl?: string;
   companyName?: string;
   companyAddress?: string;

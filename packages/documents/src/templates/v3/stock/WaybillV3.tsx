@@ -351,6 +351,7 @@ const formatAddress = (address?: string | Address): string => {
 
 const A4WaybillV3 = ({ data }: { data: WaybillData }) => {
   const primary = data.branding?.primaryColor || '#0f172a';
+  const secondary = data.branding?.secondaryColor || '#1e40af';
   const styles = getA4Styles(primary);
   return (
     <Page size="A4" style={styles.page}>
@@ -422,7 +423,7 @@ const A4WaybillV3 = ({ data }: { data: WaybillData }) => {
         </View>
         {/* Recipient */}
         <View style={styles.addressCard}>
-          <View style={[styles.addressCardHeader, { backgroundColor: '#1e40af' }]}>
+          <View style={[styles.addressCardHeader, { backgroundColor: secondary }]}>
             <Text style={styles.addressCardTitle}>To (Recipient)</Text>
           </View>
           <View style={styles.addressCardBody}>

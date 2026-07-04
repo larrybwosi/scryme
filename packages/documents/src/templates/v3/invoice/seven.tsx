@@ -55,7 +55,6 @@ const styles = StyleSheet.create({
   logoMainText: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
   },
   logoSubText: {
     fontSize: 8,
@@ -67,7 +66,6 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 42,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
     letterSpacing: 0.5,
   },
   companyWebsite: {
@@ -96,7 +94,6 @@ const styles = StyleSheet.create({
   clientName: {
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
     marginBottom: 4,
   },
   clientTitle: {
@@ -154,7 +151,6 @@ const styles = StyleSheet.create({
   metaInvoiceNoValue: {
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
     marginBottom: 12,
   },
   metaRow: {
@@ -173,7 +169,6 @@ const styles = StyleSheet.create({
   metaRowValue: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
     textAlign: "left",
     width: "40%",
   },
@@ -262,7 +257,6 @@ const styles = StyleSheet.create({
   signatureName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
     marginBottom: 2,
   },
   signatureTitle: {
@@ -333,12 +327,14 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
     currency,
     signature,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
   } = data;
 
   const activeColor = primaryColor || DEEP_TEAL;
+  const activeSecondaryColor = secondaryColor || DARK_TEXT;
 
   const fmt = (n: number) =>
     `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -349,15 +345,11 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         {/* ================= BRANDING HEADER ================= */}
         <View style={styles.headerRow}>
           <View style={styles.logoContainer}>
-            {company.logo ? (
+            {company.logo && (
               <Image src={company.logo} style={{ width: 100, height: 50, marginRight: 15, objectFit: 'contain' }} />
-            ) : (
-              <View style={[styles.logoIcon, { borderColor: activeColor }]}>
-                <View style={[styles.logoInnerCircle, { backgroundColor: activeColor }]} />
-              </View>
             )}
             <View style={styles.logoTextGroup}>
-              <Text style={[styles.logoMainText, { color: activeColor }]}>{company.name}</Text>
+              <Text style={[styles.logoMainText, { color: activeSecondaryColor }]}>{company.name}</Text>
               <Text style={styles.logoSubText}>{company.slogan || 'Business Slogan'}</Text>
             </View>
           </View>
@@ -376,7 +368,7 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         <View style={styles.infoSection}>
           <View style={styles.clientBlock}>
             <Text style={styles.toLabel}>To</Text>
-            <Text style={styles.clientName}>{customer.name}</Text>
+            <Text style={[styles.clientName, { color: activeSecondaryColor }]}>{customer.name}</Text>
             <Text style={styles.clientTitle}>Director</Text>
 
             <Text style={styles.infoLabel}>Address</Text>
@@ -420,11 +412,11 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             )}
 
             <Text style={styles.metaInvoiceNoLabel}>{type === 'invoice' ? 'Invoice' : 'Receipt'} No.</Text>
-            <Text style={styles.metaInvoiceNoValue}>#{number}</Text>
+            <Text style={[styles.metaInvoiceNoValue, { color: activeSecondaryColor }]}>#{number}</Text>
 
             <View style={styles.metaRow}>
               <Text style={styles.metaRowLabel}>Date :</Text>
-              <Text style={styles.metaRowValue}>{date}</Text>
+              <Text style={[styles.metaRowValue, { color: activeSecondaryColor }]}>{date}</Text>
             </View>
             {(kraPin || kraControlCode || kraReceiptNumber) && (
               <View style={{ marginTop: 5 }}>
@@ -528,7 +520,7 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         {signature && (
           <View style={styles.signatureSection}>
             {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-            <Text style={styles.signatureName}>
+            <Text style={[styles.signatureName, { color: activeSecondaryColor }]}>
               {signature.name}
             </Text>
             <Text style={styles.signatureTitle}>

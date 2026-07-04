@@ -6,12 +6,12 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Button } from '@repo/ui/components/ui/button';
 import { AlertCircle, Tag, Plus, Search, X } from 'lucide-react';
 import { useNavigate as useRouter } from 'react-router';
-import { useBakeryCategories } from '@/hooks/bakery';
+import { useBakeryCategories, useProductCategories } from '@/hooks/bakery';
 
 interface Category {
   id: string;
   name: string;
-  color: string;
+  color?: string;
 }
 
 interface CategorySelectProps {
@@ -21,6 +21,7 @@ interface CategorySelectProps {
   disabled?: boolean;
   required?: boolean;
   excludeCategory?: string;
+  type?: 'bakery' | 'product';
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({
@@ -30,14 +31,24 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   disabled = false,
   required = false,
   excludeCategory,
+  type = 'bakery',
 }) => {
   const navigate = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const { data: categories, isLoading: loadingCategories, error } = useBakeryCategories();
+
+  const bakeryCategories = useBakeryCategories();
+  const productCategories = useProductCategories();
+
+  const { data: categories, isLoading: loadingCategories, error } = type === 'bakery' ? bakeryCategories : productCategories;
 
   const handleCreateCategory = () => {
-    navigate('/categories?create=true');
+    if (type === 'bakery') {
+      navigate('/categories?create=true');
+    } else {
+      // For now just redirect to categories, maybe later we add product categories page
+      navigate('/categories?create=true');
+    }
   };
 
   // Filter categories based on search query and exclusion
