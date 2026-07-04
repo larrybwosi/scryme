@@ -14,6 +14,7 @@ describe("ReviewPriceChangeUseCase", () => {
       client: {
         priceChangeRequest: {
           findUnique: vi.fn(),
+          findFirst: vi.fn(),
           update: vi.fn(),
         },
         priceListItem: {
@@ -52,7 +53,7 @@ describe("ReviewPriceChangeUseCase", () => {
       reason: "Cost increase",
     };
 
-    prisma.client.priceChangeRequest.findUnique.mockResolvedValue(request);
+    prisma.client.priceChangeRequest.findFirst.mockResolvedValue(request);
     prisma.client.priceChangeRequest.update.mockResolvedValue({
       ...request,
       status: PriceChangeStatus.APPROVED,
@@ -65,7 +66,7 @@ describe("ReviewPriceChangeUseCase", () => {
       status: PriceChangeStatus.APPROVED,
     });
 
-    expect(prisma.client.priceChangeRequest.findUnique).toHaveBeenCalledWith({
+    expect(prisma.client.priceChangeRequest.findFirst).toHaveBeenCalledWith({
       where: { id: requestId, organizationId },
     });
     expect(prisma.client.priceListItem.update).toHaveBeenCalledWith({
@@ -94,7 +95,7 @@ describe("ReviewPriceChangeUseCase", () => {
       status: PriceChangeStatus.PENDING,
     };
 
-    prisma.client.priceChangeRequest.findUnique.mockResolvedValue(request);
+    prisma.client.priceChangeRequest.findFirst.mockResolvedValue(request);
     prisma.client.priceChangeRequest.update.mockResolvedValue({
       ...request,
       status: PriceChangeStatus.REJECTED,
@@ -120,7 +121,7 @@ describe("ReviewPriceChangeUseCase", () => {
   });
 
   it("should throw NotFoundException if request not found", async () => {
-    prisma.client.priceChangeRequest.findUnique.mockResolvedValue(null);
+    prisma.client.priceChangeRequest.findFirst.mockResolvedValue(null);
 
     await expect(
       useCase.execute({
@@ -133,7 +134,7 @@ describe("ReviewPriceChangeUseCase", () => {
   });
 
   it("should throw BadRequestException if request is not pending", async () => {
-    prisma.client.priceChangeRequest.findUnique.mockResolvedValue({
+    prisma.client.priceChangeRequest.findFirst.mockResolvedValue({
       status: PriceChangeStatus.APPROVED,
     });
 

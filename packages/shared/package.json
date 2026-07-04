@@ -152,6 +152,7 @@
     "@upstash/redis": "^1.37.0",
     "ably": "^2.18.0",
     "argon2": "^0.44.0",
+    "date-fns": "^4.1.0",
     "axios": "latest",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",

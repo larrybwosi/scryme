@@ -6,6 +6,8 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "downlevelIteration": true,
+    "target": "ES2021",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
     "sourceMap": false,
@@ -23,6 +25,7 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": false,
+    "downlevelIteration": true,
     "types": ["node", "vitest/globals"],
     "paths": {
       "@/*": ["./src/*"]
