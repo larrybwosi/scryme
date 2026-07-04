@@ -6,6 +6,8 @@
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "downlevelIteration": true,
+    "target": "ES2021",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
     "sourceMap": false,
