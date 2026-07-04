@@ -1,5 +1,11 @@
 # web
 
+## 5.4.0
+
+### Minor Changes
+
+- e753bc3: new
+
 ## 5.3.0
 
 ### Minor Changes
