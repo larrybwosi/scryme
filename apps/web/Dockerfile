@@ -70,6 +70,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
@@ -91,8 +92,8 @@ USER nextjs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/api/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "apps/web/server.js"]
