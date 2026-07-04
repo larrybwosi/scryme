@@ -116,10 +116,7 @@ services:
       - scryme-network
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    image: scryme-api:latest
+    image: ghcr.io/larrybwosi/scryme/api:latest
     restart: always
     deploy:
       resources:
@@ -146,6 +143,11 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/v2/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
@@ -153,13 +155,7 @@ services:
       - "logging_job=api"
 
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-    image: scryme-web:latest
+    image: ghcr.io/larrybwosi/scryme/web:latest
     restart: always
     deploy:
       resources:
@@ -177,14 +173,81 @@ services:
       db:
         condition: service_healthy
       api:
-        condition: service_started
+        condition: service_healthy
     networks:
       - scryme-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
       - "traefik.http.services.web.loadbalancer.server.port=${PORT:-3000}"
       - "logging_job=web"
+
+  crm:
+    image: ghcr.io/larrybwosi/scryme/crm:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=socketio
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://api.scryme.local}
+      - PORT=3001
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - scryme-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
+      - "traefik.http.services.crm.loadbalancer.server.port=${PORT:-3001}"
+      - "logging_job=crm"
+
+  bakery:
+    image: ghcr.io/larrybwosi/scryme/bakery:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    environment:
+      - VITE_API_URL=${NEXT_PUBLIC_API_URL}
+      - PORT=3003
+    ports:
+      - "3003:3003"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - scryme-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
+      - "traefik.http.services.bakery.loadbalancer.server.port=${PORT:-3003}"
+      - "logging_job=bakery"
 
 volumes:
   postgres_data:
