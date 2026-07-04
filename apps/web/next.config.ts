@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+<<<<<<< HEAD
+  transpilePackages: ["@react-pdf/renderer"],
+=======
+>>>>>>> dev
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [

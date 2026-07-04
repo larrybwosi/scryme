@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  MessageSquare,
-  User,
-  CalendarIcon,
-  Building2,
-  Briefcase,
-  Stethoscope,
-  ShieldCheck,
-} from 'lucide-react';
+import { MessageSquare, User, CalendarIcon, Building2, Briefcase, Stethoscope, ShieldCheck } from 'lucide-react';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
@@ -161,7 +153,7 @@ export default function CustomerForm({
     return formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined;
   };
 
-    const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+  const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full bg-background text-foreground mb-6">

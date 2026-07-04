@@ -18,7 +18,10 @@ const serverSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url(),
+  ),
   PORT: z.coerce.number().default(3001),
 
   // Auth
@@ -44,7 +47,10 @@ const serverSchema = z.object({
   // Zitadel
   ZITADEL_DOMAIN: z.string().optional(),
   ZITADEL_CLIENT_ID: z.string().optional(),
-  ZITADEL_API_URL: z.string().url().optional(),
+  ZITADEL_API_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().optional(),
+  ),
   ZITADEL_ORG_ID: z.string().optional(),
   ZITADEL_PROJECT_ID: z.string().optional(),
 
@@ -73,13 +79,19 @@ const serverSchema = z.object({
   SANITY_API_TOKEN: z.string().optional(),
 
   // RustFS (S3 Compatible) Configuration
-  RUSTFS_ENDPOINT: z.string().url().optional(),
+  RUSTFS_ENDPOINT: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().optional(),
+  ),
   RUSTFS_ACCESS_KEY: z.string().optional(),
   RUSTFS_SECRET_KEY: z.string().optional(),
   RUSTFS_REGION: z.string().default("us-east-1"),
   RUSTFS_BUCKET: z.string().default("dealio-uploads"),
   RUSTFS_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
-  RUSTFS_PUBLIC_URL: z.string().url().optional(),
+  RUSTFS_PUBLIC_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().optional(),
+  ),
 
   // Realtime Configuration
   REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
@@ -88,15 +100,30 @@ const serverSchema = z.object({
 });
 
 const clientSchema = z.object({
-  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-  NEXT_PUBLIC_API_URL: z.string().url().default("http://localhost:3002"),
-  NEXT_PUBLIC_WEB_URL: z.string().url().default("http://localhost:3000"),
-  NEXT_PUBLIC_CRM_URL: z.string().url().default("http://localhost:3001"),
+  NEXT_PUBLIC_APP_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().default("http://localhost:3000"),
+  ),
+  NEXT_PUBLIC_API_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().default("http://localhost:3002"),
+  ),
+  NEXT_PUBLIC_WEB_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().default("http://localhost:3000"),
+  ),
+  NEXT_PUBLIC_CRM_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().default("http://localhost:3001"),
+  ),
   NEXT_PUBLIC_COOKIE_DOMAIN: z.string().optional(),
 
   // Realtime Configuration
   NEXT_PUBLIC_REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
-  NEXT_PUBLIC_SOCKET_URL: z.string().url().default("http://localhost:3002"),
+  NEXT_PUBLIC_SOCKET_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url().default("http://localhost:3002"),
+  ),
 });
 
 // ─────────────────────────────────────────────
