@@ -274,6 +274,12 @@ services:
       resources:
         limits:
           memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:4000/api/v2/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_HOST: redis
@@ -321,6 +327,12 @@ services:
       resources:
         limits:
           memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -332,7 +344,8 @@ services:
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:
@@ -354,6 +367,12 @@ services:
       resources:
         limits:
           memory: 768M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -363,7 +382,8 @@ services:
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:
@@ -382,11 +402,18 @@ services:
       resources:
         limits:
           memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3003/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     environment:
       VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
       NODE_ENV: production
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:
