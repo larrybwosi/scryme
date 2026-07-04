@@ -61,3 +61,8 @@
 **Vulnerability:** Scoped lookups for `UnclaimedPayment`, `Transaction`, and `Fulfillment` were using `findUnique` with only the record ID, bypassing `organizationId` checks in multi-tenant environments.
 **Learning:** Prisma's `findUnique` only enforces multi-field uniqueness if a composite unique index (`@@unique`) exists. In this codebase, many models lack `@@unique([id, organizationId])`, so `where: { id, organizationId }` in `findUnique` is often invalid or ignored in favor of just `id`. This allows an authenticated user to access records from other tenants if they know or guess the ID.
 **Prevention:** Always use `findFirst` instead of `findUnique` when performing tenant-scoped lookups for models that do not have a composite unique index on `[id, organizationId]`. Explicitly include `organizationId` in the `where` clause of every sensitive lookup.
+
+## 2025-05-21 - IDOR Vulnerability in WebSocket Event Handlers
+**Vulnerability:** The V2 and V3 Realtime Gateways were missing authorization checks for `presence:get`, `presence:leave`, and `history:get` events, allowing any authenticated user to access sensitive channel data.
+**Learning:** While primary actions like `join` or `publish` often have explicit authorization, secondary event handlers that accept a channel identifier are frequently overlooked. This creates a significant IDOR risk where an attacker can probe or leak data from channels they are not authorized to join.
+**Prevention:** Implement a centralized `validateChannelAccess` method and apply it consistently to *every* websocket event handler that operates on a channel. Never assume that an authenticated connection implies authorization for all resources.

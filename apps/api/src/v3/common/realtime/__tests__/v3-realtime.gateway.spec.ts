@@ -123,4 +123,34 @@ describe('V3RealtimeGateway', () => {
     expect(redis.saveMessage).not.toHaveBeenCalled();
     expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
   });
+
+  it('should block history:get for an unauthorized channel', async () => {
+    const client = {
+      v3Context: mockContext,
+    } as any as Socket;
+
+    const result = await gateway.handleHistoryGet(client, { channel: 'inventory:org-2' });
+
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
+
+  it('should block presence:get for an unauthorized channel', async () => {
+    const client = {
+      v3Context: mockContext,
+    } as any as Socket;
+
+    const result = await gateway.handlePresenceGet(client, { channel: 'inventory:org-2' });
+
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
+
+  it('should block presence:leave for an unauthorized channel', async () => {
+    const client = {
+      v3Context: mockContext,
+    } as any as Socket;
+
+    const result = await gateway.handlePresenceLeave(client, { channel: 'inventory:org-2' });
+
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
 });

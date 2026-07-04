@@ -151,6 +151,10 @@ export class V3RealtimeGateway
     @MessageBody() data: { channel: string },
   ) {
     const context = (client as any).v3Context;
+    if (!(await this.validateChannelAccess(context, data.channel))) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const clientId = context?.memberId || client.id;
     await this.redis.leavePresence(data.channel, clientId);
 
@@ -171,6 +175,11 @@ export class V3RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
   ) {
+    const context = (client as any).v3Context;
+    if (!(await this.validateChannelAccess(context, data.channel))) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const members = await this.redis.getPresence(data.channel);
     return members;
   }
@@ -180,6 +189,11 @@ export class V3RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string; limit?: number },
   ) {
+    const context = (client as any).v3Context;
+    if (!(await this.validateChannelAccess(context, data.channel))) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const history = await this.redis.getHistory(data.channel);
     const limit = data.limit || 100;
     return history.slice(-limit);
