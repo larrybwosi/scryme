@@ -165,7 +165,7 @@ export function IngredientFormDialog({ open, onOpenChange, ingredient }: Ingredi
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-xs text-slate-600">Classification Group</Label>
-                <CategorySelect onValueChange={value => setValue('categoryId', value)} value={categoryIdValue} placeholder="Select category" />
+                <CategorySelect type="product" onValueChange={value => setValue('categoryId', value)} value={categoryIdValue} placeholder="Select category" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="buyingPrice" className="text-xs text-slate-600">Standard Cost (Base)</Label>

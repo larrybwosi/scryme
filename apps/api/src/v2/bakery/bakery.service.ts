@@ -697,31 +697,7 @@ export class BakeryService {
 
     return this.prisma.client.batch.findMany({
       where,
-      // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
-      select: {
-        id: true,
-        batchNumber: true,
-        status: true,
-        plannedQuantity: true,
-        actualQuantity: true,
-        scheduledStartAt: true,
-        notes: true,
-        createdAt: true,
-        updatedAt: true,
-        recipeId: true,
-        organizationId: true,
-        leadBakerId: true,
-        systemUnitId: true,
-        orgUnitId: true,
-        startedAt: true,
-        completedAt: true,
-        cancelledAt: true,
-        duration: true,
-        productionDate: true,
-        expiresAt: true,
-        expirationStatus: true,
-        shelfLifeDays: true,
-        tags: true,
+      include: {
         recipe: {
           select: {
             id: true,
@@ -731,6 +707,19 @@ export class BakeryService {
           },
         },
         leadBaker: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
+        assistantBakers: {
           select: {
             id: true,
             member: {
@@ -787,7 +776,7 @@ export class BakeryService {
     // Always generate the batch number, ignoring any manual input from the client
     const batchNumber = await this.generateBatchNumber(organizationId);
 
-    const { date, time, batchNumber: _, ...rest } = data;
+    const { date, time, batchNumber: _, assistantBakerIds, ...rest } = data;
 
     // Process scheduledStartAt if date and time are provided
     let scheduledStartAt = data.scheduledStartAt;
@@ -804,6 +793,11 @@ export class BakeryService {
         batchNumber,
         scheduledStartAt: scheduledStartAt || new Date(),
         organizationId,
+        assistantBakers: assistantBakerIds?.length
+          ? {
+              connect: assistantBakerIds.map((id: string) => ({ id })),
+            }
+          : undefined,
       },
     });
   }
@@ -812,11 +806,18 @@ export class BakeryService {
     const { organizationId } = ctx;
 
     // Strip organizationId and id from data to prevent mass assignment
-    const { organizationId: _, id: __, ...updateData } = data;
+    const { organizationId: _, id: __, assistantBakerIds, ...updateData } = data;
 
     return this.prisma.client.batch.update({
       where: { id, organizationId },
-      data: updateData,
+      data: {
+        ...updateData,
+        assistantBakers: assistantBakerIds
+          ? {
+              set: assistantBakerIds.map((id: string) => ({ id })),
+            }
+          : undefined,
+      },
     });
   }
 

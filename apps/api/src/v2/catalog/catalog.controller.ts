@@ -65,6 +65,12 @@ export class CatalogController {
     return this.catalogService.getCategory(ctx, id);
   }
 
+  @Post("categories")
+  @RequirePermission("product:manage:categories")
+  async createCategory(@v2Context() ctx: V2ApiContext, @Body() data: any) {
+    return this.catalogService.createCategory(ctx, data);
+  }
+
   @Patch("categories/:id")
   @RequirePermission("product:manage:categories")
   async updateCategory(
