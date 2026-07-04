@@ -7,7 +7,7 @@ const isBrowser = typeof window !== "undefined";
 const isNextJs =
   (!isBrowser &&
     typeof process !== "undefined" &&
-    (!!process.env.NEXT_RUNTIME || !!process.env.NEXT_PHASE)) ||
+    !!process.env.NEXT_RUNTIME) ||
   !!process.env.__NEXT_PRIVATE_ORIGIN;
 const isNestJs = !isBrowser && !isNextJs;
 
@@ -99,18 +99,13 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SOCKET_URL: z.string().url().default("http://localhost:3002"),
 });
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
 // ─────────────────────────────────────────────
 // Env file loader (Node.js only — skipped in browser)
 // ─────────────────────────────────────────────
-async function loadEnvFiles() {
+function loadEnvFiles() {
   if (isBrowser) return;
 
   try {
-    const { createRequire } = await import("module");
-    const require = createRequire(import.meta.url);
     const fs = require("fs");
     const path = require("path");
     const dotenv = require("dotenv");
@@ -150,7 +145,7 @@ async function loadEnvFiles() {
           override: true,
           debug: false,
         });
-        expand(config);
+        expand({ ...config, override: true });
       }
     }
   } catch (e) {
@@ -232,10 +227,9 @@ function getRawEnv() {
 // Parse and validate
 // ─────────────────────────────────────────────
 function parseEnv() {
-  // Note: loadEnvFiles is now async to avoid top-level 'module' import.
-  // In a real app, you might want to await this before using env.
-  // For now, we'll keep it synchronous-ish or rely on process.env being pre-populated.
-  // Since this is called at the top level, we can't easily await it without top-level await support in all consumers.
+  if (!isBrowser) {
+    loadEnvFiles();
+  }
 
   const raw = isBrowser ? process.env : getRawEnv();
 
@@ -253,27 +247,17 @@ function parseEnv() {
   }
 
   if (isNestJs) {
-    const parsedServer = serverSchema.safeParse(raw);
-    if (!parsedServer.success && process.env.NODE_ENV !== "test") {
+    const parsed = serverSchema.safeParse(raw);
+    if (!parsed.success && process.env.NODE_ENV !== "test") {
       console.error(
-        "❌ Invalid server environment variables:",
-        parsedServer.error.flatten().fieldErrors,
+        "❌ Invalid environment variables:",
+        parsed.error.flatten().fieldErrors,
       );
-      throw new Error("Invalid server environment variables");
+      throw new Error("Invalid environment variables");
     }
-
-    const parsedClient = clientSchema.safeParse(raw);
-    if (!parsedClient.success && process.env.NODE_ENV !== "test") {
-      console.error(
-        "❌ Invalid client environment variables:",
-        parsedClient.error.flatten().fieldErrors,
-      );
-      throw new Error("Invalid client environment variables");
-    }
-
     return {
-      ...(parsedServer.data ?? {}),
-      ...(parsedClient.data ?? {}),
+      ...(parsed.data ?? {}),
+      ...clientSchema.parse({}),
     } as z.infer<typeof serverSchema> & z.infer<typeof clientSchema>;
   }
 

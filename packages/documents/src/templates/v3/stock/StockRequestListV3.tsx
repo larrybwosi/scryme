@@ -1,6 +1,13 @@
-import React from 'react';
-import { Page, Text, View, Document, Image, StyleSheet } from '@react-pdf/renderer';
-import { format } from 'date-fns';
+import React from "react";
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  Image,
+  StyleSheet,
+} from "@react-pdf/renderer";
+import { format } from "date-fns";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,8 +17,14 @@ export interface StockRequestV3Item {
   location: string;
   requestedBy?: string;
   itemsCount: number;
-  priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW' | string;
-  status: 'PENDING' | 'APPROVED' | 'FULFILLED' | 'REJECTED' | 'PARTIAL' | string;
+  priority: "URGENT" | "HIGH" | "NORMAL" | "LOW" | string;
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "FULFILLED"
+    | "REJECTED"
+    | "PARTIAL"
+    | string;
   estimatedCost: string;
   justification?: string;
 }
@@ -27,209 +40,191 @@ export interface StockRequestListV3Data {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+// Clean spreadsheet-style: white background throughout, light gray header,
+// thin grid lines, full-width table, no cards/KPI tiles, no colored badges.
 
-const getStyles = (primary = '#0f172a') =>
+const BORDER = "#dcdcdc";
+const PAGE_MARGIN = 24;
+
+const getStyles = (primary = "#f2f3f5") =>
   StyleSheet.create({
     page: {
-      fontFamily: 'Helvetica',
+      fontFamily: "Helvetica",
       fontSize: 9,
-      color: '#1e293b',
-      backgroundColor: '#ffffff',
-      paddingHorizontal: 0,
-      paddingVertical: 0,
+      color: "#1a1a1a",
+      backgroundColor: "#ffffff",
     },
-    // Header band
+
+    // ── Compact header band (light gray) ──
     headerBand: {
       backgroundColor: primary,
-      paddingHorizontal: 40,
-      paddingTop: 32,
-      paddingBottom: 24,
+      paddingHorizontal: PAGE_MARGIN,
+      paddingVertical: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderBottom: `1px solid ${BORDER}`,
     },
-    headerRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
     },
     logo: {
-      width: 48,
-      height: 48,
-      borderRadius: 8,
-      objectFit: 'contain',
-      marginBottom: 8,
+      width: 22,
+      height: 22,
+      objectFit: "contain",
+      marginRight: 8,
     },
     orgName: {
-      fontSize: 13,
-      fontWeight: 'bold',
-      color: '#ffffff',
-      opacity: 0.95,
+      fontSize: 11,
+      fontWeight: "bold",
+      color: "#1a1a1a",
     },
-    docTitleBlock: {
-      alignItems: 'flex-end',
+    branchName: {
+      fontSize: 8,
+      color: "#6b6b6b",
+      marginLeft: 6,
+    },
+    headerRight: {
+      alignItems: "flex-end",
     },
     docTitle: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: '#ffffff',
-      letterSpacing: 1.5,
+      fontSize: 12,
+      fontWeight: "bold",
+      color: "#1a1a1a",
+      letterSpacing: 1,
     },
     docSubtitle: {
-      fontSize: 8,
-      color: '#94a3b8',
-      marginTop: 3,
-      letterSpacing: 0.5,
+      fontSize: 7,
+      color: "#6b6b6b",
+      marginTop: 1,
     },
-    // Meta strip
+
+    // ── Meta strip (plain, white, thin bottom rule) ──
     metaStrip: {
-      flexDirection: 'row',
-      paddingHorizontal: 40,
-      paddingVertical: 12,
-      backgroundColor: '#f8fafc',
-      borderBottom: '1px solid #e2e8f0',
-      gap: 32,
+      flexDirection: "row",
+      paddingHorizontal: PAGE_MARGIN,
+      paddingVertical: 8,
+      backgroundColor: "#ffffff",
+      borderBottom: `1px solid ${BORDER}`,
     },
     metaItem: {
-      flexDirection: 'column',
+      flexDirection: "row",
+      alignItems: "center",
+      marginRight: 28,
     },
     metaLabel: {
       fontSize: 7,
-      color: '#94a3b8',
-      fontWeight: 'bold',
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      color: "#6b6b6b",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      marginRight: 4,
     },
     metaValue: {
-      fontSize: 9,
-      color: '#1e293b',
-      fontWeight: 'bold',
-      marginTop: 2,
+      fontSize: 8.5,
+      color: "#1a1a1a",
+      fontWeight: "bold",
     },
-    // KPI band
-    kpiBand: {
-      flexDirection: 'row',
-      paddingHorizontal: 40,
-      paddingVertical: 14,
-      borderBottom: '1px solid #e2e8f0',
-      gap: 12,
-    },
-    kpiCard: {
-      flex: 1,
-      borderRadius: 6,
-      paddingVertical: 10,
-      paddingHorizontal: 14,
-      flexDirection: 'column',
-    },
-    kpiLabel: {
-      fontSize: 7,
-      fontWeight: 'bold',
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
-      marginBottom: 4,
-    },
-    kpiValue: {
-      fontSize: 18,
-      fontWeight: 'bold',
-    },
-    // Table
+
+    // ── Table (spreadsheet grid, full width) ──
     tableContainer: {
-      paddingHorizontal: 40,
-      paddingTop: 20,
-      paddingBottom: 60,
+      paddingHorizontal: PAGE_MARGIN,
+      paddingTop: 14,
+      paddingBottom: 50,
     },
-    tableHeader: {
-      flexDirection: 'row',
-      backgroundColor: '#f1f5f9',
-      borderRadius: 4,
-      paddingVertical: 8,
-      paddingHorizontal: 10,
-      marginBottom: 2,
+    tableHeaderRow: {
+      flexDirection: "row",
+      backgroundColor: "#eceef0",
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      borderTop: `1px solid ${BORDER}`,
+      borderLeft: `1px solid ${BORDER}`,
+      borderRight: `1px solid ${BORDER}`,
+      borderBottom: `1px solid ${BORDER}`,
     },
     th: {
       fontSize: 7,
-      fontWeight: 'bold',
-      color: '#64748b',
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      fontWeight: "bold",
+      color: "#4b4b4b",
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     tableRow: {
-      flexDirection: 'row',
-      borderBottom: '1px solid #f1f5f9',
-      paddingVertical: 9,
-      paddingHorizontal: 10,
-      alignItems: 'center',
+      flexDirection: "row",
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      alignItems: "center",
+      borderBottom: `1px solid ${BORDER}`,
+      borderLeft: `1px solid ${BORDER}`,
+      borderRight: `1px solid ${BORDER}`,
     },
     tableRowAlt: {
-      backgroundColor: '#fafafa',
+      backgroundColor: "#fafafa",
     },
     td: {
-      fontSize: 9,
-      color: '#334155',
+      fontSize: 8.5,
+      color: "#1a1a1a",
     },
-    // Priority badge
-    badge: {
-      borderRadius: 4,
-      paddingVertical: 2,
-      paddingHorizontal: 6,
-      fontSize: 7,
-      fontWeight: 'bold',
+
+    // Column widths — plain text values, no badges. Sum to 100% for full width.
+    colReqNo: { width: "13%" },
+    colDate: { width: "11%" },
+    colLocation: { width: "17%" },
+    colRequestedBy: { width: "15%" },
+    colItems: { width: "8%", textAlign: "center" },
+    colPriority: { width: "11%" },
+    colStatus: { width: "11%" },
+    colCost: { width: "14%", textAlign: "right" },
+
+    // ── Summary line (replaces KPI cards) ──
+    summaryRow: {
+      flexDirection: "row",
+      paddingHorizontal: PAGE_MARGIN,
+      paddingVertical: 8,
+      borderTop: `1px solid ${BORDER}`,
+      justifyContent: "flex-end",
+    },
+    summaryItem: {
+      flexDirection: "row",
+      marginLeft: 24,
+    },
+    summaryLabel: {
+      fontSize: 7.5,
+      color: "#6b6b6b",
+      textTransform: "uppercase",
       letterSpacing: 0.3,
+      marginRight: 4,
     },
-    // Columns widths
-    colReqNo: { width: '13%' },
-    colDate: { width: '12%' },
-    colLocation: { width: '16%' },
-    colRequestedBy: { width: '14%' },
-    colItems: { width: '8%', textAlign: 'center' },
-    colPriority: { width: '11%' },
-    colStatus: { width: '11%' },
-    colCost: { width: '15%', textAlign: 'right' },
-    // Footer
+    summaryValue: {
+      fontSize: 8.5,
+      fontWeight: "bold",
+      color: "#1a1a1a",
+    },
+
+    // ── Footer ──
     footer: {
-      position: 'absolute',
+      position: "absolute",
       bottom: 0,
       left: 0,
       right: 0,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 40,
-      paddingVertical: 12,
-      backgroundColor: primary,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: PAGE_MARGIN,
+      paddingVertical: 8,
+      borderTop: `1px solid ${BORDER}`,
+      backgroundColor: "#ffffff",
     },
     footerText: {
-      fontSize: 7,
-      color: '#94a3b8',
+      fontSize: 6.5,
+      color: "#8a8a8a",
     },
     footerOrg: {
-      fontSize: 8,
-      fontWeight: 'bold',
-      color: '#ffffff',
+      fontSize: 7,
+      fontWeight: "bold",
+      color: "#1a1a1a",
     },
   });
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const PRIORITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  URGENT: { bg: '#fef2f2', text: '#dc2626', label: 'URGENT' },
-  HIGH: { bg: '#fff7ed', text: '#ea580c', label: 'HIGH' },
-  NORMAL: { bg: '#eff6ff', text: '#2563eb', label: 'NORMAL' },
-  LOW: { bg: '#f0fdf4', text: '#16a34a', label: 'LOW' },
-};
-
-const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  PENDING: { bg: '#fef9c3', text: '#a16207' },
-  APPROVED: { bg: '#dcfce7', text: '#15803d' },
-  FULFILLED: { bg: '#dbeafe', text: '#1d4ed8' },
-  REJECTED: { bg: '#fee2e2', text: '#b91c1c' },
-  PARTIAL: { bg: '#f3e8ff', text: '#7c3aed' },
-};
-
-function priorityStyle(p: string) {
-  return PRIORITY_STYLES[p] || { bg: '#f1f5f9', text: '#64748b', label: p };
-}
-
-function statusStyle(s: string) {
-  return STATUS_STYLES[s] || { bg: '#f1f5f9', text: '#64748b' };
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -238,91 +233,66 @@ export const StockRequestListV3 = ({
 }: {
   data: StockRequestListV3Data;
 }) => {
-  const primary = data.primaryColor || '#0f172a';
+  const primary = data.primaryColor || "#f2f3f5";
   const styles = getStyles(primary);
 
-  // KPI counts
   const total = data.requests.length;
-  const urgent = data.requests.filter(r => r.priority === 'URGENT').length;
-  const pending = data.requests.filter(r => r.status === 'PENDING').length;
-  const fulfilled = data.requests.filter(r => r.status === 'FULFILLED').length;
+  const urgent = data.requests.filter((r) => r.priority === "URGENT").length;
+  const pending = data.requests.filter((r) => r.status === "PENDING").length;
+  const fulfilled = data.requests.filter(
+    (r) => r.status === "FULFILLED",
+  ).length;
 
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
-        {/* ── Header Band ── */}
+        {/* ── Header Band (compact) ── */}
         <View style={styles.headerBand}>
-          <View style={styles.headerRow}>
-            <View>
-              {data.logoUrl && (
-                <Image src={data.logoUrl} style={styles.logo} />
-              )}
-              <Text style={styles.orgName}>{data.organizationName}</Text>
-              {data.branchName && (
-                <Text style={{ fontSize: 8, color: '#94a3b8', marginTop: 2 }}>
-                  {data.branchName}
-                </Text>
-              )}
-            </View>
-            <View style={styles.docTitleBlock}>
-              <Text style={styles.docTitle}>STOCK REQUEST LIST</Text>
-              <Text style={styles.docSubtitle}>
-                {data.periodLabel || format(new Date(), 'MMMM yyyy')} · Internal Use Only
-              </Text>
-            </View>
+          <View style={styles.headerLeft}>
+            {data.logoUrl && <Image src={data.logoUrl} style={styles.logo} />}
+            <Text style={styles.orgName}>{data.organizationName}</Text>
+            {data.branchName && (
+              <Text style={styles.branchName}>· {data.branchName}</Text>
+            )}
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.docTitle}>STOCK REQUEST LIST</Text>
+            <Text style={styles.docSubtitle}>
+              {data.periodLabel || format(new Date(), "MMMM yyyy")} · Internal
+              Use Only
+            </Text>
           </View>
         </View>
 
         {/* ── Meta Strip ── */}
         <View style={styles.metaStrip}>
           <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Generated</Text>
+            <Text style={styles.metaLabel}>Generated:</Text>
             <Text style={styles.metaValue}>
-              {format(new Date(), 'MMM dd, yyyy HH:mm')}
+              {format(new Date(), "MMM dd, yyyy HH:mm")}
             </Text>
           </View>
           {data.generatedBy && (
             <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Prepared By</Text>
+              <Text style={styles.metaLabel}>Prepared By:</Text>
               <Text style={styles.metaValue}>{data.generatedBy}</Text>
             </View>
           )}
           <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Report Level</Text>
+            <Text style={styles.metaLabel}>Report Level:</Text>
             <Text style={styles.metaValue}>
-              {data.branchName ? 'Branch' : 'Organization'}
+              {data.branchName ? "Branch" : "Organization"}
             </Text>
           </View>
           <View style={styles.metaItem}>
-            <Text style={styles.metaLabel}>Total Requests</Text>
+            <Text style={styles.metaLabel}>Total Requests:</Text>
             <Text style={styles.metaValue}>{total}</Text>
-          </View>
-        </View>
-
-        {/* ── KPI Band ── */}
-        <View style={styles.kpiBand}>
-          <View style={[styles.kpiCard, { backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }]}>
-            <Text style={[styles.kpiLabel, { color: '#64748b' }]}>Total Requests</Text>
-            <Text style={[styles.kpiValue, { color: '#0f172a' }]}>{total}</Text>
-          </View>
-          <View style={[styles.kpiCard, { backgroundColor: '#fef2f2', border: '1px solid #fecaca' }]}>
-            <Text style={[styles.kpiLabel, { color: '#dc2626' }]}>Urgent</Text>
-            <Text style={[styles.kpiValue, { color: '#dc2626' }]}>{urgent}</Text>
-          </View>
-          <View style={[styles.kpiCard, { backgroundColor: '#fef9c3', border: '1px solid #fde047' }]}>
-            <Text style={[styles.kpiLabel, { color: '#a16207' }]}>Pending</Text>
-            <Text style={[styles.kpiValue, { color: '#a16207' }]}>{pending}</Text>
-          </View>
-          <View style={[styles.kpiCard, { backgroundColor: '#dcfce7', border: '1px solid #86efac' }]}>
-            <Text style={[styles.kpiLabel, { color: '#15803d' }]}>Fulfilled</Text>
-            <Text style={[styles.kpiValue, { color: '#15803d' }]}>{fulfilled}</Text>
           </View>
         </View>
 
         {/* ── Table ── */}
         <View style={styles.tableContainer}>
-          {/* Header row */}
-          <View style={styles.tableHeader}>
+          <View style={styles.tableHeaderRow}>
             <Text style={[styles.th, styles.colReqNo]}>Request #</Text>
             <Text style={[styles.th, styles.colDate]}>Date</Text>
             <Text style={[styles.th, styles.colLocation]}>Location</Text>
@@ -333,57 +303,89 @@ export const StockRequestListV3 = ({
             <Text style={[styles.th, styles.colCost]}>Est. Cost</Text>
           </View>
 
-          {data.requests.map((req, i) => {
-            const pStyle = priorityStyle(req.priority);
-            const sStyle = statusStyle(req.status);
-            return (
-              <View
-                key={i}
-                style={[styles.tableRow, i % 2 !== 0 ? styles.tableRowAlt : {}]}
+          {data.requests.map((req, i) => (
+            <View
+              key={i}
+              style={[styles.tableRow, i % 2 !== 0 ? styles.tableRowAlt : {}]}
+            >
+              <Text
+                style={[
+                  styles.td,
+                  styles.colReqNo,
+                  { fontFamily: "Helvetica-Bold" },
+                ]}
               >
-                <Text style={[styles.td, styles.colReqNo, { fontFamily: 'Helvetica-Bold', color: '#1d4ed8' }]}>
-                  {req.requestNumber}
-                </Text>
-                <Text style={[styles.td, styles.colDate]}>{req.requestDate}</Text>
-                <Text style={[styles.td, styles.colLocation]}>{req.location}</Text>
-                <Text style={[styles.td, styles.colRequestedBy]}>{req.requestedBy || '—'}</Text>
-                <Text style={[styles.td, styles.colItems, { textAlign: 'center' }]}>
-                  {req.itemsCount}
-                </Text>
-                {/* Priority badge */}
-                <View style={styles.colPriority}>
-                  <View style={[styles.badge, { backgroundColor: pStyle.bg }]}>
-                    <Text style={{ color: pStyle.text, fontSize: 7, fontWeight: 'bold' }}>
-                      {pStyle.label}
-                    </Text>
-                  </View>
-                </View>
-                {/* Status badge */}
-                <View style={styles.colStatus}>
-                  <View style={[styles.badge, { backgroundColor: sStyle.bg }]}>
-                    <Text style={{ color: sStyle.text, fontSize: 7, fontWeight: 'bold' }}>
-                      {req.status}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[styles.td, styles.colCost, { textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>
-                  {req.estimatedCost}
-                </Text>
-              </View>
-            );
-          })}
+                {req.requestNumber}
+              </Text>
+              <Text style={[styles.td, styles.colDate]}>{req.requestDate}</Text>
+              <Text style={[styles.td, styles.colLocation]}>
+                {req.location}
+              </Text>
+              <Text style={[styles.td, styles.colRequestedBy]}>
+                {req.requestedBy || "—"}
+              </Text>
+              <Text
+                style={[styles.td, styles.colItems, { textAlign: "center" }]}
+              >
+                {req.itemsCount}
+              </Text>
+              <Text style={[styles.td, styles.colPriority]}>
+                {req.priority}
+              </Text>
+              <Text style={[styles.td, styles.colStatus]}>{req.status}</Text>
+              <Text
+                style={[
+                  styles.td,
+                  styles.colCost,
+                  { textAlign: "right", fontFamily: "Helvetica-Bold" },
+                ]}
+              >
+                {req.estimatedCost}
+              </Text>
+            </View>
+          ))}
 
           {data.requests.length === 0 && (
-            <View style={{ paddingVertical: 30, alignItems: 'center' }}>
-              <Text style={{ fontSize: 9, color: '#94a3b8' }}>No requests found.</Text>
+            <View
+              style={{
+                paddingVertical: 30,
+                alignItems: "center",
+                borderLeft: `1px solid ${BORDER}`,
+                borderRight: `1px solid ${BORDER}`,
+                borderBottom: `1px solid ${BORDER}`,
+              }}
+            >
+              <Text style={{ fontSize: 9, color: "#8a8a8a" }}>
+                No requests found.
+              </Text>
             </View>
           )}
+        </View>
+
+        {/* ── Summary line (replaces KPI cards) ── */}
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Total:</Text>
+            <Text style={styles.summaryValue}>{total}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Urgent:</Text>
+            <Text style={styles.summaryValue}>{urgent}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Pending:</Text>
+            <Text style={styles.summaryValue}>{pending}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Fulfilled:</Text>
+            <Text style={styles.summaryValue}>{fulfilled}</Text>
+          </View>
         </View>
 
         {/* ── Footer ── */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
-            Generated on {format(new Date(), 'dd/MM/yyyy HH:mm')} · Confidential
+            Generated on {format(new Date(), "dd/MM/yyyy HH:mm")} · Confidential
           </Text>
           <Text style={styles.footerOrg}>{data.organizationName}</Text>
           <Text style={styles.footerText}>Stock Request List · v3</Text>
