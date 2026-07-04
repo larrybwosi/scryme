@@ -17,4 +17,8 @@ export const authClient = createAuthClient({
   ],
 });
 
-export const { signIn, signUp, useSession, requestPasswordReset } = authClient;
+export const signIn: typeof authClient.signIn = authClient.signIn;
+export const signUp: typeof authClient.signUp = authClient.signUp;
+export const useSession: typeof authClient.useSession = authClient.useSession;
+export const requestPasswordReset: typeof authClient.requestPasswordReset =
+  authClient.requestPasswordReset;
