@@ -1,7 +1,6 @@
 {
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
-    "target": "es2017",
     "noEmit": false,
     "paths": {
       "@repo/ui/*": [

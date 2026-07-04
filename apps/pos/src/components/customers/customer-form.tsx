@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import {
   MessageSquare,
@@ -90,7 +88,7 @@ export default function CustomerForm({
     loyaltyTierId: customer?.loyaltyTierId || undefined,
     deliveryNotes: customer?.deliveryNotes || '',
     avatar: customer?.avatar || '',
-
+    isBusiness: !!customer?.businessAccountId,
     // Pharmacy Fields
     medicalHistory: (customer as any)?.medicalHistory || '',
     allergies: (customer as any)?.allergies || '',
