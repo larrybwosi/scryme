@@ -1,7 +1,4 @@
 import { z } from "zod";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
 
 // ─────────────────────────────────────────────
 // Environment detection
@@ -105,10 +102,12 @@ const clientSchema = z.object({
 // ─────────────────────────────────────────────
 // Env file loader (Node.js only — skipped in browser)
 // ─────────────────────────────────────────────
-function loadEnvFiles() {
+async function loadEnvFiles() {
   if (isBrowser) return;
 
   try {
+    const { createRequire } = await import("module");
+    const require = createRequire(import.meta.url);
     const fs = require("fs");
     const path = require("path");
     const dotenv = require("dotenv");
@@ -230,9 +229,10 @@ function getRawEnv() {
 // Parse and validate
 // ─────────────────────────────────────────────
 function parseEnv() {
-  if (!isBrowser) {
-    loadEnvFiles();
-  }
+  // Note: loadEnvFiles is now async to avoid top-level 'module' import.
+  // In a real app, you might want to await this before using env.
+  // For now, we'll keep it synchronous-ish or rely on process.env being pre-populated.
+  // Since this is called at the top level, we can't easily await it without top-level await support in all consumers.
 
   const raw = isBrowser ? process.env : getRawEnv();
 

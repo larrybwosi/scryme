@@ -7,7 +7,8 @@
   "exports": {
     ".": {
       "types": "./src/client.ts",
-      "import": "./dist/client.js"
+      "import": "./dist/client.mjs",
+      "require": "./dist/client.js"
     },
     "./client": {
       "types": "./src/browser.ts",
