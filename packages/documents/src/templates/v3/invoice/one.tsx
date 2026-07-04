@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
 } from "@react-pdf/renderer";
 import React from "react";
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   footerSite: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#FFFFFF" },
 });
 
-export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
+export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -241,7 +242,13 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
     footerText,
     footerWebsite,
     signature,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
   } = data;
+
+  const activeColor = primaryColor || TEAL;
 
   const fmt = (n: number) =>
     `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -252,12 +259,19 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
         {/* Header: logo + company info */}
         <View style={styles.headerRow}>
           <View style={styles.logoBlock}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoCircleText}>
-                {company.name.charAt(0)}
-              </Text>
+            {company.logo ? (
+              <Image src={company.logo} style={{ width: 60, height: 60, marginRight: 12, objectFit: 'contain' }} />
+            ) : (
+              <View style={[styles.logoCircle, { backgroundColor: activeColor }]}>
+                <Text style={styles.logoCircleText}>
+                  {company.name.charAt(0)}
+                </Text>
+              </View>
+            )}
+            <View>
+              <Text style={styles.logoText}>{company.name}</Text>
+              {company.slogan && <Text style={{ fontSize: 8, color: GRAY_TEXT, marginTop: 2 }}>{company.slogan}</Text>}
             </View>
-            <Text style={styles.logoText}>{company.name}</Text>
           </View>
           <View style={styles.companyInfo}>
             {company.address && <Text>{company.address}</Text>}
@@ -282,7 +296,12 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
               {customer.email && <Text>{customer.email}</Text>}
             </View>
             {customer.website && (
-              <Text style={styles.website}>{customer.website}</Text>
+              <Text style={[styles.website, { color: activeColor }]}>{customer.website}</Text>
+            )}
+            {kraPin && (
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold" }}>KRA PIN: {kraPin}</Text>
+              </View>
             )}
           </View>
           <View style={{ alignItems: "flex-end" }}>
@@ -294,7 +313,7 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
         <View style={[styles.metaRow, { justifyContent: "flex-end" }]}>
           <View style={styles.metaBlockFirst}>
             <Text style={styles.metaLabel}>Total Due:</Text>
-            <Text style={styles.metaValueTeal}>{fmt(total)}</Text>
+            <Text style={[styles.metaValueTeal, { color: activeColor }]}>{fmt(total)}</Text>
           </View>
           <View style={styles.metaBlock}>
             <Text style={styles.metaLabel}>
@@ -311,7 +330,7 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
         </View>
 
         {/* Table header */}
-        <View style={[styles.tableHeader, { marginTop: 25 }]}>
+        <View style={[styles.tableHeader, { marginTop: 25, backgroundColor: activeColor }]}>
           <Text style={[styles.tableHeaderText, styles.colDesc]}>
             ITEM DESCRIPTION
           </Text>
@@ -385,20 +404,39 @@ export const TemplateOne = ({ data }: { data: V3DocumentData }) => {
                 <Text style={styles.discountValue}>-{fmt(discount)}</Text>
               </View>
             )}
-            <View style={styles.totalDueRow}>
+            <View style={[styles.totalDueRow, { backgroundColor: activeColor }]}>
               <Text style={styles.totalDueLabel}>Total Due:</Text>
               <Text style={styles.totalDueValue}>{fmt(total)}</Text>
             </View>
           </View>
         </View>
 
-        {/* Signature */}
-        {signature && (
-          <View style={styles.signatureBlock}>
-            <Text style={styles.signatureName}>{signature.name}</Text>
-            <Text style={styles.signatureTitle}>{signature.title}</Text>
+        {/* Compliance and QR Section */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+          <View style={{ width: '60%' }}>
+            {kraControlCode && (
+              <Text style={{ fontSize: 8, color: GRAY_TEXT }}>KRA Control Code: {kraControlCode}</Text>
+            )}
+            {kraReceiptNumber && (
+              <Text style={{ fontSize: 8, color: GRAY_TEXT }}>KRA Receipt Number: {kraReceiptNumber}</Text>
+            )}
+
+            {/* Signature */}
+            {signature && (
+              <View style={[styles.signatureBlock, { alignItems: 'flex-start', marginTop: 15 }]}>
+                {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
+                <Text style={styles.signatureName}>{signature.name}</Text>
+                <Text style={styles.signatureTitle}>{signature.title}</Text>
+              </View>
+            )}
           </View>
-        )}
+
+          {qrCode && (
+            <View style={{ alignItems: 'flex-end' }}>
+              <Image src={qrCode} style={{ width: 60, height: 60 }} />
+            </View>
+          )}
+        </View>
 
         {/* Thank you */}
         <Text style={styles.thankYou}>Thank you for your business</Text>

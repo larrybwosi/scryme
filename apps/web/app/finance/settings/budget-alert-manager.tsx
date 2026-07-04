@@ -11,12 +11,21 @@ import {
   Activity,
   ArrowUpRight,
   Settings,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 import { toast } from "sonner";
 import { upsertBudgetAlert } from "@/app/actions/finance-settings";
 import { cn } from "@repo/ui/lib/utils";
@@ -80,52 +89,6 @@ export function BudgetAlertManager({
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
-          {isAdding && (
-            <div className="p-6 rounded-2xl border-2 border-[#34A853] bg-[#34A853]/5 animate-in fade-in slide-in-from-top-4 duration-300 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Budget Utilization Threshold (%)</Label>
-                  <div className="relative">
-                    <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                    <Input
-                      type="number"
-                      value={formData.threshold}
-                      onChange={e =>
-                        setFormData({
-                          ...formData,
-                          threshold: Number(e.target.value),
-                        })
-                      }
-                      className="pl-9"
-                      placeholder="e.g., 80"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Budget ID</Label>
-                  <Input
-                    value={formData.budgetId}
-                    onChange={e =>
-                      setFormData({ ...formData, budgetId: e.target.value })
-                    }
-                    placeholder="Enter Budget ID..."
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAdding(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={handleAdd} disabled={isPending}>
-                  {isPending ? "Creating..." : "Create Alert"}
-                </Button>
-              </div>
-            </div>
-          )}
-
           {alerts.length === 0 && !isAdding ? (
             <div className="flex flex-col items-center justify-center h-[300px] text-center border-2 border-dashed border-zinc-200 rounded-2xl">
               <div className="p-4 rounded-full bg-zinc-100 text-zinc-400 mb-4">
@@ -242,6 +205,61 @@ export function BudgetAlertManager({
           </div>
         </div>
       </div>
+
+      <Dialog open={isAdding} onOpenChange={setIsAdding}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Budget Alert</DialogTitle>
+            <DialogDescription>
+              Set a utilization threshold for real-time notifications.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Utilization Threshold (%)</Label>
+                <div className="relative">
+                  <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Input
+                    type="number"
+                    value={formData.threshold}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        threshold: Number(e.target.value),
+                      })
+                    }
+                    className="pl-9"
+                    placeholder="e.g., 80"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Budget ID</Label>
+                <Input
+                  value={formData.budgetId}
+                  onChange={e =>
+                    setFormData({ ...formData, budgetId: e.target.value })
+                  }
+                  placeholder="Enter Budget ID..."
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsAdding(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#34A853] hover:bg-[#2d9147]"
+              onClick={handleAdd}
+              disabled={isPending}>
+              {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Create Alert
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

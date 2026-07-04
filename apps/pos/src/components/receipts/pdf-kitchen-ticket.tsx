@@ -276,15 +276,9 @@ export const PDFKitchenTicket = ({ order, businessName, kitchenTicketConfig }: P
             </View>
           )}
           {config.showTime && (
-            <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Date</Text>
-              <Text style={styles.metaValue}>{format(new Date(order.createdAt), 'MM/dd/yyyy')}</Text>
-            </View>
-          )}
-          {config.showTime && (
-            <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>Time</Text>
-              <Text style={styles.metaValue}>{format(new Date(order.createdAt), 'HH:mm')}</Text>
+            <View style={{ width: '100%', marginBottom: 4 }}>
+              <Text style={styles.metaLabel}>Order Time</Text>
+              <Text style={styles.metaValue}>{format(new Date(order.createdAt), "dd MMM yyyy 'at' hh:mm a")}</Text>
             </View>
           )}
         </View>
@@ -337,7 +331,7 @@ export const PDFKitchenTicket = ({ order, businessName, kitchenTicketConfig }: P
         {/* ----------------- Footer Summary ----------------- */}
         <View style={styles.footer}>
           <Text style={styles.timestamp}>Total Items: {totalItemsCount}</Text>
-          <Text style={styles.timestamp}>Printed: {format(new Date(), 'MM/dd/yyyy HH:mm:ss')}</Text>
+          <Text style={styles.timestamp}>Printed: {format(new Date(), "dd MMM yyyy 'at' hh:mm a")}</Text>
           
           <Text style={styles.endOfTicket}>- END OF TICKET -</Text>
         </View>

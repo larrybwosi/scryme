@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Svg,
   Path,
@@ -262,7 +263,7 @@ const ZigzagLogo = () => (
   </Svg>
 );
 
-export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
+export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -279,7 +280,13 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
     bankDetails,
     terms,
     signature,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
   } = data;
+
+  const activeColor = primaryColor || DARK_NAVY;
 
   const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -289,13 +296,20 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
         {/* ---- Header ---- */}
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
-            <ZigzagLogo />
+            {company.logo ? (
+              <Image src={company.logo} style={{ width: 60, height: 60, objectFit: 'contain' }} />
+            ) : (
+              <ZigzagLogo />
+            )}
             <View style={styles.brandTextBlock}>
               <Text style={styles.brandName}>{company.name}</Text>
               {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
             </View>
           </View>
-          <Text style={styles.documentTitle}>{type}</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.documentTitle}>{type}</Text>
+            {qrCode && <Image src={qrCode} style={{ width: 40, height: 40, marginTop: 5 }} />}
+          </View>
         </View>
 
         {/* ---- To / meta ---- */}
@@ -312,6 +326,13 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
               {customer.phone ? `\n${customer.phone}` : ""}
               {customer.email ? `\n${customer.email}` : ""}
             </Text>
+            {(kraPin || kraControlCode || kraReceiptNumber) && (
+              <View style={{ marginTop: 10 }}>
+                {kraPin && <Text style={{ fontSize: 7, color: GRAY_TEXT }}>KRA PIN: {kraPin}</Text>}
+                {kraControlCode && <Text style={{ fontSize: 7, color: GRAY_TEXT }}>KRA Control Code: {kraControlCode}</Text>}
+                {kraReceiptNumber && <Text style={{ fontSize: 7, color: GRAY_TEXT }}>KRA Receipt No: {kraReceiptNumber}</Text>}
+              </View>
+            )}
           </View>
           <View style={styles.toRight}>
             <Text style={styles.metaLine}>
@@ -324,7 +345,7 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
         </View>
 
         {/* ---- Table ---- */}
-        <View style={styles.tableHeader}>
+        <View style={[styles.tableHeader, { backgroundColor: activeColor }]}>
           <Text style={styles.thDesc}>ITEM DESCRIPTION</Text>
           <Text style={styles.thQty}>QTY</Text>
           <Text style={styles.thPrice}>PRICE</Text>
@@ -374,7 +395,7 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
             )}
             <Text style={styles.thankYou}>Thank you for business with us!</Text>
           </View>
-          <View style={styles.grandTotalBlock}>
+          <View style={[styles.grandTotalBlock, { backgroundColor: activeColor }]}>
             <Text style={styles.grandTotalLabel}>GRAND TOTAL</Text>
             <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
           </View>
@@ -383,6 +404,7 @@ export const TemplateFour = ({ data }: { data: V3DocumentData }) => {
         {/* ---- Signature ---- */}
         {signature && signature.name && (
           <View style={styles.signatureArea}>
+            {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
             <Text style={styles.signatureScript}>{signature.name}</Text>
             <Text style={styles.signatureName}>{signature.name.toUpperCase()}</Text>
             <Text style={styles.signatureTitle}>{signature.title}</Text>

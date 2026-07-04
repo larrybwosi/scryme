@@ -112,3 +112,24 @@ export function getMockWaybillData(orgDetails?: any) {
     },
   };
 }
+
+export function getMockV3Data(type: 'invoice' | 'receipt', orgDetails?: any) {
+  const transaction = getMockInvoiceTransaction(orgDetails);
+
+  // We need to simulate the organization structure for the mapper
+  // so it can resolve branding from config
+  const mockOrg = {
+    ...transaction.organization,
+    invoiceConfig: orgDetails?.invoiceConfig,
+    receiptConfig: orgDetails?.receiptConfig,
+    settings: {
+      ...transaction.organization.settings,
+      defaultCurrency: orgDetails?.settings?.defaultCurrency || 'USD',
+      defaultTimezone: orgDetails?.settings?.defaultTimezone || 'UTC',
+    }
+  };
+
+  (transaction as any).organization = mockOrg;
+
+  return Mappers.toV3DocumentData(transaction as any, type);
+}

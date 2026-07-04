@@ -391,6 +391,7 @@ export class InvoiceUseCase {
               include: {
                 settings: true,
                 invoiceConfig: true,
+                receiptConfig: true,
               },
             },
             location: true,
@@ -402,6 +403,7 @@ export class InvoiceUseCase {
           include: {
             settings: true,
             invoiceConfig: true,
+            receiptConfig: true,
           },
         },
         items: true,
@@ -410,6 +412,25 @@ export class InvoiceUseCase {
     });
 
     if (!invoice) throw new NotFoundException("Invoice not found");
+
+    // Check if we should use V3 templates
+    if (invoice.templateId?.startsWith("invoice-v3-")) {
+      const v3Data = Mappers.toV3DocumentData(invoice as any, "invoice");
+
+      let qrCode: string | undefined;
+      try {
+        const QRCode = await import("qrcode");
+        qrCode = await QRCode.toDataURL(invoice.id);
+      } catch (e) {
+        console.error("Failed to generate QR code", e);
+      }
+
+      return this.documentService.generateV3DocumentPDF(
+        invoice.templateId,
+        v3Data,
+        qrCode,
+      );
+    }
 
     // If it's linked to a transaction, check if an up-to-date invoice attachment exists
     if (invoice.transactionId) {
@@ -462,12 +483,34 @@ export class InvoiceUseCase {
           include: {
             settings: true,
             receiptConfig: true,
+            invoiceConfig: true,
           },
         },
       },
     });
 
     if (!transaction) throw new NotFoundException("Transaction not found");
+
+    // Check if we should use V3 templates (if any default receipt template is V3)
+    const templateId =
+      transaction.organization?.settings?.defaultReceiptTemplate;
+    if (templateId?.startsWith("receipt-v3-")) {
+      const v3Data = Mappers.toV3DocumentData(transaction as any, "receipt");
+
+      let qrCode: string | undefined;
+      try {
+        const QRCode = await import("qrcode");
+        qrCode = await QRCode.toDataURL(transaction.number);
+      } catch (e) {
+        console.error("Failed to generate QR code", e);
+      }
+
+      return this.documentService.generateV3DocumentPDF(
+        templateId,
+        v3Data,
+        qrCode,
+      );
+    }
 
     const existingDoc = transaction.attachments?.find(
       (a) =>

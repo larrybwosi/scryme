@@ -4,8 +4,6 @@ export * from "../realtime";
 export * from "../api/v2";
 export * from "../lib";
 export * from "../redis";
-export * from "../services/openloyalty";
-export * from "../services/customer";
 export * from "../actions";
 export * from "../lib/images";
 export * from "../node-utils";

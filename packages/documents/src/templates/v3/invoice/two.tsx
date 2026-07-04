@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   Svg,
   Path,
@@ -207,18 +208,18 @@ const styles = StyleSheet.create({
   termsText: { fontSize: 8, color: GRAY_TEXT, lineHeight: 1.6 },
 });
 
-const DiamondIcon = () => (
+const DiamondIcon = ({ color = PINK }: { color?: string }) => (
   <Svg width={22} height={22} viewBox="0 0 24 24">
     <Path
       d="M6 4 L18 4 L22 9 L12 21 L2 9 Z M2 9 L22 9 M6 4 L9 9 L12 21 M18 4 L15 9 L12 21"
-      stroke={PINK}
+      stroke={color}
       strokeWidth={1}
       fill="none"
     />
   </Svg>
 );
 
-export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
+export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -232,7 +233,14 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
     currency,
     bankDetails,
     terms,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
+    signature,
   } = data;
+
+  const activeColor = primaryColor || PINK;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -241,9 +249,19 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* ---- Brand header ---- */}
-        <DiamondIcon />
-        <Text style={styles.brandName}>{company.name}</Text>
-        {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View>
+            {company.logo && (
+              <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 10, objectFit: 'contain' }} />
+            )}
+            {!company.logo && <DiamondIcon color={activeColor} />}
+            <Text style={styles.brandName}>{company.name}</Text>
+            {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
+          </View>
+          {qrCode && (
+            <Image src={qrCode} style={{ width: 60, height: 60 }} />
+          )}
+        </View>
 
         <View style={styles.headerRow}>
           <View style={styles.addressBlock}>
@@ -272,7 +290,7 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
 
         {/* ---- DOCUMENT title ---- */}
         <View style={styles.titleRow}>
-          <View style={styles.accentBar} />
+          <View style={[styles.accentBar, { backgroundColor: activeColor === PINK ? DARK : activeColor }]} />
           <Text style={styles.documentTitle}>{type}</Text>
         </View>
 
@@ -314,21 +332,43 @@ export const TemplateTwo = ({ data }: { data: V3DocumentData }) => {
           <Text style={styles.grandTotal}>{fmt(total)}</Text>
         </View>
 
-        {/* ---- Payment options ---- */}
-        {bankDetails && (
-          <View style={styles.paymentSection}>
-            <Text style={styles.paymentLabel}>PAYMENT OPTIONS</Text>
-            <Text style={styles.bankDetails}>BANK DETAILS</Text>
-            {bankDetails.accountNo && (
-              <Text style={styles.bankAccount}>ACCOUNT NO: {bankDetails.accountNo}</Text>
+        {/* ---- Compliance & Signature ---- */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 }}>
+          <View>
+            {(kraPin || kraControlCode || kraReceiptNumber) && (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={styles.paymentLabel}>COMPLIANCE INFO</Text>
+                {kraPin && <Text style={styles.bankDetails}>KRA PIN: {kraPin}</Text>}
+                {kraControlCode && <Text style={styles.bankAccount}>Control Code: {kraControlCode}</Text>}
+                {kraReceiptNumber && <Text style={styles.bankAccount}>Receipt No: {kraReceiptNumber}</Text>}
+              </View>
             )}
-            {bankDetails.sortCode && (
-              <Text style={styles.bankAccount}>SORT CODE: {bankDetails.sortCode}</Text>
+
+            {signature && (
+              <View style={{ marginTop: 10 }}>
+                {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
+                <Text style={styles.bankDetails}>{signature.name}</Text>
+                <Text style={styles.bankAccount}>{signature.title}</Text>
+              </View>
             )}
           </View>
-        )}
 
-        <View style={styles.dividerThick} />
+          {/* ---- Payment options ---- */}
+          {bankDetails && (
+            <View style={[styles.paymentSection, { marginTop: 0 }]}>
+              <Text style={styles.paymentLabel}>PAYMENT OPTIONS</Text>
+              <Text style={styles.bankDetails}>BANK DETAILS</Text>
+              {bankDetails.accountNo && (
+                <Text style={styles.bankAccount}>ACCOUNT NO: {bankDetails.accountNo}</Text>
+              )}
+              {bankDetails.sortCode && (
+                <Text style={styles.bankAccount}>SORT CODE: {bankDetails.sortCode}</Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        <View style={[styles.dividerThick, { borderTopColor: activeColor === PINK ? DARK : activeColor }]} />
 
         {/* ---- Terms ---- */}
         {terms && (

@@ -4,29 +4,17 @@ import {
   getStockDashboardStats,
   getStockMovementsChartData,
   getStockDistributionByLocation,
-  getStockLevels,
 } from "@/app/actions/stock-management";
-import { getInventoryLocations } from "@/app/actions/inventory";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/components/ui/card";
+import { Card, CardContent } from "@repo/ui/components/ui/card";
 import {
   TrendingUp,
   Package,
   ArrowLeftRight,
   AlertTriangle,
-  LayoutGrid,
-  ArrowRight,
   ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@repo/ui/components/ui/button";
 import { StockCharts } from "@/components/stocking/stock-charts";
-import { StockLevelsTable } from "@/components/stocking/stock-levels-table";
-import { StockLevelsFilters } from "@/components/stocking/stock-levels-filters";
 
 export default async function StockingDashboard({
   searchParams,
@@ -38,17 +26,11 @@ export default async function StockingDashboard({
 }) {
   const params = await searchParams;
 
-  const [stats, movementData, distributionData, locations, stockLevels] =
-    await Promise.all([
-      getStockDashboardStats(),
-      getStockMovementsChartData(),
-      getStockDistributionByLocation(),
-      getInventoryLocations(),
-      getStockLevels({
-        locationId: params.locationId,
-        search: params.search,
-      }),
-    ]);
+  const [stats, movementData, distributionData] = await Promise.all([
+    getStockDashboardStats(),
+    getStockMovementsChartData(),
+    getStockDistributionByLocation(),
+  ]);
 
   if (!stats) return <div>Failed to load stats.</div>;
 
@@ -129,35 +111,6 @@ export default async function StockingDashboard({
         movementData={movementData}
         distributionData={distributionData}
       />
-
-      {/* Stock Levels Section */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <div>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <LayoutGrid size={20} className="text-blue-600" />
-              Branch Stock Levels
-            </CardTitle>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Detailed breakdown of inventory across all locations and
-              in-transit units.
-            </p>
-          </div>
-          <Link href="/stocking/list">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-              View All
-              <ArrowRight size={16} />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent className="pt-6 flex flex-col gap-6">
-          <StockLevelsFilters locations={locations} />
-          <StockLevelsTable data={stockLevels} />
-        </CardContent>
-      </Card>
     </div>
   );
 }

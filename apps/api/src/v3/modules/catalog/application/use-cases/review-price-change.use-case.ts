@@ -25,8 +25,11 @@ export class ReviewPriceChangeUseCase {
      * Since the use case only uses the scalar 'priceListItemId' for updates,
      * removing the join reduces database overhead and memory usage.
      * Estimated impact: -1 SQL join, ~10-15% faster execution for this lookup.
+     *
+     * SECURITY (Sentinel): Using findFirst instead of findUnique because
+     * PriceChangeRequest lacks a composite unique index on [id, organizationId].
      */
-    const request = await this.prisma.client.priceChangeRequest.findUnique({
+    const request = await this.prisma.client.priceChangeRequest.findFirst({
       where: { id: requestId, organizationId },
     });
 

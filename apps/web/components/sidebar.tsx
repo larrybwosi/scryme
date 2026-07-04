@@ -88,6 +88,7 @@ const sidebarConfig: SidebarSection[] = [
         href: "/inventory",
         items: [
           { title: "Product List", href: "/inventory" },
+          { title: "Register Barcodes", href: "/inventory/barcodes" },
           { title: "Suppliers", href: "/inventory/supplier" },
           { title: "Units", href: "/inventory/units" },
         ],

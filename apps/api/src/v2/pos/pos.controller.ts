@@ -27,6 +27,7 @@ import {
   CreateStockTransferSchema,
   ShiftSyncSchema,
   RegisterPettyCashSchema,
+  RegisterBarcodeSchema,
 } from "./pos.schema";
 
 @ApiTags("POS")
@@ -327,5 +328,12 @@ export class PosController {
   ) {
     const parsedLimit = limit ? parseInt(limit, 10) : 10;
     return this.posService.getPettyCashTransactions(ctx, parsedLimit);
+  }
+
+  @Post("inventory/barcode")
+  @ApiOperation({ summary: "Register or update product variant barcode" })
+  @UsePipes(new ZodValidationPipe(RegisterBarcodeSchema))
+  async registerBarcode(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    return this.posService.registerBarcode(ctx, body);
   }
 }

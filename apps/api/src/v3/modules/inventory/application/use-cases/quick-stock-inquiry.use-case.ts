@@ -43,8 +43,15 @@ export class QuickStockInquiryUseCase {
       },
     });
 
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced O(N*M) lookup with O(N+M) Map.
+     * Indexing the stocks by variantId allows for constant-time lookups
+     * during the mapping phase, which is more efficient for large lists.
+     */
+    const stockMap = new Map(stocks.map((s) => [s.variantId, s]));
+
     return variantIds.map((variantId) => {
-      const stock = stocks.find((s) => s.variantId === variantId);
+      const stock = stockMap.get(variantId);
       return {
         variantId,
         sku: stock?.variant.sku || "N/A",
