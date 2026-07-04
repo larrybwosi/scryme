@@ -82,6 +82,7 @@ export * from "./templates/v2/StockTransferListTemplate";
 
 // V3 Templates
 export * from "./templates/v3";
+export * from "./templates/v3/stock";
 
 export * from "./mock-data";
 

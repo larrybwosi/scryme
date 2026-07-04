@@ -12,6 +12,8 @@ import { ReceiptDocument as ReceiptDefault } from './templates/v1/Receipt';
 import { ReceiptTemplate as ReceiptV2 } from './templates/v2/ReceiptTemplate';
 
 import { WaybillDocument as WaybillDefault } from './templates/v1/Waybill';
+import { WaybillV3Document } from './templates/v3/stock/WaybillV3';
+import { DeliveryNoteV3Document } from './templates/v3/stock/DeliveryNoteV3';
 
 import {
   TemplateOne,
@@ -32,7 +34,7 @@ import {
   ReceiptEight,
 } from './templates/v3';
 
-export type DocumentType = 'INVOICE' | 'RECEIPT' | 'WAYBILL';
+export type DocumentType = 'INVOICE' | 'RECEIPT' | 'WAYBILL' | 'DELIVERY_NOTE';
 
 export interface TemplateMetadata {
   id: string;
@@ -264,6 +266,24 @@ export const DOCUMENT_REGISTRY: TemplateMetadata[] = [
     version: 'v1.0.0',
     type: 'WAYBILL',
     component: WaybillDefault as React.ComponentType<any>
+  },
+  {
+    id: 'waybill-v3',
+    name: 'V3 Enterprise Waybill',
+    description: 'Next-gen enterprise waybill with branded header band, three-party signature block, and thermal format support.',
+    version: 'v3.0.0',
+    type: 'WAYBILL',
+    component: WaybillV3Document as React.ComponentType<any>
+  },
+
+  // Delivery Notes
+  {
+    id: 'delivery-note-v3',
+    name: 'V3 Enterprise Delivery Note',
+    description: 'Professional delivery note with three-party signature block, condition columns, and branded footer.',
+    version: 'v3.0.0',
+    type: 'DELIVERY_NOTE',
+    component: DeliveryNoteV3Document as React.ComponentType<any>
   }
 ];
 
