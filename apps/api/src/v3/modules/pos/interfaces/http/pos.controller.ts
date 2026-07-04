@@ -6,6 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
   Query,
+  Res,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -22,6 +23,7 @@ import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
 import { GetTransactionsUseCase } from "../../application/use-cases/get-transactions.use-case";
 import { RegisterPettyCashUseCase } from "../../application/use-cases/register-petty-cash.use-case";
+import { DownloadPosBinaryUseCase } from "../../application/use-cases/download-pos-binary.use-case";
 import { RegisterPettyCashDto } from "../../application/dto/petty-cash.dto";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import {
@@ -43,6 +45,7 @@ export class PosController {
     private readonly syncUseCase: SyncUseCase,
     private readonly getTransactionsUseCase: GetTransactionsUseCase,
     private readonly registerPettyCashUseCase: RegisterPettyCashUseCase,
+    private readonly downloadPosBinaryUseCase: DownloadPosBinaryUseCase,
   ) {}
 
   @Post("provision")
@@ -169,6 +172,26 @@ export class PosController {
   @ApiResponse({ status: 200, description: "Petty cash funds" })
   async getPettyCashFunds(@v3Context() ctx: V3ApiContext) {
     return this.registerPettyCashUseCase.getFunds(ctx);
+  }
+
+  @Get("download")
+  @ApiOperation({
+    summary: "Download POS binary for a specific platform",
+    operationId: "POS_DownloadBinary",
+  })
+  @ApiResponse({ status: 200, description: "Stream binary file" })
+  async downloadBinary(
+    @Query("platform") platform: string,
+    @Res() res: any,
+  ) {
+    const { stream, fileName, contentType } = await this.downloadPosBinaryUseCase.execute(platform);
+
+    res.set({
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+    });
+
+    stream.pipe(res);
   }
 
   @Get("petty-cash/transactions")

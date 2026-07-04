@@ -39,12 +39,14 @@ export default async function DashboardPage(props: {
     }).format(val);
 
   return (
-    <div className="p-8 max-w-(--breakpoint-2xl) mx-auto">
+    <div className="p-4 md:p-8 max-w-(--breakpoint-2xl) mx-auto">
       <Suspense fallback={<div>Loading dashboard...</div>}>
-        <DashboardHeader userName={auth.user.name} date={today} />
+        <div className="mt-12 lg:mt-0">
+          <DashboardHeader userName={auth.user.name} date={today} />
+        </div>
 
         {/* Top Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
           <StatCard
             title="Sales performance"
             value={formatCurrency(data.stats.salesPerformance.value)}
@@ -76,7 +78,7 @@ export default async function DashboardPage(props: {
         </div>
 
         {/* Main Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
           <div className="lg:col-span-2">
             <RevenueChart
               data={data.totalRevenue.chartData}
@@ -91,7 +93,7 @@ export default async function DashboardPage(props: {
         </div>
 
         {/* Bottom Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <AverageOrderValueChart
             data={data.averageOrderValue.chartData}
             value={formatCurrency(data.averageOrderValue.value)}

@@ -5,6 +5,7 @@ import { ProcessSaleUseCase } from "./application/use-cases/process-sale.use-cas
 import { SyncUseCase } from "./application/use-cases/sync.use-case";
 import { GetTransactionsUseCase } from "./application/use-cases/get-transactions.use-case";
 import { RegisterPettyCashUseCase } from "./application/use-cases/register-petty-cash.use-case";
+import { DownloadPosBinaryUseCase } from "./application/use-cases/download-pos-binary.use-case";
 import { InventoryModule } from "../inventory/inventory.module";
 import { CatalogModule } from "../catalog/catalog.module";
 import { LoyaltyModule } from "../loyalty/loyalty.module";
@@ -26,6 +27,7 @@ import { FinanceModule } from "../finance/finance.module";
     SyncUseCase,
     GetTransactionsUseCase,
     RegisterPettyCashUseCase,
+    DownloadPosBinaryUseCase,
   ],
 })
 export class PosModule {}

@@ -114,6 +114,10 @@ const sidebarConfig: SidebarSection[] = [
     items: [{ title: "Workflows", icon: Zap, href: "/workflows" }],
   },
   {
+    title: "DEVICES",
+    items: [{ title: "POS App", icon: ShoppingCart, href: "/dashboard/pos" }],
+  },
+  {
     title: "ACCOUNTING",
     items: [
       {
@@ -142,7 +146,7 @@ const sidebarConfig: SidebarSection[] = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({ className }: { className?: string }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -171,6 +175,7 @@ export function Sidebar() {
       className={cn(
         "flex flex-col h-screen border-r bg-white transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[80px]" : "w-[280px]",
+        className,
       )}>
       {/* Brand Header */}
       <div
