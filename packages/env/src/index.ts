@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 // ─────────────────────────────────────────────
 // Environment detection
