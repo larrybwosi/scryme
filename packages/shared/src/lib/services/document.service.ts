@@ -4,6 +4,8 @@ import {
   SimpleInvoicePDF,
   DeliveryNoteDocument,
   getInvoiceTemplate,
+  getTemplateById,
+  isV3Template,
   ReceiptTemplateV2,
 } from "@repo/documents/server";
 import { storageService } from "../../storage";
@@ -78,11 +80,12 @@ export class DocumentService {
 
         await db.attachment.create({
           data: {
+            id: dnUpload.id, // Use the storage ID as the attachment ID
             organizationId,
             memberId,
             transactionId,
             fulfillmentId,
-            fileName: dnFileName,
+            fileName: dnUpload.id,
             fileUrl: dnUpload.url,
             shortCode,
             shortUrl,
@@ -162,10 +165,9 @@ export class DocumentService {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const template = transaction.organization?.settings?.defaultInvoiceTemplate;
-    const DocumentComponent = getInvoiceTemplate(template);
-    const documentData = Mappers.toInvoiceData(transaction as any);
+    const templateId = transaction.organization?.settings?.defaultInvoiceTemplate;
 
+    let stream;
     let qrCode = "";
     try {
       qrCode = await QRCode.toDataURL(transaction.number);
@@ -173,9 +175,21 @@ export class DocumentService {
       console.error("Failed to generate QR code", err);
     }
 
-    const stream = await DocumentGenerator.renderToStream(
-      React.createElement(DocumentComponent, { data: documentData, qrCode }),
-    );
+    if (isV3Template(templateId)) {
+      const template = getTemplateById(templateId!);
+      if (!template) throw new Error(`Template not found: ${templateId}`);
+
+      const documentData = Mappers.toV3DocumentData(transaction as any, "invoice");
+      stream = await DocumentGenerator.renderToStream(
+        React.createElement(template.component, { data: documentData, qrCode }),
+      );
+    } else {
+      const DocumentComponent = getInvoiceTemplate(templateId);
+      const documentData = Mappers.toInvoiceData(transaction as any);
+      stream = await DocumentGenerator.renderToStream(
+        React.createElement(DocumentComponent, { data: documentData, qrCode }),
+      );
+    }
     const buffer = await this.streamToBuffer(stream);
 
     const fileName = `invoice-${transaction.number}-${Date.now()}.pdf`;
@@ -191,10 +205,11 @@ export class DocumentService {
 
     return await db.attachment.create({
       data: {
+        id: upload.id, // Use the storage ID as the attachment ID
         organizationId,
         memberId: effectiveMemberId,
         transactionId,
-        fileName,
+        fileName: upload.id,
         fileUrl: upload.url,
         shortCode,
         shortUrl,
@@ -247,10 +262,30 @@ export class DocumentService {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const documentData = Mappers.toReceiptData(transaction as any);
-    const stream = await DocumentGenerator.renderToStream(
-      React.createElement(ReceiptTemplateV2, { data: documentData }),
-    );
+    const templateId = transaction.organization?.settings?.defaultReceiptTemplate;
+
+    let stream;
+    let qrCode = "";
+    try {
+      qrCode = await QRCode.toDataURL(transaction.number);
+    } catch (err) {
+      console.error("Failed to generate QR code", err);
+    }
+
+    if (isV3Template(templateId)) {
+      const template = getTemplateById(templateId!);
+      if (!template) throw new Error(`Template not found: ${templateId}`);
+
+      const documentData = Mappers.toV3DocumentData(transaction as any, "receipt");
+      stream = await DocumentGenerator.renderToStream(
+        React.createElement(template.component, { data: documentData, qrCode }),
+      );
+    } else {
+      const documentData = Mappers.toReceiptData(transaction as any);
+      stream = await DocumentGenerator.renderToStream(
+        React.createElement(ReceiptTemplateV2, { data: documentData }),
+      );
+    }
     const buffer = await this.streamToBuffer(stream);
 
     const fileName = `receipt-${transaction.number}-${Date.now()}.pdf`;
@@ -266,10 +301,11 @@ export class DocumentService {
 
     return await db.attachment.create({
       data: {
+        id: upload.id, // Use the storage ID as the attachment ID
         organizationId,
         memberId: effectiveMemberId,
         transactionId,
-        fileName,
+        fileName: upload.id,
         fileUrl: upload.url,
         shortCode,
         shortUrl,

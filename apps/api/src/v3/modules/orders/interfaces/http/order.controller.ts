@@ -123,9 +123,10 @@ export class OrderController {
     @Body() body: UpdateOrderStatusDto,
   ) {
     return this.updateOrderStatusUseCase.execute(
+      req.organization.id,
+      req.user?.memberId,
       id,
       body.status,
-      req.user?.memberId || req.user?.id,
     );
   }
 

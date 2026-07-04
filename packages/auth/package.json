@@ -1,31 +1,42 @@
 {
   "name": "@repo/auth",
   "version": "0.1.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server.ts",
-    "./nest": "./src/nest.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./dist/server.js"
+    },
+    "./nest": {
+      "types": "./src/nest.ts",
+      "import": "./dist/nest.js"
+    }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
+    "auth:build": "tsup",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
     "better-auth": "^1.4.19",
-    "next": "16.2.0",
     "zod": "latest"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "tsup": "^8.5.1",
+    "next": "16.2.10"
   }
 }

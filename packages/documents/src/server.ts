@@ -8,6 +8,7 @@ import {
   BrandingOptions,
   CurrencySettings
 } from './types';
+import { V3DocumentData } from './templates/v3/types';
 import * as crypto from 'crypto';
 import QRCode from 'qrcode';
 import {
@@ -29,6 +30,31 @@ import {
   WaybillConfig
 } from '@repo/db';
 
+import {
+  resolveBranding,
+  resolveCurrencySettings,
+  formatCurrency,
+  formatAddress,
+  isV3Template,
+} from "./utils";
+
+export {
+  resolveBranding,
+  resolveCurrencySettings,
+  formatCurrency,
+  formatAddress,
+  isV3Template,
+} from "./utils";
+
+export {
+  getTemplateById,
+  getTemplatesByType,
+} from "./registry";
+
+export {
+  getMockV3Data,
+} from "./mock-data";
+
 /**
  * Generates a verification hash for an invoice.
  */
@@ -45,20 +71,6 @@ export function generateVerificationHash(data: {
     .substring(0, 16)
     .toUpperCase();
 }
-
-import {
-  resolveBranding,
-  resolveCurrencySettings,
-  formatCurrency,
-  formatAddress,
-} from "./utils";
-
-export {
-  resolveBranding,
-  resolveCurrencySettings,
-  formatCurrency,
-  formatAddress,
-};
 
 /**
  * Generates a QR code as a data URL.
@@ -200,12 +212,12 @@ export const Mappers = {
       branding: resolveBranding(organization),
       dateRangeText,
       activeFiltersText,
-      transactions: transactions.map(t => ({
+      transactions: transactions.map((t: any) => ({
         number: t.number,
         date: new Date(t.createdAt).toLocaleDateString(),
         customerName: t.customer?.name || 'N/A',
         total: Number(t.finalTotal),
-        paymentInfo: t.payments?.map((p: Payment) => `${p.method} (${p.status})`).join(', ') || 'N/A',
+        paymentInfo: t.payments?.map((p: any) => `${p.method} (${p.status})`).join(', ') || 'N/A',
         items: (t.items || []).map((item: TransactionItem) => ({
           productName: item.productName,
           variantName: item.variantName,
@@ -418,6 +430,160 @@ export const Mappers = {
       termsAndConditions: config.defaultTerms,
       footerText: config.footerText,
       verificationHash,
+    };
+  },
+
+  /**
+   * Maps a Transaction or Invoice entity to V3DocumentData.
+   */
+  toV3DocumentData(
+    input: TransactionWithDetails | (Invoice & {
+      items: InvoiceItem[];
+      organization: Organization & { settings: any; invoiceConfig: InvoiceConfig | null; receiptConfig: ReceiptConfig | null };
+      template: InvoiceTemplate | null;
+      transaction: (Transaction & { payments: Payment[]; customer?: Customer & { addresses?: Address[] } }) | null;
+    }),
+    type: 'invoice' | 'receipt' = 'invoice'
+  ): V3DocumentData {
+    const isInvoice = 'invoiceNumber' in input || ('grandTotal' in input && !('finalTotal' in input));
+
+    let org: any;
+    let items: any[];
+    let customer: any;
+    let totals: any;
+    let meta: any;
+    let config: any;
+
+    if (!isInvoice) {
+      const tx = input as TransactionWithDetails;
+      org = tx.organization;
+      config = type === 'invoice' ? org?.invoiceConfig : org?.receiptConfig;
+
+      items = (tx.items || []).map((item: any) => ({
+        name: item.productName || 'Item',
+        description: item.variantName || '',
+        quantity: Number(item.quantity || 0),
+        unitPrice: Number(item.unitPrice || 0),
+        total: Number(item.lineTotal || item.subtotal || 0),
+        ref: item.sku
+      }));
+
+      customer = {
+        name: tx.customer?.name || 'Walk-in Customer',
+        email: tx.customer?.email,
+        phone: tx.customer?.phone,
+        address: formatAddress(tx.customer?.addresses?.[0])
+      };
+
+      totals = {
+        subtotal: Number(tx.subtotal || 0),
+        tax: Number(tx.taxTotal || 0),
+        total: Number(tx.finalTotal || 0),
+        discount: Number(tx.discountTotal || 0),
+        amountPaid: tx.payments?.reduce((acc: number, p: Payment) => acc + Number(p.amount || 0), 0) || 0,
+      };
+
+      meta = {
+        number: tx.number,
+        date: tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
+      };
+    } else {
+      const inv = input as (Invoice & {
+        items: InvoiceItem[];
+        organization: Organization & { settings: any; invoiceConfig: InvoiceConfig | null; receiptConfig: ReceiptConfig | null };
+        template: InvoiceTemplate | null;
+        transaction: (Transaction & { payments: Payment[]; customer?: Customer & { addresses?: Address[] } }) | null;
+      });
+      org = inv.organization;
+      config = type === 'invoice' ? org?.invoiceConfig : org?.receiptConfig;
+
+      items = (inv.items || []).map((item: any) => ({
+        name: item.itemName || 'Item',
+        description: '',
+        quantity: Number(item.quantity || 0),
+        unitPrice: Number(item.rate || 0),
+        total: Number(item.amount || 0),
+        ref: item.itemCode
+      }));
+
+      const tx = inv.transaction;
+      customer = {
+        name: inv.customerName || tx?.customer?.name || 'Walk-in Customer',
+        email: tx?.customer?.email,
+        phone: tx?.customer?.phone || inv.kraPin,
+        address: formatAddress(tx?.customer?.addresses?.[0]) || ''
+      };
+
+      totals = {
+        subtotal: Number(inv.netTotal || 0),
+        tax: Number(inv.totalTaxes || 0),
+        total: Number(inv.grandTotal || 0),
+        discount: tx ? Number(tx.discountTotal || 0) : 0,
+        amountPaid: Number(inv.amountPaid || 0),
+      };
+
+      meta = {
+        number: tx?.number || inv.id.substring(0, 8).toUpperCase(),
+        date: inv.postingDate ? new Date(inv.postingDate).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
+        dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-GB') : undefined
+      };
+    }
+
+    const currencySettings = resolveCurrencySettings(isInvoice ? (input as any).transaction : input, org);
+    const branding = resolveBranding(org, config);
+
+    return {
+      type,
+      number: meta.number,
+      date: meta.date,
+      dueDate: meta.dueDate,
+
+      company: {
+        name: branding.companyName || org?.name || 'Organization',
+        address: branding.companyAddress || formatAddress(org?.address),
+        phone: branding.companyPhone || org?.phone,
+        email: branding.companyEmail || org?.email,
+        website: branding.companyWebsite || org?.website,
+        logo: branding.logoUrl
+      },
+
+      customer,
+
+      items,
+
+      subtotal: totals.subtotal,
+      tax: totals.tax,
+      total: totals.total,
+      discount: totals.discount,
+      amountPaid: totals.amountPaid,
+      balanceDue: Math.max(0, totals.total - totals.amountPaid),
+
+      currency: {
+        symbol: currencySettings.symbol || '$',
+        code: currencySettings.code || 'USD'
+      },
+
+      paymentTerms: config?.defaultTerms || 'Payment due upon receipt.',
+      paymentMethod: !isInvoice ? (input as TransactionWithDetails).payments?.[0]?.method : undefined,
+      paymentInfo: config?.paymentInfo || config?.defaultNotes,
+
+      bankDetails: config ? {
+        name: config.bankName,
+        accountNo: config.accountNumber,
+        sortCode: config.sortCode,
+        iban: config.iban,
+        swift: config.swiftCode
+      } : undefined,
+
+      footerText: config?.footerText,
+
+      primaryColor: branding.primaryColor,
+
+      // KRA Data if available (from invoice or custom logic)
+      kraPin: (input as any).kraPin,
+      kraControlCode: (input as any).kraControlCode,
+      kraReceiptNumber: (input as any).kraReceiptNumber,
+      // QR Code placeholder - usually generated in UseCase
     };
   },
 

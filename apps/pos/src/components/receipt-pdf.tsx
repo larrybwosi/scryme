@@ -371,216 +371,288 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
         : 'A4';
 
   const currency = settings.currency || 'KSH';
+  const labels = config.labels || {
+    receipt: 'RECEIPT',
+    date: 'DATE',
+    cashier: 'CASHIER',
+    customer: 'CUSTOMER',
+    item: 'ITEM',
+    qty: 'QTY',
+    price: 'PRICE',
+    total: 'TOTAL',
+    subtotal: 'SUBTOTAL',
+    tax: 'TAX',
+    discount: 'DISCOUNT',
+    savings: 'SAVINGS',
+    paymentMethod: 'PAYMENT METHOD',
+    change: 'CHANGE',
+    servedBy: 'SERVED BY',
+    vat: 'VAT',
+    tin: 'TIN',
+  };
+
+  const renderSection = (section: string) => {
+    switch (section) {
+      case 'header':
+        return (
+          <View key="header" style={styles.header}>
+            {config.showLogo && config.logoUrl && <Image src={config.logoUrl} style={styles.logo} />}
+            {config.showLocationHeader && (
+              <Text style={[styles.contactLine, { fontWeight: 'bold', textTransform: 'uppercase' }]}>
+                {config.locationNameOverride || branchName || labels.branch}
+              </Text>
+            )}
+            <Text style={styles.bizName}>{settings.businessName || 'Business Name'}</Text>
+            {config.showTagline && config.tagline && <Text style={styles.slogan}>{config.tagline}</Text>}
+            {!config.tagline && settings.businessSlogan && <Text style={styles.slogan}>{settings.businessSlogan}</Text>}
+
+            {/* Contact — inline where possible */}
+            {config.showAddress && settings.address && <Text style={styles.contactLine}>{settings.address}</Text>}
+            {(config.showPhone || settings.phone) && settings.email ? (
+              <Text style={styles.contactLine}>
+                {config.phone || settings.phone} · {settings.email}
+              </Text>
+            ) : (
+              <>
+                {(config.showPhone || settings.phone) && (
+                  <Text style={styles.contactLine}>{config.phone || settings.phone}</Text>
+                )}
+                {settings.email && <Text style={styles.contactLine}>{settings.email}</Text>}
+              </>
+            )}
+            {settings.website && <Text style={styles.contactLine}>{settings.website}</Text>}
+
+            {/* Reg numbers inline */}
+            {(config.showTaxNumber && config.taxNumber) ||
+            (config.showVatNumber && config.vatNumber) ||
+            (config.showCompanyRegNumber && config.companyRegNumber) ||
+            config.customFields?.some(f => f.enabled) ? (
+              <View style={styles.regRow}>
+                {config.showTaxNumber && config.taxNumber && (
+                  <Text style={styles.regItem}>
+                    {labels.tin}: {config.taxNumber}
+                  </Text>
+                )}
+                {config.showVatNumber && config.vatNumber && (
+                  <Text style={styles.regItem}>
+                    {labels.vat}: {config.vatNumber}
+                  </Text>
+                )}
+                {config.showCompanyRegNumber && config.companyRegNumber && (
+                  <Text style={styles.regItem}>
+                    {labels.reg}: {config.companyRegNumber}
+                  </Text>
+                )}
+                {config.customFields
+                  ?.filter(f => f.enabled && f.label && f.value)
+                  .map((field, idx) => (
+                    <Text key={idx} style={styles.regItem}>
+                      {field.label}: {field.value}
+                    </Text>
+                  ))}
+              </View>
+            ) : null}
+          </View>
+        );
+
+      case 'meta':
+        return (
+          <View key="meta" style={styles.metaGrid}>
+            {config.showOrderNumber !== false && (
+              <View style={styles.metaCell}>
+                <Text style={styles.metaLabel}>{labels.receipt} No</Text>
+                <Text style={styles.metaValue}>
+                  {config.orderNumberPrefix || ''}
+                  {order.orderNumber}
+                </Text>
+              </View>
+            )}
+            {config.showTransactionId && (
+              <View style={styles.metaCell}>
+                <Text style={styles.metaLabel}>Trans ID</Text>
+                <Text style={styles.metaValue}>{order.id}</Text>
+              </View>
+            )}
+            <View style={styles.metaCell}>
+              <Text style={styles.metaLabel}>{labels.date}</Text>
+              <Text style={styles.metaValue}>
+                {order.createdAt
+                  ? format(new Date(order.createdAt), 'dd/MM/yy HH:mm')
+                  : format(new Date(), 'dd/MM/yy HH:mm')}
+              </Text>
+            </View>
+            {config.showCashier && order.cashierName && (
+              <View style={styles.metaCell}>
+                <Text style={styles.metaLabel}>{labels.servedBy}</Text>
+                <Text style={styles.metaValue}>{order.cashierName}</Text>
+              </View>
+            )}
+            {config.showCustomerName && order.customerName && (
+              <View style={styles.metaCell}>
+                <Text style={styles.metaLabel}>{labels.customer}</Text>
+                <Text style={styles.metaValue}>{order.customerName}</Text>
+              </View>
+            )}
+            {!config.showLocationHeader && (config.locationNameOverride || branchName) && (
+              <View style={styles.metaCell}>
+                <Text style={styles.metaLabel}>Branch</Text>
+                <Text style={styles.metaValue}>{config.locationNameOverride || branchName}</Text>
+              </View>
+            )}
+          </View>
+        );
+
+      case 'items':
+        return (
+          <View key="items" style={styles.table}>
+            <View style={styles.tHead}>
+              <Text style={[styles.colItem, styles.tHCell]}>{labels.item}</Text>
+              <Text style={[styles.colQty, styles.tHCell]}>{labels.qty}</Text>
+              <Text style={[styles.colPrice, styles.tHCell]}>{labels.price}</Text>
+              <Text style={[styles.colTotal, styles.tHCell]}>{labels.amount}</Text>
+            </View>
+
+            {order.items?.map((item, i) => {
+              const unitPrice = item.selectedUnit?.price || 0;
+              const lineTotal = unitPrice * item.quantity;
+              const variant = item.variantName || '';
+              const showVariant = variant && !['Default', 'Default Variant'].includes(variant);
+              return (
+                <View key={i} style={styles.tRow}>
+                  <View style={styles.colItem}>
+                    <Text style={styles.itemName}>{item.productName}</Text>
+                    {showVariant && <Text style={styles.itemVariant}>{variant}</Text>}
+                    {config.showItemTax && <Text style={{ fontSize: base - 2, opacity: 0.5 }}>TAX INC.</Text>}
+                  </View>
+                  <Text style={styles.colQty}>{item.quantity}</Text>
+                  <View style={[styles.colPrice, { flexDirection: 'column' }]}>
+                    <Text style={{ color: '#555' }}>{formatCurrency(unitPrice, currency)}</Text>
+                    {config.showItemDiscounts && (
+                      <Text style={{ fontSize: base - 2, color: '#16a34a' }}>-0.00</Text>
+                    )}
+                  </View>
+                  <Text style={[styles.colTotal, { fontWeight: 'bold' }]}>{formatCurrency(lineTotal, currency)}</Text>
+                </View>
+              );
+            })}
+          </View>
+        );
+
+      case 'totals':
+        return (
+          <View key="totals" style={styles.totalsWrap}>
+            {config.showSubtotal !== false && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>{labels.subtotal}</Text>
+                <Text style={styles.totalValue}>{formatCurrency(order.subTotal || 0, currency)}</Text>
+              </View>
+            )}
+            {config.showDiscountBreakdown !== false && order.discount > 0 && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>{labels.discount}</Text>
+                <Text style={styles.totalValue}>-{formatCurrency(order.discount, currency)}</Text>
+              </View>
+            )}
+            {config.showTaxBreakdown !== false && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>{labels.tax}</Text>
+                <Text style={styles.totalValue}>{formatCurrency(order.taxes || 0, currency)}</Text>
+              </View>
+            )}
+            <View style={styles.grandRow}>
+              <Text style={styles.grandLabel}>{labels.total}</Text>
+              <Text style={styles.grandValue}>
+                {currency} {formatCurrency(order.total || 0, currency)}
+              </Text>
+            </View>
+            <View style={[styles.totalRow, { marginTop: 2 }]}>
+              <Text style={styles.totalLabel}>{labels.paymentMethod}</Text>
+              <Text style={styles.totalValue}>{order.paymentMethod || 'Cash'}</Text>
+            </View>
+            {config.showSavingsTotal && order.discount > 0 && (
+              <View style={styles.savingsRow}>
+                <Text style={styles.savingsText}>{labels.savings}</Text>
+                <Text style={[styles.savingsText, { fontWeight: 'bold' }]}>
+                  {formatCurrency(order.discount, currency)}
+                </Text>
+              </View>
+            )}
+          </View>
+        );
+
+      case 'footer':
+        return (
+          <View key="footer" style={styles.footer}>
+            <View style={styles.divider} />
+
+            {config.showThankYouMessage ? (
+              <Text style={styles.footerMsg}>{config.thankYouMessage || 'Thank You'}</Text>
+            ) : (
+              <Text style={styles.footerMsg}>Thank You</Text>
+            )}
+
+            {config.showNextVisitPromo && config.nextVisitPromoText && (
+              <Text style={[styles.footerLine, { fontWeight: 'bold' }]}>{config.nextVisitPromoText}</Text>
+            )}
+
+            {(config.showLoyaltyPoints || config.showLoyaltyBalance) && (
+              <View style={styles.loyaltyBox}>
+                {config.showLoyaltyPoints && (
+                  <Text style={styles.loyaltyItem}>Pts Earned: +{Math.floor((order.total || 0) / 10)}</Text>
+                )}
+                {config.showLoyaltyBalance && <Text style={styles.loyaltyItem}>Balance: 150 pts</Text>}
+              </View>
+            )}
+
+            {config.showSocialMedia && config.socialMediaHandle && (
+              <Text style={[styles.footerLine, { fontWeight: 'bold', marginTop: 2 }]}>{config.socialMediaHandle}</Text>
+            )}
+
+            {config.showSurveyQr && config.surveyUrl && (
+              <Text style={styles.footerLine}>Rate us: {config.surveyUrl}</Text>
+            )}
+
+            {config.showReturnPolicy && config.returnPolicyText && (
+              <Text style={[styles.footerDisclaimer, { marginTop: 5 }]}>{config.returnPolicyText}</Text>
+            )}
+
+            {config.showLegalDisclaimer && config.legalDisclaimerText && (
+              <Text style={styles.footerDisclaimer}>{config.legalDisclaimerText}</Text>
+            )}
+
+            {config.showSignatureLine && (
+              <View style={styles.signatureWrap}>
+                <Text style={styles.signatureText}>{config.signatureLineText || 'Customer Signature'}</Text>
+              </View>
+            )}
+
+            <Text style={styles.footerDisclaimer}>Goods once sold are not returnable.</Text>
+          </View>
+        );
+
+      case 'codes':
+        return (
+          <View key="codes" style={{ alignItems: 'center', marginTop: 10 }}>
+            {config.showQrCode && qrCodeUrl && <Image src={qrCodeUrl} style={{ width: 48, height: 48 }} />}
+
+            {config.showBarcode && barcodeUrl && (
+              <View style={styles.barcodeWrap}>
+                <Image src={barcodeUrl} style={{ width: isThermal ? 120 : 160, height: 28, objectFit: 'contain' }} />
+                <Text style={styles.barcodeNum}>{order.orderNumber}</Text>
+              </View>
+            )}
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <Document>
       <Page size={pageSize} style={styles.page}>
-        {/* ── HEADER ── */}
-        <View style={styles.header}>
-          {config.showLogo && config.logoUrl && <Image src={config.logoUrl} style={styles.logo} />}
-          <Text style={styles.bizName}>{settings.businessName || 'Business Name'}</Text>
-          {config.showTagline && config.tagline && <Text style={styles.slogan}>{config.tagline}</Text>}
-          {!config.tagline && settings.businessSlogan && <Text style={styles.slogan}>{settings.businessSlogan}</Text>}
-
-          {/* Contact — inline where possible */}
-          {config.showAddress && settings.address && <Text style={styles.contactLine}>{settings.address}</Text>}
-          {(config.showPhone || settings.phone) && settings.email ? (
-            <Text style={styles.contactLine}>
-              {config.phone || settings.phone} · {settings.email}
-            </Text>
-          ) : (
-            <>
-              {(config.showPhone || settings.phone) && (
-                <Text style={styles.contactLine}>{config.phone || settings.phone}</Text>
-              )}
-              {settings.email && <Text style={styles.contactLine}>{settings.email}</Text>}
-            </>
-          )}
-          {settings.website && <Text style={styles.contactLine}>{settings.website}</Text>}
-
-          {/* Reg numbers inline */}
-          {(config.showTaxNumber && config.taxNumber) ||
-          (config.showVatNumber && config.vatNumber) ||
-          (config.showCompanyRegNumber && config.companyRegNumber) ? (
-            <View style={styles.regRow}>
-              {config.showTaxNumber && config.taxNumber && <Text style={styles.regItem}>TIN: {config.taxNumber}</Text>}
-              {config.showVatNumber && config.vatNumber && <Text style={styles.regItem}>VAT: {config.vatNumber}</Text>}
-              {config.showCompanyRegNumber && config.companyRegNumber && (
-                <Text style={styles.regItem}>REG: {config.companyRegNumber}</Text>
-              )}
-            </View>
-          ) : null}
-        </View>
-
-        {/* ── META GRID ── */}
-        <View style={styles.metaGrid}>
-          {config.showOrderNumber !== false && (
-            <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Receipt No</Text>
-              <Text style={styles.metaValue}>
-                {config.orderNumberPrefix || ''}
-                {order.orderNumber}
-              </Text>
-            </View>
-          )}
-          {config.showTransactionId && (
-            <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Trans ID</Text>
-              <Text style={styles.metaValue}>{order.id}</Text>
-            </View>
-          )}
-          <View style={styles.metaCell}>
-            <Text style={styles.metaLabel}>Date</Text>
-            <Text style={styles.metaValue}>
-              {order.createdAt
-                ? format(new Date(order.createdAt), 'dd/MM/yy HH:mm')
-                : format(new Date(), 'dd/MM/yy HH:mm')}
-            </Text>
-          </View>
-          {branchName && (
-            <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Branch</Text>
-              <Text style={styles.metaValue}>{branchName}</Text>
-            </View>
-          )}
-          {config.showCashier && order.cashierName && (
-            <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Served By</Text>
-              <Text style={styles.metaValue}>{order.cashierName}</Text>
-            </View>
-          )}
-          {config.showCustomerName && order.customerName && (
-            <View style={styles.metaCell}>
-              <Text style={styles.metaLabel}>Customer</Text>
-              <Text style={styles.metaValue}>{order.customerName}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* ── ITEMS TABLE ── */}
-        <View style={styles.table}>
-          <View style={styles.tHead}>
-            <Text style={[styles.colItem, styles.tHCell]}>Item</Text>
-            <Text style={[styles.colQty, styles.tHCell]}>Qty</Text>
-            <Text style={[styles.colPrice, styles.tHCell]}>Price</Text>
-            <Text style={[styles.colTotal, styles.tHCell]}>Amt</Text>
-          </View>
-
-          {order.items?.map((item, i) => {
-            const unitPrice = item.selectedUnit?.price || 0;
-            const lineTotal = unitPrice * item.quantity;
-            const variant = item.variantName || '';
-            const showVariant = variant && !['Default', 'Default Variant'].includes(variant);
-            return (
-              <View key={i} style={styles.tRow}>
-                <View style={styles.colItem}>
-                  <Text style={styles.itemName}>{item.productName}</Text>
-                  {showVariant && <Text style={styles.itemVariant}>{variant}</Text>}
-                </View>
-                <Text style={styles.colQty}>{item.quantity}</Text>
-                <Text style={[styles.colPrice, { color: '#555' }]}>{formatCurrency(unitPrice, currency)}</Text>
-                <Text style={[styles.colTotal, { fontWeight: 'bold' }]}>{formatCurrency(lineTotal, currency)}</Text>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* ── TOTALS ── */}
-        <View style={styles.totalsWrap}>
-          {config.showSubtotal !== false && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>{formatCurrency(order.subTotal || 0, currency)}</Text>
-            </View>
-          )}
-          {config.showDiscountBreakdown !== false && order.discount > 0 && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Discount</Text>
-              <Text style={styles.totalValue}>-{formatCurrency(order.discount, currency)}</Text>
-            </View>
-          )}
-          {config.showTaxBreakdown !== false && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Tax</Text>
-              <Text style={styles.totalValue}>{formatCurrency(order.taxes || 0, currency)}</Text>
-            </View>
-          )}
-          <View style={styles.grandRow}>
-            <Text style={styles.grandLabel}>Total</Text>
-            <Text style={styles.grandValue}>
-              {currency} {formatCurrency(order.total || 0, currency)}
-            </Text>
-          </View>
-          <View style={[styles.totalRow, { marginTop: 2 }]}>
-            <Text style={styles.totalLabel}>Payment</Text>
-            <Text style={styles.totalValue}>{order.paymentMethod || 'Cash'}</Text>
-          </View>
-          {config.showSavingsTotal && order.discount > 0 && (
-            <View style={styles.savingsRow}>
-              <Text style={styles.savingsText}>You Saved</Text>
-              <Text style={[styles.savingsText, { fontWeight: 'bold' }]}>
-                {formatCurrency(order.discount, currency)}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* ── FOOTER ── */}
-        <View style={styles.footer}>
-          <View style={styles.divider} />
-
-          {config.showThankYouMessage ? (
-            <Text style={styles.footerMsg}>{config.thankYouMessage || 'Thank You'}</Text>
-          ) : (
-            <Text style={styles.footerMsg}>Thank You</Text>
-          )}
-
-          {config.showNextVisitPromo && config.nextVisitPromoText && (
-            <Text style={[styles.footerLine, { fontWeight: 'bold' }]}>{config.nextVisitPromoText}</Text>
-          )}
-
-          {(config.showLoyaltyPoints || config.showLoyaltyBalance) && (
-            <View style={styles.loyaltyBox}>
-              {config.showLoyaltyPoints && (
-                <Text style={styles.loyaltyItem}>Pts Earned: +{Math.floor((order.total || 0) / 10)}</Text>
-              )}
-              {config.showLoyaltyBalance && <Text style={styles.loyaltyItem}>Balance: 150 pts</Text>}
-            </View>
-          )}
-
-          {config.showSocialMedia && config.socialMediaHandle && (
-            <Text style={[styles.footerLine, { fontWeight: 'bold', marginTop: 2 }]}>{config.socialMediaHandle}</Text>
-          )}
-
-          {config.showSurveyQr && config.surveyUrl && (
-            <Text style={styles.footerLine}>Rate us: {config.surveyUrl}</Text>
-          )}
-
-          {config.showQrCode && qrCodeUrl && <Image src={qrCodeUrl} style={{ width: 48, height: 48, marginTop: 6 }} />}
-
-          {config.showBarcode && barcodeUrl && (
-            <View style={styles.barcodeWrap}>
-              <Image src={barcodeUrl} style={{ width: isThermal ? 120 : 160, height: 28, objectFit: 'contain' }} />
-              <Text style={styles.barcodeNum}>{order.orderNumber}</Text>
-            </View>
-          )}
-
-          {config.showReturnPolicy && config.returnPolicyText && (
-            <Text style={[styles.footerDisclaimer, { marginTop: 5 }]}>{config.returnPolicyText}</Text>
-          )}
-
-          {config.showLegalDisclaimer && config.legalDisclaimerText && (
-            <Text style={styles.footerDisclaimer}>{config.legalDisclaimerText}</Text>
-          )}
-
-          {config.showSignatureLine && (
-            <View style={styles.signatureWrap}>
-              <Text style={styles.signatureText}>{config.signatureLineText || 'Customer Signature'}</Text>
-            </View>
-          )}
-
-          <Text style={styles.footerDisclaimer}>Goods once sold are not returnable.</Text>
-        </View>
+        {(config.sectionOrder || ['header', 'meta', 'items', 'totals', 'footer', 'codes']).map(section => renderSection(section))}
       </Page>
     </Document>
   );

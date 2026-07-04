@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { UpdaterProvider } from "@/lib/providers/UpdateProvider"
 import RealtimeInitializer from "@/lib/providers/RealtimeProvider"
 import { ServerNotificationProvider } from "@/lib/providers/ServerNotificationProvider"
+import { TooltipProvider } from "@repo/ui/components/ui/tooltip"
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const themeConfig = usePosStore((state) => state.settings.themeConfig)
@@ -124,12 +125,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <NotificationToast />
       <ConnectionStatusBanner />
       <QueryClientProvider client={queryClient}>
-        <RealtimeInitializer/>
-        <UpdaterProvider checkInterval={60 * 60 * 1000 * 4}>
-          <ServerNotificationProvider>
-            {children}
-          </ServerNotificationProvider>
-        </UpdaterProvider>
+        <TooltipProvider>
+          <RealtimeInitializer/>
+          <UpdaterProvider checkInterval={60 * 60 * 1000 * 4}>
+            <ServerNotificationProvider>
+              {children}
+            </ServerNotificationProvider>
+          </UpdaterProvider>
+        </TooltipProvider>
       </QueryClientProvider>
       
       {/* Custom Desktop POS Toaster Configuration */}

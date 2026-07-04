@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [dev, nextgen]
+    branches: [dev, nextgen, crm]
   pull_request:
-    branches: [dev, nextgen]
+    branches: [dev, nextgen, crm]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,13 +29,11 @@ jobs:
       pkg_db: ${{ steps.changes.outputs.pkg_db }}
       pkg_documents: ${{ steps.changes.outputs.pkg_documents }}
       pkg_env: ${{ steps.changes.outputs.pkg_env }}
-      pkg_mpesa: ${{ steps.changes.outputs.pkg_mpesa }}
       pkg_notifications: ${{ steps.changes.outputs.pkg_notifications }}
       pkg_sdk: ${{ steps.changes.outputs.pkg_sdk }}
       pkg_shared: ${{ steps.changes.outputs.pkg_shared }}
       pkg_ui: ${{ steps.changes.outputs.pkg_ui }}
       pkg_windmill: ${{ steps.changes.outputs.pkg_windmill }}
-      pkg_zitadel: ${{ steps.changes.outputs.pkg_zitadel }}
       workflow: ${{ steps.changes.outputs.workflow }}
       test_workflow: ${{ steps.changes.outputs.test_workflow }}
     steps:
@@ -66,16 +64,12 @@ jobs:
               - 'packages/config-eslint/**'
             pkg_config_typescript:
               - 'packages/config-typescript/**'
-            pkg_crm:
-              - 'packages/crm/**'
             pkg_db:
               - 'packages/db/**'
             pkg_documents:
               - 'packages/documents/**'
             pkg_env:
               - 'packages/env/**'
-            pkg_mpesa:
-              - 'packages/mpesa/**'
             pkg_notifications:
               - 'packages/notifications/**'
             pkg_sdk:
@@ -86,8 +80,6 @@ jobs:
               - 'packages/ui/**'
             pkg_windmill:
               - 'packages/windmill/**'
-            pkg_zitadel:
-              - 'packages/zitadel/**'
             test_workflow:
               - '.github/workflows/test.yml'
             workflow:
@@ -248,11 +240,9 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_auth }}" == "true" ]; then FILTER="$FILTER --filter=@repo/auth..."; fi
             if [ "${{ needs.filter.outputs.pkg_config_eslint }}" == "true" ]; then FILTER="$FILTER --filter=@repo/eslint-config..."; fi
             if [ "${{ needs.filter.outputs.pkg_config_typescript }}" == "true" ]; then FILTER="$FILTER --filter=@repo/typescript-config..."; fi
-            if [ "${{ needs.filter.outputs.pkg_crm }}" == "true" ]; then FILTER="$FILTER --filter=@repo/crm..."; fi
             if [ "${{ needs.filter.outputs.pkg_db }}" == "true" ]; then FILTER="$FILTER --filter=@repo/db..."; fi
             if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ]; then FILTER="$FILTER --filter=@repo/documents..."; fi
             if [ "${{ needs.filter.outputs.pkg_env }}" == "true" ]; then FILTER="$FILTER --filter=@repo/env..."; fi
-            if [ "${{ needs.filter.outputs.pkg_mpesa }}" == "true" ]; then FILTER="$FILTER --filter=@repo/mpesa..."; fi
             if [ "${{ needs.filter.outputs.pkg_notifications }}" == "true" ]; then FILTER="$FILTER --filter=@repo/notifications..."; fi
             if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@repo/sdk..."; fi
             if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
@@ -383,6 +373,7 @@ jobs:
         run: |
           FILTER=""
           if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            pnpm turbo build --filter=pos...
             pnpm --filter pos test:frontend
           fi
 
@@ -410,7 +401,9 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter pos exec playwright install --with-deps
       - name: Run E2E tests
-        run: pnpm --filter pos test:e2e
+        run: |
+          pnpm turbo build --filter=pos...
+          pnpm --filter pos test:e2e
         env:
           POSTHOG_API_KEY: mock
           SENTRY_DSN: mock

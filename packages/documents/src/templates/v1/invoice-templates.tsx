@@ -8,6 +8,8 @@ import { BusinessInvoicePDF as DenvisInvoiceTemp6 } from './denvis.temp.6';
 import { InvoicePDF as InvoiceSimple } from './InvoicePDF';
 import { InvoiceTemplate as InvoiceV2 } from '../v2/InvoiceTemplate';
 import { InvoiceData } from '../../types';
+import { isV3Template } from '../../utils';
+import { getTemplateById } from '../../registry';
 
 export { type InvoiceData };
 
@@ -39,6 +41,13 @@ export function getInvoiceTemplate(template?: string | null) {
   if (template && template in INVOICE_TEMPLATES) {
     return INVOICE_TEMPLATES[template as InvoiceTemplateType];
   }
+
+  // Support for V3 templates via registry
+  if (isV3Template(template)) {
+    const v3Template = getTemplateById(template!);
+    if (v3Template) return v3Template.component;
+  }
+
   return INVOICE_TEMPLATES.default;
 }
 

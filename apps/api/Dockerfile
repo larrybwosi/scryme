@@ -38,8 +38,10 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install all dependencies securely
-RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
+# Install all dependencies securely using cache mounts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
 
 # Copy full source code and turbo configuration
 COPY --from=pruner /app/out/full/ .
@@ -48,10 +50,10 @@ COPY --from=pruner /app/out/full/ .
 RUN pnpm turbo run generate
 
 # Build the API and its internal workspace dependencies
-# Use a smaller memory limit and increase concurrency if possible,
-# but keep it low to avoid over-consuming compute.
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN pnpm turbo build --filter=api... --concurrency=2
+# Limit memory and concurrency to reduce resource consumption
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+RUN --mount=type=cache,id=turbo,target=/app/.turbo \
+    pnpm turbo build --filter=api... --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -91,7 +93,7 @@ USER nestjs
 EXPOSE 4000
 
 HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4000/api/v2/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-4000}/api/v2/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/main"]

@@ -64,3 +64,7 @@
 ## 2026-06-29 - [Excluding Heavy JSON in Template Lists]
 **Learning:** Fetching full `InvoiceTemplate` records just to list available templates in a UI dropdown or management table is a significant performance drain due to the large `templateData` JSON field (containing full layout/styles). Excluding this field via a Prisma `select` block reduces the payload by ~80-90%.
 **Action:** Always use `select` to prune large JSON blobs or relation arrays in any 'GetList' or 'GetTemplates' style service methods, ensuring they are only retrieved in 'GetById' or 'Export' methods where the full data is actually required.
+
+## 2026-07-02 - [Database-Level Field Comparison vs In-Memory Filtering]
+**Learning:** Filtering results after pagination (e.g., `lowStock` in `InventoryService`) in-memory is a performance anti-pattern that leads to inconsistent page sizes and unnecessary data fetching. Prisma v7.8.0 supports database-level field comparisons via `fields` (e.g., `availableStock: { lte: prisma.productVariantStock.fields.reorderPoint }`), which shifts the filter to the SQL `WHERE` clause.
+**Action:** Always move filters that compare two fields on the same model to the database level using Prisma's `fields` API to ensure correct pagination and reduce API overhead.

@@ -26,7 +26,7 @@ export const useBatches = (filters?: any) => {
   return useQuery({
     queryKey: ["batches", filters],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         const data = await tauriInvoke<FormattedBatch[]>("get_batches");
         return {
           data,
@@ -48,7 +48,7 @@ export const useBatchById = (id: string) => {
   return useQuery({
     queryKey: ["batches", id],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         const batches = await tauriInvoke<FormattedBatch[]>("get_batches");
         return batches.find((b) => b.id === id) as FormattedBatch;
       }
@@ -62,7 +62,7 @@ export const useBatchTraceability = (id: string) => {
   return useQuery({
     queryKey: ["batches", id, "traceability"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("get_batch_traceability", { id });
       }
       return sdk.bakery.getBatchTraceability(id);
@@ -75,7 +75,7 @@ export const useCreateBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_batch", {
           userId: "local-user",
           input: { ...data, organizationId: "local-org" },
@@ -92,7 +92,7 @@ export const useRecipes = () => {
   return useQuery({
     queryKey: ["recipes"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke<Recipe[]>("get_recipes");
       }
       const data = await sdk.bakery.getRecipes();
@@ -107,7 +107,7 @@ export const useRecipe = (id: string) => {
   return useQuery({
     queryKey: ["recipe", id],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         const recipes = await tauriInvoke<Recipe[]>("get_recipes");
         return recipes.find((r) => r.id === id) as Recipe;
       }
@@ -121,7 +121,7 @@ export const useCreateRecipe = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_recipe", {
           userId: "local-user",
           input: { ...data, organizationId: "local-org" },
@@ -144,7 +144,7 @@ export const useScaleRecipe = () => {
       recipeId: string;
       targetYield: number;
     }) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("scale_recipe", { recipeId, targetYield });
       }
       return null;
@@ -157,7 +157,7 @@ export const useTemplates = () => {
   return useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke<Template[]>("get_templates");
       }
       const data = await sdk.bakery.getTemplates();
@@ -173,7 +173,7 @@ export const useBakerySettings = () => {
   return useQuery({
     queryKey: ["bakerySettings"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke<BakerySettings>("get_settings", {
           organizationId: "local-org",
         });
@@ -188,7 +188,7 @@ export const useBakers = () => {
   return useQuery({
     queryKey: ["bakers"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke<BakeryBaker[]>("get_bakers");
       }
       const data = await sdk.bakery.getBakers();
@@ -204,7 +204,7 @@ export const useBakeryData = () => {
   return useQuery({
     queryKey: ["bakeryOverview"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke<OverviewData>("get_overview", {
           organizationId: "local-org",
         });
@@ -228,7 +228,7 @@ export const useBakeryCategories = () => {
   return useQuery({
     queryKey: ["bakeryCategories"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke<BakeryCategory[]>("get_categories");
       }
       const data = await sdk.bakery.getCategories();
@@ -243,7 +243,7 @@ export const useUpdateRecipe = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...data }: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_recipe", {
           userId: "local-user",
           recipe: { id, ...data },
@@ -259,7 +259,7 @@ export const useDeleteRecipe = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("delete_recipe", { userId: "local-user", id });
       }
       return sdk.bakery.deleteRecipe(id);
@@ -272,7 +272,7 @@ export const useUpdateBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...data }: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_batch", {
           userId: "local-user",
           input: { id, ...data },
@@ -289,7 +289,7 @@ export const useDeleteBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("delete_batch", { userId: "local-user", id });
       }
       return sdk.bakery.deleteBatch(id);
@@ -302,7 +302,7 @@ export const useStartBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_batch_status", {
           userId: "local-user",
           id,
@@ -319,7 +319,7 @@ export const useCompleteBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ batchId, data }: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_batch_status", {
           userId: "local-user",
           id: batchId,
@@ -336,7 +336,7 @@ export const useCancelBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_batch_status", {
           userId: "local-user",
           id,
@@ -353,7 +353,7 @@ export const useDuplicateBatch = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         // Mock duplicate for now or implement in Rust
         return tauriInvoke("get_batches").then((batches: any) => {
           const batch = batches.find((b: any) => b.id === id);
@@ -384,7 +384,7 @@ export const useCreateTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_template", {
           userId: "local-user",
           template: { ...data, organizationId: "local-org" },
@@ -400,7 +400,7 @@ export const useUpdateTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ templateId, data }: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_template", {
           userId: "local-user",
           template: { id: templateId, ...data },
@@ -416,7 +416,7 @@ export const useDeleteTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("delete_template", { userId: "local-user", id });
       }
       return sdk.bakery.deleteTemplate(id);
@@ -429,7 +429,7 @@ export const useDuplicateTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("get_templates").then((templates: any) => {
           const template = templates.find((t: any) => t.id === id);
           if (!template) throw new Error("Template not found");
@@ -453,7 +453,7 @@ export const useCreateBatchFromTemplate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("get_templates").then((templates: any) => {
           const template = templates.find((t: any) => t.id === id);
           if (!template) throw new Error("Template not found");
@@ -481,7 +481,7 @@ export const useCreateBakeryCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_category", {
           userId: "local-user",
           category: { ...data, organizationId: "local-org" },
@@ -498,7 +498,7 @@ export const useUpdateBakeryCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_category", {
           userId: "local-user",
           category: { id, ...data },
@@ -515,7 +515,7 @@ export const useDeleteBakeryCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("delete_category", { userId: "local-user", id });
       }
       return sdk.bakery.deleteCategory(id);
@@ -528,7 +528,7 @@ export const useDeleteBakeryCategory = () => {
 export const useGenerateRecipeAi = () => {
   return useMutation({
     mutationFn: async ({ prompt }: { prompt: string }) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         throw new Error(
           "AI Recipe Generation is not available in offline mode",
         );
@@ -582,7 +582,7 @@ export function useBakerySettingsManagement() {
 
   const updateSettings = useMutation({
     mutationFn: (data: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_settings", {
           userId: "local-user",
           settings: data,
@@ -598,7 +598,7 @@ export function useBakerySettingsManagement() {
 
   const addBaker = useMutation({
     mutationFn: (data: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_baker", {
           userId: "local-user",
           baker: { ...data, organizationId: "local-org" },
@@ -611,7 +611,7 @@ export function useBakerySettingsManagement() {
 
   const removeBaker = useMutation({
     mutationFn: (bakerId: string) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("delete_baker", {
           userId: "local-user",
           id: bakerId,
@@ -624,7 +624,7 @@ export function useBakerySettingsManagement() {
 
   const updateBaker = useMutation({
     mutationFn: ({ bakerId, data }: any) => {
-      if (isTauri() || isOfflineMode()) {
+      if (isTauri() && isOfflineMode()) {
         return tauriInvoke("update_baker", {
           userId: "local-user",
           baker: { id: bakerId, ...data },

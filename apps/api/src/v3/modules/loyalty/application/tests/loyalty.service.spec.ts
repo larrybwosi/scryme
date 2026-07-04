@@ -1,47 +1,37 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { LoyaltyService } from "../loyalty.service";
-import { PrismaService } from "@/prisma/prisma.service";
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi } from "vitest";
 
-// Use vi.hoisted for variables needed in vi.mock
-const { mockPrisma } = vi.hoisted(() => ({
-  mockPrisma: {
-    transaction: {
-      findUnique: vi.fn(),
-    },
-    loyaltyProgram: {
-      findFirst: vi.fn(),
-    },
-    customer: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    loyaltyTransaction: {
-      create: vi.fn(),
-    },
-    loyaltyReward: {
-      findUnique: vi.fn(),
-    },
-    loyaltyVoucher: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-    $transaction: vi.fn((cb) => cb(mockPrisma)),
-  },
-}));
+// 1. Hoist the mocks
+const mocked = vi.hoisted(() => {
+  const m = {
+    transaction: { findUnique: vi.fn() },
+    loyaltyProgram: { findFirst: vi.fn() },
+    customer: { findUnique: vi.fn(), update: vi.fn() },
+    loyaltyTransaction: { create: vi.fn() },
+    loyaltyReward: { findUnique: vi.fn() },
+    loyaltyVoucher: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    $transaction: vi.fn((cb) => cb(m)),
+  };
+  return { mockPrisma: m };
+});
 
-// Mock @repo/db before imports that use it
+// 2. Mock the dependency
 vi.mock("@repo/db", async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,
-    db: mockPrisma,
+    db: mocked.mockPrisma,
   };
 });
 
+// 3. Regular imports
+import { Test, TestingModule } from "@nestjs/testing";
+import { LoyaltyService } from "../loyalty.service";
+import { PrismaService } from "@/prisma/prisma.service";
+import { describe, it, expect, beforeEach } from "vitest";
+
 describe("LoyaltyService", () => {
   let service: LoyaltyService;
+  const { mockPrisma } = mocked;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

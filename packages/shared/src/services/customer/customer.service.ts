@@ -1,18 +1,32 @@
-/**
- * Customer Service — internal database
- *
- * All customer storage is primarily managed by the local DB.
- * The native CRM module provides dynamic fields and activities.
- */
+import "server-only";
+import { PrismaClient } from "@repo/db";
+import { runAutomation } from "@repo/windmill";
+import { ActionResponse } from "../../types/action-response";
+import { RecordService } from "../record.service";
+import { SchemaService } from "../schema.service";
+import { LoyaltyService } from "./loyalty/loyalty.service";
 
-import { db as prisma, type Customer, type CrmRecord, type Invoice, type Transaction } from "@repo/db";
-// import { runAutomation } from '@repo/windmill/server';
-import type { ActionResponse } from "../../types/action-response";
-import { LoyaltyService } from './loyalty.service';
+export class CustomerService {
+  private recordService: RecordService;
+  private schemaService: SchemaService;
 
-export const CustomerService = {
+  constructor(private prisma: PrismaClient) {
+    this.recordService = new RecordService(prisma);
+    this.schemaService = new SchemaService(prisma);
+  }
+
+  private splitName(name: string): { firstName: string; lastName: string } {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) {
+      return { firstName: name, lastName: "" };
+    }
+    const lastName = parts.pop() || "";
+    const firstName = parts.join(" ");
+    return { firstName, lastName };
+  }
+
   /**
-   * List customers from local DB.
+   * List customers from local DB, merged with CRM data.
    */
   async getCustomers(
     organizationId: string,
@@ -21,10 +35,12 @@ export const CustomerService = {
       page?: number;
       pageSize?: number;
       orderBy?: string;
-    }
-  ): Promise<ActionResponse<{ customers: any[]; totalCount: number; totalPages: number }>> {
+    },
+  ): Promise<
+    ActionResponse<{ customers: any[]; totalCount: number; totalPages: number }>
+  > {
     try {
-      const { query = '', page = 1, pageSize = 15 } = searchParams ?? {};
+      const { query = "", page = 1, pageSize = 15 } = searchParams ?? {};
       const skip = (page - 1) * pageSize;
 
       const where = {
@@ -32,125 +48,156 @@ export const CustomerService = {
         ...(query
           ? {
               OR: [
-                { name: { contains: query, mode: 'insensitive' as const } },
-                { email: { contains: query, mode: 'insensitive' as const } },
-                { phone: { contains: query, mode: 'insensitive' as const } },
+                { name: { contains: query, mode: "insensitive" as const } },
+                { email: { contains: query, mode: "insensitive" as const } },
+                { phone: { contains: query, mode: "insensitive" as const } },
               ],
             }
           : {}),
       };
 
       const [customers, totalCount] = await Promise.all([
-        prisma.customer.findMany({
+        this.prisma.customer.findMany({
           where,
           take: pageSize,
           skip,
-          orderBy: { name: 'asc' },
-          // ⚡ Bolt: Performance Optimization
-          // Remove broad 'include: { crmRecord: true }' to avoid fetching large dynamic JSON data in list view.
-          // This reduces database I/O and response payload size while maintaining the scalar data contract.
+          orderBy: { name: "asc" },
+          include: {
+            crmRecord: true,
+          },
         }),
-        prisma.customer.count({ where }),
+        this.prisma.customer.count({ where }),
       ]);
 
       return {
         success: true,
         data: {
-          customers: customers.map((c: Customer & { crmRecord?: CrmRecord | null }) => ({
-            ...c,
-            localId: c.id,
-            // UI compatibility shape
-            name: { firstName: c.name, lastName: '' },
-            emails: { primaryEmail: c.email },
-            phones: { primaryPhoneNumber: c.phone },
-          })),
+          customers: customers.map((c) => {
+            const crmData = (c.crmRecord?.data as Record<string, any>) || {};
+            const { firstName, lastName } = this.splitName(c.name);
+            return {
+              ...c,
+              ...crmData,
+              localId: c.id,
+              // UI compatibility shape
+              name: {
+                firstName: crmData.firstName || firstName,
+                lastName: crmData.lastName || lastName,
+              },
+              emails: { primaryEmail: c.email },
+              phones: { primaryPhoneNumber: c.phone },
+            };
+          }),
           totalCount,
           totalPages: Math.ceil(totalCount / pageSize),
         },
       };
     } catch (error) {
-      console.error('[CustomerService] getCustomers error:', error);
+      console.error("[CustomerService] getCustomers error:", error);
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to fetch customers.',
+        message:
+          error instanceof Error ? error.message : "Failed to fetch customers.",
       };
     }
-  },
+  }
 
   /**
-   * Fetch a single customer by their local ID with financial data.
+   * Fetch a single customer by their local ID, merged with CRM data and financial stats.
    */
-  async getCustomerById(organizationId: string, customerId: string): Promise<ActionResponse<any>> {
+  async getCustomerById(
+    organizationId: string,
+    customerId: string,
+  ): Promise<ActionResponse<any>> {
     try {
-      // PERFORMANCE: Use database-level aggregation for financial stats to avoid loading all invoices into memory.
-      // We also limit the number of related records (invoices, notes, activities) fetched to reduce payload size.
-      const [customer, totals, paidTotals] = await Promise.all([
-        prisma.customer.findFirst({
-          where: { id: customerId, organizationId },
-          include: {
-            crmRecord: {
-              include: {
-                notes: { orderBy: { timelineDate: 'desc' }, take: 10 },
-                activities: { orderBy: { createdAt: 'desc' }, take: 10 },
-              },
-            },
-            invoices: {
-              orderBy: { postingDate: 'desc' },
-              take: 10,
-            },
-            transactions: {
-              where: { organizationId },
-              orderBy: { createdAt: 'desc' },
-              take: 10,
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: customerId, organizationId },
+        include: {
+          crmRecord: {
+            include: {
+              notes: { orderBy: { timelineDate: "desc" } },
+              activities: { orderBy: { createdAt: "desc" } },
             },
           },
-        }),
-        prisma.invoice.aggregate({
-          where: { customerId, organizationId },
-          _sum: { grandTotal: true },
-        }),
-        prisma.invoice.aggregate({
-          where: { customerId, organizationId, status: 'PAID' },
-          _sum: { grandTotal: true },
-        }),
-      ]);
+          invoices: {
+            orderBy: { postingDate: "desc" },
+          },
+          transactions: {
+            where: { organizationId },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+          },
+        },
+      });
 
       if (!customer) {
-        return { success: false, message: 'Customer not found.' };
+        return { success: false, message: "Customer not found." };
       }
 
-      const totalInvoiced = totals._sum.grandTotal || 0;
-      const totalPaidInvoices = paidTotals._sum.grandTotal || 0;
+      const crmData = (customer.crmRecord?.data as Record<string, any>) || {};
+      const { firstName, lastName } = this.splitName(customer.name);
+
+      // Calculate balance
+      const totalInvoiced = customer.invoices.reduce(
+        (acc, inv) => acc + inv.grandTotal,
+        0,
+      );
+      const totalPaidInvoices = customer.invoices
+        .filter((inv) => inv.status === "PAID")
+        .reduce((acc, inv) => acc + inv.grandTotal, 0);
+
       const balance = totalInvoiced - totalPaidInvoices;
 
       return {
         success: true,
         data: {
-          ...customer,
-          localId: customer.id,
-          name: { firstName: customer.name, lastName: '' },
-          emails: { primaryEmail: customer.email },
-          phones: { primaryPhoneNumber: customer.phone },
+          customer: {
+            ...customer,
+            ...crmData,
+            localId: customer.id,
+            name: {
+              firstName: crmData.firstName || firstName,
+              lastName: crmData.lastName || lastName,
+            },
+            emails: { primaryEmail: customer.email },
+            phones: { primaryPhoneNumber: customer.phone },
+          },
           balance,
           stats: [
-            { label: 'Total Invoiced', value: totalInvoiced, color: 'blue' },
-            { label: 'Total Paid', value: totalPaidInvoices, color: 'green' },
-            { label: 'Current Balance', value: balance, color: balance > 0 ? 'orange' : 'green' },
-          ]
+            {
+              label: "Total Invoiced",
+              value: `$${totalInvoiced.toLocaleString()}`,
+              color: "blue",
+            },
+            {
+              label: "Total Paid",
+              value: `$${totalPaidInvoices.toLocaleString()}`,
+              color: "green",
+            },
+            {
+              label: "Current Balance",
+              value: `$${balance.toLocaleString()}`,
+              color: balance > 0 ? "orange" : "green",
+            },
+          ],
+          invoices: customer.invoices,
+          transactions: customer.transactions,
+          activities: customer.crmRecord?.activities || [],
+          notes: customer.crmRecord?.notes || [],
         },
       };
     } catch (error) {
-      console.error('[CustomerService] getCustomerById error:', error);
-      return { success: false, message: 'Failed to fetch customer.' };
+      console.error("[CustomerService] getCustomerById error:", error);
+      return { success: false, message: "Failed to fetch customer." };
     }
-  },
+  }
 
   /**
-   * Create or update a customer.
+   * Create or update a customer, ensuring CRM record synchronization.
    */
   async saveCustomer(
     organizationId: string,
-    _memberId: string,
+    memberId: string,
     formData: {
       id?: string;
       name: string;
@@ -161,10 +208,12 @@ export const CustomerService = {
       avatar?: string | null;
       city?: string | null;
       jobTitle?: string | null;
-    }
+      [key: string]: any;
+    },
   ): Promise<ActionResponse<{ customer: any; localId: string }>> {
     try {
-      const { id, name, email, phone, company } = formData;
+      const { id, name, email, phone, company, ...extraFields } = formData;
+      const { firstName, lastName } = this.splitName(name);
 
       const customerData = {
         name,
@@ -174,72 +223,136 @@ export const CustomerService = {
         organizationId,
       };
 
-      let customer;
+      // 1. Ensure CRM Object Definition exists for "person"
+      let personObject = await this.schemaService.getObjectByName(
+        organizationId,
+        "person",
+      );
+      if (!personObject) {
+        const seeded =
+          await this.schemaService.seedStandardObjects(organizationId);
+        personObject = seeded.person;
+      }
+
+      // 2. Prepare CRM record data
+      const crmRecordData = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        company,
+        ...extraFields,
+      };
+
+      let customer = null;
       if (id) {
-        customer = await prisma.customer.update({
+        customer = await this.prisma.customer.findUnique({
           where: { id },
-          data: customerData,
+          include: { crmRecord: true },
         });
-      } else {
-        customer = await prisma.customer.create({
-          data: customerData,
-        });
-
-        // Trigger CRM Sync (New Master)
-        try {
-          const personObject = await prisma.crmObjectDefinition.findFirst({
-            where: { organizationId, name: 'person' }
-          });
-
-          if (personObject) {
-            const crmRecord = await prisma.crmRecord.create({
-              data: {
-                objectId: personObject.id,
-                organizationId,
-                data: {
-                  firstName: customer.name,
-                  email: customer.email,
-                  phone: customer.phone,
-                }
-              }
-            });
-            await prisma.customer.update({
-              where: { id: customer.id },
-              data: { crmRecordId: crmRecord.id }
-            });
-          }
-        } catch (crmError) {
-          console.error('[CustomerService] CRM Record creation failed:', crmError);
-        }
-
-        // Process referral signup rewards
-        await LoyaltyService.processReferral(prisma as any, organizationId, customer.id, customer.id, 'SIGNUP');
-
-        // Trigger Windmill notification for new customer registration
-        try {
-          /* await runAutomation({
+      } else if (email || phone) {
+        // Safe lookup: only if email or phone is provided
+        customer = await this.prisma.customer.findFirst({
+          where: {
             organizationId,
-            scriptPath: 'f/dealio/customer-registration-alert',
-            dealioEventType: 'customer_registration',
+            OR: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
+          },
+          include: { crmRecord: true },
+        });
+      }
+
+      if (customer) {
+        // Update existing customer
+        customer = await this.prisma.customer.update({
+          where: { id: customer.id },
+          data: customerData,
+          include: { crmRecord: true },
+        });
+
+        if (customer.crmRecordId) {
+          await this.recordService.updateRecord(
+            customer.crmRecordId,
+            crmRecordData,
+            organizationId,
+            memberId,
+          );
+        } else {
+          const record = await this.recordService.createRecord({
+            objectId: personObject.id,
+            organizationId,
+            data: crmRecordData,
+            ownerId: memberId,
+          });
+          customer = await this.prisma.customer.update({
+            where: { id: customer.id },
+            data: { crmRecordId: record.id },
+            include: { crmRecord: true },
+          });
+        }
+      } else {
+        // Create new customer
+        const record = await this.recordService.createRecord({
+          objectId: personObject.id,
+          organizationId,
+          data: crmRecordData,
+          ownerId: memberId,
+        });
+
+        customer = await this.prisma.customer.create({
+          data: {
+            ...customerData,
+            crmRecordId: record.id,
+          },
+          include: { crmRecord: true },
+        });
+
+        // Trigger Loyalty processing and Windmill notification for new customer
+        try {
+          // Initialize loyalty account if needed (External)
+          await LoyaltyService.adjustPointsExternal(
+            customer.id,
+            0,
+            "MANUAL_ADJUSTMENT",
+            "Initial registration",
+          );
+
+          // Internal loyalty referral
+          await LoyaltyService.processReferral(
+            this.prisma,
+            organizationId,
+            customer.id,
+            customer.id,
+            "SIGNUP",
+          );
+
+          await runAutomation({
+            organizationId,
+            scriptPath: "f/dealio/customer-registration-alert",
+            dealioEventType: "customer_registration",
             data: {
               customerId: customer.id,
               customerName: name,
               customerEmail: email,
-              eventType: 'customer_registration',
+              eventType: "customer_registration",
             },
-          }); */
+          });
         } catch (error) {
-          console.error('[CustomerService] Failed to trigger registration notification:', error);
+          console.error(
+            "[CustomerService] Failed to trigger registration actions:",
+            error,
+          );
         }
       }
 
       return {
         success: true,
-        message: id ? 'Customer updated successfully.' : 'Customer created successfully.',
+        message: id
+          ? "Customer updated successfully."
+          : "Customer created successfully.",
         data: {
           customer: {
             ...customer,
-            name: { firstName: customer.name, lastName: '' },
+            name: { firstName, lastName },
             emails: { primaryEmail: customer.email },
             phones: { primaryPhoneNumber: customer.phone },
           },
@@ -247,29 +360,47 @@ export const CustomerService = {
         },
       };
     } catch (error) {
-      console.error('[CustomerService] saveCustomer error:', error);
-      const msg = error instanceof Error ? error.message : 'Failed to save customer.';
+      console.error("[CustomerService] saveCustomer error:", error);
+      const msg =
+        error instanceof Error ? error.message : "Failed to save customer.";
       return { success: false, message: msg };
     }
-  },
+  }
 
   /**
-   * Delete a customer.
+   * Delete a customer and its associated CRM record.
    */
   async deleteCustomer(
     organizationId: string,
     _userId: string,
-    customerId: string
+    customerId: string,
   ): Promise<ActionResponse<{ id: string }>> {
     try {
-      await prisma.customer.delete({
+      const customer = await this.prisma.customer.findUnique({
         where: { id: customerId, organizationId },
       });
 
-      return { success: true, message: 'Customer deleted successfully.', data: { id: customerId } };
+      if (!customer) throw new Error("Customer not found");
+
+      if (customer.crmRecordId) {
+        await this.recordService.deleteRecord(
+          customer.crmRecordId,
+          organizationId,
+        );
+      }
+
+      await this.prisma.customer.delete({
+        where: { id: customerId },
+      });
+
+      return {
+        success: true,
+        message: "Customer deleted successfully.",
+        data: { id: customerId },
+      };
     } catch (error) {
-      console.error('[CustomerService] deleteCustomer error:', error);
-      return { success: false, message: 'Failed to delete customer.' };
+      console.error("[CustomerService] deleteCustomer error:", error);
+      return { success: false, message: "Failed to delete customer." };
     }
-  },
-};
+  }
+}

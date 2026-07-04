@@ -13,17 +13,13 @@
     "@repo/db": "workspace:*",
     "@repo/scryme": "workspace:*",
     "axios": "^1.15.2",
-    "clsx": "^2.1.1",
     "handlebars": "^4.7.9",
-    "lucide-react": "^0.474.0",
     "nodemailer": "^7.0.13",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.9.1",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
     "server-only": "^0.0.1"
   },
   "scripts": {

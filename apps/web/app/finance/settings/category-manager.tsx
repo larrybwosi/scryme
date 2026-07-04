@@ -12,12 +12,21 @@ import {
   Lock,
   Eye,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 import { toast } from "sonner";
 import { createExpenseCategory } from "@/app/actions/finance";
 import { cn } from "@repo/ui/lib/utils";
@@ -89,7 +98,6 @@ export function CategoryManager({
         </div>
         <Button
           onClick={() => setIsAdding(true)}
-          disabled={isAdding}
           size="sm"
           className="bg-[#34A853] hover:bg-[#2d9147]">
           <Plus className="w-4 h-4 mr-2" /> Add Category
@@ -98,64 +106,6 @@ export function CategoryManager({
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-4">
-          {isAdding && (
-            <div className="p-6 rounded-2xl border-2 border-[#34A853] bg-[#34A853]/5 animate-in fade-in slide-in-from-top-4 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={e =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="e.g., Office Supplies"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Code</Label>
-                  <Input
-                    value={formData.code}
-                    onChange={e =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                    placeholder="e.g., OFFICE"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>GL Account Code</Label>
-                  <Input
-                    value={formData.glCode}
-                    onChange={e =>
-                      setFormData({ ...formData, glCode: e.target.value })
-                    }
-                    placeholder="e.g., 6100"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Input
-                    value={formData.description}
-                    onChange={e =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Brief purpose..."
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-3 mt-6">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsAdding(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={handleAdd} disabled={isPending}>
-                  {isPending ? "Creating..." : "Create Category"}
-                </Button>
-              </div>
-            </div>
-          )}
-
           <div className="grid grid-cols-1 gap-3">
             {filtered.map(cat => (
               <div
@@ -219,6 +169,75 @@ export function CategoryManager({
           </div>
         </div>
       </div>
+
+      <Dialog open={isAdding} onOpenChange={setIsAdding}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Expense Category</DialogTitle>
+            <DialogDescription>
+              Create a new category for expense classification.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input
+                  value={formData.name}
+                  onChange={e =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="e.g., Office Supplies"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Code</Label>
+                <Input
+                  value={formData.code}
+                  onChange={e =>
+                    setFormData({ ...formData, code: e.target.value })
+                  }
+                  placeholder="e.g., OFFICE"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>GL Account Code</Label>
+              <Input
+                value={formData.glCode}
+                onChange={e =>
+                  setFormData({ ...formData, glCode: e.target.value })
+                }
+                placeholder="e.g., 6100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                value={formData.description}
+                onChange={e =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Brief purpose..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsAdding(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#34A853] hover:bg-[#2d9147]"
+              onClick={handleAdd}
+              disabled={isPending}>
+              {isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Create Category
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
