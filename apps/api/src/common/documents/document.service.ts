@@ -9,6 +9,8 @@ import {
   GenericInvoiceData,
   ReceiptTemplateV2,
   ReceiptPDFDataV2,
+  getTemplateById,
+  V3DocumentData,
 } from "@repo/documents";
 import { generateVerificationHash } from "@repo/documents/server";
 import { Readable } from "stream";
@@ -74,6 +76,25 @@ export class DocumentService {
   async generateReceiptPDF(data: ReceiptPDFDataV2): Promise<Readable> {
     const element = DocumentGenerator.createElement(ReceiptTemplateV2, {
       data,
+    });
+    return (await DocumentGenerator.renderToStream(
+      element,
+    )) as unknown as Readable;
+  }
+
+  async generateV3DocumentPDF(
+    templateId: string,
+    data: V3DocumentData,
+    qrCode?: string,
+  ): Promise<Readable> {
+    const template = getTemplateById(templateId);
+    if (!template) {
+      throw new Error(`Template not found: ${templateId}`);
+    }
+
+    const element = DocumentGenerator.createElement(template.component, {
+      data,
+      qrCode,
     });
     return (await DocumentGenerator.renderToStream(
       element,

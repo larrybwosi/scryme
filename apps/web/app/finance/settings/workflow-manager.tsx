@@ -36,6 +36,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   createApprovalWorkflow,
@@ -266,28 +271,34 @@ export function WorkflowManager({
                         }}
                         className="bg-transparent border-none font-bold text-sm h-8 p-0 focus-visible:ring-0 w-1/2"
                       />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => {
-                          const newSteps = editingWorkflow.steps.filter(
-                            (_: any, i: number) => i !== sIdx,
-                          );
-                          // Re-number steps
-                          const updatedSteps = newSteps.map(
-                            (s: any, i: number) => ({
-                              ...s,
-                              stepNumber: i + 1,
-                            }),
-                          );
-                          setEditingWorkflow({
-                            ...editingWorkflow,
-                            steps: updatedSteps,
-                          });
-                        }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            aria-label="Delete step"
+                            onClick={() => {
+                              const newSteps = editingWorkflow.steps.filter(
+                                (_: any, i: number) => i !== sIdx,
+                              );
+                              // Re-number steps
+                              const updatedSteps = newSteps.map(
+                                (s: any, i: number) => ({
+                                  ...s,
+                                  stepNumber: i + 1,
+                                }),
+                              );
+                              setEditingWorkflow({
+                                ...editingWorkflow,
+                                steps: updatedSteps,
+                              });
+                            }}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete step</TooltipContent>
+                      </Tooltip>
                     </div>
 
                     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -714,14 +725,20 @@ export function WorkflowManager({
                     </div>
                   </div>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label="More options"
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>More options</TooltipContent>
+                    </Tooltip>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => setEditingWorkflow(workflow)}>

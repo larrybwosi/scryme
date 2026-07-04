@@ -5,12 +5,28 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@repo/ui/components/ui/dialog';
 import { Label } from '@repo/ui/components/ui/label';
-import { Plus, Pencil, Trash2, Search, Printer } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Printer, Loader2 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { LabelService } from '@/lib/label-service';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { usePosStore } from '@/store/store';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@repo/ui/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@repo/ui/components/ui/tooltip';
 
 export default function ProductManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +34,8 @@ export default function ProductManagementPage() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const handleBarcodeScanned = (e: any) => {
@@ -75,19 +93,38 @@ export default function ProductManagementPage() {
     }
   };
 
-  const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+  const handleDelete = async () => {
+    if (!productToDelete) return;
+    setIsDeleting(true);
     try {
-      await invoke('delete_local_product_command', { productId, locationId: 'standalone' });
+      await invoke('delete_local_product_command', { productId: productToDelete, locationId: 'standalone' });
       toast.success('Product deleted');
       triggerSync();
+      setProductToDelete(null);
     } catch (error) {
       toast.error('Failed to delete product');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
+    <TooltipProvider>
     <div className="p-6 space-y-6">
+      <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && !isDeleting && setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone. This will permanently delete the product.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleDelete(); }} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isDeleting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</> : 'Delete Product'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Product Management</h1>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -161,43 +198,29 @@ export default function ProductManagementPage() {
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.price || product.variants?.[0]?.price || product.variants?.[0]?.sellableUnits?.[0]?.price}</TableCell>
                 <TableCell>{product.stock || product.variants?.[0]?.stock}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title="Print Barcode"
-                    onClick={async () => {
+                <TableCell className="text-right space-x-2">
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Print Barcode" onClick={async () => {
                       try {
                         const currency = usePosStore.getState().settings.receiptConfig.currency || 'USD';
                         await LabelService.printLabels([{
-                          id: product.productId,
-                          name: product.productName,
-                          barcode: product.barcode || product.sku || product.productId,
-                          price: product.price || product.variants?.[0]?.price || 0,
-                          currency,
-                          quantity: 1
-                        }], {
-                          size: '50x30',
-                          showPrice: true,
-                          showSku: true,
-                          showName: true,
-                          barcodeType: 'code128',
-                          printerName: 'default'
-                        });
+                          id: product.productId, name: product.productName, barcode: product.barcode || product.sku || product.productId,
+                          price: product.price || product.variants?.[0]?.price || 0, currency, quantity: 1
+                        }], { size: '50x30', showPrice: true, showSku: true, showName: true, barcodeType: 'code128', printerName: 'default' });
                         toast.success('Label sent to printer');
-                      } catch (err) {
-                        toast.error('Printing failed');
-                      }
-                    }}
-                  >
-                    <Printer className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(product.productId)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                      } catch (err) { toast.error('Printing failed'); }
+                    }}><Printer className="h-4 w-4" /></Button>
+                  </TooltipTrigger><TooltipContent>Print Barcode</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Edit Product" onClick={() => { setEditingProduct(product); setIsDialogOpen(true); }}>
+                      <Pencil className="h-4 w-4" /></Button>
+                  </TooltipTrigger><TooltipContent>Edit Product</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive" aria-label="Delete Product" onClick={() => setProductToDelete(product.productId)}>
+                      <Trash2 className="h-4 w-4" /></Button>
+                  </TooltipTrigger><TooltipContent>Delete Product</TooltipContent></Tooltip>
                 </TableCell>
               </TableRow>
             ))}
@@ -205,5 +228,6 @@ export default function ProductManagementPage() {
         </Table>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

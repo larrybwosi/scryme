@@ -6,7 +6,8 @@ import {
 } from "@nestjs/common";
 import { V3AuthCoreService } from "../../modules/auth-core/infrastructure/services/v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ModuleRef } from "@nestjs/core";
+import { ModuleRef, Reflector } from "@nestjs/core";
+import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
 
 @Injectable()
 export class V3AuthGuard implements CanActivate {
@@ -15,9 +16,19 @@ export class V3AuthGuard implements CanActivate {
   constructor(
     private readonly prisma: PrismaService,
     private readonly moduleRef: ModuleRef,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      ALLOW_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 

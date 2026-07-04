@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ActivityLogger } from "@repo/crm/server";
+import { ActivityLogger } from "@repo/shared/crm/server";
 import { CrmActivity } from "@repo/db";
 
 @Injectable()

@@ -10,7 +10,7 @@ import { ApiRealtimeService } from "../../../../../common/services/realtime.serv
 import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import { InvoiceUseCase } from "../../../finance/application/use-cases/invoice.use-case";
-import { confirmOrder } from "@repo/shared/actions/transaction/orders";
+import { confirmOrder } from "@repo/shared/actions";
 
 @Injectable()
 export class UpdateOrderStatusUseCase {
@@ -24,8 +24,13 @@ export class UpdateOrderStatusUseCase {
     private readonly invoiceUseCase: InvoiceUseCase,
   ) {}
 
-  async execute(orderId: string, status: string, memberId?: string) {
-    const order = await this.orderRepository.findById(orderId);
+  async execute(
+    organizationId: string,
+    memberId: string,
+    orderId: string,
+    status: string,
+  ) {
+    const order = await this.orderRepository.findById(orderId, organizationId);
     if (!order) {
       throw new NotFoundException("Order not found");
     }
@@ -40,14 +45,19 @@ export class UpdateOrderStatusUseCase {
         orderId,
       );
       if (!result.success) {
-        throw new BadRequestException(result.error || "Failed to confirm order");
+        throw new BadRequestException(
+          result.error || "Failed to confirm order",
+        );
       }
     } else {
       order.status = status;
       await this.orderRepository.save(order);
     }
 
-    const updatedOrder = await this.orderRepository.findById(orderId);
+    const updatedOrder = await this.orderRepository.findById(
+      orderId,
+      organizationId,
+    );
 
     if (status === "COMPLETED" && oldStatus !== "COMPLETED") {
       await this.handleOrderCompletion(updatedOrder);

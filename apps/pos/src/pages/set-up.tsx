@@ -381,7 +381,15 @@ export default function SetupPage() {
 
   const handleTokenNext = (token: string) => {
     setSetupData(prev => ({ ...prev, setupToken: token }));
-    setStep(2); // Go to Device Type selection
+
+    // Hub and Spoke options are strictly for restaurant mode
+    const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+    if (businessMode === 'restaurant') {
+      setStep(2); // Go to Device Type selection
+    } else {
+      setDeviceConfig({ type: 'MAIN_HUB', hubIp: null });
+      setStep(3); // Skip to success
+    }
   };
 
   const handleDeviceTypeNext = (type: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string) => {

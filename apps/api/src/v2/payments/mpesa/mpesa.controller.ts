@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Param, Req, Get } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { MpesaService } from "@repo/mpesa/server";
-import type { MpesaTriggerInput } from "@repo/mpesa/server";
+import { MpesaService } from "@repo/shared/mpesa/server";
+import type { MpesaTriggerInput } from "@repo/shared/mpesa/server";
 import type { FastifyRequest } from "fastify";
 import {
   AllowPublic,

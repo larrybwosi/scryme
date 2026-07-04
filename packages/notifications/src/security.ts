@@ -36,10 +36,27 @@ export async function isSafeUrl(urlString: string): Promise<boolean> {
       return false;
     }
 
-    // Resolve hostname to IP address
-    const { address } = await lookup(hostname);
+    // Resolve hostname to IP address(es)
+    // @security: We use { all: true } to check ALL resolved IP addresses.
+    // This prevents bypasses where a hostname resolves to both a safe and an unsafe IP.
+    const addresses = await lookup(hostname, { all: true });
 
-    return isSafeIp(address);
+    // If no addresses found, it's not safe
+    if (!addresses || (Array.isArray(addresses) && addresses.length === 0)) {
+      return false;
+    }
+
+    // Every resolved IP address must be safe
+    if (Array.isArray(addresses)) {
+      for (const { address } of addresses) {
+        if (!isSafeIp(address)) return false;
+      }
+    } else {
+      // Fallback for unexpected return type from promisified lookup
+      if (!isSafeIp((addresses as any).address)) return false;
+    }
+
+    return true;
   } catch (error) {
     return false;
   }
@@ -84,6 +101,12 @@ function isSafeIp(ip: string): boolean {
   // --- IPv6 Validation ---
   if (net.isIPv6(ip)) {
     const normalizedIp = ip.toLowerCase();
+
+    // Handle IPv4-mapped IPv6 addresses (::ffff:1.2.3.4)
+    if (normalizedIp.startsWith("::ffff:")) {
+      const ipv4 = ip.split(":").pop();
+      return ipv4 ? isSafeIp(ipv4) : false;
+    }
 
     // ::/128 (Unspecified) & ::1/128 (Loopback)
     if (

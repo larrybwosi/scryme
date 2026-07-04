@@ -7,3 +7,4 @@ export * from './provisioning/v2';
 export * from './provisioning/v3';
 export * from './validations/order';
 export * from './validations/sale';
+export * from './validations/customer/pos';

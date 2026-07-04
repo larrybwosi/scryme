@@ -47,7 +47,8 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
 
   return await (prisma as any).$transaction(async (tx: any) => {
     // 1. Fetch Transaction with Product Conversions
-    const transaction = await tx.transaction.findUnique({
+    // @security: Multi-tenant isolation is enforced by scoping lookup to organizationId.
+    const transaction = await tx.transaction.findFirst({
       where: { id: transactionId, organizationId },
       include: {
         location: true,
@@ -209,8 +210,12 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
   const { fulfilmentId, organizationId, reconciledBy, outcome, proofUrl, receivedBy, failureReason } = data;
 
   return await (prisma as any).$transaction(async (tx: any) => {
-    const fulfillment = await tx.fulfillment.findUnique({
-      where: { id: fulfilmentId },
+    // @security: Multi-tenant isolation is enforced by scoping lookup to organizationId via transaction.
+    const fulfillment = await tx.fulfillment.findFirst({
+      where: {
+        id: fulfilmentId,
+        transaction: { organizationId },
+      },
       include: {
         transaction: {
           include: {
@@ -222,7 +227,7 @@ export async function performReconciliation(prisma: PrismaClient, data: Reconcil
       },
     });
 
-    if (!fulfillment || fulfillment.transaction.organizationId !== organizationId) {
+    if (!fulfillment) {
       throw new Error('FULFILLMENT_OR_TRANSACTION_NOT_FOUND');
     }
 

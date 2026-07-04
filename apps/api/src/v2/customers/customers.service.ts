@@ -21,14 +21,12 @@ export class CustomersService {
     const limit = Math.min(60, Math.max(1, parseInt(query.limit ?? "25", 10)));
 
     try {
-      const result = await SharedCustomerService.getCustomers(
-        ctx.organizationId,
-        {
-          query: q,
-          page,
-          pageSize: limit,
-        },
-      );
+      const service = new SharedCustomerService(this.prisma.client as any);
+      const result = await service.getCustomers(ctx.organizationId, {
+        query: q,
+        page,
+        pageSize: limit,
+      });
 
       if (!result.success) {
         throw new BadGatewayException(
@@ -62,7 +60,8 @@ export class CustomersService {
 
   async getCustomer(ctx: V2ApiContext, customerId: string) {
     try {
-      const result = await SharedCustomerService.getCustomerById(
+      const service = new SharedCustomerService(this.prisma.client as any);
+      const result = await service.getCustomerById(
         ctx.organizationId,
         customerId,
       );
@@ -98,7 +97,8 @@ export class CustomersService {
 
   async createCustomer(ctx: V2ApiContext, body: any) {
     try {
-      const result = await SharedCustomerService.saveCustomer(
+      const service = new SharedCustomerService(this.prisma.client as any);
+      const result = await service.saveCustomer(
         ctx.organizationId,
         ctx.memberId ?? "api",
         body,
@@ -135,7 +135,8 @@ export class CustomersService {
     // 1. Delete from our local database (mapping/cache)
     // We use the shared CustomerService which handles deletion from the database
     // and cleanup of associated records if any.
-    const result = await SharedCustomerService.deleteCustomer(
+    const service = new SharedCustomerService(this.prisma.client as any);
+    const result = await service.deleteCustomer(
       organizationId,
       ctx.userId || "api",
       id,
