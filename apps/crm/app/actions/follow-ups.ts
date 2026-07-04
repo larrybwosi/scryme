@@ -1,5 +1,6 @@
 'use server';
 
+import { addDays, addWeeks, addMonths } from 'date-fns';
 import { db, type CrmFollowUp } from '@repo/db';
 import { crmFollowUpSchema, type CrmFollowUpFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
@@ -7,9 +8,22 @@ import { revalidatePath } from 'next/cache';
 export async function createFollowUp(data: CrmFollowUpFormValues, organizationId: string): Promise<CrmFollowUp> {
   const validatedData = crmFollowUpSchema.parse(data);
 
+  // Automatically tie to customer's default location if not provided
+  let locationId = validatedData.locationId;
+  if (!locationId) {
+    const record = await db.crmRecord.findUnique({
+      where: { id: validatedData.recordId },
+      include: { customer: true }
+    });
+    if (record?.customer?.defaultLocationId) {
+      locationId = record.customer.defaultLocationId;
+    }
+  }
+
   const followUp = await db.crmFollowUp.create({
     data: {
       ...validatedData,
+      locationId,
       organizationId,
     },
     include: {
@@ -47,6 +61,40 @@ export async function updateFollowUp(id: string, data: Partial<CrmFollowUpFormVa
       }
     }
   });
+
+  // Handle recurring follow-ups
+  if (data.status === 'COMPLETED' && followUp.isRecurring && followUp.recurringInterval) {
+    let nextDueDate = new Date(followUp.dueDate);
+
+    switch (followUp.recurringInterval) {
+      case 'DAILY':
+        nextDueDate = addDays(nextDueDate, 1);
+        break;
+      case 'WEEKLY':
+        nextDueDate = addWeeks(nextDueDate, 1);
+        break;
+      case 'MONTHLY':
+        nextDueDate = addMonths(nextDueDate, 1);
+        break;
+    }
+
+    await db.crmFollowUp.create({
+      data: {
+        title: followUp.title,
+        description: followUp.description,
+        dueDate: nextDueDate,
+        priority: followUp.priority,
+        status: 'PENDING',
+        type: followUp.type,
+        recordId: followUp.recordId,
+        organizationId: followUp.organizationId,
+        assignedToId: followUp.assignedToId,
+        locationId: followUp.locationId,
+        isRecurring: true,
+        recurringInterval: followUp.recurringInterval,
+      }
+    });
+  }
 
   if (followUp.record.customer) {
     revalidatePath(`/customers/${followUp.record.customer.id}`);
