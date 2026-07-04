@@ -8,9 +8,9 @@ import {
   Zap,
   ShieldCheck,
   Download,
-  Windows,
+  Monitor,
   Apple,
-  Linux
+  Terminal
 } from "lucide-react";
 
 export default function PosPage() {
@@ -43,9 +43,9 @@ export default function PosPage() {
   ];
 
   const downloads = [
-    { platform: "Windows", version: "v8.4.0", icon: MonitorSmartphone, arch: "x64 (.exe)", link: "/api/v3/pos/download?platform=windows" },
+    { platform: "Windows", version: "v8.4.0", icon: Monitor, arch: "x64 (.exe)", link: "/api/v3/pos/download?platform=windows" },
     { platform: "macOS", version: "v8.4.0", icon: Apple, arch: "Silicon/Intel (.dmg)", link: "/api/v3/pos/download?platform=macos" },
-    { platform: "Linux", version: "v8.4.0", icon: MonitorSmartphone, arch: "AppImage/Deb (.deb)", link: "/api/v3/pos/download?platform=linux" },
+    { platform: "Linux", version: "v8.4.0", icon: Terminal, arch: "AppImage/Deb (.deb)", link: "/api/v3/pos/download?platform=linux" },
   ];
 
   return (

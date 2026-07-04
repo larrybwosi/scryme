@@ -186,12 +186,13 @@ export class PosController {
   ) {
     const { stream, fileName, contentType } = await this.downloadPosBinaryUseCase.execute(platform);
 
+    // Explicitly handle response to bypass interceptors
     res.set({
       "Content-Type": contentType,
       "Content-Disposition": `attachment; filename="${fileName}"`,
     });
 
-    stream.pipe(res);
+    return stream.pipe(res);
   }
 
   @Get("petty-cash/transactions")

@@ -1,13 +1,14 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "@/prisma/prisma.service";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import axios from "axios";
 import { Stream } from "stream";
 
 @Injectable()
 export class DownloadPosBinaryUseCase {
-  constructor(private readonly prisma: PrismaService) {}
-
   async execute(platform: string) {
+    if (!platform) {
+      throw new BadRequestException("Platform parameter is required");
+    }
+
     const platforms: Record<string, { url: string; fileName: string; contentType: string }> = {
       windows: {
         url: "https://github.com/larrybwosi/scryme/releases/latest/download/Scryme_POS_x64_en-US.msi.zip",
