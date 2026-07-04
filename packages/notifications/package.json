@@ -1,13 +1,22 @@
 {
   "name": "@repo/notifications",
   "version": "0.1.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./src/index.ts",
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
   "dependencies": {
     "@repo/db": "workspace:*",
@@ -18,13 +27,14 @@
     "nodemailer": "^7.0.13"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
+    "dev": "tsup --watch"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "tsup": "^8.5.1",
     "vitest": "^4.1.5"
   }
 }
