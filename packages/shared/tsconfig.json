@@ -3,22 +3,16 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["ESNext", "DOM"],
-    "declaration": true,
-    "outDir": "dist",
     "rootDir": "src",
-    "strict": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "jsx": "react-jsx",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["jest", "node"],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "noImplicitAny": false,
-    "strictNullChecks": false
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

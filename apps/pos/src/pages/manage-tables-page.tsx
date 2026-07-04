@@ -10,8 +10,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@repo/ui/components/ui/dropdown-menu';
 import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Plus, Edit2, Trash2, Users, MapPin, CheckCircle2, Clock, Ban, Search, MoreHorizontal, LayoutGrid, SlidersHorizontal, History as HistoryIcon, UserCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, MapPin, CheckCircle2, Clock, Ban, Search, MoreHorizontal, LayoutGrid, SlidersHorizontal, History as HistoryIcon, UserCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@repo/ui/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@repo/ui/components/ui/tooltip';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 
@@ -25,6 +40,9 @@ export default function ManageTablesPage() {
   const [selectedTableForHistory, setSelectedTableForHistory] = useState<Table | null>(null);
   const [tableHistory, setTableHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState<string | null>(null);
 
   const tables = usePosStore(state => state.tables);
   const addTable = usePosStore(state => state.addTable);
@@ -91,8 +109,21 @@ export default function ManageTablesPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this table? This action cannot be undone.')) {
-      deleteTable(id);
+    setTableToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!tableToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteTable(tableToDelete);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to delete table:', error);
+    } finally {
+      setIsDeleting(false);
+      setTableToDelete(null);
     }
   };
 
@@ -342,11 +373,18 @@ export default function ManageTablesPage() {
                   </div>
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1 text-muted-foreground hover:text-foreground">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1 text-muted-foreground hover:text-foreground" aria-label="Table actions">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Table Actions</p>
+                      </TooltipContent>
+                    </Tooltip>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuLabel className="text-xs uppercase text-muted-foreground tracking-wider">Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
@@ -523,6 +561,37 @@ export default function ManageTablesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the table configuration from the floor plan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Table'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

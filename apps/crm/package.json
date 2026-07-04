@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "crm",
-  "version": "6.2.0",
+  "version": "6.3.0",
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
@@ -17,7 +17,6 @@
     "@hookform/resolvers": "3.9.0",
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:^",
-    "@repo/plane": "workspace:*",
     "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
@@ -29,7 +28,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.454.0",
-    "next": "16.2.0",
+    "next": "16.2.9",
     "pg": "^8.21.0",
     "postcss": "^8.5.15",
     "react": "19.2.6",

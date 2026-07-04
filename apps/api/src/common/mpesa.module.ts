@@ -1,5 +1,5 @@
 import { Module, Global } from "@nestjs/common";
-import { MpesaService } from "@repo/mpesa/server";
+import { MpesaService } from "@repo/shared/mpesa/server";
 
 @Global()
 @Module({

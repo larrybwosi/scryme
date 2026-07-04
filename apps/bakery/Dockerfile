@@ -42,8 +42,10 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install all dependencies securely
-RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
+# Install all dependencies securely using cache mounts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
 
 # Copy full source code
 COPY --from=pruner /app/out/full/ .
@@ -55,7 +57,10 @@ ENV VITE_API_URL=APP_VITE_API_URL_PLACEHOLDER
 RUN pnpm turbo run generate
 
 # Build the Bakery app
-RUN pnpm turbo build --filter=bakery
+# Limit memory and concurrency to reduce resource consumption
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+RUN --mount=type=cache,id=turbo,target=/app/.turbo \
+    pnpm turbo build --filter=bakery --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -78,6 +83,6 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 3003
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3003/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3003}/ || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

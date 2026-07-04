@@ -430,6 +430,7 @@ model InventoryLocation {
   fromStockTransfers        StockTransfer[]            @relation("FromLocation")
   toStockTransfers          StockTransfer[]            @relation("ToLocation")
   batchOutputs              Batch[]
+  crmFollowUps              CrmFollowUp[]              @relation("LocationFollowUps")
 
   // Stock Reconciliation Relations
   stockReconciliations      StockReconciliation[]
@@ -437,6 +438,9 @@ model InventoryLocation {
 
   // API Key Relations
   apiKeys                   ApiKey[]
+
+  // Integration Tracking
+  scrymeChannelId String?
 
   // Device Setup & Registry Relations
   deviceSetupTokens         DeviceSetupToken[]

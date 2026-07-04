@@ -88,7 +88,7 @@ export const businessConfigs: Record<BusinessType, BusinessConfig> = {
     label: 'Cafe',
     description: 'Coffee shop and cafe with quick service',
     features: {
-      tableManagement: true,
+      tableManagement: false,
       deliveryTracking: true,
       prescriptionManagement: false,
       bookIsbn: false,
@@ -360,7 +360,7 @@ export const businessConfigs: Record<BusinessType, BusinessConfig> = {
     label: 'Bar / Pub',
     description: 'Bar with age verification',
     features: {
-      tableManagement: true,
+      tableManagement: false,
       deliveryTracking: false,
       prescriptionManagement: false,
       bookIsbn: false,
@@ -494,7 +494,22 @@ export const businessConfigs: Record<BusinessType, BusinessConfig> = {
 };
 
 export function getBusinessConfig(type: BusinessType): BusinessConfig {
-  return businessConfigs[type] || businessConfigs.retail;
+  const config = businessConfigs[type] || businessConfigs.retail;
+
+  // Compile-time feature overrides based on VITE_BUSINESS_MODE
+  const mode = import.meta.env.VITE_BUSINESS_MODE;
+
+  if (mode && mode !== 'restaurant') {
+    // Strictly disable table management for non-restaurant builds
+    config.features.tableManagement = false;
+
+    // Disable kitchen display for variants other than restaurant and bar
+    if (mode !== 'bar') {
+      config.features.kitchenDisplay = false;
+    }
+  }
+
+  return config;
 }
 
 interface SidebarItem {
@@ -533,6 +548,7 @@ export const getDefaultSidebarItems = (businessType: BusinessType): SidebarItem[
   items.push({ id: 'petty-cash', label: 'Petty Cash', icon: 'Banknote', enabled: true });
   items.push({ id: 'pricing', label: 'Pricing', icon: 'Banknote', enabled: false });
   items.push({ id: 'barcodes', label: 'Barcodes', icon: 'Barcode', enabled: true });
+  items.push({ id: 'barcode-registration', label: 'Register Barcodes', icon: 'QrCode', enabled: true });
   items.push({ id: 'stock-acceptance', label: 'Stock Acceptance', icon: 'Package', enabled: false });
   items.push({ id: 'stock-transfer', label: 'Stock Transfer', icon: 'Package', enabled: false });
   items.push({ id: 'stock-request', label: 'Stock Request', icon: 'ClipboardList', enabled: false });

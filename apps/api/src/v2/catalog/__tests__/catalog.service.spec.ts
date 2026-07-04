@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // Use hoisted to define mock objects needed in vi.mock
-const { mockDb } = vi.hoisted(() => ({
+const mocked = vi.hoisted(() => ({
   mockDb: {
     product: { findMany: vi.fn(), count: vi.fn() },
     category: { findMany: vi.fn() },
@@ -18,6 +18,8 @@ const { mockDb } = vi.hoisted(() => ({
     PARTIAL: "PARTIAL",
   },
 }));
+
+const { mockDb } = mocked;
 
 // Mock @repo/shared/api/v2
 vi.mock("@repo/shared/api/v2", () => ({

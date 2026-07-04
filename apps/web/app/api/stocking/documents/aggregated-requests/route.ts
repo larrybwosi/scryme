@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 import { createElement } from "react";
-import {
-  AggregatedStockRequestListTemplate,
-  DocumentGenerator,
-} from "@repo/documents";
+import { AggregatedStockRequestListV3, DocumentGenerator } from "@repo/documents";
 import { getAggregatedStockRequests } from "@/app/actions/stock-management";
 import { format } from "date-fns";
 
@@ -17,17 +14,36 @@ export async function GET(req: NextRequest) {
 
   const searchParams = req.nextUrl.searchParams;
   const search = searchParams.get("search") || undefined;
+  const locationId = searchParams.get("locationId") || undefined;
+  const level = searchParams.get("level") || "organization";
+  const generatedBy = searchParams.get("generatedBy") || undefined;
 
   const organization = await db.organization.findUnique({
     where: { id: auth.organizationId },
     select: { name: true, logo: true },
   });
 
-  const items = await getAggregatedStockRequests({ search });
+  let branchName: string | undefined;
+  if (level === "branch" && locationId) {
+    const location = await db.inventoryLocation.findUnique({
+      where: { id: locationId },
+      select: { name: true },
+    });
+    branchName = location?.name;
+  }
+
+  const items = await getAggregatedStockRequests({
+    search,
+    locationId: level === "branch" ? locationId : undefined,
+  });
 
   const documentData = {
     organizationName: organization?.name || "Organization",
     logoUrl: organization?.logo || undefined,
+    primaryColor: "#0f172a",
+    generatedBy,
+    branchName,
+    periodLabel: format(new Date(), "MMMM yyyy"),
     items: items.map(item => ({
       sku: item.sku,
       name: item.name,
@@ -41,15 +57,20 @@ export async function GET(req: NextRequest) {
   try {
     const stream = await DocumentGenerator.renderToStream(
       createElement(
-        AggregatedStockRequestListTemplate as any,
+        AggregatedStockRequestListV3 as any,
         { data: documentData } as any,
       ) as any,
     );
 
+    const filename =
+      level === "branch" && branchName
+        ? `compiled-stock-requests-${branchName.toLowerCase().replace(/\s+/g, "-")}-${format(new Date(), "yyyy-MM-dd")}.pdf`
+        : `compiled-stock-requests-org-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+
     return new NextResponse(stream as any, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="aggregated-stock-requests-${format(new Date(), "yyyy-MM-dd")}.pdf"`,
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error) {

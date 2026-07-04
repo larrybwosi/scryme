@@ -12,8 +12,11 @@ describe("isSafeUrl", () => {
   const mockLookup = dns.lookup as any;
 
   it("should allow safe public URLs", async () => {
-    mockLookup.mockImplementation((hostname: string, cb: any) => {
-      cb(null, { address: "93.184.216.34" }); // example.com
+    mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+      if (typeof options === "function") {
+        cb = options;
+      }
+      cb(null, [{ address: "93.184.216.34" }]); // example.com
     });
 
     expect(await isSafeUrl("https://example.com/webhook")).toBe(true);
@@ -27,15 +30,21 @@ describe("isSafeUrl", () => {
   });
 
   it("should block loopback addresses", async () => {
-    mockLookup.mockImplementation((hostname: string, cb: any) => {
-      cb(null, { address: "127.0.0.1" });
+    mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+      if (typeof options === "function") {
+        cb = options;
+      }
+      cb(null, [{ address: "127.0.0.1" }]);
     });
     expect(await isSafeUrl("http://localhost:3000")).toBe(false);
     expect(await isSafeUrl("http://127.0.0.1:3000")).toBe(false);
     expect(await isSafeUrl("http://127.0.0.2")).toBe(false);
 
-    mockLookup.mockImplementation((hostname: string, cb: any) => {
-      cb(null, { address: "::1" });
+    mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+      if (typeof options === "function") {
+        cb = options;
+      }
+      cb(null, [{ address: "::1" }]);
     });
     expect(await isSafeUrl("http://[::1]")).toBe(false);
   });
@@ -51,8 +60,11 @@ describe("isSafeUrl", () => {
     ];
 
     for (const ip of privateIps) {
-      mockLookup.mockImplementation((hostname: string, cb: any) => {
-        cb(null, { address: ip });
+      mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+        if (typeof options === "function") {
+          cb = options;
+        }
+        cb(null, [{ address: ip }]);
       });
       expect(await isSafeUrl(`http://some-internal-host.local`)).toBe(false);
       expect(await isSafeUrl(`http://${ip}`)).toBe(false);
@@ -63,10 +75,31 @@ describe("isSafeUrl", () => {
     const privateIps = ["fc00::1", "fc00::", "fe80::1"];
 
     for (const ip of privateIps) {
-      mockLookup.mockImplementation((hostname: string, cb: any) => {
-        cb(null, { address: ip });
+      mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+        if (typeof options === "function") {
+          cb = options;
+        }
+        cb(null, [{ address: ip }]);
       });
       expect(await isSafeUrl(`http://some-internal-host.local`)).toBe(false);
+      expect(await isSafeUrl(`http://[${ip}]`)).toBe(false);
+    }
+  });
+
+  it("should block IPv4-mapped IPv6 addresses for private ranges", async () => {
+    const mappedIps = [
+      "::ffff:127.0.0.1",
+      "::ffff:10.0.0.1",
+      "::ffff:169.254.169.254",
+    ];
+
+    for (const ip of mappedIps) {
+      mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+        if (typeof options === "function") {
+          cb = options;
+        }
+        cb(null, [{ address: ip }]);
+      });
       expect(await isSafeUrl(`http://[${ip}]`)).toBe(false);
     }
   });
@@ -77,7 +110,10 @@ describe("isSafeUrl", () => {
   });
 
   it("should return false if DNS lookup fails", async () => {
-    mockLookup.mockImplementation((hostname: string, cb: any) => {
+    mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+      if (typeof options === "function") {
+        cb = options;
+      }
       cb(new Error("DNS Error"));
     });
     expect(await isSafeUrl("https://non-existent-domain.test")).toBe(false);

@@ -20,28 +20,84 @@ export class StockMovementReportService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const movements = await this.prisma.client.stockMovement.findMany({
+    // ⚡ Bolt Optimization: Use database-level aggregation (groupBy) instead of fetching all movements.
+    // This reduces network payload and memory usage from O(N) to O(1) for summary stats.
+    const summaryAggs = await this.prisma.client.stockMovement.groupBy({
+      by: ["movementType"],
       where: {
         organizationId,
-        movementDate: {
-          gte: startDate,
+        movementDate: { gte: startDate },
+      },
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    if (summaryAggs.length === 0) {
+      this.logger.log(
+        `No stock movements found for org ${organizationId} in the last ${days} days. Skipping report.`,
+      );
+      return;
+    }
+
+    let totalIn = 0;
+    let totalOut = 0;
+
+    summaryAggs.forEach((agg) => {
+      if (this.isIncoming(agg.movementType)) {
+        totalIn += agg._sum.quantity?.toNumber() || 0;
+      } else if (this.isOutgoing(agg.movementType)) {
+        totalOut += agg._sum.quantity?.toNumber() || 0;
+      }
+    });
+
+    // ⚡ Bolt Optimization: Use Two-Step Aggregation Pattern for top items.
+    // 1) Group by variantId in the database to find top 5 by quantity.
+    const topVariantAggs = await this.prisma.client.stockMovement.groupBy({
+      by: ["variantId"],
+      where: {
+        organizationId,
+        movementDate: { gte: startDate },
+      },
+      _sum: {
+        quantity: true,
+      },
+      orderBy: {
+        _sum: {
+          quantity: "desc",
         },
       },
-      include: {
-        variant: {
-          include: {
-            product: true,
-          },
+      take: 5,
+    });
+
+    // 2) Hydrate names for only the top 5 variants in a single targeted query.
+    const topVariantIds = topVariantAggs.map((a) => a.variantId);
+    const variantsMetadata = await this.prisma.client.productVariant.findMany({
+      where: { id: { in: topVariantIds } },
+      select: {
+        id: true,
+        name: true,
+        product: {
+          select: { name: true },
         },
       },
     });
 
-    if (movements.length === 0) {
-      this.logger.log(`No stock movements found for org ${organizationId} in the last ${days} days. Skipping report.`);
-      return;
-    }
+    const topItems = topVariantAggs.map((agg) => {
+      const v = variantsMetadata.find((m) => m.id === agg.variantId);
+      return {
+        name: v
+          ? `${v.product.name} (${v.name || "Default"})`
+          : "Unknown Variant",
+        qty: agg._sum.quantity?.toNumber() || 0,
+      };
+    });
 
-    const reportMessage = this.formatReportMessage(movements, days, organizationId);
+    const reportMessage = this.formatReportMessage(
+      { totalIn, totalOut, topItems },
+      days,
+      organizationId,
+    );
 
     const scrymeConfig = await this.scrymeService.getConfiguration(organizationId);
     if (!scrymeConfig || !scrymeConfig.workspaceSlug || !scrymeConfig.isActive) {
@@ -63,28 +119,16 @@ export class StockMovementReportService {
     }
   }
 
-  private formatReportMessage(movements: any[], days: number, organizationId: string): string {
-    const totalIn = movements
-      .filter(m => this.isIncoming(m.movementType))
-      .reduce((acc, m) => acc + Number(m.quantity), 0);
-
-    const totalOut = movements
-      .filter(m => this.isOutgoing(m.movementType))
-      .reduce((acc, m) => acc + Number(m.quantity), 0);
-
-    // Group by variant for top moved items
-    const variantStats: Record<string, { name: string, qty: number }> = {};
-    movements.forEach(m => {
-      const variantName = `${m.variant.product.name} (${m.variant.name || 'Default'})`;
-      if (!variantStats[variantName]) {
-        variantStats[variantName] = { name: variantName, qty: 0 };
-      }
-      variantStats[variantName].qty += Number(m.quantity);
-    });
-
-    const topItems = Object.values(variantStats)
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5);
+  private formatReportMessage(
+    stats: {
+      totalIn: number;
+      totalOut: number;
+      topItems: { name: string; qty: number }[];
+    },
+    days: number,
+    organizationId: string,
+  ): string {
+    const { totalIn, totalOut, topItems } = stats;
 
     const baseUrl = process.env.PUBLIC_WEB_URL || "https://app.dealio.co";
     const detailUrl = `${baseUrl}/inventory/movements?orgId=${organizationId}&days=${days}`;

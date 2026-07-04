@@ -1,4 +1,8 @@
-import { FulfillmentType, PaymentMethod, TransactionType } from "@repo/db/client";
+import {
+  FulfillmentType,
+  PaymentMethod,
+  TransactionType,
+} from "@repo/db/client";
 import { z } from "zod";
 
 export enum OrderTransactionStatus {
@@ -15,12 +19,12 @@ export const OrderItemInputSchema = z.object({
 });
 
 export const OrderPaymentInputSchema = z.object({
-  method: z.nativeEnum(PaymentMethod).or(z.any()), // Fallback for errorMap issue
+  method: z.enum(PaymentMethod).or(z.any()), // Fallback for errorMap issue
   amount: z.number().positive("Payment amount must be positive"),
 });
 
 export const OrderFulfillmentInputSchema = z.object({
-  type: z.nativeEnum(FulfillmentType).or(z.any()), // Fallback for errorMap issue
+  type: z.enum(FulfillmentType).or(z.any()), // Fallback for errorMap issue
   shippingAddressId: z.string().optional(),
   pickupLocationId: z.string().optional(),
   tableNumber: z.string().optional(),
@@ -31,7 +35,7 @@ export const CreateOrderInputSchema = z.object({
   businessAccountId: z.string().optional(),
   locationId: z.string(),
   type: z
-    .nativeEnum(TransactionType)
+    .enum(TransactionType)
     .refine((type) => type !== TransactionType.POS_SALE, {
       message: "Use the POS sale endpoint for POS transactions",
     }),
@@ -41,7 +45,7 @@ export const CreateOrderInputSchema = z.object({
   payments: z.array(OrderPaymentInputSchema).default([]),
   fulfillment: OrderFulfillmentInputSchema.optional(),
   status: z
-    .nativeEnum(OrderTransactionStatus)
+    .enum(OrderTransactionStatus)
     .default(OrderTransactionStatus.PENDING_CONFIRMATION),
   notes: z.string().optional(),
   termsAndConditions: z.string().optional(),

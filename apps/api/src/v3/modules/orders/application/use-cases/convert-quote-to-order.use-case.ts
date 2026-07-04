@@ -17,7 +17,9 @@ export class ConvertQuoteToOrderUseCase {
 
   async execute(organizationId: string, quoteId: string) {
     // 1. Find the quote
-    const quote = await this.prisma.client.transaction.findUnique({
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Transaction lacks a composite unique index on [id, organizationId].
+    const quote = await this.prisma.client.transaction.findFirst({
       where: { id: quoteId, organizationId },
       include: { items: true },
     });

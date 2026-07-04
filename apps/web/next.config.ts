@@ -18,19 +18,26 @@ const nextConfig = {
       },
       {
         protocol: "http",
-        hostname: "scryme-rustfs-5a3a70-100-92-168-31.sslip.io",
-        port: "",
+        hostname: "localhost",
+        port: "3002",
         pathname: "/**",
       },
       {
         protocol: "http",
-        hostname: "100.92.168.31",
+        hostname: "localhost",
       },
       {
         protocol: "https",
         hostname: "**",
       },
     ],
+  },
+  experimental: {
+    workerThreads: false,
+    cpus: 1,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
 };
 

@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "private": true,
   "scripts": {
     "build": "nest build",
@@ -39,13 +39,9 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "7.8.0",
     "@repo/auth": "workspace:*",
-    "@repo/crm": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
-    "@repo/mpesa": "workspace:*",
-    "@repo/notifications": "workspace:*",
-    "@repo/plane": "workspace:*",
     "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/windmill": "workspace:*",

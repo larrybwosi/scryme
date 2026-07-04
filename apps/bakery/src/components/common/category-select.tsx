@@ -6,7 +6,7 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Button } from '@repo/ui/components/ui/button';
 import { AlertCircle, Tag, Plus, Search, X } from 'lucide-react';
 import { useNavigate as useRouter } from 'react-router';
-import { useListCategories } from '@/lib/api/categories';
+import { useBakeryCategories } from '@/hooks/bakery';
 
 interface Category {
   id: string;
@@ -34,7 +34,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const navigate = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const { data: categories, isLoading: loadingCategories, error } = useListCategories();
+  const { data: categories, isLoading: loadingCategories, error } = useBakeryCategories();
 
   const handleCreateCategory = () => {
     navigate('/categories?create=true');
@@ -44,17 +44,17 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const filteredCategories = useMemo(() => {
     if (!categories) return [];
 
-    let filtered = excludeCategory ? categories.filter((category: Category) => category.id !== excludeCategory) : categories;
+    let filtered = excludeCategory ? categories.filter((category: any) => category.id !== excludeCategory) : categories;
 
     if (searchQuery.trim()) {
-      filtered = filtered.filter((category: Category) => category.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      filtered = filtered.filter((category: any) => category.name.toLowerCase().includes(searchQuery.toLowerCase()));
     }
 
     return filtered;
   }, [categories, excludeCategory, searchQuery]);
 
   // Get selected category for display
-  const selectedCategory = categories?.find((cat: Category) => cat.id === value);
+  const selectedCategory = categories?.find((cat: any) => cat.id === value);
 
   if (loadingCategories) {
     return (
@@ -147,7 +147,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         {/* Category list */}
         <div className="max-h-[300px] overflow-y-auto">
           {filteredCategories.length > 0 ? (
-            filteredCategories.map((category: Category) => (
+            filteredCategories.map((category: any) => (
               <SelectItem key={category.id} value={category.id}>
                 <div className="flex items-center gap-3">
                   <div

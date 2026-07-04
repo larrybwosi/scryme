@@ -1,37 +1,138 @@
 {
   "name": "@repo/shared",
   "version": "0.1.0",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./ably": "./src/ably/index.ts",
-    "./ably/client": "./src/ably/client.ts",
-    "./axios": "./src/axios/index.ts",
-    "./constants": "./src/constants/index.ts",
-    "./integrations": "./src/integrations/index.ts",
-    "./redis": "./src/redis/index.ts",
-    "./utils": "./src/utils/index.ts",
-    "./realtime": "./src/realtime/index.ts",
-    "./realtime/client": "./src/realtime/client.tsx",
-    "./storage": "./src/storage/index.ts",
-    "./api/v2": "./src/api/v2/index.ts",
-    "./lib": "./src/lib/index.ts",
-    "./actions": "./src/actions/index.ts",
-    "./services/openloyalty": "./src/services/openloyalty/index.ts",
-    "./services/customer": "./src/services/customer/index.ts",
-    "./suppliers": "./src/suppliers/index.ts",
-    "./suppliers/server": "./src/suppliers/server.ts",
-    "./server": "./src/server/index.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./ably": {
+      "types": "./src/ably/index.ts",
+      "import": "./dist/ably.js",
+      "require": "./dist/ably.cjs"
+    },
+    "./ably/client": {
+      "types": "./src/ably/client.ts",
+      "import": "./dist/ably/client.js",
+      "require": "./dist/ably/client.cjs"
+    },
+    "./axios": {
+      "types": "./src/axios/index.ts",
+      "import": "./dist/axios.js",
+      "require": "./dist/axios.cjs"
+    },
+    "./constants": {
+      "types": "./src/constants/index.ts",
+      "import": "./dist/constants.js",
+      "require": "./dist/constants.cjs"
+    },
+    "./integrations": {
+      "types": "./src/integrations/index.ts",
+      "import": "./dist/integrations.js",
+      "require": "./dist/integrations.cjs"
+    },
+    "./integrations/plane": {
+      "types": "./src/integrations/plane/index.ts",
+      "import": "./dist/integrations/plane.js",
+      "require": "./dist/integrations/plane.cjs"
+    },
+    "./redis": {
+      "types": "./src/redis/index.ts",
+      "import": "./dist/redis.js",
+      "require": "./dist/redis.cjs"
+    },
+    "./utils": {
+      "types": "./src/utils/index.ts",
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs"
+    },
+    "./realtime": {
+      "types": "./src/realtime/index.ts",
+      "import": "./dist/realtime.js",
+      "require": "./dist/realtime.cjs"
+    },
+    "./realtime/client": {
+      "types": "./src/realtime/client.tsx",
+      "import": "./dist/realtime/client.js",
+      "require": "./dist/realtime/client.cjs"
+    },
+    "./storage": {
+      "types": "./src/storage/index.ts",
+      "import": "./dist/storage.js",
+      "require": "./dist/storage.cjs"
+    },
+    "./api/v2": {
+      "types": "./src/api/v2/index.ts",
+      "import": "./dist/api/v2.js",
+      "require": "./dist/api/v2.cjs"
+    },
+    "./lib": {
+      "types": "./src/lib/index.ts",
+      "import": "./dist/lib.js",
+      "require": "./dist/lib.cjs"
+    },
+    "./actions": {
+      "types": "./src/actions/index.ts",
+      "import": "./dist/actions.js",
+      "require": "./dist/actions.cjs"
+    },
+    "./services/customer": {
+      "types": "./src/services/customer/index.ts",
+      "import": "./dist/services/customer.js",
+      "require": "./dist/services/customer.cjs"
+    },
+    "./suppliers": {
+      "types": "./src/suppliers/index.ts",
+      "import": "./dist/suppliers.js",
+      "require": "./dist/suppliers.cjs"
+    },
+    "./suppliers/server": {
+      "types": "./src/suppliers/server.ts",
+      "import": "./dist/suppliers/server.js",
+      "require": "./dist/suppliers/server.cjs"
+    },
+    "./server": {
+      "types": "./src/server/index.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./node-utils": {
+      "types": "./src/node-utils.ts",
+      "import": "./dist/node-utils.js"
+    },
+    "./mpesa": {
+      "types": "./src/mpesa/index.ts",
+      "import": "./dist/mpesa/index.js"
+    },
+    "./mpesa/server": {
+      "types": "./src/mpesa/server.ts",
+      "import": "./dist/mpesa/server.js"
+    },
+    "./crm": {
+      "types": "./src/crm/index.ts",
+      "import": "./dist/crm/index.js"
+    },
+    "./crm/client": {
+      "types": "./src/crm/client.ts",
+      "import": "./dist/crm/client.js"
+    },
+    "./crm/server": {
+      "types": "./src/crm/server.ts",
+      "import": "./dist/crm/server.js"
+    }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
+    "shared:build": "tsup",
     "test": "jest --passWithNoTests",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
-    "dev": "echo \"no dev needed\""
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1067.0",
@@ -43,6 +144,7 @@
     "@repo/env": "workspace:*",
     "@repo/notifications": "workspace:*",
     "@repo/scryme": "workspace:*",
+    "@repo/windmill": "workspace:*",
     "@sanity/client": "^7.22.1",
     "@tanstack/react-query": "^5.100.9",
     "@types/jsonwebtoken": "^9.0.10",
@@ -50,6 +152,7 @@
     "@upstash/redis": "^1.37.0",
     "ably": "^2.18.0",
     "argon2": "^0.44.0",
+    "date-fns": "^4.1.0",
     "axios": "latest",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
@@ -79,6 +182,7 @@
     "@types/react-dom": "^19.2.3",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.9",
+    "tsup": "^8.5.1",
     "vitest": "^4.1.8"
   }
 }

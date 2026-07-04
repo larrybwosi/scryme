@@ -85,15 +85,41 @@ export async function getTransactions(params: {
 
   return await db.transaction.findMany({
     where,
-    include: {
-      customer: true,
-      location: true,
-      member: {
-        include: {
-          user: true,
+    // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' to reduce database payload
+    // and network overhead for the list view. We fetch only the fields required by the TransactionTable.
+    select: {
+      id: true,
+      number: true,
+      createdAt: true,
+      updatedAt: true,
+      type: true,
+      finalTotal: true,
+      totalPaid: true,
+      currencyCode: true,
+      status: true,
+      paymentStatus: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
-      attachments: true,
+      location: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      attachments: {
+        select: {
+          id: true,
+          description: true,
+          uploadedAt: true,
+          fileUrl: true,
+          shortUrl: true,
+        },
+      },
       _count: {
         select: { items: true },
       },
@@ -313,6 +339,7 @@ export async function addPayment(
     chequeDate?: Date;
     bankName?: string;
     attachments?: {
+      id?: string;
       fileName: string;
       fileUrl: string;
       mimeType: string;
@@ -343,7 +370,11 @@ export async function addPayment(
       attachments: data.attachments
         ? {
             create: data.attachments.map(att => ({
-              ...att,
+              id: att.id,
+              fileName: att.fileName,
+              fileUrl: att.fileUrl,
+              mimeType: att.mimeType,
+              sizeBytes: att.sizeBytes,
               isPublic: true,
               organizationId: auth.organizationId!,
               memberId: auth.memberId!,
@@ -709,7 +740,7 @@ export async function reconcileFulfillment(
     notes?: string;
     receivedBy?: string;
     otp?: string;
-    attachments?: { fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
+    attachments?: { id?: string; fileName: string; fileUrl: string; mimeType: string; sizeBytes?: number; description?: string }[];
   },
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
@@ -737,7 +768,12 @@ export async function reconcileFulfillment(
         deliveredAt: new Date(),
         attachments: data.attachments ? {
           create: data.attachments.map(att => ({
-            ...att,
+            id: att.id,
+            fileName: att.fileName,
+            fileUrl: att.fileUrl,
+            mimeType: att.mimeType,
+            sizeBytes: att.sizeBytes,
+            description: att.description,
             isPublic: true,
             organizationId: auth.organizationId!,
             memberId: auth.memberId!,
