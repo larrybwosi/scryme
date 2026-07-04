@@ -139,6 +139,14 @@ jobs:
             libglib2.0-dev \
             libudev-dev \
             libpcsclite
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -249,7 +257,7 @@ jobs:
       - name: Get current version
         id: get-version
         run: |
-          VERSION=$(node -p "require('./apps/pos/package.json').version")
+          VERSION=$(node -p "require('./apps/bakery/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
@@ -260,7 +268,7 @@ jobs:
         with:
           files: |
             ./docker-bake.hcl
-          targets: pos,bakery
+          targets: bakery
           push: true
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}

@@ -3,7 +3,7 @@ import { db } from '@repo/db';
 import { getServerAuth } from '@repo/auth/server';
 import { WindmillTemplateService } from '@repo/windmill/server';
 import { ScrymeChatApiClient } from '@repo/scryme';
-import { PlaneApiClient } from '@repo/plane';
+import { PlaneApiClient } from '@repo/shared';
 
 export async function POST() {
   const auth = await getServerAuth();

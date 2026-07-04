@@ -23,4 +23,6 @@ export const db = prisma;
 export * from "../generated/client";
 import { Prisma } from "../generated/client";
 export const Decimal = Prisma.Decimal;
-export type { SupplierGetPayload } from "../generated/models/Supplier";
+
+export type SupplierGetPayload<S = any> = any;
+export type SupplierDefaultArgs = any;

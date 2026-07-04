@@ -50,22 +50,31 @@ export const useCreateRawMaterial = () => {
           unitPrice: data.buyingPrice,
           reorderLevel: data.reorderLevel,
           unitId: data.baseUnitId || data.baseOrgUnitId,
-          stockingUnitId: data.stockingUnitId || data.stockingOrgUnitId,
-          unitsPerContainer: data.unitsPerContainer,
-          organizationId: 'local-org',
+          stockingUnitId: data.stockingUnitId || data.stockingOrgUnitId || null, // Ensured fallback
+          unitsPerContainer: data.unitsPerContainer || 1,
+          organizationId: "local-org",
           currentStock: 0,
           maxStock: (data.reorderLevel || 0) * 2,
         };
-        return tauriInvoke('create_ingredient', { userId: 'local-user', ingredient: ingredientData });
+
+        // Tauri automatically translates object top-level keys like `userId` to `user_id`
+        return tauriInvoke("create_ingredient", {
+          userId: "local-user",
+          ingredient: ingredientData,
+        });
       }
       return sdk.bakery.createIngredient(data);
     },
     onSuccess: () => {
       // Invalidate and refetch raw materials list
-      queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+      queryClient.invalidateQueries({ queryKey: ["ingredients"] });
     },
     onError: (error: any) => {
-      throw new Error(error.response?.data?.message || error.message || 'Failed to create raw material');
+      throw new Error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create raw material",
+      );
     },
   });
 };

@@ -105,6 +105,13 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             }
         }
 
+        // Periodic ingredients sync
+        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+            if let Err(e) = sync_ingredients(&client, &api_base_url, &pool, &api_key).await {
+                log::warn!("Ingredients sync failed: {}", e);
+            }
+        }
+
         sleep(current_delay).await;
     }
 }
@@ -255,6 +262,58 @@ async fn sync_categories(
             .bind(&category.organization_id)
             .bind(category.created_at)
             .bind(category.updated_at)
+            .execute(pool)
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn sync_ingredients(
+    client: &reqwest::Client,
+    api_base_url: &str,
+    pool: &SqlitePool,
+    api_key: &str,
+) -> BackendResult<()> {
+    let url = format!("{}/bakery/ingredients", api_base_url);
+    let res = client.get(&url).header("X-API-KEY", api_key).send().await?;
+
+    if res.status().is_success() {
+        let ingredients: Vec<crate::models::Ingredient> = res.json().await?;
+        for ing in ingredients {
+            sqlx::query(
+                "INSERT INTO ingredients (
+                    id, name, sku, category_id, current_stock, reorder_level, max_stock,
+                    unit_id, stocking_unit_id, units_per_container, unit_price, organization_id, created_at, updated_at
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    sku = excluded.sku,
+                    category_id = excluded.category_id,
+                    current_stock = excluded.current_stock,
+                    reorder_level = excluded.reorder_level,
+                    max_stock = excluded.max_stock,
+                    unit_id = excluded.unit_id,
+                    stocking_unit_id = excluded.stocking_unit_id,
+                    units_per_container = excluded.units_per_container,
+                    unit_price = excluded.unit_price,
+                    updated_at = excluded.updated_at"
+            )
+            .bind(&ing.id)
+            .bind(&ing.name)
+            .bind(&ing.sku)
+            .bind(&ing.category_id)
+            .bind(ing.current_stock)
+            .bind(ing.reorder_level)
+            .bind(ing.max_stock)
+            .bind(&ing.unit_id)
+            .bind(&ing.stocking_unit_id)
+            .bind(ing.units_per_container)
+            .bind(ing.unit_price)
+            .bind(&ing.organization_id)
+            .bind(ing.created_at)
+            .bind(ing.updated_at)
             .execute(pool)
             .await?;
         }
@@ -446,6 +505,7 @@ async fn sync_item(
         "BAKER" => ("bakers".to_string(), true),
         "UNIT" => ("units/organization".to_string(), false),
         "INGREDIENT" => ("ingredients".to_string(), true),
+        "RAW_MATERIAL" => ("ingredients".to_string(), true),
         _ => (format!("{}s", item.entity_type.to_lowercase()), true),
     };
 
@@ -456,14 +516,48 @@ async fn sync_item(
     };
 
     let req = match item.action.as_str() {
-        "CREATE" => client
-            .post(&url)
-            .body(item.payload.clone())
-            .header("Content-Type", "application/json"),
-        "UPDATE" => client
-            .patch(format!("{}/{}", url, item.entity_id))
-            .body(item.payload.clone())
-            .header("Content-Type", "application/json"),
+        "CREATE" => {
+            let mut payload: serde_json::Value = serde_json::from_str(&item.payload).unwrap_or_default();
+            // Remove local-only fields that might cause API errors
+            if let Some(obj) = payload.as_object_mut() {
+                obj.remove("id");
+                obj.remove("created_at");
+                obj.remove("updated_at");
+                obj.remove("createdAt");
+                obj.remove("updatedAt");
+
+                // For INGREDIENT, the API might expect camelCase
+                if item.entity_type == "INGREDIENT" {
+                   if let Some(up) = obj.remove("unit_price") {
+                       obj.insert("unitPrice".to_string(), up);
+                   }
+                   if let Some(rl) = obj.remove("reorder_level") {
+                       obj.insert("reorderLevel".to_string(), rl);
+                   }
+                   // and so on for other fields if necessary
+                }
+            }
+
+            client
+                .post(&url)
+                .json(&payload)
+                .header("Content-Type", "application/json")
+        },
+        "UPDATE" => {
+            let mut payload: serde_json::Value = serde_json::from_str(&item.payload).unwrap_or_default();
+            if let Some(obj) = payload.as_object_mut() {
+                obj.remove("id");
+                obj.remove("created_at");
+                obj.remove("updated_at");
+                obj.remove("createdAt");
+                obj.remove("updatedAt");
+            }
+
+            client
+                .patch(format!("{}/{}", url, item.entity_id))
+                .json(&payload)
+                .header("Content-Type", "application/json")
+        },
         "UPDATE_STATUS" => {
             // Handle specific status updates for batches
             if item.entity_type == "BATCH" {

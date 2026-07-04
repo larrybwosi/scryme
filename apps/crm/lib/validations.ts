@@ -58,8 +58,12 @@ export const crmFollowUpSchema = z.object({
   dueDate: z.coerce.date(),
   priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
   status: z.enum(['PENDING', 'COMPLETED', 'OVERDUE', 'CANCELLED']).default('PENDING'),
+  type: z.enum(['CALL', 'MEETING', 'EMAIL', 'PREPARATION', 'OTHER']).default('OTHER'),
   recordId: z.string().min(1, 'Record ID is required'),
   assignedToId: z.string().optional().nullable(),
+  locationId: z.string().optional().nullable(),
+  isRecurring: z.boolean().default(false),
+  recurringInterval: z.string().optional().nullable(),
 });
 
 export type CrmFollowUpFormValues = z.infer<typeof crmFollowUpSchema>;

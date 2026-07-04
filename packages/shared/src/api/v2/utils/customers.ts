@@ -8,20 +8,8 @@ export interface TwentyCrmClientConfig {
   apiKey: string;
 }
 
-export interface CreatePosCustomerData {
-  name: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-  address?: {
-    street1: string;
-    street2?: string;
-    city: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  };
-}
+import { type CreatePosCustomerData } from '../../../lib/validations/customer/pos';
+export type { CreatePosCustomerData };
 
 // --- Shared Helpers ---
 

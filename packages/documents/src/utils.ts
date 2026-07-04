@@ -106,3 +106,10 @@ export function formatAddress(input: any): string {
 
   return parts.length > 0 ? parts.join(", ") : "";
 }
+
+/**
+ * Checks if a template ID refers to a V3 template.
+ */
+export function isV3Template(templateId?: string | null): boolean {
+  return !!(templateId?.startsWith("invoice-v3-") || templateId?.startsWith("receipt-v3-"));
+}

@@ -7,6 +7,7 @@ FROM node:22-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # FIXED: Install pnpm safely via npm (aligned with version 10.34.1)
@@ -38,8 +39,10 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install all dependencies securely
-RUN pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
+# Install all dependencies securely using cache mounts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile --dangerously-allow-all-builds --ignore-scripts
 
 # Copy full source code
 COPY --from=pruner /app/out/full/ .
@@ -54,7 +57,10 @@ ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 RUN pnpm turbo run generate
 
 # Build the Web app
-RUN pnpm turbo build --filter=web...
+# Updated memory allocation to 4GB (4096MB)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN --mount=type=cache,id=turbo,target=/app/.turbo \
+    pnpm turbo build --filter=web... --concurrency=1
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -84,6 +90,9 @@ RUN chmod +x ./entrypoint.sh
 USER nextjs
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "apps/web/server.js"]

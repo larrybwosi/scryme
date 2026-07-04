@@ -121,6 +121,10 @@ services:
       dockerfile: apps/api/Dockerfile
     image: scryme-api:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_HOST=redis
@@ -145,7 +149,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
-      - "traefik.http.services.api.loadbalancer.server.port=4000"
+      - "traefik.http.services.api.loadbalancer.server.port=${PORT:-4000}"
       - "logging_job=api"
 
   web:
@@ -157,6 +161,10 @@ services:
         - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
     image: scryme-web:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
@@ -175,7 +183,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
-      - "traefik.http.services.web.loadbalancer.server.port=3000"
+      - "traefik.http.services.web.loadbalancer.server.port=${PORT:-3000}"
       - "logging_job=web"
 
 volumes:

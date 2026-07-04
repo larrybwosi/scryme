@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
 } from "@react-pdf/renderer";
 import React from "react";
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   footerText: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: DARK },
 });
 
-export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
+export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
     type,
     number,
@@ -223,7 +224,13 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
     bankDetails,
     footerWebsite,
     signature,
+    primaryColor,
+    kraPin,
+    kraControlCode,
+    kraReceiptNumber,
   } = data;
+
+  const activeColor = primaryColor || DARK;
 
   const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -231,49 +238,62 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* ---- Top gray band ---- */}
-        <View style={styles.topBand}>
-          <Text style={styles.dateText}>{date}</Text>
-          <Text style={styles.documentTitle}>{type}</Text>
+        <View style={[styles.topBand, activeColor !== DARK ? { backgroundColor: activeColor } : {}]}>
+          <Text style={[styles.dateText, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{date}</Text>
+          <Text style={[styles.documentTitle, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{type}</Text>
 
           <View style={styles.topRow}>
             {/* Company block */}
             <View style={styles.companyBlock}>
-              <Text style={styles.companyLabel}>{company.name}</Text>
-              {company.slogan && <Text style={styles.companyLabel}>{company.slogan}</Text>}
+              {company.logo && (
+                <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 15, objectFit: 'contain' }} />
+              )}
+              <Text style={[styles.companyLabel, { fontSize: 12, fontFamily: 'Helvetica-Bold' }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.name}</Text>
+              {company.slogan && <Text style={[styles.companyLabel, { marginTop: 2 }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.slogan}</Text>}
               <View style={styles.metaTable}>
                 <View style={styles.metaRow}>
-                  <Text style={styles.metaKey}>Date issued</Text>
-                  <Text style={styles.metaColon}>:</Text>
-                  <Text style={styles.metaVal}>{date}</Text>
+                  <Text style={[styles.metaKey, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>Date issued</Text>
+                  <Text style={[styles.metaColon, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>:</Text>
+                  <Text style={[styles.metaVal, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{date}</Text>
                 </View>
                 <View style={styles.metaRow}>
-                  <Text style={styles.metaKey}>
+                  <Text style={[styles.metaKey, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>
                     {type === "invoice" ? "Invoice No" : "Receipt No"}
                   </Text>
-                  <Text style={styles.metaColon}>:</Text>
-                  <Text style={styles.metaVal}>{number}</Text>
+                  <Text style={[styles.metaColon, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>:</Text>
+                  <Text style={[styles.metaVal, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{number}</Text>
                 </View>
+                {(kraPin || kraControlCode || kraReceiptNumber) && (
+                  <View style={{ marginTop: 10 }}>
+                    {kraPin && <Text style={{ fontSize: 7, color: activeColor !== DARK ? '#FFFFFF' : GRAY_TEXT }}>KRA PIN: {kraPin}</Text>}
+                    {kraControlCode && <Text style={{ fontSize: 7, color: activeColor !== DARK ? '#FFFFFF' : GRAY_TEXT }}>Control Code: {kraControlCode}</Text>}
+                    {kraReceiptNumber && <Text style={{ fontSize: 7, color: activeColor !== DARK ? '#FFFFFF' : GRAY_TEXT }}>Receipt No: {kraReceiptNumber}</Text>}
+                  </View>
+                )}
               </View>
             </View>
 
             {/* To block */}
             <View style={styles.toBlock}>
-              <Text style={styles.toLabel}>
+              <Text style={[styles.toLabel, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>
                 {type === "invoice" ? "Invoice to" : "Receipt to"}
               </Text>
-              <Text style={styles.toName}>{customer.name}</Text>
-              <Text style={styles.toAddr}>
+              <Text style={[styles.toName, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{customer.name}</Text>
+              <Text style={[styles.toAddr, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>
                 {customer.address}
                 {customer.phone ? `\n${customer.phone}` : ""}
                 {customer.email ? `\n${customer.email}` : ""}
               </Text>
+              {qrCode && (
+                <Image src={qrCode} style={{ width: 60, height: 60, marginTop: 10 }} />
+              )}
             </View>
           </View>
         </View>
 
         {/* ---- Table ---- */}
         <View style={styles.tableSection}>
-          <View style={styles.tableHeader}>
+          <View style={[styles.tableHeader, { borderBottomColor: activeColor }]}>
             <Text style={styles.thRef}>REF</Text>
             <Text style={styles.thDesc}>DESCRIPTION</Text>
             <Text style={styles.thQty}>QTY</Text>
@@ -310,8 +330,8 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
         {/* ---- Subtotal ---- */}
         <View style={styles.subtotalRow}>
           <Text style={styles.subtotalLabel}>TOTAL</Text>
-          <View style={styles.subtotalValueBox}>
-            <Text style={styles.subtotalValue}>{fmt(total)}</Text>
+          <View style={[styles.subtotalValueBox, { backgroundColor: activeColor === DARK ? SUBTOTAL_BG : activeColor }]}>
+            <Text style={[styles.subtotalValue, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{fmt(total)}</Text>
           </View>
         </View>
 
@@ -347,8 +367,9 @@ export const TemplateThree = ({ data }: { data: V3DocumentData }) => {
 
             {signature && (
               <View style={styles.signatureArea}>
+                {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
                 <Text style={styles.signatureScript}>{signature.name}</Text>
-                <View style={styles.signatureLine} />
+                <View style={[styles.signatureLine, { borderTopColor: activeColor }]} />
                 <Text style={styles.signatureLabel}>{signature.title || "Signature"}</Text>
               </View>
             )}

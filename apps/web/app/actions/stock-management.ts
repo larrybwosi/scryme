@@ -832,6 +832,7 @@ export async function getStockLevels(params: {
 export async function getStockRequestList(params?: {
   search?: string;
   status?: string;
+  locationId?: string;
 }): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
@@ -840,6 +841,10 @@ export async function getStockRequestList(params?: {
 
   if (params?.status && params.status !== "all") {
     where.status = params.status;
+  }
+
+  if (params?.locationId) {
+    where.toLocationId = params.locationId;
   }
 
   if (params?.search) {
@@ -960,15 +965,22 @@ export async function getStockRequestDetails(id: string): Promise<any> {
 
 export async function getAggregatedStockRequests(params?: {
   search?: string;
+  locationId?: string;
 }): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
 
+  const stockRequestFilter: any = {
+    organizationId: context.organizationId,
+    status: { in: ["PENDING", "APPROVED", "PARTIALLY_FULFILLED"] },
+  };
+
+  if (params?.locationId) {
+    stockRequestFilter.toLocationId = params.locationId;
+  }
+
   const itemWhere: any = {
-    stockRequest: {
-      organizationId: context.organizationId,
-      status: { in: ["PENDING", "APPROVED", "PARTIALLY_FULFILLED"] },
-    },
+    stockRequest: stockRequestFilter,
   };
 
   if (params?.search) {

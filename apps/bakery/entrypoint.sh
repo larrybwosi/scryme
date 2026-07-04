@@ -21,5 +21,9 @@ replace_envs() {
 
 replace_envs
 
+# Replace LISTEN_PORT in nginx config
+echo "Replacing LISTEN_PORT in nginx config..."
+sed -i "s/LISTEN_PORT/${PORT:-3003}/g" /etc/nginx/conf.d/default.conf
+
 echo "Starting Nginx..."
 exec nginx -g "daemon off;"

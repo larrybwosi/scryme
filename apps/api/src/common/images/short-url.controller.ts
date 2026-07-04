@@ -12,6 +12,7 @@ import { ImageService } from "./image.service";
 import { AllowPublic } from "../decorators/auth.decorator";
 import { PrismaService } from "../../prisma/prisma.service";
 import { storageService } from "@repo/shared/storage";
+import { isSafeUrl } from "@repo/shared/server";
 import axios from "axios";
 import { RedisService } from "../../redis/redis.service";
 
@@ -94,6 +95,32 @@ export class ShortUrlController {
 
       const isImage = mimeType.startsWith("image/");
 
+      // For RustFS/S3, we need the storage key.
+      // We prioritize the ID if it looks like a UUID/Storage key (contains a dot or is long enough)
+      // Otherwise we fallback to fileName.
+      // Actually, looking at the upload logic, we usually store the storage key in the 'id' field of Attachment.
+      let storageKey = attachmentId;
+
+      // If id is a CUID (starts with c) and fileName exists and looks like a storage key (has extension)
+      // we might need to be careful. But standardizing on 'id' being the storage key is the goal.
+      if (
+        attachmentId.startsWith("c") &&
+        attachment.fileName &&
+        attachment.fileName.includes(".")
+      ) {
+        // Legacy or specific cases where fileName was used for storage key
+        // If fileName contains a dot, it's likely the storage key (e.g. uuid.jpg)
+        storageKey = attachment.fileName;
+      }
+
+      // @robustness: Ensure the storageKey has the mandatory 'dealio-' prefix
+      if (
+        process.env.STORAGE_PROVIDER === "rustfs" &&
+        !storageKey.startsWith("dealio-")
+      ) {
+        storageKey = `dealio-${storageKey}`;
+      }
+
       if (isImage) {
         const width = w ? parseInt(w, 10) : undefined;
         const height = h ? parseInt(h, 10) : undefined;
@@ -101,7 +128,7 @@ export class ShortUrlController {
         const format = fm;
 
         const { data, contentType } = await this.imageService.optimizeImage(
-          attachmentId,
+          storageKey,
           {
             width,
             height,
@@ -135,10 +162,14 @@ export class ShortUrlController {
         }
 
         const signedUrl = await storageService.getSignedUrl(
-          attachmentId,
+          storageKey,
           60,
           organizationId,
         );
+
+        if (!(await isSafeUrl(signedUrl))) {
+          throw new Error(`Potentially unsafe storage URL: ${signedUrl}`);
+        }
 
         // Fetch the file to stream it AND potentially cache it
         const response = await axios.get(signedUrl, {

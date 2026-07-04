@@ -1,10 +1,14 @@
 {
   "$schema": "https://v2-10-0.turborepo.dev/schema.json",
   "concurrency": "2",
-  "globalPassThroughEnv": ["DATABASE_URL", "BETTER_AUTH_SECRET", "NEXT_PUBLIC_API_URL"],
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "NEXT_PUBLIC_API_URL"
+  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
@@ -21,13 +25,26 @@
     "db:seed": {
       "cache": false
     },
+    "db:build": {
+      "cache": true
+    },
+    "shared:build": {
+      "cache": true
+    },
+    "auth:build": {
+      "cache": true
+    },
+
     "dev": {
+      "dependsOn": ["generate", "auth:build", "shared:build", "db:build"],
       "cache": false,
       "persistent": true
     },
     "generate": {
       "dependsOn": ["^generate"],
-      "cache": false
+      "inputs": ["prisma/schema/**", "prisma.config.ts"],
+      "outputs": ["generated/**"],
+      "cache": true
     },
     "lint": {
       "dependsOn": ["^generate"]

@@ -114,6 +114,11 @@ export const RegisterPettyCashSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.number().positive(),
   paymentMethod: z.string().min(1),
-  pettyCashFundId: z.string().optional(),
-  receiptUrl: z.string().optional(),
+  pettyCashFundId: z.string().optional().nullable(),
+  receiptUrl: z.string().optional().nullable(),
+});
+
+export const RegisterBarcodeSchema = z.object({
+  variantId: z.string().min(1, "Variant ID is required"),
+  barcode: z.string().min(1, "Barcode is required"),
 });

@@ -271,6 +271,16 @@ pub fn get_migrations() -> Vec<Migration> {
                 ALTER TABLE bakers ADD COLUMN pin_hash TEXT;
             ",
             kind: MigrationKind::Up,
+        },
+        // --- NEW MIGRATION ADDED HERE ---
+        Migration {
+            version: 6,
+            description: "add_stocking_unit_and_container_fields_to_ingredients",
+            sql: "
+                ALTER TABLE ingredients ADD COLUMN stocking_unit_id TEXT;
+                ALTER TABLE ingredients ADD COLUMN units_per_container REAL;
+            ",
+            kind: MigrationKind::Up,
         }
     ]
 }

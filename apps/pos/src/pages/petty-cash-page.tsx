@@ -113,7 +113,8 @@ export default function PettyCashPage() {
         amount: parseFloat(amount),
         description,
         paymentMethod: "CASH",
-        receiptUrl,
+        receiptUrl: receiptUrl || null,
+        pettyCashFundId: funds[0]?.id || null,
       };
 
       await invoke("register_petty_cash_command", {
