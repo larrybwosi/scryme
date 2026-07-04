@@ -27,9 +27,9 @@ describe("InventoryMovementService", () => {
       },
     };
     service = new InventoryMovementService(prisma as any);
-    // @ts-ignore - access private logger to spy on it
+    // @ts-expect-error - access private logger to spy on it
     vi.spyOn(service.logger, "error").mockImplementation(() => {});
-    // @ts-ignore - access private logger to spy on it
+    // @ts-expect-error - access private logger to spy on it
     vi.spyOn(service.logger, "log").mockImplementation(() => {});
   });
 
@@ -64,7 +64,7 @@ describe("InventoryMovementService", () => {
         movementType: MovementType.ADJUSTMENT_IN,
       });
 
-      // @ts-ignore
+      // @ts-expect-error - accessing private logger
       expect(service.logger.error).toHaveBeenCalledWith(
         expect.stringContaining(`[Integrity Alert] Stock mismatch for variant ${variantId} at location ${locationId}`),
       );
@@ -100,7 +100,7 @@ describe("InventoryMovementService", () => {
         movementType: MovementType.ADJUSTMENT_IN,
       });
 
-      // @ts-ignore
+      // @ts-expect-error - accessing private logger
       expect(service.logger.error).not.toHaveBeenCalled();
     });
 
@@ -134,7 +134,7 @@ describe("InventoryMovementService", () => {
         where: { variantId, locationId: { in: [fromLoc, toLoc] } },
         select: { locationId: true, currentStock: true },
       });
-      // @ts-ignore
+      // @ts-expect-error - accessing private logger
       expect(service.logger.error).not.toHaveBeenCalled();
     });
   });
