@@ -124,10 +124,8 @@ const STOCKING_DOCS = [
 
 function versionBadgeClass(version: string) {
   const major = version.split(".")[0];
-  if (major === "v3")
-    return "bg-violet-50 text-violet-600 border-violet-200";
-  if (major === "v2")
-    return "bg-blue-50 text-blue-600 border-blue-200";
+  if (major === "v3") return "bg-violet-50 text-violet-600 border-violet-200";
+  if (major === "v2") return "bg-blue-50 text-blue-600 border-blue-200";
   return "bg-zinc-100 text-zinc-500 border-zinc-200";
 }
 
@@ -143,7 +141,9 @@ export function EnhancedDocumentSettings({
   const [activePanel, setActivePanel] = useState<SidebarPanel>("templates");
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
-  const [downloadingLevel, setDownloadingLevel] = useState<"branch" | "org" | null>(null);
+  const [downloadingLevel, setDownloadingLevel] = useState<
+    "branch" | "org" | null
+  >(null);
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -173,12 +173,12 @@ export function EnhancedDocumentSettings({
   };
 
   const getMockDataForType = (type: DocumentType, templateId?: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line
     const { isV3Template } = require("@repo/documents/server");
     const isV3 = isV3Template(templateId);
 
     if (isV3 && (type === "INVOICE" || type === "RECEIPT")) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // eslint-disable-next-line
       const { getMockV3Data } = require("@repo/documents/server");
       return getMockV3Data(type === "INVOICE" ? "invoice" : "receipt", {
         ...organization,
@@ -197,9 +197,10 @@ export function EnhancedDocumentSettings({
       address: config?.companyAddress || organization?.address,
       phone: config?.companyPhone || organization?.phone,
       email: config?.companyEmail || organization?.email,
-      logo: (config?.showLogo ?? true)
-        ? config?.logoUrl || organization?.logo
-        : null,
+      logo:
+        (config?.showLogo ?? true)
+          ? config?.logoUrl || organization?.logo
+          : null,
     };
 
     let mockData: any;
@@ -329,7 +330,7 @@ export function EnhancedDocumentSettings({
         {isActive && (
           <span
             className={cn(
-              "absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full",
+              "absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.75 rounded-full",
               accent,
             )}
           />
@@ -364,7 +365,7 @@ export function EnhancedDocumentSettings({
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-[700px] bg-white border border-zinc-200/70 rounded-2xl shadow-sm overflow-hidden">
+    <div className="flex h-full min-h-175 bg-white border border-zinc-200/70 rounded-2xl shadow-sm overflow-hidden">
       {/* ── Left Sidebar ────────────────────────────────────────────────── */}
       <aside className="w-64 shrink-0 border-r border-zinc-100 bg-zinc-50/50 flex flex-col overflow-y-auto">
         {/* Customer-facing documents */}
@@ -452,15 +453,15 @@ export function EnhancedDocumentSettings({
               {isStockingPanel && activeStockingDoc
                 ? activeStockingDoc.label
                 : activePanel === "config"
-                ? `${selectedDocType?.label ?? ""} — Configuration`
-                : `${selectedDocType?.label ?? ""} — Templates`}
+                  ? `${selectedDocType?.label ?? ""} — Configuration`
+                  : `${selectedDocType?.label ?? ""} — Templates`}
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
               {isStockingPanel && activeStockingDoc
                 ? "Operational reporting · V3 enterprise templates"
                 : activePanel === "config"
-                ? "Branding, layout, and formatting options"
-                : `${templates.length} template${templates.length !== 1 ? "s" : ""} available`}
+                  ? "Branding, layout, and formatting options"
+                  : `${templates.length} template${templates.length !== 1 ? "s" : ""} available`}
             </p>
           </div>
 
@@ -493,7 +494,8 @@ export function EnhancedDocumentSettings({
                     No templates available
                   </p>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Templates for this document type haven&apos;t been added yet.
+                    Templates for this document type haven&apos;t been added
+                    yet.
                   </p>
                 </div>
               )}
@@ -571,15 +573,10 @@ export function EnhancedDocumentSettings({
                               <Button
                                 size="sm"
                                 className="h-8 text-xs flex-1 bg-zinc-900 hover:bg-zinc-800 text-white border-0 rounded-lg"
-                                onClick={() =>
-                                  handleUpdateDefault(template.id)
-                                }
+                                onClick={() => handleUpdateDefault(template.id)}
                                 disabled={!!isUpdating}>
                                 {isThisUpdating ? (
-                                  <Loader2
-                                    size={12}
-                                    className="animate-spin"
-                                  />
+                                  <Loader2 size={12} className="animate-spin" />
                                 ) : (
                                   "Set default"
                                 )}
