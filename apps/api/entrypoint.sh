@@ -9,6 +9,12 @@ wait_for_db() {
   COUNT=0
   # Using prisma to check connection as it's already available
   until ./node_modules/.bin/prisma db execute --stdin "SELECT 1;" > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+    # Try global prisma if local fails
+    if [ ! -f "./node_modules/.bin/prisma" ]; then
+       if command -v prisma > /dev/null 2>&1; then
+         prisma db execute --stdin "SELECT 1;" > /dev/null 2>&1 && break
+       fi
+    fi
     sleep 2
     COUNT=$((COUNT + 1))
     echo "Retry $COUNT/$MAX_RETRIES..."
