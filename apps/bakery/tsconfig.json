@@ -18,8 +18,7 @@
     "allowImportingTsExtensions": true,
     "types": ["vite/client"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@repo/auth": ["../../packages/auth/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
