@@ -3,17 +3,41 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./templates/v1/*": "./src/templates/v1/*.tsx",
-    "./templates/v2/*": "./src/templates/v2/*.tsx",
-    "./templates/v3/*": "./src/templates/v3/*.tsx"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./templates/v1/*": {
+      "import": "./dist/templates/v1/*.js",
+      "require": "./dist/templates/v1/*.cjs"
+    },
+    "./templates/v2/*": {
+      "import": "./dist/templates/v2/*.js",
+      "require": "./dist/templates/v2/*.cjs"
+    },
+    "./templates/v3/*": {
+      "import": "./dist/templates/v3/*.js",
+      "require": "./dist/templates/v3/*.cjs"
+    }
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
     "test": "vitest run"
@@ -32,6 +56,7 @@
     "@types/react": "^19.2.14",
     "@vitest/coverage-v8": "^3.0.7",
     "jsdom": "^26.0.0",
+    "tsup": "^8.5.1",
     "vitest": "^3.0.7"
   }
 }
