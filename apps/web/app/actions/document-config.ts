@@ -12,6 +12,7 @@ export async function updateReceiptConfig(data: {
   companyPhone?: string;
   companyEmail?: string;
   primaryColor?: string;
+  secondaryColor?: string;
 }) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
@@ -37,6 +38,7 @@ export async function updateWaybillConfig(data: {
   companyPhone?: string;
   companyEmail?: string;
   primaryColor?: string;
+  secondaryColor?: string;
 }) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
