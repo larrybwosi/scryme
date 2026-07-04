@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@repo/ui", "@repo/db"],
+  serverExternalPackages: ["@prisma/client", "pg"],
 };
 
 export default nextConfig;
