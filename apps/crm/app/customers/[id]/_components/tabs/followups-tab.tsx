@@ -64,8 +64,14 @@ function FollowUpCard({
             >
               {followUp.title}
             </span>
+            <StatusBadge status={followUp.type} size="sm" />
             <StatusBadge status={followUp.priority} size="sm" />
             <StatusBadge status={followUp.status} size="sm" />
+            {followUp.isRecurring && (
+              <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase">
+                {followUp.recurringInterval}
+              </span>
+            )}
           </div>
 
           {followUp.description && (
@@ -127,7 +133,10 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
     description: '',
     dueDate: new Date().toISOString().split('T')[0],
     priority: 'MEDIUM' as any,
+    type: 'OTHER' as any,
     assignedToId: '',
+    isRecurring: false,
+    recurringInterval: 'WEEKLY',
   });
 
   useEffect(() => {
@@ -169,13 +178,25 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
         description: form.description.trim(),
         dueDate: new Date(form.dueDate),
         priority: form.priority,
+        type: form.type,
         recordId: customer.crmRecordId,
         status: 'PENDING',
         assignedToId: form.assignedToId || null,
+        isRecurring: form.isRecurring,
+        recurringInterval: form.isRecurring ? form.recurringInterval : null,
       }, customer.organizationId);
 
       toast.success('Follow-up created');
-      setForm({ title: '', description: '', dueDate: new Date().toISOString().split('T')[0], priority: 'MEDIUM', assignedToId: '' });
+      setForm({
+        title: '',
+        description: '',
+        dueDate: new Date().toISOString().split('T')[0],
+        priority: 'MEDIUM',
+        type: 'OTHER',
+        assignedToId: '',
+        isRecurring: false,
+        recurringInterval: 'WEEKLY',
+      });
       setShowForm(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create follow-up');
@@ -229,6 +250,45 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
               <select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as any }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
                 {['HIGH', 'MEDIUM', 'LOW'].map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Type</label>
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
+                {['CALL', 'MEETING', 'EMAIL', 'PREPARATION', 'OTHER'].map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2 flex items-center gap-3 py-1">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={form.isRecurring}
+                    onChange={(e) => setForm((f) => ({ ...f, isRecurring: e.target.checked }))}
+                    className="sr-only"
+                  />
+                  <div className={cn(
+                    "w-8 h-4 rounded-full transition-colors",
+                    form.isRecurring ? "bg-primary" : "bg-muted"
+                  )} />
+                  <div className={cn(
+                    "absolute left-0.5 w-3 h-3 rounded-full bg-white transition-transform",
+                    form.isRecurring ? "translate-x-4" : "translate-x-0"
+                  )} />
+                </div>
+                <span className="text-[12.5px] font-medium text-foreground group-hover:text-primary transition-colors">Recurring Follow-up</span>
+              </label>
+
+              {form.isRecurring && (
+                <select
+                  value={form.recurringInterval}
+                  onChange={(e) => setForm((f) => ({ ...f, recurringInterval: e.target.value }))}
+                  className="text-[12px] bg-background border border-border rounded-md px-2 py-1 outline-none focus:border-primary transition-colors ml-auto"
+                >
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MONTHLY">Monthly</option>
+                </select>
+              )}
             </div>
             <div className="col-span-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Assigned To</label>

@@ -99,6 +99,9 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SOCKET_URL: z.string().url().default("http://localhost:3002"),
 });
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 // ─────────────────────────────────────────────
 // Env file loader (Node.js only — skipped in browser)
 // ─────────────────────────────────────────────
@@ -145,7 +148,7 @@ function loadEnvFiles() {
           override: true,
           debug: false,
         });
-        expand({ ...config, override: true });
+        expand(config);
       }
     }
   } catch (e) {
