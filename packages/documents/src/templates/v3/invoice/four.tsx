@@ -41,7 +41,6 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 15,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     letterSpacing: 0.5,
   },
   brandSlogan: {
@@ -53,7 +52,6 @@ const styles = StyleSheet.create({
   documentTitle: {
     fontSize: 26,
     fontFamily: "Helvetica",
-    color: DARK,
     letterSpacing: 2,
     textTransform: "uppercase",
   },
@@ -76,7 +74,6 @@ const styles = StyleSheet.create({
   toName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     marginBottom: 4,
   },
   toAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
@@ -211,12 +208,10 @@ const styles = StyleSheet.create({
   signatureScript: {
     fontSize: 18,
     fontFamily: "Helvetica-Oblique",
-    color: DARK,
   },
   signatureName: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     marginTop: 4,
   },
   signatureTitle: { fontSize: 7.5, color: GRAY_TEXT, marginTop: 1 },
@@ -281,12 +276,14 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
     terms,
     signature,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
   } = data;
 
   const activeColor = primaryColor || DARK_NAVY;
+  const activeSecondaryColor = secondaryColor || DARK;
 
   const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -296,18 +293,16 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         {/* ---- Header ---- */}
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
-            {company.logo ? (
-              <Image src={company.logo} style={{ width: 60, height: 60, objectFit: 'contain' }} />
-            ) : (
-              <ZigzagLogo />
+            {company.logo && (
+              <Image src={company.logo} style={{ width: 60, height: 60, objectFit: 'contain', marginRight: 10 }} />
             )}
             <View style={styles.brandTextBlock}>
-              <Text style={styles.brandName}>{company.name}</Text>
+              <Text style={[styles.brandName, { color: activeSecondaryColor }]}>{company.name}</Text>
               {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
             </View>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={styles.documentTitle}>{type}</Text>
+            <Text style={[styles.documentTitle, { color: activeSecondaryColor }]}>{type}</Text>
             {qrCode && <Image src={qrCode} style={{ width: 40, height: 40, marginTop: 5 }} />}
           </View>
         </View>
@@ -320,7 +315,7 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
                 {type === "invoice" ? "Invoice to:" : "Receipt to:"}
               </Text>
             </View>
-            <Text style={styles.toName}>{customer.name}</Text>
+            <Text style={[styles.toName, { color: activeSecondaryColor }]}>{customer.name}</Text>
             <Text style={styles.toAddr}>
               {customer.address}
               {customer.phone ? `\n${customer.phone}` : ""}
@@ -405,8 +400,8 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         {signature && signature.name && (
           <View style={styles.signatureArea}>
             {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-            <Text style={styles.signatureScript}>{signature.name}</Text>
-            <Text style={styles.signatureName}>{signature.name.toUpperCase()}</Text>
+            <Text style={[styles.signatureScript, { color: activeSecondaryColor }]}>{signature.name}</Text>
+            <Text style={[styles.signatureName, { color: activeSecondaryColor }]}>{signature.name.toUpperCase()}</Text>
             <Text style={styles.signatureTitle}>{signature.title}</Text>
           </View>
         )}

@@ -78,4 +78,5 @@ export interface V3DocumentData {
 
   // Branding
   primaryColor?: string;
+  secondaryColor?: string;
 }

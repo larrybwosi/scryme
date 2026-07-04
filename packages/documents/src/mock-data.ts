@@ -120,8 +120,16 @@ export function getMockV3Data(type: 'invoice' | 'receipt', orgDetails?: any) {
   // so it can resolve branding from config
   const mockOrg = {
     ...transaction.organization,
-    invoiceConfig: orgDetails?.invoiceConfig,
-    receiptConfig: orgDetails?.receiptConfig,
+    invoiceConfig: orgDetails?.invoiceConfig || {
+      primaryColor: '#2563eb',
+      secondaryColor: '#1e293b',
+      showLogo: true,
+    },
+    receiptConfig: orgDetails?.receiptConfig || {
+      primaryColor: '#2563eb',
+      secondaryColor: '#1e293b',
+      showLogo: true,
+    },
     settings: {
       ...transaction.organization.settings,
       defaultCurrency: orgDetails?.settings?.defaultCurrency || 'USD',

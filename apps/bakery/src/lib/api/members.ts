@@ -1,6 +1,6 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MemberRole } from '@repo/sdk/src/index';
+import { MemberRole } from '@repo/sdk';
 import { toast } from 'sonner';
 import sdk from '@/lib/sdk';
 
