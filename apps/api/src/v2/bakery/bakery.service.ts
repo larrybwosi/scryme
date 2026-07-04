@@ -697,6 +697,7 @@ export class BakeryService {
 
     return this.prisma.client.batch.findMany({
       where,
+      // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
       include: {
         recipe: {
           select: {

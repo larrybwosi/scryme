@@ -47,9 +47,11 @@ COPY --from=pruner /app/out/full/ .
 
 # Build-time environment variables
 ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
 ARG BETTER_AUTH_SECRET
-ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
+ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-build}
+# Provide a dummy DATABASE_URL for build time validation
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 
 # Generate Prisma Client (if needed by CRM)
 RUN pnpm turbo run generate
