@@ -1,12 +1,14 @@
 import { Controller, Post, Headers, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { v2Context } from 'src/common/decorators/v2-context.decorator';
+import { AllowPublic } from '../../common/decorators/auth.decorator';
 import { ably, type V2ApiContext } from '@repo/shared/server';
 
 @ApiTags('Realtime')
 @Controller('realtime')
 export class RealtimeController {
   @Post('auth')
+  @AllowPublic()
   @ApiOperation({ summary: 'Ably token authentication for v2 API' })
   async auth(
     @v2Context() ctx: V2ApiContext,
