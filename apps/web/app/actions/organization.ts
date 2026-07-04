@@ -136,7 +136,7 @@ export async function updateInvoiceTemplate(templateId: string): Promise<any> {
 }
 
 export async function updateDefaultDocumentTemplate(
-  type: "INVOICE" | "RECEIPT" | "WAYBILL",
+  type: "INVOICE" | "RECEIPT" | "WAYBILL" | "DELIVERY_NOTE",
   templateId: string,
 ): Promise<any> {
   const auth = await getServerAuth();
@@ -146,6 +146,7 @@ export async function updateDefaultDocumentTemplate(
     INVOICE: "defaultInvoiceTemplate",
     RECEIPT: "defaultReceiptTemplate",
     WAYBILL: "defaultWaybillTemplate",
+    DELIVERY_NOTE: "defaultDeliveryNoteTemplate",
   };
 
   const field = fieldMap[type];
