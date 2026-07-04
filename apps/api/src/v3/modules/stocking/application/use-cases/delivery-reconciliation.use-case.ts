@@ -127,8 +127,9 @@ export class DeliveryReconciliationUseCase {
       const qtyReturned = 0; // Legacy mapping from when DTO had qtyReturned
 
       // Fetch fulfillment along with all required deep relations needed for calculations
-      const fulfillment = await tx.fulfillment.findUnique({
-        where: { id: fulfillmentId },
+      // SECURITY (Sentinel): Using findFirst with organizationId to prevent IDOR.
+      const fulfillment = await tx.fulfillment.findFirst({
+        where: { id: fulfillmentId, transaction: { organizationId } },
         include: {
           transaction: {
             include: {
