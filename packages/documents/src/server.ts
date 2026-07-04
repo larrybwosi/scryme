@@ -578,6 +578,7 @@ export const Mappers = {
       footerText: config?.footerText,
 
       primaryColor: branding.primaryColor,
+      secondaryColor: branding.secondaryColor,
 
       // KRA Data if available (from invoice or custom logic)
       kraPin: (input as any).kraPin,

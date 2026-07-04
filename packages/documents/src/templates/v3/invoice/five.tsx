@@ -31,12 +31,10 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
     marginBottom: 4,
-    color: DARK_TEXT,
   },
   infoText: {
     fontSize: 8.5,
     lineHeight: 1.4,
-    color: DARK_TEXT,
   },
   contactSpacing: {
     marginTop: 10,
@@ -81,7 +79,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 10,
-    color: DARK_TEXT,
     marginTop: 4,
   },
 
@@ -250,6 +247,7 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
     paymentInfo,
     terms,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
@@ -257,6 +255,7 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
   } = data;
 
   const activeColor = primaryColor || ACCENT_ORANGE;
+  const activeSecondaryColor = secondaryColor || DARK_TEXT;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -267,8 +266,8 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         {/* ================= LEFT COLUMN ================= */}
         <View style={styles.leftColumn}>
           <View style={styles.billToBlock}>
-            <Text style={styles.sectionTitle}>Bill To</Text>
-            <Text style={[styles.infoText, { fontFamily: "Helvetica-Bold" }]}>
+            <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>Bill To</Text>
+            <Text style={[styles.infoText, { fontFamily: "Helvetica-Bold", color: activeSecondaryColor }]}>
               {customer.name}
             </Text>
             {customer.address && (
@@ -276,15 +275,15 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
             )}
 
             <View style={styles.contactSpacing}>
-              <Text style={styles.sectionTitle}>Contact</Text>
+              <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>Contact</Text>
               {customer.phone && (
-                <Text style={styles.infoText}>{customer.phone}</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{customer.phone}</Text>
               )}
               {customer.email && (
-                <Text style={styles.infoText}>{customer.email}</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{customer.email}</Text>
               )}
               {customer.website && (
-                <Text style={styles.infoText}>{customer.website}</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{customer.website}</Text>
               )}
             </View>
           </View>
@@ -298,22 +297,22 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
 
           <View style={styles.leftBottomBlock}>
             <View style={styles.businessContactBlock}>
-              <Text style={styles.sectionTitle}>{company.name}</Text>
+              <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>{company.name}</Text>
               {company.phone && (
-                <Text style={styles.infoText}>Ph: {company.phone}</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>Ph: {company.phone}</Text>
               )}
               {company.email && (
-                <Text style={styles.infoText}>Email: {company.email}</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>Email: {company.email}</Text>
               )}
               {company.address && (
-                <Text style={styles.infoText}>{company.address}</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{company.address}</Text>
               )}
             </View>
 
             {paymentInfo && (
               <View>
-                <Text style={styles.sectionTitle}>Payment Info</Text>
-                <Text style={styles.infoText}>{paymentInfo}</Text>
+                <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>Payment Info</Text>
+                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{paymentInfo}</Text>
               </View>
             )}
           </View>
@@ -327,7 +326,7 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
               <Image src={company.logo} style={{ width: 120, height: 60, marginBottom: 10, objectFit: 'contain' }} />
             )}
             <Text style={[styles.mainTitle, { color: activeColor }]}>{company.name}</Text>
-            {company.slogan && <Text style={styles.subtitle}>{company.slogan}</Text>}
+            {company.slogan && <Text style={[styles.subtitle, { color: DARK_TEXT }]}>{company.slogan}</Text>}
           </View>
 
           {/* Metadata Block */}
@@ -437,7 +436,7 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
             {signature && (
               <View style={{ alignItems: 'flex-end', marginBottom: 15 }}>
                 {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{signature.name}</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: activeSecondaryColor }}>{signature.name}</Text>
                 <Text style={{ fontSize: 8 }}>{signature.title}</Text>
               </View>
             )}
