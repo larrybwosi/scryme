@@ -175,6 +175,10 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
   ) {
+    if (!this.validateChannelAccess(client, data.channel)) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const members = await this.redis.getPresence(data.channel);
     return members;
   }
@@ -184,6 +188,10 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string; limit?: number },
   ) {
+    if (!this.validateChannelAccess(client, data.channel)) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const history = await this.redis.getHistory(data.channel);
     const limit = data.limit || 100;
     return history.slice(-limit);

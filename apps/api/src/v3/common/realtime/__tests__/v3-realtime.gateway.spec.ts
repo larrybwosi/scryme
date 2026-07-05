@@ -27,6 +27,7 @@ describe('V3RealtimeGateway', () => {
             client: {
               transaction: {
                 findUnique: vi.fn(),
+                findFirst: vi.fn(),
               },
             },
           },
@@ -88,7 +89,7 @@ describe('V3RealtimeGateway', () => {
       v3Context: mockContext,
     } as any as Socket;
 
-    vi.mocked(prisma.client.transaction.findUnique).mockResolvedValue({ organizationId: 'org-1' } as any);
+    vi.mocked(prisma.client.transaction.findFirst).mockResolvedValue({ organizationId: 'org-1' } as any);
 
     const data = { channel: 'order:order-1', event: 'status', data: { status: 'PAID' } };
     const result = await gateway.handlePublish(client, data);
@@ -103,7 +104,7 @@ describe('V3RealtimeGateway', () => {
     } as any as Socket;
 
     // Order belongs to org-2
-    vi.mocked(prisma.client.transaction.findUnique).mockResolvedValue({ organizationId: 'org-2' } as any);
+    vi.mocked(prisma.client.transaction.findFirst).mockResolvedValue(null);
 
     const data = { channel: 'order:order-2', event: 'status', data: { status: 'PAID' } };
     const result = await gateway.handlePublish(client, data);
@@ -121,6 +122,26 @@ describe('V3RealtimeGateway', () => {
     const result = await gateway.handlePublish(client, data);
 
     expect(redis.saveMessage).not.toHaveBeenCalled();
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
+
+  it('should block handlePresenceGet for unauthorized channel', async () => {
+    const client = {
+      v3Context: mockContext,
+    } as any as Socket;
+
+    const result = await gateway.handlePresenceGet(client, { channel: 'inventory:org-2' });
+
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
+
+  it('should block handleHistoryGet for unauthorized channel', async () => {
+    const client = {
+      v3Context: mockContext,
+    } as any as Socket;
+
+    const result = await gateway.handleHistoryGet(client, { channel: 'inventory:org-2' });
+
     expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
   });
 });

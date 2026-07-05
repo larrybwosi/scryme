@@ -98,4 +98,26 @@ describe('RealtimeGateway', () => {
     expect(gateway.server.to).toHaveBeenCalledWith('organization:org-1:events');
     expect(gateway.server.emit).toHaveBeenCalledWith('test-event', { foo: 'bar' });
   });
+
+  it('should block handlePresenceGet for unauthorized channel', async () => {
+    const client = {
+      id: 'client-1',
+      v2Context: { organizationId: 'org-1' },
+    } as any as Socket;
+
+    const result = await gateway.handlePresenceGet(client, { channel: 'organization:org-2:events' });
+
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
+
+  it('should block handleHistoryGet for unauthorized channel', async () => {
+    const client = {
+      id: 'client-1',
+      v2Context: { organizationId: 'org-1' },
+    } as any as Socket;
+
+    const result = await gateway.handleHistoryGet(client, { channel: 'organization:org-2:events' });
+
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
 });
