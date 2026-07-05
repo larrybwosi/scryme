@@ -138,7 +138,7 @@ jobs:
             patchelf \
             libglib2.0-dev \
             libudev-dev \
-            libpcsclite
+            libpcsclite-dev \
             libwebkit2gtk-4.1-dev \
             build-essential \
             curl \

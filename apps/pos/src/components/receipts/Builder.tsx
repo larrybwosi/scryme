@@ -135,7 +135,7 @@ const DEFAULT_CONFIG: ReceiptConfig = {
   instructionsTitle: 'Instructions',
   promoCodeText: 'Promo Code Applied',
   thankYouMessage: 'Thank you for dining with us!',
-  footerText: 'Powered by NeoReceipts',
+  footerText: 'Powered by Scryme ERP',
   itemSpacing: 5,
 };
 

@@ -19,6 +19,7 @@ import { Separator } from '@repo/ui/components/ui/separator';
 import { Sheet, SheetHeader, SheetTitle, SheetTrigger, SheetContent } from '@repo/ui/components/ui/sheet';
 import { useDeleteTemplate, useTemplates, useDuplicateTemplate, useCreateBatchFromTemplate } from '@/hooks/bakery';
 import { Template, TemplateSchedule } from '@/types/bakery';
+import { useDeleteConfirmation } from '@/lib/providers/delete-modal';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
@@ -39,7 +40,8 @@ export default function TemplateManager() {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 
   const { data: templates, isLoading: loadingTemplates, error } = useTemplates();
-  const { mutateAsync: deleteTemplate } = useDeleteTemplate();
+  const { mutateAsync: deleteTemplate, isPending: isDeleting } = useDeleteTemplate();
+  const { confirmDelete } = useDeleteConfirmation();
   const { mutate: duplicateTemplate, isPending: isDuplicating } = useDuplicateTemplate();
   const { mutate: createBatchFromTemplate, isPending: isCreatingBatch } = useCreateBatchFromTemplate();
 
@@ -52,8 +54,13 @@ export default function TemplateManager() {
     );
   }, [templates, searchTerm]);
 
-  const handleDeleteTemplate = async (templateId: string) => {
-    if (window.confirm('Delete this production template?')) {
+  const handleDeleteTemplate = async (templateId: string, templateName: string) => {
+    const confirmed = await confirmDelete({
+      entityType: 'template',
+      entityName: templateName,
+    });
+
+    if (confirmed) {
       try {
         await deleteTemplate(templateId);
         toast.success('Template removed');
@@ -221,10 +228,16 @@ export default function TemplateManager() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleDeleteTemplate(template.id)}
+                              onClick={() => handleDeleteTemplate(template.id, template.name)}
                               className="text-red-600"
+                              disabled={isDeleting}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              {isDeleting ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="mr-2 h-4 w-4" />
+                              )}
+                              {isDeleting ? 'Deleting...' : 'Delete'}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -296,9 +309,17 @@ export default function TemplateManager() {
                   variant="ghost"
                   size="sm"
                   className="h-8 text-[10px] font-black uppercase tracking-widest hover:text-red-600"
-                  onClick={() => handleDeleteTemplate(template.id)}
+                  onClick={() => handleDeleteTemplate(template.id, template.name)}
+                  disabled={isDeleting}
                 >
-                  Decommission
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      Decommissioning...
+                    </>
+                  ) : (
+                    'Decommission'
+                  )}
                 </Button>
                 <div className="flex gap-1">
                   <Button

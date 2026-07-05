@@ -27,20 +27,13 @@
       "pubkey": "dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg=="
     },
     "sql": {
-      "preload": [
-        "sqlite:bakery.db"
-      ],
+      "preload": ["sqlite:bakery.db"],
       "default": "sqlite:bakery.db"
     }
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "msi",
-      "nsis",
-      "deb",
-      "dmg"
-    ],
+    "targets": ["msi", "nsis", "deb", "dmg"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
