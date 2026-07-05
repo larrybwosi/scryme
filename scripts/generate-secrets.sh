@@ -1,68 +1,86 @@
 #!/bin/bash
 
-# Function to generate a random string
+ENV_FILE=".env"
+EXAMPLE_FILE=".env.example"
+
+# 1. Initialize .env file if it doesn't exist
+if [ ! -f "$ENV_FILE" ]; then
+  if [ -f "$EXAMPLE_FILE" ]; then
+    cp "$EXAMPLE_FILE" "$ENV_FILE"
+    echo "Created .env from $EXAMPLE_FILE"
+  else
+    touch "$ENV_FILE"
+    echo "Created a brand new empty .env file"
+  fi
+fi
+
+# Function to generate a secure random string
 generate_secret() {
   openssl rand -base64 32 | tr -d '/+=' | head -c 32
 }
 
-# Define secret variables
-POSTGRES_USER=${POSTGRES_USER:-scryme}
-POSTGRES_PASSWORD=$(generate_secret)
-POSTGRES_DB=${POSTGRES_DB:-scryme_db}
-JWT_SECRET=$(generate_secret)
-BETTER_AUTH_SECRET=$(generate_secret)
-INTERNAL_ADMIN_SECRET=$(generate_secret)
-ENCRYPTION_KEY=$(generate_secret) # Must be 32 chars
+# Helper function to update or append keys safely without destroying human changes
+update_env_var() {
+  local key="$1"
+  local default_value="$2"
+  local force_overwrite="$3"
 
-# Define URLs
-DATABASE_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@db:5432/$POSTGRES_DB?schema=public"
-REDIS_URL="redis://redis:6379"
+  if grep -q "^${key}=" "$ENV_FILE"; then
+    local current_val
+    current_val=$(grep "^${key}=" "$ENV_FILE" | cut -d'=' -f2-)
 
-# Create .env file from .env.example if it exists, otherwise start fresh
-# Don't overwrite if .env already exists to preserve manual changes
-if [ ! -f .env ]; then
-  if [ -f .env.example ]; then
-    cp .env.example .env
-    echo "Created .env from .env.example"
+    # Overwrite if forced OR if the current value is blank or an obvious placeholder string
+    if [ "$force_overwrite" = "true" ] || [ -z "$current_val" ] || [[ "$current_val" == *"your-"* ]] || [[ "$current_val" == *"fallback-"* ]] || [[ "$current_val" == *"dbpassword"* ]]; then
+      sed -i.bak "s|^${key}=.*|${key}=${default_value}|" "$ENV_FILE" && rm -f "${ENV_FILE}.bak"
+    fi
   else
-    touch .env
-    echo "Created new .env file"
-  fi
-else
-  echo ".env file already exists, updating secrets..."
-fi
-
-# Update or append secrets in .env
-update_env() {
-  local key=$1
-  local value=$2
-
-  # Check if key exists
-  if grep -q "^$key=" .env; then
-    # Portable sed -i
-    sed -i.bak "s|^$key=.*|$key=$value|" .env && rm .env.bak
-  else
-    echo "$key=$value" >> .env
+    echo "${key}=${default_value}" >> "$ENV_FILE"
   fi
 }
 
-update_env "POSTGRES_USER" "$POSTGRES_USER"
-update_env "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
-update_env "POSTGRES_DB" "$POSTGRES_DB"
-update_env "DATABASE_URL" "$DATABASE_URL"
-update_env "JWT_SECRET" "$JWT_SECRET"
-update_env "BETTER_AUTH_SECRET" "$BETTER_AUTH_SECRET"
-update_env "INTERNAL_ADMIN_SECRET" "$INTERNAL_ADMIN_SECRET"
-update_env "ENCRYPTION_KEY" "$ENCRYPTION_KEY"
-update_env "REDIS_URL" "$REDIS_URL"
-update_env "REDIS_HOST" "redis"
-update_env "REDIS_PORT" "6379"
+echo "Updating and patching environment secrets..."
 
-# Also update Socket URLs.
-# NOTE: For server-side, we use internal docker host.
-# For client-side (NEXT_PUBLIC), we use localhost to ensure browser connectivity.
-update_env "SOCKET_URL" "http://api:4000"
-update_env "NEXT_PUBLIC_SOCKET_URL" "http://localhost:3002"
-update_env "NEXT_PUBLIC_API_URL" "http://localhost:3002"
+# 2. Enforce your requested defaults
+update_env_var "REALTIME_PROVIDER" "socketio" "true"
+update_env_var "NEXT_PUBLIC_REALTIME_PROVIDER" "socketio" "true"
+update_env_var "STORAGE_PROVIDER" "rustfs" "true"
 
-echo ".env file generated successfully with random secrets."
+# 3. Handle Database Configuration & Fallbacks
+update_env_var "POSTGRES_USER" "scryme" "false"
+update_env_var "POSTGRES_PASSWORD" "$(generate_secret)" "false"
+update_env_var "POSTGRES_DB" "scryme_db" "false"
+
+# Re-read them to dynamically construct the standard connection string
+DB_USER=$(grep "^POSTGRES_USER=" "$ENV_FILE" | cut -d'=' -f2-)
+DB_PASS=$(grep "^POSTGRES_PASSWORD=" "$ENV_FILE" | cut -d'=' -f2-)
+DB_NAME=$(grep "^POSTGRES_DB=" "$ENV_FILE" | cut -d'=' -f2-)
+update_env_var "DATABASE_URL" "postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}?schema=public" "true"
+
+# 4. Generate Application Infrastructure Keys if blank/missing
+update_env_var "JWT_SECRET" "$(generate_secret)" "false"
+update_env_var "BETTER_AUTH_SECRET" "$(generate_secret)" "false"
+update_env_var "INTERNAL_ADMIN_SECRET" "$(generate_secret)" "false"
+update_env_var "ENCRYPTION_KEY" "$(generate_secret)" "false"
+
+# 5. RustFS (S3 Compatible Storage) Credentials
+update_env_var "RUSTFS_ACCESS_KEY" "$(generate_secret)" "false"
+update_env_var "RUSTFS_SECRET_KEY" "$(generate_secret)" "false"
+update_env_var "RUSTFS_ENDPOINT" "http://storage.scryme.local" "true"
+update_env_var "RUSTFS_PUBLIC_URL" "http://storage.scryme.local" "true"
+update_env_var "RUSTFS_REGION" "us-east-1" "false"
+update_env_var "RUSTFS_BUCKET" "scryme-uploads" "false"
+update_env_var "RUSTFS_FORCE_PATH_STYLE" "true" "false"
+
+# 6. Traefik Routing Configuration for internal & external requests
+update_env_var "NEXT_PUBLIC_API_URL" "http://api.scryme.local" "true"
+update_env_var "NEXT_PUBLIC_WEB_URL" "http://scryme.local" "true"
+update_env_var "NEXT_PUBLIC_CRM_URL" "http://crm.scryme.local" "true"
+update_env_var "SOCKET_URL" "http://api.scryme.local" "true"
+update_env_var "NEXT_PUBLIC_SOCKET_URL" "http://api.scryme.local" "true"
+
+# 7. Redis defaults
+update_env_var "REDIS_HOST" "redis" "false"
+update_env_var "REDIS_PORT" "6379" "false"
+update_env_var "REDIS_URL" "redis://redis:6379" "false"
+
+echo "The .env file has been processed successfully with unified configurations."
