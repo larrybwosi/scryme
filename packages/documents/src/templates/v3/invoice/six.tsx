@@ -31,11 +31,9 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 11,
-    color: MUTED_TEXT,
   },
   metaText: {
     fontSize: 10,
-    color: MUTED_TEXT,
     marginTop: 15,
   },
   dateText: {
@@ -239,6 +237,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
     currency,
     terms,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
@@ -247,6 +246,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
   } = data;
 
   const activeColor = primaryColor || CHARCOAL;
+  const activeSecondaryColor = secondaryColor || CHARCOAL;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -260,12 +260,12 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
             {company.logo && (
               <Image src={company.logo} style={{ width: 100, height: 50, marginBottom: 10, objectFit: 'contain' }} />
             )}
-            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, color: activeColor }}>
+            <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 11, color: activeSecondaryColor }}>
               {company.name}
             </Text>
-            {company.slogan && <Text style={styles.companyName}>{company.slogan}</Text>}
+            {company.slogan && <Text style={[styles.companyName, { color: MUTED_TEXT }]}>{company.slogan}</Text>}
 
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, { color: MUTED_TEXT }]}>
               {type === 'invoice' ? 'Invoice' : 'Receipt'} No &nbsp; : &nbsp; {number}
             </Text>
             <Text style={styles.dateText}>{date}</Text>
@@ -278,7 +278,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
                 : "Invoice"}
             </Text>
             <Text style={styles.invoiceToLabel}>{type === 'invoice' ? 'Invoice to' : 'Receipt to'}</Text>
-            <Text style={styles.customerName}>{customer.name}</Text>
+            <Text style={[styles.customerName, { color: activeSecondaryColor }]}>{customer.name}</Text>
             {customer.address && (
               <Text style={styles.customerAddress}>{customer.address}</Text>
             )}
@@ -426,7 +426,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               <>
                 {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
                 <View style={styles.signatureLine}>
-                  <Text style={styles.signatureGraphic}>{signature.name}</Text>
+                  <Text style={[styles.signatureGraphic, { color: activeSecondaryColor }]}>{signature.name}</Text>
                 </View>
                 <Text style={styles.signatureLabel}>{signature.title}</Text>
               </>

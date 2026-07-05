@@ -50,7 +50,7 @@ export class StrapiProductSyncUseCase {
     const errors: string[] = [];
     let successCount = 0;
     let failureCount = 0;
-    let skippedCount = 0;
+    const skippedCount = 0;
 
     try {
       // Fetch all products for this org (with variants and inventory)
@@ -192,7 +192,7 @@ export class StrapiProductSyncUseCase {
     const errors: string[] = [];
     let successCount = 0;
     let failureCount = 0;
-    let skippedCount = 0;
+    const skippedCount = 0;
     let totalItems = 0;
 
     try {

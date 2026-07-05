@@ -53,7 +53,8 @@ export class RealtimeGateway
 
   async handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
-    const clientId = client.handshake.auth.clientId || client.id;
+    const context = (client as any).v2Context;
+    const clientId = context?.memberId || client.id;
     const presenceChannels = (client as any).presenceChannels as Set<string>;
 
     if (presenceChannels) {
@@ -131,7 +132,8 @@ export class RealtimeGateway
       return { event: "error", message: "Unauthorized" };
     }
 
-    const clientId = client.handshake.auth.clientId || client.id;
+    const context = (client as any).v2Context;
+    const clientId = context?.memberId || client.id;
     await this.redis.enterPresence(data.channel, clientId, data.metadata);
 
     // Track presence channel on client for cleanup on disconnect
@@ -154,7 +156,8 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
   ) {
-    const clientId = client.handshake.auth.clientId || client.id;
+    const context = (client as any).v2Context;
+    const clientId = context?.memberId || client.id;
     await this.redis.leavePresence(data.channel, clientId);
 
     if ((client as any).presenceChannels) {
@@ -175,6 +178,10 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string },
   ) {
+    if (!this.validateChannelAccess(client, data.channel)) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const members = await this.redis.getPresence(data.channel);
     return members;
   }
@@ -184,6 +191,10 @@ export class RealtimeGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { channel: string; limit?: number },
   ) {
+    if (!this.validateChannelAccess(client, data.channel)) {
+      return { event: "error", message: "Unauthorized" };
+    }
+
     const history = await this.redis.getHistory(data.channel);
     const limit = data.limit || 100;
     return history.slice(-limit);

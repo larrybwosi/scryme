@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "5.3.0",
+  "version": "5.5.0",
   "private": true,
   "scripts": {
     "build": "nest build",
@@ -42,9 +42,11 @@
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
+    "@repo/notifications": "workspace:*",
     "@repo/scryme": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/windmill": "workspace:*",
+    "@repo/zitadel": "workspace:*",
     "@upstash/redis": "^1.38.0",
     "ably": "^2.23.0",
     "argon2": "^0.44.0",
@@ -93,6 +95,7 @@
     "ts-loader": "^9.6.2",
     "typescript-eslint": "^8.62.0",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "webpack": "^5.108.3"
   }
 }

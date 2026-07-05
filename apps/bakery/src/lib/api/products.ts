@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Product, ProductType, ProductVariant } from '@repo/sdk/src/index';
+import { Product, ProductType, ProductVariant } from '@repo/sdk';
 import sdk from '@/lib/sdk';
 
 // Define the shape of your paginated response if needed for variants

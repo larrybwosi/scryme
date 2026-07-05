@@ -282,20 +282,21 @@ model CartItem {
   cartId String
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  productId String // Reference to your local product/pricing catalog
-  variantId String @default("base") // Reference to specific product variant (default to "base" to avoid NULL in unique constraint)
+  productId String
+  product   Product @relation("ProductToCartItems", fields: [productId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation("VariantToCartItems", fields: [variantId], references: [id], onDelete: Cascade)
   quantity  Int    @default(1)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId, variantId])
 }
-
 enum CartStatus {
   ACTIVE
   CHECKED_OUT
   ABANDONED
+  COMPLETED
 }
 
 model Favorite {

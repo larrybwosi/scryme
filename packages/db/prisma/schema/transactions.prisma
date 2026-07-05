@@ -378,6 +378,7 @@ model ReceiptConfig {
 
   // Branding Overrides
   primaryColor   String?
+  secondaryColor String?
   companyName    String?
   companyAddress String?
   companyEmail   String?
@@ -400,6 +401,7 @@ model WaybillConfig {
 
   // Branding Overrides
   primaryColor   String?
+  secondaryColor String?
   companyName    String?
   companyAddress String?
   companyEmail   String?

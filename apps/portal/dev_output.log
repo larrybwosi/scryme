@@ -1,0 +1,69 @@
+
+> portal@1.0.0 dev /app/apps/portal
+> next dev -p 3002
+
+   ▲ Next.js 15.2.0
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.0.2:3002
+
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ✓ Compiled /middleware in 398ms (100 modules)
+ ○ Compiling /[orgSlug]/catalog ...
+ ✓ Compiled /[orgSlug]/catalog in 10s (2503 modules)
+[2m2026-07-04T18:28:10.875Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Base URL is not set. Set the baseURL option or BETTER_AUTH_URL env, or use a dynamic baseURL with allowedHosts for multi-host setups. Without it the origin is derived from the incoming request, and callbacks and redirects may not work correctly.
+[2m2026-07-04T18:28:10.876Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-07-04T18:28:10.876Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-07-04T18:28:12.398Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Base URL is not set. Set the baseURL option or BETTER_AUTH_URL env, or use a dynamic baseURL with allowedHosts for multi-host setups. Without it the origin is derived from the incoming request, and callbacks and redirects may not work correctly.
+[2m2026-07-04T18:28:12.398Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-07-04T18:28:12.398Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+ ⨯ Error [PrismaClientKnownRequestError]:
+Invalid `prisma.organization.findUnique()` invocation:
+
+
+
+    at async getOrganizationBySlug (app/lib/org.ts:3:9)
+    at async OrgLayout (app/[orgSlug]/layout.tsx:23:14)
+  1 | import { db } from "@repo/db";
+  2 | export async function getOrganizationBySlug(slug: string) {
+> 3 |   return await db.organization.findUnique({ where: { slug }, include: { zitadelConfiguration: true } });
+    |         ^
+  4 | } {
+  code: 'ECONNREFUSED',
+  meta: [Object],
+  clientVersion: '7.8.0',
+  digest: '4016221495'
+}
+ GET /test-org/catalog 500 in 16409ms
+ ○ Compiling /[orgSlug]/login ...
+ ✓ Compiled /[orgSlug]/login in 1574ms (2508 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /test-org/login 200 in 1974ms
+ ⨯ Error [PrismaClientKnownRequestError]:
+Invalid `prisma.organization.findUnique()` invocation:
+
+
+
+    at async getOrganizationBySlug (app/lib/org.ts:3:9)
+    at async OrgLayout (app/[orgSlug]/layout.tsx:23:14)
+  1 | import { db } from "@repo/db";
+  2 | export async function getOrganizationBySlug(slug: string) {
+> 3 |   return await db.organization.findUnique({ where: { slug }, include: { zitadelConfiguration: true } });
+    |         ^
+  4 | } {
+  code: 'ECONNREFUSED',
+  meta: [Object],
+  clientVersion: '7.8.0',
+  digest: '4016221495'
+}
+ ✓ Compiled in 584ms (478 modules)
+ ⨯ ../../packages/ui/dist/components/ui/button.js
+Error: Failed to read source code from /app/packages/ui/dist/components/ui/button.js
+
+Caused by:
+    No such file or directory (os error 2)
+
+Import trace for requested module:
+../../packages/ui/dist/components/ui/button.js
+./app/[orgSlug]/catalog/add-to-cart-button.tsx
+ ✓ Compiled in 1349ms (478 modules)

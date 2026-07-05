@@ -137,10 +137,10 @@ services:
     networks:
       - scryme-prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.local}`)"
@@ -163,6 +163,7 @@ services:
 
   loki:
     image: grafana/loki:latest
+    restart: always
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml
@@ -185,6 +186,7 @@ services:
 
   promtail:
     image: grafana/promtail:latest
+    restart: always
     volumes:
       - /var/log:/var/log
       - /var/run/docker.sock:/var/run/docker.sock
@@ -214,6 +216,10 @@ services:
     image: ghcr.io/zitadel/zitadel:latest
     restart: always
     command: "start-noprint"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -227,6 +233,12 @@ services:
     depends_on:
       zitadel-setup:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/debug/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     networks:
       - scryme-prod-network
     labels:
@@ -239,12 +251,22 @@ services:
   windmill-server:
     image: ghcr.io/windmill-labs/windmill:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=server
     depends_on:
       windmill-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     networks:
       - scryme-prod-network
     labels:
@@ -255,6 +277,10 @@ services:
   windmill-worker:
     image: ghcr.io/windmill-labs/windmill:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=worker
@@ -274,6 +300,12 @@ services:
       resources:
         limits:
           memory: 1G
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/v2/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_HOST: redis
@@ -299,7 +331,7 @@ services:
       traefik:
         condition: service_started
       zitadel:
-        condition: service_started
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:
@@ -321,6 +353,12 @@ services:
       resources:
         limits:
           memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -332,7 +370,8 @@ services:
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:
@@ -354,6 +393,12 @@ services:
       resources:
         limits:
           memory: 768M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -363,7 +408,8 @@ services:
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:
@@ -382,11 +428,18 @@ services:
       resources:
         limits:
           memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
     environment:
       VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
       NODE_ENV: production
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     networks:
       - scryme-prod-network
     labels:

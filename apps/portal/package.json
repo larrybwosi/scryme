@@ -11,9 +11,10 @@
   "dependencies": {
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
-    "@repo/ui": "workspace:*",
-    "@repo/shared": "workspace:*",
+    "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@repo/zitadel": "workspace:*",
     "@repo/documents": "workspace:*",
     "next": "16.2.10",
