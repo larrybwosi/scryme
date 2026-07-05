@@ -51,7 +51,7 @@ RUN pnpm turbo run generate
 
 # Build the API and its internal workspace dependencies
 # Limit memory and concurrency to reduce resource consumption
-ENV NODE_OPTIONS="--max-old-space-size=1536"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=api... --concurrency=1
 
