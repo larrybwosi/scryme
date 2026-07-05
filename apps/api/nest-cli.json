@@ -6,6 +6,7 @@
     "deleteOutDir": false,
     "builder": "webpack",
     "typeCheck": false,
-    "webpack": true
+    "webpack": true,
+    "webpackConfigPath": "webpack.config.cjs"
   }
 }
