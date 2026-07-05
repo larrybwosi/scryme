@@ -74,7 +74,7 @@ export default function StockOptimizationsPage() {
         icon={<TrendingUp size={24} />}
       />
 
-      <Alert variant="info" className="bg-blue-50 border-blue-200">
+      <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800">
         <Info className="h-4 w-4 text-blue-600" />
         <AlertTitle className="text-blue-800">How it works</AlertTitle>
         <AlertDescription className="text-blue-700">
