@@ -32,9 +32,25 @@ export class CheckoutUseCase {
     const variantIds = cart.items
       .map((i) => i.variantId)
       .filter((id) => id !== "base");
+    /**
+     * ⚡ Bolt Optimization: Replaced broad 'include' with targeted 'select'.
+     * Fetching only required fields for checkout (prices, names, sku) reduces
+     * database I/O and memory overhead in the critical payment path.
+     */
     const variants = await this.prisma.client.productVariant.findMany({
       where: { id: { in: variantIds } },
-      include: { product: true },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        retailPrice: true,
+        buyingPrice: true,
+        product: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
     const variantMap = new Map(variants.map((v) => [v.id, v]));
 
