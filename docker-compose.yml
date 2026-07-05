@@ -21,8 +21,6 @@ services:
   redis:
     image: redis:alpine
     restart: always
-    ports:
-      - "6379:6379"
     networks:
       - scryme-network
     healthcheck:
@@ -34,9 +32,6 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
     networks:
       - scryme-network
     healthcheck:
@@ -61,9 +56,6 @@ services:
       - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
       - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
       - RUSTFS_CONSOLE_ENABLE=true
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
       - rustfs_data:/data
     depends_on:
@@ -83,11 +75,8 @@ services:
 
   loki:
     image: grafana/loki:latest
-    ports:
-      - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml
       - loki_data:/tmp/loki
     networks:
       - scryme-network
@@ -108,10 +97,32 @@ services:
   promtail:
     image: grafana/promtail:latest
     volumes:
-      - /var/log:/var/log
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./docker/promtail/config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        mkdir -p /etc/promtail
+        cat <<EOF > /etc/promtail/config.yml
+        server:
+          http_listen_port: 9080
+          grpc_listen_port: 0
+        positions:
+          filename: /tmp/positions.yaml
+        clients:
+          - url: http://loki:3100/loki/api/v1/push
+        scrape_configs:
+        - job_name: docker
+          docker_sd_configs:
+            - host: unix:///var/run/docker.sock
+              refresh_interval: 5s
+          relabel_configs:
+            - source_labels: ['__meta_docker_container_name']
+              regex: '/(.*)'
+              target_label: 'container'
+        EOF
+        promtail -config.file=/etc/promtail/config.yml
     networks:
       - scryme-network
 
@@ -144,7 +155,15 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/v2/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4000/api/v2/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -177,7 +196,15 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -211,7 +238,15 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/api/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -239,7 +274,15 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3003/",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
