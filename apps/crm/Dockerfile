@@ -84,6 +84,12 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/.next/static ./apps/crm/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/public ./apps/crm/public
 
+# CRITICAL: Next.js standalone needs the Prisma schema/engines explicitly available if imported
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma ./prisma
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma/seed.ts ./prisma/seed.ts
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/package.json ./packages/db/package.json
+
 # Copy entrypoint script
 COPY --from=pruner --chown=nextjs:nodejs /app/apps/crm/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
