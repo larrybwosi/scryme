@@ -9,7 +9,7 @@ import { ICustomerRepository } from "../../domain/repositories/customer-reposito
 import { RegisterCustomerDto } from "../dto/register-customer.dto";
 import { Customer } from "../../domain/entities/customer.entity";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ZitadelService } from "@repo/zitadel/server";
+import { ZitadelService } from "@repo/zitadel";
 import { randomUUID } from "crypto";
 import { emitCustomerCreated } from "@repo/windmill/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";

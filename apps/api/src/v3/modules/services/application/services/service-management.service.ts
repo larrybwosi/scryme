@@ -2,6 +2,7 @@ import { Injectable, ConflictException, NotFoundException, Inject } from "@nestj
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateServiceDto, CreateServiceCategoryDto } from "../dto/service.dto";
 import { notificationEngine } from "@repo/notifications";
+import * as crypto from "crypto";
 
 @Injectable()
 export class ServiceManagementService {
@@ -98,7 +99,6 @@ export class ServiceManagementService {
   }
 
   async registerCustomerApp(orgId: string, name: string) {
-      const crypto = require('crypto');
       const clientId = `client_${crypto.randomBytes(8).toString('hex')}`;
       const clientSecret = crypto.randomBytes(32).toString('hex');
 
