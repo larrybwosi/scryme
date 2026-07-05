@@ -56,7 +56,7 @@ export function Footer() {
       <div className="container mx-auto py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           {/* Brand column */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 flex flex-col items-center md:items-start text-center md:text-left">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary">
                 <Building2 size={16} className="text-primary-foreground" />
@@ -75,7 +75,7 @@ export function Footer() {
             </p>
 
             {/* Newsletter CTA */}
-            <div>
+            <div className="w-full max-w-sm">
               <p
                 className="text-xs font-semibold uppercase tracking-wider mb-3"
                 style={{ color: "var(--site-dark-muted)" }}
@@ -109,7 +109,7 @@ export function Footer() {
 
           {/* Link columns */}
           {Object.values(footerLinks).map((section) => (
-            <div key={section.title}>
+            <div key={section.title} className="text-center md:text-left">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 text-white">
                 {section.title}
               </h3>

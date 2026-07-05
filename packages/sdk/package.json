@@ -19,6 +19,7 @@
     "dev": "tsup --watch"
   },
   "devDependencies": {
+    "tsup": "^8.5.1",
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "^29.5.14",
     "jest": "^29.7.0",
