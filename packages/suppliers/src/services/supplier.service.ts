@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { V2ApiContext } from '@repo/shared';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  BadRequestException,
+} from "@nestjs/common";
+import { V2ApiContext } from "@repo/shared";
 
 @Injectable()
 export class SupplierService {
-  constructor(@Inject('PRISMA_SERVICE') private readonly prisma: any) {}
+  constructor(@Inject("PRISMA_SERVICE") private readonly prisma: any) {}
 
   async getSuppliers(ctx: V2ApiContext) {
     const { organizationId } = ctx;
@@ -48,11 +53,28 @@ export class SupplierService {
     return supplier;
   }
 
-  async createSupplierDocument(ctx: V2ApiContext, supplierId: string, data: any) {
+  async createSupplierDocument(
+    ctx: V2ApiContext,
+    supplierId: string,
+    data: any,
+  ) {
     const { organizationId } = ctx;
+
+    // Verify supplier ownership
+    const supplier = await this.prisma.client.supplier.findFirst({
+      where: { id: supplierId, organizationId },
+    });
+    if (!supplier) throw new NotFoundException("Supplier not found");
+
+    const { name, documentType, fileUrl, expiryDate, status } = data;
+
     return this.prisma.client.supplierDocument.create({
       data: {
-        ...data,
+        name,
+        documentType,
+        fileUrl,
+        expiryDate,
+        status,
         supplierId,
         organizationId,
       },
@@ -61,29 +83,68 @@ export class SupplierService {
 
   async createQualityIncident(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // Whitelist and validate input data
+    const {
+      title,
+      description,
+      severity,
+      status,
+      batchId,
+      stockBatchId,
+      supplierId,
+    } = data;
+
+    // Verify ownership of related entities to prevent IDOR
+    if (supplierId) {
+      const s = await this.prisma.client.supplier.findFirst({
+        where: { id: supplierId, organizationId },
+      });
+      if (!s) throw new BadRequestException("Invalid supplier ID");
+    }
+    if (batchId) {
+      const b = await this.prisma.client.batch.findFirst({
+        where: { id: batchId, organizationId },
+      });
+      if (!b) throw new BadRequestException("Invalid batch ID");
+    }
+    if (stockBatchId) {
+      const sb = await this.prisma.client.stockBatch.findFirst({
+        where: { id: stockBatchId, organizationId },
+      });
+      if (!sb) throw new BadRequestException("Invalid stock batch ID");
+    }
+
     const count = await this.prisma.client.qualityIncident.count({
       where: { organizationId },
     });
-    const incidentNumber = `INC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+    const incidentNumber = `INC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
     return await this.prisma.client.$transaction(async (tx: any) => {
       const incident = await tx.qualityIncident.create({
         data: {
-          ...data,
+          title,
+          description,
+          severity,
+          status,
+          batchId,
+          stockBatchId,
+          supplierId,
           incidentNumber,
           organizationId,
           reportedById: ctx.memberId!,
         },
       });
 
-      if (data.supplierId) {
+      if (supplierId) {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
         const performance = await tx.supplierPerformance.findFirst({
           where: {
-            supplierId: data.supplierId,
+            supplierId,
+            organizationId,
             periodStart: { lte: now },
             periodEnd: { gte: now },
           },
@@ -104,7 +165,7 @@ export class SupplierService {
         } else {
           await tx.supplierPerformance.create({
             data: {
-              supplierId: data.supplierId,
+              supplierId,
               organizationId,
               periodStart: startOfMonth,
               periodEnd: endOfMonth,
@@ -123,10 +184,14 @@ export class SupplierService {
 
   async getQualityIncidents(ctx: V2ApiContext, query: any) {
     const { organizationId } = ctx;
+    const { status, severity, supplierId } = query;
+
     return this.prisma.client.qualityIncident.findMany({
       where: {
         organizationId,
-        ...query,
+        ...(status && { status }),
+        ...(severity && { severity }),
+        ...(supplierId && { supplierId }),
       },
       include: {
         batch: true,
@@ -144,8 +209,24 @@ export class SupplierService {
     const { organizationId } = ctx;
     const { title, description, supplierId, stockBatchId } = data;
 
-    const count = await this.prisma.client.recall.count({ where: { organizationId } });
-    const recallNumber = `REC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+    // Verify ownership to prevent IDOR
+    if (supplierId) {
+      const s = await this.prisma.client.supplier.findFirst({
+        where: { id: supplierId, organizationId },
+      });
+      if (!s) throw new BadRequestException("Invalid supplier ID");
+    }
+    if (stockBatchId) {
+      const sb = await this.prisma.client.stockBatch.findFirst({
+        where: { id: stockBatchId, organizationId },
+      });
+      if (!sb) throw new BadRequestException("Invalid stock batch ID");
+    }
+
+    const count = await this.prisma.client.recall.count({
+      where: { organizationId },
+    });
+    const recallNumber = `REC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
     return await this.prisma.client.$transaction(async (tx: any) => {
       const recall = await tx.recall.create({
@@ -173,12 +254,15 @@ export class SupplierService {
 
         if (affectedBatchIds.length > 0) {
           await tx.batch.updateMany({
-            where: { id: { in: affectedBatchIds } },
+            where: { id: { in: affectedBatchIds }, organizationId },
             data: { isRecalled: true, recallId: recall.id },
           });
 
           await tx.stockBatch.updateMany({
-            where: { productionBatchId: { in: affectedBatchIds } },
+            where: {
+              productionBatchId: { in: affectedBatchIds },
+              organizationId,
+            },
             data: { isRecalled: true, recallId: recall.id },
           });
         }
