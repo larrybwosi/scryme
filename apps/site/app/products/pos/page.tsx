@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
-import { ShoppingCart, Monitor, Wifi, BarChart2, Package, Receipt, Shield, Repeat2 } from "lucide-react";
+import {
+  ShoppingCart,
+  Monitor,
+  Wifi,
+  BarChart2,
+  Package,
+  Receipt,
+  Shield,
+  Repeat2,
+  Layers,
+  HardDrive,
+  UserCheck,
+  Download,
+  Terminal,
+} from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
 import { StructuredData } from "@/components/seo/structured-data";
@@ -238,6 +252,92 @@ export default function PosPage() {
                 <p className="text-sm text-muted leading-relaxed">{desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Deep features grid */}
+      <section className="py-20 bg-background">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Layers className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">Multi-Register Sync</h3>
+              <p className="text-muted leading-relaxed">
+                Seamlessly run multiple terminals in a single location. Our CRDT-based synchronization ensures all registers stay updated with live inventory and sales data, resolving conflicts automatically.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <HardDrive className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">Peripheral Support</h3>
+              <p className="text-muted leading-relaxed">
+                Connect your existing hardware. Native support for industry-standard receipt printers, barcode scanners, and cash drawers via USB, Bluetooth, or Network.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <UserCheck className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">Advanced Permissions</h3>
+              <p className="text-muted leading-relaxed">
+                Granular role-based access control. Manage cashier shifts, till floats, and manager overrides with a detailed audit trail of every action performed on the terminal.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Download Section */}
+      <section className="py-24 bg-surface-2 border-t border-border" id="download">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-6">
+            Ready to speed up your checkout?
+          </h2>
+          <p className="text-lg text-muted mb-12 max-w-2xl mx-auto">
+            Download the native Scryme POS application for your operating system. Fast, secure, and built for enterprise reliability.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co"}/public/download/windows`}
+              className="group flex flex-col items-center p-8 rounded-2xl border border-border bg-background hover:border-primary transition-all hover:shadow-xl"
+            >
+              <Monitor className="w-10 h-10 mb-4 text-muted group-hover:text-primary transition-colors" />
+              <span className="font-bold">Windows</span>
+              <span className="text-xs text-muted mt-1">.msi installer</span>
+              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-primary">
+                <Download className="w-4 h-4" />
+                Download
+              </div>
+            </a>
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co"}/public/download/macos`}
+              className="group flex flex-col items-center p-8 rounded-2xl border border-border bg-background hover:border-primary transition-all hover:shadow-xl"
+            >
+              <HardDrive className="w-10 h-10 mb-4 text-muted group-hover:text-primary transition-colors" />
+              <span className="font-bold">macOS</span>
+              <span className="text-xs text-muted mt-1">Universal .dmg</span>
+              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-primary">
+                <Download className="w-4 h-4" />
+                Download
+              </div>
+            </a>
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co"}/public/download/linux`}
+              className="group flex flex-col items-center p-8 rounded-2xl border border-border bg-background hover:border-primary transition-all hover:shadow-xl"
+            >
+              <Terminal className="w-10 h-10 mb-4 text-muted group-hover:text-primary transition-colors" />
+              <span className="font-bold">Linux</span>
+              <span className="text-xs text-muted mt-1">.AppImage</span>
+              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-primary">
+                <Download className="w-4 h-4" />
+                Download
+              </div>
+            </a>
           </div>
         </div>
       </section>

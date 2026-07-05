@@ -10,7 +10,7 @@
     "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --emitDeclarationOnly false --noEmit false",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
     "dev": "echo \"no dev needed\""

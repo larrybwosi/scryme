@@ -236,8 +236,8 @@ export function Navbar() {
       <div
         className={cn(
           "lg:hidden border-t border-border bg-card/95 backdrop-blur-md",
-          "transition-all duration-300 overflow-hidden",
-          mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+          "transition-all duration-300 overflow-y-auto",
+          mobileOpen ? "max-h-[calc(100vh-64px)] opacity-100" : "max-h-0 opacity-0"
         )}
         aria-hidden={!mobileOpen}
       >
