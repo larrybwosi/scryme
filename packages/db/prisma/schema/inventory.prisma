@@ -77,7 +77,7 @@ model Product {
   @@index([slug])
   @@index([organizationId])
   @@index([organizationId, id])
-  cartItems       CartItem[]
+  cartItems       CartItem[] @relation("ProductToCartItems")
   @@unique([organizationId, barcode])
   @@index([defaultLocationId])
 }
@@ -152,7 +152,7 @@ model ProductVariant {
   producedByRecipe Recipe?
   supplierPriceHistories SupplierPriceHistory[]
 
-  cartItems       CartItem[]
+  cartItems       CartItem[] @relation("VariantToCartItems")
   // Stock Reconciliation Relations
   reconciliationItems ReconciliationItem[]
   assemblies          Assembly[]

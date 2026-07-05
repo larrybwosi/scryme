@@ -57,3 +57,13 @@ Invalid `prisma.organization.findUnique()` invocation:
   digest: '4016221495'
 }
  ✓ Compiled in 584ms (478 modules)
+ ⨯ ../../packages/ui/dist/components/ui/button.js
+Error: Failed to read source code from /app/packages/ui/dist/components/ui/button.js
+
+Caused by:
+    No such file or directory (os error 2)
+
+Import trace for requested module:
+../../packages/ui/dist/components/ui/button.js
+./app/[orgSlug]/catalog/add-to-cart-button.tsx
+ ✓ Compiled in 1349ms (478 modules)
