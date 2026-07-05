@@ -11,9 +11,25 @@ export class B2BUseCase {
         organizationId,
         isActive: true,
       },
-      include: {
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' to reduce
+      // database I/O and network payload. Fetching only required fields for variants
+      // and category prevents over-fetching of large or unused metadata.
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         variants: {
-          include: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            sku: true,
             variantStocks: {
               select: {
                 availableStock: true,
@@ -22,11 +38,14 @@ export class B2BUseCase {
             },
           },
         },
-        category: true,
       },
     });
 
-    return products;
+    // Map to maintain DTO compliance while preserving the expected structure
+    return products.map((p) => ({
+      ...p,
+      categoryName: p.category?.name,
+    }));
   }
 
   async getInvoices(organizationId: string, businessAccountId: string) {
