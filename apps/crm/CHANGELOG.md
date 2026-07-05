@@ -1,5 +1,11 @@
 # crm
 
+## 6.5.0
+
+### Minor Changes
+
+- 7349c05: Nothing
+
 ## 6.4.0
 
 ### Minor Changes
