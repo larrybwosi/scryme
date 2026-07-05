@@ -3,9 +3,9 @@ services:
     image: postgres:17-alpine
     restart: always
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-scryme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-scryme_password}
+      - POSTGRES_DB=${POSTGRES_DB:-scryme_db}
     ports:
       - "5438:5432"
     volumes:
@@ -53,8 +53,8 @@ services:
     image: rustfs/rustfs:latest
     restart: always
     environment:
-      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
-      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-rustfs_access_key}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-rustfs_secret_key}
       - RUSTFS_CONSOLE_ENABLE=true
     volumes:
       - rustfs_data:/data
@@ -134,15 +134,20 @@ services:
         limits:
           memory: 1G
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - DATABASE_URL=${DATABASE_URL:-postgresql://scryme:scryme_password@db:5432/scryme_db?schema=public}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - PORT=4000
-      - REALTIME_PROVIDER=socketio
-      - SOCKET_URL=http://api:4000
-      - ZITADEL_API_URL=${ZITADEL_API_URL}
-      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID}
-      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID}
+      - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
+      - SOCKET_URL=${SOCKET_URL:-http://api:4000}
+      - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
+      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-org-id}
+      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-project-id}
+      - JWT_SECRET=${JWT_SECRET:-fallback-secret-for-dev}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-dev}
+      - INTERNAL_ADMIN_SECRET=${INTERNAL_ADMIN_SECRET:-fallback-secret-for-dev}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-fallback-secret-for-dev-32-chars}
     ports:
       - "3002:4000"
     depends_on:
@@ -181,10 +186,11 @@ services:
         limits:
           memory: 768M
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=socketio
+      - DATABASE_URL=${DATABASE_URL:-postgresql://scryme:scryme_password@db:5432/scryme_db?schema=public}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://api.scryme.local}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
       - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://api.scryme.local}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-dev}
       - PORT=3000
     ports:
       - "3000:3000"
@@ -222,12 +228,12 @@ services:
         limits:
           memory: 512M
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=socketio
+      - DATABASE_URL=${DATABASE_URL:-postgresql://scryme:scryme_password@db:5432/scryme_db?schema=public}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://api.scryme.local}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
       - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://api.scryme.local}
       - PORT=3001
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-dev}
     ports:
       - "3001:3001"
     depends_on:
@@ -264,7 +270,7 @@ services:
         limits:
           memory: 256M
     environment:
-      - VITE_API_URL=${NEXT_PUBLIC_API_URL}
+      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-http://api.scryme.local}
       - PORT=3003
     ports:
       - "3003:3003"
