@@ -517,9 +517,16 @@ pub async fn authenticated_api_request(
 
     let json_res: serde_json::Value = res.json().await.map_err(BackendError::Network)?;
 
-    // Return only data portion if it's a standard response
+    // Return data and metadata if it's a standard response
     if json_res["success"].as_bool().unwrap_or(false) && json_res.get("data").is_some() {
-        Ok(json_res["data"].clone())
+        if let Some(meta) = json_res.get("meta").or(json_res.get("metadata")) {
+            Ok(serde_json::json!({
+                "data": json_res["data"],
+                "metadata": meta
+            }))
+        } else {
+            Ok(json_res["data"].clone())
+        }
     } else {
         Ok(json_res)
     }
@@ -598,9 +605,9 @@ pub async fn reset_device_config(state: State<'_, BakeryAuthState>) -> BackendRe
         }
     }
 
-    *state.device_config.lock().unwrap() = None;
-    state.sessions.lock().unwrap().clear();
-    *state.active_member_id.lock().unwrap() = None;
+    *state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))? = None;
+    state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?.clear();
+    *state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))? = None;
 
     Ok(())
 }
