@@ -41,7 +41,7 @@
       "persistent": true
     },
     "generate": {
-      "dependsOn": ["^generate"],
+      "dependsOn": ["^generate", "^build"],
       "inputs": ["prisma/schema/**", "prisma.config.ts"],
       "outputs": ["generated/**"],
       "cache": true
