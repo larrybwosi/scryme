@@ -31,6 +31,7 @@ const formSchema = z.object({
   companyPhone: z.string().optional(),
   companyEmail: z.string().optional(),
   primaryColor: z.string().optional(),
+  secondaryColor: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,6 +58,7 @@ export function DocumentConfigForm({ type, initialConfig }: DocumentConfigFormPr
       companyPhone: initialConfig?.companyPhone || "",
       companyEmail: initialConfig?.companyEmail || "",
       primaryColor: initialConfig?.primaryColor || "",
+      secondaryColor: initialConfig?.secondaryColor || "",
     },
   });
 
@@ -135,6 +137,25 @@ export function DocumentConfigForm({ type, initialConfig }: DocumentConfigFormPr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Brand Primary Color</FormLabel>
+                    <FormControl>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          className="w-12 p-1 h-9"
+                          {...field}
+                        />
+                        <Input {...field} placeholder="#000000" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="secondaryColor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand Secondary Color</FormLabel>
                     <FormControl>
                       <div className="flex gap-2">
                         <Input

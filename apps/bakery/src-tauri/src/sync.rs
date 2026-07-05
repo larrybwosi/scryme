@@ -13,15 +13,21 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
     let max_delay = Duration::from_secs(3600);
 
     loop {
-        // Fetch current API URL from settings
-        let api_base_url = match sqlx::query_scalar::<_, Option<String>>(
-            "SELECT api_endpoint_url FROM bakery_settings WHERE id = 'default-settings' LIMIT 1",
-        )
-        .fetch_optional(&pool)
-        .await
-        {
-            Ok(Some(Some(url))) if !url.is_empty() => url,
-            _ => default_api_base_url.clone(),
+        // 1. Try to get API URL from keyring (same logic as BakeryAuthState)
+        let mut api_base_url = match get_api_key_and_url(&pool).await {
+            Ok(Some((_, Some(url)))) if !url.is_empty() => url,
+            _ => {
+                // 2. Fallback to database settings
+                match sqlx::query_scalar::<_, Option<String>>(
+                    "SELECT api_endpoint_url FROM bakery_settings WHERE id = 'default-settings' LIMIT 1",
+                )
+                .fetch_optional(&pool)
+                .await
+                {
+                    Ok(Some(Some(url))) if !url.is_empty() => url,
+                    _ => default_api_base_url.clone(),
+                }
+            }
         };
 
         let api_base_url = if api_base_url.ends_with("/api/v2") {
@@ -30,8 +36,8 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             format!("{}/api/v2", api_base_url.trim_end_matches('/'))
         };
 
-        let api_key = match get_api_key(&pool).await {
-            Ok(Some(key)) => key,
+        let api_key = match get_api_key_and_url(&pool).await {
+            Ok(Some((key, _))) => key,
             _ => {
                 // If we don't have an API key, we can't sync.
                 // Reset delay and wait a bit before checking again.
@@ -85,28 +91,28 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
         }
 
         // Periodic units sync (V2)
-        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+        if let Ok(Some((api_key, _))) = get_api_key_and_url(&pool).await {
             if let Err(e) = sync_units(&client, &api_base_url, &pool, &api_key).await {
                 log::warn!("Periodic units sync failed: {}", e);
             }
         }
 
         // Periodic categories sync
-        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+        if let Ok(Some((api_key, _))) = get_api_key_and_url(&pool).await {
             if let Err(e) = sync_categories(&client, &api_base_url, &pool, &api_key).await {
                 log::warn!("Categories sync failed: {}", e);
             }
         }
 
         // Two-way sync for Recipes and Batches
-        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+        if let Ok(Some((api_key, _))) = get_api_key_and_url(&pool).await {
             if let Err(e) = sync_recipes_and_batches(&client, &api_base_url, &pool, &api_key).await {
                 log::warn!("Recipes and batches sync failed: {}", e);
             }
         }
 
         // Periodic ingredients sync
-        if let Ok(Some(api_key)) = get_api_key(&pool).await {
+        if let Ok(Some((api_key, _))) = get_api_key_and_url(&pool).await {
             if let Err(e) = sync_ingredients(&client, &api_base_url, &pool, &api_key).await {
                 log::warn!("Ingredients sync failed: {}", e);
             }
@@ -415,16 +421,16 @@ async fn sync_recipes_and_batches(
     Ok(())
 }
 
-async fn get_api_key(pool: &SqlitePool) -> BackendResult<Option<String>> {
+async fn get_api_key_and_url(pool: &SqlitePool) -> BackendResult<Option<(String, Option<String>)>> {
     // 1. Try to get from database first
-    let res: Option<(Option<String>,)> =
-        sqlx::query_as("SELECT api_key FROM bakery_settings WHERE api_key IS NOT NULL LIMIT 1")
+    let res: Option<(Option<String>, Option<String>)> =
+        sqlx::query_as("SELECT api_key, api_endpoint_url FROM bakery_settings WHERE api_key IS NOT NULL LIMIT 1")
             .fetch_optional(pool)
             .await
             .map_err(BackendError::from)?;
 
-    if let Some(key) = res.and_then(|r| r.0) {
-        return Ok(Some(key));
+    if let Some((Some(key), url)) = res {
+        return Ok(Some((key, url)));
     }
 
     // 2. Try to get from keyring (provisioned devices)
@@ -434,7 +440,7 @@ async fn get_api_key(pool: &SqlitePool) -> BackendResult<Option<String>> {
     match entry.get_password() {
         Ok(pw) => {
              if let Ok(config) = serde_json::from_str::<crate::commands::DeviceConfig>(&pw) {
-                Ok(Some(config.device_key))
+                Ok(Some((config.device_key, Some(config.base_url))))
             } else {
                 Ok(None)
             }

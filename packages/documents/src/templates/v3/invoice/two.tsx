@@ -34,14 +34,12 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 16,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     marginTop: 10,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
   brandSlogan: {
     fontSize: 7.5,
-    color: GRAY_TEXT,
     marginTop: 2,
     marginBottom: 16,
     letterSpacing: 0.5,
@@ -52,14 +50,13 @@ const styles = StyleSheet.create({
   addressLine: {
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     marginBottom: 3,
   },
   addressLineReg: { fontSize: 8.5, color: GRAY_TEXT, marginBottom: 3 },
 
   metaBlock: { alignItems: "flex-start" },
-  metaDate: { fontSize: 8.5, color: DARK, marginBottom: 10 },
-  metaNo: { fontSize: 8.5, color: DARK, marginBottom: 14 },
+  metaDate: { fontSize: 8.5, marginBottom: 10 },
+  metaNo: { fontSize: 8.5, marginBottom: 14 },
   toLabel: {
     fontSize: 7.5,
     color: GRAY_TEXT,
@@ -69,7 +66,6 @@ const styles = StyleSheet.create({
   toName: {
     fontSize: 9.5,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     marginBottom: 6,
   },
   toLine: { fontSize: 8.5, color: GRAY_TEXT, marginBottom: 2 },
@@ -81,11 +77,10 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 30,
   },
-  accentBar: { width: 6, height: 48, backgroundColor: DARK, marginRight: 18 },
+  accentBar: { width: 6, height: 48, marginRight: 18 },
   documentTitle: {
     fontSize: 38,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
     letterSpacing: 1,
     textTransform: "uppercase",
   },
@@ -234,6 +229,7 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
     bankDetails,
     terms,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
@@ -241,6 +237,7 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
   } = data;
 
   const activeColor = primaryColor || PINK;
+  const activeSecondaryColor = secondaryColor || DARK;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -254,9 +251,8 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
             {company.logo && (
               <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 10, objectFit: 'contain' }} />
             )}
-            {!company.logo && <DiamondIcon color={activeColor} />}
-            <Text style={styles.brandName}>{company.name}</Text>
-            {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
+            <Text style={[styles.brandName, { color: activeSecondaryColor }]}>{company.name}</Text>
+            {company.slogan && <Text style={[styles.brandSlogan, { color: GRAY_TEXT }]}>{company.slogan}</Text>}
           </View>
           {qrCode && (
             <Image src={qrCode} style={{ width: 60, height: 60 }} />
@@ -266,10 +262,10 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         <View style={styles.headerRow}>
           <View style={styles.addressBlock}>
             {company.address && (
-              <Text style={styles.addressLine}>{company.address}</Text>
+              <Text style={[styles.addressLine, { color: activeSecondaryColor }]}>{company.address}</Text>
             )}
             {company.phone && (
-              <Text style={styles.addressLine}>P: {company.phone}</Text>
+              <Text style={[styles.addressLine, { color: activeSecondaryColor }]}>P: {company.phone}</Text>
             )}
             {company.website && (
               <Text style={styles.addressLineReg}>{company.website}</Text>
@@ -277,10 +273,10 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
           </View>
 
           <View style={styles.metaBlock}>
-            <Text style={styles.metaDate}>{date}</Text>
-            <Text style={styles.metaNo}>NO# {number}</Text>
+            <Text style={[styles.metaDate, { color: activeSecondaryColor }]}>{date}</Text>
+            <Text style={[styles.metaNo, { color: activeSecondaryColor }]}>NO# {number}</Text>
             <Text style={styles.toLabel}>TO:</Text>
-            <Text style={styles.toName}>{customer.name}</Text>
+            <Text style={[styles.toName, { color: activeSecondaryColor }]}>{customer.name}</Text>
             {customer.address && <Text style={styles.toLine}>{customer.address}</Text>}
             {customer.phone && <Text style={styles.toLine}>{customer.phone}</Text>}
             {customer.email && <Text style={styles.toLine}>{customer.email}</Text>}
@@ -290,8 +286,8 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
 
         {/* ---- DOCUMENT title ---- */}
         <View style={styles.titleRow}>
-          <View style={[styles.accentBar, { backgroundColor: activeColor === PINK ? DARK : activeColor }]} />
-          <Text style={styles.documentTitle}>{type}</Text>
+          <View style={[styles.accentBar, { backgroundColor: activeColor }]} />
+          <Text style={[styles.documentTitle, { color: activeSecondaryColor }]}>{type}</Text>
         </View>
 
         {/* ---- Table ---- */}
@@ -368,7 +364,7 @@ export const TemplateTwo = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
           )}
         </View>
 
-        <View style={[styles.dividerThick, { borderTopColor: activeColor === PINK ? DARK : activeColor }]} />
+        <View style={[styles.dividerThick, { borderTopColor: activeColor }]} />
 
         {/* ---- Terms ---- */}
         {terms && (

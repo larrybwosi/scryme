@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export async function updateInvoiceConfig(data: {
   primaryColor?: string;
+  secondaryColor?: string;
   logoUrl?: string;
   companyName?: string;
   companyAddress?: string;

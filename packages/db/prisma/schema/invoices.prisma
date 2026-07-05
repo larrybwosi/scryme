@@ -178,6 +178,7 @@ model InvoiceConfig {
 
   // Branding Overrides
   primaryColor   String?
+  secondaryColor String?
   logoUrl        String?
   companyName    String?
   companyAddress String?

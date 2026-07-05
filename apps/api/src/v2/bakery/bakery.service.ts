@@ -1,11 +1,13 @@
 import {
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
   BadRequestException,
   Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { Prisma } from "@/prisma/client";
 import { AuthService } from "../../auth/auth.service";
 import { type V2ApiContext } from "@repo/shared/api/v2";
 import {
@@ -29,7 +31,7 @@ export class BakeryService {
 
   async getCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.bakeryCategory.findUnique({
+    return this.prisma.client.bakeryCategory.findFirst({
       where: { id, organizationId },
     });
   }
@@ -170,23 +172,47 @@ export class BakeryService {
 
   async getBakeryOverview(ctx: V2ApiContext) {
     const { organizationId } = ctx;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const [
       batches,
       recipesCount,
       bakersCount,
-      stockItems,
       recipeStats,
       recipeGroups,
+      totalBatches,
+      activeBatches,
+      completedToday,
+      lowStockItems,
+      lowStockPreview,
+      totalValueData,
     ] = await Promise.all([
+      /**
+       * ⚡ Bolt: Optimized batch retrieval.
+       * Using targeted select and limited fetch to 10 items for the dashboard preview.
+       */
       this.prisma.client.batch.findMany({
         where: { organizationId },
         take: 10,
         orderBy: { scheduledStartAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          batchNumber: true,
+          status: true,
+          scheduledStartAt: true,
+          actualQuantity: true,
+          completedAt: true,
           recipe: { select: { id: true, name: true } },
           leadBaker: {
-            include: {
-              member: { include: { user: { select: { name: true } } } },
+            select: {
+              id: true,
+              member: {
+                select: {
+                  id: true,
+                  user: { select: { name: true, image: true } },
+                },
+              },
             },
           },
         },
@@ -195,16 +221,54 @@ export class BakeryService {
       this.prisma.client.bakeryBaker.count({
         where: { bakerySettings: { organizationId } },
       }),
+      this.prisma.client.recipe.aggregate({
+        where: { organizationId },
+        _avg: { costPrice: true },
+      }),
+      this.prisma.client.recipe.groupBy({
+        where: { organizationId },
+        by: ["categoryId"],
+        _count: { _all: true },
+      }),
+      /**
+       * ⚡ Bolt: Database-level counting.
+       * Shifting summary statistics to O(1) database counts to ensure accuracy
+       * even when the number of records exceeds the UI fetch limit.
+       */
+      this.prisma.client.batch.count({ where: { organizationId } }),
+      this.prisma.client.batch.count({
+        where: { organizationId, status: "IN_PROGRESS" as any },
+      }),
+      this.prisma.client.batch.count({
+        where: {
+          organizationId,
+          status: "COMPLETED" as any,
+          completedAt: { gte: today },
+        },
+      }),
+      /**
+       * ⚡ Bolt: Database-level field comparison.
+       * Using Prisma's field comparison (Prisma.ProductVariantStockScalarFieldEnum)
+       * to filter low stock items at the database level instead of in-memory.
+       */
+      this.prisma.client.productVariantStock.count({
+        where: {
+          organizationId,
+          variant: { product: { type: "RAW_MATERIAL" as any } },
+          availableStock: {
+            lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
+          },
+        },
+      }),
       this.prisma.client.productVariantStock.findMany({
         where: {
           organizationId,
           variant: { product: { type: "RAW_MATERIAL" as any } },
+          availableStock: {
+            lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
+          },
         },
-        /**
-         * ⚡ Bolt: Optimization
-         * Using select to fetch only essential scalar fields and relations for summary calculations.
-         * This avoids fetching unused heavy fields and relations.
-         */
+        take: 10,
         select: {
           id: true,
           availableStock: true,
@@ -214,7 +278,6 @@ export class BakeryService {
             select: {
               name: true,
               sku: true,
-              buyingPrice: true,
               baseUnit: { select: { symbol: true } },
               baseOrgUnit: { select: { symbol: true } },
             },
@@ -222,22 +285,19 @@ export class BakeryService {
         },
       }),
       /**
-       * ⚡ Bolt: Database-level Aggregation
-       * Replacing in-memory reduction with database-level avg to calculate average cost.
-       * Reduces network traffic and memory usage from O(N) to O(1).
+       * ⚡ Bolt: Targeted inventory value query.
+       * Fetching only required numeric fields for total value calculation
+       * to minimize network traffic and memory usage.
        */
-      this.prisma.client.recipe.aggregate({
-        where: { organizationId },
-        _avg: { costPrice: true },
-      }),
-      /**
-       * ⚡ Bolt: Database-level Grouping
-       * Using groupBy to count recipes per category at the database level.
-       */
-      this.prisma.client.recipe.groupBy({
-        where: { organizationId },
-        by: ["categoryId"],
-        _count: { _all: true },
+      this.prisma.client.productVariantStock.findMany({
+        where: {
+          organizationId,
+          variant: { product: { type: "RAW_MATERIAL" as any } },
+        },
+        select: {
+          availableStock: true,
+          variant: { select: { buyingPrice: true } },
+        },
       }),
     ]);
 
@@ -260,23 +320,19 @@ export class BakeryService {
         (recipesByCategory[catName] || 0) + g._count._all;
     });
 
-    const lowStockIngredients = stockItems
-      .filter(
-        (s: any) => Number(s.availableStock) <= Number(s.reorderPoint || 0),
-      )
-      .map((s: any) => ({
-        id: s.id,
-        name: s.variant.name,
-        sku: s.variant.sku,
-        current: Number(s.availableStock),
-        reorder: Number(s.reorderPoint || 0),
-        max: Number(
-          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
-        ),
-        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
-      }));
+    const lowStockIngredients = lowStockPreview.map((s: any) => ({
+      id: s.id,
+      name: s.variant.name,
+      sku: s.variant.sku,
+      current: Number(s.availableStock),
+      reorder: Number(s.reorderPoint || 0),
+      max: Number(
+        s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
+      ),
+      unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
+    }));
 
-    const totalInventoryValue = stockItems.reduce(
+    const totalInventoryValue = totalValueData.reduce(
       (acc, s: any) =>
         acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
       0,
@@ -293,27 +349,12 @@ export class BakeryService {
       recipesByCategory,
       totalInventoryValue,
       lowStockIngredients,
-      stockData: stockItems.slice(0, 10).map((s: any) => ({
-        id: s.id,
-        name: s.variant.name,
-        current: Number(s.availableStock),
-        reorder: Number(s.reorderPoint || 0),
-        max: Number(
-          s.reorderQty || (s.reorderPoint ? Number(s.reorderPoint) * 2 : 100),
-        ),
-        unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
-      })),
+      stockData: lowStockIngredients, // Reuse the low stock preview as dashboard stock data
       summary: {
-        totalBatches: batches.length,
-        activeBatches: batches.filter((b: any) => b.status === "IN_PROGRESS")
-          .length,
-        completedToday: batches.filter((b: any) => {
-            const today = new Date();
-            return b.status === "COMPLETED" &&
-                   b.completedAt &&
-                   b.completedAt.toDateString() === today.toDateString();
-        }).length,
-        lowStockItems: lowStockIngredients.length,
+        totalBatches,
+        activeBatches,
+        completedToday,
+        lowStockItems,
       },
     };
   }
@@ -698,30 +739,7 @@ export class BakeryService {
     return this.prisma.client.batch.findMany({
       where,
       // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
-      select: {
-        id: true,
-        batchNumber: true,
-        status: true,
-        plannedQuantity: true,
-        actualQuantity: true,
-        scheduledStartAt: true,
-        notes: true,
-        createdAt: true,
-        updatedAt: true,
-        recipeId: true,
-        organizationId: true,
-        leadBakerId: true,
-        systemUnitId: true,
-        orgUnitId: true,
-        startedAt: true,
-        completedAt: true,
-        cancelledAt: true,
-        duration: true,
-        productionDate: true,
-        expiresAt: true,
-        expirationStatus: true,
-        shelfLifeDays: true,
-        tags: true,
+      include: {
         recipe: {
           select: {
             id: true,
@@ -731,6 +749,19 @@ export class BakeryService {
           },
         },
         leadBaker: {
+          select: {
+            id: true,
+            member: {
+              select: {
+                id: true,
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
+        assistantBakers: {
           select: {
             id: true,
             member: {
@@ -787,7 +818,7 @@ export class BakeryService {
     // Always generate the batch number, ignoring any manual input from the client
     const batchNumber = await this.generateBatchNumber(organizationId);
 
-    const { date, time, batchNumber: _, ...rest } = data;
+    const { date, time, batchNumber: _, assistantBakerIds, ...rest } = data;
 
     // Process scheduledStartAt if date and time are provided
     let scheduledStartAt = data.scheduledStartAt;
@@ -804,6 +835,11 @@ export class BakeryService {
         batchNumber,
         scheduledStartAt: scheduledStartAt || new Date(),
         organizationId,
+        assistantBakers: assistantBakerIds?.length
+          ? {
+              connect: assistantBakerIds.map((id: string) => ({ id })),
+            }
+          : undefined,
       },
     });
   }
@@ -812,11 +848,18 @@ export class BakeryService {
     const { organizationId } = ctx;
 
     // Strip organizationId and id from data to prevent mass assignment
-    const { organizationId: _, id: __, ...updateData } = data;
+    const { organizationId: _, id: __, assistantBakerIds, ...updateData } = data;
 
     return this.prisma.client.batch.update({
       where: { id, organizationId },
-      data: updateData,
+      data: {
+        ...updateData,
+        assistantBakers: assistantBakerIds
+          ? {
+              set: assistantBakerIds.map((id: string) => ({ id })),
+            }
+          : undefined,
+      },
     });
   }
 
@@ -1248,10 +1291,26 @@ export class BakeryService {
   }
 
   async addBaker(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
+    const { memberId, specialties, isActive } = data;
+
+    // 🛡️ Sentinel: Verify that the member belongs to the same organization to prevent IDOR
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+    });
+
+    if (!member) {
+      throw new ForbiddenException("Member not found in this organization.");
+    }
+
     const settings = await this.getSettings(ctx);
+
+    // 🛡️ Sentinel: Use explicit whitelisting to prevent mass assignment of sensitive internal fields
     return this.prisma.client.bakeryBaker.create({
       data: {
-        ...data,
+        memberId,
+        specialties,
+        isActive: isActive !== undefined ? isActive : true,
         bakerySettingsId: settings.id,
       },
     });
@@ -1264,18 +1323,15 @@ export class BakeryService {
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
-    // Strip organizationId and id from data to prevent mass assignment
-    const {
-      organizationId: _,
-      id: __,
-      bakerySettingsId: ___,
-      memberId: ____,
-      ...updateData
-    } = data;
+    // 🛡️ Sentinel: Explicitly destructure allowed fields to prevent mass assignment
+    const { specialties, isActive } = data;
 
     return this.prisma.client.bakeryBaker.update({
       where: { id },
-      data: updateData,
+      data: {
+        specialties,
+        isActive,
+      },
     });
   }
 

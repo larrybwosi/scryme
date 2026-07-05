@@ -1,4 +1,4 @@
-import { getSDK } from '@repo/sdk/src/index';
+import { getSDK } from '@repo/sdk';
 import { invoke } from '@tauri-apps/api/core';
 import { sanitizeApiUrl } from '@/utils/url';
 import { tauriInvoke } from './tauri-bridge';

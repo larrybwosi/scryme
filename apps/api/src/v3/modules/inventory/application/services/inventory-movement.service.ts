@@ -112,6 +112,12 @@ export class InventoryMovementService {
     return movement;
   }
 
+  /**
+   * OPTIMIZATION (Bolt ⚡): Optimized integrity check.
+   * 1. Deduplicates location IDs to avoid redundant queries.
+   * 2. Uses parallel database-level aggregations (_sum) instead of fetching full batch arrays.
+   * 3. Replaces sequential O(N) queries with O(1) parallel batch lookups.
+   */
   private async verifyIntegrity(
     tx: any,
     organizationId: string,
@@ -119,33 +125,37 @@ export class InventoryMovementService {
     fromLoc?: string,
     toLoc?: string,
   ) {
-    const locationIds = [fromLoc, toLoc].filter(Boolean) as string[];
+    const locationIds = [...new Set([fromLoc, toLoc].filter(Boolean))] as string[];
+    if (locationIds.length === 0) return;
 
-    for (const locationId of locationIds) {
-      const stock = await tx.productVariantStock.findUnique({
-        where: { variantId_locationId: { variantId, locationId } },
-      });
-
-      const batches = await tx.stockBatch.findMany({
+    const [stocks, batchSums] = await Promise.all([
+      tx.productVariantStock.findMany({
+        where: { variantId, locationId: { in: locationIds } },
+        select: { locationId: true, currentStock: true },
+      }),
+      tx.stockBatch.groupBy({
+        by: ["locationId"],
         where: {
           organizationId,
           variantId,
-          locationId,
+          locationId: { in: locationIds },
           currentQuantity: { gt: 0 },
         },
-      });
+        _sum: { currentQuantity: true },
+      }),
+    ]);
 
-      const totalBatchQty = batches.reduce(
-        (acc: number, b: any) => acc + Number(b.currentQuantity),
-        0,
-      );
-      const currentStock = Number(stock?.currentStock || 0);
+    for (const locationId of locationIds) {
+      const stock = stocks.find((s: any) => s.locationId === locationId);
+      const batchSum = batchSums.find((b: any) => b.locationId === locationId);
+
+      const totalBatchQty = batchSum?._sum?.currentQuantity?.toNumber() || 0;
+      const currentStock = stock?.currentStock?.toNumber() || 0;
 
       if (Math.abs(totalBatchQty - currentStock) > 0.001) {
         this.logger.error(
           `[Integrity Alert] Stock mismatch for variant ${variantId} at location ${locationId}. Stock: ${currentStock}, Batches: ${totalBatchQty}`,
         );
-        // In highly strict enterprise systems, we might block the transaction here.
       }
     }
   }
