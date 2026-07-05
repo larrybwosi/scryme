@@ -1,6 +1,7 @@
 import {
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
   BadRequestException,
   Logger,
   NotFoundException,
@@ -29,7 +30,7 @@ export class BakeryService {
 
   async getCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.bakeryCategory.findUnique({
+    return this.prisma.client.bakeryCategory.findFirst({
       where: { id, organizationId },
     });
   }
@@ -1250,10 +1251,26 @@ export class BakeryService {
   }
 
   async addBaker(ctx: V2ApiContext, data: any) {
+    const { organizationId } = ctx;
+    const { memberId, specialties, isActive } = data;
+
+    // 🛡️ Sentinel: Verify that the member belongs to the same organization to prevent IDOR
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+    });
+
+    if (!member) {
+      throw new ForbiddenException("Member not found in this organization.");
+    }
+
     const settings = await this.getSettings(ctx);
+
+    // 🛡️ Sentinel: Use explicit whitelisting to prevent mass assignment of sensitive internal fields
     return this.prisma.client.bakeryBaker.create({
       data: {
-        ...data,
+        memberId,
+        specialties,
+        isActive: isActive !== undefined ? isActive : true,
         bakerySettingsId: settings.id,
       },
     });
@@ -1266,18 +1283,15 @@ export class BakeryService {
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
-    // Strip organizationId and id from data to prevent mass assignment
-    const {
-      organizationId: _,
-      id: __,
-      bakerySettingsId: ___,
-      memberId: ____,
-      ...updateData
-    } = data;
+    // 🛡️ Sentinel: Explicitly destructure allowed fields to prevent mass assignment
+    const { specialties, isActive } = data;
 
     return this.prisma.client.bakeryBaker.update({
       where: { id },
-      data: updateData,
+      data: {
+        specialties,
+        isActive,
+      },
     });
   }
 
