@@ -69,8 +69,8 @@ ENV NODE_OPTIONS="--max-old-space-size=768"
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs nestjs
 
-# Install Prisma globally for migrations using pnpm to match base
-RUN pnpm add -g prisma@7.8.0
+# Install Prisma and tsx globally for migrations and seeding
+RUN pnpm add -g prisma@7.8.0 tsx@4.21.0
 
 # Set up pnpm and prisma engines permissions for the non-root user
 RUN chown -R nestjs:nodejs /pnpm
@@ -83,6 +83,7 @@ COPY --from=installer --chown=nestjs:nodejs /app/apps/api/package.json ./package
 # Copy shared packages if your API depends on them
 COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma ./prisma
+COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma/seed.ts ./prisma/seed.ts
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
