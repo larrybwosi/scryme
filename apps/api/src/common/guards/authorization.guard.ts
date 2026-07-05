@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY, SCOPES_KEY } from '../decorators/auth.decorator';
+import { PERMISSIONS_KEY, SCOPES_KEY, ALLOW_PUBLIC_KEY } from '../decorators/auth.decorator';
 import { V2ApiContext } from '@repo/shared/server';
 
 @Injectable()
@@ -13,6 +13,11 @@ export class AuthorizationGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(ALLOW_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -23,7 +28,13 @@ export class AuthorizationGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (!requiredPermissions && !requiredScopes) {
+    // SECURITY: Default Deny.
+    // Handlers must be explicitly marked as @AllowPublic(), @Permissions(), or @Scopes()
+    if (!requiredPermissions && !requiredScopes && !isPublic) {
+      throw new ForbiddenException('Security restriction: Handler missing authorization decorators (Default Deny)');
+    }
+
+    if (isPublic && !requiredPermissions && !requiredScopes) {
       return true;
     }
 

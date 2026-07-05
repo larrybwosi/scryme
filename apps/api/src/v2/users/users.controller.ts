@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Param, Body } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { v2Context } from '../../common/decorators/v2-context.decorator';
+import { RequirePermission } from '../../common/decorators/auth.decorator';
 import type { V2ApiContext } from '@repo/shared/server';
 
 @ApiTags('Users')
@@ -12,11 +13,13 @@ export class UsersController {
   // --- Profile & Account Section ---
 
   @Get(':id/profile')
+  @RequirePermission('customer:read:all')
   async getProfile(@v2Context() ctx: V2ApiContext, @Param('id') id: string) {
     return this.usersService.getProfile(ctx, id);
   }
 
   @Patch(':id/profile')
+  @RequirePermission('customer:write:all')
   async updateProfile(@v2Context() ctx: V2ApiContext, @Param('id') id: string, @Body() body: any) {
     return this.usersService.updateProfile(ctx, id, body);
   }
