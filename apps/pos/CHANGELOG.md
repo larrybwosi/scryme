@@ -1,5 +1,11 @@
 # [3.3.0-nextgen.22](https://github.com/larrybwosi/dealio-desktop/compare/v3.3.0-nextgen.21...v3.3.0-nextgen.22) (2026-05-08)
 
+## 8.6.0
+
+### Minor Changes
+
+- 29f1a01: There is nothing much
+
 ## 8.5.0
 
 ### Minor Changes
