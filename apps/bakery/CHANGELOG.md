@@ -1,5 +1,11 @@
 # bakery
 
+## 8.7.0
+
+### Minor Changes
+
+- 0accae5: nothing
+
 ## 8.6.0
 
 ### Minor Changes
