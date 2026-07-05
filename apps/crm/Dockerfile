@@ -56,9 +56,12 @@ ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 # Generate Prisma Client (if needed by CRM)
 RUN pnpm turbo run generate
 
+# Ensure public directory exists to prevent COPY failure in runner stage
+RUN mkdir -p apps/crm/public
+
 # Build the CRM and its internal workspace dependencies
 # Limit memory and concurrency to reduce resource consumption
-ENV NODE_OPTIONS="--max-old-space-size=1536"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=crm... --concurrency=1
 
