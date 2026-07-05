@@ -4,7 +4,7 @@
 FROM node:22-slim AS base
 
 # Prisma needs openssl, and ca-certificates.
-# 💡 FIXED: Added wget here so the Stage 4 HEALTHCHECK actually works!
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     ca-certificates \
@@ -23,7 +23,7 @@ FROM base AS pruner
 WORKDIR /app
 RUN pnpm add -g turbo
 COPY . .
-# Remove potentially conflicting build artifacts from the host
+
 RUN rm -rf .turbo && rm -rf node_modules
 # Run prune
 RUN turbo prune api --docker
@@ -83,6 +83,8 @@ COPY --from=installer --chown=nestjs:nodejs /app/apps/api/package.json ./package
 # Copy shared packages if your API depends on them
 COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma ./prisma
+COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
+COPY --from=installer --chown=nestjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
 # Copy entrypoint script safely from the pruned context
 COPY --from=pruner /app/out/full/apps/api/entrypoint.sh ./entrypoint.sh
