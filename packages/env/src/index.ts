@@ -133,10 +133,12 @@ function loadEnvFiles() {
   if (isBrowser) return;
 
   try {
-    const fs = require("fs");
-    const path = require("path");
-    const dotenv = require("dotenv");
-    const { expand } = require("dotenv-expand");
+    const fs = (function() { try { return require("fs"); } catch { return null; } })();
+    const path = (function() { try { return require("path"); } catch { return null; } })();
+    const dotenv = (function() { try { return require("dotenv"); } catch { return null; } })();
+    const { expand } = (function() { try { return require("dotenv-expand"); } catch { return {}; } })();
+
+    if (!fs || !path || !dotenv || !expand) return;
 
     const currentDir = process.cwd();
 

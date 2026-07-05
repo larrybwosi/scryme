@@ -9,5 +9,5 @@ export default defineConfig({
   sourcemap: true,
   splitting: false,
   treeshake: true,
-  external: ["dotenv", "dotenv-expand", "zod"],
+  external: ["dotenv", "dotenv-expand", "zod", "fs", "path"],
 });
