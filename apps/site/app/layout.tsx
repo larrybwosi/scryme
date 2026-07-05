@@ -51,6 +51,14 @@ export const metadata: Metadata = {
     description:
       "All-in-one enterprise platform for CRM, POS, Inventory, and Finance.",
     siteName: "Scryme",
+    images: [
+      {
+        url: "https://scryme.co/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Scryme — Enterprise Business Platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -58,6 +66,7 @@ export const metadata: Metadata = {
     description:
       "All-in-one enterprise platform for CRM, POS, Inventory, and Finance.",
     creator: "@scryme",
+    images: ["https://scryme.co/og-image.png"],
   },
   robots: {
     index: true,
@@ -88,6 +97,7 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Scryme",
+    alternateName: "Scryme Technologies",
     url: "https://scryme.co",
     logo: "https://scryme.co/logo.png",
     sameAs: [
@@ -95,6 +105,12 @@ export default function RootLayout({
       "https://linkedin.com/company/scryme",
     ],
     description: "Scryme is the all-in-one enterprise platform for CRM, Point of Sale, Inventory, and Finance.",
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+1-800-SCRYME",
+      contactType: "customer service",
+      availableLanguage: ["en"],
+    },
   };
 
   const websiteData = {
@@ -109,11 +125,25 @@ export default function RootLayout({
     },
   };
 
+  const softwareData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Scryme POS",
+    operatingSystem: "Windows, macOS, Linux",
+    applicationCategory: "BusinessApplication",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <html lang="en" className={`${inter.variable} bg-background`}>
       <body className="font-sans antialiased text-foreground">
         <StructuredData data={organizationData} />
         <StructuredData data={websiteData} />
+        <StructuredData data={softwareData} />
         <Navbar />
         {children}
         <Footer />
