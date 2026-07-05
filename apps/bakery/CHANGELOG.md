@@ -1,5 +1,11 @@
 # bakery
 
+## 8.6.0
+
+### Minor Changes
+
+- 29f1a01: There is nothing much
+
 ## 8.2.0
 
 ### Minor Changes
