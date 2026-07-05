@@ -5,7 +5,10 @@ set -e
 # Define schema path for Prisma commands
 SCHEMA_PATH="./prisma/schema"
 
-# Function to wait for database
+# In Prisma 7.8 with prisma.config.ts, we might not need --schema,
+# but keeping it for now if we want to be explicit.
+# However, if it's a directory, Prisma might expect the main file or the directory itself.
+
 wait_for_db() {
   echo "Waiting for database to be ready..."
   MAX_RETRIES=60 # Increased retries for slower DB startups
@@ -46,6 +49,11 @@ if [ -n "$DATABASE_URL" ]; then
   fi
 
   $PRISMA_BIN migrate deploy --schema "$SCHEMA_PATH"
+
+  echo "Seeding database..."
+  # Use the seeding script defined in package.json or direct command
+  # Since we are in the runner stage, we need to make sure tsx is available.
+  $PRISMA_BIN db seed --schema "$SCHEMA_PATH"
 else
   echo "⚠️ DATABASE_URL not set, skipping migrations."
 fi
