@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# FIXED: Install pnpm safely via npm (aligned with version 10.34.1)
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN npm install -g pnpm@10.34.1
@@ -78,13 +77,14 @@ ENV NODE_OPTIONS="--max-old-space-size=512"
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs nextjs
 
-# FIXED: Correct paths for Next.js standalone output mapping
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
 # CRITICAL: Next.js standalone needs the Prisma schema/engines explicitly available if imported
-COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma ./packages/db/prisma
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma ./prisma
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
 # Copy entrypoint script
 COPY --from=pruner --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
