@@ -1,11 +1,34 @@
 services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: always
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80" # Main HTTP entrypoint for local domains
+      - "8080:8080" # Traefik Dashboard (localhost:8080)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      scryme-network:
+        aliases:
+          - scryme.local
+          - api.scryme.local
+          - crm.scryme.local
+          - bakery.scryme.local
+          - storage.scryme.local
+
   db:
     image: postgres:17-alpine
     restart: always
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-scryme}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-scryme_password}
-      - POSTGRES_DB=${POSTGRES_DB:-scryme_db}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5438:5432"
     volumes:
@@ -53,8 +76,8 @@ services:
     image: rustfs/rustfs:latest
     restart: always
     environment:
-      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-rustfs_access_key}
-      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-rustfs_secret_key}
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
       - RUSTFS_CONSOLE_ENABLE=true
     volumes:
       - rustfs_data:/data
@@ -70,7 +93,8 @@ services:
       retries: 5
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.local}`)"
+      - "traefik.http.routers.rustfs.entrypoints=web"
+      - "traefik.http.routers.rustfs.rule=Host('storage.scryme.local')"
       - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
 
   loki:
@@ -134,22 +158,20 @@ services:
         limits:
           memory: 1G
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://scryme:scryme_password@db:5432/scryme_db?schema=public}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_URL=${REDIS_URL}
       - PORT=4000
-      - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
-      - SOCKET_URL=${SOCKET_URL:-http://api:4000}
-      - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
-      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-org-id}
-      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-project-id}
-      - JWT_SECRET=${JWT_SECRET:-fallback-secret-for-dev}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-dev}
-      - INTERNAL_ADMIN_SECRET=${INTERNAL_ADMIN_SECRET:-fallback-secret-for-dev}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-fallback-secret-for-dev-32-chars}
-    ports:
-      - "3002:4000"
+      - REALTIME_PROVIDER=${REALTIME_PROVIDER}
+      - SOCKET_URL=${SOCKET_URL}
+      - ZITADEL_API_URL=${ZITADEL_API_URL}
+      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID}
+      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID}
+      - JWT_SECRET=${JWT_SECRET}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - INTERNAL_ADMIN_SECRET=${INTERNAL_ADMIN_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -174,8 +196,9 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
-      - "traefik.http.services.api.loadbalancer.server.port=${PORT:-4000}"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.rule=Host('api.scryme.local')"
+      - "traefik.http.services.api.loadbalancer.server.port=4000"
       - "logging_job=api"
 
   web:
@@ -186,14 +209,12 @@ services:
         limits:
           memory: 768M
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://scryme:scryme_password@db:5432/scryme_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://api.scryme.local}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://api.scryme.local}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-dev}
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - PORT=3000
-    ports:
-      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -216,8 +237,9 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
-      - "traefik.http.services.web.loadbalancer.server.port=${PORT:-3000}"
+      - "traefik.http.routers.web.entrypoints=web"
+      - "traefik.http.routers.web.rule=Host('scryme.local')"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
       - "logging_job=web"
 
   crm:
@@ -228,14 +250,12 @@ services:
         limits:
           memory: 512M
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://scryme:scryme_password@db:5432/scryme_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://api.scryme.local}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://api.scryme.local}
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
       - PORT=3001
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-dev}
-    ports:
-      - "3001:3001"
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
     depends_on:
       db:
         condition: service_healthy
@@ -258,8 +278,9 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
-      - "traefik.http.services.crm.loadbalancer.server.port=${PORT:-3001}"
+      - "traefik.http.routers.crm.entrypoints=web"
+      - "traefik.http.routers.crm.rule=Host('crm.scryme.local')"
+      - "traefik.http.services.crm.loadbalancer.server.port=3001"
       - "logging_job=crm"
 
   bakery:
@@ -270,10 +291,8 @@ services:
         limits:
           memory: 256M
     environment:
-      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-http://api.scryme.local}
+      - VITE_API_URL=${NEXT_PUBLIC_API_URL}
       - PORT=3003
-    ports:
-      - "3003:3003"
     depends_on:
       api:
         condition: service_healthy
@@ -294,8 +313,9 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
-      - "traefik.http.services.bakery.loadbalancer.server.port=${PORT:-3003}"
+      - "traefik.http.routers.bakery.entrypoints=web"
+      - "traefik.http.routers.bakery.rule=Host('bakery.scryme.local')"
+      - "traefik.http.services.bakery.loadbalancer.server.port=3003"
       - "logging_job=bakery"
 
 volumes:
