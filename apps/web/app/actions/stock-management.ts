@@ -968,7 +968,7 @@ export async function getAggregatedStockRequests(params?: {
   search?: string;
   locationId?: string;
   categoryId?: string;
-  priority?: StockRequestPriority;
+  priority?: StockRequestPriority | "all";
   startDate?: Date;
   endDate?: Date;
 }): Promise<any[]> {
