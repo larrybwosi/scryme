@@ -7,6 +7,6 @@
     "builder": "webpack",
     "typeCheck": false,
     "webpack": true,
-    "webpackConfigPath": "webpack.config.cjs"
+    "webpackConfigPath": "webpack.config.js"
   }
 }
