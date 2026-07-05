@@ -23,6 +23,8 @@ export function resolveBranding(
     showLogo,
     primaryColor:
       config?.primaryColor || (organization as any)?.primaryColor || "#2563eb",
+    secondaryColor:
+      config?.secondaryColor || (organization as any)?.secondaryColor || "#64748b",
     showPoweredBy: (config as any)?.showPoweredBy ?? true,
     watermarkText: (config as any)?.watermarkText,
     customFields: (config as any)?.customFields,

@@ -63,7 +63,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_OPTIONS="--max-old-space-size=768"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
@@ -92,7 +92,7 @@ USER nestjs
 
 EXPOSE 4000
 
-HEALTHCHECK --interval=60s --timeout=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-4000}/api/v2/health || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]

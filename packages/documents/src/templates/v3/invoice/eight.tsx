@@ -242,7 +242,6 @@ const styles = StyleSheet.create({
   signatureLineText: {
     fontFamily: "Helvetica-Oblique",
     fontSize: 15,
-    color: TEXT_LIGHT,
   },
   signatureLabelText: {
     fontSize: 8.5,
@@ -265,6 +264,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
     paymentInfo,
     terms,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
@@ -272,6 +272,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
   } = data;
 
   const activeColor = primaryColor || DARK_BG;
+  const activeSecondaryColor = secondaryColor || TEXT_LIGHT;
 
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -286,11 +287,11 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               {company.logo && (
                 <Image src={company.logo} style={{ width: 100, height: 50, marginBottom: 10, objectFit: 'contain' }} />
               )}
-              <Text style={styles.companyName}>{company.name}</Text>
+              <Text style={[styles.companyName, { color: activeSecondaryColor }]}>{company.name}</Text>
               {company.slogan && <Text style={styles.companySlogan}>{company.slogan}</Text>}
             </View>
             <View style={styles.brandRight}>
-              <Text style={styles.hugeTitle}>
+              <Text style={[styles.hugeTitle, { color: activeSecondaryColor }]}>
                 {type ? type.toUpperCase() : "INVOICE"}
               </Text>
             </View>
@@ -300,7 +301,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             {/* Client Recipient Details */}
             <View style={styles.clientMetaDataBlock}>
               <Text style={styles.metaLabelInline}>To</Text>
-              <Text style={styles.clientName}>{customer.name}</Text>
+              <Text style={[styles.clientName, { color: activeSecondaryColor }]}>{customer.name}</Text>
               <Text style={styles.clientTitle}>Director</Text>
               <Text style={styles.clientAddressText}>
                 {customer.address ||
@@ -317,7 +318,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={styles.metaNumberLabel}>{type === 'invoice' ? 'Invoice' : 'Receipt'} No.</Text>
-                  <Text style={styles.metaNumberValue}>#{number}</Text>
+                  <Text style={[styles.metaNumberValue, { color: activeSecondaryColor }]}>#{number}</Text>
                 </View>
                 {qrCode && (
                   <Image src={qrCode} style={{ width: 40, height: 40 }} />
@@ -429,7 +430,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
                 <>
                   {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
                   <View style={styles.signatureGraphicPlaceholder}>
-                    <Text style={styles.signatureLineText}>{signature.name}</Text>
+                    <Text style={[styles.signatureLineText, { color: activeSecondaryColor }]}>{signature.name}</Text>
                   </View>
                   <Text style={styles.signatureLabelText}>{signature.title}</Text>
                 </>

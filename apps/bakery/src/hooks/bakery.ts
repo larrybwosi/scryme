@@ -44,6 +44,22 @@ export const useBatches = (filters?: any) => {
   });
 };
 
+export const useProductCategories = () => {
+  return useQuery({
+    queryKey: ["productCategories"],
+    queryFn: async () => {
+      if (isTauri() && isOfflineMode()) {
+        // Fallback for offline mode if needed
+        return [];
+      }
+      const data = await sdk.catalog.getCategories();
+      return (Array.isArray(data)
+        ? data
+        : data?.data || []) as unknown as any[];
+    },
+  });
+};
+
 export const useBatchById = (id: string) => {
   return useQuery({
     queryKey: ["batches", id],

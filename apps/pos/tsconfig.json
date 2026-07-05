@@ -27,7 +27,8 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "moduleResolution": "bundler"
   },
   "include": [
     "src"

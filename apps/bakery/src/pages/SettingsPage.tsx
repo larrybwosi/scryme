@@ -45,7 +45,7 @@ import { useBakerySettingsManagement } from '@/hooks/bakery';
 import { useUnits } from '@/lib/units/hooks';
 import { toast } from 'sonner';
 import sdk from '@/lib/sdk';
-import { getSDK } from '@repo/sdk/src/index';
+import { getSDK } from '@repo/sdk';
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri, isOfflineMode } from '@/lib/sdk';
 import { sanitizeApiUrl } from '@/utils/url';

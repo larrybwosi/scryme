@@ -1,7 +1,7 @@
 {
   "name": "bakery",
   "private": true,
-  "version": "8.3.0",
+  "version": "8.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "test:backend": "cd src-tauri && cargo test",
     "tauri": "tauri",
     "preview": "vite preview",
+    "test:frontend": "vitest run",
     "type-check": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
@@ -55,13 +56,13 @@
     "@eslint/js": "8.57.0",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "^2.10.1",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.15",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@tailwindcss/postcss": "^4.3.0",
-    "@tailwindcss/vite": "^4.3.0",
     "@vitejs/plugin-react-swc": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "eslint-plugin-react": "7.37.5",

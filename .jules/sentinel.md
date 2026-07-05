@@ -57,6 +57,11 @@
 **Learning:** Security utilities performing DNS-based validation must account for hostnames resolving to multiple IP addresses. Validating only the first returned address is insufficient as the application's HTTP client might choose a different (unsafe) IP from the resolved list.
 **Prevention:** Always use `dns.lookup` with the `{ all: true }` option and iterate through all resolved IP addresses to ensure every single one is safe before allowing the request.
 
+## 2026-07-05 - IDOR and Mass Assignment in Bakery Baker Management
+**Vulnerability:** The `BakeryService.addBaker` method lacked verification that the provided `memberId` belonged to the authenticated `organizationId`, allowing an attacker to add any member from any organization as a baker. Additionally, both `addBaker` and `updateBaker` were susceptible to mass assignment of internal fields like `bakerySettingsId`.
+**Learning:** In multi-tenant systems, every foreign key provided by a user (like `memberId`) must be validated against the current tenant's scope before being used in a write operation. Furthermore, using spread operators (`...data`) in Prisma `create`/`update` calls without explicit whitelisting can expose internal fields to unauthorized modifications.
+**Prevention:** Always perform a scoped lookup for foreign keys (e.g., `member.findFirst({ where: { id: memberId, organizationId } })`) before persisting a record that references them. Use explicit destructuring or a whitelist to select only allowed fields from user input before passing them to the database layer.
+
 ## 2025-05-20 - IDOR Vulnerability in M-Pesa and Delivery Utilities
 **Vulnerability:** Scoped lookups for `UnclaimedPayment`, `Transaction`, and `Fulfillment` were using `findUnique` with only the record ID, bypassing `organizationId` checks in multi-tenant environments.
 **Learning:** Prisma's `findUnique` only enforces multi-field uniqueness if a composite unique index (`@@unique`) exists. In this codebase, many models lack `@@unique([id, organizationId])`, so `where: { id, organizationId }` in `findUnique` is often invalid or ignored in favor of just `id`. This allows an authenticated user to access records from other tenants if they know or guess the ID.

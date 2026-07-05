@@ -179,12 +179,10 @@ const styles = StyleSheet.create({
   signatureScript: {
     fontSize: 16,
     fontFamily: "Helvetica-Oblique",
-    color: DARK,
     marginBottom: 2,
   },
   signatureLine: {
     borderTopWidth: 1,
-    borderTopColor: DARK,
     width: 140,
     marginBottom: 3,
   },
@@ -208,7 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 45,
     paddingTop: 14,
   },
-  footerText: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: DARK },
+  footerText: { fontSize: 8.5, fontFamily: "Helvetica-Bold" },
 });
 
 export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
@@ -225,12 +223,14 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
     footerWebsite,
     signature,
     primaryColor,
+    secondaryColor,
     kraPin,
     kraControlCode,
     kraReceiptNumber,
   } = data;
 
   const activeColor = primaryColor || DARK;
+  const activeSecondaryColor = secondaryColor || DARK;
 
   const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -248,7 +248,7 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               {company.logo && (
                 <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 15, objectFit: 'contain' }} />
               )}
-              <Text style={[styles.companyLabel, { fontSize: 12, fontFamily: 'Helvetica-Bold' }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.name}</Text>
+              <Text style={[styles.companyLabel, { fontSize: 12, fontFamily: 'Helvetica-Bold' }, activeColor !== DARK ? { color: '#FFFFFF' } : { color: activeSecondaryColor }]}>{company.name}</Text>
               {company.slogan && <Text style={[styles.companyLabel, { marginTop: 2 }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.slogan}</Text>}
               <View style={styles.metaTable}>
                 <View style={styles.metaRow}>
@@ -368,7 +368,7 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             {signature && (
               <View style={styles.signatureArea}>
                 {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-                <Text style={styles.signatureScript}>{signature.name}</Text>
+                <Text style={[styles.signatureScript, { color: activeSecondaryColor }]}>{signature.name}</Text>
                 <View style={[styles.signatureLine, { borderTopColor: activeColor }]} />
                 <Text style={styles.signatureLabel}>{signature.title || "Signature"}</Text>
               </View>
@@ -379,9 +379,9 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         {/* ---- Footer ---- */}
         <View style={styles.footerDivider} />
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>{footerWebsite || company.website || ""}</Text>
-          <Text style={styles.footerText}>{company.email || ""}</Text>
-          <Text style={styles.footerText}>THANK YOU</Text>
+          <Text style={[styles.footerText, { color: activeSecondaryColor }]}>{footerWebsite || company.website || ""}</Text>
+          <Text style={[styles.footerText, { color: activeSecondaryColor }]}>{company.email || ""}</Text>
+          <Text style={[styles.footerText, { color: activeSecondaryColor }]}>THANK YOU</Text>
         </View>
       </Page>
     </Document>

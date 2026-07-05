@@ -286,7 +286,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
         orgUnitId: batch?.orgUnitId || batch?.unitId || undefined,
         status: batch?.status || BatchStatus.PLANNED,
         leadBakerId: batch?.leadBakerId || undefined,
-        assistantBakerIds: batch?.assistantBakerIds || [],
+        assistantBakerIds: batch?.assistantBakerIds || batch?.assistantBakers?.map((b: any) => b.id) || [],
         duration: batch?.duration ? Number(batch.duration) : undefined,
         notes: batch?.notes || '',
         createdFromTemplateId: batch?.createdFromTemplateId || undefined,
