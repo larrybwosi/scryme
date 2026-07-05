@@ -46,7 +46,6 @@ export class RealtimeController {
         [notificationChannel]: ["subscribe", "publish", "history"],
         [inventoryChannel]: ["subscribe", "publish", "history"],
         [ordersChannel]: ["subscribe", "publish", "history"],
-        "channel:*": ["subscribe", "publish", "history"],
       };
 
       // Add POS specific channel if we have a location
