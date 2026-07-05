@@ -83,6 +83,7 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/publ
 
 # CRITICAL: Next.js standalone needs the Prisma schema/engines explicitly available if imported
 COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma ./prisma
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma/seed.ts ./prisma/seed.ts
 COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
 COPY --from=installer --chown=nextjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
