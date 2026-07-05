@@ -307,7 +307,7 @@ services:
       retries: 3
       start_period: 40s
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       RABBITMQ_URL: ${RABBITMQ_URL}
@@ -360,7 +360,7 @@ services:
       retries: 3
       start_period: 40s
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
       NEXT_PUBLIC_REALTIME_PROVIDER: socketio
       NEXT_PUBLIC_SOCKET_URL: http://${API_DOMAIN:-api.scryme.local}
@@ -400,7 +400,7 @@ services:
       retries: 3
       start_period: 40s
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
       NEXT_PUBLIC_REALTIME_PROVIDER: socketio
       NEXT_PUBLIC_SOCKET_URL: http://${API_DOMAIN:-api.scryme.local}
