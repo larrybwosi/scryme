@@ -1,27 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.0
-    container_name: traefik
-    restart: always
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80" # Main HTTP entrypoint for local domains
-      - "8080:8080" # Traefik Dashboard (localhost:8080)
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      scryme-network:
-        aliases:
-          - scryme.local
-          - api.scryme.local
-          - crm.scryme.local
-          - bakery.scryme.local
-          - storage.scryme.local
-
   db:
     image: postgres:17-alpine
     restart: always
@@ -86,6 +63,7 @@ services:
         condition: service_completed_successfully
     networks:
       - scryme-network
+      - dokploy-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/"]
       interval: 10s
@@ -94,7 +72,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.rustfs.entrypoints=web"
-      - "traefik.http.routers.rustfs.rule=Host('storage.scryme.local')"
+      - "traefik.http.routers.rustfs.rule=Host(`storage.scryme.local`)"
       - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
 
   loki:
@@ -181,6 +159,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
+      - dokploy-network
     healthcheck:
       test:
         [
@@ -197,7 +176,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.entrypoints=web"
-      - "traefik.http.routers.api.rule=Host('api.scryme.local')"
+      - "traefik.http.routers.api.rule=Host(`api.scryme.local`)"
       - "traefik.http.services.api.loadbalancer.server.port=4000"
       - "logging_job=api"
 
@@ -222,6 +201,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
+      - dokploy-network
     healthcheck:
       test:
         [
@@ -238,7 +218,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.entrypoints=web"
-      - "traefik.http.routers.web.rule=Host('scryme.local')"
+      - "traefik.http.routers.web.rule=Host(`scryme.local`)"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
       - "logging_job=web"
 
@@ -263,6 +243,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
+      - dokploy-network
     healthcheck:
       test:
         [
@@ -279,7 +260,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.crm.entrypoints=web"
-      - "traefik.http.routers.crm.rule=Host('crm.scryme.local')"
+      - "traefik.http.routers.crm.rule=Host(`crm.scryme.local`)"
       - "traefik.http.services.crm.loadbalancer.server.port=3001"
       - "logging_job=crm"
 
@@ -298,6 +279,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
+      - dokploy-network
     healthcheck:
       test:
         [
@@ -314,7 +296,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bakery.entrypoints=web"
-      - "traefik.http.routers.bakery.rule=Host('bakery.scryme.local')"
+      - "traefik.http.routers.bakery.rule=Host(`bakery.scryme.local`)"
       - "traefik.http.services.bakery.loadbalancer.server.port=3003"
       - "logging_job=bakery"
 
@@ -326,3 +308,6 @@ volumes:
 networks:
   scryme-network:
     driver: bridge
+  dokploy-network:
+    external: true
+    name: dokploy-network
