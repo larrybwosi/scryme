@@ -1,14 +1,16 @@
 import { betterAuth } from "better-auth";
 import { authOptions } from "./index";
-import { admin, customSession } from "better-auth/plugins";
+import { admin, customSession, jwt } from "better-auth/plugins";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { nextCookies } from "better-auth/next-js";
 import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
 import { getRedisClient } from "@repo/shared/redis";
+import { env } from "@repo/env";
 
 export const auth = betterAuth({
   ...(authOptions as any),
+  baseURL: env.BETTER_AUTH_URL || "http://localhost:3000",
   session: {
     preserveSessionInDatabase: true,
     storeSessionInDatabase: true,
@@ -51,6 +53,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    jwt(),
     admin({
       defaultRole: UserRole.MEMBER,
     }),

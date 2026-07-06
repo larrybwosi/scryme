@@ -15,8 +15,34 @@ import {
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { Suspense } from "react";
 
 export default function AuthorizePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <Skeleton className="h-8 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-full" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+          </CardFooter>
+        </Card>
+      </div>
+    }>
+      <AuthorizeContent />
+    </Suspense>
+  );
+}
+
+function AuthorizeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const clientId = searchParams.get("client_id");
