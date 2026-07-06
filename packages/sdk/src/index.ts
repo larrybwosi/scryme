@@ -227,6 +227,18 @@ export const getSDK = (config: SDKConfig) => {
       getHistory: (params?: { path?: string }) =>
         sdk.client.get("/workflows/history", { params }),
     },
+    b2b: {
+      getCatalog: (orgSlug: string, params?: any) =>
+        sdk.client.get(`/${orgSlug}/b2b/catalog`, { params }),
+      getOrders: (orgSlug: string) =>
+        sdk.client.get(`/${orgSlug}/b2b/orders`),
+      getInvoices: (orgSlug: string) =>
+        sdk.client.get(`/${orgSlug}/b2b/invoices`),
+      createOrder: (orgSlug: string, data: any) =>
+        sdk.client.post(`/${orgSlug}/b2b/orders`, data),
+      requestQuote: (orgSlug: string, data: any) =>
+        sdk.client.post(`/${orgSlug}/b2b/quotes`, data),
+    },
   };
 
   return sdk;

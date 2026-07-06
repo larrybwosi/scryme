@@ -30,11 +30,6 @@
 **Learning:** Outbound requests to URLs provided by users or stored in configurations are primary targets for SSRF attacks. Relying on simple string checks for "localhost" is insufficient as attackers can use DNS-resolved IPs (e.g., `127.0.0.1`, `10.0.0.1`) or IPv6 loopback addresses to bypass filters and access internal metadata services or APIs.
 **Prevention:** Always use a robust URL validation utility like `isSafeUrl` (implemented in `@repo/shared/server`) that resolves the hostname via DNS and verifies that the resulting IP address does not fall within private, loopback, or reserved ranges. Apply this validation to all modules performing outbound HTTP(S) requests to external endpoints.
 
-## 2025-05-21 - IDOR in Realtime V2 POS Channels
-**Vulnerability:** The `RealtimeGateway` (V2) allowed any authenticated member to join `pos:[locationId]:sales` channels without verifying if the `locationId` belonged to their organization.
-**Learning:** Synchronous authorization methods in WebSocket gateways often tempt developers to skip database-backed ownership checks for performance or simplicity. This creates a significant IDOR risk where tenant isolation is only enforced at the authentication layer but not at the resource/channel layer.
-**Prevention:** Always implement `validateChannelAccess` as an asynchronous method and perform tenant-scoped database lookups for any resource identifiers present in the channel name (e.g., `locationId`, `orderId`). Ensure that the `where` clause explicitly includes both the resource `id` and the authenticated `organizationId`.
-
 ## 2025-05-18 - Sensitive Data Leakage at Recursion Depth Limit
 **Vulnerability:** The `redactSensitiveData` utility leaked raw objects and arrays when they exceeded the `maxDepth` limit, as the recursion would stop and return the remaining data as-is without further inspection.
 **Learning:** Security-critical recursion must never "fail open" by returning raw data when limits are reached. If a data structure is too deep to inspect, it must be considered potentially sensitive and replaced with a placeholder.
@@ -71,8 +66,3 @@
 **Vulnerability:** Scoped lookups for `UnclaimedPayment`, `Transaction`, and `Fulfillment` were using `findUnique` with only the record ID, bypassing `organizationId` checks in multi-tenant environments.
 **Learning:** Prisma's `findUnique` only enforces multi-field uniqueness if a composite unique index (`@@unique`) exists. In this codebase, many models lack `@@unique([id, organizationId])`, so `where: { id, organizationId }` in `findUnique` is often invalid or ignored in favor of just `id`. This allows an authenticated user to access records from other tenants if they know or guess the ID.
 **Prevention:** Always use `findFirst` instead of `findUnique` when performing tenant-scoped lookups for models that do not have a composite unique index on `[id, organizationId]`. Explicitly include `organizationId` in the `where` clause of every sensitive lookup.
-
-## 2025-05-21 - IDOR Vulnerability in Checkout Process
-**Vulnerability:** The `CheckoutUseCase` fetched the `Cart` entity using only the `cartId` provided in the request body, allowing an authenticated user to initiate checkout for a cart belonging to any organization.
-**Learning:** Even if an endpoint is protected by authentication and multi-tenancy guards, individual use cases must still enforce tenant isolation when fetching resources by ID. Failing to scope these lookups to the current `organizationId` creates an IDOR vulnerability where cross-tenant data can be accessed or modified.
-**Prevention:** Always scope database lookups for entities (like `Cart`, `Order`, `Customer`) using the authenticated `organizationId`. Use `findFirst` with both `id` and `organizationId` in the `where` clause to ensure strict multi-tenant isolation, especially when composite unique indexes are not present.

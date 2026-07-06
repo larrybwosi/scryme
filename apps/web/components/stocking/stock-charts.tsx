@@ -28,48 +28,16 @@ const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 interface StockChartsProps {
   movementData: any[];
   distributionData: any[];
-  showOnlyDistribution?: boolean;
-  hideDistribution?: boolean;
 }
 
 export function StockCharts({
   movementData,
   distributionData,
-  showOnlyDistribution,
-  hideDistribution,
 }: StockChartsProps) {
-  if (showOnlyDistribution) {
-    return (
-      <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={distributionData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={5}
-              dataKey="value">
-              {distributionData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Movement Trends */}
-      <Card className={hideDistribution ? "lg:col-span-3" : "lg:col-span-2"}>
+      <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle>Stock Movement Trends</CardTitle>
         </CardHeader>
@@ -115,38 +83,36 @@ export function StockCharts({
       </Card>
 
       {/* Distribution by Location */}
-      {!hideDistribution && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribution by Location</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={distributionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value">
-                    {distributionData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribution by Location</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={distributionData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value">
+                  {distributionData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

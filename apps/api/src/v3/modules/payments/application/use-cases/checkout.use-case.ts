@@ -21,12 +21,8 @@ export class CheckoutUseCase {
     dto: CheckoutDto,
   ): Promise<CheckoutResponseDto> {
     // 1. Get Cart
-    // @security Multi-tenant isolation: Scoping lookup by organizationId to prevent IDOR
-    const cart = await this.prisma.client.cart.findFirst({
-      where: {
-        id: dto.cartId,
-        organizationId,
-      },
+    const cart = await this.prisma.client.cart.findUnique({
+      where: { id: dto.cartId },
       include: { items: true },
     });
 

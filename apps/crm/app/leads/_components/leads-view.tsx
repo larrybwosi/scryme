@@ -12,7 +12,6 @@ import {
   MoreHorizontal,
   Building2,
   CheckCircle2,
-  Loader2,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { getLeads, qualifyLead } from "../../actions/leads";
@@ -45,11 +44,6 @@ import {
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
 
 const PAGE_SIZE = 10;
 
@@ -271,28 +265,16 @@ export function LeadsView() {
                                 onClick={() => openQualifyDialog(lead)}
                                 disabled={qualifyingId === lead.id}
                             >
-                                {qualifyingId === lead.id ? (
-                                    <Loader2 size={14} className="animate-spin" />
-                                ) : (
-                                    <CheckCircle2 size={14} className="text-green-600" />
-                                )}
+                                <CheckCircle2 size={14} className="text-green-600" />
                                 {qualifyingId === lead.id ? "Qualifying..." : "Qualify"}
                             </Button>
                           )}
                           <DropdownMenu>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                                    aria-label="More actions"
-                                  >
-                                    <MoreHorizontal size={14} />
-                                  </button>
-                                </DropdownMenuTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent>More actions</TooltipContent>
-                            </Tooltip>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors">
+                                <MoreHorizontal size={14} />
+                              </button>
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem>Edit Lead</DropdownMenuItem>
                               <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
@@ -312,36 +294,12 @@ export function LeadsView() {
               Showing {startItem}–{endItem} of {filtered.length} leads
             </p>
             <div className="flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={safeCurrentPage === 1}
-                    className="w-8 h-8"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Previous page</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={safeCurrentPage === totalPages}
-                    className="w-8 h-8"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Next page</TooltipContent>
-              </Tooltip>
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safeCurrentPage === 1} className="w-8 h-8">
+                <ChevronLeft size={14} />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safeCurrentPage === totalPages} className="w-8 h-8">
+                <ChevronRight size={14} />
+              </Button>
             </div>
           </div>
         </div>
@@ -392,7 +350,6 @@ export function LeadsView() {
             <DialogFooter>
                 <Button variant="outline" onClick={() => setIsQualifyDialogOpen(false)}>Cancel</Button>
                 <Button onClick={handleQualify} disabled={!!qualifyingId}>
-                    {qualifyingId && <Loader2 size={14} className="mr-2 animate-spin" />}
                     {qualifyingId ? "Qualifying..." : "Confirm Qualification"}
                 </Button>
             </DialogFooter>
