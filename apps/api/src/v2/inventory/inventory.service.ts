@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { Prisma } from "@/prisma/client";
 import { ApiRealtimeService } from "../../common/services/realtime.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
 import { paginate } from "../../v3/common/utils/pagination";
@@ -40,7 +41,7 @@ export class InventoryService {
 
       if (lowStock === "true") {
         where.availableStock = {
-          lte: this.prisma.client.productVariantStock.fields.reorderPoint,
+          lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
         };
       }
 
@@ -118,9 +119,16 @@ export class InventoryService {
 
   async createInventoryItem(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    // 🛡️ Sentinel: Whitelist fields to prevent mass assignment of internal or sensitive fields
+    const { productId, variantId, locationId, reorderPoint, reorderQty } = data;
+
     return this.prisma.client.productVariantStock.create({
       data: {
-        ...data,
+        productId,
+        variantId,
+        locationId,
+        reorderPoint,
+        reorderQty,
         organizationId,
       },
     });
@@ -142,14 +150,26 @@ export class InventoryService {
   async updateInventoryItem(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
 
-    // Remove organizationId from data if present to prevent accidental re-assignment
-    const { organizationId: _, ...updateData } = data;
+    // 🛡️ Sentinel: Whitelist allowed update fields and ignore organizationId to prevent bypass
+    const {
+      reorderPoint,
+      reorderQty,
+      availableStock,
+      currentStock,
+      reservedStock,
+    } = data;
 
     // Use updateMany with a filter on organizationId to ensure multi-tenant isolation.
     // Prisma's update does not support non-unique filters.
     const result = await this.prisma.client.productVariantStock.updateMany({
       where: { id, organizationId },
-      data: updateData,
+      data: {
+        reorderPoint,
+        reorderQty,
+        availableStock,
+        currentStock,
+        reservedStock,
+      },
     });
 
     if (result.count === 0) {
@@ -190,10 +210,33 @@ export class InventoryService {
     inventoryId: string,
     data: any,
   ) {
-    const { organizationId } = ctx;
+    const { organizationId, memberId } = ctx;
+
+    // 🛡️ Sentinel: Whitelist movement fields and enforce context-based IDs to prevent impersonation
+    const {
+      variantId,
+      stockBatchId,
+      quantity,
+      fromLocationId,
+      toLocationId,
+      movementType,
+      referenceId,
+      referenceType,
+      notes,
+    } = data;
+
     return this.prisma.client.stockMovement.create({
       data: {
-        ...data,
+        variantId,
+        stockBatchId,
+        quantity,
+        fromLocationId,
+        toLocationId,
+        movementType,
+        referenceId,
+        referenceType,
+        notes,
+        memberId: memberId || data.memberId || "system", // Fallback for robustness, though context is preferred
         organizationId,
       },
     });

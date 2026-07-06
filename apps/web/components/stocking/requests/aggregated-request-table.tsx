@@ -28,6 +28,8 @@ interface AggregatedItem {
   totalRequested: number;
   totalAllocated: number;
   totalRemaining: number;
+  categoryName: string;
+  preferredSupplier: string;
   requests: {
     requestId: string;
     requestNumber: string;
@@ -60,7 +62,7 @@ export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
           <TableRow className="bg-gray-50/50">
             <TableHead className="w-[40px]"></TableHead>
             <TableHead>Product</TableHead>
-            <TableHead>SKU</TableHead>
+            <TableHead>Category</TableHead>
             <TableHead className="text-center">Total Requested</TableHead>
             <TableHead className="text-center">Total Allocated</TableHead>
             <TableHead className="text-center">Remaining</TableHead>
@@ -94,10 +96,15 @@ export function AggregatedRequestTable({ data }: { data: AggregatedItem[] }) {
                         {item.variantName !== "Default" &&
                           ` - ${item.variantName}`}
                       </span>
+                      <span className="text-[10px] text-gray-400 font-mono uppercase">
+                        {item.sku}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-[10px] text-gray-400 font-mono uppercase">
-                    {item.sku}
+                  <TableCell>
+                    <Badge variant="secondary" className="font-normal text-[10px]">
+                      {item.categoryName}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-center font-semibold">
                     {item.totalRequested}
