@@ -372,6 +372,35 @@ export class BookingService {
     });
   }
 
+  async getBookingById(orgId: string, id: string) {
+    const booking = await this.prisma.serviceBooking.findFirst({
+        where: { id, organizationId: orgId },
+        include: {
+            service: true,
+            customer: true,
+            staff: { include: { member: { include: { user: true } } } },
+            resources: { include: { resource: true } },
+            materials: { include: { variant: true } }
+        }
+    });
+
+    if (!booking) throw new NotFoundException("Booking not found");
+    return booking;
+  }
+
+  async updateBookingStatus(orgId: string, id: string, status: BookingStatus) {
+    const booking = await this.prisma.serviceBooking.findFirst({
+        where: { id, organizationId: orgId }
+    });
+
+    if (!booking) throw new NotFoundException("Booking not found");
+
+    return this.prisma.serviceBooking.update({
+        where: { id },
+        data: { status }
+    });
+  }
+
   async cancelBookingSeries(orgId: string, recurrenceId: string) {
     return this.prisma.serviceBooking.updateMany({
         where: {
