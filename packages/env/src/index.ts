@@ -292,7 +292,7 @@ function parseEnv() {
   const fullSchema = serverSchema.merge(clientSchema);
   const parsed = fullSchema.safeParse(raw);
   if (!parsed.success && process.env.NODE_ENV !== "test") {
-    console.error(
+    console.log(
       "❌ Invalid environment variables:",
       parsed.error.flatten().fieldErrors,
     );
