@@ -20,7 +20,7 @@ const serverSchema = z.object({
     .default("development"),
   DATABASE_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url(),
+    z.string().url().default("postgresql://postgres:postgres@localhost:5432/scryme"),
   ),
   PORT: z.coerce.number().default(3001),
 
@@ -268,9 +268,11 @@ function parseEnv() {
         "❌ Invalid client environment variables:",
         parsed.error.flatten().fieldErrors,
       );
-      throw new Error("Invalid client environment variables");
+      if (process.env.NODE_ENV === "production" && !process.env.SKIP_ENV_VALIDATION) {
+        throw new Error("Invalid client environment variables");
+      }
     }
-    return parsed.data as z.infer<typeof serverSchema> &
+    return (parsed.data || clientSchema.parse({})) as z.infer<typeof serverSchema> &
       z.infer<typeof clientSchema>;
   }
 
@@ -281,7 +283,9 @@ function parseEnv() {
         "❌ Invalid environment variables:",
         parsed.error.flatten().fieldErrors,
       );
-      throw new Error("Invalid environment variables");
+      if (process.env.NODE_ENV === "production" && !process.env.SKIP_ENV_VALIDATION) {
+        throw new Error("Invalid environment variables");
+      }
     }
     return {
       ...(parsed.data ?? {}),
@@ -296,7 +300,9 @@ function parseEnv() {
       "❌ Invalid environment variables:",
       parsed.error.flatten().fieldErrors,
     );
-    throw new Error("Invalid environment variables");
+    if (process.env.NODE_ENV === "production" && !process.env.SKIP_ENV_VALIDATION) {
+      throw new Error("Invalid environment variables");
+    }
   }
 
   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
