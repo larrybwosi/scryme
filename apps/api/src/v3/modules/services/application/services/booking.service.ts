@@ -7,7 +7,7 @@ import { InventoryMovementService } from "@/v3/modules/inventory/application/ser
 import { StaffSchedulingService } from "./staff-scheduling.service";
 import { CalComService } from "./calcom.service";
 import { Prisma } from "@repo/db";
-import { RRule } from "rrule";
+import { rrulestr } from "rrule";
 
 @Injectable()
 export class BookingService {
@@ -137,7 +137,7 @@ export class BookingService {
     }
 
     if (dto.recurrenceRule) {
-        const rule = RRule.rrulestr(dto.recurrenceRule);
+        const rule = rrulestr(dto.recurrenceRule);
         const dates = rule.all((d, i) => i < 50); // Limit to 50 occurrences for safety
 
         const recurrence = await this.prisma.client.bookingRecurrence.create({

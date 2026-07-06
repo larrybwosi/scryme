@@ -59,7 +59,7 @@ export class StrapiProductSyncUseCase {
         include: {
           variants: {
             include: {
-              inventoryItems: {
+              variantStocks: {
                 include: { location: true },
               },
               priceLists: {
@@ -78,7 +78,7 @@ export class StrapiProductSyncUseCase {
       for (const product of products) {
         try {
           // Build location stock map across all variants
-          const locationStock = this.buildLocationStockMap(product.variants as any[]);
+          const locationStock = this.buildLocationStockMap((product as any).variants as any[]);
 
           // Check for existing mapping
           const mapping = await this.prisma.client.ecommerceProductMapping.findFirst({
@@ -100,7 +100,7 @@ export class StrapiProductSyncUseCase {
           };
 
           // Merge lowest variant price as default product price
-          const lowestPrice = this.getLowestVariantPrice(product.variants as any[]);
+          const lowestPrice = this.getLowestVariantPrice((product as any).variants as any[]);
           if (lowestPrice !== undefined) strapiPayload.price = lowestPrice;
 
           if (mapping?.externalProductId) {
@@ -263,7 +263,6 @@ export class StrapiProductSyncUseCase {
               const variant = await this.prisma.client.productVariant.create({
                 data: {
                   productId: newProduct.id,
-                  organizationId,
                   name: "Default",
                   sku,
                 },
@@ -381,9 +380,9 @@ export class StrapiProductSyncUseCase {
   private buildLocationStockMap(variants: any[]): Record<string, number> {
     const map: Record<string, number> = {};
     for (const variant of variants) {
-      for (const item of variant.inventoryItems ?? []) {
+      for (const item of variant.variantStocks ?? []) {
         const locId = item.locationId;
-        map[locId] = (map[locId] ?? 0) + (item.quantityOnHand ?? 0);
+        map[locId] = (map[locId] ?? 0) + (item.currentStock ?? 0);
       }
     }
     return map;
@@ -403,7 +402,7 @@ export class StrapiProductSyncUseCase {
     });
     if (!cat) {
       cat = await this.prisma.client.category.create({
-        data: { organizationId, name },
+        data: { organizationId, name, code: name.toUpperCase() },
       });
     }
     return cat.id;

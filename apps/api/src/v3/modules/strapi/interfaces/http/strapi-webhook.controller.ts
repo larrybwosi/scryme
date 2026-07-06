@@ -49,7 +49,7 @@ export class StrapiWebhookController {
   async receive(
     @Param("connectionId") connectionId: string,
     @Headers("x-strapi-signature") signature: string | undefined,
-    @Req() req: any,
+    @Req() req: RawBodyRequest<Request>,
     @Body() payload: StrapiWebhookPayload,
   ): Promise<{ ok: boolean; webhookLogId: string }> {
     this.logger.log(
