@@ -11,8 +11,16 @@ import {
   GitBranch,
   ChevronDown,
   Loader2,
+  Filter,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import {
   Tabs,
@@ -50,16 +58,29 @@ export default function StockRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
 
+  const [filters, setFilters] = useState({
+    locationId: "all",
+    priority: "all",
+    categoryId: "all",
+  });
+
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
         if (activeTab === "all") {
-          const data = await getStockRequestList({ search: debouncedSearch });
+          const data = await getStockRequestList({
+            search: debouncedSearch,
+            status: "all",
+            locationId: filters.locationId === "all" ? undefined : filters.locationId
+          });
           setRequests(data);
         } else {
           const data = await getAggregatedStockRequests({
             search: debouncedSearch,
+            locationId: filters.locationId,
+            priority: filters.priority as any,
+            categoryId: filters.categoryId
           });
           setAggregatedItems(data);
         }
@@ -70,7 +91,7 @@ export default function StockRequestsPage() {
       }
     }
     fetchData();
-  }, [activeTab, debouncedSearch]);
+  }, [activeTab, debouncedSearch, filters]);
 
   const downloadPdf = (level: "organization" | "branch") => {
     const endpoint =
@@ -96,6 +117,13 @@ export default function StockRequestsPage() {
     downloading === `${ep}-organization`;
   const activeEndpoint =
     activeTab === "all" ? "requests" : "aggregated-requests";
+
+  const [locations, setLocations] = useState<any[]>([]);
+  useEffect(() => {
+    import("@/app/actions/inventory").then(mod => {
+      mod.getInventoryLocations().then(setLocations);
+    });
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
@@ -184,7 +212,8 @@ export default function StockRequestsPage() {
 
       {/* ── Tabs ── */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="all">Individual Requests</TabsTrigger>
             <TabsTrigger value="aggregated">
@@ -195,18 +224,75 @@ export default function StockRequestsPage() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="relative w-64">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={16}
-            />
-            <Input
-              placeholder="Search requests..."
-              className="pl-10"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative w-64">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={16}
+              />
+              <Input
+                placeholder="Search requests..."
+                className="pl-10"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" size="icon" className="border-zinc-200">
+              <Filter size={16} />
+            </Button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-zinc-100 shadow-sm">
+          <div className="flex items-center gap-2 px-2 text-xs font-medium text-zinc-500 uppercase tracking-wider border-r border-zinc-100 mr-2">
+            <Filter size={12} />
+            Quick Filters
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-400">Branch:</span>
+            <Select value={filters.locationId} onValueChange={(v) => setFilters({...filters, locationId: v})}>
+              <SelectTrigger className="h-8 min-w-[150px] text-xs">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {locations.map(loc => (
+                  <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {activeTab === "aggregated" && (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-400">Priority:</span>
+                <Select value={filters.priority} onValueChange={(v) => setFilters({...filters, priority: v})}>
+                  <SelectTrigger className="h-8 min-w-[120px] text-xs">
+                    <SelectValue placeholder="All Priorities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priorities</SelectItem>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-zinc-400 hover:text-zinc-600 ml-auto h-8"
+            onClick={() => setFilters({locationId: "all", priority: "all", categoryId: "all"})}
+          >
+            Clear All
+          </Button>
+        </div>
         </div>
 
         <TabsContent value="all" className="mt-0">
