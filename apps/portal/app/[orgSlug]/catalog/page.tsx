@@ -1,7 +1,15 @@
-import { requireSession } from "@/app/lib/session.server";
+import { requireSession } from "@/app/lib/session";
 import { getB2BProducts } from "@/app/lib/actions";
 import { AddToCartButton } from "./add-to-cart-button";
-import { Card, CardHeader, CardTitle, CardFooter, CardContent, Input, Badge } from "@repo/ui";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+  CardContent,
+} from "@repo/ui/components/ui/card";
+import { Input } from "@repo/ui/components/ui/input";
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Search } from "lucide-react";
 import Image from "next/image";
 
@@ -14,8 +22,8 @@ export default async function CatalogPage({
 }) {
   const { orgSlug } = await params;
   const { q } = await searchParams;
-  const session = await requireSession(orgSlug);
-  const products = await getB2BProducts(session.orgId, q);
+  await requireSession(orgSlug);
+  const products = await getB2BProducts(orgSlug, q);
 
   return (
     <div className="p-6 space-y-6">
@@ -36,10 +44,10 @@ export default async function CatalogPage({
         </form>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {products.map((p) => {
-          const variant = p.variants[0];
-          const price = (variant as any)?.priceListItems[0]?.price;
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 text-primary-foreground">
+        {products.map((p: any) => {
+          const variant = p.variants?.[0];
+          const price = variant?.price || variant?.priceListItems?.[0]?.price;
 
           return (
             <Card key={p.id} className="overflow-hidden flex flex-col">
@@ -71,7 +79,7 @@ export default async function CatalogPage({
                 <p className="text-xs text-muted-foreground mt-1">SKU: {p.sku}</p>
               </CardContent>
               <CardFooter className="p-4 border-t bg-muted/50">
-                <AddToCartButton variantId={variant?.id} />
+                <AddToCartButton orgSlug={orgSlug} variantId={variant?.id} />
               </CardFooter>
             </Card>
           );

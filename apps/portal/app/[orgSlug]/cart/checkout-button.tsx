@@ -11,7 +11,7 @@ export function CheckoutButton({ orgSlug }: { orgSlug: string }) {
   const handleCheckout = async () => {
     setLoading(true);
     try {
-      const tx = await checkout();
+      const tx = await checkout(orgSlug);
       router.push(`/${orgSlug}/orders/${tx.id}`);
     } catch (e) {
       alert("Failed to checkout: " + (e as Error).message);

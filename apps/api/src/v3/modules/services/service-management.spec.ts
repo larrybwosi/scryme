@@ -15,27 +15,32 @@ describe('ServiceManagementService', () => {
         {
           provide: PrismaService,
           useValue: {
-            serviceCategory: {
-              create: vi.fn(),
-              findMany: vi.fn(),
-              findFirst: vi.fn(),
-              update: vi.fn(),
-              delete: vi.fn(),
-            },
-            service: {
-              create: vi.fn(),
-              findMany: vi.fn(),
-              findUnique: vi.fn(),
-              findFirst: vi.fn(),
-              update: vi.fn(),
-              delete: vi.fn(),
-            },
-            serviceResource: {
-              create: vi.fn(),
-              findMany: vi.fn(),
-              findFirst: vi.fn(),
-              update: vi.fn(),
-              delete: vi.fn(),
+            client: {
+              serviceCategory: {
+                create: vi.fn(),
+                findMany: vi.fn(),
+                findFirst: vi.fn(),
+                update: vi.fn(),
+                delete: vi.fn(),
+              },
+              service: {
+                create: vi.fn(),
+                findMany: vi.fn(),
+                findUnique: vi.fn(),
+                findFirst: vi.fn(),
+                update: vi.fn(),
+                delete: vi.fn(),
+              },
+              serviceResource: {
+                create: vi.fn(),
+                findMany: vi.fn(),
+                findFirst: vi.fn(),
+                update: vi.fn(),
+                delete: vi.fn(),
+              },
+              v3ApiClient: {
+                create: vi.fn(),
+              }
             }
           },
         },
@@ -56,15 +61,15 @@ describe('ServiceManagementService', () => {
       const catId = 'cat1';
       const dto = { name: 'Updated Name' };
 
-      vi.spyOn(prisma.serviceCategory, 'findFirst').mockResolvedValue({ id: catId, organizationId: orgId } as any);
-      vi.spyOn(prisma.serviceCategory, 'update').mockResolvedValue({ id: catId, ...dto } as any);
+      vi.spyOn(prisma.client.serviceCategory, 'findFirst').mockResolvedValue({ id: catId, organizationId: orgId } as any);
+      vi.spyOn(prisma.client.serviceCategory, 'update').mockResolvedValue({ id: catId, ...dto } as any);
 
       const result = await service.updateCategory(orgId, catId, dto);
 
-      expect(prisma.serviceCategory.findFirst).toHaveBeenCalledWith({
+      expect(prisma.client.serviceCategory.findFirst).toHaveBeenCalledWith({
         where: { id: catId, organizationId: orgId }
       });
-      expect(prisma.serviceCategory.update).toHaveBeenCalledWith({
+      expect(prisma.client.serviceCategory.update).toHaveBeenCalledWith({
         where: { id: catId },
         data: dto
       });
@@ -72,7 +77,7 @@ describe('ServiceManagementService', () => {
     });
 
     it('should throw NotFoundException if category does not exist for the org', async () => {
-      vi.spyOn(prisma.serviceCategory, 'findFirst').mockResolvedValue(null);
+      vi.spyOn(prisma.client.serviceCategory, 'findFirst').mockResolvedValue(null);
 
       await expect(service.updateCategory('org1', 'cat1', { name: 'New' }))
         .rejects.toThrow(NotFoundException);
@@ -89,12 +94,12 @@ describe('ServiceManagementService', () => {
             resourceIds: ['res1']
         };
 
-        vi.spyOn(prisma.service, 'findFirst').mockResolvedValue({ id: serviceId, organizationId: orgId } as any);
-        vi.spyOn(prisma.service, 'update').mockResolvedValue({ id: serviceId, ...dto } as any);
+        vi.spyOn(prisma.client.service, 'findFirst').mockResolvedValue({ id: serviceId, organizationId: orgId } as any);
+        vi.spyOn(prisma.client.service, 'update').mockResolvedValue({ id: serviceId, ...dto } as any);
 
         await service.updateService(orgId, serviceId, dto);
 
-        expect(prisma.service.update).toHaveBeenCalledWith({
+        expect(prisma.client.service.update).toHaveBeenCalledWith({
             where: { id: serviceId },
             data: expect.objectContaining({
                 name: dto.name,

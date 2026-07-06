@@ -18,7 +18,13 @@ import {
 import { LayoutDashboard, BookOpen, ShoppingCart, ReceiptText, Settings } from "lucide-react";
 import Link from "next/link";
 
-export default async function OrgLayout({ children, params }: { children: React.ReactNode; params: { orgSlug: string } }) {
+export default async function OrgLayout({
+  children,
+  params
+}: {
+  children: React.ReactNode;
+  params: Promise<{ orgSlug: string }>
+}) {
   const { orgSlug } = await params;
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) notFound();

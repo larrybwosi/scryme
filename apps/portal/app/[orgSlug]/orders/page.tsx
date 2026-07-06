@@ -1,21 +1,26 @@
 import { requireSession } from "@/app/lib/session";
-import { db } from "@repo/db";
-import { Table, TableBody, TableCell, TableRow, TableHeader, TableHead, Badge, Button } from "@repo/ui";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHeader,
+  TableHead,
+} from "@repo/ui/components/ui/table";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Eye } from "lucide-react";
+import { getPortalSDK } from "@/app/lib/portal-sdk";
 
 export default async function OrdersPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
-  const session = await requireSession(orgSlug);
-  const txs = await db.transaction.findMany({
-    where: {
-      customerId: session.customerId,
-      organizationId: session.orgId,
-      type: "SALES_ORDER"
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  await requireSession(orgSlug);
+
+  const sdk = await getPortalSDK();
+  const txsResponse = await sdk.b2b.getOrders(orgSlug);
+  const txs = txsResponse || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -33,7 +38,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ orgSlug
         <p className="text-muted-foreground">Manage and track your previous orders.</p>
       </div>
 
-      <div className="border rounded-lg bg-card">
+      <div className="border rounded-lg bg-card text-primary-foreground">
         <Table>
           <TableHeader>
             <TableRow>
@@ -45,10 +50,10 @@ export default async function OrdersPage({ params }: { params: Promise<{ orgSlug
             </TableRow>
           </TableHeader>
           <TableBody>
-            {txs.map(t => (
+            {txs.map((t: any) => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium">{t.number}</TableCell>
-                <TableCell>{format(t.createdAt, "dd MMM yyyy")}</TableCell>
+                <TableCell>{t.createdAt ? format(new Date(t.createdAt), "dd MMM yyyy") : "N/A"}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusColor(t.status) as any}>
                     {t.status.replace(/_/g, ' ')}
