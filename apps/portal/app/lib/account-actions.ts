@@ -1,7 +1,7 @@
 "use server";
-import { db } from "@repo/db";
-import { getSession } from "./session.server";
+import { getSession } from "./session";
 import { revalidatePath } from "next/cache";
+import { getPortalSDK } from "./portal-sdk";
 
 export async function updateAccount(orgSlug: string, formData: FormData) {
   const session = await getSession();
@@ -12,14 +12,12 @@ export async function updateAccount(orgSlug: string, formData: FormData) {
   const phone = formData.get("phone") as string;
   const company = formData.get("company") as string;
 
-  await db.customer.update({
-    where: { id: session.customerId },
-    data: {
-      name,
-      email,
-      phone,
-      company,
-    }
+  const sdk = await getPortalSDK();
+  await sdk.customers.updateCustomer(orgSlug, session.customerId, {
+    name,
+    email,
+    phone,
+    company,
   });
 
   revalidatePath(`/${orgSlug}/account`);

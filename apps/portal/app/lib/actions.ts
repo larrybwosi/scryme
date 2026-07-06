@@ -1,28 +1,19 @@
-import { db } from "@repo/db";
+import { getPortalSDK } from "./portal-sdk";
 
-export async function getB2BProducts(orgId: string, query?: string) {
-  return await db.product.findMany({
-    where: {
-      organizationId: orgId,
-      isActive: true,
-      ...(query ? {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { sku: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-        ]
-      } : {})
-    },
-    include: {
-      variants: {
-        where: { isActive: true },
-        include: {
-          priceListItems: {
-            where: { isActive: true },
-            take: 1
-          }
-        }
-      }
-    }
-  });
+export async function getB2BProducts(orgSlug: string, query?: string) {
+  const sdk = await getPortalSDK();
+  const response = await sdk.b2b.getCatalog(orgSlug);
+
+  const products = response || [];
+
+  if (query) {
+    const q = query.toLowerCase();
+    return products.filter((p: any) =>
+      p.name.toLowerCase().includes(q) ||
+      p.sku?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q)
+    );
+  }
+
+  return products;
 }

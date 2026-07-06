@@ -1,24 +1,26 @@
-import { requireSession } from "@/app/lib/session.server";
-import { db } from "@repo/db";
+import { requireSession } from "@/app/lib/session";
 import { notFound } from "next/navigation";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  Badge,
-  Button
-} from "@repo/ui";
+} from "@repo/ui/components/ui/table";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Button } from "@repo/ui/components/ui/button";
 import { format } from "date-fns";
 import { ArrowLeft, Package, Clock, CreditCard, CheckCircle2, Truck, Box, Factory } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@repo/ui";
+import { cn } from "@repo/ui/lib/utils";
+import { getPortalSDK } from "@/app/lib/portal-sdk";
 
 const statusSteps = [
   { status: "PENDING_CONFIRMATION", label: "Pending", icon: Clock },
@@ -35,15 +37,11 @@ export default async function OrderDetailPage({
   params: Promise<{ orgSlug: string, id: string }>
 }) {
   const { orgSlug, id } = await params;
-  const session = await requireSession(orgSlug);
+  await requireSession(orgSlug);
 
-  const order = await db.transaction.findUnique({
-    where: { id, organizationId: session.orgId, customerId: session.customerId },
-    include: {
-      items: true,
-      location: true
-    }
-  });
+  const sdk = await getPortalSDK();
+  const orders = await sdk.b2b.getOrders(orgSlug);
+  const order = orders.find((o: any) => o.id === id);
 
   if (!order) notFound();
 
@@ -63,7 +61,7 @@ export default async function OrderDetailPage({
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-6 space-y-6 max-w-5xl mx-auto text-primary-foreground">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href={`/${orgSlug}/orders`}>
@@ -72,7 +70,7 @@ export default async function OrderDetailPage({
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Order #{order.number}</h1>
-          <p className="text-muted-foreground">Placed on {format(order.createdAt, "PPP 'at' p")}</p>
+          <p className="text-muted-foreground">Placed on {order.createdAt ? format(new Date(order.createdAt), "PPP 'at' p") : "N/A"}</p>
         </div>
         <div className="ml-auto">
           <Badge variant={getStatusColor(order.status) as any} className="text-sm px-3 py-1">
@@ -119,7 +117,7 @@ export default async function OrderDetailPage({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 text-primary-foreground">
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Order Items</CardTitle>
           </CardHeader>
@@ -134,7 +132,7 @@ export default async function OrderDetailPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {order.items.map((item) => (
+                {order.items?.map((item: any) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="font-medium">{item.productName}</div>
@@ -155,7 +153,7 @@ export default async function OrderDetailPage({
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-primary-foreground">
+            <CardContent className="space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>${Number(order.subtotal).toFixed(2)}</span>
@@ -179,12 +177,12 @@ export default async function OrderDetailPage({
             <CardHeader>
               <CardTitle>Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-primary-foreground">
+            <CardContent className="space-y-4">
               <div className="flex items-start gap-3">
                 <Package className="size-4 mt-1 text-muted-foreground" />
                 <div>
                   <div className="text-sm font-medium">Fulfillment Location</div>
-                  <div className="text-xs text-muted-foreground">{order.location.name}</div>
+                  <div className="text-xs text-muted-foreground">{order.location?.name}</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">

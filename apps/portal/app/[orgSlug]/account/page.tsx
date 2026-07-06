@@ -1,5 +1,4 @@
-import { requireSession } from "@/app/lib/session.server";
-import { db } from "@repo/db";
+import { requireSession } from "@/app/lib/session";
 import {
   Card,
   CardContent,
@@ -7,26 +6,31 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  Input,
-  Button
-} from "@repo/ui";
+} from "@repo/ui/components/ui/card";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
 import { updateAccount } from "@/app/lib/account-actions";
 import { User, Building, Mail, Phone, Save } from "lucide-react";
+import { getPortalSDK } from "@/app/lib/portal-sdk";
 
 export default async function AccountPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const session = await requireSession(orgSlug);
 
-  const customer = await db.customer.findUnique({
-    where: { id: session.customerId }
-  });
+  const sdk = await getPortalSDK();
+  let customer;
+  try {
+    customer = await sdk.customers.getCustomer(orgSlug, session.customerId);
+  } catch (e) {
+    return <div>Error loading customer profile.</div>;
+  }
 
   if (!customer) return <div>Customer not found</div>;
 
   const updateAccountWithSlug = updateAccount.bind(null, orgSlug);
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl mx-auto">
+    <div className="p-6 space-y-6 max-w-2xl mx-auto text-primary-foreground">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-muted-foreground">Manage your business profile and contact information.</p>
