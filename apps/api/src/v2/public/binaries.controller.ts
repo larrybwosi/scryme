@@ -11,7 +11,7 @@ import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import axios from "axios";
 import { env } from "@repo/env";
-import { FastifyReply } from "fastify";
+import type { FastifyReply } from "fastify";
 
 @ApiTags("Public")
 @Controller("public")
@@ -27,7 +27,7 @@ export class BinariesController {
   })
   async downloadBinary(
     @Param("platform") platform: string,
-    @Res() res: FastifyReply,
+    @Res() res: any,
   ) {
     const owner = env.GITHUB_OWNER;
     const repo = env.GITHUB_REPO;

@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   Req,
   UseGuards,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -40,14 +41,48 @@ export class PublicServicesController {
   @ApiOperation({ summary: "List available services for public booking" })
   async getServices(@Req() req: any) {
     // Only return active services and specific fields for public view
-    const services = await this.serviceManagement.getServices(req.organization.id);
-    return services.filter(s => s.isActive).map(s => ({
+    const services = await this.serviceManagement.getServices(req.organization.id, { isActive: true });
+    return services.map(s => ({
         id: s.id,
         name: s.name,
         description: s.description,
         price: s.price,
-        estimatedDuration: s.estimatedDuration
+        estimatedDuration: s.estimatedDuration,
+        categoryId: s.categoryId
     }));
+  }
+
+  @Get("categories")
+  @ApiOperation({ summary: "List service categories publicly" })
+  async getCategories(@Req() req: any) {
+    const categories = await this.serviceManagement.getCategories(req.organization.id);
+    return categories.map(c => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        parentId: c.parentId
+    }));
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "Get service details publicly" })
+  async getService(@Req() req: any, @Param("id") id: string) {
+    const service = await this.serviceManagement.getServiceById(req.organization.id, id);
+    if (!service.isActive) throw new NotFoundException("Service is not available");
+
+    return {
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        price: service.price,
+        estimatedDuration: service.estimatedDuration,
+        categoryId: service.categoryId,
+        categoryName: service.category?.name,
+        staff: service.staff.map(s => ({
+            id: s.memberId,
+            name: s.member?.user?.name || "Staff"
+        }))
+    };
   }
 
   @Post("otp/request")
@@ -83,7 +118,7 @@ export class PublicServicesController {
       if (!req.customer) {
           throw new Error("Customer context required");
       }
-      return this.prisma.serviceBooking.findMany({
+      return this.prisma.client.serviceBooking.findMany({
           where: {
               organizationId: req.organization.id,
               customerId: req.customer.id

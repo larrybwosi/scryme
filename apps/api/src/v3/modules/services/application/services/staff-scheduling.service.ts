@@ -6,7 +6,7 @@ export class StaffSchedulingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createShift(orgId: string, memberId: string, data: { dayOfWeek: number, startTime: string, endTime: string }) {
-    return this.prisma.staffShift.create({
+    return this.prisma.client.staffShift.create({
       data: {
         ...data,
         memberId,
@@ -16,14 +16,14 @@ export class StaffSchedulingService {
   }
 
   async getStaffShifts(orgId: string, memberId: string) {
-    return this.prisma.staffShift.findMany({
+    return this.prisma.client.staffShift.findMany({
       where: { organizationId: orgId, memberId },
       include: { breaks: true },
     });
   }
 
   async addBreak(shiftId: string, data: { startTime: string, endTime: string, description?: string }) {
-    return this.prisma.staffBreak.create({
+    return this.prisma.client.staffBreak.create({
       data: {
         ...data,
         shiftId,
@@ -41,7 +41,7 @@ export class StaffSchedulingService {
     const startMinutes = startTime.getHours() * 60 + startTime.getMinutes();
     const endMinutes = endTime.getHours() * 60 + endTime.getMinutes();
 
-    const shifts = await this.prisma.staffShift.findMany({
+    const shifts = await this.prisma.client.staffShift.findMany({
         where: { memberId, dayOfWeek, isActive: true },
         include: { breaks: true }
     });
