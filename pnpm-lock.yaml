@@ -1019,7 +1019,7 @@ importers:
         specifier: workspace:*
         version: link:../shared
       better-auth:
-        specifier: ^1.4.19
+        specifier: ^1.6.23
         version: 1.6.23(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@babel/core@7.29.7)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.9)
       zod:
         specifier: latest
@@ -1397,7 +1397,7 @@ importers:
         specifier: ^1.4.0
         version: 1.6.0(@date-fns/tz@1.5.0)(@types/react@19.2.14)(date-fns@4.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@hookform/resolvers':
-        specifier: ^5.2.2
+        specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.80.0(react@19.2.6))
       '@tanstack/react-query':
         specifier: ^5.90.21
@@ -1451,7 +1451,7 @@ importers:
         specifier: ^7.54.2
         version: 7.80.0(react@19.2.6)
       react-resizable-panels:
-        specifier: ^4.10.0
+        specifier: ^4.12.1
         version: 4.12.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       recharts:
         specifier: 3.8.0

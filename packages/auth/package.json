@@ -31,17 +31,17 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
+    "@better-auth/oauth-provider": "latest",
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
-    "@better-auth/oauth-provider": "latest",
-    "better-auth": "^1.4.19",
+    "better-auth": "^1.6.23",
     "zod": "latest"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.6.0",
-    "tsup": "^8.5.1",
-    "next": "16.2.10"
+    "next": "16.2.10",
+    "tsup": "^8.5.1"
   }
 }
