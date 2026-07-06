@@ -1,7 +1,10 @@
 {
   "name": "api",
-  "version": "5.5.0",
+  "version": "8.8.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

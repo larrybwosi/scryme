@@ -70,6 +70,39 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # 2. Centralized package build to be shared across jobs
+  build-packages:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    needs: release-management
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build Packages
+        run: pnpm turbo build --filter="./packages/*"
+
+      - name: Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-packages
+          path: |
+            packages/*/dist
+            packages/db/prisma
+
   # Quick helper to extract version for multi-platform app matrix
   set-version:
     name: Set Version Output
@@ -87,11 +120,11 @@ jobs:
           VERSION=$(node -p "require('./apps/pos/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-  # 2. Builds and Publishes POS to GitHub Releases (Matrix parallelization)
+  # 3. Builds and Publishes POS to GitHub Releases (Matrix parallelization)
   publish-pos:
     name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
-    needs: [release-management, set-version]
+    needs: [release-management, set-version, build-packages]
     strategy:
       fail-fast: false
       matrix:
@@ -133,23 +166,29 @@ jobs:
           sudo apt-get install -y \
             libgtk-3-dev \
             libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
             librsvg2-dev \
             patchelf \
             libglib2.0-dev \
             libudev-dev \
             libpcsclite-dev \
-            libwebkit2gtk-4.1-dev \
             build-essential \
             curl \
             wget \
             file \
             libxdo-dev \
             libssl-dev \
-            libayatana-appindicator3-dev \
+            libayatana-appindicator3-dev
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+
+      - name: Build POS App
+        run: pnpm turbo build --filter=pos...
 
       - name: Build and Publish POS App
         uses: tauri-apps/tauri-action@v0
@@ -171,11 +210,11 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.features }}
 
-  # 3. Builds and Publishes Bakery App (Matrix parallelization)
+  # 4. Builds and Publishes Bakery App (Matrix parallelization)
   publish-bakery:
     name: Publish Bakery App (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: [release-management, set-version]
+    needs: [release-management, set-version, build-packages]
     strategy:
       fail-fast: false
       matrix:
@@ -206,7 +245,7 @@ jobs:
           sudo apt-get install -y \
             libgtk-3-dev \
             libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
+            libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
             libglib2.0-dev \
@@ -214,6 +253,14 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+
+      - name: Build Bakery App
+        run: pnpm turbo build --filter=bakery...
 
       - name: Build and Publish Bakery App
         uses: tauri-apps/tauri-action@v0
@@ -230,11 +277,11 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-  # 4. Builds Docker Images (Runs in parallel with steps 2 & 3)
+  # 5. Builds Docker Images (Runs after packages are verified)
   docker-images:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    needs: [release-management]
+    needs: [release-management, build-packages]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

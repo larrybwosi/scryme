@@ -56,9 +56,12 @@ ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 # Generate Prisma Client (if needed by CRM)
 RUN pnpm turbo run generate
 
+# Ensure public directory exists to prevent COPY failure in runner stage
+RUN mkdir -p apps/crm/public
+
 # Build the CRM and its internal workspace dependencies
 # Limit memory and concurrency to reduce resource consumption
-ENV NODE_OPTIONS="--max-old-space-size=1536"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=crm... --concurrency=1
 
@@ -80,6 +83,12 @@ RUN useradd --system --uid 1001 -g nodejs nextjs
 COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/.next/static ./apps/crm/.next/static
 COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/public ./apps/crm/public
+
+# CRITICAL: Next.js standalone needs the Prisma schema/engines explicitly available if imported
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma ./prisma
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma/seed.ts ./prisma/seed.ts
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
+COPY --from=installer --chown=nextjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
 # Copy entrypoint script
 COPY --from=pruner --chown=nextjs:nodejs /app/apps/crm/entrypoint.sh ./entrypoint.sh
