@@ -34,27 +34,13 @@ export class B2BUseCase {
       where.categoryId = categoryId;
     }
 
-    // Combined pagination wrapper with dev branch's performance-oriented 'select' properties
     const { data: products, meta } = await paginate(this.prisma.client.product, {
       where,
       page,
       limit,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+      include: {
         variants: {
-          where: { isActive: true },
-          select: {
-            id: true,
-            name: true,
-            sku: true,
+          include: {
             variantStocks: {
               select: {
                 availableStock: true,
@@ -63,6 +49,7 @@ export class B2BUseCase {
             },
           },
         },
+        category: true,
       },
     });
 
@@ -130,7 +117,7 @@ export class B2BUseCase {
       items: data.items.map((item: any) => ({
         variantId: item.variantId,
         quantity: item.quantity,
-       })),
+      })),
       organizationId,
       businessAccountId,
     });
@@ -229,7 +216,7 @@ export class B2BUseCase {
       items: data.items.map((item: any) => ({
         variantId: item.variantId,
         quantity: item.quantity,
-       })),
+      })),
       organizationId,
       businessAccountId,
     });
