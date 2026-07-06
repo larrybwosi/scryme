@@ -16,7 +16,7 @@ export class OtpService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes
 
-    const verification = await this.prisma.bookingVerificationCode.create({
+    const verification = await this.prisma.client.bookingVerificationCode.create({
       data: {
         organizationId: orgId,
         email: dto.email,
@@ -45,7 +45,7 @@ export class OtpService {
   }
 
   async verifyOtp(orgId: string, dto: VerifyOtpDto) {
-    const verification = await this.prisma.bookingVerificationCode.findFirst({
+    const verification = await this.prisma.client.bookingVerificationCode.findFirst({
       where: {
         organizationId: orgId,
         code: dto.code,
@@ -60,7 +60,7 @@ export class OtpService {
       throw new BadRequestException("Invalid or expired OTP");
     }
 
-    await this.prisma.bookingVerificationCode.update({
+    await this.prisma.client.bookingVerificationCode.update({
       where: { id: verification.id },
       data: { verifiedAt: new Date() },
     });
@@ -69,7 +69,7 @@ export class OtpService {
   }
 
   async validateVerification(orgId: string, verificationId: string) {
-      const verification = await this.prisma.bookingVerificationCode.findFirst({
+      const verification = await this.prisma.client.bookingVerificationCode.findFirst({
           where: {
               id: verificationId,
               organizationId: orgId,

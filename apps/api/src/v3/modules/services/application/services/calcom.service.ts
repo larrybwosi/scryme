@@ -9,7 +9,7 @@ export class CalComService {
   constructor(private readonly prisma: PrismaService) {}
 
   async syncBookingToCal(memberId: string, booking: any) {
-    const member = await this.prisma.member.findUnique({
+    const member = await this.prisma.client.member.findUnique({
         where: { id: memberId },
         select: { calComApiKey: true }
     });
@@ -35,7 +35,7 @@ export class CalComService {
   }
 
   async fetchAvailabilityFromCal(memberId: string, date: Date) {
-     const member = await this.prisma.member.findUnique({
+     const member = await this.prisma.client.member.findUnique({
         where: { id: memberId },
         select: { calComApiKey: true, calComId: true }
     });

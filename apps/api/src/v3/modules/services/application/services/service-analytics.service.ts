@@ -7,7 +7,7 @@ export class ServiceAnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getResourceUtilization(orgId: string, startDate: Date, endDate: Date) {
-    const bookings = await this.prisma.serviceBooking.findMany({
+    const bookings = await this.prisma.client.serviceBooking.findMany({
       where: {
         organizationId: orgId,
         scheduledStartTime: { gte: startDate, lte: endDate },
@@ -39,7 +39,7 @@ export class ServiceAnalyticsService {
   }
 
   async getStaffPerformance(orgId: string, startDate: Date, endDate: Date) {
-      const bookings = await this.prisma.serviceBooking.findMany({
+      const bookings = await this.prisma.client.serviceBooking.findMany({
           where: {
               organizationId: orgId,
               actualEndTime: { gte: startDate, lte: endDate },
@@ -64,7 +64,7 @@ export class ServiceAnalyticsService {
   }
 
   async getBookingConversionFunnel(orgId: string, startDate: Date, endDate: Date) {
-      const bookings = await this.prisma.serviceBooking.findMany({
+      const bookings = await this.prisma.client.serviceBooking.findMany({
           where: {
               organizationId: orgId,
               createdAt: { gte: startDate, lte: endDate }

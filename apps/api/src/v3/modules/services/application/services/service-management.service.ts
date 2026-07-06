@@ -9,7 +9,7 @@ export class ServiceManagementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createCategory(orgId: string, dto: CreateServiceCategoryDto) {
-    return this.prisma.serviceCategory.create({
+    return this.prisma.client.serviceCategory.create({
       data: {
         ...dto,
         organizationId: orgId,
@@ -18,32 +18,32 @@ export class ServiceManagementService {
   }
 
   async updateCategory(orgId: string, id: string, dto: UpdateServiceCategoryDto) {
-    const category = await this.prisma.serviceCategory.findFirst({
+    const category = await this.prisma.client.serviceCategory.findFirst({
         where: { id, organizationId: orgId }
     });
 
     if (!category) throw new NotFoundException("Category not found");
 
-    return this.prisma.serviceCategory.update({
+    return this.prisma.client.serviceCategory.update({
         where: { id },
         data: dto
     });
   }
 
   async deleteCategory(orgId: string, id: string) {
-    const category = await this.prisma.serviceCategory.findFirst({
+    const category = await this.prisma.client.serviceCategory.findFirst({
         where: { id, organizationId: orgId }
     });
 
     if (!category) throw new NotFoundException("Category not found");
 
-    return this.prisma.serviceCategory.delete({
+    return this.prisma.client.serviceCategory.delete({
         where: { id }
     });
   }
 
   async getCategories(orgId: string) {
-    return this.prisma.serviceCategory.findMany({
+    return this.prisma.client.serviceCategory.findMany({
       where: { organizationId: orgId },
       include: { subcategories: true },
     });
@@ -53,7 +53,7 @@ export class ServiceManagementService {
     const { staffIds, resourceIds, materials, taxRateIds, ...serviceData } = dto;
 
     // Check for existing SKU
-    const existing = await this.prisma.service.findUnique({
+    const existing = await this.prisma.client.service.findUnique({
       where: { sku: dto.sku },
     });
 
@@ -61,7 +61,7 @@ export class ServiceManagementService {
       throw new ConflictException(`Service with SKU ${dto.sku} already exists`);
     }
 
-    return this.prisma.service.create({
+    return this.prisma.client.service.create({
       data: {
         ...serviceData,
         organizationId: orgId,
@@ -82,7 +82,7 @@ export class ServiceManagementService {
   }
 
   async updateService(orgId: string, id: string, dto: UpdateServiceDto) {
-    const service = await this.prisma.service.findFirst({
+    const service = await this.prisma.client.service.findFirst({
         where: { id, organizationId: orgId }
     });
 
@@ -90,7 +90,7 @@ export class ServiceManagementService {
 
     const { staffIds, resourceIds, materials, taxRateIds, ...serviceData } = dto;
 
-    return this.prisma.service.update({
+    return this.prisma.client.service.update({
         where: { id },
         data: {
             ...serviceData,
@@ -115,19 +115,19 @@ export class ServiceManagementService {
   }
 
   async deleteService(orgId: string, id: string) {
-    const service = await this.prisma.service.findFirst({
+    const service = await this.prisma.client.service.findFirst({
         where: { id, organizationId: orgId }
     });
 
     if (!service) throw new NotFoundException("Service not found");
 
-    return this.prisma.service.delete({
+    return this.prisma.client.service.delete({
         where: { id }
     });
   }
 
   async getServices(orgId: string, options?: { isActive?: boolean }) {
-    return this.prisma.service.findMany({
+    return this.prisma.client.service.findMany({
       where: {
           organizationId: orgId,
           ...(options?.isActive !== undefined ? { isActive: options.isActive } : {}),
@@ -141,7 +141,7 @@ export class ServiceManagementService {
   }
 
   async getServiceById(orgId: string, id: string) {
-    const service = await this.prisma.service.findFirst({
+    const service = await this.prisma.client.service.findFirst({
       where: { id, organizationId: orgId },
       include: {
         category: true,
@@ -157,7 +157,7 @@ export class ServiceManagementService {
   }
 
   async createResource(orgId: string, dto: CreateServiceResourceDto) {
-    return this.prisma.serviceResource.create({
+    return this.prisma.client.serviceResource.create({
         data: {
             ...dto,
             organizationId: orgId
@@ -166,32 +166,32 @@ export class ServiceManagementService {
   }
 
   async updateResource(orgId: string, id: string, dto: UpdateServiceResourceDto) {
-    const resource = await this.prisma.serviceResource.findFirst({
+    const resource = await this.prisma.client.serviceResource.findFirst({
         where: { id, organizationId: orgId }
     });
 
     if (!resource) throw new NotFoundException("Resource not found");
 
-    return this.prisma.serviceResource.update({
+    return this.prisma.client.serviceResource.update({
         where: { id },
         data: dto
     });
   }
 
   async deleteResource(orgId: string, id: string) {
-    const resource = await this.prisma.serviceResource.findFirst({
+    const resource = await this.prisma.client.serviceResource.findFirst({
         where: { id, organizationId: orgId }
     });
 
     if (!resource) throw new NotFoundException("Resource not found");
 
-    return this.prisma.serviceResource.delete({
+    return this.prisma.client.serviceResource.delete({
         where: { id }
     });
   }
 
   async getResources(orgId: string) {
-    return this.prisma.serviceResource.findMany({
+    return this.prisma.client.serviceResource.findMany({
         where: { organizationId: orgId }
     });
   }
@@ -200,7 +200,7 @@ export class ServiceManagementService {
       const clientId = `client_${crypto.randomBytes(8).toString('hex')}`;
       const clientSecret = crypto.randomBytes(32).toString('hex');
 
-      return this.prisma.v3ApiClient.create({
+      return this.prisma.client.v3ApiClient.create({
           data: {
               organizationId: orgId,
               name,

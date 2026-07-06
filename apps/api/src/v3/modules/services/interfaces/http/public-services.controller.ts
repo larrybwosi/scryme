@@ -118,7 +118,7 @@ export class PublicServicesController {
       if (!req.customer) {
           throw new Error("Customer context required");
       }
-      return this.prisma.serviceBooking.findMany({
+      return this.prisma.client.serviceBooking.findMany({
           where: {
               organizationId: req.organization.id,
               customerId: req.customer.id

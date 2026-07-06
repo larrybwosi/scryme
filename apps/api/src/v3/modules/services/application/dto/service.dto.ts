@@ -79,7 +79,7 @@ export class CreateServiceDto {
   @IsNumber()
   bufferTimeAfter?: number;
 
-  @ApiPropertyOptional({ description: "Custom fields (JSON)", type: 'object' })
+  @ApiPropertyOptional({ description: "Custom fields (JSON)", type: 'object', additionalProperties: true })
   @IsOptional()
   customFields?: Record<string, any>;
 
@@ -173,7 +173,7 @@ export class CreateBookingDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ description: "Custom fields", type: 'object' })
+  @ApiPropertyOptional({ description: "Custom fields", type: 'object', additionalProperties: true })
   @IsOptional()
   customFields?: Record<string, any>;
 
