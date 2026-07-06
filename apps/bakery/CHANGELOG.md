@@ -1,5 +1,11 @@
 # bakery
 
+## 8.8.0
+
+### Minor Changes
+
+- a47ab8c: some
+
 ## 8.7.0
 
 ### Minor Changes
