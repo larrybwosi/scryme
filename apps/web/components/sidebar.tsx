@@ -134,6 +134,7 @@ const sidebarConfig: SidebarSection[] = [
         href: "/settings",
         items: [
           { title: "Organization", href: "/settings" },
+          { title: "Developer", href: "/settings/developer" },
           { title: "Documents", href: "/settings/documents" },
           { title: "Authorized Devices", href: "/settings/devices" },
         ],
