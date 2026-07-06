@@ -1,22 +1,40 @@
 import { requireSession } from "@/app/lib/session";
 import { getCart } from "@/app/lib/cart-actions";
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Card, CardContent, CardFooter, CardHeader, CardTitle } from "@repo/ui";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import { Trash2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckoutButton } from "./checkout-button";
+import { RemoveFromCartButton } from "./remove-from-cart-button";
 
 export default async function CartPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
-  const session = await requireSession(orgSlug);
-  const cart = await getCart(session.orgId, session.customerId) as any;
+  await requireSession(orgSlug);
+  const cart = await getCart(orgSlug) as any;
 
-  const total = cart.items.reduce((acc: number, item: any) => {
-    const price = Number(item.variant?.priceListItems[0]?.price || 0);
+  const items = cart?.items || [];
+
+  const total = items.reduce((acc: number, item: any) => {
+    const price = Number(item.variant?.price || item.variant?.priceListItems?.[0]?.price || 0);
     return acc + (price * item.quantity);
   }, 0);
 
-  if (cart.items.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
         <div className="bg-muted p-6 rounded-full">
@@ -38,7 +56,7 @@ export default async function CartPage({ params }: { params: Promise<{ orgSlug: 
         <p className="text-muted-foreground">Review your items before placing an order.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-primary-foreground">
         <div className="lg:col-span-2">
           <Card>
             <Table>
@@ -53,8 +71,8 @@ export default async function CartPage({ params }: { params: Promise<{ orgSlug: 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cart.items.map((item: any) => {
-                  const price = Number(item.variant?.priceListItems[0]?.price || 0);
+                {items.map((item: any) => {
+                  const price = Number(item.variant?.price || item.variant?.priceListItems?.[0]?.price || 0);
                   const subtotal = price * item.quantity;
 
                   return (
@@ -79,9 +97,7 @@ export default async function CartPage({ params }: { params: Promise<{ orgSlug: 
                       <TableCell className="text-center">{item.quantity}</TableCell>
                       <TableCell className="text-right font-medium">${subtotal.toFixed(2)}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="text-destructive">
-                          <Trash2 className="size-4" />
-                        </Button>
+                        <RemoveFromCartButton orgSlug={orgSlug} variantId={item.variantId} />
                       </TableCell>
                     </TableRow>
                   );

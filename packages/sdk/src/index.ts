@@ -227,6 +227,28 @@ export const getSDK = (config: SDKConfig) => {
       getHistory: (params?: { path?: string }) =>
         sdk.client.get("/workflows/history", { params }),
     },
+    b2b: {
+      getCatalog: (orgSlug: string) => sdk.client.get(`/${orgSlug}/b2b/catalog`),
+      getInvoices: (orgSlug: string) =>
+        sdk.client.get(`/${orgSlug}/b2b/invoices`),
+      getOrders: (orgSlug: string) => sdk.client.get(`/${orgSlug}/b2b/orders`),
+      createOrder: (orgSlug: string, data: any) =>
+        sdk.client.post(`/${orgSlug}/b2b/orders`, data),
+    },
+    cart: {
+      getCart: (orgSlug: string, sessionId?: string) =>
+        sdk.client.get(`/${orgSlug}/cart`, { params: { sessionId } }),
+      addItem: (orgSlug: string, data: { variantId: string; quantity: number; customerId?: string; sessionId?: string }) =>
+        sdk.client.post(`/${orgSlug}/cart/items`, data),
+      removeItem: (orgSlug: string, data: { variantId: string; customerId?: string; sessionId?: string }) =>
+        sdk.client.delete(`/${orgSlug}/cart/items`, { data }),
+    },
+    customers: {
+      getCustomer: (orgSlug: string, id: string) =>
+        sdk.client.get(`/${orgSlug}/customers/${id}`),
+      updateCustomer: (orgSlug: string, id: string, data: any) =>
+        sdk.client.patch(`/${orgSlug}/customers/${id}`, data),
+    },
   };
 
   return sdk;
