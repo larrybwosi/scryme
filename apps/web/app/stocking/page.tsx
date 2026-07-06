@@ -5,13 +5,21 @@ import {
   getStockMovementsChartData,
   getStockDistributionByLocation,
 } from "@/app/actions/stock-management";
-import { Card, CardContent } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import {
   TrendingUp,
   Package,
   ArrowLeftRight,
   AlertTriangle,
   ShoppingCart,
+  ShoppingBag,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { StockCharts } from "@/components/stocking/stock-charts";
@@ -73,6 +81,23 @@ export default async function StockingDashboard({
     },
   ];
 
+  const adminTools = [
+    {
+      title: "Consolidated Procurement",
+      description: "Bulk order items needed across all branches",
+      icon: ShoppingBag,
+      link: "/stocking/procurement",
+      color: "bg-green-500",
+    },
+    {
+      title: "Stock Optimizations",
+      description: "Smart transfer recommendations for slow stock",
+      icon: Zap,
+      link: "/stocking/optimizations",
+      color: "bg-blue-500",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
       <PageHeader
@@ -107,9 +132,50 @@ export default async function StockingDashboard({
         ))}
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ShoppingBag className="text-green-600" size={20} />
+              Admin Stocking Tools
+            </CardTitle>
+            <CardDescription>Advanced tools for organization-wide inventory management.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4">
+            {adminTools.map((tool, i) => (
+              <Link key={i} href={tool.link}>
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all cursor-pointer group">
+                  <div className={`p-3 rounded-lg ${tool.color} text-white group-hover:scale-110 transition-transform`}>
+                    <tool.icon size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm">{tool.title}</h4>
+                    <p className="text-xs text-gray-500">{tool.description}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribution by Location</CardTitle>
+          </CardHeader>
+          <CardContent>
+             <StockCharts
+              movementData={[]}
+              distributionData={distributionData}
+              showOnlyDistribution
+            />
+          </CardContent>
+        </Card>
+      </div>
+
       <StockCharts
         movementData={movementData}
         distributionData={distributionData}
+        hideDistribution
       />
     </div>
   );

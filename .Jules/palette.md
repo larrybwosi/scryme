@@ -40,3 +40,7 @@
 ## 2026-06-30 - [Leveraging Shared Confirmation Providers in Bakery]
 **Learning:** While implementing custom `AlertDialog` states provides full control, it often exceeds PR line limits and duplicates logic already present in shared providers. The Bakery app has a `DeleteConfirmationProvider` that encapsulates the `AlertDialog` logic into a simple async hook.
 **Action:** Before implementing custom confirmation state, check for existing context-based confirmation providers (like `useDeleteConfirmation`). Use these to reduce boilerplate and keep PRs focused and under the line limit. Always add `aria-label` to icon-only triggers.
+
+## 2025-05-15 - [Nesting Tooltip with DropdownMenu]
+**Learning:** In this design system (Radix-based), when adding a tooltip to a dropdown trigger, the Tooltip must be nested inside the DropdownMenu but outside the DropdownMenuTrigger. Both triggers must use `asChild` to avoid DOM bloat and ensure events like clicks and hovers propagate correctly to both components.
+**Action:** Use the pattern: `<DropdownMenu><Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild>...`

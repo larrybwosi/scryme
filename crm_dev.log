@@ -1,0 +1,121 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> crm@6.6.0 dev /app/apps/crm
+> next dev --port 3001
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.0.2:3001
+✓ Ready in 533ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+[env] Failed to load .env files: Error: dynamic usage of require is not supported
+    at O (../../packages/env/src/index.ts:136:16)
+    at N (../../packages/env/src/index.ts:258:5)
+    at module evaluation (../../packages/env/src/index.ts:305:20)
+    at <unknown> (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:301:158)
+    at module evaluation (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:5:30)
+    at <unknown> (.next/dev/server/chunks/packages_0u-hpn6._.js:356:159)
+    at module evaluation (.next/dev/server/chunks/packages_0u-hpn6._.js:293:30)
+    at <unknown> (proxy.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/apps_crm_proxy_ts_21bc1xc._.js:5:30)
+    at Object.<anonymous> (.next/dev/server/middleware.js:20:3)
+  134 |
+  135 |   try {
+> 136 |     const fs = require("fs");
+      |                ^
+  137 |     const path = require("path");
+  138 |     const dotenv = require("dotenv");
+  139 |     const { expand } = require("dotenv-expand");
+❌ Invalid environment variables: { DATABASE_URL: [ 'Required' ] }
+⨯ Error: Invalid environment variables
+    at N (../../packages/env/src/index.ts:298:11)
+    at module evaluation (../../packages/env/src/index.ts:305:20)
+    at <unknown> (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:301:158)
+    at module evaluation (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:5:30)
+    at <unknown> (.next/dev/server/chunks/packages_0u-hpn6._.js:356:159)
+    at module evaluation (.next/dev/server/chunks/packages_0u-hpn6._.js:293:30)
+    at <unknown> (proxy.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/apps_crm_proxy_ts_21bc1xc._.js:5:30)
+    at Object.<anonymous> (.next/dev/server/middleware.js:20:3)
+  296 |       parsed.error.flatten().fieldErrors,
+  297 |     );
+> 298 |     throw new Error("Invalid environment variables");
+      |           ^
+  299 |   }
+  300 |
+  301 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+Error: Invalid environment variables
+    at N (../../packages/env/src/index.ts:298:11)
+    at module evaluation (../../packages/env/src/index.ts:305:20)
+    at <unknown> (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:301:158)
+    at module evaluation (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:5:30)
+    at <unknown> (.next/dev/server/chunks/packages_0u-hpn6._.js:356:159)
+    at module evaluation (.next/dev/server/chunks/packages_0u-hpn6._.js:293:30)
+    at <unknown> (proxy.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/apps_crm_proxy_ts_21bc1xc._.js:5:30)
+    at Object.<anonymous> (.next/dev/server/middleware.js:20:3)
+  296 |       parsed.error.flatten().fieldErrors,
+  297 |     );
+> 298 |     throw new Error("Invalid environment variables");
+      |           ^
+  299 |   }
+  300 |
+  301 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+⨯ unhandledRejection: Error: Invalid environment variables
+    at N (../../packages/env/src/index.ts:298:11)
+    at module evaluation (../../packages/env/src/index.ts:305:20)
+    at <unknown> (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:301:158)
+    at module evaluation (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:5:30)
+    at <unknown> (.next/dev/server/chunks/packages_0u-hpn6._.js:356:159)
+    at module evaluation (.next/dev/server/chunks/packages_0u-hpn6._.js:293:30)
+    at <unknown> (proxy.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/apps_crm_proxy_ts_21bc1xc._.js:5:30)
+    at Object.<anonymous> (.next/dev/server/middleware.js:20:3)
+  296 |       parsed.error.flatten().fieldErrors,
+  297 |     );
+> 298 |     throw new Error("Invalid environment variables");
+      |           ^
+  299 |   }
+  300 |
+  301 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+⨯ unhandledRejection:  Error: Invalid environment variables
+    at N (../../packages/env/src/index.ts:298:11)
+    at module evaluation (../../packages/env/src/index.ts:305:20)
+    at <unknown> (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:301:158)
+    at module evaluation (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:5:30)
+    at <unknown> (.next/dev/server/chunks/packages_0u-hpn6._.js:356:159)
+    at module evaluation (.next/dev/server/chunks/packages_0u-hpn6._.js:293:30)
+    at <unknown> (proxy.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/apps_crm_proxy_ts_21bc1xc._.js:5:30)
+    at Object.<anonymous> (.next/dev/server/middleware.js:20:3)
+  296 |       parsed.error.flatten().fieldErrors,
+  297 |     );
+> 298 |     throw new Error("Invalid environment variables");
+      |           ^
+  299 |   }
+  300 |
+  301 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+ GET /leads 404 in 2.6s (next.js: -151637µs, proxy.ts: 2.5s, application-code: 164ms)
+[browser] Uncaught Error: Invalid environment variables
+    at N (../../packages/env/src/index.ts:298:11)
+    at module evaluation (../../packages/env/src/index.ts:305:20)
+    at <unknown> (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:301:158)
+    at module evaluation (.next/dev/server/chunks/packages_db_dist_client_mjs_1yk4g5j._.js:5:30)
+    at <unknown> (.next/dev/server/chunks/packages_0u-hpn6._.js:356:159)
+    at module evaluation (../../packages/shared/src/redis/index.ts:121:1)
+    at <unknown> (proxy.ts:2:1)
+    at module evaluation (.next/dev/server/chunks/apps_crm_proxy_ts_21bc1xc._.js:5:30)
+    at Object.<anonymous> (.next/dev/server/middleware.js:20:3)
+  296 |       parsed.error.flatten().fieldErrors,
+  297 |     );
+> 298 |     throw new Error("Invalid environment variables");
+      |           ^
+  299 |   }
+  300 |
+  301 |   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
+○ Compiling /_not-found/page ...
