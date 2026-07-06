@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import {
   startOfMonth,
   subMonths,
+  subDays,
   format,
   endOfMonth,
   startOfDay,
@@ -966,6 +967,10 @@ export async function getStockRequestDetails(id: string): Promise<any> {
 export async function getAggregatedStockRequests(params?: {
   search?: string;
   locationId?: string;
+  categoryId?: string;
+  priority?: StockRequestPriority | "all";
+  startDate?: Date;
+  endDate?: Date;
 }): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
@@ -975,13 +980,32 @@ export async function getAggregatedStockRequests(params?: {
     status: { in: ["PENDING", "APPROVED", "PARTIALLY_FULFILLED"] },
   };
 
-  if (params?.locationId) {
+  if (params?.locationId && params.locationId !== "all") {
     stockRequestFilter.toLocationId = params.locationId;
+  }
+
+  if (params?.priority && params.priority !== "all") {
+    stockRequestFilter.priority = params.priority;
+  }
+
+  if (params?.startDate || params?.endDate) {
+    stockRequestFilter.requestDate = {
+      gte: params.startDate,
+      lte: params.endDate,
+    };
   }
 
   const itemWhere: any = {
     stockRequest: stockRequestFilter,
   };
+
+  if (params?.categoryId && params.categoryId !== "all") {
+    itemWhere.variant = {
+      product: {
+        categoryId: params.categoryId,
+      },
+    };
+  }
 
   if (params?.search) {
     itemWhere.OR = [
@@ -1001,7 +1025,16 @@ export async function getAggregatedStockRequests(params?: {
     include: {
       variant: {
         include: {
-          product: true,
+          product: {
+            include: {
+              category: true,
+            },
+          },
+          suppliers: {
+            where: { isPreferred: true },
+            include: { supplier: true },
+            take: 1,
+          },
         },
       },
       stockRequest: {
@@ -1036,6 +1069,8 @@ export async function getAggregatedStockRequests(params?: {
         locationName: item.stockRequest.toLocation.name,
         quantity: item.requestedQuantity,
         remaining: remaining,
+        priority: item.stockRequest.priority,
+        requestDate: item.stockRequest.requestDate,
       });
     } else {
       aggregationMap.set(item.variantId, {
@@ -1043,6 +1078,9 @@ export async function getAggregatedStockRequests(params?: {
         sku: item.variant.sku,
         name: item.variant.product.name,
         variantName: item.variant.name,
+        categoryName: item.variant.product.category.name,
+        preferredSupplier: item.variant.suppliers[0]?.supplier?.name || "N/A",
+        preferredSupplierId: item.variant.suppliers[0]?.supplierId || null,
         totalRequested: new Decimal(item.requestedQuantity),
         totalAllocated: new Decimal(item.allocatedQuantity),
         totalRemaining: remaining,
@@ -1053,6 +1091,8 @@ export async function getAggregatedStockRequests(params?: {
             locationName: item.stockRequest.toLocation.name,
             quantity: item.requestedQuantity,
             remaining: remaining,
+            priority: item.stockRequest.priority,
+            requestDate: item.stockRequest.requestDate,
           },
         ],
       });
@@ -1072,6 +1112,50 @@ export async function getAggregatedStockRequests(params?: {
   }));
 }
 
+export async function getVariantSupplierPrices(variantId: string): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const [suppliers, priceHistory] = await Promise.all([
+    db.productSupplier.findMany({
+      where: {
+        variantId,
+        supplier: { organizationId: context.organizationId },
+      },
+      include: {
+        supplier: true,
+      },
+      orderBy: { costPrice: "asc" },
+    }),
+    db.supplierPriceHistory.findMany({
+      where: {
+        variantId,
+        organizationId: context.organizationId,
+      },
+      include: {
+        supplier: true,
+      },
+      orderBy: { effectiveDate: "desc" },
+      take: 10,
+    }),
+  ]);
+
+  return suppliers.map(ps => ({
+    supplierId: ps.supplierId,
+    supplierName: ps.supplier.name,
+    currentCost: ps.costPrice.toNumber(),
+    isPreferred: ps.isPreferred,
+    leadTimeDays: ps.leadTimeDays,
+    minimumOrderQuantity: ps.minimumOrderQuantity,
+    history: priceHistory
+      .filter(h => h.supplierId === ps.supplierId)
+      .map(h => ({
+        price: h.costPrice.toNumber(),
+        date: h.effectiveDate,
+      })),
+  }));
+}
+
 export async function getStockRequestLocations(): Promise<any[]> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) return [];
@@ -1080,6 +1164,127 @@ export async function getStockRequestLocations(): Promise<any[]> {
     where: { organizationId: context.organizationId, isActive: true },
     select: { id: true, name: true },
   });
+}
+
+export async function getStockTransferRecommendations(): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const thirtyDaysAgo = subDays(new Date(), 30);
+
+  // 1. Get current stock levels
+  const stockLevels = await db.productVariantStock.findMany({
+    where: { organizationId: context.organizationId },
+    include: {
+      variant: {
+        include: {
+          product: {
+            include: {
+              category: true,
+            },
+          },
+        },
+      },
+      location: true,
+    },
+  });
+
+  // 2. Get sales in the last 30 days
+  const salesItems = await db.transactionItem.findMany({
+    where: {
+      transaction: {
+        organizationId: context.organizationId,
+        status: { in: ["COMPLETED", "DELIVERED", "CONFIRMED"] },
+        createdAt: { gte: thirtyDaysAgo },
+      },
+    },
+    select: {
+      variantId: true,
+      quantity: true,
+      transaction: { select: { locationId: true } },
+    },
+  });
+
+  // 3. Aggregate sales: Map<variantId, Map<locationId, totalQuantity>>
+  const salesVelocityMap = new Map<string, Map<string, number>>();
+  salesItems.forEach(item => {
+    if (!salesVelocityMap.has(item.variantId)) {
+      salesVelocityMap.set(item.variantId, new Map());
+    }
+    const locMap = salesVelocityMap.get(item.variantId)!;
+    locMap.set(
+      item.transaction.locationId,
+      (locMap.get(item.transaction.locationId) || 0) + item.quantity,
+    );
+  });
+
+  // 4. Calculate recommendations
+  const recommendations: any[] = [];
+  const variantIds = Array.from(new Set(stockLevels.map(s => s.variantId)));
+
+  variantIds.forEach(vId => {
+    const variantStocks = stockLevels.filter(s => s.variantId === vId);
+    const variantSales = salesVelocityMap.get(vId) || new Map<string, number>();
+
+    // Calculate velocity and days of cover for each location
+    const locationMetrics = variantStocks.map(stock => {
+      const thirtyDaySales = variantSales.get(stock.locationId) || 0;
+      const dailyVelocity = thirtyDaySales / 30;
+      const available = stock.availableStock.toNumber();
+      const daysOfCover = dailyVelocity > 0 ? available / dailyVelocity : 9999;
+
+      return {
+        locationId: stock.locationId,
+        locationName: stock.location.name,
+        available,
+        dailyVelocity,
+        daysOfCover,
+      };
+    });
+
+    // Identify sources (Slow moving: high days of cover)
+    const sources = locationMetrics.filter(
+      m => m.available > 10 && m.daysOfCover > 90,
+    );
+    // Identify targets (Fast moving: low days of cover)
+    const targets = locationMetrics.filter(
+      m => m.daysOfCover < 15 || (m.dailyVelocity > 0.5 && m.daysOfCover < 30),
+    );
+
+    if (sources.length > 0 && targets.length > 0) {
+      // Create transfer suggestions
+      sources.forEach(source => {
+        targets.forEach(target => {
+          // Suggest moving some stock from source to target
+          // Amount: enough to give target 30 days of cover, but don't take source below 60 days
+          const targetNeeded = Math.max(0, target.dailyVelocity * 30 - target.available);
+          const sourceCanSpare = Math.max(0, source.available - source.dailyVelocity * 60);
+          const transferQty = Math.min(targetNeeded, sourceCanSpare);
+
+          if (transferQty >= 5) {
+            // Only suggest if it's worth the effort
+            const variant = variantStocks[0].variant;
+            recommendations.push({
+              variantId: vId,
+              sku: variant.sku,
+              productName: variant.product.name,
+              variantName: variant.name,
+              categoryName: variant.product.category.name,
+              fromLocationId: source.locationId,
+              fromLocationName: source.locationName,
+              toLocationId: target.locationId,
+              toLocationName: target.locationName,
+              suggestedQuantity: Math.round(transferQty),
+              reason: `Slow moving at ${source.locationName} (${Math.round(source.daysOfCover)} days cover), High demand at ${target.locationName} (${Math.round(target.daysOfCover)} days cover)`,
+              priority: target.daysOfCover < 7 ? "HIGH" : "MEDIUM",
+            });
+          }
+        });
+      });
+    }
+  });
+
+  return recommendations;
 }
 
 export async function fulfillStockRequestItems(data: {

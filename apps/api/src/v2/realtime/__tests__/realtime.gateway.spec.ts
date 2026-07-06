@@ -1,17 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RealtimeGateway } from '../realtime.gateway';
 import { RealtimeRedisService } from '../realtime-redis.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 describe('RealtimeGateway', () => {
   let gateway: RealtimeGateway;
   let redis: RealtimeRedisService;
+  let prisma: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RealtimeGateway,
+        {
+          provide: PrismaService,
+          useValue: {
+            client: {
+              inventoryLocation: {
+                findFirst: vi.fn(),
+              },
+            },
+          },
+        },
         {
           provide: RealtimeRedisService,
           useValue: {
@@ -28,6 +40,7 @@ describe('RealtimeGateway', () => {
 
     gateway = module.get<RealtimeGateway>(RealtimeGateway);
     redis = module.get<RealtimeRedisService>(RealtimeRedisService);
+    prisma = module.get<PrismaService>(PrismaService);
     gateway.server = {
       to: vi.fn().mockReturnThis(),
       emit: vi.fn(),
@@ -97,5 +110,39 @@ describe('RealtimeGateway', () => {
     expect(redis.saveMessage).toHaveBeenCalledWith('organization:org-1:events', 'test-event', { foo: 'bar' });
     expect(gateway.server.to).toHaveBeenCalledWith('organization:org-1:events');
     expect(gateway.server.emit).toHaveBeenCalledWith('test-event', { foo: 'bar' });
+  });
+
+  it('should allow access to pos channel if location belongs to org', async () => {
+    const client = {
+      join: vi.fn(),
+      id: 'client-1',
+      v2Context: { organizationId: 'org-1' },
+    } as any as Socket;
+
+    vi.mocked(prisma.client.inventoryLocation.findFirst).mockResolvedValue({ id: 'loc-1' } as any);
+
+    const result = await gateway.handleJoinRoom(client, { channel: 'pos:loc-1:sales' });
+
+    expect(prisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
+      where: { id: 'loc-1', organizationId: 'org-1' },
+      select: { id: true },
+    });
+    expect(client.join).toHaveBeenCalledWith('pos:loc-1:sales');
+    expect(result).toEqual({ event: 'joined', data: 'pos:loc-1:sales' });
+  });
+
+  it('should deny access to pos channel if location does not belong to org', async () => {
+    const client = {
+      join: vi.fn(),
+      id: 'client-1',
+      v2Context: { organizationId: 'org-1' },
+    } as any as Socket;
+
+    vi.mocked(prisma.client.inventoryLocation.findFirst).mockResolvedValue(null);
+
+    const result = await gateway.handleJoinRoom(client, { channel: 'pos:loc-2:sales' });
+
+    expect(client.join).not.toHaveBeenCalled();
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
   });
 });
