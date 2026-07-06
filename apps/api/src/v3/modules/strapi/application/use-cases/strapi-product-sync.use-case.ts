@@ -62,7 +62,7 @@ export class StrapiProductSyncUseCase {
               variantStocks: {
                 include: { location: true },
               },
-              priceLists: {
+              priceListItems: {
                 include: { priceList: true },
                 take: 1,
                 orderBy: { createdAt: "asc" },
@@ -263,8 +263,10 @@ export class StrapiProductSyncUseCase {
               const variant = await this.prisma.client.productVariant.create({
                 data: {
                   productId: newProduct.id,
+                  attributes: {},
                   name: "Default",
                   sku,
+                  buyingPrice: 0 as any,
                 },
               });
 
@@ -390,7 +392,7 @@ export class StrapiProductSyncUseCase {
 
   private getLowestVariantPrice(variants: any[]): number | undefined {
     const prices = variants.flatMap((v) =>
-      (v.priceLists ?? []).map((pl: any) => Number(pl.price)),
+      (v.priceListItems ?? []).map((pl: any) => Number(pl.price)),
     );
     if (!prices.length) return undefined;
     return Math.min(...prices);
