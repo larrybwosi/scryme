@@ -1,18 +1,5 @@
 # crm
 
-## 8.8.0
-
-### Minor Changes
-
-- a47ab8c: some
-
-## 6.7.0
-
-### Minor Changes
-
-- 0accae5: nothing
-- 3152aac: nothing
-
 ## 6.6.0
 
 ### Minor Changes

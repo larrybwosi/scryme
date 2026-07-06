@@ -8,8 +8,7 @@ import { IOrderRepository } from "../../domain/repositories/order-repository.int
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
-import { ApiRealtimeService } from "@/common/services/realtime.service";
-import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
+import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
 import { emitOrderPlaced } from "@repo/windmill/server";
 import { createOrder } from "@repo/shared/actions";
 import { type CreateOrderInput } from "@repo/shared/lib";
@@ -22,7 +21,6 @@ export class CreateOrderUseCase {
     private readonly prisma: PrismaService,
     private readonly webhookService: WebhookService,
     private readonly realtimeService: ApiRealtimeService,
-    private readonly scrymeNotificationService: ScrymeNotificationService,
   ) {}
 
   async execute(organizationId: string, dto: CreateOrderDto, memberId: string) {
@@ -66,14 +64,9 @@ export class CreateOrderUseCase {
         quantity: Number(i.quantity),
         lineTotal: Number(i.lineTotal),
       })),
-    }).catch(err =>
+    }).catch((err) =>
       console.error("[v3 Order] Failed to emit Windmill event:", err),
     );
-
-    // 6. Notify Scryme
-    await this.scrymeNotificationService
-      .notifyOrderCreated(organizationId, order.id)
-      .catch(err => console.error("[v3 Order] Failed to notify Scryme:", err));
 
     return order;
   }
