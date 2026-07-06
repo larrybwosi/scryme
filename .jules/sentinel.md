@@ -66,3 +66,8 @@
 **Vulnerability:** Scoped lookups for `UnclaimedPayment`, `Transaction`, and `Fulfillment` were using `findUnique` with only the record ID, bypassing `organizationId` checks in multi-tenant environments.
 **Learning:** Prisma's `findUnique` only enforces multi-field uniqueness if a composite unique index (`@@unique`) exists. In this codebase, many models lack `@@unique([id, organizationId])`, so `where: { id, organizationId }` in `findUnique` is often invalid or ignored in favor of just `id`. This allows an authenticated user to access records from other tenants if they know or guess the ID.
 **Prevention:** Always use `findFirst` instead of `findUnique` when performing tenant-scoped lookups for models that do not have a composite unique index on `[id, organizationId]`. Explicitly include `organizationId` in the `where` clause of every sensitive lookup.
+
+## 2025-05-21 - IDOR Vulnerability in Checkout Process
+**Vulnerability:** The `CheckoutUseCase` fetched the `Cart` entity using only the `cartId` provided in the request body, allowing an authenticated user to initiate checkout for a cart belonging to any organization.
+**Learning:** Even if an endpoint is protected by authentication and multi-tenancy guards, individual use cases must still enforce tenant isolation when fetching resources by ID. Failing to scope these lookups to the current `organizationId` creates an IDOR vulnerability where cross-tenant data can be accessed or modified.
+**Prevention:** Always scope database lookups for entities (like `Cart`, `Order`, `Customer`) using the authenticated `organizationId`. Use `findFirst` with both `id` and `organizationId` in the `where` clause to ensure strict multi-tenant isolation, especially when composite unique indexes are not present.
