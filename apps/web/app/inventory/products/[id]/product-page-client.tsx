@@ -113,6 +113,16 @@ export function ProductPageClient({
     initialStock: 0,
     isActive: true,
     attributes: {},
+    pointsOnPurchase: 0,
+    loyaltyPointsOverride: 0,
+    requiresExpiryTracking: true,
+    expiryWarningDays: 2,
+    defaultShelfLifeDays: 0,
+    requiresSerialNumber: false,
+    wholesalePrice: 0,
+    promotionalPrice: 0,
+    isPopular: false,
+    isNew: false,
   });
 
   const handleSave = async () => {
@@ -135,6 +145,9 @@ export function ProductPageClient({
         isActive: product.isActive,
         buyingPrice: product.variants?.[0]?.buyingPrice,
         retailPrice: product.variants?.[0]?.retailPrice,
+        imageUrls: product.imageUrls,
+        pointsOnPurchase: product.pointsOnPurchase,
+        loyaltyPointsOverride: product.loyaltyPointsOverride,
       });
       toast.success("Product updated successfully");
     } catch (error) {
@@ -368,6 +381,23 @@ export function ProductPageClient({
                       </div>
                     </div>
                     <div className="grid gap-2">
+                      <Label htmlFor="rating">Product Rating (0-5)</Label>
+                      <Input
+                        id="rating"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        value={product.rating || 0}
+                        onChange={e =>
+                          setProduct({
+                            ...product,
+                            rating: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
                       <Label htmlFor="description">Short Description</Label>
                       <Textarea
                         id="description"
@@ -397,7 +427,7 @@ export function ProductPageClient({
                       onChange={urls =>
                         setProduct({ ...product, imageUrls: urls })
                       }
-                      maxImages={6}
+                      maxImages={5}
                     />
                   </CardContent>
                   <CardFooter className="bg-zinc-50/50 border-t py-3">
@@ -562,6 +592,16 @@ export function ProductPageClient({
                                         initialStock: 0,
                                         isActive: v.isActive,
                                         attributes: v.attributes || {},
+                                        pointsOnPurchase: v.pointsOnPurchase || 0,
+                                        loyaltyPointsOverride: v.loyaltyPointsOverride || 0,
+                                        requiresExpiryTracking: v.requiresExpiryTracking ?? true,
+                                        expiryWarningDays: v.expiryWarningDays || 2,
+                                        defaultShelfLifeDays: v.defaultShelfLifeDays || 0,
+                                        requiresSerialNumber: v.requiresSerialNumber ?? false,
+                                        wholesalePrice: Number(v.wholesalePrice || 0),
+                                        promotionalPrice: Number(v.promotionalPrice || 0),
+                                        isPopular: v.isPopular ?? false,
+                                        isNew: v.isNew ?? false,
                                       });
                                       setIsVariantDialogOpen(true);
                                     }}>
@@ -1818,6 +1858,105 @@ export function ProductPageClient({
                 />
               </div>
             </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="font-bold">Loyalty Points</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="v-points">Base Points</Label>
+                  <Input
+                    id="v-points"
+                    type="number"
+                    value={variantForm.pointsOnPurchase}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        pointsOnPurchase: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="v-points-override">Points Override</Label>
+                  <Input
+                    id="v-points-override"
+                    type="number"
+                    value={variantForm.loyaltyPointsOverride}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        loyaltyPointsOverride: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="font-bold">Expiration & Serial Tracking</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="v-expiry-tracking"
+                    checked={variantForm.requiresExpiryTracking}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        requiresExpiryTracking: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="v-expiry-tracking">Expiry Tracking</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="v-serial-tracking"
+                    checked={variantForm.requiresSerialNumber}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        requiresSerialNumber: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="v-serial-tracking">Serial Tracking</Label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="v-expiry-warning">Warning Days</Label>
+                  <Input
+                    id="v-expiry-warning"
+                    type="number"
+                    value={variantForm.expiryWarningDays}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        expiryWarningDays: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="v-shelf-life">Shelf Life Days</Label>
+                  <Input
+                    id="v-shelf-life"
+                    type="number"
+                    value={variantForm.defaultShelfLifeDays}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        defaultShelfLifeDays: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
             {!editingVariant && (
               <div className="grid gap-2">
                 <Label htmlFor="v-stock">Initial Stock</Label>
@@ -1909,6 +2048,18 @@ export function ProductPageClient({
                       retailPrice: Number(variantForm.retailPrice),
                       reorderPoint: Number(variantForm.reorderPoint || 0),
                       reorderQty: Number(variantForm.reorderQty || 0),
+                      pointsOnPurchase: Number(variantForm.pointsOnPurchase),
+                      loyaltyPointsOverride: Number(
+                        variantForm.loyaltyPointsOverride,
+                      ),
+                      defaultShelfLifeDays: Number(
+                        variantForm.defaultShelfLifeDays,
+                      ),
+                      expiryWarningDays: Number(variantForm.expiryWarningDays),
+                      wholesalePrice: Number(variantForm.wholesalePrice),
+                      promotionalPrice: Number(variantForm.promotionalPrice),
+                      isPopular: variantForm.isPopular,
+                      isNew: variantForm.isNew,
                     });
                     toast.success("Variant updated");
                     // Manually update local state for better UX
@@ -1927,6 +2078,18 @@ export function ProductPageClient({
                       buyingPrice: Number(variantForm.buyingPrice),
                       retailPrice: Number(variantForm.retailPrice),
                       initialStock: Number(variantForm.initialStock || 0),
+                      pointsOnPurchase: Number(variantForm.pointsOnPurchase),
+                      loyaltyPointsOverride: Number(
+                        variantForm.loyaltyPointsOverride,
+                      ),
+                      defaultShelfLifeDays: Number(
+                        variantForm.defaultShelfLifeDays,
+                      ),
+                      expiryWarningDays: Number(variantForm.expiryWarningDays),
+                      wholesalePrice: Number(variantForm.wholesalePrice),
+                      promotionalPrice: Number(variantForm.promotionalPrice),
+                      isPopular: variantForm.isPopular,
+                      isNew: variantForm.isNew,
                     });
                     toast.success("Variant created");
                     // Add to local state
