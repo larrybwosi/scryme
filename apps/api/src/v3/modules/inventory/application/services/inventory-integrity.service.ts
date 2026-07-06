@@ -43,7 +43,7 @@ export class InventoryIntegrityService {
 
     // 1. Check Stock Summary vs Batches
     const stocks = await this.prisma.client.productVariantStock.findMany({
-      where: { variantId },
+      where: { variantId, organizationId },
     });
 
     for (const stock of stocks) {
@@ -52,6 +52,7 @@ export class InventoryIntegrityService {
           variantId,
           locationId: stock.locationId,
           currentQuantity: { gt: 0 },
+          organizationId,
         },
       });
 
@@ -82,7 +83,7 @@ export class InventoryIntegrityService {
     locationId: string,
   ) {
     const batches = await this.prisma.client.stockBatch.findMany({
-      where: { variantId, locationId, currentQuantity: { gt: 0 } },
+      where: { variantId, locationId, currentQuantity: { gt: 0 }, organizationId },
     });
 
     const totalBatchQty = batches.reduce(
@@ -90,14 +91,18 @@ export class InventoryIntegrityService {
       0,
     );
 
-    await this.prisma.client.productVariantStock.update({
-      where: { variantId_locationId: { variantId, locationId } },
+    const result = await this.prisma.client.productVariantStock.updateMany({
+      where: { variantId, locationId, organizationId },
       data: {
         currentStock: totalBatchQty,
         availableStock: totalBatchQty,
       },
     });
 
-    return { success: true, newStock: totalBatchQty };
+    return {
+      success: result.count > 0,
+      newStock: totalBatchQty,
+      affected: result.count,
+    };
   }
 }

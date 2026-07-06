@@ -42,6 +42,15 @@ export class AssemblyUseCase {
 
   async complete(organizationId: string, memberId: string, assemblyId: string, locationId: string) {
     return this.prisma.client.$transaction(async tx => {
+      // 0. Verify location ownership
+      const location = await tx.inventoryLocation.findFirst({
+        where: { id: locationId, organizationId },
+      });
+
+      if (!location) {
+        throw new NotFoundException('Location not found or does not belong to your organization');
+      }
+
       const assembly = await tx.assembly.findUnique({
         where: { id: assemblyId, organizationId },
         include: { items: true },
