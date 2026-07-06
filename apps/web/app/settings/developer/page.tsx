@@ -121,7 +121,7 @@ export default function DeveloperSettings() {
           <div>
             <CardTitle>My Applications</CardTitle>
             <CardDescription>
-              Applications you've created to integrate with Dealio.
+              Applications you&apos;ve created to integrate with Dealio.
             </CardDescription>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={(open) => {
@@ -140,7 +140,7 @@ export default function DeveloperSettings() {
                   <DialogHeader>
                     <DialogTitle>Create OAuth Application</DialogTitle>
                     <DialogDescription>
-                      Register a new application to enable "Login with Dealio".
+                      Register a new application to enable &quot;Login with Dealio&quot;.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -213,7 +213,7 @@ export default function DeveloperSettings() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={() => setIsCreateOpen(false)} className="w-full">I've saved it</Button>
+                    <Button onClick={() => setIsCreateOpen(false)} className="w-full">I&apos;ve saved it</Button>
                   </DialogFooter>
                 </>
               )}
@@ -279,7 +279,7 @@ export default function DeveloperSettings() {
         <CardHeader>
           <CardTitle>Documentation</CardTitle>
           <CardDescription>
-            Learn how to integrate "Login with Dealio" into your applications.
+            Learn how to integrate &quot;Login with Dealio&quot; into your applications.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">

@@ -11,6 +11,7 @@ export const auth = betterAuth({
   ...(authOptions as any),
   session: {
     preserveSessionInDatabase: true,
+    storeSessionInDatabase: true,
   },
   secondaryStorage: {
     get: async (key: string) => {

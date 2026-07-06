@@ -14,6 +14,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import Image from "next/image";
 
 export default function AuthorizePage() {
   const searchParams = useSearchParams();
@@ -57,7 +58,7 @@ export default function AuthorizePage() {
   const handleConsent = async (accept: boolean) => {
     setProcessing(true);
     try {
-      const { data, error } = await authClient.oauth2.consent({
+      const { error } = await authClient.oauth2.consent({
         accept,
         scope,
       });
@@ -123,7 +124,7 @@ export default function AuthorizePage() {
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
             {clientInfo?.icon ? (
-              <img src={clientInfo.icon} alt={clientInfo.name} className="w-12 h-12 rounded" />
+              <Image src={clientInfo.icon} alt={clientInfo.name || "App Icon"} width={48} height={48} className="rounded" />
             ) : (
               <CheckCircle2 className="h-10 w-10 text-primary" />
             )}
