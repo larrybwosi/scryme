@@ -1,8 +1,8 @@
 import { betterAuth } from "better-auth";
 import { authOptions } from "./index";
-import { admin } from "better-auth/plugins";
+import { admin, customSession } from "better-auth/plugins";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { nextCookies } from "better-auth/next-js";
-import { customSession } from "better-auth/plugins";
 import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
 import { getRedisClient } from "@repo/shared/redis";
@@ -121,6 +121,56 @@ export const auth = betterAuth({
         user: { ...user, ...customUserData },
         session,
       };
+    }),
+    oauthProvider({
+      loginPage: "/login",
+      consentPage: "/oauth/authorize",
+      scopes: ["openid", "profile", "email", "org_info", "membership"],
+      customUserInfoClaims: async ({ user, scopes }) => {
+        const claims: any = {};
+        if (scopes.includes("profile")) {
+          claims.name = user.name;
+          claims.image = user.image;
+          claims.username = (user as any).username;
+        }
+        if (scopes.includes("email")) {
+          claims.email = user.email;
+          claims.email_verified = user.emailVerified;
+        }
+        if (scopes.includes("org_info") || scopes.includes("membership")) {
+          const organizations = await db.organization.findMany({
+            where: {
+              members: {
+                some: { userId: user.id },
+              },
+            },
+            include: {
+              members: {
+                where: { userId: user.id },
+                select: { role: true, id: true },
+              },
+            },
+          });
+
+          if (scopes.includes("org_info")) {
+            claims.organizations = organizations.map((org) => ({
+              id: org.id,
+              name: org.name,
+              slug: org.slug,
+              logo: org.logo,
+            }));
+          }
+
+          if (scopes.includes("membership")) {
+            claims.memberships = organizations.map((org) => ({
+              organizationId: org.id,
+              memberId: org.members[0]?.id,
+              role: org.members[0]?.role,
+            }));
+          }
+        }
+        return claims;
+      },
     }),
     nextCookies(),
   ],

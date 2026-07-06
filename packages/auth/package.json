@@ -34,6 +34,7 @@
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
+    "@better-auth/oauth-provider": "latest",
     "better-auth": "^1.4.19",
     "zod": "latest"
   },
