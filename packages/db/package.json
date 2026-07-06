@@ -12,7 +12,8 @@
     },
     "./client": {
       "types": "./src/browser.ts",
-      "import": "./dist/browser.js"
+      "import": "./dist/browser.mjs",
+      "require": "./dist/browser.js"
     }
   },
   "scripts": {

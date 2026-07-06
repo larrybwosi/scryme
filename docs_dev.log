@@ -1,0 +1,10 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> docs@0.0.0 dev /app/apps/docs
+> vite
+
+
+  VITE v5.4.21  ready in 285 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose

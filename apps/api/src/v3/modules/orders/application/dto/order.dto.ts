@@ -12,15 +12,40 @@ export class UpdateOrderStatusDto {
 }
 
 export class OrderResponseDto {
-  @ApiProperty({ example: "ord_123" })
+  @ApiProperty({
+    description: "The unique identifier of the order",
+    example: "ord_123",
+  })
   id: string;
 
-  @ApiProperty({ example: "PENDING" })
+  @ApiProperty({
+    description: "The current status of the order",
+    example: "PENDING",
+  })
   status: string;
 
-  @ApiProperty({ example: 45.99 })
+  @ApiProperty({
+    description: "The total amount of the order including taxes and discounts",
+    example: 45.99,
+  })
   totalAmount: number;
 
-  @ApiProperty({ example: "2023-10-27T10:00:00.000Z" })
+  @ApiProperty({
+    description: "The date and time when the order was created",
+    example: "2023-10-27T10:00:00.000Z",
+  })
   createdAt: string;
+
+  @ApiProperty({
+    description: "The customer ID associated with the order",
+    example: "cust_123",
+    nullable: true,
+  })
+  customerId: string | null;
+
+  @ApiProperty({
+    description: "The location ID where the order was placed",
+    example: "loc_123",
+  })
+  locationId: string;
 }

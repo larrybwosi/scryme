@@ -1,0 +1,88 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Scryme V3 API",
+    "description": "The Scryme V3 API documentation - Scalable & Enterprise Ready",
+    "version": "3.0"
+  },
+  "paths": {
+    "/{orgSlug}/inventory": {
+      "get": {
+        "operationId": "Inventory_GetInventory",
+        "parameters": [
+          { "name": "orgSlug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory list",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/InventoryResponseDto" } }
+              }
+            }
+          }
+        },
+        "tags": ["V3 Inventory"]
+      }
+    },
+    "/{orgSlug}/orders": {
+      "post": {
+        "operationId": "Orders_CreateOrder",
+        "parameters": [
+          { "name": "orgSlug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateOrderDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/OrderResponseDto" } }
+            }
+          }
+        },
+        "tags": ["V3 Orders"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InventoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "inv_123" },
+          "productId": { "type": "string", "example": "prod_123" },
+          "quantity": { "type": "number", "example": 100 }
+        }
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "locationId": { "type": "string", "example": "loc_123" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/OrderItemDto" } }
+        },
+        "required": ["locationId", "items"]
+      },
+      "OrderItemDto": {
+        "type": "object",
+        "properties": {
+          "variantId": { "type": "string", "example": "var_123" },
+          "quantity": { "type": "number", "example": 1 }
+        }
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ord_123" },
+          "status": { "type": "string", "example": "PENDING" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  }
+}
