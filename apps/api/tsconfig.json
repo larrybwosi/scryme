@@ -27,7 +27,6 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "strict": false,
-    "downlevelIteration": true,
     "types": ["node", "vitest/globals"],
     "paths": {
       "@/*": ["./src/*"]
