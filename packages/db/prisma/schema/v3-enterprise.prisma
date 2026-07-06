@@ -13,6 +13,9 @@ model V3ApiClient {
   scopes         String[]     @default(["read", "write"])
   corsOrigins    String[]     @default([])
 
+  businessAccountId String?
+  businessAccount   BusinessAccount? @relation(fields: [businessAccountId], references: [id], onDelete: SetNull)
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
