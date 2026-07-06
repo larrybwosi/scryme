@@ -21,6 +21,7 @@ describe("CheckoutUseCase (Integration)", () => {
       client: {
         cart: {
           findUnique: vi.fn(),
+          findFirst: vi.fn(),
           update: vi.fn(),
         },
         productVariant: {
@@ -87,7 +88,7 @@ describe("CheckoutUseCase (Integration)", () => {
       CheckoutRequestID: "check-123",
     };
 
-    vi.mocked(prisma.client.cart.findUnique).mockResolvedValue(mockCart as any);
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.productVariant.findMany).mockResolvedValue(
       mockVariants as any,
     );
@@ -117,6 +118,31 @@ describe("CheckoutUseCase (Integration)", () => {
       expect.objectContaining({
         amount: 200,
         phoneNumber: "254700000000",
+      }),
+    );
+  });
+
+  it("should throw NotFoundException if cart belongs to another organization", async () => {
+    const organizationId = "org-123";
+    const dto = {
+      cartId: "cart-another-org",
+      phoneNumber: "254700000000",
+      locationId: "loc-123",
+    };
+
+    // findFirst will return null because organizationId doesn't match
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(null as any);
+
+    await expect(useCase.execute(organizationId, dto)).rejects.toThrow(
+      "Cart not found",
+    );
+
+    expect(prisma.client.cart.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: "cart-another-org",
+          organizationId: "org-123",
+        },
       }),
     );
   });
