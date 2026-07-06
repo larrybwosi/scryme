@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
 import { PricingModel, BookingStatus } from "@repo/db";
-import { IsEnum, IsString, IsNumber, IsOptional, IsArray, IsDateString, IsUUID, Min } from "class-validator";
+import { IsEnum, IsString, IsNumber, IsOptional, IsArray, IsDateString, IsUUID, Min, IsBoolean } from "class-validator";
 
 export class CreateServiceCategoryDto {
   @ApiProperty({ description: "Category name" })
@@ -17,6 +17,8 @@ export class CreateServiceCategoryDto {
   @IsString()
   parentId?: string;
 }
+
+export class UpdateServiceCategoryDto extends PartialType(CreateServiceCategoryDto) {}
 
 export class ServiceMaterialDto {
   @ApiProperty({ description: "Product variant ID" })
@@ -77,7 +79,7 @@ export class CreateServiceDto {
   @IsNumber()
   bufferTimeAfter?: number;
 
-  @ApiPropertyOptional({ description: "Custom fields (JSON)", type: 'object' })
+  @ApiPropertyOptional({ description: "Custom fields (JSON)", type: 'object', additionalProperties: true })
   @IsOptional()
   customFields?: Record<string, any>;
 
@@ -103,7 +105,32 @@ export class CreateServiceDto {
   @IsArray()
   @IsString({ each: true })
   taxRateIds?: string[];
+
+  @ApiPropertyOptional({ description: "Is service active" })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
+
+export class UpdateServiceDto extends PartialType(CreateServiceDto) {}
+
+export class CreateServiceResourceDto {
+  @ApiProperty({ description: "Resource name" })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({ description: "Resource type" })
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @ApiPropertyOptional({ description: "Is resource active" })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdateServiceResourceDto extends PartialType(CreateServiceResourceDto) {}
 
 export class CreateBookingDto {
   @ApiProperty({ description: "Service ID" })
@@ -146,7 +173,7 @@ export class CreateBookingDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ description: "Custom fields", type: 'object' })
+  @ApiPropertyOptional({ description: "Custom fields", type: 'object', additionalProperties: true })
   @IsOptional()
   customFields?: Record<string, any>;
 

@@ -6,8 +6,8 @@ import { notificationEngine } from "@repo/notifications";
 import { InventoryMovementService } from "@/v3/modules/inventory/application/services/inventory-movement.service";
 import { StaffSchedulingService } from "./staff-scheduling.service";
 import { CalComService } from "./calcom.service";
-import { Prisma } from "@prisma/client";
-import { rrule } from "rrule";
+import { Prisma } from "@repo/db";
+import { RRule } from "rrule";
 
 @Injectable()
 export class BookingService {
@@ -19,7 +19,7 @@ export class BookingService {
   ) {}
 
   async createBooking(orgId: string, dto: CreateBookingDto & { customerContact?: string }) {
-    const service = await this.prisma.service.findFirst({
+    const service = await this.prisma.client.service.findFirst({
       where: { id: dto.serviceId, organizationId: orgId },
     });
 
@@ -52,7 +52,7 @@ export class BookingService {
             // Logic to check if startTime/endTime overlaps with calAvailability busy slots
         }
 
-        const overlap = await this.prisma.serviceBooking.findFirst({
+        const overlap = await this.prisma.client.serviceBooking.findFirst({
           where: {
             staff: { some: { memberId: staffId } },
             status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
@@ -70,7 +70,7 @@ export class BookingService {
 
     if (dto.resourceIds) {
       for (const resourceId of dto.resourceIds) {
-        const overlap = await this.prisma.serviceBooking.findFirst({
+        const overlap = await this.prisma.client.serviceBooking.findFirst({
           where: {
             resources: { some: { resourceId: resourceId } },
             status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
@@ -86,7 +86,7 @@ export class BookingService {
       }
     }
 
-    const booking = await this.prisma.serviceBooking.create({
+    const booking = await this.prisma.client.serviceBooking.create({
       data: {
         organizationId: orgId,
         serviceId: dto.serviceId,
@@ -116,16 +116,16 @@ export class BookingService {
         }
 
         // Create a transaction for the deposit
-        await this.prisma.transaction.create({
+        await this.prisma.client.transaction.create({
             data: {
                 organizationId: orgId,
                 number: `DEP-${Date.now().toString().slice(-6)}`,
-                type: TransactionType.DEPOSIT,
-                channel: TransactionChannel.ONLINE,
-                status: TransactionStatus.PENDING,
+                type: TransactionType.SALES_ORDER,
+                channel: TransactionChannel.ECOMMERCE_STORE,
+                status: TransactionStatus.PENDING_CONFIRMATION,
                 paymentStatus: PaymentStatus.UNPAID,
                 customerId: dto.customerId,
-                locationId: dto.locationId || (await this.prisma.inventoryLocation.findFirst({ where: { organizationId: orgId } }))?.id || "",
+                locationId: dto.locationId || (await this.prisma.client.inventoryLocation.findFirst({ where: { organizationId: orgId } }))?.id || "",
                 subtotal: depositValue,
                 taxTotal: 0,
                 finalTotal: depositValue,
@@ -137,10 +137,10 @@ export class BookingService {
     }
 
     if (dto.recurrenceRule) {
-        const rule = rrule.rrulestr(dto.recurrenceRule);
+        const rule = RRule.rrulestr(dto.recurrenceRule);
         const dates = rule.all((d, i) => i < 50); // Limit to 50 occurrences for safety
 
-        const recurrence = await this.prisma.bookingRecurrence.create({
+        const recurrence = await this.prisma.client.bookingRecurrence.create({
             data: {
                 organizationId: orgId,
                 rule: dto.recurrenceRule,
@@ -173,7 +173,7 @@ export class BookingService {
         }
 
         if (bookingsData.length > 0) {
-            await this.prisma.serviceBooking.createMany({
+            await this.prisma.client.serviceBooking.createMany({
                 data: bookingsData,
             });
 
@@ -182,7 +182,7 @@ export class BookingService {
             // but for this step we've optimized the main creation.
         }
 
-        await this.prisma.serviceBooking.update({
+        await this.prisma.client.serviceBooking.update({
             where: { id: booking.id },
             data: { recurrenceId: recurrence.id }
         });
@@ -216,7 +216,7 @@ export class BookingService {
   }
 
   async completeBooking(orgId: string, bookingId: string, memberId: string, dto: CompleteBookingDto) {
-    const booking = await this.prisma.serviceBooking.findFirst({
+    const booking = await this.prisma.client.serviceBooking.findFirst({
       where: { id: bookingId, organizationId: orgId },
       include: { service: { include: { materials: true, taxRates: { include: { taxRate: true } } } }, staff: true }
     });
@@ -229,7 +229,7 @@ export class BookingService {
       quantity: Number(m.quantity)
     }));
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async (tx) => {
       if (booking.locationId) {
         for (const material of materialsUsed) {
             await tx.bookingConsumedMaterial.create({
@@ -361,7 +361,7 @@ export class BookingService {
   }
 
   async getBookings(orgId: string) {
-    return this.prisma.serviceBooking.findMany({
+    return this.prisma.client.serviceBooking.findMany({
       where: { organizationId: orgId },
       include: {
         service: true,
@@ -372,8 +372,37 @@ export class BookingService {
     });
   }
 
+  async getBookingById(orgId: string, id: string) {
+    const booking = await this.prisma.client.serviceBooking.findFirst({
+        where: { id, organizationId: orgId },
+        include: {
+            service: true,
+            customer: true,
+            staff: { include: { member: { include: { user: true } } } },
+            resources: { include: { resource: true } },
+            materials: { include: { variant: true } }
+        }
+    });
+
+    if (!booking) throw new NotFoundException("Booking not found");
+    return booking;
+  }
+
+  async updateBookingStatus(orgId: string, id: string, status: BookingStatus) {
+    const booking = await this.prisma.client.serviceBooking.findFirst({
+        where: { id, organizationId: orgId }
+    });
+
+    if (!booking) throw new NotFoundException("Booking not found");
+
+    return this.prisma.client.serviceBooking.update({
+        where: { id },
+        data: { status }
+    });
+  }
+
   async cancelBookingSeries(orgId: string, recurrenceId: string) {
-    return this.prisma.serviceBooking.updateMany({
+    return this.prisma.client.serviceBooking.updateMany({
         where: {
             organizationId: orgId,
             recurrenceId,
