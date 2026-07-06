@@ -30,6 +30,11 @@
 **Learning:** Outbound requests to URLs provided by users or stored in configurations are primary targets for SSRF attacks. Relying on simple string checks for "localhost" is insufficient as attackers can use DNS-resolved IPs (e.g., `127.0.0.1`, `10.0.0.1`) or IPv6 loopback addresses to bypass filters and access internal metadata services or APIs.
 **Prevention:** Always use a robust URL validation utility like `isSafeUrl` (implemented in `@repo/shared/server`) that resolves the hostname via DNS and verifies that the resulting IP address does not fall within private, loopback, or reserved ranges. Apply this validation to all modules performing outbound HTTP(S) requests to external endpoints.
 
+## 2025-05-21 - IDOR in Realtime V2 POS Channels
+**Vulnerability:** The `RealtimeGateway` (V2) allowed any authenticated member to join `pos:[locationId]:sales` channels without verifying if the `locationId` belonged to their organization.
+**Learning:** Synchronous authorization methods in WebSocket gateways often tempt developers to skip database-backed ownership checks for performance or simplicity. This creates a significant IDOR risk where tenant isolation is only enforced at the authentication layer but not at the resource/channel layer.
+**Prevention:** Always implement `validateChannelAccess` as an asynchronous method and perform tenant-scoped database lookups for any resource identifiers present in the channel name (e.g., `locationId`, `orderId`). Ensure that the `where` clause explicitly includes both the resource `id` and the authenticated `organizationId`.
+
 ## 2025-05-18 - Sensitive Data Leakage at Recursion Depth Limit
 **Vulnerability:** The `redactSensitiveData` utility leaked raw objects and arrays when they exceeded the `maxDepth` limit, as the recursion would stop and return the remaining data as-is without further inspection.
 **Learning:** Security-critical recursion must never "fail open" by returning raw data when limits are reached. If a data structure is too deep to inspect, it must be considered potentially sensitive and replaced with a placeholder.
