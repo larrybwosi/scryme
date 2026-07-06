@@ -1,8 +1,6 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  transpilePackages: ["@repo/ui", "@repo/db"],
-  serverExternalPackages: ["@prisma/client", "pg"],
+/** @type {import('next').NextConfig} */
+module.exports = {
+  reactStrictMode: true,
+  transpilePackages: ["@repo/ui", "@react-pdf/renderer"],
+  output: "standalone",
 };
-
-export default nextConfig;
