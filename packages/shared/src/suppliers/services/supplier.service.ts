@@ -50,9 +50,23 @@ export class SupplierService {
 
   async createSupplierDocument(ctx: V2ApiContext, supplierId: string, data: any) {
     const { organizationId } = ctx;
+
+    // Verify supplier belongs to organization
+    const supplier = await this.prisma.client.supplier.findFirst({
+      where: { id: supplierId, organizationId },
+    });
+    if (!supplier) throw new NotFoundException('Supplier not found');
+
+    // Whitelist data to prevent mass assignment
+    const { name, documentType, fileUrl, expiryDate, status } = data;
+
     return this.prisma.client.supplierDocument.create({
       data: {
-        ...data,
+        name,
+        documentType,
+        fileUrl,
+        expiryDate,
+        status,
         supplierId,
         organizationId,
       },
@@ -61,6 +75,32 @@ export class SupplierService {
 
   async createQualityIncident(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // Whitelist data to prevent mass assignment
+    const { title, description, severity, status, batchId, stockBatchId, supplierId } = data;
+
+    // Verify foreign keys belong to organization
+    if (supplierId) {
+      const supplier = await this.prisma.client.supplier.findFirst({
+        where: { id: supplierId, organizationId },
+      });
+      if (!supplier) throw new NotFoundException('Supplier not found');
+    }
+
+    if (batchId) {
+      const batch = await this.prisma.client.batch.findFirst({
+        where: { id: batchId, organizationId },
+      });
+      if (!batch) throw new NotFoundException('Batch not found');
+    }
+
+    if (stockBatchId) {
+      const stockBatch = await this.prisma.client.stockBatch.findFirst({
+        where: { id: stockBatchId, organizationId },
+      });
+      if (!stockBatch) throw new NotFoundException('Stock batch not found');
+    }
+
     const count = await this.prisma.client.qualityIncident.count({
       where: { organizationId },
     });
@@ -69,21 +109,27 @@ export class SupplierService {
     return await this.prisma.client.$transaction(async (tx: any) => {
       const incident = await tx.qualityIncident.create({
         data: {
-          ...data,
+          title,
+          description,
+          severity,
+          status,
+          batchId,
+          stockBatchId,
+          supplierId,
           incidentNumber,
           organizationId,
           reportedById: ctx.memberId!,
         },
       });
 
-      if (data.supplierId) {
+      if (supplierId) {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
         const performance = await tx.supplierPerformance.findFirst({
           where: {
-            supplierId: data.supplierId,
+            supplierId: supplierId,
             periodStart: { lte: now },
             periodEnd: { gte: now },
           },
@@ -104,7 +150,7 @@ export class SupplierService {
         } else {
           await tx.supplierPerformance.create({
             data: {
-              supplierId: data.supplierId,
+              supplierId: supplierId,
               organizationId,
               periodStart: startOfMonth,
               periodEnd: endOfMonth,
@@ -123,11 +169,21 @@ export class SupplierService {
 
   async getQualityIncidents(ctx: V2ApiContext, query: any) {
     const { organizationId } = ctx;
+
+    // Whitelist query parameters to prevent filter injection
+    const { status, severity, supplierId, batchId, stockBatchId, take, skip } = query;
+
     return this.prisma.client.qualityIncident.findMany({
       where: {
         organizationId,
-        ...query,
+        status,
+        severity,
+        supplierId,
+        batchId,
+        stockBatchId,
       },
+      take: take ? Number(take) : undefined,
+      skip: skip ? Number(skip) : undefined,
       include: {
         batch: true,
         stockBatch: {
@@ -143,6 +199,21 @@ export class SupplierService {
   async initiateRecall(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
     const { title, description, supplierId, stockBatchId } = data;
+
+    // Verify foreign keys belong to organization
+    if (supplierId) {
+      const supplier = await this.prisma.client.supplier.findFirst({
+        where: { id: supplierId, organizationId },
+      });
+      if (!supplier) throw new NotFoundException('Supplier not found');
+    }
+
+    if (stockBatchId) {
+      const stockBatch = await this.prisma.client.stockBatch.findFirst({
+        where: { id: stockBatchId, organizationId },
+      });
+      if (!stockBatch) throw new NotFoundException('Stock batch not found');
+    }
 
     const count = await this.prisma.client.recall.count({ where: { organizationId } });
     const recallNumber = `REC-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
