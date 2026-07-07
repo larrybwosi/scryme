@@ -20,13 +20,13 @@ const serverSchema = z.object({
     .default("development"),
   DATABASE_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url(),
+    z.url().default("postgresql://postgres:postgres@localhost:5432/scryme"),
   ),
   PORT: z.coerce.number().default(3001),
 
   // Auth
   BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
-  BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
+  BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -50,7 +50,7 @@ const serverSchema = z.object({
   ZITADEL_CLIENT_ID: z.string().optional(),
   ZITADEL_API_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().optional(),
+    z.url().optional(),
   ),
   ZITADEL_ORG_ID: z.string().optional(),
   ZITADEL_PROJECT_ID: z.string().optional(),
@@ -66,7 +66,7 @@ const serverSchema = z.object({
   GITHUB_TOKEN: z.string().optional(),
 
   // OpenObserve
-  OPENOBSERVE_URL: z.string().url().optional(),
+  OPENOBSERVE_URL: z.url().optional(),
   OPENOBSERVE_ORG: z.string().optional(),
   OPENOBSERVE_STREAM: z.string().optional(),
   OPENOBSERVE_TOKEN: z.string().optional(),
@@ -82,7 +82,7 @@ const serverSchema = z.object({
   // RustFS (S3 Compatible) Configuration
   RUSTFS_ENDPOINT: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().optional(),
+    z.url().optional(),
   ),
   RUSTFS_ACCESS_KEY: z.string().optional(),
   RUSTFS_SECRET_KEY: z.string().optional(),
@@ -91,31 +91,31 @@ const serverSchema = z.object({
   RUSTFS_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
   RUSTFS_PUBLIC_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().optional(),
+    z.url().optional(),
   ),
 
   // Realtime Configuration
   REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
   ABLY_API_KEY: z.string().optional(),
-  SOCKET_URL: z.string().url().default("http://localhost:3002"),
+  SOCKET_URL: z.url().default("http://localhost:3002"),
 });
 
 const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().default("http://localhost:3000"),
+    z.url().default("http://localhost:3000"),
   ),
   NEXT_PUBLIC_API_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().default("http://localhost:3002"),
+    z.url().default("http://localhost:3002"),
   ),
   NEXT_PUBLIC_WEB_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().default("http://localhost:3000"),
+    z.url().default("http://localhost:3000"),
   ),
   NEXT_PUBLIC_CRM_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().default("http://localhost:3001"),
+    z.url().default("http://localhost:3001"),
   ),
   NEXT_PUBLIC_COOKIE_DOMAIN: z.string().optional(),
 
@@ -123,21 +123,39 @@ const clientSchema = z.object({
   NEXT_PUBLIC_REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
   NEXT_PUBLIC_SOCKET_URL: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url().default("http://localhost:3002"),
+    z.url().default("http://localhost:3002"),
   ),
 });
 
 // ─────────────────────────────────────────────
 // Env file loader (Node.js only — skipped in browser)
 // ─────────────────────────────────────────────
+
+// Indirect require, hidden from bundler static analysis (webpack/Turbopack)
+// so this code path isn't eagerly resolved/bundled for client or edge runtimes.
+const nodeRequire: NodeJS.Require | undefined =
+  typeof require !== "undefined"
+    ? // eslint-disable-next-line no-eval
+      (eval("require") as NodeJS.Require)
+    : undefined;
+
 function loadEnvFiles() {
   if (isBrowser) return;
+  // Only run in an actual Node.js process (not edge runtime), where
+  // process.versions.node is present.
+  if (
+    typeof process === "undefined" ||
+    !process.versions?.node ||
+    !nodeRequire
+  ) {
+    return;
+  }
 
   try {
-    const fs = require("fs");
-    const path = require("path");
-    const dotenv = require("dotenv");
-    const { expand } = require("dotenv-expand");
+    const fs = nodeRequire("fs");
+    const path = nodeRequire("path");
+    const dotenv = nodeRequire("dotenv");
+    const { expand } = nodeRequire("dotenv-expand");
 
     const currentDir = process.cwd();
 
@@ -266,11 +284,18 @@ function parseEnv() {
     if (!parsed.success) {
       console.error(
         "❌ Invalid client environment variables:",
-        parsed.error.flatten().fieldErrors,
+        z.flattenError(parsed.error).fieldErrors,
       );
-      throw new Error("Invalid client environment variables");
+      if (
+        process.env.NODE_ENV === "production" &&
+        !process.env.SKIP_ENV_VALIDATION
+      ) {
+        throw new Error("Invalid client environment variables");
+      }
     }
-    return parsed.data as z.infer<typeof serverSchema> &
+    return (parsed.data || clientSchema.parse({})) as z.infer<
+      typeof serverSchema
+    > &
       z.infer<typeof clientSchema>;
   }
 
@@ -279,9 +304,14 @@ function parseEnv() {
     if (!parsed.success && process.env.NODE_ENV !== "test") {
       console.error(
         "❌ Invalid environment variables:",
-        parsed.error.flatten().fieldErrors,
+        z.flattenError(parsed.error).fieldErrors,
       );
-      throw new Error("Invalid environment variables");
+      if (
+        process.env.NODE_ENV === "production" &&
+        !process.env.SKIP_ENV_VALIDATION
+      ) {
+        throw new Error("Invalid environment variables");
+      }
     }
     return {
       ...(parsed.data ?? {}),
@@ -294,9 +324,14 @@ function parseEnv() {
   if (!parsed.success && process.env.NODE_ENV !== "test") {
     console.log(
       "❌ Invalid environment variables:",
-      parsed.error.flatten().fieldErrors,
+      z.flattenError(parsed.error).fieldErrors,
     );
-    throw new Error("Invalid environment variables");
+    if (
+      process.env.NODE_ENV === "production" &&
+      !process.env.SKIP_ENV_VALIDATION
+    ) {
+      throw new Error("Invalid environment variables");
+    }
   }
 
   return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
