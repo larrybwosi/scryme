@@ -255,10 +255,11 @@ export class PosController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Download invoice PDF', operationId: 'POS_DownloadInvoice' })
   async downloadInvoice(
+    @v3Context() ctx: V3ApiContext,
     @Param('id') id: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
-    const stream = await this.invoiceUseCase.getDownloadStreamDirect(id);
+    const stream = await this.invoiceUseCase.getDownloadStreamDirect(ctx.organizationId, id);
     res.header('Content-Type', 'application/pdf');
     res.header('Content-Disposition', `attachment; filename=invoice-${id}.pdf`);
     return new StreamableFile(stream);
@@ -269,10 +270,11 @@ export class PosController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Download receipt PDF', operationId: 'POS_DownloadReceipt' })
   async downloadReceipt(
+    @v3Context() ctx: V3ApiContext,
     @Param('id') id: string, // id is transactionId here
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
-    const stream = await this.invoiceUseCase.getReceiptDownloadStream(id);
+    const stream = await this.invoiceUseCase.getReceiptDownloadStream(ctx.organizationId, id);
     res.header('Content-Type', 'application/pdf');
     res.header('Content-Disposition', `attachment; filename=receipt-${id}.pdf`);
     return new StreamableFile(stream);

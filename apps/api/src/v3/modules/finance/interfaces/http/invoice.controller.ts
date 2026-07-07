@@ -135,7 +135,7 @@ export class PublicInvoiceController {
       throw new ForbiddenException('Invalid or expired link');
     }
 
-    const stream = await this.invoiceUseCase.getDownloadStreamDirect(id);
+    const stream = await this.invoiceUseCase.getDownloadStreamDirect(payload.orgId, id);
     res.header('Content-Type', 'application/pdf');
     res.header('Content-Disposition', `attachment; filename=invoice-${id}.pdf`);
     return new StreamableFile(stream);
@@ -158,7 +158,7 @@ export class PublicInvoiceController {
       throw new ForbiddenException('Invalid or expired link');
     }
 
-    const stream = await this.invoiceUseCase.getReceiptDownloadStream(transactionId);
+    const stream = await this.invoiceUseCase.getReceiptDownloadStream(payload.orgId, transactionId);
     res.header('Content-Type', 'application/pdf');
     res.header('Content-Disposition', `attachment; filename=receipt-${transactionId}.pdf`);
     return new StreamableFile(stream);
