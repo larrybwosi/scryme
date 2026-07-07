@@ -3,7 +3,7 @@ import { MemberUseCase } from "../member.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import { MemberRole, MembershipStatus } from "@repo/db";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("MemberUseCase", () => {
@@ -128,6 +128,97 @@ describe("MemberUseCase", () => {
       await expect(useCase.createMember("org1", dto)).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe("Security Enhancements", () => {
+    describe("updateMember", () => {
+      it("should prevent a member from changing their own role", async () => {
+        const dto = { role: MemberRole.ADMIN };
+        mockPrisma.client.member.findFirst.mockResolvedValue({
+          id: "m1",
+          role: MemberRole.EMPLOYEE,
+          isActive: true,
+        });
+
+        await expect(
+          useCase.updateMember("org1", "m1", dto, "m1"),
+        ).rejects.toThrow("You cannot change your own role");
+      });
+
+      it("should prevent non-OWNER from promoting someone to ADMIN", async () => {
+        const dto = { role: MemberRole.ADMIN };
+        mockPrisma.client.member.findFirst
+          .mockResolvedValueOnce({
+            id: "m2",
+            role: MemberRole.EMPLOYEE,
+            isActive: true,
+          }) // target
+          .mockResolvedValueOnce({ id: "m1", role: MemberRole.MANAGER }); // actor
+
+        await expect(
+          useCase.updateMember("org1", "m2", dto, "m1"),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it("should prevent non-OWNER from promoting someone to OWNER", async () => {
+        const dto = { role: MemberRole.OWNER };
+        mockPrisma.client.member.findFirst
+          .mockResolvedValueOnce({
+            id: "m2",
+            role: MemberRole.EMPLOYEE,
+            isActive: true,
+          }) // target
+          .mockResolvedValueOnce({ id: "m1", role: MemberRole.ADMIN }); // actor
+
+        await expect(
+          useCase.updateMember("org1", "m2", dto, "m1"),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it("should allow OWNER to promote someone to ADMIN", async () => {
+        const dto = { role: MemberRole.ADMIN };
+        mockPrisma.client.member.findFirst
+          .mockResolvedValueOnce({
+            id: "m2",
+            role: MemberRole.EMPLOYEE,
+            isActive: true,
+            user: { name: "Test" },
+          }) // target
+          .mockResolvedValueOnce({ id: "m1", role: MemberRole.OWNER }); // actor
+
+        mockPrisma.client.member.update.mockResolvedValue({ id: "m2", ...dto });
+
+        const result = await useCase.updateMember("org1", "m2", dto, "m1");
+        expect(result.role).toBe(MemberRole.ADMIN);
+      });
+
+      it("should prevent a member from deactivating themselves", async () => {
+        const dto = { isActive: false };
+        mockPrisma.client.member.findFirst.mockResolvedValue({
+          id: "m1",
+          role: MemberRole.ADMIN,
+          isActive: true,
+          user: { name: "Self" },
+        });
+
+        await expect(
+          useCase.updateMember("org1", "m1", dto, "m1"),
+        ).rejects.toThrow("You cannot deactivate your own membership");
+      });
+    });
+
+    describe("deleteMember", () => {
+      it("should prevent a member from deleting themselves", async () => {
+        mockPrisma.client.member.findFirst.mockResolvedValue({
+          id: "m1",
+          role: MemberRole.ADMIN,
+        });
+
+        await expect(
+          useCase.deleteMember("org1", "m1", "m1"),
+        ).rejects.toThrow("You cannot delete your own membership");
+      });
     });
   });
 });
