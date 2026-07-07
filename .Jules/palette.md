@@ -40,3 +40,7 @@
 ## 2026-06-30 - [Leveraging Shared Confirmation Providers in Bakery]
 **Learning:** While implementing custom `AlertDialog` states provides full control, it often exceeds PR line limits and duplicates logic already present in shared providers. The Bakery app has a `DeleteConfirmationProvider` that encapsulates the `AlertDialog` logic into a simple async hook.
 **Action:** Before implementing custom confirmation state, check for existing context-based confirmation providers (like `useDeleteConfirmation`). Use these to reduce boilerplate and keep PRs focused and under the line limit. Always add `aria-label` to icon-only triggers.
+
+## 2025-06-30 - [Unified Destructive Actions & Loading Feedback in Web]
+**Learning:** Native `confirm()` is inconsistent with the monorepo's design language and lacks built-in support for loading states. When a component has multiple destructive actions (e.g., Revoke and Delete), a single `AlertDialog` with dynamic content can maintain UX clarity while keeping the code DRY and within line limits.
+**Action:** Replace `confirm()` with `AlertDialog`. Use `pendingAction` state to manage dynamic titles, descriptions, and action logic. Always include `Loader2` feedback in the `AlertDialogAction` button.
