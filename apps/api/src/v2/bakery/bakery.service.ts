@@ -729,17 +729,50 @@ export class BakeryService {
   }
 
   // Batches
+  /**
+   * List all production batches.
+   * ⚡ Bolt: Performance Optimization
+   * Replaced broad 'include' with targeted 'select' to exclude heavy fields like 'qcData'.
+   * This reduces network payload size and database I/O. Added a default limit to
+   * prevent performance degradation on large datasets without breaking the existing array contract.
+   */
   async getBatches(ctx: V2ApiContext, query: any) {
     const { organizationId } = ctx;
-    const { status, recipeId } = query;
+    const { status, recipeId, limit = 100, page = 1 } = query;
     const where: any = { organizationId };
     if (status) where.status = status;
     if (recipeId) where.recipeId = recipeId;
 
+    const skip = (Number(page) - 1) * Number(limit);
+
     return this.prisma.client.batch.findMany({
       where,
-      // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
-      include: {
+      skip,
+      take: Number(limit),
+      orderBy: { scheduledStartAt: "desc" },
+      select: {
+        id: true,
+        batchNumber: true,
+        organizationId: true,
+        recipeId: true,
+        status: true,
+        plannedQuantity: true,
+        actualQuantity: true,
+        recipeMultiplier: true,
+        scheduledStartAt: true,
+        startedAt: true,
+        completedAt: true,
+        cancelledAt: true,
+        duration: true,
+        notes: true,
+        productionDate: true,
+        expiresAt: true,
+        expirationStatus: true,
+        shelfLifeDays: true,
+        wasteQuantity: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true,
         recipe: {
           select: {
             id: true,
@@ -777,7 +810,6 @@ export class BakeryService {
         systemUnit: { select: { id: true, name: true, symbol: true } },
         orgUnit: { select: { id: true, name: true, symbol: true } },
       },
-      orderBy: { scheduledStartAt: "desc" },
     });
   }
 
