@@ -40,9 +40,9 @@ export class ReviewsService {
 
     return {
       data: result.data,
-      totalCount: result.meta.total,
+      totalCount: result.total,
       currentPage: Number(page),
-      totalPages: Math.ceil(result.meta.total / Number(limit)),
+      totalPages: Math.ceil(result.total / Number(limit)),
       limit: Number(limit),
     };
   }

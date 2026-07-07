@@ -34,8 +34,12 @@
   "packageManager": "pnpm@10.34.1",
   "name": "scryme",
   "dependencies": {
+    "@swc/core": "^1.15.43",
+    "ably": "^2.21.0",
     "axios": "^1.16.1",
-    "socket.io-client": "^4.8.3"
+    "clsx": "^2.1.1",
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.4.3"
   },
   "pnpm": {
     "overrides": {

@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
+import * as z from "zod";
 import {
   Form,
   FormControl,
@@ -16,19 +16,10 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Switch } from "@repo/ui/components/ui/switch";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/ui/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Save, Palette, Upload, X } from "lucide-react";
-import {
-  updateReceiptConfig,
-  updateWaybillConfig,
-} from "../../actions/document-config";
+import { updateReceiptConfig, updateWaybillConfig } from "../../actions/document-config";
 import { uploadFileAction } from "../../actions/sales";
 import Image from "next/image";
 
@@ -52,13 +43,10 @@ interface DocumentConfigFormProps {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-export function DocumentConfigForm({
-  type,
-  initialConfig,
-}: DocumentConfigFormProps) {
+export function DocumentConfigForm({ type, initialConfig }: DocumentConfigFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -82,9 +70,7 @@ export function DocumentConfigForm({
         } else {
           await updateWaybillConfig(values);
         }
-        toast.success(
-          `${type.charAt(0) + type.slice(1).toLowerCase()} configuration updated successfully`,
-        );
+        toast.success(`${type.charAt(0) + type.slice(1).toLowerCase()} configuration updated successfully`);
       } catch (error) {
         toast.error(`Failed to update ${type.toLowerCase()} configuration`);
       }
@@ -123,9 +109,7 @@ export function DocumentConfigForm({
           <CardHeader className="bg-muted/10">
             <div className="flex items-center gap-2">
               <Palette className="w-5 h-5 text-emerald-600" />
-              <CardTitle>
-                {type.charAt(0) + type.slice(1).toLowerCase()} Branding
-              </CardTitle>
+              <CardTitle>{type.charAt(0) + type.slice(1).toLowerCase()} Branding</CardTitle>
             </div>
             <CardDescription>
               Customize how your {type.toLowerCase()}s appear.
@@ -221,7 +205,10 @@ export function DocumentConfigForm({
                 <FormItem>
                   <FormLabel>Address Override</FormLabel>
                   <FormControl>
-                    <Input placeholder="Full billing address..." {...field} />
+                    <Input
+                      placeholder="Full billing address..."
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -266,22 +253,22 @@ export function DocumentConfigForm({
                           <button
                             type="button"
                             onClick={() => field.onChange("")}
-                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
                             <X className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
                         <div
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors">
+                          className="w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
                           {isUploading ? (
                             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                           ) : (
                             <>
                               <Upload className="w-6 h-6 text-muted-foreground" />
-                              <span className="text-[10px] text-muted-foreground font-medium">
-                                Upload Logo
-                              </span>
+                              <span className="text-[10px] text-muted-foreground font-medium">Upload Logo</span>
                             </>
                           )}
                         </div>
@@ -296,10 +283,7 @@ export function DocumentConfigForm({
                       />
                     </div>
                   </FormControl>
-                  <FormDescription>
-                    Custom logo specifically for {type.toLowerCase()}s (Max
-                    10MB)
-                  </FormDescription>
+                  <FormDescription>Custom logo specifically for {type.toLowerCase()}s (Max 10MB)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -34,16 +34,11 @@ export class B2BUseCase {
       where.categoryId = categoryId;
     }
 
-    const { data: products, meta } = await paginate(
-      this.prisma.client.product,
-      {
-        offset: (page - 1) * limit,
-        limit,
-      },
+    const { data: products, meta } = await paginate(this.prisma.client.product, {
       where,
-      { createdAt: "desc" },
-      {
-        include: {
+      page,
+      limit,
+      include: {
         variants: {
           include: {
             variantStocks: {
