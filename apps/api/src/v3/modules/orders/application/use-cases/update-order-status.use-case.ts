@@ -60,6 +60,7 @@ export class UpdateOrderStatusUseCase {
     try {
       const points = await this.loyaltyService.calculatePointsForTransaction(
         order.id,
+        order.organizationId,
       );
       if (points > 0) {
         await this.loyaltyService.awardPoints(
