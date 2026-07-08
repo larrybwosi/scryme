@@ -78,12 +78,20 @@ export class PricingManagementService {
     }
 
     // 3. Get existing variant to capture OLD cost before updating
-    const variant = await client.productVariant.findUnique({
-      where: { id: variantId },
+    // SECURITY (Sentinel): Using findFirst with organizationId scoping to prevent IDOR.
+    const variant = await client.productVariant.findFirst({
+      where: { id: variantId, product: { organizationId } },
       select: { buyingPrice: true },
     });
 
-    const oldCost = variant ? Number(variant.buyingPrice) : activeCost;
+    if (!variant) {
+      this.logger.warn(
+        `Variant ${variantId} not found for organization ${organizationId}`,
+      );
+      return;
+    }
+
+    const oldCost = Number(variant.buyingPrice);
 
     // 4. Update the ProductVariant.buyingPrice to stay in sync
     await client.productVariant.update({
@@ -130,7 +138,11 @@ export class PricingManagementService {
     switch (strategy) {
       case SupplierSelection.PREFERRED: {
         const preferred = await client.productSupplier.findFirst({
-          where: { variantId, isPreferred: true },
+          where: {
+            variantId,
+            isPreferred: true,
+            product: { organizationId },
+          },
           select: { costPrice: true },
         });
         return preferred ? Number(preferred.costPrice) : null;
@@ -138,7 +150,10 @@ export class PricingManagementService {
 
       case SupplierSelection.LOWEST_COST: {
         const lowest = await client.productSupplier.findFirst({
-          where: { variantId },
+          where: {
+            variantId,
+            product: { organizationId },
+          },
           orderBy: { costPrice: "asc" },
           select: { costPrice: true },
         });

@@ -72,6 +72,10 @@
 **Learning:** Standard permission-based guards (e.g., `members:write`) are often insufficient for sensitive operations like role promotion or account deletion in multi-tenant environments. Without granular checks on the actor's role and target record, a low-privileged user with write access can escalate privileges or orphan an organization.
 **Prevention:** Implement explicit role-based authorization within service logic for sensitive field updates (like `role`). Restrict promotion to administrative roles to `OWNER`s only and enforce self-protection logic to prevent users from deleting or deactivating their own memberships at the application layer.
 
+## 2026-07-08 - Enforcement of Transitive Ownership for Linked Models
+**Vulnerability:** Models without a direct `organizationId` (e.g., `ProductVariant`, `ProductSupplier`) were being updated using only their primary IDs, allowing cross-tenant data modification if the ID was known.
+**Learning:** In multi-tenant systems where some models are linked to a tenant via a parent (transitive ownership), relying on a previous scoped lookup is insufficient if the subsequent `update` operation uses only the primary ID. Prisma's `update` does not automatically inherit filters from previous `findFirst` calls in the same transaction.
+**Prevention:** Always perform an explicit existence check using scoped relation filters (e.g., `{ product: { organizationId } }`) before proceeding with an update on models lacking a direct tenant foreign key. Ensure the update operation itself or the logic leading to it is strictly aborted if the check fails.
 ## 2026-07-08 - IDOR Vulnerability in Checkout Process
 **Vulnerability:** The `CheckoutUseCase.execute` method was fetching a `Cart` using only its `id`, allowing any authenticated user to potentially checkout any other user's cart if they knew the `cartId`.
 **Learning:** Even if a model (like `Cart`) is considered "temporary" or "transactional", it must still enforce multi-tenant isolation. Relying on `id` alone for lookups in a multi-tenant environment is a classic IDOR vector, especially when composite unique indexes on `[id, organizationId]` are missing.
