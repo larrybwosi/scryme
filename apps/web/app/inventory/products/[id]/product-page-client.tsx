@@ -15,6 +15,7 @@ import {
   Truck,
   Image as ImageIcon,
   ChevronRight,
+  Loader2,
   ExternalLink,
   Edit,
   Scale,
@@ -87,6 +88,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 
 export function ProductPageClient({
   product: initialProduct,
@@ -100,6 +111,10 @@ export function ProductPageClient({
   const [activeTab, setActiveTab] = useState("overview");
   const [isSaving, setIsSaving] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [variantsToDelete, setVariantsToDelete] = useState<string[] | null>(
+    null,
+  );
 
   // Variant Dialog State
   const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false);
@@ -170,6 +185,31 @@ export function ProductPageClient({
       // Refresh logic would go here
     } catch (e) {
       toast.error("Failed to update variants");
+    }
+  };
+
+  const handleDeleteVariants = async () => {
+    if (!variantsToDelete) return;
+    setIsDeleting(true);
+    try {
+      await bulkDeleteVariants(variantsToDelete);
+      toast.success(
+        variantsToDelete.length === 1 ? "Variant deleted" : "Variants deleted",
+      );
+      setProduct({
+        ...product,
+        variants: product.variants.filter(
+          (v: any) => !variantsToDelete.includes(v.id),
+        ),
+      });
+      setSelectedVariants(prev =>
+        prev.filter(id => !variantsToDelete.includes(id)),
+      );
+      setVariantsToDelete(null);
+    } catch (e) {
+      toast.error("Failed to delete variant(s)");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -345,7 +385,8 @@ export function ProductPageClient({
                           variant="outline"
                           size="icon"
                           onClick={handleGenerateSlug}
-                          title="Generate slug">
+                          title="Generate slug"
+                          aria-label="Generate slug">
                           <RefreshCw className="w-4 h-4" />
                         </Button>
                       </div>
@@ -615,26 +656,7 @@ export function ProductPageClient({
                                   <DropdownMenuItem
                                     className="text-red-600"
                                     disabled={product.variants?.length <= 1}
-                                    onClick={async () => {
-                                      if (
-                                        confirm(
-                                          "Are you sure you want to delete this variant?",
-                                        )
-                                      ) {
-                                        await bulkDeleteVariants([v.id]);
-                                        toast.success("Variant deleted");
-                                        // Note: You'd ideally want a way to refresh the local 'product' state here
-                                        // but for now revalidatePath in the action should handle it on next load.
-                                        // A better UX would be to update the state.
-                                        setProduct({
-                                          ...product,
-                                          variants: product.variants.filter(
-                                            (varItem: any) =>
-                                              varItem.id !== v.id,
-                                          ),
-                                        });
-                                      }
-                                    }}>
+                                    onClick={() => setVariantsToDelete([v.id])}>
                                     <Trash2 className="w-4 h-4 mr-2" /> Delete
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -667,23 +689,7 @@ export function ProductPageClient({
                         selectedVariants.length >=
                           (product.variants?.length || 0)
                       }
-                      onClick={async () => {
-                        if (
-                          confirm(
-                            "Are you sure you want to delete these variants?",
-                          )
-                        ) {
-                          await bulkDeleteVariants(selectedVariants);
-                          toast.success("Variants deleted");
-                          setProduct({
-                            ...product,
-                            variants: product.variants.filter(
-                              (v: any) => !selectedVariants.includes(v.id),
-                            ),
-                          });
-                          setSelectedVariants([]);
-                        }
-                      }}>
+                      onClick={() => setVariantsToDelete(selectedVariants)}>
                       Delete Selected
                     </Button>
                   </div>
@@ -1733,6 +1739,39 @@ export function ProductPageClient({
           </Card>
         </div>
       </div>
+
+      <AlertDialog
+        open={!!variantsToDelete}
+        onOpenChange={open => !open && setVariantsToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              selected variant(s) and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault();
+                handleDeleteVariants();
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={isVariantDialogOpen} onOpenChange={setIsVariantDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
