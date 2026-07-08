@@ -71,3 +71,8 @@
 **Vulnerability:** `MemberUseCase` allowed any user with `members:write` permissions to promote themselves or others to `OWNER`/`ADMIN` roles and delete or deactivate their own accounts.
 **Learning:** Standard permission-based guards (e.g., `members:write`) are often insufficient for sensitive operations like role promotion or account deletion in multi-tenant environments. Without granular checks on the actor's role and target record, a low-privileged user with write access can escalate privileges or orphan an organization.
 **Prevention:** Implement explicit role-based authorization within service logic for sensitive field updates (like `role`). Restrict promotion to administrative roles to `OWNER`s only and enforce self-protection logic to prevent users from deleting or deactivating their own memberships at the application layer.
+
+## 2026-07-08 - IDOR Vulnerability in Checkout Process
+**Vulnerability:** The `CheckoutUseCase.execute` method was fetching a `Cart` using only its `id`, allowing any authenticated user to potentially checkout any other user's cart if they knew the `cartId`.
+**Learning:** Even if a model (like `Cart`) is considered "temporary" or "transactional", it must still enforce multi-tenant isolation. Relying on `id` alone for lookups in a multi-tenant environment is a classic IDOR vector, especially when composite unique indexes on `[id, organizationId]` are missing.
+**Prevention:** Always scope database lookups using the authenticated `organizationId`. Use `findFirst` with both `id` and `organizationId` in the `where` clause to ensure strict isolation, and verify this pattern in integration tests.
