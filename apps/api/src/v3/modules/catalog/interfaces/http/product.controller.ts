@@ -9,6 +9,7 @@ import {
   Query,
   Patch,
   Param,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ApiTags,
