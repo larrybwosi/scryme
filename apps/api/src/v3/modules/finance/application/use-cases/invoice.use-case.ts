@@ -230,18 +230,18 @@ export class InvoiceUseCase {
     }
   }
 
-  async getDownloadStreamDirect(invoiceId: string) {
-    const invoice = await this.prisma.client.invoice.findUnique({
-      where: { id: invoiceId },
+  async getDownloadStreamDirect(organizationId: string, invoiceId: string) {
+    const invoice = await this.prisma.client.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
       include: { items: true, organization: true, template: true },
     });
     if (!invoice) throw new NotFoundException("Invoice not found");
     return this.generatePDF(invoice);
   }
 
-  async getReceiptDownloadStream(transactionId: string) {
-    const transaction = await this.prisma.client.transaction.findUnique({
-      where: { id: transactionId },
+  async getReceiptDownloadStream(organizationId: string, transactionId: string) {
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId },
       include: {
         items: true,
         customer: true,

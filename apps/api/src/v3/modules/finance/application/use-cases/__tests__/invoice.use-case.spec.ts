@@ -106,4 +106,61 @@ describe('InvoiceUseCase', () => {
       }));
     });
   });
+
+  describe('Document Downloads (Security Scoped)', () => {
+    it('should return invoice download stream if organizationId matches', async () => {
+      const orgId = 'org-1';
+      const invId = 'inv-1';
+      const mockInvoice = {
+        id: invId,
+        organizationId: orgId,
+        items: [],
+        postingDate: new Date(),
+        organization: { name: 'Org' },
+      };
+      mockPrisma.client.invoice.findFirst.mockResolvedValue(mockInvoice);
+      mockDocumentService.generateInvoicePDF.mockResolvedValue('pdf-stream');
+
+      const result = await useCase.getDownloadStreamDirect(orgId, invId);
+
+      expect(mockPrisma.client.invoice.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: invId, organizationId: orgId }
+      }));
+      expect(result).toBeDefined();
+    });
+
+    it('should throw NotFoundException if organizationId mismatches for invoice download', async () => {
+      mockPrisma.client.invoice.findFirst.mockResolvedValue(null);
+      await expect(useCase.getDownloadStreamDirect('wrong-org', 'inv-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return receipt download stream if organizationId matches', async () => {
+      const orgId = 'org-1';
+      const txnId = 'txn-1';
+      const mockTxn = {
+        id: txnId,
+        organizationId: orgId,
+        number: 'T1',
+        createdAt: new Date(),
+        items: [],
+        organization: { name: 'Org' },
+        payments: []
+      };
+      mockPrisma.client.transaction.findFirst.mockResolvedValue(mockTxn);
+      mockDocumentService.generateInvoicePDF.mockResolvedValue('pdf-stream'); // This is generateReceiptPDF we need to mock
+      (mockDocumentService as any).generateReceiptPDF = vi.fn().mockResolvedValue('pdf-stream');
+
+      const result = await useCase.getReceiptDownloadStream(orgId, txnId);
+
+      expect(mockPrisma.client.transaction.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: txnId, organizationId: orgId }
+      }));
+      expect(result).toBeDefined();
+    });
+
+    it('should throw NotFoundException if organizationId mismatches for receipt download', async () => {
+      mockPrisma.client.transaction.findFirst.mockResolvedValue(null);
+      await expect(useCase.getReceiptDownloadStream('wrong-org', 'txn-1')).rejects.toThrow(NotFoundException);
+    });
+  });
 });

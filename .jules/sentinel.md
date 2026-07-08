@@ -89,3 +89,8 @@
 **Vulnerability:** Found IDOR vulnerabilities in `InventoryIntegrityService` where `organizationId` was ignored in database queries, and in `AssemblyUseCase.complete` where `locationId` ownership was not verified.
 **Learning:** Even when `organizationId` is available in the method signature, it must be explicitly included in every Prisma query. For models with unique indexes that don't include the tenant ID (like `ProductVariantStock`), `updateMany` should be used instead of `update` to safely enforce organizational scoping.
 **Prevention:** Always scope `findMany`, `findFirst`, and `updateMany` with `organizationId`. For any foreign ID provided by the client (like `locationId`), perform an explicit ownership check before usage.
+
+## 2026-07-08 - [Insecure Direct Object Reference (IDOR) in Public and POS Document Downloads]
+**Vulnerability:** The invoice and receipt download endpoints in both the POS and Public controllers were retrieving documents by ID without verifying organizational ownership.
+**Learning:** Document download endpoints, especially those that generate PDFs, are often implemented as simple "get by ID" lookups, bypassing the standard multi-tenancy filters. Public links using capability tokens must still have their embedded organization context enforced at the service layer.
+**Prevention:** Always include `organizationId` in the `where` clause for document generation and download methods. Ensure that services used by both public and authenticated controllers require explicit tenant scoping.
