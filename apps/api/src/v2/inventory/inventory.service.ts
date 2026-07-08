@@ -118,9 +118,25 @@ export class InventoryService {
 
   async createInventoryItem(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const {
+      productId,
+      variantId,
+      locationId,
+      currentStock,
+      availableStock,
+      reorderPoint,
+      reorderQty,
+    } = data;
+
     return this.prisma.client.productVariantStock.create({
       data: {
-        ...data,
+        productId,
+        variantId,
+        locationId,
+        currentStock,
+        availableStock,
+        reorderPoint,
+        reorderQty,
         organizationId,
       },
     });
@@ -142,8 +158,21 @@ export class InventoryService {
   async updateInventoryItem(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
 
-    // Remove organizationId from data if present to prevent accidental re-assignment
-    const { organizationId: _, ...updateData } = data;
+    // SECURITY (Sentinel): Whitelist allowed fields to prevent mass assignment.
+    const {
+      currentStock,
+      availableStock,
+      reorderPoint,
+      reorderQty,
+      reservedStock,
+    } = data;
+
+    const updateData: any = {};
+    if (currentStock !== undefined) updateData.currentStock = currentStock;
+    if (availableStock !== undefined) updateData.availableStock = availableStock;
+    if (reorderPoint !== undefined) updateData.reorderPoint = reorderPoint;
+    if (reorderQty !== undefined) updateData.reorderQty = reorderQty;
+    if (reservedStock !== undefined) updateData.reservedStock = reservedStock;
 
     // Use updateMany with a filter on organizationId to ensure multi-tenant isolation.
     // Prisma's update does not support non-unique filters.
@@ -191,10 +220,42 @@ export class InventoryService {
     data: any,
   ) {
     const { organizationId } = ctx;
+
+    // SECURITY (Sentinel): Validate that the inventory item belongs to the organization
+    const inventoryItem = await this.prisma.client.productVariantStock.findFirst({
+      where: { id: inventoryId, organizationId },
+    });
+
+    if (!inventoryItem) {
+      throw new NotFoundException("Inventory item not found");
+    }
+
+    // SECURITY (Sentinel): Explicit field whitelisting and context enforcement.
+    const {
+      variantId,
+      stockBatchId,
+      quantity,
+      fromLocationId,
+      toLocationId,
+      movementType,
+      notes,
+      referenceId,
+      referenceType,
+    } = data;
+
     return this.prisma.client.stockMovement.create({
       data: {
-        ...data,
+        variantId: variantId || inventoryItem.variantId,
+        stockBatchId,
+        quantity,
+        fromLocationId,
+        toLocationId,
+        movementType,
+        notes,
+        referenceId,
+        referenceType,
         organizationId,
+        memberId: ctx.memberId || data.memberId || "system",
       },
     });
   }
