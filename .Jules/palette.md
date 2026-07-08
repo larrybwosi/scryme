@@ -44,3 +44,7 @@
 ## 2025-06-30 - [Unified Destructive Actions & Loading Feedback in Web]
 **Learning:** Native `confirm()` is inconsistent with the monorepo's design language and lacks built-in support for loading states. When a component has multiple destructive actions (e.g., Revoke and Delete), a single `AlertDialog` with dynamic content can maintain UX clarity while keeping the code DRY and within line limits.
 **Action:** Replace `confirm()` with `AlertDialog`. Use `pendingAction` state to manage dynamic titles, descriptions, and action logic. Always include `Loader2` feedback in the `AlertDialogAction` button.
+
+## 2025-07-08 - [Selection State Synchronization After Deletion]
+**Learning:** When using `AlertDialog` for destructive actions that affect selected items, it's critical to synchronize the selection state immediately after a successful operation. Failing to clear or filter `selectedVariants` (or similar collection states) can lead to stale UI indicators (e.g., "Delete Selected (1)" still showing after the item was removed).
+**Action:** Always filter or clear selection state in the `finally` or success block of a deletion operation: `setSelectedItems(prev => prev.filter(id => !deletedIds.includes(id)))`.
