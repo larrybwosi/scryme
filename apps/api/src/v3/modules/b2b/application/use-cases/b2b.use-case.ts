@@ -43,20 +43,36 @@ export class B2BUseCase {
       where,
       { createdAt: "desc" },
       {
-        include: {
-        variants: {
-          include: {
-            variantStocks: {
-              select: {
-                availableStock: true,
-                locationId: true,
+        // ⚡ Bolt Optimization: Use targeted select instead of broad include to reduce database I/O
+        // and network payload size by only fetching fields required for the catalog view.
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          imageUrls: true,
+          categoryId: true,
+          variants: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              variantStocks: {
+                select: {
+                  availableStock: true,
+                  locationId: true,
+                },
               },
             },
           },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
-        category: true,
       },
-    });
+    );
 
     // Resolve prices for all variants
     const allVariantIds = products.flatMap((p: any) =>
