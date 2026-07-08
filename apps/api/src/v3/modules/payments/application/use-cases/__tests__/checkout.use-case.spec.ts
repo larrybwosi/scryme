@@ -20,7 +20,7 @@ describe("CheckoutUseCase (Integration)", () => {
     prisma = {
       client: {
         cart: {
-          findUnique: vi.fn(),
+          findFirst: vi.fn(),
           update: vi.fn(),
         },
         productVariant: {
@@ -87,7 +87,7 @@ describe("CheckoutUseCase (Integration)", () => {
       CheckoutRequestID: "check-123",
     };
 
-    vi.mocked(prisma.client.cart.findUnique).mockResolvedValue(mockCart as any);
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.productVariant.findMany).mockResolvedValue(
       mockVariants as any,
     );
@@ -103,6 +103,11 @@ describe("CheckoutUseCase (Integration)", () => {
     vi.mocked(prisma.client.cart.update).mockResolvedValue({} as any);
 
     const result = await useCase.execute(organizationId, dto);
+
+    expect(prisma.client.cart.findFirst).toHaveBeenCalledWith({
+      where: { id: dto.cartId, organizationId },
+      include: { items: true },
+    });
 
     expect(result).toEqual({
       orderId: "order-123",
