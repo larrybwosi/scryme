@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -175,24 +176,77 @@ export class CatalogService {
 
   async createProduct(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const { organizationId: _, ...cleanData } = data;
+
+    // Verify category ownership to prevent IDOR
+    if (cleanData.categoryId) {
+      const category = await this.prisma.client.category.findFirst({
+        where: { id: cleanData.categoryId, organizationId },
+      });
+      if (!category) throw new BadRequestException("Invalid category ID");
+    }
+
+    // Verify default location ownership if provided
+    if (cleanData.defaultLocationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: cleanData.defaultLocationId, organizationId },
+      });
+      if (!location)
+        throw new BadRequestException("Invalid default location ID");
+    }
+
     return this.prisma.client.product.create({
-      data: { ...data, organizationId },
+      data: { ...cleanData, organizationId },
     });
   }
 
   async updateProduct(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.product.update({
-      where: { id, organizationId },
-      data,
-    });
+    const { organizationId: _, ...cleanData } = data;
+
+    // Verify category ownership if being updated
+    if (cleanData.categoryId) {
+      const category = await this.prisma.client.category.findFirst({
+        where: { id: cleanData.categoryId, organizationId },
+      });
+      if (!category) throw new BadRequestException("Invalid category ID");
+    }
+
+    // Verify default location ownership if being updated
+    if (cleanData.defaultLocationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: cleanData.defaultLocationId, organizationId },
+      });
+      if (!location)
+        throw new BadRequestException("Invalid default location ID");
+    }
+
+    try {
+      return await this.prisma.client.product.update({
+        where: { id, organizationId },
+        data: cleanData,
+      });
+    } catch (error) {
+      // Prisma error for record not found
+      if (error.code === 'P2025') {
+        throw new NotFoundException("Product not found");
+      }
+      throw error;
+    }
   }
 
   async deleteProduct(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.product.delete({
-      where: { id, organizationId },
-    });
+    try {
+      return await this.prisma.client.product.delete({
+        where: { id, organizationId },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException("Product not found");
+      }
+      throw error;
+    }
   }
 
   async getCategories(ctx: V2ApiContext) {
@@ -254,24 +308,58 @@ export class CatalogService {
 
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const { organizationId: _, ...cleanData } = data;
+
+    // Verify parent category ownership to prevent IDOR
+    if (cleanData.parentId) {
+      const parent = await this.prisma.client.category.findFirst({
+        where: { id: cleanData.parentId, organizationId },
+      });
+      if (!parent) throw new BadRequestException("Invalid parent category ID");
+    }
+
     return this.prisma.client.category.create({
-      data: { ...data, organizationId },
+      data: { ...cleanData, organizationId },
     });
   }
 
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.category.update({
-      where: { id, organizationId },
-      data,
-    });
+    const { organizationId: _, ...cleanData } = data;
+
+    // Verify parent category ownership if being updated
+    if (cleanData.parentId) {
+      const parent = await this.prisma.client.category.findFirst({
+        where: { id: cleanData.parentId, organizationId },
+      });
+      if (!parent) throw new BadRequestException("Invalid parent category ID");
+    }
+
+    try {
+      return await this.prisma.client.category.update({
+        where: { id, organizationId },
+        data: cleanData,
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException("Category not found");
+      }
+      throw error;
+    }
   }
 
   async deleteCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.category.delete({
-      where: { id, organizationId },
-    });
+    try {
+      return await this.prisma.client.category.delete({
+        where: { id, organizationId },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException("Category not found");
+      }
+      throw error;
+    }
   }
 
   async getVariants(ctx: V2ApiContext, query: any) {
