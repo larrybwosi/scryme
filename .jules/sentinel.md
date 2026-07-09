@@ -80,6 +80,11 @@
 **Vulnerability:** Models without a direct `organizationId` (e.g., `ProductVariant`, `ProductSupplier`) were being updated using only their primary IDs, allowing cross-tenant data modification if the ID was known.
 **Learning:** In multi-tenant systems where some models are linked to a tenant via a parent (transitive ownership), relying on a previous scoped lookup is insufficient if the subsequent `update` operation uses only the primary ID. Prisma's `update` does not automatically inherit filters from previous `findFirst` calls in the same transaction.
 **Prevention:** Always perform an explicit existence check using scoped relation filters (e.g., `{ product: { organizationId } }`) before proceeding with an update on models lacking a direct tenant foreign key. Ensure the update operation itself or the logic leading to it is strictly aborted if the check fails.
+
+## 2026-07-09 - IDOR and Mass Assignment in CRM V3 API
+**Vulnerability:** The V3 CRM module allowed creating records with `objectId` and `ownerId` belonging to other organizations. Additionally, several services used spread operators (`...dto`) in Prisma `create` calls, exposing the models to mass assignment of internal fields.
+**Learning:** Even with global multi-tenancy guards, individual fields that reference other entities (like object definitions or members) must be explicitly validated against the current tenant's scope. Spread operators in mutations are dangerous as they can bypass intended field restrictions.
+**Prevention:** Always perform scoped lookups for every user-provided ID (foreign keys) before persisting them. Replace spread operators with explicit field mapping in Prisma `data` blocks to enforce a strict whitelist of modifiable fields.
 ## 2026-07-08 - IDOR Vulnerability in Checkout Process
 **Vulnerability:** The `CheckoutUseCase.execute` method was fetching a `Cart` using only its `id`, allowing any authenticated user to potentially checkout any other user's cart if they knew the `cartId`.
 **Learning:** Even if a model (like `Cart`) is considered "temporary" or "transactional", it must still enforce multi-tenant isolation. Relying on `id` alone for lookups in a multi-tenant environment is a classic IDOR vector, especially when composite unique indexes on `[id, organizationId]` are missing.
