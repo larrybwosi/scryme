@@ -39,6 +39,7 @@ export class ScrymeChatApiClient {
   private readonly clientSecret: string;
   private accessToken: string | null = null;
   private tokenExpiresAt: number | null = null;
+  private authPromise: Promise<void> | null = null;
 
   constructor(
     baseUrl: string = process.env.SCRYME_CHAT_API_URL || 'https://api.scryme.app',
@@ -55,27 +56,39 @@ export class ScrymeChatApiClient {
       return;
     }
 
-    if (!this.clientId || !this.clientSecret) {
-      throw new Error('Scryme Chat M2M credentials missing');
+    if (this.authPromise) {
+      return this.authPromise;
     }
 
-    const response = await axios.post(
-      `${this.baseUrl}/api/v2/oauth/token`,
-      {
-        grant_type: 'client_credentials',
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-      },
-      {
-        timeout: 10000,
-        maxContentLength: 1 * 1024 * 1024, // 1MB for token
-      }
-    );
+    this.authPromise = (async () => {
+      try {
+        if (!this.clientId || !this.clientSecret) {
+          throw new Error('Scryme Chat M2M credentials missing');
+        }
 
-    this.accessToken = response.data.access_token;
-    // Assuming 1 hour expiry if not provided
-    const expiresIn = response.data.expires_in || 3600;
-    this.tokenExpiresAt = Date.now() + (expiresIn - 60) * 1000; // Buffer of 1 minute
+        const response = await axios.post(
+          `${this.baseUrl}/api/v2/oauth/token`,
+          {
+            grant_type: 'client_credentials',
+            client_id: this.clientId,
+            client_secret: this.clientSecret,
+          },
+          {
+            timeout: 10000,
+            maxContentLength: 1 * 1024 * 1024, // 1MB for token
+          }
+        );
+
+        this.accessToken = response.data.access_token;
+        // Assuming 1 hour expiry if not provided
+        const expiresIn = response.data.expires_in || 3600;
+        this.tokenExpiresAt = Date.now() + (expiresIn - 60) * 1000; // Buffer of 1 minute
+      } finally {
+        this.authPromise = null;
+      }
+    })();
+
+    return this.authPromise;
   }
 
   private async request<T>(
@@ -85,19 +98,31 @@ export class ScrymeChatApiClient {
   ): Promise<T> {
     await this.ensureAuthenticated();
 
-    const response = await axios({
-      method,
-      url: `${this.baseUrl}${path}`,
-      data,
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 10000,
-      maxContentLength: 10 * 1024 * 1024, // 10MB limit
-    });
+    try {
+      const response = await axios({
+        method,
+        url: `${this.baseUrl}${path}`,
+        data,
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+        maxContentLength: 10 * 1024 * 1024, // 10MB limit
+      });
 
-    return response.data;
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        console.error(`Scryme API Error [${method} ${path}]:`, {
+          status: error.response.status,
+          data: error.response.data,
+        });
+      } else {
+        console.error(`Scryme API Error [${method} ${path}]:`, error.message);
+      }
+      throw error;
+    }
   }
 
   /**
