@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
@@ -51,7 +52,15 @@ export class InvitationUseCase {
     inviterId: string,
     inviterUserId: string,
   ) {
-    const { email, role, expiresAt, ...otherData } = dto;
+    const {
+      email,
+      role,
+      expiresAt,
+      departmentIds,
+      customRoleIds,
+      roleGroupIds,
+      isGuestInvite,
+    } = dto;
 
     // Check if already a member
     const existingMember = await this.prisma.client.member.findFirst({
@@ -80,7 +89,10 @@ export class InvitationUseCase {
         token,
         expiresAt: expiryDate,
         inviterId: inviterUserId,
-        ...otherData,
+        departmentIds,
+        customRoleIds,
+        roleGroupIds,
+        isGuestInvite,
       },
     });
 
@@ -145,6 +157,33 @@ export class InvitationUseCase {
 
     if (!invitation || invitation.status !== InvitationStatus.PENDING) {
       throw new BadRequestException("Invalid or expired invitation");
+    }
+
+    // Security: Verify user email matches invitation email
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user || user.email !== invitation.email) {
+      throw new ForbiddenException(
+        "This invitation was sent to a different email address",
+      );
+    }
+
+    // Security: Check if user is already a member
+    const existingMember = await this.prisma.client.member.findFirst({
+      where: {
+        organizationId: invitation.organizationId,
+        userId: userId,
+        deletedAt: null,
+      },
+    });
+
+    if (existingMember) {
+      throw new BadRequestException(
+        "You are already a member of this organization",
+      );
     }
 
     if (invitation.expiresAt < new Date()) {
