@@ -203,19 +203,36 @@ export class CatalogService {
     return product;
   }
 
+  private async clearCatalogCache(organizationId: string) {
+    try {
+      await this.redis.del(`v2:catalog:categories:${organizationId}`);
+      const pattern = `v2:catalog:products:${organizationId}:*`;
+      const keys = await this.redis.keys(pattern);
+      if (keys && keys.length > 0) {
+        await this.redis.del(...keys);
+      }
+    } catch (err) {
+      console.error("Failed to clear catalog cache:", err);
+    }
+  }
+
   async createProduct(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.product.create({
+    const result = await this.prisma.client.product.create({
       data: { ...data, organizationId },
     });
+    await this.clearCatalogCache(organizationId);
+    return result;
   }
 
   async updateProduct(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.product.update({
+    const result = await this.prisma.client.product.update({
       where: { id, organizationId },
       data,
     });
+    await this.clearCatalogCache(organizationId);
+    return result;
   }
 
   async deleteProduct(ctx: V2ApiContext, id: string) {
@@ -230,6 +247,7 @@ export class CatalogService {
       { productId: id },
     );
 
+    await this.clearCatalogCache(organizationId);
     return result;
   }
 
@@ -292,24 +310,30 @@ export class CatalogService {
 
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.category.create({
+    const result = await this.prisma.client.category.create({
       data: { ...data, organizationId },
     });
+    await this.clearCatalogCache(organizationId);
+    return result;
   }
 
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.category.update({
+    const result = await this.prisma.client.category.update({
       where: { id, organizationId },
       data,
     });
+    await this.clearCatalogCache(organizationId);
+    return result;
   }
 
   async deleteCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.category.delete({
+    const result = await this.prisma.client.category.delete({
       where: { id, organizationId },
     });
+    await this.clearCatalogCache(organizationId);
+    return result;
   }
 
   async getVariants(ctx: V2ApiContext, query: any) {
