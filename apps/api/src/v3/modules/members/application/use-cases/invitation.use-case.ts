@@ -33,6 +33,17 @@ export class InvitationUseCase {
       this.prisma.client.invitation.count({ where }),
       this.prisma.client.invitation.findMany({
         where,
+        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // and keep sensitive fields (like token) from being loaded in lists.
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          status: true,
+          expiresAt: true,
+          inviterId: true,
+          createdAt: true,
+        },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -140,7 +151,19 @@ export class InvitationUseCase {
   async acceptInvitation(dto: AcceptInvitationDto, userId: string) {
     const invitation = await this.prisma.client.invitation.findUnique({
       where: { token: dto.token },
-      include: { organization: true },
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'.
+      // The 'organization' relation was unused; selecting only required scalar fields
+      // reduces database I/O and eliminates an unnecessary join.
+      select: {
+        id: true,
+        organizationId: true,
+        role: true,
+        status: true,
+        expiresAt: true,
+        departmentIds: true,
+        customRoleIds: true,
+        roleGroupIds: true,
+      },
     });
 
     if (!invitation || invitation.status !== InvitationStatus.PENDING) {
