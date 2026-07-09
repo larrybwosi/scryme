@@ -6,33 +6,16 @@
 ▲ Next.js 16.2.10 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
-✓ Ready in 547ms
+✓ Ready in 600ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+○ Compiling proxy ...
 - Experiments (use with caution):
   · cpus: 1
 
-[2m2026-07-08T00:09:42.784Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
-[2m2026-07-08T00:09:42.790Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
-[2m2026-07-08T00:09:42.805Z[0m [33mWARN[0m [1m[Better Auth]:[0m Please ensure '/.well-known/oauth-authorization-server/api/auth' exists. Upon completion, clear with silenceWarnings.oauthAuthServerConfig.
-○ Compiling /login ...
- GET /login 200 in 6.8s (next.js: 6.1s, proxy.ts: 12ms, application-code: 733ms)
-[browser] Uncaught ReferenceError: require is not defined
-    at eval (file://http://localhost:3000/_next/static/chunks/_1b17n3b._.js:87:26)
-    at module evaluation (../../packages/env/src/index.ts:139:8)
-    at module evaluation (lib/auth-client.ts:4:1)
-    at module evaluation (app/login/page.tsx:18:1)
-    at RootLayout (app/layout.tsx:20:15)
-  137 |   typeof require !== "undefined"
-  138 |     ? // eslint-disable-next-line no-eval
-> 139 |       (eval("require") as NodeJS.Require)
-      |        ^
-  140 |     : undefined;
-  141 |
-  142 | function loadEnvFiles() {
-○ Compiling /api/auth/ably ...
-[2m2026-07-08T00:09:57.016Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
-[2m2026-07-08T00:09:57.019Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
-[2m2026-07-08T00:09:57.025Z[0m [33mWARN[0m [1m[Better Auth]:[0m Please ensure '/.well-known/oauth-authorization-server/api/auth' exists. Upon completion, clear with silenceWarnings.oauthAuthServerConfig.
-/app/apps/web:
- ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  web@5.6.0 dev: `next dev`
-Command failed with signal "SIGTERM"
-[?25h
+[2m2026-07-08T23:43:10.030Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-07-08T23:43:10.038Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-07-08T23:43:10.060Z[0m [33mWARN[0m [1m[Better Auth]:[0m Please ensure '/.well-known/oauth-authorization-server/api/auth' exists. Upon completion, clear with silenceWarnings.oauthAuthServerConfig.
