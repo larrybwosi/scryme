@@ -94,3 +94,8 @@
 **Vulnerability:** The invoice and receipt download endpoints in both the POS and Public controllers were retrieving documents by ID without verifying organizational ownership.
 **Learning:** Document download endpoints, especially those that generate PDFs, are often implemented as simple "get by ID" lookups, bypassing the standard multi-tenancy filters. Public links using capability tokens must still have their embedded organization context enforced at the service layer.
 **Prevention:** Always include `organizationId` in the `where` clause for document generation and download methods. Ensure that services used by both public and authenticated controllers require explicit tenant scoping.
+
+## 2026-07-10 - [IDOR in Catalog Management and Multi-tenant Scoping Patterns]
+**Vulnerability:** Found IDOR vulnerabilities in `CatalogService` where products and categories could be linked to entities (categories, locations, parents) belonging to other organizations via mass assignment of `organizationId` or unsanitized input IDs.
+**Learning:** In Prisma v7.8.0, models without compound `[id, organizationId]` unique indexes require explicit `organizationId` in the `where` clause for `update` and `delete` operations. Prisma throws error `P2025` (Record to update not found) when this scoping fails.
+**Prevention:** Use explicit field destructuring to prevent mass assignment of `organizationId`. For related entity IDs provided by the client, perform a `findFirst` ownership check before using them in mutations. In `update` and `delete` calls, include `organizationId` in the filter and catch `P2025` to return a `NotFoundException`.
