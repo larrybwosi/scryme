@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   Injectable,
   NotFoundException,
@@ -73,7 +72,7 @@ export class InvitationUseCase {
       ? new Date(expiresAt)
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
 
-    const invitation = await this.prisma.client.invitation.create({
+    const invitation = (await this.prisma.client.invitation.create({
       data: {
         organizationId,
         email,
@@ -83,7 +82,7 @@ export class InvitationUseCase {
         inviterId: inviterUserId,
         ...otherData,
       },
-    });
+    })) as any;
 
     // Audit Log
     await this.prisma.client.auditLog.create({
@@ -112,9 +111,9 @@ export class InvitationUseCase {
   }
 
   async revokeInvitation(organizationId: string, id: string, actorId: string) {
-    const invitation = await this.prisma.client.invitation.findFirst({
+    const invitation = (await this.prisma.client.invitation.findFirst({
       where: { id, organizationId, status: InvitationStatus.PENDING },
-    });
+    })) as any;
 
     if (!invitation)
       throw new NotFoundException("Pending invitation not found");
@@ -131,7 +130,7 @@ export class InvitationUseCase {
         action: AuditLogAction.DELETE,
         entityType: AuditEntityType.MEMBER,
         entityId: updated.id,
-        description: `Revoked invitation for ${(invitation as any).email}`,
+        description: `Revoked invitation for ${invitation.email}`,
       },
     });
 
@@ -139,10 +138,10 @@ export class InvitationUseCase {
   }
 
   async acceptInvitation(dto: AcceptInvitationDto, userId: string) {
-    const invitation = await this.prisma.client.invitation.findUnique({
+    const invitation = (await this.prisma.client.invitation.findUnique({
       where: { token: dto.token },
       include: { organization: true },
-    });
+    })) as any;
 
     if (!invitation || invitation.status !== InvitationStatus.PENDING) {
       throw new BadRequestException("Invalid or expired invitation");
@@ -169,7 +168,7 @@ export class InvitationUseCase {
           departmentMemberships:
             invitation.departmentIds && invitation.departmentIds.length > 0
               ? {
-                  create: invitation.departmentIds.map((dId) => ({
+                  create: invitation.departmentIds.map((dId: string) => ({
                     departmentId: dId,
                   })),
                 }
@@ -177,13 +176,13 @@ export class InvitationUseCase {
           customRoles:
             invitation.customRoleIds && invitation.customRoleIds.length > 0
               ? {
-                  connect: invitation.customRoleIds.map((id) => ({ id })),
+                  connect: invitation.customRoleIds.map((id: string) => ({ id })),
                 }
               : undefined,
           roleGroups:
             invitation.roleGroupIds && invitation.roleGroupIds.length > 0
               ? {
-                  connect: invitation.roleGroupIds.map((id) => ({ id })),
+                  connect: invitation.roleGroupIds.map((id: string) => ({ id })),
                 }
               : undefined,
         },
