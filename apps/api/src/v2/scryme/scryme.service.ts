@@ -29,10 +29,19 @@ export class ScrymeService {
     );
 
     try {
-      const workspace = await this.scrymeClient.createWorkspace(
-        name,
-        workspaceSlug,
-      );
+      let workspace;
+      try {
+        workspace = await this.scrymeClient.createWorkspace(name, workspaceSlug);
+      } catch (error: any) {
+        if (error.response?.status === 409) {
+          this.logger.log(
+            `Workspace ${workspaceSlug} already exists, fetching...`,
+          );
+          workspace = await this.scrymeClient.getWorkspace(workspaceSlug);
+        } else {
+          throw error;
+        }
+      }
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
         where: { organizationId },
@@ -54,6 +63,11 @@ export class ScrymeService {
         this.logger.error(`Initial user sync failed: ${err.message}`),
       );
 
+      // Provision default channels
+      this.setupDefaultChannels(organizationId).catch((err) =>
+        this.logger.error(`Failed to setup default channels: ${err.message}`),
+      );
+
       return config;
     } catch (error: any) {
       this.logger.error(
@@ -61,6 +75,113 @@ export class ScrymeService {
         error.stack,
       );
       throw error;
+    }
+  }
+
+  async setupDefaultChannels(organizationId: string) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config?.workspaceSlug || !config.isActive) return;
+
+    const defaultChannels = [
+      { name: "Notifications", slug: "notifications" },
+      { name: "Approvals", slug: "approvals" },
+    ];
+
+    for (const ch of defaultChannels) {
+      try {
+        await this.scrymeClient.createChannel(
+          config.workspaceSlug,
+          ch.name,
+          ch.slug,
+        );
+      } catch (error: any) {
+        if (error.response?.status !== 409) {
+          this.logger.error(
+            `Failed to create default channel ${ch.slug}: ${error.message}`,
+          );
+        }
+      }
+    }
+  }
+
+  async provisionChannelForEntity(
+    organizationId: string,
+    entityType: "department" | "location",
+    entityId: string,
+  ) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config?.workspaceSlug || !config.isActive) return;
+
+    let entity;
+    if (entityType === "department") {
+      entity = await this.prisma.client.department.findUnique({
+        where: { id: entityId },
+      });
+    } else {
+      entity = await this.prisma.client.inventoryLocation.findUnique({
+        where: { id: entityId },
+      });
+    }
+
+    if (!entity || (entity as any).scrymeChannelId) return;
+
+    const prefix = entityType === "department" ? "dept" : "loc";
+    const channelSlug = `${prefix}-${entity.name.toLowerCase().replace(/\s+/g, "-")}`;
+
+    try {
+      const channel = await this.scrymeClient.createChannel(
+        config.workspaceSlug,
+        entity.name,
+        channelSlug,
+      );
+
+      if (entityType === "department") {
+        await this.prisma.client.department.update({
+          where: { id: entityId },
+          data: { scrymeChannelId: channel.id },
+        });
+      } else {
+        await this.prisma.client.inventoryLocation.update({
+          where: { id: entityId },
+          data: { scrymeChannelId: channel.id },
+        });
+      }
+
+      return channel;
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        this.logger.warn(`Channel ${channelSlug} already exists for ${entityType} ${entityId}`);
+        // We could potentially try to find the channel ID by slug here if we had a getChannelBySlug method
+      } else {
+        this.logger.error(
+          `Failed to provision channel for ${entityType} ${entityId}: ${error.message}`,
+        );
+      }
+    }
+  }
+
+  async syncAllChannels(organizationId: string) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config?.workspaceSlug || !config.isActive) return;
+
+    const departments = await this.prisma.client.department.findMany({
+      where: { organizationId, scrymeChannelId: null },
+    });
+
+    const locations = await this.prisma.client.inventoryLocation.findMany({
+      where: { organizationId, scrymeChannelId: null },
+    });
+
+    this.logger.log(
+      `Syncing channels for ${departments.length} departments and ${locations.length} locations`,
+    );
+
+    for (const dept of departments) {
+      await this.provisionChannelForEntity(organizationId, "department", dept.id);
+    }
+
+    for (const loc of locations) {
+      await this.provisionChannelForEntity(organizationId, "location", loc.id);
     }
   }
 
