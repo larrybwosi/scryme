@@ -130,7 +130,7 @@ export class InvitationUseCase {
         action: AuditLogAction.DELETE,
         entityType: AuditEntityType.MEMBER,
         entityId: updated.id,
-        description: `Revoked invitation for ${invitation.email}`,
+        description: `Revoked invitation for ${(invitation as any).email}`,
       },
     });
 
