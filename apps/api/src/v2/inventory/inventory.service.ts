@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { Prisma } from "@/prisma/client";
+import { ScrymeService } from "../scryme/scryme.service";
 import { ApiRealtimeService } from "../../common/services/realtime.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
 import { paginate } from "../../v3/common/utils/pagination";
@@ -15,6 +16,7 @@ export class InventoryService {
   constructor(
     private prisma: PrismaService,
     private realtime: ApiRealtimeService,
+    private scryme: ScrymeService,
   ) {}
 
   async getInventory(ctx: V2ApiContext, query: any) {
@@ -384,12 +386,21 @@ export class InventoryService {
 
   async createLocation(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.inventoryLocation.create({
+    const location = await this.prisma.client.inventoryLocation.create({
       data: {
         ...data,
         organizationId,
       },
     });
+
+    // Background provision Scryme channel
+    this.scryme
+      .provisionChannelForEntity(organizationId, "location", location.id)
+      .catch((err) =>
+        console.error(`Failed to provision Scryme channel for location: ${err.message}`),
+      );
+
+    return location;
   }
 
   async getLocation(ctx: V2ApiContext, id: string) {

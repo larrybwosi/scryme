@@ -63,7 +63,7 @@ export class StrapiConnectionUseCase {
           name: dto.name,
           platform: EcommercePlatform.STRAPI,
           storeUrl: dto.strapiUrl,
-          apiToken: dto.apiToken,
+          apiKey: dto.apiToken,
           webhookSecret: dto.webhookSecret,
           syncDirection: dto.syncDirection ?? SyncDirection.BIDIRECTIONAL,
           enabledSyncTypes: dto.enabledSyncTypes ?? [
@@ -142,7 +142,7 @@ export class StrapiConnectionUseCase {
       const connData: Record<string, unknown> = {};
       if (dto.name) connData.name = dto.name;
       if (dto.strapiUrl) connData.storeUrl = dto.strapiUrl;
-      if (dto.apiToken) connData.apiToken = dto.apiToken;
+      if (dto.apiToken) connData.apiKey = dto.apiToken;
       if (dto.webhookSecret) connData.webhookSecret = dto.webhookSecret;
       if (dto.syncDirection) connData.syncDirection = dto.syncDirection;
       if (dto.enabledSyncTypes) connData.enabledSyncTypes = dto.enabledSyncTypes;

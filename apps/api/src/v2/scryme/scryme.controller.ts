@@ -47,7 +47,23 @@ export class ScrymeController {
       throw new NotFoundException("Organization not found");
     }
 
-    return this.scrymeService.provisionWorkspace(org.id, org.name, org.slug);
+    const config = await this.scrymeService.provisionWorkspace(
+      org.id,
+      org.name,
+      org.slug,
+    );
+
+    // Also sync all existing entity channels
+    await this.scrymeService.syncAllChannels(ctx.organizationId);
+
+    return config;
+  }
+
+  @Post("sync-channels")
+  @RequirePermission("settings:manage")
+  async syncChannels(@v2Context() ctx: V2ApiContext) {
+    await this.scrymeService.syncAllChannels(ctx.organizationId);
+    return { status: "success", message: "Channel sync completed" };
   }
 
   @Post("notify")
