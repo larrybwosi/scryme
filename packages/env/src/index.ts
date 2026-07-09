@@ -22,6 +22,7 @@ const serverSchema = z.object({
     (val) => (val === "" ? undefined : val),
     z.url().default("postgresql://postgres:postgres@localhost:5432/scryme"),
   ),
+  DATABASE_POOL_SIZE: z.string().optional(),
   PORT: z.coerce.number().default(3001),
 
   // Auth
@@ -209,6 +210,7 @@ function getRawEnv() {
     // Server
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
