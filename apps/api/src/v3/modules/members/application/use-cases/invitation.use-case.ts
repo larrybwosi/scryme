@@ -168,6 +168,7 @@ export class InvitationUseCase {
       // reduces database I/O and eliminates an unnecessary join.
       select: {
         id: true,
+        email: true,
         organizationId: true,
         role: true,
         status: true,
