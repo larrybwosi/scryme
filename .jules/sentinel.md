@@ -90,6 +90,11 @@
 **Learning:** Even if a model (like `Cart`) is considered "temporary" or "transactional", it must still enforce multi-tenant isolation. Relying on `id` alone for lookups in a multi-tenant environment is a classic IDOR vector, especially when composite unique indexes on `[id, organizationId]` are missing.
 **Prevention:** Always scope database lookups using the authenticated `organizationId`. Use `findFirst` with both `id` and `organizationId` in the `where` clause to ensure strict isolation, and verify this pattern in integration tests.
 
+## 2026-07-10 - IDOR Prevention in Bulk Lookups
+**Vulnerability:** `BakeryService.completeBatch` fetched multiple `StockBatch` records using only their IDs in a `findMany` query, allowing users to consume stock from batches belonging to other organizations.
+**Learning:** Scoping a `findMany` query with `organizationId` is necessary but not sufficient for IDOR protection if the application doesn't also verify that *all* requested IDs were found. If some IDs belong to another tenant, they will simply be omitted from the result set, and the application might proceed with a partial or incorrect state if it doesn't explicitly check the count.
+**Prevention:** When performing bulk lookups by ID in a multi-tenant environment, always include the `organizationId` in the `where` clause AND verify that `results.length === new Set(requestedIds).size`. This ensures that every requested resource exists and belongs to the authorized tenant.
+
 ## 2026-07-09 - IDOR and Multi-tenant Stock Manipulation in Assembly Management
 **Vulnerability:** The `AssemblyUseCase` allowed users to create assemblies referencing product variants and stock batches from other organizations. Upon completion, the system would decrement stock from these foreign records. Additionally, the target `locationId` for production output was trusted from the request body without ownership validation.
 **Learning:** High-level "transactional" use cases often assume that since an entity (like an Assembly) is owned by a tenant, all its related entities or subsequent operational parameters (like locations) are also safe. In multi-tenant systems, every ID provided at every stage of a multi-step process must be validated against the tenant context.

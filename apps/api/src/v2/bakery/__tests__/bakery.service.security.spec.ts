@@ -5,6 +5,7 @@ import { AuthService } from "../../../auth/auth.service";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { V2ApiContext } from "@repo/shared/api/v2";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Decimal } from "decimal.js";
 
 describe("BakeryService Security", () => {
   let service: BakeryService;
@@ -27,6 +28,27 @@ describe("BakeryService Security", () => {
         findFirst: vi.fn(),
         update: vi.fn(),
       },
+      batch: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+      },
+      stockBatch: {
+        findMany: vi.fn(),
+        update: vi.fn(),
+        create: vi.fn(),
+      },
+      batchIngredientConsumption: {
+        createMany: vi.fn(),
+      },
+      stockMovement: {
+        createMany: vi.fn(),
+        create: vi.fn(),
+      },
+      productVariantStock: {
+        update: vi.fn(),
+        upsert: vi.fn(),
+      },
+      $transaction: vi.fn((cb) => cb(mockPrisma.client)),
     },
   };
 
@@ -52,6 +74,49 @@ describe("BakeryService Security", () => {
     locationId: "loc-1",
     permissions: [],
   };
+
+  describe("completeBatch", () => {
+    it("should prevent using stock batches from another organization (IDOR)", async () => {
+      mockPrisma.client.batch.findUnique.mockResolvedValue({
+        id: "batch-1",
+        organizationId: "org-1",
+        batchNumber: "BAT-1",
+        recipe: {
+          producesVariantId: "variant-1",
+          producesVariant: { productId: "product-1" },
+        },
+      });
+
+      mockPrisma.client.batch.update.mockResolvedValue({
+        id: "batch-1",
+        expiresAt: new Date(),
+      });
+
+      mockPrisma.client.stockBatch.create.mockResolvedValue({
+        id: "new-stock-batch",
+      });
+
+      // Mock finding stock batches.
+      // If we query with organizationId, it should only return batches from that org.
+      // In this test case, we simulate that findMany returns an empty array because
+      // the requested stock-batch-1 belongs to 'other-org' and we are searching within 'org-1'.
+      mockPrisma.client.stockBatch.findMany.mockImplementation(({ where }: any) => {
+        if (where.organizationId === "org-1" && where.id.in.includes("stock-batch-1")) {
+          return Promise.resolve([]);
+        }
+        return Promise.resolve([]);
+      });
+
+      const data = {
+        actualQuantity: 10,
+        ingredientConsumptions: [{ stockBatchId: "stock-batch-1", quantity: 5 }],
+      };
+
+      // 🛡️ Sentinel: This SHOULD throw ForbiddenException if fixed.
+      // Currently, it might not throw anything (vulnerable) or throw something else.
+      await expect(service.completeBatch(ctx, "batch-1", data)).rejects.toThrow(ForbiddenException);
+    });
+  });
 
   describe("addBaker", () => {
     it("should prevent adding a member from another organization (IDOR)", async () => {
