@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus, Box, Edit, Trash2, MoreVertical } from "lucide-react";
+import { Plus, Box, Edit, Trash2, MoreVertical, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 import { UnitDialog } from "./unit-dialog";
 import { deleteUnit } from "../../app/actions/locations";
 import { toast } from "sonner";
@@ -25,18 +35,21 @@ interface UnitListProps {
 }
 
 export function UnitList({ locationId, zones, units }: UnitListProps) {
-  async function onDelete(id: string) {
-    if (
-      confirm(
-        "Are you sure you want to delete this unit? This will fail if it contains stock.",
-      )
-    ) {
-      try {
-        await deleteUnit(id);
-        toast.success("Unit deleted successfully");
-      } catch (error: any) {
-        toast.error(error.message);
-      }
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  async function onDelete() {
+    if (!deletingId) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteUnit(deletingId);
+      toast.success("Unit deleted successfully");
+      setDeletingId(null);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -100,7 +113,7 @@ export function UnitList({ locationId, zones, units }: UnitListProps) {
                       variant="ghost"
                       size="icon"
                       className="transition-opacity text-red-600 hover:text-red-700"
-                      onClick={() => onDelete(unit.id)}
+                      onClick={() => setDeletingId(unit.id)}
                       aria-label={`Delete ${unit.name}`}>
                       <Trash2 size={14} />
                     </Button>
@@ -112,6 +125,33 @@ export function UnitList({ locationId, zones, units }: UnitListProps) {
           ))
         )}
       </div>
+
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={open => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this unit? This will fail if it
+              contains stock.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault();
+                onDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700">
+              {isDeleting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

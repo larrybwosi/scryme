@@ -21,12 +21,10 @@ export class CheckoutUseCase {
     dto: CheckoutDto,
   ): Promise<CheckoutResponseDto> {
     // 1. Get Cart
-    // @security Multi-tenant isolation: Scoping lookup by organizationId to prevent IDOR
+    // SECURITY (Sentinel): Using findFirst instead of findUnique to scope by organizationId
+    // since Cart may lack a composite unique index on [id, organizationId].
     const cart = await this.prisma.client.cart.findFirst({
-      where: {
-        id: dto.cartId,
-        organizationId,
-      },
+      where: { id: dto.cartId, organizationId },
       include: { items: true },
     });
 

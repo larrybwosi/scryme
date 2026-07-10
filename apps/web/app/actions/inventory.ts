@@ -333,6 +333,8 @@ export async function updateProduct(
     isFeatured?: boolean;
     lowStockThreshold?: number;
     isActive?: boolean;
+    pointsOnPurchase?: number;
+    loyaltyPointsOverride?: number;
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -357,6 +359,8 @@ export async function updateProduct(
         isFeatured: data.isFeatured,
         lowStockThreshold: data.lowStockThreshold,
         isActive: data.isActive,
+        pointsOnPurchase: data.pointsOnPurchase,
+        loyaltyPointsOverride: data.loyaltyPointsOverride,
       },
     });
 
@@ -1095,6 +1099,16 @@ export async function createVariant(data: {
   buyingPrice: number;
   retailPrice: number;
   initialStock?: number;
+  pointsOnPurchase?: number;
+  loyaltyPointsOverride?: number;
+  defaultShelfLifeDays?: number;
+  requiresExpiryTracking?: boolean;
+  expiryWarningDays?: number;
+  requiresSerialNumber?: boolean;
+  wholesalePrice?: number;
+  promotionalPrice?: number;
+  isPopular?: boolean;
+  isNew?: boolean;
 }): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId)
@@ -1115,6 +1129,22 @@ export async function createVariant(data: {
         baseOrgUnitId: pieceUnit.orgUnitId,
         stockingUnitId: pieceUnit.systemUnitId,
         stockingOrgUnitId: pieceUnit.orgUnitId,
+        pointsOnPurchase: data.pointsOnPurchase,
+        loyaltyPointsOverride: data.loyaltyPointsOverride,
+        defaultShelfLifeDays: data.defaultShelfLifeDays,
+        requiresExpiryTracking: data.requiresExpiryTracking,
+        expiryWarningDays: data.expiryWarningDays,
+        requiresSerialNumber: data.requiresSerialNumber,
+        wholesalePrice:
+          data.wholesalePrice !== undefined
+            ? new Decimal(data.wholesalePrice)
+            : undefined,
+        promotionalPrice:
+          data.promotionalPrice !== undefined
+            ? new Decimal(data.promotionalPrice)
+            : undefined,
+        isPopular: data.isPopular,
+        isNew: data.isNew,
       },
     });
 
@@ -1176,6 +1206,10 @@ export async function updateVariant(
     expiryWarningDays?: number;
     requiresSerialNumber?: boolean;
     tags?: string[];
+    wholesalePrice?: number;
+    promotionalPrice?: number;
+    isPopular?: boolean;
+    isNew?: boolean;
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -1206,6 +1240,16 @@ export async function updateVariant(
       expiryWarningDays: data.expiryWarningDays,
       requiresSerialNumber: data.requiresSerialNumber,
       tags: data.tags,
+      wholesalePrice:
+        data.wholesalePrice !== undefined
+          ? new Decimal(data.wholesalePrice)
+          : undefined,
+      promotionalPrice:
+        data.promotionalPrice !== undefined
+          ? new Decimal(data.promotionalPrice)
+          : undefined,
+      isPopular: data.isPopular,
+      isNew: data.isNew,
     },
   });
 

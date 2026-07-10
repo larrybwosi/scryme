@@ -1,35 +1,12 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { B2BUseCase } from "../b2b.use-case";
-import { PrismaService } from "@/prisma/prisma.service";
-import { Decimal } from "decimal.js";
+import { Test, TestingModule } from '@nestjs/testing';
+import { B2BUseCase } from '../b2b.use-case';
+import { PrismaService } from '@/prisma/prisma.service';
+import { PricingResolverService } from '../../../../catalog/application/services/pricing-resolver.service';
 
-describe("B2BUseCase", () => {
+describe('B2BUseCase', () => {
   let useCase: B2BUseCase;
-  let prismaService: PrismaService;
-
-  const mockPrismaService = {
-    client: {
-      product: {
-        findMany: vi.fn(),
-      },
-      transaction: {
-        findMany: vi.fn(),
-        create: vi.fn(),
-      },
-      businessAccount: {
-        findFirst: vi.fn(),
-      },
-      inventoryLocation: {
-        findFirst: vi.fn(),
-      },
-      productVariant: {
-        findMany: vi.fn(),
-      },
-      productVariantStock: {
-        findMany: vi.fn(),
-      },
-    },
-  };
+  let prisma: PrismaService;
+  let pricingResolver: PricingResolverService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,81 +14,89 @@ describe("B2BUseCase", () => {
         B2BUseCase,
         {
           provide: PrismaService,
-          useValue: mockPrismaService,
+          useValue: {
+            client: {
+              product: { findMany: vi.fn() },
+              transaction: { findMany: vi.fn(), create: vi.fn() },
+              inventoryLocation: { findFirst: vi.fn() },
+              productVariant: { findMany: vi.fn() },
+            },
+          },
+        },
+        {
+          provide: PricingResolverService,
+          useValue: {
+            resolveBatchVariantPrices: vi.fn().mockResolvedValue(new Map()),
+          },
         },
       ],
     }).compile();
 
     useCase = module.get<B2BUseCase>(B2BUseCase);
-    prismaService = module.get<PrismaService>(PrismaService);
+    prisma = module.get<PrismaService>(PrismaService);
+    pricingResolver = module.get<PricingResolverService>(PricingResolverService);
   });
 
-  afterEach(() => {
-    vi.clearAllMocks();
+  it('should be defined', () => {
+    expect(useCase).toBeDefined();
   });
 
-  describe("getCatalog", () => {
-    it("should return products in catalog with categoryName mapping", async () => {
+  describe('getCatalog', () => {
+    it('should return products in catalog with categoryName mapping', async () => {
       const mockProducts = [
         {
-          id: "prod_1",
-          name: "Product 1",
-          description: "Desc 1",
-          category: { id: "cat_1", name: "Category 1" },
-          variants: [
-            {
-              id: "var_1",
-              name: "Variant 1",
-              sku: "SKU-1",
-              variantStocks: [{ availableStock: new Decimal(10), locationId: "loc_1" }],
-            },
-          ],
+          id: 'p1',
+          name: 'Product 1',
+          category: { name: 'Category 1' },
+          variants: [{ id: 'v1', name: 'Variant 1' }],
         },
       ];
 
-      mockPrismaService.client.product.findMany.mockResolvedValue(mockProducts);
+      vi.spyOn(prisma.client.product as any, 'findMany').mockResolvedValue(mockProducts);
+      // Mock paginate instead of findMany if we use it
+      const paginateModule = await import('../../../../../common/utils/pagination');
+      vi.spyOn(paginateModule, 'paginate').mockResolvedValue({
+        data: mockProducts,
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      } as any);
 
-      const result = await useCase.getCatalog("org_1", "ba_1");
+      const result = await useCase.getCatalog('org1', 'ba1', { page: 1, limit: 20 });
 
-      expect(result[0]).toHaveProperty("categoryName", "Category 1");
-      expect(mockPrismaService.client.product.findMany).toHaveBeenCalledWith(
+      expect(result.data).toBeDefined();
+      expect(result.data[0].categoryName).toBe('Category 1');
+      expect(result.data[0].variants[0].unitPrice).toBeDefined();
+    });
+  });
+
+  describe('getInvoices', () => {
+    it('should return transactions of type POS_SALE', async () => {
+      const mockInvoices = [{ id: 'i1', type: 'POS_SALE' }];
+      vi.spyOn(prisma.client.transaction, 'findMany').mockResolvedValue(mockInvoices as any);
+
+      const result = await useCase.getInvoices('org1', 'ba1');
+
+      expect(result).toEqual(mockInvoices);
+      expect(prisma.client.transaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          select: expect.objectContaining({
-            category: expect.any(Object),
-            variants: expect.any(Object),
-          }),
-        })
+          where: expect.objectContaining({ type: 'POS_SALE' }),
+        }),
       );
     });
   });
 
-  describe("getInvoices", () => {
-    it("should return transactions of type POS_SALE", async () => {
-      const mockInvoices = [
-        { id: "tx_1", number: "INV-1", type: "POS_SALE" },
-      ];
-      mockPrismaService.client.transaction.findMany.mockResolvedValue(mockInvoices);
+  describe('getOrders', () => {
+    it('should return transactions of type SALES_ORDER with items included', async () => {
+      const mockOrders = [{ id: 'o1', type: 'SALES_ORDER', items: [] }];
+      vi.spyOn(prisma.client.transaction, 'findMany').mockResolvedValue(mockOrders as any);
 
-      const result = await useCase.getInvoices("org_1", "ba_1");
-
-      expect(result).toEqual(mockInvoices);
-    });
-  });
-
-  describe("getOrders", () => {
-    it("should return transactions of type SALES_ORDER with items included", async () => {
-      const mockOrders = [
-        { id: "tx_2", number: "ORD-1", type: "SALES_ORDER", items: [] },
-      ];
-      mockPrismaService.client.transaction.findMany.mockResolvedValue(mockOrders);
-
-      const result = await useCase.getOrders("org_1", "ba_1");
+      const result = await useCase.getOrders('org1', 'ba1');
 
       expect(result).toEqual(mockOrders);
-      expect(mockPrismaService.client.transaction.findMany).toHaveBeenCalledWith(
+      expect(prisma.client.transaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          where: expect.objectContaining({ type: 'SALES_ORDER' }),
           include: { items: true },
-        })
+        }),
       );
     });
   });

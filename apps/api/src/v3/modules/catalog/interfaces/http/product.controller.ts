@@ -9,6 +9,7 @@ import {
   Query,
   Patch,
   Param,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -116,10 +117,28 @@ export class ProductController {
     const organizationId = req.organization.id;
 
     const result = await this.prisma.client.$transaction(async (tx) => {
+      // SECURITY (Sentinel): Validate ownership before update to prevent IDOR.
+      // ProductSupplier doesn't have organizationId directly, so we check via Product relation.
+      const exists = await tx.productSupplier.findFirst({
+        where: {
+          variantId,
+          supplierId,
+          product: { organizationId },
+        },
+      });
+
+      if (!exists) {
+        throw new NotFoundException("Supplier variant not found");
+      }
+
       // If setting as preferred, unset any existing preferred supplier for this variant
       if (body.isPreferred === true) {
         await tx.productSupplier.updateMany({
-          where: { variantId, isPreferred: true },
+          where: {
+            variantId,
+            isPreferred: true,
+            product: { organizationId },
+          },
           data: { isPreferred: false },
         });
       }

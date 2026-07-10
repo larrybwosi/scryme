@@ -59,7 +59,11 @@ export class CrmController {
   @ApiOperation({ summary: "Create a new CRM record" })
   @ApiResponse({ status: 201, type: CrmRecordResponseDto })
   async createRecord(@Request() req: any, @Body() dto: CreateCrmRecordDto) {
-    return this.recordService.createRecord(req.organization.id, "default", dto);
+    return this.recordService.createRecord(
+      req.organization.id,
+      dto.objectId,
+      dto,
+    );
   }
 
   @Get("records/:id")

@@ -15,6 +15,7 @@ import {
   Truck,
   Image as ImageIcon,
   ChevronRight,
+  Loader2,
   ExternalLink,
   Edit,
   Scale,
@@ -87,6 +88,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 
 export function ProductPageClient({
   product: initialProduct,
@@ -100,6 +111,10 @@ export function ProductPageClient({
   const [activeTab, setActiveTab] = useState("overview");
   const [isSaving, setIsSaving] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [variantsToDelete, setVariantsToDelete] = useState<string[] | null>(
+    null,
+  );
 
   // Variant Dialog State
   const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false);
@@ -113,6 +128,16 @@ export function ProductPageClient({
     initialStock: 0,
     isActive: true,
     attributes: {},
+    pointsOnPurchase: 0,
+    loyaltyPointsOverride: 0,
+    requiresExpiryTracking: true,
+    expiryWarningDays: 2,
+    defaultShelfLifeDays: 0,
+    requiresSerialNumber: false,
+    wholesalePrice: 0,
+    promotionalPrice: 0,
+    isPopular: false,
+    isNew: false,
   });
 
   const handleSave = async () => {
@@ -135,6 +160,9 @@ export function ProductPageClient({
         isActive: product.isActive,
         buyingPrice: product.variants?.[0]?.buyingPrice,
         retailPrice: product.variants?.[0]?.retailPrice,
+        imageUrls: product.imageUrls,
+        pointsOnPurchase: product.pointsOnPurchase,
+        loyaltyPointsOverride: product.loyaltyPointsOverride,
       });
       toast.success("Product updated successfully");
     } catch (error) {
@@ -157,6 +185,31 @@ export function ProductPageClient({
       // Refresh logic would go here
     } catch (e) {
       toast.error("Failed to update variants");
+    }
+  };
+
+  const handleDeleteVariants = async () => {
+    if (!variantsToDelete) return;
+    setIsDeleting(true);
+    try {
+      await bulkDeleteVariants(variantsToDelete);
+      toast.success(
+        variantsToDelete.length === 1 ? "Variant deleted" : "Variants deleted",
+      );
+      setProduct({
+        ...product,
+        variants: product.variants.filter(
+          (v: any) => !variantsToDelete.includes(v.id),
+        ),
+      });
+      setSelectedVariants(prev =>
+        prev.filter(id => !variantsToDelete.includes(id)),
+      );
+      setVariantsToDelete(null);
+    } catch (e) {
+      toast.error("Failed to delete variant(s)");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -332,7 +385,8 @@ export function ProductPageClient({
                           variant="outline"
                           size="icon"
                           onClick={handleGenerateSlug}
-                          title="Generate slug">
+                          title="Generate slug"
+                          aria-label="Generate slug">
                           <RefreshCw className="w-4 h-4" />
                         </Button>
                       </div>
@@ -368,6 +422,23 @@ export function ProductPageClient({
                       </div>
                     </div>
                     <div className="grid gap-2">
+                      <Label htmlFor="rating">Product Rating (0-5)</Label>
+                      <Input
+                        id="rating"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                        value={product.rating || 0}
+                        onChange={e =>
+                          setProduct({
+                            ...product,
+                            rating: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
                       <Label htmlFor="description">Short Description</Label>
                       <Textarea
                         id="description"
@@ -397,7 +468,7 @@ export function ProductPageClient({
                       onChange={urls =>
                         setProduct({ ...product, imageUrls: urls })
                       }
-                      maxImages={6}
+                      maxImages={5}
                     />
                   </CardContent>
                   <CardFooter className="bg-zinc-50/50 border-t py-3">
@@ -562,6 +633,16 @@ export function ProductPageClient({
                                         initialStock: 0,
                                         isActive: v.isActive,
                                         attributes: v.attributes || {},
+                                        pointsOnPurchase: v.pointsOnPurchase || 0,
+                                        loyaltyPointsOverride: v.loyaltyPointsOverride || 0,
+                                        requiresExpiryTracking: v.requiresExpiryTracking ?? true,
+                                        expiryWarningDays: v.expiryWarningDays || 2,
+                                        defaultShelfLifeDays: v.defaultShelfLifeDays || 0,
+                                        requiresSerialNumber: v.requiresSerialNumber ?? false,
+                                        wholesalePrice: Number(v.wholesalePrice || 0),
+                                        promotionalPrice: Number(v.promotionalPrice || 0),
+                                        isPopular: v.isPopular ?? false,
+                                        isNew: v.isNew ?? false,
                                       });
                                       setIsVariantDialogOpen(true);
                                     }}>
@@ -575,26 +656,7 @@ export function ProductPageClient({
                                   <DropdownMenuItem
                                     className="text-red-600"
                                     disabled={product.variants?.length <= 1}
-                                    onClick={async () => {
-                                      if (
-                                        confirm(
-                                          "Are you sure you want to delete this variant?",
-                                        )
-                                      ) {
-                                        await bulkDeleteVariants([v.id]);
-                                        toast.success("Variant deleted");
-                                        // Note: You'd ideally want a way to refresh the local 'product' state here
-                                        // but for now revalidatePath in the action should handle it on next load.
-                                        // A better UX would be to update the state.
-                                        setProduct({
-                                          ...product,
-                                          variants: product.variants.filter(
-                                            (varItem: any) =>
-                                              varItem.id !== v.id,
-                                          ),
-                                        });
-                                      }
-                                    }}>
+                                    onClick={() => setVariantsToDelete([v.id])}>
                                     <Trash2 className="w-4 h-4 mr-2" /> Delete
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -627,23 +689,7 @@ export function ProductPageClient({
                         selectedVariants.length >=
                           (product.variants?.length || 0)
                       }
-                      onClick={async () => {
-                        if (
-                          confirm(
-                            "Are you sure you want to delete these variants?",
-                          )
-                        ) {
-                          await bulkDeleteVariants(selectedVariants);
-                          toast.success("Variants deleted");
-                          setProduct({
-                            ...product,
-                            variants: product.variants.filter(
-                              (v: any) => !selectedVariants.includes(v.id),
-                            ),
-                          });
-                          setSelectedVariants([]);
-                        }
-                      }}>
+                      onClick={() => setVariantsToDelete(selectedVariants)}>
                       Delete Selected
                     </Button>
                   </div>
@@ -1694,6 +1740,39 @@ export function ProductPageClient({
         </div>
       </div>
 
+      <AlertDialog
+        open={!!variantsToDelete}
+        onOpenChange={open => !open && setVariantsToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              selected variant(s) and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault();
+                handleDeleteVariants();
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={isVariantDialogOpen} onOpenChange={setIsVariantDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -1818,6 +1897,105 @@ export function ProductPageClient({
                 />
               </div>
             </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="font-bold">Loyalty Points</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="v-points">Base Points</Label>
+                  <Input
+                    id="v-points"
+                    type="number"
+                    value={variantForm.pointsOnPurchase}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        pointsOnPurchase: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="v-points-override">Points Override</Label>
+                  <Input
+                    id="v-points-override"
+                    type="number"
+                    value={variantForm.loyaltyPointsOverride}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        loyaltyPointsOverride: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="font-bold">Expiration & Serial Tracking</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="v-expiry-tracking"
+                    checked={variantForm.requiresExpiryTracking}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        requiresExpiryTracking: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="v-expiry-tracking">Expiry Tracking</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="v-serial-tracking"
+                    checked={variantForm.requiresSerialNumber}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        requiresSerialNumber: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="v-serial-tracking">Serial Tracking</Label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="v-expiry-warning">Warning Days</Label>
+                  <Input
+                    id="v-expiry-warning"
+                    type="number"
+                    value={variantForm.expiryWarningDays}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        expiryWarningDays: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="v-shelf-life">Shelf Life Days</Label>
+                  <Input
+                    id="v-shelf-life"
+                    type="number"
+                    value={variantForm.defaultShelfLifeDays}
+                    onChange={e =>
+                      setVariantForm({
+                        ...variantForm,
+                        defaultShelfLifeDays: Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
             {!editingVariant && (
               <div className="grid gap-2">
                 <Label htmlFor="v-stock">Initial Stock</Label>
@@ -1909,6 +2087,18 @@ export function ProductPageClient({
                       retailPrice: Number(variantForm.retailPrice),
                       reorderPoint: Number(variantForm.reorderPoint || 0),
                       reorderQty: Number(variantForm.reorderQty || 0),
+                      pointsOnPurchase: Number(variantForm.pointsOnPurchase),
+                      loyaltyPointsOverride: Number(
+                        variantForm.loyaltyPointsOverride,
+                      ),
+                      defaultShelfLifeDays: Number(
+                        variantForm.defaultShelfLifeDays,
+                      ),
+                      expiryWarningDays: Number(variantForm.expiryWarningDays),
+                      wholesalePrice: Number(variantForm.wholesalePrice),
+                      promotionalPrice: Number(variantForm.promotionalPrice),
+                      isPopular: variantForm.isPopular,
+                      isNew: variantForm.isNew,
                     });
                     toast.success("Variant updated");
                     // Manually update local state for better UX
@@ -1927,6 +2117,18 @@ export function ProductPageClient({
                       buyingPrice: Number(variantForm.buyingPrice),
                       retailPrice: Number(variantForm.retailPrice),
                       initialStock: Number(variantForm.initialStock || 0),
+                      pointsOnPurchase: Number(variantForm.pointsOnPurchase),
+                      loyaltyPointsOverride: Number(
+                        variantForm.loyaltyPointsOverride,
+                      ),
+                      defaultShelfLifeDays: Number(
+                        variantForm.defaultShelfLifeDays,
+                      ),
+                      expiryWarningDays: Number(variantForm.expiryWarningDays),
+                      wholesalePrice: Number(variantForm.wholesalePrice),
+                      promotionalPrice: Number(variantForm.promotionalPrice),
+                      isPopular: variantForm.isPopular,
+                      isNew: variantForm.isNew,
                     });
                     toast.success("Variant created");
                     // Add to local state

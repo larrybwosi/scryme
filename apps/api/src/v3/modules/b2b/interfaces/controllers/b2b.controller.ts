@@ -4,8 +4,9 @@ import { B2BUseCase } from "../../application/use-cases/b2b.use-case";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
-import { CreateB2BOrderDto, B2BOrderResponseDto, B2BCatalogProductDto } from "../../application/dto/b2b.dto";
+import { CreateB2BOrderDto, B2BOrderResponseDto, B2BCatalogProductDto, CatalogPaginationDto, PaginatedB2BCatalogDto } from "../../application/dto/b2b.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { Query } from "@nestjs/common";
 
 @ApiTags("V3 B2B")
 @ApiBearerAuth()
@@ -22,12 +23,12 @@ export class B2BController {
     description: "Returns all active products with variants and stock information for the business account.",
     operationId: "B2B_GetCatalog",
   })
-  @ApiResponse({ status: 200, type: [B2BCatalogProductDto], description: "List of products in the catalog" })
-  async getCatalog(@Req() req: any) {
+  @ApiResponse({ status: 200, type: PaginatedB2BCatalogDto, description: "Paginated list of products in the catalog" })
+  async getCatalog(@Req() req: any, @Query() query: CatalogPaginationDto) {
     const businessAccountId = req.v3Context?.businessAccountId;
     const organizationId =
       req.v3Context?.organizationId || req.organization?.id;
-    return this.b2bUseCase.getCatalog(organizationId, businessAccountId);
+    return this.b2bUseCase.getCatalog(organizationId, businessAccountId, query);
   }
 
   @Get("invoices")
@@ -79,5 +80,22 @@ export class B2BController {
     const organizationId =
       req.v3Context?.organizationId || req.organization?.id;
     return this.b2bUseCase.createOrder(organizationId, businessAccountId, data);
+  }
+
+  @Post("quotes")
+  @ApiOperation({
+    summary: "Request a B2B quote",
+    description: "Creates a quote for the business account.",
+    operationId: "B2B_CreateQuote",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Quote created successfully",
+  })
+  async createQuote(@Req() req: any, @Body() data: CreateB2BOrderDto) {
+    const businessAccountId = req.v3Context?.businessAccountId;
+    const organizationId =
+      req.v3Context?.organizationId || req.organization?.id;
+    return this.b2bUseCase.createQuote(organizationId, businessAccountId, data);
   }
 }

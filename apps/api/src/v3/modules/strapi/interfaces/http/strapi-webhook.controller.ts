@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
 import type { Request } from "@nestjs/common";
-import { StrapiWebhookService, StrapiWebhookPayload } from "../../infrastructure/services/strapi-webhook.service";
+import { StrapiWebhookService, type StrapiWebhookPayload } from "../../infrastructure/services/strapi-webhook.service";
 
 /**
  * StrapiWebhookController
