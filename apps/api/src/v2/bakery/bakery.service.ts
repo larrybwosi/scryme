@@ -951,10 +951,24 @@ export class BakeryService {
          * We pre-fetch all stock batches in a single query and aggregate updates
          * to minimize database roundtrips and improve transaction throughput.
          */
-        const stockBatchIds = ingredientConsumptions.map((c: any) => c.stockBatchId);
+        const stockBatchIds = ingredientConsumptions.map(
+          (c: any) => c.stockBatchId,
+        );
+
+        // 🛡️ Sentinel: Enforce multi-tenant isolation by scoping stock batch lookup to the organization.
         const stockBatches = await tx.stockBatch.findMany({
-          where: { id: { in: stockBatchIds } },
+          where: {
+            id: { in: stockBatchIds },
+            organizationId,
+          },
         });
+
+        if (stockBatches.length !== new Set(stockBatchIds).size) {
+          throw new ForbiddenException(
+            "Access denied to one or more requested stock batches.",
+          );
+        }
+
         const stockBatchMap = new Map(stockBatches.map((sb) => [sb.id, sb]));
 
         const consumptionData = [];
