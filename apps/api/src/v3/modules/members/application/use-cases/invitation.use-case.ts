@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
@@ -33,6 +34,17 @@ export class InvitationUseCase {
       this.prisma.client.invitation.count({ where }),
       this.prisma.client.invitation.findMany({
         where,
+        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // and keep sensitive fields (like token) from being loaded in lists.
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          status: true,
+          expiresAt: true,
+          inviterId: true,
+          createdAt: true,
+        },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -51,7 +63,15 @@ export class InvitationUseCase {
     inviterId: string,
     inviterUserId: string,
   ) {
-    const { email, role, expiresAt, ...otherData } = dto;
+    const {
+      email,
+      role,
+      expiresAt,
+      departmentIds,
+      customRoleIds,
+      roleGroupIds,
+      isGuestInvite,
+    } = dto;
 
     // Check if already a member
     const existingMember = await this.prisma.client.member.findFirst({
@@ -72,7 +92,7 @@ export class InvitationUseCase {
       ? new Date(expiresAt)
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
 
-    const invitation = (await this.prisma.client.invitation.create({
+    const invitation = await this.prisma.client.invitation.create({
       data: {
         organizationId,
         email,
@@ -80,9 +100,12 @@ export class InvitationUseCase {
         token,
         expiresAt: expiryDate,
         inviterId: inviterUserId,
-        ...otherData,
+        departmentIds,
+        customRoleIds,
+        roleGroupIds,
+        isGuestInvite,
       },
-    })) as any;
+    });
 
     // Audit Log
     await this.prisma.client.auditLog.create({
@@ -111,9 +134,9 @@ export class InvitationUseCase {
   }
 
   async revokeInvitation(organizationId: string, id: string, actorId: string) {
-    const invitation = (await this.prisma.client.invitation.findFirst({
+    const invitation = await this.prisma.client.invitation.findFirst({
       where: { id, organizationId, status: InvitationStatus.PENDING },
-    })) as any;
+    });
 
     if (!invitation)
       throw new NotFoundException("Pending invitation not found");
@@ -138,13 +161,53 @@ export class InvitationUseCase {
   }
 
   async acceptInvitation(dto: AcceptInvitationDto, userId: string) {
-    const invitation = (await this.prisma.client.invitation.findUnique({
+    const invitation = await this.prisma.client.invitation.findUnique({
       where: { token: dto.token },
-      include: { organization: true },
-    })) as any;
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'.
+      // The 'organization' relation was unused; selecting only required scalar fields
+      // reduces database I/O and eliminates an unnecessary join.
+      select: {
+        id: true,
+        email: true,
+        organizationId: true,
+        role: true,
+        status: true,
+        expiresAt: true,
+        departmentIds: true,
+        customRoleIds: true,
+        roleGroupIds: true,
+      },
+    });
 
     if (!invitation || invitation.status !== InvitationStatus.PENDING) {
       throw new BadRequestException("Invalid or expired invitation");
+    }
+
+    // Security: Verify user email matches invitation email
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user || user.email !== invitation.email) {
+      throw new ForbiddenException(
+        "This invitation was sent to a different email address",
+      );
+    }
+
+    // Security: Check if user is already a member
+    const existingMember = await this.prisma.client.member.findFirst({
+      where: {
+        organizationId: invitation.organizationId,
+        userId: userId,
+        deletedAt: null,
+      },
+    });
+
+    if (existingMember) {
+      throw new BadRequestException(
+        "You are already a member of this organization",
+      );
     }
 
     if (invitation.expiresAt < new Date()) {
@@ -168,7 +231,7 @@ export class InvitationUseCase {
           departmentMemberships:
             invitation.departmentIds && invitation.departmentIds.length > 0
               ? {
-                  create: invitation.departmentIds.map((dId: string) => ({
+                  create: invitation.departmentIds.map((dId) => ({
                     departmentId: dId,
                   })),
                 }
@@ -176,13 +239,13 @@ export class InvitationUseCase {
           customRoles:
             invitation.customRoleIds && invitation.customRoleIds.length > 0
               ? {
-                  connect: invitation.customRoleIds.map((id: string) => ({ id })),
+                  connect: invitation.customRoleIds.map((id) => ({ id })),
                 }
               : undefined,
           roleGroups:
             invitation.roleGroupIds && invitation.roleGroupIds.length > 0
               ? {
-                  connect: invitation.roleGroupIds.map((id: string) => ({ id })),
+                  connect: invitation.roleGroupIds.map((id) => ({ id })),
                 }
               : undefined,
         },
