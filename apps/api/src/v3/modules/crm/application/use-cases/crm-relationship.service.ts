@@ -30,12 +30,7 @@ export class CrmRelationshipService {
 
     return this.prisma.client.crmRelationshipDefinition.create({
       data: {
-        name: dto.name,
-        type: dto.type,
-        sourceObjectId: dto.sourceObjectId,
-        targetObjectId: dto.targetObjectId,
-        sourceLabel: dto.sourceLabel,
-        targetLabel: dto.targetLabel,
+        ...dto,
         organizationId,
       },
     });

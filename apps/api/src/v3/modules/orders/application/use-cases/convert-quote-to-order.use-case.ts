@@ -19,15 +19,9 @@ export class ConvertQuoteToOrderUseCase {
     // 1. Find the quote
     // SECURITY (Sentinel): Using findFirst instead of findUnique because
     // Transaction lacks a composite unique index on [id, organizationId].
-    /**
-     * OPTIMIZATION (Bolt ⚡): Removed redundant 'include: { items: true }'.
-     * Since the use case only uses the quote for validation of type and status,
-     * fetching full item lists is an unnecessary database join and payload.
-     * Estimated impact: -1 SQL join, ~20-30% reduction in DB-to-API data transfer.
-     */
     const quote = await this.prisma.client.transaction.findFirst({
       where: { id: quoteId, organizationId },
-      select: { id: true, type: true, status: true },
+      include: { items: true },
     });
 
     if (!quote) {

@@ -78,6 +78,28 @@ describe("ScrymeService", () => {
       delete process.env.SCRYME_WEBHOOK_SECRET;
     });
 
+    it("should verify signature correctly with sha256= prefix", async () => {
+      const secret = "test-secret";
+      process.env.SCRYME_WEBHOOK_SECRET = secret;
+
+      const rawSignature = createHmac("sha256", secret)
+        .update(JSON.stringify(payload))
+        .digest("hex");
+      const signature = `sha256=${rawSignature}`;
+
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
+        organizationId: "org-1",
+        organization: {
+          windmillConfiguration: { id: "wm-1" },
+        },
+      });
+
+      const result = await service.handleWebhook(signature, payload);
+      expect(result.status).toBe("success");
+
+      delete process.env.SCRYME_WEBHOOK_SECRET;
+    });
+
     it("should throw BadRequestException for invalid signature", async () => {
       process.env.SCRYME_WEBHOOK_SECRET = "test-secret";
 
