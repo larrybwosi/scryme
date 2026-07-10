@@ -35,6 +35,7 @@ import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 @ApiTags("V3 Customers")
 @ApiBearerAuth()
 @Controller(":orgSlug/customers")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class CustomerController {

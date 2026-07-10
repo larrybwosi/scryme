@@ -21,6 +21,7 @@ import { BusinessAccountService } from "@/v3/modules/customers/application/use-c
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @Controller(":orgSlug/business-accounts")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class BusinessAccountController {
   constructor(
     private readonly businessAccountService: BusinessAccountService,

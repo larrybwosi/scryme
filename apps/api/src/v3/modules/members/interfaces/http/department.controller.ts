@@ -11,7 +11,7 @@ import {
   Request,
   UseInterceptors,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
@@ -32,6 +32,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/members/departments")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class DepartmentController {
   constructor(private readonly departmentUseCase: DepartmentUseCase) {}
 

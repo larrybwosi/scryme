@@ -39,6 +39,7 @@ import { ReviewPriceChangeUseCase } from "../../application/use-cases/review-pri
 @ApiTags("V3 Catalog")
 @ApiBearerAuth()
 @Controller(":orgSlug/catalog")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ProductController {

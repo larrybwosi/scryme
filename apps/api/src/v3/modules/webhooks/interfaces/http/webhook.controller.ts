@@ -29,6 +29,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()
 @Controller(":orgSlug/webhooks")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class WebhookController {

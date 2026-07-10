@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Req, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { B2BUseCase } from "../../application/use-cases/b2b.use-case";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -10,6 +10,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @ApiTags("V3 B2B")
 @ApiBearerAuth()
 @Controller(":orgSlug/b2b")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class B2BController {

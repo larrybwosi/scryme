@@ -7,7 +7,7 @@ import {
   UseGuards,
   Req,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
 import { PettyCashUseCase } from "../../application/use-cases/petty-cash.use-case";

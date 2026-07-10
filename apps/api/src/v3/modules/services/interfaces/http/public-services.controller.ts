@@ -28,6 +28,7 @@ import {
 
 @ApiTags("Public Services")
 @Controller("public/:orgSlug/services")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseInterceptors(StandardResponseInterceptor)
 export class PublicServicesController {
   constructor(

@@ -35,6 +35,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @ApiBearerAuth()
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/members/invitations")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class InvitationController {
   constructor(private readonly invitationUseCase: InvitationUseCase) {}
 
