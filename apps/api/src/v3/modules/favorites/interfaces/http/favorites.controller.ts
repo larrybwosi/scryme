@@ -28,6 +28,7 @@ import {
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/favorites")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class FavoritesController {
   constructor(private readonly favoritesUseCase: FavoritesUseCase) {}
 

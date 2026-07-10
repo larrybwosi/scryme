@@ -11,7 +11,7 @@ import {
   Query,
   StreamableFile,
 } from "@nestjs/common";
-import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam } from "@nestjs/swagger";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { AuditInterceptor } from "@/v3/common/interceptors/audit.interceptor";
@@ -49,6 +49,7 @@ import { DocumentService } from "@/common/documents/document.service";
 @ApiTags("V3 Stocking")
 @ApiBearerAuth()
 @Controller(":orgSlug/stocking")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class StockingController {
