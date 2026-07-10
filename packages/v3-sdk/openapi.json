@@ -1,0 +1,11 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Scryme V3 API",
+    "version": "3.0"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {}
+  }
+}

@@ -35,6 +35,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 
 @ApiTags("V3 POS")
 @Controller(":orgSlug/pos")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseInterceptors(StandardResponseInterceptor)
 export class PosController {
   constructor(

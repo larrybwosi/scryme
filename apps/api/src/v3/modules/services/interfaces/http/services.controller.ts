@@ -41,6 +41,7 @@ import { BookingStatus } from "@repo/db";
 @ApiTags("V3 Services")
 @ApiBearerAuth()
 @Controller(":orgSlug/services")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ServicesController {

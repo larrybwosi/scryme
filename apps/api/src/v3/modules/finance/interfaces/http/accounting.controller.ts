@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam } from "@nestjs/swagger";
 import { AccountingService } from "../../application/services/accounting.service";
 import { FinancialReportingService } from "../../application/services/financial-reporting.service";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
@@ -11,6 +11,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @ApiTags("V3 Finance / Accounting")
 @ApiBearerAuth()
 @Controller(":orgSlug/finance/accounting")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class AccountingController {

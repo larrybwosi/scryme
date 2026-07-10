@@ -30,6 +30,7 @@ import {
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/cart")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class CartController {
   constructor(private readonly cartUseCase: CartUseCase) {}
 

@@ -30,6 +30,7 @@ import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 @ApiTags("V3 Loyalty")
 @ApiBearerAuth()
 @Controller(":orgSlug/loyalty")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class LoyaltyController {

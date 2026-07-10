@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiParam } from "@nestjs/swagger";
 import { StandalonePosService } from "../../infrastructure/services/standalone-pos.service";
 import {
   CreateSetupKeyDto,
