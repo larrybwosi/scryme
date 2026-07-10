@@ -15,26 +15,6 @@ export class CrmRecordService {
     objectId: string,
     dto: CreateCrmRecordDto,
   ) {
-    // Verify object definition exists and belongs to org
-    const objectDef = await this.prisma.client.crmObjectDefinition.findFirst({
-      where: { id: objectId, organizationId },
-    });
-
-    if (!objectDef) {
-      throw new NotFoundException("CRM Object definition not found");
-    }
-
-    // Verify owner belongs to org if provided
-    if (dto.ownerId) {
-      const owner = await this.prisma.client.member.findFirst({
-        where: { id: dto.ownerId, organizationId },
-      });
-
-      if (!owner) {
-        throw new NotFoundException("Owner member not found");
-      }
-    }
-
     const record = await this.prisma.client.crmRecord.create({
       data: {
         organizationId,
@@ -67,17 +47,6 @@ export class CrmRecordService {
 
     if (!record) {
       throw new NotFoundException("CRM Record not found");
-    }
-
-    // Verify owner belongs to org if provided
-    if (dto.ownerId) {
-      const owner = await this.prisma.client.member.findFirst({
-        where: { id: dto.ownerId, organizationId },
-      });
-
-      if (!owner) {
-        throw new NotFoundException("Owner member not found");
-      }
     }
 
     const updatedRecord = await this.prisma.client.crmRecord.update({

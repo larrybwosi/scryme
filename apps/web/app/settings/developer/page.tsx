@@ -35,22 +35,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@repo/ui/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@repo/ui/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import { Plus, Trash2, Key, Globe, ExternalLink, Copy, Check, Loader2 } from "lucide-react";
+import { Plus, Trash2, Key, Globe, ExternalLink, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DeveloperSettings() {
@@ -60,8 +45,6 @@ export default function DeveloperSettings() {
   const [newApp, setNewApp] = useState({ name: "", redirectUri: "" });
   const [createdApp, setCreatedApp] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [appToDelete, setAppToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchApps = async () => {
     setLoading(true);
@@ -100,26 +83,22 @@ export default function DeveloperSettings() {
     }
   };
 
-  const handleDeleteApp = async () => {
-    if (!appToDelete) return;
+  const handleDeleteApp = async (clientId: string) => {
+    if (!confirm("Are you sure you want to delete this application? This action cannot be undone.")) return;
 
-    setIsDeleting(true);
     try {
       const { error } = await authClient.oauth2.deleteClient({
-        client_id: appToDelete,
+        client_id: clientId,
       });
 
       if (error) {
         toast.error(error.message);
       } else {
         toast.success("Application deleted");
-        setAppToDelete(null);
         fetchApps();
       }
     } catch (err) {
       toast.error("Failed to delete application");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -280,38 +259,12 @@ export default function DeveloperSettings() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Copy Client ID"
-                              onClick={() => copyToClipboard(app.clientId, app.id)}
-                            >
-                              {copiedId === app.id ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Copy Client ID</TooltipContent>
-                        </Tooltip>
-
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive"
-                              aria-label="Delete Application"
-                              onClick={() => setAppToDelete(app.clientId)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Delete Application</TooltipContent>
-                        </Tooltip>
+                        <Button variant="ghost" size="icon" title="Copy Client ID" onClick={() => copyToClipboard(app.clientId, app.id)}>
+                           {copiedId === app.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteApp(app.clientId)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -321,38 +274,6 @@ export default function DeveloperSettings() {
           )}
         </CardContent>
       </Card>
-
-      <AlertDialog open={!!appToDelete} onOpenChange={(open) => !open && !isDeleting && setAppToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the OAuth2 application
-              and revoke all access tokens.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleDeleteApp();
-              }}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete Application"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Card>
         <CardHeader>
