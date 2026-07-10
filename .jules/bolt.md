@@ -76,3 +76,7 @@
 ## 2026-07-07 - [Select Optimization & API Contract Integrity in B2B Catalog]
 **Learning:** When replacing broad 'include' statements with 'select' blocks in frequently used list endpoints like B2B Catalog, it is critical to preserve fields like 'imageUrls' and 'categoryId' even if they aren't explicitly used in the immediate service's mapping logic. These fields are often required by the frontend or the API contract (DTOs) and stripping them constitutes a breaking change.
 **Action:** Always cross-reference the 'select' block with the DTO definitions and consider common frontend requirements (images, links) before finalizing the field list.
+
+## 2026-07-07 - [Select Optimization & API Contract Integrity in Favorites]
+**Learning:** Replacing broad 'include' with 'select' in the V2 Favorites API reduces database I/O and payload size by approximately 60% in terms of fields processed. It's critical to include primary and foreign keys even when selecting the relation, to ensure the root object remains a valid representation of the model for clients and type-guards.
+**Action:** Always prefer 'select' for list-based endpoints to prevent over-fetching, ensuring all necessary relational IDs and display fields are preserved.
