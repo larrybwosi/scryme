@@ -1,5 +1,15 @@
 # crm
 
+## 7.0.0
+
+### Major Changes
+
+- 1d47ac9: Update
+
+### Minor Changes
+
+- 02475f8: nothing
+
 ## 6.6.0
 
 ### Minor Changes
