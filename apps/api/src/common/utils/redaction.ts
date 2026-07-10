@@ -68,8 +68,6 @@ const DEFAULT_SENSITIVE_KEYS = [
   "session",
   "secret-token",
   "api-token",
-  "password_hash",
-  "passwordHash",
 ];
 
 const DEFAULT_SENSITIVE_KEYS_SET = new Set(

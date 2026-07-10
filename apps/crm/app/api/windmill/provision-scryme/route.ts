@@ -32,9 +32,35 @@ export async function POST() {
       const scrymeClient = new ScrymeChatApiClient();
       const workspaceSlug = `org-${org.slug}`.toLowerCase();
 
+      // Find owner or admin user email for multi-tenant workspace mapping
+      const ownerMember = await db.member.findFirst({
+        where: {
+          organizationId: org.id,
+          role: "OWNER",
+          isActive: true,
+        },
+        include: { user: true },
+      }) || await db.member.findFirst({
+        where: {
+          organizationId: org.id,
+          role: "ADMIN",
+          isActive: true,
+        },
+        include: { user: true },
+      }) || await db.member.findFirst({
+        where: {
+          organizationId: org.id,
+          isActive: true,
+        },
+        include: { user: true },
+      });
+
+      const ownerEmail = ownerMember?.user?.email || ownerMember?.email || 'admin@organization.com';
+
       const scrymeWorkspace = await scrymeClient.createWorkspace(
         org.name,
         workspaceSlug,
+        ownerEmail,
       );
 
       await db.scrymeConfiguration.upsert({
