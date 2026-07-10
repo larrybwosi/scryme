@@ -76,3 +76,7 @@
 ## 2026-07-07 - [Select Optimization & API Contract Integrity in B2B Catalog]
 **Learning:** When replacing broad 'include' statements with 'select' blocks in frequently used list endpoints like B2B Catalog, it is critical to preserve fields like 'imageUrls' and 'categoryId' even if they aren't explicitly used in the immediate service's mapping logic. These fields are often required by the frontend or the API contract (DTOs) and stripping them constitutes a breaking change.
 **Action:** Always cross-reference the 'select' block with the DTO definitions and consider common frontend requirements (images, links) before finalizing the field list.
+
+## 2026-07-09 - [Batch Pre-fetching and Parallelization in Pricing]
+**Learning:** Performing repeated database lookups (N+1) inside a loop to check for existing pending requests is a major bottleneck. Pre-fetching these records into a Map and parallelizing the independent updates using `Promise.all` reduces total execution time from sequential $O(N)$ to concurrent $O(1)$ database roundtrips.
+**Action:** Always batch pre-fetch optional relation or existence checks before entering a loop and use parallel execution for independent side-effect operations.

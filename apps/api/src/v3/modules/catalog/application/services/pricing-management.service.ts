@@ -100,6 +100,10 @@ export class PricingManagementService {
     });
 
     // 5. Find all PriceListItems for this variant that belong to auto-sync PriceLists
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad 'include: { priceList: true }' with a targeted 'select'
+     * block to reduce database load and serialization overhead.
+     */
     const affectedItems = await client.priceListItem.findMany({
       where: {
         variantId,
@@ -109,24 +113,50 @@ export class PricingManagementService {
           isActive: true,
         },
       },
-      include: {
-        priceList: true,
+      select: {
+        id: true,
+        price: true,
+        method: true,
+        percentageValue: true,
+        variantId: true,
+        priceListId: true,
       },
     });
 
-    for (const item of affectedItems) {
-      await this.processItemPriceUpdate(
-        {
-          item,
-          oldCost,
-          newCost: activeCost,
-          settings,
-          source,
-          sourceId,
-        },
-        client,
-      );
-    }
+    /**
+     * OPTIMIZATION (Bolt ⚡): Pre-fetch all pending price change requests for the affected items
+     * in a single batch query to eliminate the N+1 query pattern inside the loop.
+     */
+    const pendingRequests = await client.priceChangeRequest.findMany({
+      where: {
+        priceListItemId: { in: affectedItems.map((item) => item.id) },
+        status: PriceChangeStatus.PENDING,
+      },
+    });
+    const requestsByItemId = new Map(
+      pendingRequests.map((req) => [req.priceListItemId, req]),
+    );
+
+    /**
+     * OPTIMIZATION (Bolt ⚡): Use Promise.all to parallelize price update processing,
+     * reducing total execution time from sequential to concurrent.
+     */
+    await Promise.all(
+      affectedItems.map((item) =>
+        this.processItemPriceUpdate(
+          {
+            item,
+            oldCost,
+            newCost: activeCost,
+            settings,
+            source,
+            sourceId,
+            existingRequest: requestsByItemId.get(item.id),
+          },
+          client,
+        ),
+      ),
+    );
   }
 
   private async resolveActiveCost(
@@ -182,10 +212,19 @@ export class PricingManagementService {
       settings: any;
       source: string;
       sourceId?: string;
+      existingRequest?: any;
     },
     client: PrismaTransaction,
   ) {
-    const { item, oldCost, newCost, settings, source, sourceId } = params;
+    const {
+      item,
+      oldCost,
+      newCost,
+      settings,
+      source,
+      sourceId,
+      existingRequest,
+    } = params;
     const oldPrice = Number(item.price);
 
     let proposedPrice: number;
@@ -234,6 +273,7 @@ export class PricingManagementService {
             newMargin,
             settings,
           ),
+          existingRequest,
         },
         client,
       );
@@ -292,15 +332,12 @@ export class PricingManagementService {
       source,
       sourceId,
       reason,
+      existingRequest,
     } = data;
 
     // Check if there's already a pending request for this item to avoid duplicates
-    const existing = await client.priceChangeRequest.findFirst({
-      where: {
-        priceListItemId: item.id,
-        status: PriceChangeStatus.PENDING,
-      },
-    });
+    // ⚡ Bolt: Rely on pre-fetched existingRequest to avoid N+1 query.
+    const existing = existingRequest;
 
     if (existing) {
       await client.priceChangeRequest.update({
