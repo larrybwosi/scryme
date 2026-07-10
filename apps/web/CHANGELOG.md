@@ -1,5 +1,15 @@
 # web
 
+## 6.0.0
+
+### Major Changes
+
+- 1d47ac9: Update
+
+### Minor Changes
+
+- 02475f8: nothing
+
 ## 5.6.0
 
 ### Minor Changes
