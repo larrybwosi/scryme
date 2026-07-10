@@ -1,8 +1,8 @@
 ---
-"api": minor
 "bakery": minor
-"crm": minor
 "pos": minor
+"api": minor
+"crm": minor
 "web": minor
 ---
 
