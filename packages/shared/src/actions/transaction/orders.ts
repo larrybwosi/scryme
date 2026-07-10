@@ -800,10 +800,35 @@ export async function confirmOrder(
         });
         const stockPoolMap = new Map(stockPools.map((s) => [s.variantId, s]));
 
+        // OPTIMIZATION (Bolt ⚡): Pre-fetch all available batches for all variants in the order
+        // to eliminate the N+1 query pattern in the loop.
+        const batchOrderBy: any[] =
+          inventoryPolicy === "LIFO"
+            ? [{ receivedDate: "desc" }]
+            : [{ expiryDate: "asc" }, { receivedDate: "asc" }];
+
+        const allAvailableBatches = await tx.stockBatch.findMany({
+          where: {
+            variantId: { in: variantIds },
+            locationId: order.locationId,
+            organizationId,
+            currentQuantity: { gt: 0 },
+          },
+          orderBy: batchOrderBy,
+        });
+
+        const variantBatchesMap = new Map<string, any[]>();
+        for (const batch of allAvailableBatches) {
+          if (!variantBatchesMap.has(batch.variantId)) {
+            variantBatchesMap.set(batch.variantId, []);
+          }
+          variantBatchesMap.get(batch.variantId)!.push(batch);
+        }
+
         const stockUpdates: Prisma.PrismaPromise<any>[] = [];
         const stockAdjustments: any[] = [];
-        const allocationCreations: any[] =
-          [];
+        const allocationCreations: any[] = [];
+
         for (const [variantId, totalBaseNeeded] of Array.from(
           baseQuantitiesToCommit.entries(),
         )) {
@@ -851,20 +876,7 @@ export async function confirmOrder(
           } as any);
 
           // C. Soft Allocate Batches (FEFO/LIFO)
-          const batchOrderBy: any[] =
-            inventoryPolicy === "LIFO"
-              ? [{ receivedDate: "desc" }]
-              : [{ expiryDate: "asc" }, { receivedDate: "asc" }];
-
-          const availableBatches = await tx.stockBatch.findMany({
-            where: {
-              variantId,
-              locationId: order.locationId,
-              organizationId,
-              currentQuantity: { gt: 0 },
-            },
-            orderBy: batchOrderBy,
-          });
+          const availableBatches = variantBatchesMap.get(variantId) || [];
 
           let remainingToAllocateForVariant = totalBaseNeeded;
 

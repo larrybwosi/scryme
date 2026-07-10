@@ -1,11 +1,12 @@
 import { createAuthClient } from "better-auth/react";
 import { adminClient } from "better-auth/client/plugins";
-import { env } from "@repo/env";
+import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { ac, ADMIN, CASHIER, DEVELOPER } from "./permissions";
 
 export const authClient = createAuthClient({
-  baseURL: env.NEXT_PUBLIC_APP_URL,
+  baseURL: process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000",
   plugins: [
+    oauthProviderClient(),
     adminClient({
       ac,
       roles: {

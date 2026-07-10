@@ -3,12 +3,12 @@ import { vi } from "vitest";
 // 1. Hoist the mocks
 const mocked = vi.hoisted(() => {
   const m = {
-    transaction: { findUnique: vi.fn() },
+    transaction: { findUnique: vi.fn(), findFirst: vi.fn() },
     loyaltyProgram: { findFirst: vi.fn() },
-    customer: { findUnique: vi.fn(), update: vi.fn() },
+    customer: { findUnique: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
     loyaltyTransaction: { create: vi.fn() },
-    loyaltyReward: { findUnique: vi.fn() },
-    loyaltyVoucher: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    loyaltyReward: { findUnique: vi.fn(), findFirst: vi.fn() },
+    loyaltyVoucher: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), findFirst: vi.fn() },
     $transaction: vi.fn((cb) => cb(m)),
   };
   return { mockPrisma: m };
@@ -50,17 +50,17 @@ describe("LoyaltyService", () => {
 
   describe("calculatePointsForTransaction", () => {
     it("should return 0 if no loyalty program exists", async () => {
-      (mockPrisma.transaction.findUnique as any).mockResolvedValue({
+      (mockPrisma.transaction.findFirst as any).mockResolvedValue({
         organization: { loyaltyPrograms: [] },
         customer: { id: "cust1" },
       });
 
-      const points = await service.calculatePointsForTransaction("txn1");
+      const points = await service.calculatePointsForTransaction("txn1", "org1");
       expect(points).toBe(0);
     });
 
     it("should calculate points based on currency spend", async () => {
-      (mockPrisma.transaction.findUnique as any).mockResolvedValue({
+      (mockPrisma.transaction.findFirst as any).mockResolvedValue({
         id: "txn1",
         finalTotal: { toNumber: () => 100 },
         items: [],
@@ -83,7 +83,7 @@ describe("LoyaltyService", () => {
         },
       });
 
-      const points = await service.calculatePointsForTransaction("txn1");
+      const points = await service.calculatePointsForTransaction("txn1", "org1");
       expect(points).toBe(100);
     });
   });

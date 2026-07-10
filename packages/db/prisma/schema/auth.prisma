@@ -165,3 +165,78 @@ model ApiKeyUsageLog {
   @@index([organizationId])
   @@map("api_key_usage_log")
 }
+
+model OAuthClient {
+  id                      String   @id @default(cuid())
+  clientId                String   @unique
+  clientSecret            String?
+  name                    String?
+  icon                    String?
+  uri                     String?
+  contacts                String[] @default([])
+  tos                     String?
+  policy                  String?
+  softwareId              String?
+  softwareVersion         String?
+  softwareStatement       String?
+  redirectUris            String[]
+  postLogoutRedirectUris  String[] @default([])
+  responseTypes           String[] @default(["code"])
+  grantTypes              String[] @default(["authorization_code", "refresh_token"])
+  tokenEndpointAuthMethod String?  @default("client_secret_post")
+  public                  Boolean? @default(false)
+  disabled                Boolean? @default(false)
+  skipConsent             Boolean? @default(false)
+  enableEndSession        Boolean? @default(false)
+  requirePKCE             Boolean? @default(true)
+  userId                  String?
+  referenceId             String?
+  metadata                Json?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("oauth_client")
+}
+
+model OAuthRefreshToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  clientId    String
+  userId      String
+  referenceId String?
+  sessionId   String?
+  scopes      String[]
+  authTime    DateTime?
+  revoked     DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+
+  @@map("oauth_refresh_token")
+}
+
+model OAuthAccessToken {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  clientId    String
+  userId      String?
+  referenceId String?
+  sessionId   String?
+  refreshId   String?
+  scopes      String[]
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@map("oauth_access_token")
+}
+
+model OAuthConsent {
+  id          String   @id @default(cuid())
+  userId      String
+  clientId    String
+  referenceId String?
+  scopes      String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("oauth_consent")
+}

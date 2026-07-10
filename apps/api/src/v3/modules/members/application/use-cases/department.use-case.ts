@@ -14,6 +14,7 @@ import { AuditLogAction, AuditEntityType } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/scryme";
 import { PlaneApiClient } from "@repo/shared";
 import { Logger } from "@nestjs/common";
+import { ScrymeService } from "@/v2/scryme/scryme.service";
 
 @Injectable()
 export class DepartmentUseCase {
@@ -21,7 +22,10 @@ export class DepartmentUseCase {
   private scrymeClient: ScrymeChatApiClient;
   private planeClient: PlaneApiClient;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scrymeService: ScrymeService,
+  ) {
     this.scrymeClient = new ScrymeChatApiClient();
     this.planeClient = new PlaneApiClient();
   }
@@ -137,13 +141,11 @@ export class DepartmentUseCase {
       const updates: any = {};
 
       if (scrymeConfig?.workspaceSlug && scrymeConfig.isActive) {
-        const channelSlug = `dept-${department.name.toLowerCase().replace(/\s+/g, '-')}`;
-        const channel = await this.scrymeClient.createChannel(
-          scrymeConfig.workspaceSlug,
-          department.name,
-          channelSlug,
+        await this.scrymeService.provisionChannelForEntity(
+          organizationId,
+          "department",
+          department.id,
         );
-        updates.scrymeChannelId = channel.id;
       }
 
       if (planeConfig?.workspaceSlug && planeConfig.isActive) {
@@ -283,21 +285,20 @@ export class DepartmentUseCase {
 
           // Enterprise: Automatically create channel if missing
           if (!channelId) {
-            this.logger.log(`Scryme channel missing for department ${fullDept.name}, creating...`);
+            this.logger.log(
+              `Scryme channel missing for department ${fullDept.name}, creating...`,
+            );
             try {
-              const channelSlug = `dept-${fullDept.name.toLowerCase().replace(/\s+/g, '-')}`;
-              const channel = await this.scrymeClient.createChannel(
-                scrymeConfiguration.workspaceSlug,
-                fullDept.name,
-                channelSlug,
+              const channel = await this.scrymeService.provisionChannelForEntity(
+                organizationId,
+                "department",
+                departmentId,
               );
-              channelId = channel.id;
-              await this.prisma.client.department.update({
-                where: { id: departmentId },
-                data: { scrymeChannelId: channelId },
-              });
+              channelId = channel?.id;
             } catch (err: any) {
-              this.logger.error(`Failed to auto-create Scryme channel: ${err.message}`);
+              this.logger.error(
+                `Failed to auto-create Scryme channel: ${err.message}`,
+              );
             }
           }
 
@@ -309,20 +310,17 @@ export class DepartmentUseCase {
                 fullMember.user.email,
               );
             } catch (err: any) {
-            // If user not found, try robust mapping
-            if (
-              err.response?.status === 404 &&
-              fullMember.user.scrymeUserId
-            ) {
-              this.logger.warn(
-                `Email-based add failed for ${fullMember.user.email}, retrying with scrymeUserId`,
-              );
-              // Scryme API might have an ID-based add method or we use sync
+              // If user not found, try robust mapping
+              if (err.response?.status === 404 && fullMember.user.scrymeUserId) {
+                this.logger.warn(
+                  `Email-based add failed for ${fullMember.user.email}, retrying with scrymeUserId`,
+                );
+                // Scryme API might have an ID-based add method or we use sync
+              }
+              throw err;
             }
-            throw err;
           }
         }
-      }
 
       if (fullDept.planeProjectId && planeConfiguration?.workspaceSlug) {
            // Plane requires adding to workspace first, then project

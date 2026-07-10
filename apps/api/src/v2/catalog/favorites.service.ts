@@ -16,12 +16,32 @@ export class FavoritesService {
 
     return this.prisma.client.favorite.findMany({
       where: { organizationId, customerId },
-      include: {
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Replaced broad 'include' with targeted 'select' to reduce over-fetching.
+       * Reduces database I/O and network payload size by selecting only essential fields.
+       */
+      select: {
+        id: true,
+        productId: true,
+        customerId: true,
+        organizationId: true,
+        createdAt: true,
         product: {
-          include: {
-            category: true,
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            imageUrls: true,
+            categoryId: true,
+            category: { select: { id: true, name: true } },
             variants: {
-              include: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                retailPrice: true,
+                buyingPrice: true,
                 baseUnit: true,
                 baseOrgUnit: true,
               },

@@ -25,14 +25,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { Truck, ShoppingCart, Package, Info, History, TrendingUp, TrendingDown, DollarSign, Loader2, Building2 } from "lucide-react";
+import { Truck, ShoppingCart, Package } from "lucide-react";
 import {
   fulfillStockRequestItems,
   getStockRequestLocations,
-  getVariantSupplierPrices,
 } from "@/app/actions/stock-management";
 import { toast } from "sonner";
-import { Badge } from "@repo/ui/components/ui/badge";
 
 interface AggregatedItem {
   variantId: string;
@@ -69,8 +67,6 @@ export function FulfillmentModal({
   const [locations, setLocations] = useState<{ id: string; name: string }[]>(
     [],
   );
-  const [supplierPrices, setSupplierPrices] = useState<any[]>([]);
-  const [loadingPrices, setLoadingPrices] = useState(false);
 
   // Track how much to fulfill for each request
   const [fulfillmentQuantities, setFulfillmentQuantities] = useState<
@@ -79,12 +75,7 @@ export function FulfillmentModal({
 
   useEffect(() => {
     getStockRequestLocations().then(setLocations);
-
-    setLoadingPrices(true);
-    getVariantSupplierPrices(item.variantId)
-      .then(setSupplierPrices)
-      .finally(() => setLoadingPrices(false));
-  }, [item.variantId]);
+  }, []);
 
   const handleFulfill = async () => {
     if (activeTab === "TRANSFER" && !fromLocationId) {
@@ -235,78 +226,23 @@ export function FulfillmentModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="PURCHASE" className="mt-0 space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Supplier Price Comparison
-                  </Label>
-                  <Badge variant="outline" className="text-[10px] font-normal border-green-200 text-green-700 bg-green-50">
-                    Live Rates
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2">
-                  {loadingPrices ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                    </div>
-                  ) : supplierPrices.length === 0 ? (
-                    <div className="text-center py-4 border-2 border-dashed rounded-lg text-zinc-400 text-sm">
-                      No suppliers registered for this product.
-                    </div>
-                  ) : (
-                    supplierPrices.map((sp, idx) => {
-                      const isCheapest = idx === 0;
-                      return (
-                        <div
-                          key={sp.supplierId}
-                          className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all ${
-                            supplierId === sp.supplierId
-                              ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600"
-                              : "hover:border-zinc-300 hover:bg-zinc-50 border-zinc-100"
-                          }`}
-                          onClick={() => setSupplierId(sp.supplierId)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isCheapest ? "bg-green-100 text-green-600" : "bg-zinc-100 text-zinc-500"}`}>
-                              {isCheapest ? <DollarSign size={16} /> : <Building2 size={16} />}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-zinc-700">{sp.supplierName}</span>
-                                {sp.isPreferred && <Badge className="text-[9px] bg-blue-100 text-blue-600 hover:bg-blue-100 border-none px-1 h-3.5">PREFER</Badge>}
-                                {isCheapest && <Badge className="text-[9px] bg-green-100 text-green-600 hover:bg-green-100 border-none px-1 h-3.5">BEST PRICE</Badge>}
-                              </div>
-                              <p className="text-[10px] text-zinc-400">
-                                Lead time: {sp.leadTimeDays || "?"} days • Min order: {sp.minimumOrderQuantity || "none"}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-bold text-zinc-900">KES {sp.currentCost.toLocaleString()}</div>
-                            {sp.history.length > 1 && (
-                              <div className="flex items-center gap-1 text-[10px] justify-end">
-                                {sp.history[0].price < sp.history[1].price ? (
-                                  <TrendingDown size={10} className="text-green-500" />
-                                ) : (
-                                  <TrendingUp size={10} className="text-red-500" />
-                                )}
-                                <span className={sp.history[0].price < sp.history[1].price ? "text-green-600" : "text-red-600"}>
-                                  {Math.abs(((sp.history[0].price - sp.history[1].price) / sp.history[1].price) * 100).toFixed(1)}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <p className="text-[11px] text-zinc-400 italic bg-zinc-50 p-2 rounded border border-zinc-100">
-                  <Info size={12} className="inline mr-1 mb-0.5" />
-                  Prices are fetched from the Product Supplier database. Creating this order will trigger a new Purchase Order workflow.
+            <TabsContent value="PURCHASE" className="mt-0 space-y-4">
+              <div className="space-y-2">
+                <Label>Supplier</Label>
+                <Select value={supplierId} onValueChange={setSupplierId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select supplier to order from..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* In a real app, you'd fetch suppliers. For now, placeholders or simple list. */}
+                    <SelectItem value="SUP-001">
+                      Main Distribution Center
+                    </SelectItem>
+                    <SelectItem value="SUP-002">Global Imports Ltd</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-400 italic">
+                  This will create a new Purchase Order.
                 </p>
               </div>
             </TabsContent>

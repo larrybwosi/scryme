@@ -25,8 +25,7 @@ wait_for_db() {
     fi
   fi
 
-  # We use --url explicitly for connectivity check to bypass potential schema loading issues during startup
-  until $PRISMA_BIN db execute --stdin "SELECT 1;" --url "$DATABASE_URL" > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+  until $PRISMA_BIN db execute --stdin "SELECT 1;" --schema "$SCHEMA_PATH" > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
     sleep 2
     COUNT=$((COUNT + 1))
     echo "Retry $COUNT/$MAX_RETRIES: Database not yet available..."
@@ -34,8 +33,6 @@ wait_for_db() {
 
   if [ $COUNT -eq $MAX_RETRIES ]; then
     echo "❌ Database is not ready after $MAX_RETRIES retries. Exiting."
-    # Final attempt without redirection to show error details in logs
-    $PRISMA_BIN db execute --stdin "SELECT 1;" --url "$DATABASE_URL"
     exit 1
   fi
   echo "✅ Database is ready!"
@@ -51,12 +48,12 @@ if [ -n "$DATABASE_URL" ]; then
     PRISMA_BIN="prisma"
   fi
 
-  # Prisma will automatically use prisma.config.ts in the root directory
-  $PRISMA_BIN migrate deploy
+  $PRISMA_BIN migrate deploy --schema "$SCHEMA_PATH"
 
   echo "Seeding database..."
-  # Prisma will automatically use prisma.config.ts in the root directory
-  $PRISMA_BIN db seed
+  # Use the seeding script defined in package.json or direct command
+  # Since we are in the runner stage, we need to make sure tsx is available.
+  $PRISMA_BIN db seed --schema "$SCHEMA_PATH"
 else
   echo "⚠️ DATABASE_URL not set, skipping migrations."
 fi
