@@ -596,6 +596,20 @@ export class MemberUseCase {
       throw new BadRequestException("Device is not associated with a location");
     }
 
+    const MAX_PIN_ATTEMPTS = 3;
+    const LOCKOUT_DURATION_SECONDS = 900; // 15 minutes
+
+    const rateLimitKey = `v3_pin_attempts:${organizationId}:${cardId}`;
+    const currentAttempts = (await this.redis.get<number>(rateLimitKey)) || 0;
+
+    if (currentAttempts >= MAX_PIN_ATTEMPTS) {
+      const ttl = await this.redis.ttl(rateLimitKey);
+      const minutesLeft = Math.ceil(ttl / 60);
+      throw new UnauthorizedException(
+        `Account locked. Try again in ${minutesLeft} minutes.`,
+      );
+    }
+
     const member = await this.prisma.client.member.findFirst({
       where: {
         organizationId,
@@ -616,13 +630,31 @@ export class MemberUseCase {
     });
 
     if (!member || !member.pinHash) {
-      throw new UnauthorizedException("Invalid credentials");
+      // Track failed attempts even for non-existent members to prevent enumeration if possible,
+      // though here cardId is known.
+      const newCount = await this.redis.incr(rateLimitKey);
+      if (newCount === 1) {
+        await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
+      }
+      throw new UnauthorizedException(
+        `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+      );
     }
 
     const isPinValid = await bcrypt.compare(pin, member.pinHash);
     if (!isPinValid) {
-      throw new UnauthorizedException("Invalid credentials");
+      // Track failed attempts
+      const newCount = await this.redis.incr(rateLimitKey);
+      if (newCount === 1) {
+        await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
+      }
+      throw new UnauthorizedException(
+        `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+      );
     }
+
+    // Clear failed attempts on successful login
+    await this.redis.del(rateLimitKey);
 
     // Perform check-in logic
     const activeLog = await this.prisma.client.attendanceLog.findFirst({

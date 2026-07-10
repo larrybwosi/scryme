@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { PERMISSIONS_KEY, SCOPES_KEY } from "../decorators/auth.decorator";
+import { PERMISSIONS_KEY, SCOPES_KEY, ALLOW_PUBLIC_KEY } from "../decorators/auth.decorator";
 import { V2ApiContext } from "@repo/shared/api/v2";
 
 @Injectable()
@@ -13,6 +13,15 @@ export class AuthorizationGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      ALLOW_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isPublic) {
+      return true;
+    }
+
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -24,10 +33,14 @@ export class AuthorizationGuard implements CanActivate {
     );
 
     if (!requiredPermissions && !requiredScopes) {
-      return true;
+      throw new ForbiddenException("Default deny: no permissions or scopes defined for this endpoint");
     }
 
     const { v2Context } = context.switchToHttp().getRequest<any>();
+
+    if (!v2Context) {
+      throw new ForbiddenException("Security context is missing");
+    }
 
     if (requiredPermissions) {
       const hasPermission = requiredPermissions.every((permission) =>
