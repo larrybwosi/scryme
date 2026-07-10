@@ -29,7 +29,11 @@ export class CrmDefinitionService {
 
     return this.prisma.client.crmObjectDefinition.create({
       data: {
-        ...dto,
+        name: dto.name,
+        label: dto.label,
+        labelPlural: dto.labelPlural,
+        description: dto.description,
+        icon: dto.icon,
         organizationId,
       },
     });
@@ -57,7 +61,12 @@ export class CrmDefinitionService {
 
     return this.prisma.client.crmFieldDefinition.create({
       data: {
-        ...dto,
+        name: dto.name,
+        label: dto.label,
+        type: dto.type,
+        isRequired: dto.isRequired,
+        options: dto.options,
+        order: dto.order,
         objectId,
       },
     });
