@@ -66,6 +66,11 @@ export class ScrymeApprovalService {
           });
         }
 
+        const dmChannel = await this.scrymeClient.getDirectMessageChannel(
+          workspaceSlug,
+          scrymeUserId,
+        );
+
         const actions: ScrymeChatAction[] = [
           {
             id: `approve:${decision.id}`,
@@ -97,25 +102,32 @@ export class ScrymeApprovalService {
           `*Type:* ${request.requestType}\n\n` +
           `Please review and take action.`;
 
-        // Unified Message layout sends DM via `recipientId` directly using new API
+        // Enterprise: DO NOT use scrymeThreadId in DMs across different users.
+        // DM threads are user-specific. Instead, we use it only if it was started in THIS DM.
+        const existingDmMessage = await this.prisma.client.scrymeMessage.findFirst({
+          where: {
+            relatedId: requestId,
+            recipientId: decision.approverId,
+            channelSlug: dmChannel.slug,
+          },
+          orderBy: { createdAt: "asc" },
+        });
+
         const message = await this.scrymeClient.sendMessage(
           workspaceSlug,
-          "",
+          dmChannel.slug,
           {
             content,
             actions,
-            recipientId: scrymeUserId,
-            messageType: "approval",
+            threadId: existingDmMessage?.messageId || undefined,
           },
         );
-
-        const channelSlug = message?.channelId || message?.channelSlug || 'dm';
 
         await this.prisma.client.approvalDecision.update({
           where: { id: decision.id },
           data: {
             scrymeMessageId: message.id,
-            scrymeChannelId: channelSlug,
+            scrymeChannelId: dmChannel.slug,
           },
         });
 
@@ -124,7 +136,7 @@ export class ScrymeApprovalService {
           data: {
             organizationId,
             workspaceSlug,
-            channelSlug: channelSlug,
+            channelSlug: dmChannel.slug,
             messageId: message.id,
             content,
             recipientId: decision.approverId,
@@ -261,6 +273,11 @@ export class ScrymeApprovalService {
         });
       }
 
+      const dmChannel = await this.scrymeClient.getDirectMessageChannel(
+        workspaceSlug,
+        scrymeUserId,
+      );
+
       let statusEmoji = "ℹ️";
       let title = "Update on your Approval Request";
 
@@ -290,10 +307,8 @@ export class ScrymeApprovalService {
         content += `*Comments:* ${latestDecision.comments}\n`;
       }
 
-      await this.scrymeClient.sendMessage(workspaceSlug, "", {
+      await this.scrymeClient.sendMessage(workspaceSlug, dmChannel.slug, {
         content,
-        recipientId: scrymeUserId,
-        messageType: "standard",
       });
     } catch (error: any) {
       this.logger.error(

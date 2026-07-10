@@ -28,36 +28,10 @@ export class ScrymeService {
       `Provisioning Scryme workspace for org ${organizationId}: ${workspaceSlug}`,
     );
 
-    // Get owner user email for multi-tenant mapping
-    const ownerMember = await this.prisma.client.member.findFirst({
-      where: {
-        organizationId,
-        role: "OWNER",
-        isActive: true,
-      },
-      include: { user: true },
-    }) || await this.prisma.client.member.findFirst({
-      where: {
-        organizationId,
-        role: "ADMIN",
-        isActive: true,
-      },
-      include: { user: true },
-    }) || await this.prisma.client.member.findFirst({
-      where: {
-        organizationId,
-        isActive: true,
-      },
-      include: { user: true },
-    });
-
-    const ownerEmail = ownerMember?.user?.email || ownerMember?.email || 'admin@organization.com';
-
     try {
       const workspace = await this.scrymeClient.createWorkspace(
         name,
         workspaceSlug,
-        ownerEmail,
       );
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
@@ -152,13 +126,12 @@ export class ScrymeService {
         throw new BadRequestException("Missing signature");
       }
 
-      const cleanSignature = signature.replace(/^sha256=/, "");
       const expectedSignature = crypto
         .createHmac("sha256", secret)
         .update(JSON.stringify(payload))
         .digest("hex");
 
-      const signatureBuffer = Buffer.from(cleanSignature);
+      const signatureBuffer = Buffer.from(signature);
       const expectedBuffer = Buffer.from(expectedSignature);
 
       if (
@@ -181,8 +154,8 @@ export class ScrymeService {
 
     this.logger.log(`Received Scryme webhook: ${payload.event}`);
 
-    if (payload.event === "message.action" || payload.event === "action.triggered") {
-      const { workspaceSlug, action, message, user } = payload.data || payload;
+    if (payload.event === "message.action") {
+      const { workspaceSlug, action, message, user } = payload.data;
 
       if (
         action.id.startsWith("approve:") ||
