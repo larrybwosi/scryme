@@ -201,6 +201,9 @@ export class V3RealtimeGateway
     @MessageBody() data: { orderId: string },
   ) {
     const context = (client as any).v3Context;
+    if (!context || !context.organizationId) {
+      return { event: "error", message: "Unauthorized" };
+    }
 
     // Verify ownership
     const order = await this.prisma.client.transaction.findUnique({
@@ -220,6 +223,9 @@ export class V3RealtimeGateway
   @SubscribeMessage("subscribe:inventory")
   handleSubscribeInventory(@ConnectedSocket() client: Socket) {
     const context = (client as any).v3Context;
+    if (!context || !context.organizationId) {
+      return { event: "error", message: "Unauthorized" };
+    }
     const room = `inventory:${context.organizationId}`;
     client.join(room);
     return { event: "subscribed", room };

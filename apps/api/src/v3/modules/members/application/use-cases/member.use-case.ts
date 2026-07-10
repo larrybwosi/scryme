@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Inject,
   UnauthorizedException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
@@ -353,19 +354,47 @@ export class MemberUseCase {
     const { pin, departmentIds, customRoleIds, roleGroupIds, ...updateData } =
       dto;
 
-    const currentMember = await this.prisma.client.member.findUnique({
-      where: { id, organizationId },
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Member lacks a composite unique index on [id, organizationId].
+    const currentMember = await this.prisma.client.member.findFirst({
+      where: { id, organizationId, deletedAt: null },
       include: { user: true },
     });
 
     if (!currentMember) throw new NotFoundException("Member not found");
+
+    // SECURITY (Sentinel): Role escalation and self-modification protection.
+    if (dto.role && dto.role !== currentMember.role) {
+      if (actorId === id) {
+        throw new BadRequestException("You cannot change your own role");
+      }
+
+      const actor = await this.prisma.client.member.findFirst({
+        where: { id: actorId, organizationId, deletedAt: null },
+        select: { role: true },
+      });
+
+      if (!actor) throw new UnauthorizedException("Actor not found");
+
+      const isSensitiveTarget =
+        dto.role === MemberRole.OWNER || dto.role === MemberRole.ADMIN;
+      const isSensitiveCurrent =
+        currentMember.role === MemberRole.OWNER ||
+        currentMember.role === MemberRole.ADMIN;
+
+      if ((isSensitiveTarget || isSensitiveCurrent) && actor.role !== MemberRole.OWNER) {
+        throw new ForbiddenException(
+          "Only an OWNER can manage OWNER or ADMIN roles",
+        );
+      }
+    }
 
     if (pin) {
       (updateData as any).pinHash = await bcrypt.hash(pin, 10);
     }
 
     const member = await this.prisma.client.member.update({
-      where: { id, organizationId },
+      where: { id: currentMember.id },
       data: {
         ...(updateData as any),
         departmentMemberships: departmentIds
@@ -419,6 +448,9 @@ export class MemberUseCase {
     }
 
     if (dto.isActive === false && currentMember.isActive === true) {
+      if (id === actorId) {
+        throw new BadRequestException("You cannot deactivate your own membership");
+      }
       emitEvent(organizationId, "member.deactivated", {
         memberId: member.id,
         name: currentMember.user.name,
@@ -431,8 +463,21 @@ export class MemberUseCase {
   }
 
   async deleteMember(organizationId: string, id: string, actorId: string) {
+    // SECURITY (Sentinel): Validate member belongs to organization before deletion.
+    const currentMember = await this.prisma.client.member.findFirst({
+      where: { id, organizationId, deletedAt: null },
+    });
+
+    if (!currentMember) throw new NotFoundException("Member not found");
+
+    // SECURITY (Sentinel): Prevent self-deletion to avoid orphaned organizations
+    // and accidental loss of administrative access.
+    if (id === actorId) {
+      throw new BadRequestException("You cannot delete your own membership");
+    }
+
     const member = await this.prisma.client.member.update({
-      where: { id, organizationId },
+      where: { id: currentMember.id },
       data: { deletedAt: new Date(), isActive: false },
       include: { user: true },
     });
@@ -515,8 +560,15 @@ export class MemberUseCase {
     status: Status,
     actorId: string,
   ) {
+    // SECURITY (Sentinel): Validate member belongs to organization before update.
+    const currentMember = await this.prisma.client.member.findFirst({
+      where: { id, organizationId, deletedAt: null },
+    });
+
+    if (!currentMember) throw new NotFoundException("Member not found");
+
     const member = await this.prisma.client.member.update({
-      where: { id, organizationId },
+      where: { id: currentMember.id },
       data: { status },
     });
 
@@ -574,7 +626,7 @@ export class MemberUseCase {
 
     // Perform check-in logic
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: { memberId: member.id, checkOutTime: null },
+      where: { memberId: member.id, organizationId, checkOutTime: null },
     });
 
     let attendanceLogId = activeLog?.id;

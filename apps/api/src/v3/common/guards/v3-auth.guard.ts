@@ -75,6 +75,7 @@ export class V3AuthGuard implements CanActivate {
       clientId: payload.clientId,
       organizationId: payload.organizationId,
       orgSlug: payload.orgSlug,
+      businessAccountId: payload.businessAccountId,
       scopes: payload.scopes,
       organization,
       memberId: payload.memberId,

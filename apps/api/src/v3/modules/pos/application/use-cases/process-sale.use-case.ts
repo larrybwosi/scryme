@@ -213,7 +213,7 @@ export class ProcessSaleUseCase {
   ) {
     // 1. Handle Loyalty (Async)
     this.loyaltyService
-      .calculatePointsForTransaction(tId)
+      .calculatePointsForTransaction(tId, orgId)
       .then((p) => {
         if (p > 0 && cId)
           this.loyaltyService.awardPoints(cId, p, orgId, `Points ${tNo}`, tId);

@@ -72,3 +72,7 @@
 ## 2026-07-03 - [Parallelized Batched Aggregation in Movements]
 **Learning:** Sequential database lookups for multiple locations (e.g., 'from' and 'to' in transfers) within an integrity check create unnecessary database roundtrips. Combining these into parallelized queries with database-level aggregations ('groupBy' + '_sum') reduces network traffic and execution time from O(N) to O(1) database interactions per movement verification.
 **Action:** Always deduplicate entity IDs and use 'Promise.all' with 'groupBy' for any logic that requires summary statistics across multiple related entities or locations.
+
+## 2026-07-07 - [Select Optimization & API Contract Integrity in B2B Catalog]
+**Learning:** When replacing broad 'include' statements with 'select' blocks in frequently used list endpoints like B2B Catalog, it is critical to preserve fields like 'imageUrls' and 'categoryId' even if they aren't explicitly used in the immediate service's mapping logic. These fields are often required by the frontend or the API contract (DTOs) and stripping them constitutes a breaking change.
+**Action:** Always cross-reference the 'select' block with the DTO definitions and consider common frontend requirements (images, links) before finalizing the field list.

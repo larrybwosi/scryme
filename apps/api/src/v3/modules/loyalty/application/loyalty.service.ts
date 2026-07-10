@@ -10,9 +10,12 @@ import {
 export class LoyaltyService {
   constructor() {}
 
-  async calculatePointsForTransaction(transactionId: string) {
-    const transaction = await db.transaction.findUnique({
-      where: { id: transactionId },
+  async calculatePointsForTransaction(
+    transactionId: string,
+    organizationId: string,
+  ) {
+    const transaction = await db.transaction.findFirst({
+      where: { id: transactionId, organizationId },
       include: {
         items: {
           include: {
@@ -117,6 +120,13 @@ export class LoyaltyService {
   ) {
     if (points === 0) return;
 
+    // Validate customer belongs to organization
+    const customerExists = await db.customer.findFirst({
+      where: { id: customerId, organizationId },
+    });
+
+    if (!customerExists) return;
+
     const program = await db.loyaltyProgram.findFirst({
       where: { organizationId, isActive: true },
     });
@@ -169,16 +179,16 @@ export class LoyaltyService {
     rewardId: string,
     organizationId: string,
   ) {
-    const reward = await db.loyaltyReward.findUnique({
-      where: { id: rewardId },
+    const reward = await db.loyaltyReward.findFirst({
+      where: { id: rewardId, program: { organizationId } },
       include: { program: true },
     });
 
     if (!reward || !reward.isActive)
       throw new Error("Reward not found or inactive");
 
-    const customer = await db.customer.findUnique({
-      where: { id: customerId },
+    const customer = await db.customer.findFirst({
+      where: { id: customerId, organizationId },
     });
 
     if (!customer || customer.loyaltyPoints < reward.pointsRequired) {
@@ -244,8 +254,8 @@ export class LoyaltyService {
   }
 
   async getCustomerStatus(customerId: string, organizationId: string) {
-    return await db.customer.findUnique({
-      where: { id: customerId },
+    return await db.customer.findFirst({
+      where: { id: customerId, organizationId },
       select: {
         id: true,
         loyaltyPoints: true,
@@ -260,8 +270,8 @@ export class LoyaltyService {
     customerId: string,
     organizationId: string,
   ) {
-    const voucher = await db.loyaltyVoucher.findUnique({
-      where: { code },
+    const voucher = await db.loyaltyVoucher.findFirst({
+      where: { code, organizationId },
       include: {
         reward: true,
         program: true,
