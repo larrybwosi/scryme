@@ -115,8 +115,39 @@ export class InventoryService {
 
   async createInventoryItem(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+    const {
+      productId,
+      variantId,
+      locationId,
+      reorderPoint,
+      reorderQty,
+      currentStock,
+      availableStock,
+      reservedStock,
+    } = data;
+
+    // Verify ownership of location
+    await this.prisma.client.inventoryLocation.findFirstOrThrow({
+      where: { id: locationId, organizationId },
+    });
+
+    // Verify ownership of variant/product
+    await this.prisma.client.productVariant.findFirstOrThrow({
+      where: { id: variantId, product: { organizationId } },
+    });
+
     return this.prisma.client.productVariantStock.create({
-      data: { ...data, organizationId },
+      data: {
+        productId,
+        variantId,
+        locationId,
+        reorderPoint,
+        reorderQty,
+        currentStock: currentStock || 0,
+        availableStock: availableStock || 0,
+        reservedStock: reservedStock || 0,
+        organizationId,
+      },
     });
   }
 
@@ -140,11 +171,14 @@ export class InventoryService {
     });
     if (!stock) throw new NotFoundException("Inventory item not found");
 
-    const { organizationId: _orgId, ...cleanData } = data;
+    const { reorderPoint, reorderQty } = data;
 
     return this.prisma.client.productVariantStock.update({
       where: { id, organizationId },
-      data: { ...cleanData, organizationId },
+      data: {
+        reorderPoint,
+        reorderQty,
+      },
     });
   }
 
@@ -176,9 +210,41 @@ export class InventoryService {
     inventoryId: string,
     data: any,
   ) {
-    const { organizationId } = ctx;
+    const { organizationId, memberId } = ctx;
+
+    // Verify ownership of inventory and retrieve variantId
+    const stock = await this.prisma.client.productVariantStock.findFirstOrThrow({
+      where: { id: inventoryId, organizationId },
+      select: { variantId: true },
+    });
+
+    const {
+      quantity,
+      movementType,
+      notes,
+      fromLocationId,
+      toLocationId,
+      stockBatchId,
+      referenceId,
+      referenceType,
+      stockReceiptId,
+    } = data;
+
     return this.prisma.client.stockMovement.create({
-      data: { ...data, organizationId },
+      data: {
+        variantId: stock.variantId,
+        quantity,
+        movementType,
+        notes,
+        fromLocationId,
+        toLocationId,
+        stockBatchId,
+        referenceId,
+        referenceType,
+        stockReceiptId,
+        memberId: memberId || "system",
+        organizationId,
+      },
     });
   }
 
