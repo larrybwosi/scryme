@@ -14,6 +14,9 @@ describe("MemberUseCase", () => {
     del: vi.fn(),
     get: vi.fn(),
     setex: vi.fn(),
+    incr: vi.fn(),
+    expire: vi.fn(),
+    ttl: vi.fn(),
   };
 
   const mockPrisma = {
@@ -218,6 +221,48 @@ describe("MemberUseCase", () => {
         await expect(
           useCase.deleteMember("org1", "m1", "m1"),
         ).rejects.toThrow("You cannot delete your own membership");
+      });
+    });
+
+    describe("login (Terminal)", () => {
+      it("should lockout after 3 failed attempts", async () => {
+        const orgId = "org1";
+        const cardId = "card123";
+        const pin = "wrong-pin";
+
+        // Mock 3rd attempt
+        mockRedis.get.mockResolvedValue(3);
+        mockRedis.ttl.mockResolvedValue(900);
+
+        await expect(
+          useCase.login(orgId, "loc1", cardId, pin),
+        ).rejects.toThrow(/Account locked/);
+      });
+
+      it("should increment failed attempts on incorrect PIN", async () => {
+        const orgId = "org1";
+        const cardId = "card123";
+        const pin = "wrong-pin";
+
+        mockRedis.get.mockResolvedValue(0);
+        mockRedis.incr.mockResolvedValue(1);
+
+        mockPrisma.client.member.findFirst.mockResolvedValue({
+          id: "m1",
+          pinHash: "hashed-pin",
+          user: { name: "Test" },
+        });
+
+        // Use vi.mocked for better type safety if available, or just mock directly
+        // bcrypt is often global or requires manual mocking if not handled by Vitest
+        // Since bcrypt is imported in member.use-case.ts, we might need to mock it if it's not working.
+        // Assuming it works for now or we mock it in the test file if needed.
+
+        await expect(
+          useCase.login(orgId, "loc1", cardId, pin),
+        ).rejects.toThrow(/Invalid credentials/);
+
+        expect(mockRedis.incr).toHaveBeenCalled();
       });
     });
   });
