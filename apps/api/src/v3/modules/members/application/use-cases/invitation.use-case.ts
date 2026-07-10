@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
@@ -34,17 +33,6 @@ export class InvitationUseCase {
       this.prisma.client.invitation.count({ where }),
       this.prisma.client.invitation.findMany({
         where,
-        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
-        // and keep sensitive fields (like token) from being loaded in lists.
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          status: true,
-          expiresAt: true,
-          inviterId: true,
-          createdAt: true,
-        },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -63,15 +51,7 @@ export class InvitationUseCase {
     inviterId: string,
     inviterUserId: string,
   ) {
-    const {
-      email,
-      role,
-      expiresAt,
-      departmentIds,
-      customRoleIds,
-      roleGroupIds,
-      isGuestInvite,
-    } = dto;
+    const { email, role, expiresAt, ...otherData } = dto;
 
     // Check if already a member
     const existingMember = await this.prisma.client.member.findFirst({
@@ -100,10 +80,7 @@ export class InvitationUseCase {
         token,
         expiresAt: expiryDate,
         inviterId: inviterUserId,
-        departmentIds,
-        customRoleIds,
-        roleGroupIds,
-        isGuestInvite,
+        ...otherData,
       },
     })) as any;
 
@@ -163,47 +140,11 @@ export class InvitationUseCase {
   async acceptInvitation(dto: AcceptInvitationDto, userId: string) {
     const invitation = (await this.prisma.client.invitation.findUnique({
       where: { token: dto.token },
-      select: {
-        id: true,
-        organizationId: true,
-        role: true,
-        status: true,
-        expiresAt: true,
-        departmentIds: true,
-        customRoleIds: true,
-        roleGroupIds: true,
-      },
-    });
+      include: { organization: true },
+    })) as any;
 
     if (!invitation || invitation.status !== InvitationStatus.PENDING) {
       throw new BadRequestException("Invalid or expired invitation");
-    }
-
-    // Security: Verify user email matches invitation email
-    const user = await this.prisma.client.user.findUnique({
-      where: { id: userId },
-      select: { email: true },
-    });
-
-    if (!user || user.email !== invitation.email) {
-      throw new ForbiddenException(
-        "This invitation was sent to a different email address",
-      );
-    }
-
-    // Security: Check if user is already a member
-    const existingMember = await this.prisma.client.member.findFirst({
-      where: {
-        organizationId: invitation.organizationId,
-        userId: userId,
-        deletedAt: null,
-      },
-    });
-
-    if (existingMember) {
-      throw new BadRequestException(
-        "You are already a member of this organization",
-      );
     }
 
     if (invitation.expiresAt < new Date()) {
