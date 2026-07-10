@@ -76,8 +76,8 @@ COPY --from=installer /app/apps/bakery/dist /usr/share/nginx/html
 # Copy the Nginx configuration safely from the pruned context
 COPY --from=pruner /app/out/full/apps/bakery/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy entrypoint script safely from the pruned context
-COPY --from=pruner /app/out/full/apps/bakery/entrypoint.sh /entrypoint.sh
+# Copy entrypoint script safely from the pruner stage root
+COPY --from=pruner /app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 3003
