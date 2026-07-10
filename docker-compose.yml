@@ -2,10 +2,12 @@ services:
   db:
     image: postgres:17-alpine
     restart: always
+    env_file:
+      - .env.example
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-dbuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dbpassword}
+      - POSTGRES_DB=${POSTGRES_DB:-app_db}
     ports:
       - "5438:5432"
     volumes:
@@ -52,9 +54,11 @@ services:
   rustfs:
     image: rustfs/rustfs:latest
     restart: always
+    env_file:
+      - .env.example
     environment:
-      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
-      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-your-access-key}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-your-secret-key}
       - RUSTFS_CONSOLE_ENABLE=true
     volumes:
       - rustfs_data:/data
@@ -135,21 +139,23 @@ services:
       resources:
         limits:
           memory: 1G
+    env_file:
+      - .env.example
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - PORT=4000
-      - REALTIME_PROVIDER=${REALTIME_PROVIDER}
-      - SOCKET_URL=${SOCKET_URL}
-      - ZITADEL_API_URL=${ZITADEL_API_URL}
-      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID}
-      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID}
-      - JWT_SECRET=${JWT_SECRET}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - INTERNAL_ADMIN_SECRET=${INTERNAL_ADMIN_SECRET}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
+      - SOCKET_URL=${SOCKET_URL:-http://localhost:3002}
+      - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
+      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-org-id}
+      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-project-id}
+      - JWT_SECRET=${JWT_SECRET:-jwtsecret1234567890jwtsecret}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
+      - INTERNAL_ADMIN_SECRET=${INTERNAL_ADMIN_SECRET:-adminsecret1234567890secret}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-encryptionkey1234567890key12345}
     depends_on:
       db:
         condition: service_healthy
@@ -187,12 +193,14 @@ services:
       resources:
         limits:
           memory: 768M
+    env_file:
+      - .env.example
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3002}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
       - PORT=3000
     depends_on:
       db:
@@ -229,13 +237,15 @@ services:
       resources:
         limits:
           memory: 512M
+    env_file:
+      - .env.example
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3002}
       - PORT=3001
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
     depends_on:
       db:
         condition: service_healthy
@@ -271,8 +281,10 @@ services:
       resources:
         limits:
           memory: 256M
+    env_file:
+      - .env.example
     environment:
-      - VITE_API_URL=${NEXT_PUBLIC_API_URL}
+      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
       - PORT=3003
     depends_on:
       api:
