@@ -326,16 +326,12 @@ export class ScrymeApprovalService {
       include: {
         requester: { include: { user: true } },
         organization: { include: { scrymeConfiguration: true } },
-        expense: { include: { category: true } },
-        purchase: { include: { supplier: true, items: { include: { variant: true } } } },
       },
     });
 
     if (!request || !request.organization.scrymeConfiguration?.workspaceSlug) return;
 
     const workspaceSlug = request.organization.scrymeConfiguration.workspaceSlug;
-    const crmBaseUrl = process.env.NEXT_PUBLIC_CRM_URL || "http://localhost:3001";
-    const approvalUrl = `${crmBaseUrl}/finance/approvals/${request.id}`;
 
     // Determine target channel (e.g., 'finance-approvals' or department channel)
     let targetChannel = "notifications";
@@ -350,40 +346,15 @@ export class ScrymeApprovalService {
       targetChannel = deptMember.department.scrymeChannelId;
     }
 
-    let detailSummary = "";
-    if (request.expense) {
-      detailSummary = `*Expense:* ${request.expense.description}\n*Category:* ${request.expense.category.name}`;
-    } else if (request.purchase) {
-      const items = request.purchase.items
-        .map(i => `• ${i.variant.name || 'Item'}: ${i.orderedQuantity}`)
-        .join("\n");
-      detailSummary = `*Purchase Order:* ${request.purchase.purchaseNumber}\n*Supplier:* ${request.purchase.supplier.name}\n*Items:*\n${items}`;
-    }
-
-    const content = `💬 *Discussion Thread for Approval: ${request.relatedRecordNumber}*\n\n` +
-      `*Requested by:* ${request.requester.user.name || request.requester.user.email}\n` +
-      `*Amount:* ${request.currency} ${request.amount.toString()}\n` +
-      `*Type:* ${request.requestType}\n` +
-      (detailSummary ? `${detailSummary}\n` : "") +
-      `\nPlease use this thread for team discussion regarding this request.`;
-
-    const actions: ScrymeChatAction[] = [
-      {
-        id: `view_approval:${request.id}`,
-        label: "View in CRM",
-        type: "button",
-        style: "primary",
-        value: approvalUrl,
-      }
-    ];
+    const content = `💬 *Discussion Thread for Approval: ${request.relatedRecordNumber}*\n` +
+      `Requested by: ${request.requester.user.name || request.requester.user.email}\n` +
+      `Amount: ${request.currency} ${request.amount.toString()}\n` +
+      `Please use this thread for team discussion regarding this request.`;
 
     try {
       // If we don't have a central thread ID yet, create the root message
       if (!request.scrymeThreadId) {
-        const message = await this.scrymeClient.sendMessage(workspaceSlug, targetChannel, {
-          content,
-          actions
-        });
+        const message = await this.scrymeClient.sendMessage(workspaceSlug, targetChannel, { content });
 
         await this.prisma.client.approvalRequest.update({
           where: { id: requestId },

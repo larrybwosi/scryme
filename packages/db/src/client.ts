@@ -1,3 +1,4 @@
+import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/client";
 import { env } from "@repo/env";
@@ -6,11 +7,30 @@ const globalForPrisma = global as unknown as {
   prisma: PrismaClient;
 };
 
-// 1. Create the Pool specifically for the adapter
+// 1. Create the Pool specifically for the adapter with high resilience
 const connectionString = env.DATABASE_URL;
 
-// 2. Pass the pool to the adapter
-const adapter = new PrismaPg({ connectionString });
+const pool = new Pool({
+  connectionString,
+  max: parseInt(env.DATABASE_POOL_SIZE || "50", 10), // Scalable pool size
+  connectionTimeoutMillis: 5000, // wait up to 5 seconds to connect
+  idleTimeoutMillis: 30000, // close idle connections after 30 seconds
+  maxUses: 7500, // recycle connections to prevent memory leaks in pg
+});
+
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle PG connection pool client:", err);
+});
+
+// 2. Pass the pool to the adapter with custom callbacks for error logging
+const adapter = new PrismaPg(pool, {
+  onPoolError: (err) => {
+    console.error("PrismaPg Pool Error:", err);
+  },
+  onConnectionError: (err) => {
+    console.error("PrismaPg Connection Error:", err);
+  },
+});
 
 export const prisma =
   globalForPrisma.prisma ||
