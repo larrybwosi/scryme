@@ -40,6 +40,7 @@ import { SyncDirection } from "@repo/db";
 @ApiTags("V3 Strapi Integration")
 @ApiBearerAuth()
 @Controller(":orgSlug/strapi")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class StrapiConnectionController {

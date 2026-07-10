@@ -9,7 +9,7 @@ import {
   Request,
   UseInterceptors,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
@@ -27,6 +27,7 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/members/attendance")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class AttendanceController {
   constructor(private readonly attendanceUseCase: AttendanceUseCase) {}
 

@@ -38,6 +38,7 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/members")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class MembersController {
   constructor(private readonly memberUseCase: MemberUseCase) {}
 
@@ -123,7 +124,6 @@ export class MembersController {
     @Request() req: any,
     @Param("id") id: string,
     @Body("status") status: Status,
-  ) {
     const actorId = req.v3Context.memberId;
     return this.memberUseCase.updateMemberStatus(
       req.v3Context.organizationId,
