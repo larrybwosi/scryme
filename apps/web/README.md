@@ -14,7 +14,7 @@
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **UI Components**: [Radix UI](https://www.radix-ui.com/)
 - **Data Fetching**: [React Query](https://tanstack.com/query/latest) & Axios
@@ -82,7 +82,7 @@ pnpm build
 
 ---
 
-## 🏗️ Structure
+##  Structure
 
 - `app/`: Next.js App Router pages and layouts.
 - `components/`: Reusable React components.

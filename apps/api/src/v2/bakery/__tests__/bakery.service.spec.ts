@@ -177,4 +177,55 @@ describe("BakeryService", () => {
       expect(result.recipesByCategory["Bread"]).toBe(3);
     });
   });
+
+  describe("getBatches", () => {
+    it("should return batches with selected fields and default limit", async () => {
+      const ctx = { organizationId: "org-1" } as any;
+      const query = {};
+
+      const mockBatches = [
+        { id: "b1", batchNumber: "BAT-1", status: "PLANNED" },
+        { id: "b2", batchNumber: "BAT-2", status: "COMPLETED" },
+      ];
+
+      mockPrisma.client.batch.findMany.mockResolvedValue(mockBatches);
+
+      const result = await service.getBatches(ctx, query);
+
+      expect(mockPrisma.client.batch.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 100,
+          skip: 0,
+          where: { organizationId: "org-1" },
+          select: expect.objectContaining({
+            id: true,
+            batchNumber: true,
+            status: true,
+          }),
+        }),
+      );
+
+      expect(result).toHaveLength(2);
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it("should filter by status and recipeId", async () => {
+      const ctx = { organizationId: "org-1" } as any;
+      const query = { status: "COMPLETED", recipeId: "r1" };
+
+      mockPrisma.client.batch.findMany.mockResolvedValue([]);
+
+      await service.getBatches(ctx, query);
+
+      expect(mockPrisma.client.batch.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            organizationId: "org-1",
+            status: "COMPLETED",
+            recipeId: "r1",
+          },
+        }),
+      );
+    });
+  });
 });

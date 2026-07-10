@@ -2,12 +2,11 @@ import { Module, OnModuleInit } from "@nestjs/common";
 import { ScrymeService } from "./scryme.service";
 import { ScrymeController } from "./scryme.controller";
 import { ScrymeApprovalService } from "./scryme-approval.service";
-import { ScrymeNotificationService } from "./scryme-notification.service";
 
 @Module({
-  providers: [ScrymeService, ScrymeApprovalService, ScrymeNotificationService],
+  providers: [ScrymeService, ScrymeApprovalService],
   controllers: [ScrymeController],
-  exports: [ScrymeService, ScrymeApprovalService, ScrymeNotificationService],
+  exports: [ScrymeService, ScrymeApprovalService],
 })
 export class ScrymeModule implements OnModuleInit {
   constructor(private readonly scrymeService: ScrymeService) {}

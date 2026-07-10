@@ -50,6 +50,9 @@ export class UsersService {
     const userId = this.resolveUserId(ctx, id);
     if (!userId) throw new ForbiddenException();
 
+    const cacheKey = `v2:user:profile:${userId}`;
+    await this.redis.del(cacheKey);
+
     return { id: userId, ...body };
   }
 

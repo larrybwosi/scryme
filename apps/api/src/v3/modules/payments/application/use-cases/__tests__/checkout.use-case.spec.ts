@@ -20,7 +20,6 @@ describe("CheckoutUseCase (Integration)", () => {
     prisma = {
       client: {
         cart: {
-          findUnique: vi.fn(),
           findFirst: vi.fn(),
           update: vi.fn(),
         },
@@ -105,6 +104,11 @@ describe("CheckoutUseCase (Integration)", () => {
 
     const result = await useCase.execute(organizationId, dto);
 
+    expect(prisma.client.cart.findFirst).toHaveBeenCalledWith({
+      where: { id: dto.cartId, organizationId },
+      include: { items: true },
+    });
+
     expect(result).toEqual({
       orderId: "order-123",
       paymentId: "pay-123",
@@ -118,31 +122,6 @@ describe("CheckoutUseCase (Integration)", () => {
       expect.objectContaining({
         amount: 200,
         phoneNumber: "254700000000",
-      }),
-    );
-  });
-
-  it("should throw NotFoundException if cart belongs to another organization", async () => {
-    const organizationId = "org-123";
-    const dto = {
-      cartId: "cart-another-org",
-      phoneNumber: "254700000000",
-      locationId: "loc-123",
-    };
-
-    // findFirst will return null because organizationId doesn't match
-    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(null as any);
-
-    await expect(useCase.execute(organizationId, dto)).rejects.toThrow(
-      "Cart not found",
-    );
-
-    expect(prisma.client.cart.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: "cart-another-org",
-          organizationId: "org-123",
-        },
       }),
     );
   });

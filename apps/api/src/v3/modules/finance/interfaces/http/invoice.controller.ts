@@ -6,12 +6,16 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Req,
   Res,
   StreamableFile,
+  UnauthorizedException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { verifyDocumentToken } from "@repo/shared/api/v2";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
 import { InvoiceUseCase } from "../../application/use-cases/invoice.use-case";
@@ -127,9 +131,20 @@ export class PublicInvoiceController {
   @ApiOperation({ summary: "Download invoice PDF" })
   async downloadInvoice(
     @Param("id") id: string,
+    @Query("token") token: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
-    const stream = await this.invoiceUseCase.getDownloadStreamDirect(id);
+    if (!token) throw new UnauthorizedException("Token required");
+    const payload = verifyDocumentToken(token);
+
+    if (!payload || payload.type !== "invoice" || payload.id !== id) {
+      throw new ForbiddenException("Invalid or expired link");
+    }
+
+    const stream = await this.invoiceUseCase.getDownloadStreamDirect(
+      id,
+      payload.orgId,
+    );
     res.header("Content-Type", "application/pdf");
     res.header("Content-Disposition", `attachment; filename=invoice-${id}.pdf`);
     return new StreamableFile(stream);
@@ -139,10 +154,20 @@ export class PublicInvoiceController {
   @ApiOperation({ summary: "Download receipt PDF" })
   async downloadReceipt(
     @Param("transactionId") transactionId: string,
+    @Query("token") token: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
-    const stream =
-      await this.invoiceUseCase.getReceiptDownloadStream(transactionId);
+    if (!token) throw new UnauthorizedException("Token required");
+    const payload = verifyDocumentToken(token);
+
+    if (!payload || payload.type !== "receipt" || payload.id !== transactionId) {
+      throw new ForbiddenException("Invalid or expired link");
+    }
+
+    const stream = await this.invoiceUseCase.getReceiptDownloadStream(
+      transactionId,
+      payload.orgId,
+    );
     res.header("Content-Type", "application/pdf");
     res.header(
       "Content-Disposition",

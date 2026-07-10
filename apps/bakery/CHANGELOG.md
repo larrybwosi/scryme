@@ -1,18 +1,16 @@
 # bakery
 
-## 8.8.0
+## 9.0.0
+
+### Major Changes
+
+- 1d47ac9: Update
 
 ### Minor Changes
 
-- a47ab8c: some
+- 02475f8: nothing
 
 ## 8.7.0
-
-### Minor Changes
-
-- 0accae5: nothing
-
-## 8.6.0
 
 ### Minor Changes
 
