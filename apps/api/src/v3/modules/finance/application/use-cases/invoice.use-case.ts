@@ -378,9 +378,10 @@ export class InvoiceUseCase {
     return null;
   }
 
-  async getDownloadStreamDirect(invoiceId: string) {
-    const invoice = await this.prisma.client.invoice.findUnique({
-      where: { id: invoiceId },
+  async getDownloadStreamDirect(invoiceId: string, organizationId: string) {
+    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    const invoice = await this.prisma.client.invoice.findFirst({
+      where: { id: invoiceId, organizationId },
       include: {
         transaction: {
           include: {
@@ -469,9 +470,10 @@ export class InvoiceUseCase {
     return this.documentService.generateInvoicePDF(invoiceData);
   }
 
-  async getReceiptDownloadStream(transactionId: string) {
-    const transaction = await this.prisma.client.transaction.findUnique({
-      where: { id: transactionId },
+  async getReceiptDownloadStream(transactionId: string, organizationId: string) {
+    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId },
       include: {
         attachments: true,
         items: true,
