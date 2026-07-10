@@ -30,10 +30,8 @@ export class ScrymeController {
   @Post("webhook")
   async handleWebhook(
     @Body() payload: any,
-    @Headers("x-webhook-signature") webhookSig?: string,
-    @Headers("x-scryme-signature") legacySig?: string,
+    @Headers("x-scryme-signature") signature: string,
   ) {
-    const signature = webhookSig || legacySig || '';
     return this.scrymeService.handleWebhook(signature, payload);
   }
 
