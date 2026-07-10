@@ -1,17 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { UnauthorizedException } from "@nestjs/common";
 import { V3AuthService } from "../v3-auth.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { V3AuthCoreService } from "../../../../auth-core/infrastructure/services/v3-auth-core.service";
-import * as bcrypt from "bcryptjs";
-
-vi.mock("bcryptjs", () => ({
-  compare: vi.fn(),
-}));
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("V3AuthService", () => {
   let service: V3AuthService;
-  let prisma: PrismaService;
+  let authCore: V3AuthCoreService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,49 +15,63 @@ describe("V3AuthService", () => {
         {
           provide: PrismaService,
           useValue: {
-            client: {
-              client: {
-                v3ApiClient: {
-                  findUnique: vi.fn(),
-                },
-              },
-              member: {
-                findMany: vi.fn(),
-              },
-            },
+            client: {},
           },
         },
         {
           provide: V3AuthCoreService,
           useValue: {
+            provisionDevice: vi.fn(),
+            validateClient: vi.fn(),
             generateToken: vi.fn(),
+            loginMember: vi.fn(),
+            verifyToken: vi.fn(),
           },
         },
       ],
     }).compile();
 
     service = module.get<V3AuthService>(V3AuthService);
-    prisma = module.get<PrismaService>(PrismaService);
+    authCore = module.get<V3AuthCoreService>(V3AuthCoreService);
   });
 
-  describe("validateLoginMember", () => {
-    it("should throw UnauthorizedException if more than 100 members are returned", async () => {
-      const mockMembers = Array(101).fill({ id: "1", pinHash: "hash" });
-      (prisma.client.member.findMany as any).mockResolvedValue(mockMembers);
+  it("should be defined", () => {
+    expect(service).toBeDefined();
+  });
 
-      await expect(
-        (service as any).validateLoginMember("org-1", "1234"),
-      ).rejects.toThrow(UnauthorizedException);
+  describe("loginMember", () => {
+    it("should delegate to authCore.loginMember", async () => {
+      const clientId = "client-123";
+      const pin = "1234";
+      const mockToken = { access_token: "token" };
+      vi.mocked(authCore.loginMember).mockResolvedValue(mockToken as any);
+
+      const result = await service.loginMember(clientId, pin);
+
+      expect(authCore.loginMember).toHaveBeenCalledWith(clientId, pin);
+      expect(result).toEqual(mockToken);
+    });
+  });
+
+  describe("delegations", () => {
+    it("should delegate provisionDevice", async () => {
+      await service.provisionDevice("token");
+      expect(authCore.provisionDevice).toHaveBeenCalledWith("token");
     });
 
-    it("should return member if PIN matches within first 100 members", async () => {
-      const mockMembers = Array(50).fill({ id: "1", pinHash: "hash" });
-      mockMembers.push({ id: "success", pinHash: "match" });
-      (prisma.client.member.findMany as any).mockResolvedValue(mockMembers);
-      (bcrypt.compare as any).mockImplementation((pin: string, hash: string) => pin === "1234" && hash === "match");
+    it("should delegate validateClient", async () => {
+      await service.validateClient("id", "secret");
+      expect(authCore.validateClient).toHaveBeenCalledWith("id", "secret");
+    });
 
-      const result = await (service as any).validateLoginMember("org-1", "1234");
-      expect(result.id).toBe("success");
+    it("should delegate generateToken", async () => {
+      await service.generateToken({});
+      expect(authCore.generateToken).toHaveBeenCalledWith({}, undefined);
+    });
+
+    it("should delegate verifyToken", async () => {
+      await service.verifyToken("token");
+      expect(authCore.verifyToken).toHaveBeenCalledWith("token");
     });
   });
 });

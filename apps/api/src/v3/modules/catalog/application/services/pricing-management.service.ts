@@ -100,6 +100,10 @@ export class PricingManagementService {
     });
 
     // 5. Find all PriceListItems for this variant that belong to auto-sync PriceLists
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad 'include' with targeted 'select' and removed
+     * redundant 'priceList' join as 'organizationId' is already validated.
+     */
     const affectedItems = await client.priceListItem.findMany({
       where: {
         variantId,
@@ -109,24 +113,49 @@ export class PricingManagementService {
           isActive: true,
         },
       },
-      include: {
-        priceList: true,
+      select: {
+        id: true,
+        price: true,
+        method: true,
+        percentageValue: true,
       },
     });
 
-    for (const item of affectedItems) {
-      await this.processItemPriceUpdate(
-        {
-          item,
-          oldCost,
-          newCost: activeCost,
-          settings,
-          source,
-          sourceId,
-        },
-        client,
-      );
-    }
+    if (affectedItems.length === 0) return;
+
+    /**
+     * OPTIMIZATION (Bolt ⚡): Batched pre-fetching of existing price change requests
+     * to eliminate N+1 queries during the update loop.
+     */
+    const existingRequests = await client.priceChangeRequest.findMany({
+      where: {
+        priceListItemId: { in: affectedItems.map((i) => i.id) },
+        status: PriceChangeStatus.PENDING,
+      },
+    });
+
+    const requestsMap = new Map(existingRequests.map((r) => [r.priceListItemId, r]));
+
+    /**
+     * OPTIMIZATION (Bolt ⚡): Parallelizing price updates using Promise.all to reduce
+     * total execution time from O(N) to O(1) database roundtrip latency.
+     */
+    await Promise.all(
+      affectedItems.map((item) =>
+        this.processItemPriceUpdate(
+          {
+            item,
+            oldCost,
+            newCost: activeCost,
+            settings,
+            source,
+            sourceId,
+            existingRequest: requestsMap.get(item.id),
+          },
+          client,
+        ),
+      ),
+    );
   }
 
   private async resolveActiveCost(
@@ -182,10 +211,19 @@ export class PricingManagementService {
       settings: any;
       source: string;
       sourceId?: string;
+      existingRequest?: any;
     },
     client: PrismaTransaction,
   ) {
-    const { item, oldCost, newCost, settings, source, sourceId } = params;
+    const {
+      item,
+      oldCost,
+      newCost,
+      settings,
+      source,
+      sourceId,
+      existingRequest,
+    } = params;
     const oldPrice = Number(item.price);
 
     let proposedPrice: number;
@@ -234,6 +272,7 @@ export class PricingManagementService {
             newMargin,
             settings,
           ),
+          existingRequest,
         },
         client,
       );
@@ -281,7 +320,21 @@ export class PricingManagementService {
     return reasons.join(", ");
   }
 
-  private async createPriceChangeRequest(data: any, client: PrismaTransaction) {
+  private async createPriceChangeRequest(
+    data: {
+      organizationId: string;
+      item: any;
+      oldPrice: number;
+      newPrice: number;
+      oldCost: number;
+      newCost: number;
+      source: string;
+      sourceId?: string;
+      reason: string;
+      existingRequest?: any;
+    },
+    client: PrismaTransaction,
+  ) {
     const {
       organizationId,
       item,
@@ -292,19 +345,14 @@ export class PricingManagementService {
       source,
       sourceId,
       reason,
+      existingRequest,
     } = data;
 
-    // Check if there's already a pending request for this item to avoid duplicates
-    const existing = await client.priceChangeRequest.findFirst({
-      where: {
-        priceListItemId: item.id,
-        status: PriceChangeStatus.PENDING,
-      },
-    });
-
-    if (existing) {
+    // ⚡ Bolt Optimization: Use the pre-fetched existingRequest to eliminate
+    // the findFirst query inside the loop.
+    if (existingRequest) {
       await client.priceChangeRequest.update({
-        where: { id: existing.id },
+        where: { id: existingRequest.id },
         data: {
           newPrice,
           newCost,
