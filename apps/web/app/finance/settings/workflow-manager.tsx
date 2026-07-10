@@ -17,6 +17,7 @@ import {
   MapPin,
   Tag as TagIcon,
   DollarSign,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -41,6 +42,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
   createApprovalWorkflow,
@@ -62,6 +73,7 @@ export function WorkflowManager({
 }) {
   const [workflows, setWorkflows] = useState(initialWorkflows);
   const [editingWorkflow, setEditingWorkflow] = useState<any>(null);
+  const [workflowToDelete, setWorkflowToDelete] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleAddWorkflow = () => {
@@ -112,13 +124,18 @@ export function WorkflowManager({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this workflow?")) return;
+    setWorkflowToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!workflowToDelete) return;
 
     startTransition(async () => {
       try {
-        await deleteApprovalWorkflow(id);
-        setWorkflows(workflows.filter(w => w.id !== id));
+        await deleteApprovalWorkflow(workflowToDelete);
+        setWorkflows(workflows.filter(w => w.id !== workflowToDelete));
         toast.success("Workflow deleted");
+        setWorkflowToDelete(null);
       } catch (error) {
         toast.error("Failed to delete workflow");
       }
@@ -795,6 +812,39 @@ export function WorkflowManager({
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={!!workflowToDelete}
+        onOpenChange={open => !open && setWorkflowToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workflow</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this workflow? This action cannot
+              be undone and may affect pending approvals.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Workflow"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
