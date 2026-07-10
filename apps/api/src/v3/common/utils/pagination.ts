@@ -24,9 +24,7 @@ export class PaginationQueryDto {
   cursor?: string;
 }
 
-export class PaginatedResponse<T> {
-  data: T[];
-
+export class PaginationMetaDto {
   @ApiProperty()
   total: number;
 
@@ -38,6 +36,13 @@ export class PaginatedResponse<T> {
 
   @ApiProperty()
   nextCursor?: string;
+}
+
+export class PaginatedResponse<T> {
+  data: T[];
+
+  @ApiProperty({ type: PaginationMetaDto })
+  meta: PaginationMetaDto;
 }
 
 /**
@@ -77,9 +82,11 @@ export async function paginate<T>(
 
   return {
     data,
-    total,
-    limit,
-    offset: cursor ? undefined : offset,
-    nextCursor,
+    meta: {
+      total,
+      limit,
+      offset: cursor ? undefined : offset,
+      nextCursor,
+    },
   };
 }

@@ -98,7 +98,10 @@ describe("BakeryService.completeBatch", () => {
 
     // Verify stock batch pre-fetch
     expect(mockTx.stockBatch.findMany).toHaveBeenCalledWith({
-      where: { id: { in: ["sb-1", "sb-2", "sb-1"] } },
+      where: {
+        id: { in: ["sb-1", "sb-2", "sb-1"] },
+        organizationId: "org-1",
+      },
     });
 
     // Verify batch createMany

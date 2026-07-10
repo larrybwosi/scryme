@@ -34,7 +34,8 @@ export class ScrymeNotificationService {
     const workspaceSlug = order.organization.scrymeConfiguration.workspaceSlug;
     if (!workspaceSlug) return;
 
-    const crmBaseUrl = process.env.NEXT_PUBLIC_CRM_URL || "http://localhost:3001";
+    const crmBaseUrl =
+      process.env.NEXT_PUBLIC_CRM_URL || "http://localhost:3001";
     const orderUrl = `${crmBaseUrl}/orders/${order.id}`;
 
     // 1. Identify target channels
@@ -53,17 +54,22 @@ export class ScrymeNotificationService {
     }
 
     // 2. Construct the message
-    const customerName = order.customer?.name || order.businessAccount?.name || "Guest Customer";
+    const customerName =
+      order.customer?.name || order.businessAccount?.name || "Guest Customer";
     let itemsList = order.items
-      .map((item) => `• ${item.productName} x ${item.quantity.toString()} (@ ${order.currencyCode} ${item.unitPrice.toString()})`)
+      .map(
+        item =>
+          `• ${item.productName} x ${item.quantity.toString()} (@ ${order.currencyCode} ${item.unitPrice.toString()})`,
+      )
       .join("\n");
 
     if (order.items.length > 5) {
       const remaining = order.items.length - 5;
-      itemsList = order.items
-        .slice(0, 5)
-        .map((item) => `• ${item.productName} x ${item.quantity.toString()}`)
-        .join("\n") + `\n... and ${remaining} more items`;
+      itemsList =
+        order.items
+          .slice(0, 5)
+          .map(item => `• ${item.productName} x ${item.quantity.toString()}`)
+          .join("\n") + `\n... and ${remaining} more items`;
     }
 
     const content =
@@ -86,10 +92,14 @@ export class ScrymeNotificationService {
     // 3. Send to all identified channels
     for (const channelSlug of channels) {
       try {
-        const message = await this.scrymeClient.sendMessage(workspaceSlug, channelSlug, {
-          content,
-          actions,
-        });
+        const message = await this.scrymeClient.sendMessage(
+          workspaceSlug,
+          channelSlug,
+          {
+            content,
+            actions,
+          },
+        );
 
         // Log the message for tracking
         await this.prisma.client.scrymeMessage.create({

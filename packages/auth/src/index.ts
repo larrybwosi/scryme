@@ -1,4 +1,5 @@
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { jwt } from "better-auth/plugins";
 import { db, UserRole } from "@repo/db";
 import { env } from "@repo/env";
 
@@ -20,6 +21,7 @@ export const authOptions = {
       clientSecret: env.GOOGLE_CLIENT_SECRET || "default",
     },
   },
+  plugins: [jwt()],
 };
 // Export Permissions
 export * from "./permissions/constants";

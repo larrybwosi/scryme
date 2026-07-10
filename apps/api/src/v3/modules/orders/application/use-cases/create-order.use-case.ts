@@ -6,13 +6,13 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "@/common/services/realtime.service";
-import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
 import { emitOrderPlaced } from "@repo/windmill/server";
 import { createOrder } from "@repo/shared/actions";
 import { CreateOrderInput, OrderTransactionStatus } from "@repo/shared/lib";
 import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
 import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
 import { CreateOrderDto } from "../dto/create-order.dto";
+import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
 
 @Injectable()
 export class CreateOrderUseCase {

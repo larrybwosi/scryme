@@ -34,8 +34,6 @@
   "packageManager": "pnpm@10.34.1",
   "name": "scryme",
   "dependencies": {
-    "@swc/core": "^1.15.43",
-    "ably": "^2.21.0",
     "axios": "^1.16.1",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",

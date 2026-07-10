@@ -74,6 +74,7 @@ export class V3AuthCoreService {
       clientId: client.clientId,
       organizationId: client.organizationId,
       orgSlug: client.organization.slug,
+      businessAccountId: client.businessAccountId,
       scopes: client.scopes,
       type: "v3_client",
     } as any;

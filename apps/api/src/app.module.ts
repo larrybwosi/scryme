@@ -5,7 +5,7 @@ import {
   NestModule,
 } from "@nestjs/common";
 import { APP_GUARD, RouterModule } from "@nestjs/core";
-import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { GraphQLModule } from "@nestjs/graphql";
 import { MercuriusDriver, MercuriusDriverConfig } from "@nestjs/mercurius";
 import { AppController } from "./app.controller";
@@ -29,6 +29,11 @@ import { BullModule } from "@nestjs/bullmq";
 import { ScheduleModule } from "@nestjs/schedule";
 import { env } from "@repo/env";
 
+// High demand resilience & multi-tenancy throttling imports
+import { RedisService } from "./redis/redis.service";
+import { RedisThrottlerStorage } from "./common/throttling/redis-throttler-storage";
+import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-throttler.guard";
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -38,12 +43,19 @@ import { env } from "@repo/env";
         port: env.REDIS_PORT,
       },
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisService],
+      useFactory: (redis: RedisService) => ({
+        throttlers: [
+          {
+            ttl: 60000,
+            limit: 100,
+          },
+        ],
+        storage: new RedisThrottlerStorage(redis),
+      }),
+    }),
     GraphQLModule.forRoot<MercuriusDriverConfig>({
       driver: MercuriusDriver,
       autoSchemaFile: true,
@@ -82,7 +94,7 @@ import { env } from "@repo/env";
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: MultiTenantThrottlerGuard,
     },
     {
       provide: APP_GUARD,

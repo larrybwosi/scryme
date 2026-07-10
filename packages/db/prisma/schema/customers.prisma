@@ -87,6 +87,7 @@ model BusinessAccount {
 
   // B2B Connections
   b2bConnections B2BConnection[] @relation("BusinessAccountB2BConnections")
+  v3ApiClients   V3ApiClient[]
 
   @@index([organizationId])
   @@map("business_account")

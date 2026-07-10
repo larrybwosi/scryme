@@ -29,18 +29,26 @@
 **Learning:** Native `window.confirm` in the CRM module created a disjointed experience compared to other apps in the monorepo. Lack of loading states during optimistic deletion could lead to race conditions or user confusion if the background request failed after the UI element was hidden.
 **Action:** Standardize destructive actions with themed `AlertDialog`. Ensure `Loader2` feedback is present in the confirmation button and that state cleanups (closing dialog, resetting selection) occur in `finally` blocks to handle both success and error paths gracefully. Always wrap icon-only pagination and action triggers in `Tooltip` with `aria-label`.
 
-## 2026-06-28 - [Standardized Deletion UX in Location Zones]
+## 2025-06-28 - [Standardized Deletion UX in Location Zones]
 **Learning:** Using native `confirm()` for destructive actions felt disjointed from the rest of the application's design system. Additionally, the lack of a loading state during the asynchronous deletion process could lead to user uncertainty or double-clicks.
 **Action:** Replace native `confirm()` with themed `AlertDialog`. Implement `isDeleting` state to show a `Loader2` spinner and disable action buttons during the deletion process to provide immediate, consistent feedback.
 
-## 2026-06-29 - [Standardized Deletion UX in Driver Table]
+## 2025-06-29 - [Standardized Deletion UX in Driver Table]
 **Learning:** The Driver Table was using native `confirm()` for destructive actions, which was inconsistent with the rest of the application's design system and lacked accessibility features. Additionally, there was no visual feedback during the asynchronous deletion process.
 **Action:** Replace native `confirm()` with themed `AlertDialog`. Implement `isDeleting` state to show a `Loader2` spinner and disable action buttons during the deletion process. Wrap icon-only dropdown triggers in `Tooltip` and provide a descriptive `aria-label` for screen readers.
 
-## 2026-06-30 - [Leveraging Shared Confirmation Providers in Bakery]
+## 2025-06-30 - [Leveraging Shared Confirmation Providers in Bakery]
 **Learning:** While implementing custom `AlertDialog` states provides full control, it often exceeds PR line limits and duplicates logic already present in shared providers. The Bakery app has a `DeleteConfirmationProvider` that encapsulates the `AlertDialog` logic into a simple async hook.
 **Action:** Before implementing custom confirmation state, check for existing context-based confirmation providers (like `useDeleteConfirmation`). Use these to reduce boilerplate and keep PRs focused and under the line limit. Always add `aria-label` to icon-only triggers.
 
-## 2025-05-15 - [Nesting Tooltip with DropdownMenu]
-**Learning:** In this design system (Radix-based), when adding a tooltip to a dropdown trigger, the Tooltip must be nested inside the DropdownMenu but outside the DropdownMenuTrigger. Both triggers must use `asChild` to avoid DOM bloat and ensure events like clicks and hovers propagate correctly to both components.
-**Action:** Use the pattern: `<DropdownMenu><Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild>...`
+## 2025-06-30 - [Unified Destructive Actions & Loading Feedback in Web]
+**Learning:** Native `confirm()` is inconsistent with the monorepo's design language and lacks built-in support for loading states. When a component has multiple destructive actions (e.g., Revoke and Delete), a single `AlertDialog` with dynamic content can maintain UX clarity while keeping the code DRY and within line limits.
+**Action:** Replace `confirm()` with `AlertDialog`. Use `pendingAction` state to manage dynamic titles, descriptions, and action logic. Always include `Loader2` feedback in the `AlertDialogAction` button.
+
+## 2025-07-08 - [Selection State Synchronization After Deletion]
+**Learning:** When using `AlertDialog` for destructive actions that affect selected items, it's critical to synchronize the selection state immediately after a successful operation. Failing to clear or filter `selectedVariants` (or similar collection states) can lead to stale UI indicators (e.g., "Delete Selected (1)" still showing after the item was removed).
+**Action:** Always filter or clear selection state in the `finally` or success block of a deletion operation: `setSelectedItems(prev => prev.filter(id => !deletedIds.includes(id)))`.
+
+## 2026-07-08 - [Standardized Developer Settings UX]
+**Learning:** Native `confirm()` in developer settings felt inconsistent and lacked asynchronous feedback. Icon-only actions for copying and deleting lacked accessibility features and tooltips.
+**Action:** Replace native `confirm()` with themed `AlertDialog`. Include `Loader2` feedback in destructive action buttons. Wrap icon-only triggers in `Tooltip` and provide descriptive `aria-label` attributes.
