@@ -16,6 +16,7 @@ import {
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { BusinessAccountService } from "@/v3/modules/customers/application/use-cases/business-account.service";
+import { CreateBusinessAccountDto } from "../../application/dto/business-account.dto";
 
 @ApiTags("V3 Business Accounts")
 @ApiBearerAuth()
@@ -28,7 +29,7 @@ export class BusinessAccountController {
 
   @Post()
   @ApiOperation({ summary: "Create a new B2B business account" })
-  async create(@Request() req: any, @Body() body: any) {
+  async create(@Request() req: any, @Body() body: CreateBusinessAccountDto) {
     return this.businessAccountService.createBusinessAccount(
       req.organization.id,
       body,
