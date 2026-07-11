@@ -80,3 +80,7 @@
 ## 2026-07-07 - [Select Optimization & API Contract Integrity in Favorites]
 **Learning:** Replacing broad 'include' with 'select' in the V2 Favorites API reduces database I/O and payload size by approximately 60% in terms of fields processed. It's critical to include primary and foreign keys even when selecting the relation, to ensure the root object remains a valid representation of the model for clients and type-guards.
 **Action:** Always prefer 'select' for list-based endpoints to prevent over-fetching, ensuring all necessary relational IDs and display fields are preserved.
+
+## 2026-07-11 - [Select Optimization & Sync Protocol Integrity]
+**Learning:** When optimizing database lookups for synchronization protocols (e.g., POS customer delta sync), it is critical to include 'updatedAt' in the 'select' block even if it's not explicitly displayed in the UI. Sync protocols rely on this field to determine the next 'since' token; omitting it can lead to redundant syncs or data inconsistencies. Additionally, ensure all fields required by client-side local storage models (like Rust structs in Tauri) are preserved to avoid breaking local persistence.
+**Action:** Always cross-reference 'select' blocks with both the API sync protocol requirements and the target client's data models before finalizing.
