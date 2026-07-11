@@ -39,6 +39,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Label } from "@repo/ui/components/ui/label";
 import { Textarea } from "@repo/ui/components/ui/textarea";
@@ -68,6 +83,10 @@ export function DeviceList({ devices }: { devices: any[] }) {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [jsonPermissions, setJsonPermissions] = useState("");
   const [isJsonMode, setIsJsonMode] = useState(false);
+  const [confirmationAction, setConfirmationAction] = useState<{
+    device: any;
+    type: "revoke" | "delete";
+  } | null>(null);
 
   const handleEditPermissions = (device: any) => {
     setSelectedDevice(device);
@@ -109,28 +128,30 @@ export function DeviceList({ devices }: { devices: any[] }) {
     });
   };
 
-  const handleRevoke = (deviceId: string) => {
-    if (!confirm("Are you sure you want to revoke this device's access?"))
-      return;
-    startTransition(async () => {
-      try {
-        await revokeDevice(deviceId);
-        toast.success("Device access revoked");
-      } catch (error) {
-        toast.error("Failed to revoke device access");
-      }
-    });
+  const handleRevoke = (device: any) => {
+    setConfirmationAction({ device, type: "revoke" });
   };
 
-  const handleDelete = (deviceId: string) => {
-    if (!confirm("Are you sure you want to delete this device registry?"))
-      return;
+  const handleDelete = (device: any) => {
+    setConfirmationAction({ device, type: "delete" });
+  };
+
+  const onConfirmAction = () => {
+    if (!confirmationAction) return;
+    const { device, type } = confirmationAction;
+
     startTransition(async () => {
       try {
-        await deleteDevice(deviceId);
-        toast.success("Device deleted");
+        if (type === "revoke") {
+          await revokeDevice(device.id);
+          toast.success("Device access revoked");
+        } else {
+          await deleteDevice(device.id);
+          toast.success("Device deleted");
+        }
+        setConfirmationAction(null);
       } catch (error) {
-        toast.error("Failed to delete device");
+        toast.error(`Failed to ${type} device`);
       }
     });
   };
@@ -214,11 +235,19 @@ export function DeviceList({ devices }: { devices: any[] }) {
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            aria-label="More actions">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>More actions</TooltipContent>
+                    </Tooltip>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem
@@ -229,13 +258,13 @@ export function DeviceList({ devices }: { devices: any[] }) {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-amber-600"
-                        onClick={() => handleRevoke(device.id)}>
+                        onClick={() => handleRevoke(device)}>
                         <Ban className="mr-2 h-4 w-4" />
                         Revoke Access
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => handleDelete(device.id)}>
+                        onClick={() => handleDelete(device)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Device
                       </DropdownMenuItem>
@@ -331,6 +360,62 @@ export function DeviceList({ devices }: { devices: any[] }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!confirmationAction}
+        onOpenChange={open => !open && setConfirmationAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmationAction?.type === "revoke"
+                ? "Revoke Device Access"
+                : "Delete Device Registry"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmationAction?.type === "revoke" ? (
+                <>
+                  Are you sure you want to revoke access for{" "}
+                  <strong>{confirmationAction?.device?.deviceName}</strong>? The
+                  device will be logged out immediately.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to delete the registry for{" "}
+                  <strong>{confirmationAction?.device?.deviceName}</strong>? This
+                  will remove all associated data and access keys.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => {
+                e.preventDefault();
+                onConfirmAction();
+              }}
+              disabled={isPending}
+              className={
+                confirmationAction?.type === "delete"
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-amber-600 hover:bg-amber-700 text-white"
+              }>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {confirmationAction?.type === "revoke"
+                    ? "Revoking..."
+                    : "Deleting..."}
+                </>
+              ) : confirmationAction?.type === "revoke" ? (
+                "Revoke Access"
+              ) : (
+                "Delete Device"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

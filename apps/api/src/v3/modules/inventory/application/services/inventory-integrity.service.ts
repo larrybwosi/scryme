@@ -36,8 +36,9 @@ export class InventoryIntegrityService {
        */
       const variantIds = variants.map((v) => v.id);
       const [allStocks, allBatches] = await Promise.all([
+        // 🛡️ Sentinel: IDOR Prevention - Scope lookup with organizationId
         this.prisma.client.productVariantStock.findMany({
-          where: { variantId: { in: variantIds } },
+          where: { variantId: { in: variantIds }, organizationId },
           select: {
             variantId: true,
             locationId: true,
@@ -47,6 +48,7 @@ export class InventoryIntegrityService {
         this.prisma.client.stockBatch.findMany({
           where: {
             variantId: { in: variantIds },
+            organizationId,
             currentQuantity: { gt: 0 },
           },
           select: {
@@ -107,10 +109,11 @@ export class InventoryIntegrityService {
     const issues = [];
 
     // 1. Check Stock Summary vs Batches
+    // 🛡️ Sentinel: IDOR Prevention - Scope lookup with organizationId
     const stocks =
       preFetchedStocks ||
       (await this.prisma.client.productVariantStock.findMany({
-        where: { variantId },
+        where: { variantId, organizationId },
       }));
 
     for (const stock of stocks) {
@@ -120,6 +123,7 @@ export class InventoryIntegrityService {
           where: {
             variantId,
             locationId: stock.locationId,
+            organizationId,
             currentQuantity: { gt: 0 },
           },
         }));
@@ -150,8 +154,9 @@ export class InventoryIntegrityService {
     variantId: string,
     locationId: string,
   ) {
+    // 🛡️ Sentinel: IDOR Prevention - Scope lookup with organizationId
     const batches = await this.prisma.client.stockBatch.findMany({
-      where: { variantId, locationId, currentQuantity: { gt: 0 } },
+      where: { variantId, locationId, organizationId, currentQuantity: { gt: 0 } },
     });
 
     const totalBatchQty = batches.reduce(
@@ -159,8 +164,9 @@ export class InventoryIntegrityService {
       0,
     );
 
-    await this.prisma.client.productVariantStock.update({
-      where: { variantId_locationId: { variantId, locationId } },
+    // 🛡️ Sentinel: IDOR Prevention - Use updateMany with organizationId filter
+    await this.prisma.client.productVariantStock.updateMany({
+      where: { variantId, locationId, organizationId },
       data: {
         currentStock: totalBatchQty,
         availableStock: totalBatchQty,
