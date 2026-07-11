@@ -15,6 +15,40 @@ export class AssemblyUseCase {
       items: { variantId: string; quantity: number; stockBatchId?: string }[];
     }
   ) {
+    // 1. Verify target variant ownership
+    const targetVariant = await this.prisma.client.productVariant.findFirst({
+      where: { id: data.variantId, product: { organizationId } },
+    });
+    if (!targetVariant) {
+      throw new NotFoundException('Target variant not found or does not belong to your organization');
+    }
+
+    // 2. Verify component variants ownership
+    const componentVariantIds = Array.from(new Set(data.items.map(i => i.variantId)));
+    const componentVariantsCount = await this.prisma.client.productVariant.count({
+      where: {
+        id: { in: componentVariantIds },
+        product: { organizationId },
+      },
+    });
+    if (componentVariantsCount !== componentVariantIds.length) {
+      throw new BadRequestException('One or more component variants are invalid or do not belong to your organization');
+    }
+
+    // 3. Verify stock batches ownership (if provided)
+    const batchIds = Array.from(new Set(data.items.map(i => i.stockBatchId).filter((id): id is string => !!id)));
+    if (batchIds.length > 0) {
+      const batchesCount = await this.prisma.client.stockBatch.count({
+        where: {
+          id: { in: batchIds },
+          organizationId,
+        },
+      });
+      if (batchesCount !== batchIds.length) {
+        throw new BadRequestException('One or more stock batches are invalid or do not belong to your organization');
+      }
+    }
+
     const assemblyNumber = `ASY-${Date.now()}`;
 
     return this.prisma.client.assembly.create({
@@ -51,12 +85,14 @@ export class AssemblyUseCase {
         throw new NotFoundException('Location not found or does not belong to your organization');
       }
 
-      const assembly = await tx.assembly.findUnique({
+      const assembly = await tx.assembly.findFirst({
         where: { id: assemblyId, organizationId },
         include: { items: true },
       });
 
-      if (!assembly) throw new NotFoundException('Assembly not found');
+      if (!assembly) {
+        throw new NotFoundException('Assembly not found or does not belong to your organization');
+      }
       if (assembly.status !== 'PLANNED' && assembly.status !== 'IN_PROGRESS') {
         throw new BadRequestException('Assembly is already completed or cancelled');
       }
@@ -65,19 +101,18 @@ export class AssemblyUseCase {
       for (const item of assembly.items) {
         // If specific batch was selected, deduct from it
         if (item.stockBatchId) {
-          await tx.stockBatch.update({
-            where: { id: item.stockBatchId },
+          await tx.stockBatch.updateMany({
+            where: { id: item.stockBatchId, organizationId },
             data: { currentQuantity: { decrement: item.quantity } },
           });
         }
 
         // Update summary stock
-        await tx.productVariantStock.update({
+        await tx.productVariantStock.updateMany({
           where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId, // Assuming components are in the same location
-            },
+            variantId: item.variantId,
+            locationId, // Assuming components are in the same location
+            organizationId,
           },
           data: {
             currentStock: { decrement: item.quantity },
@@ -119,6 +154,11 @@ export class AssemblyUseCase {
       });
 
       // Update summary stock for result
+      const targetVariantRecord = await tx.productVariant.findFirstOrThrow({
+        where: { id: assembly.variantId, product: { organizationId } },
+        select: { productId: true },
+      });
+
       await tx.productVariantStock.upsert({
         where: {
           variantId_locationId: {
@@ -128,7 +168,7 @@ export class AssemblyUseCase {
         },
         create: {
           organizationId,
-          productId: (await tx.productVariant.findUnique({ where: { id: assembly.variantId } }))!.productId,
+          productId: targetVariantRecord.productId,
           variantId: assembly.variantId,
           locationId,
           currentStock: assembly.quantity,
@@ -158,12 +198,16 @@ export class AssemblyUseCase {
       });
 
       // 3. Update assembly status
-      return tx.assembly.update({
-        where: { id: assemblyId },
+      await tx.assembly.updateMany({
+        where: { id: assemblyId, organizationId },
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),
         },
+      });
+
+      return tx.assembly.findFirst({
+        where: { id: assemblyId, organizationId },
       });
     });
   }
