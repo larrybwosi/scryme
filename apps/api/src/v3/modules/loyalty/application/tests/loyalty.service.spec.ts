@@ -14,15 +14,19 @@ const { mockPrisma } = vi.hoisted(() => ({
     },
     customer: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      findFirstOrThrow: vi.fn(),
       update: vi.fn(),
     },
     loyaltyTransaction: {
       create: vi.fn(),
     },
     loyaltyReward: {
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
     loyaltyVoucher: {
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
