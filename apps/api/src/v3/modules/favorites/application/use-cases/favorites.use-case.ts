@@ -15,7 +15,37 @@ export class FavoritesUseCase {
     if (!customerId) throw new BadRequestException("customerId is required");
     return this.prisma.client.favorite.findMany({
       where: { organizationId, customerId },
-      include: { product: true },
+      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // and network payload size by excluding the large 'description' and other relational fields.
+      // Selection expanded to include variants to maintain consistency with V2 and prevent UI regressions.
+      select: {
+        id: true,
+        productId: true,
+        customerId: true,
+        organizationId: true,
+        createdAt: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            imageUrls: true,
+            categoryId: true,
+            category: { select: { id: true, name: true } },
+            variants: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                retailPrice: true,
+                buyingPrice: true,
+                baseUnit: true,
+                baseOrgUnit: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 
