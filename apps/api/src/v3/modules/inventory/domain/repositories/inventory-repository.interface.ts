@@ -6,7 +6,11 @@ export interface IInventoryRepository {
     organizationId: string,
     pagination?: PaginationQueryDto,
   ): Promise<InventoryItem[]>;
-  findByLocation(locationId: string): Promise<InventoryItem[]>;
+  findByLocation(
+    organizationId: string,
+    locationId: string,
+    pagination?: PaginationQueryDto,
+  ): Promise<InventoryItem[]>;
   updateQuantity(id: string, delta: number): Promise<InventoryItem>;
 }
 
