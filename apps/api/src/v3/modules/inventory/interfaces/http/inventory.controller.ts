@@ -121,10 +121,12 @@ export class InventoryController {
   async getInventory(
     @Req() req: any,
     @Query() paginationQuery: PaginationQueryDto,
+    @Query("locationId") locationId?: string,
   ) {
     return this.getInventoryUseCase.execute(
       req.organization.id,
       paginationQuery,
+      locationId,
     );
   }
 

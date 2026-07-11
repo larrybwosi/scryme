@@ -9,7 +9,19 @@ export class GetInventoryUseCase {
     private readonly inventoryRepository: IInventoryRepository,
   ) {}
 
-  async execute(organizationId: string, paginationQuery: PaginationQueryDto) {
+  async execute(
+    organizationId: string,
+    paginationQuery: PaginationQueryDto,
+    locationId?: string,
+  ) {
+    if (locationId) {
+      return this.inventoryRepository.findByLocation(
+        organizationId,
+        locationId,
+        paginationQuery,
+      );
+    }
+
     return this.inventoryRepository.findByOrganization(
       organizationId,
       paginationQuery,
