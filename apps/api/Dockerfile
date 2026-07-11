@@ -89,6 +89,7 @@ COPY --from=installer --chown=nestjs:nodejs /app/packages/db/package.json ./pack
 
 # Copy entrypoint script safely from the pruner stage root
 COPY --from=pruner /app/entrypoint.sh ./entrypoint.sh
+USER root
 RUN chmod +x ./entrypoint.sh
 
 USER nestjs

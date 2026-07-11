@@ -78,6 +78,7 @@ COPY --from=pruner /app/out/full/apps/bakery/nginx.conf /etc/nginx/conf.d/defaul
 
 # Copy entrypoint script safely from the pruner stage root
 COPY --from=pruner /app/entrypoint.sh /entrypoint.sh
+USER root
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 3003

@@ -60,7 +60,7 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
     fi
 
     # Check if database is ready by executing a simple SELECT 1
-    until $PRISMA_BIN db execute --stdin "SELECT 1;" --schema "$SCHEMA_PATH" > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+    until echo "SELECT 1;" | $PRISMA_BIN db execute --stdin > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
       sleep 2
       COUNT=$((COUNT + 1))
       echo "Retry $COUNT/$MAX_RETRIES: Database not yet available..."
@@ -82,10 +82,10 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
       PRISMA_BIN="prisma"
     fi
 
-    $PRISMA_BIN migrate deploy --schema "$SCHEMA_PATH"
+    $PRISMA_BIN migrate deploy
 
     echo "Seeding database..."
-    $PRISMA_BIN db seed --schema "$SCHEMA_PATH"
+    $PRISMA_BIN db seed
   else
     echo "⚠️ DATABASE_URL not set, skipping migrations."
   fi
