@@ -28,6 +28,17 @@ describe("BakeryService Security", () => {
         findFirst: vi.fn(),
         update: vi.fn(),
       },
+      template: {
+        create: vi.fn(),
+        findUnique: vi.fn(),
+      },
+      stockReceipt: {
+        create: vi.fn(),
+      },
+      productVariant: {
+        findUnique: vi.fn(),
+        findFirst: vi.fn(),
+      },
       batch: {
         findUnique: vi.fn(),
         update: vi.fn(),
@@ -195,6 +206,55 @@ describe("BakeryService Security", () => {
 
       expect(mockPrisma.client.bakeryCategory.findFirst).toHaveBeenCalledWith({
         where: { id: "cat-1", organizationId: "org-1" },
+      });
+    });
+  });
+
+  describe("receiveIngredients", () => {
+    it("should prevent receiving stock for a variant from another organization (IDOR)", async () => {
+      mockPrisma.client.stockReceipt.create.mockResolvedValue({ id: "receipt-1" });
+      // In a vulnerable state, findUnique only checks ID, so it might return a variant
+      // even if it belongs to another org.
+      mockPrisma.client.productVariant.findUnique.mockResolvedValue({ productId: "p-1" });
+      mockPrisma.client.productVariant.findFirst.mockResolvedValue(null);
+
+      const data = {
+        receiptReference: "REF-1",
+        lines: [{ ingredientId: "other-org-variant", quantity: 10, unitCost: 5 }],
+      };
+
+      // If we use findFirst (the fix), it should throw NotFoundException because it won't find it in the current org
+      await expect(service.receiveIngredients(ctx, data)).rejects.toThrow(NotFoundException);
+
+      // We check that findFirst was called with organizationId scoping
+      expect(mockPrisma.client.productVariant.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "other-org-variant",
+          product: { organizationId: "org-1" }
+        },
+        select: { productId: true },
+      });
+    });
+  });
+
+  describe("createTemplate", () => {
+    it("should prevent mass assignment of organizationId", async () => {
+      mockPrisma.client.template.create.mockResolvedValue({ id: "template-1" });
+
+      await service.createTemplate(ctx, {
+        name: "My Template",
+        organizationId: "hacked-org",
+        recipeId: "recipe-1",
+        quantity: 10,
+      } as any);
+
+      // In a vulnerable state, it will be called with "hacked-org"
+      // We expect it to be called with "org-1" after the fix.
+      // For now, it fails because it's called with "hacked-org".
+      expect(mockPrisma.client.template.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: "org-1", // Should use the one from ctx
+        }),
       });
     });
   });
