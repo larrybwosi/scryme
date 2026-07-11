@@ -18,6 +18,8 @@ import {
   Tag as TagIcon,
   DollarSign,
   Loader2,
+  Play,
+  Send,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -57,8 +59,18 @@ import {
   createApprovalWorkflow,
   updateApprovalWorkflow,
   deleteApprovalWorkflow,
+  testWorkflowAction,
+  sendTestScrymeMessageAction,
 } from "@/app/actions/finance-settings";
 import { cn } from "@repo/ui/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 
 export function WorkflowManager({
   initialWorkflows,
@@ -75,6 +87,58 @@ export function WorkflowManager({
   const [editingWorkflow, setEditingWorkflow] = useState<any>(null);
   const [workflowToDelete, setWorkflowToDelete] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Trial Run & Scryme Testing State
+  const [trialRunWorkflow, setTrialRunWorkflow] = useState<any>(null);
+  const [trialAmount, setTrialAmount] = useState<string>("");
+  const [trialLocationId, setTrialLocationId] = useState<string>("");
+  const [trialCategoryId, setTrialCategoryId] = useState<string>("");
+  const [trialResults, setTrialResults] = useState<any[] | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  const [scrymeChannel, setScrymeChannel] = useState<string>("notifications");
+  const [scrymeMessageText, setScrymeMessageText] = useState<string>("");
+  const [isSendingScryme, setIsSendingScryme] = useState(false);
+  const [scrymeResult, setScrymeResult] = useState<any>(null);
+
+  const handleRunSimulation = async () => {
+    if (!trialRunWorkflow) return;
+    setIsSimulating(true);
+    try {
+      const results = await testWorkflowAction(trialRunWorkflow.id, {
+        amount: trialAmount ? Number(trialAmount) : undefined,
+        locationId: trialLocationId || undefined,
+        expenseCategoryId: trialCategoryId || undefined,
+      });
+      setTrialResults(results);
+      toast.success("Simulation complete");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to run simulation");
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleSendScryme = async () => {
+    setIsSendingScryme(true);
+    setScrymeResult(null);
+    try {
+      const res = await sendTestScrymeMessageAction(
+        scrymeChannel,
+        scrymeMessageText
+      );
+      setScrymeResult(res);
+      toast.success(
+        res.simulated
+          ? "Simulated message processed successfully!"
+          : "Test message sent to Scryme Chat!"
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send test message");
+    } finally {
+      setIsSendingScryme(false);
+    }
+  };
 
   const handleAddWorkflow = () => {
     setEditingWorkflow({
@@ -762,6 +826,19 @@ export function WorkflowManager({
                         Edit Workflow
                       </DropdownMenuItem>
                       <DropdownMenuItem
+                        onClick={() => {
+                          setTrialRunWorkflow(workflow);
+                          setTrialAmount("");
+                          setTrialLocationId("");
+                          setTrialCategoryId("");
+                          setTrialResults(null);
+                          setScrymeChannel("notifications");
+                          setScrymeMessageText("");
+                          setScrymeResult(null);
+                        }}>
+                        Trial Run
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         className="text-red-500"
                         onClick={() => handleDelete(workflow.id)}>
                         Delete
@@ -845,6 +922,299 @@ export function WorkflowManager({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Trial Run Dialog */}
+      <Dialog
+        open={!!trialRunWorkflow}
+        onOpenChange={open => !open && setTrialRunWorkflow(null)}
+      >
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              <Play className="w-5 h-5 text-[#34A853]" />
+              Trial Run: {trialRunWorkflow?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Test and simulate your workflow triggers. Also test sending live messages directly to Scryme Chat.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            {/* Simulation Parameters */}
+            <div className="space-y-4 border-r border-zinc-100 pr-0 md:pr-6">
+              <h4 className="text-sm font-bold text-zinc-900 border-b pb-2 mb-4">
+                1. Set Test Parameters
+              </h4>
+              <div className="space-y-2">
+                <Label htmlFor="trialAmount">Amount</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                  <Input
+                    id="trialAmount"
+                    type="number"
+                    placeholder="e.g., 500"
+                    className="pl-9"
+                    value={trialAmount}
+                    onChange={e => setTrialAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trialLocation">Branch / Location</Label>
+                <Select
+                  value={trialLocationId}
+                  onValueChange={val => {
+                    if (val === "none_selected_clear_placeholder_unique") {
+                      setTrialLocationId("");
+                    } else {
+                      setTrialLocationId(val);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="trialLocation">
+                    <SelectValue placeholder="Select Location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none_selected_clear_placeholder_unique">Any Branch</SelectItem>
+                    {locations?.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trialCategory">Expense Category</Label>
+                <Select
+                  value={trialCategoryId}
+                  onValueChange={val => {
+                    if (val === "none_selected_clear_placeholder_unique") {
+                      setTrialCategoryId("");
+                    } else {
+                      setTrialCategoryId(val);
+                    }
+                  }}
+                >
+                  <SelectTrigger id="trialCategory">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none_selected_clear_placeholder_unique">Any Category</SelectItem>
+                    {categories?.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={handleRunSimulation}
+                disabled={isSimulating}
+                className="w-full bg-[#34A853] hover:bg-[#2d9147] h-10 mt-2"
+              >
+                {isSimulating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Simulating...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Run Workflow Simulation
+                  </>
+                )}
+              </Button>
+
+              {/* Scryme Chat Messaging Block */}
+              <div className="mt-8 pt-6 border-t border-zinc-100 space-y-4">
+                <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <Send className="w-4 h-4 text-purple-600" />
+                  Test Scryme Chat Connection
+                </h4>
+                <div className="space-y-2">
+                  <Label htmlFor="scrymeChannel">Channel Slug</Label>
+                  <Input
+                    id="scrymeChannel"
+                    placeholder="e.g., notifications"
+                    value={scrymeChannel}
+                    onChange={e => setScrymeChannel(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scrymeMessageText">Test Message Content</Label>
+                  <Input
+                    id="scrymeMessageText"
+                    placeholder="Enter custom message to send..."
+                    value={scrymeMessageText}
+                    onChange={e => setScrymeMessageText(e.target.value)}
+                  />
+                </div>
+                <Button
+                  onClick={handleSendScryme}
+                  disabled={isSendingScryme}
+                  variant="outline"
+                  className="w-full border-purple-200 hover:bg-purple-50 text-purple-700 h-10"
+                >
+                  {isSendingScryme ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin text-purple-600" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2 text-purple-600" />
+                      Send Live Test Message
+                    </>
+                  )}
+                </Button>
+
+                {scrymeResult && (
+                  <div className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2 text-xs">
+                    <div className="flex items-center justify-between font-semibold">
+                      <span className="text-zinc-500">Status</span>
+                      <Badge
+                        variant={scrymeResult.simulated ? "outline" : "default"}
+                        className={cn(
+                          "text-[9px] font-bold uppercase py-0.5 px-2",
+                          scrymeResult.simulated
+                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                            : "bg-green-50 text-green-700 border-green-200"
+                        )}
+                      >
+                        {scrymeResult.simulated ? "Simulated Mode" : "Sent Live"}
+                      </Badge>
+                    </div>
+                    {scrymeResult.simulated ? (
+                      <p className="text-[11px] text-zinc-500 italic">
+                        {scrymeResult.message}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-zinc-500 italic">
+                        Successfully dispatched and delivered message to Scryme Chat!
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Simulation Results */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-zinc-900 border-b pb-2 mb-4">
+                2. Evaluation Results
+              </h4>
+
+              {trialResults === null ? (
+                <div className="h-[300px] border border-dashed border-zinc-200 rounded-xl flex flex-col items-center justify-center p-6 text-center">
+                  <Play className="w-8 h-8 text-zinc-300 mb-2" />
+                  <p className="text-xs font-semibold text-zinc-600">No simulation run yet</p>
+                  <p className="text-[11px] text-zinc-400 max-w-xs mt-1">
+                    Fill in the test parameters on the left and click &quot;Run Workflow Simulation&quot; to see matches and actions.
+                  </p>
+                </div>
+              ) : trialResults.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/30 text-center">
+                  <p className="text-xs text-zinc-500 italic">
+                    No steps defined for this workflow, or no steps were triggered.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {trialResults.map((stepResult: any, index: number) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all",
+                        stepResult.executed
+                          ? "bg-green-50/30 border-green-200"
+                          : "bg-zinc-50/30 border-zinc-200"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[10px] font-bold">
+                            {stepResult.stepNumber}
+                          </span>
+                          <span className="text-xs font-bold text-zinc-900">
+                            {stepResult.name}
+                          </span>
+                        </div>
+                        <Badge
+                          variant={stepResult.executed ? "default" : "secondary"}
+                          className={cn(
+                            "text-[9px] font-bold uppercase",
+                            stepResult.executed
+                              ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                              : "bg-zinc-100 text-zinc-400 hover:bg-zinc-100"
+                          )}
+                        >
+                          {stepResult.executed ? "Executed" : "Skipped"}
+                        </Badge>
+                      </div>
+
+                      {/* Conditions evaluated */}
+                      <div className="mt-3 space-y-1.5 pl-7">
+                        <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                          Conditions Evaluated:
+                        </p>
+                        {stepResult.conditions.length === 0 ? (
+                          <p className="text-[11px] text-zinc-500 italic">
+                            None (Always triggers)
+                          </p>
+                        ) : (
+                          stepResult.conditions.map((cond: any, cIdx: number) => (
+                            <div
+                              key={cIdx}
+                              className="flex items-center justify-between text-[11px]"
+                            >
+                              <span className="text-zinc-600">
+                                {cond.type === "AMOUNT_RANGE" && "Amount Range"}
+                                {cond.type === "LOCATION" && "Location / Branch"}
+                                {cond.type === "EXPENSE_CATEGORY" && "Expense Category"}
+                              </span>
+                              <span
+                                className={cn(
+                                  "font-semibold",
+                                  cond.match ? "text-green-600" : "text-zinc-500"
+                                )}
+                              >
+                                {cond.match ? "✓ Matched" : "✗ Mismatched"}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      {stepResult.executed && (
+                        <div className="mt-3.5 pt-2.5 border-t border-dashed border-zinc-100 pl-7 space-y-1.5">
+                          <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                            Triggered Actions:
+                          </p>
+                          {stepResult.actions.map((act: any, aIdx: number) => (
+                            <div
+                              key={aIdx}
+                              className="flex items-center gap-1.5 text-[11px] text-zinc-700 font-semibold"
+                            >
+                              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span>{act.type === "ROLE" ? "Approver Role" : act.type}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

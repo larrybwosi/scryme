@@ -38,9 +38,15 @@ export class PrismaInventoryRepository implements IInventoryRepository {
     );
   }
 
-  async findByLocation(locationId: string): Promise<InventoryItem[]> {
+  async findByLocation(
+    organizationId: string,
+    locationId: string,
+    pagination?: PaginationQueryDto,
+  ): Promise<InventoryItem[]> {
     const items = await this.prisma.client.productVariantStock.findMany({
-      where: { locationId },
+      where: { organizationId, locationId },
+      take: pagination?.limit,
+      skip: pagination?.offset,
       select: {
         id: true,
         variantId: true,

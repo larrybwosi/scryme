@@ -89,6 +89,7 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages/db/package.json ./pack
 
 # Copy entrypoint script safely from the pruner stage root
 COPY --from=pruner --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+USER root
 RUN chmod +x ./entrypoint.sh
 
 USER nextjs
