@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
+import { CreateBusinessAccountDto } from "../dto/business-account.dto";
 
 @Injectable()
 export class BusinessAccountService {
@@ -11,12 +12,14 @@ export class BusinessAccountService {
 
   async createBusinessAccount(
     organizationId: string,
-    data: { name: string; taxId?: string; defaultLocationId?: string },
+    dto: CreateBusinessAccountDto,
   ) {
     // 1. Create Business Account
     const businessAccount = await this.prisma.client.businessAccount.create({
       data: {
-        ...data,
+        name: dto.name,
+        taxId: dto.taxId,
+        defaultLocationId: dto.defaultLocationId,
         organizationId,
       },
     });
