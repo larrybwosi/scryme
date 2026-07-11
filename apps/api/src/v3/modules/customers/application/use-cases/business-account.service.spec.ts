@@ -37,9 +37,18 @@ describe("BusinessAccountService", () => {
 
   it("should create a business account and trigger CRM sync", async () => {
     const orgId = "org-123";
-    const dto = { name: "Acme Corp", taxId: "TAX-123" };
+    const dto = {
+      name: "Acme Corp",
+      taxId: "TAX-123",
+      crmRecordId: "hack-id",
+    } as any;
 
-    const mockBA = { id: "ba-123", ...dto, organizationId: orgId };
+    const mockBA = {
+      id: "ba-123",
+      name: dto.name,
+      taxId: dto.taxId,
+      organizationId: orgId,
+    };
 
     prisma.client.businessAccount.create.mockResolvedValue(mockBA);
     crmSyncService.enqueueSyncBusinessAccount.mockResolvedValue({});
@@ -47,7 +56,12 @@ describe("BusinessAccountService", () => {
     const result = await service.createBusinessAccount(orgId, dto);
 
     expect(prisma.client.businessAccount.create).toHaveBeenCalledWith({
-      data: { ...dto, organizationId: orgId },
+      data: {
+        name: "Acme Corp",
+        taxId: "TAX-123",
+        defaultLocationId: undefined,
+        organizationId: orgId,
+      },
     });
     expect(crmSyncService.enqueueSyncBusinessAccount).toHaveBeenCalledWith(
       orgId,

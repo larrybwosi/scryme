@@ -676,11 +676,48 @@ export class BakeryService {
   }
   async createRecipe(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    const { ingredients, ...rest } = data;
+
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const {
+      name,
+      categoryId,
+      producesVariantId,
+      yieldQuantity,
+      systemUnitId,
+      orgUnitId,
+      costPrice,
+      description,
+      prepTime,
+      bakeTime,
+      totalTime,
+      difficulty,
+      temperatureCelsius,
+      servingSize,
+      instructions,
+      notes,
+      tags,
+      ingredients,
+    } = data;
 
     return this.prisma.client.recipe.create({
       data: {
-        ...rest,
+        name,
+        categoryId,
+        producesVariantId,
+        yieldQuantity,
+        systemUnitId,
+        orgUnitId,
+        costPrice,
+        description,
+        prepTime,
+        bakeTime,
+        totalTime,
+        difficulty,
+        temperatureCelsius,
+        servingSize,
+        instructions,
+        notes,
+        tags,
         organizationId,
         ingredients: ingredients
           ? {
@@ -850,10 +887,25 @@ export class BakeryService {
     // Always generate the batch number, ignoring any manual input from the client
     const batchNumber = await this.generateBatchNumber(organizationId);
 
-    const { date, time, batchNumber: _, assistantBakerIds, ...rest } = data;
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const {
+      recipeId,
+      plannedQuantity,
+      systemUnitId,
+      orgUnitId,
+      recipeMultiplier,
+      leadBakerId,
+      notes,
+      outputLocationId,
+      tags,
+      assistantBakerIds,
+      date,
+      time,
+      scheduledStartAt: providedScheduledStartAt,
+    } = data;
 
     // Process scheduledStartAt if date and time are provided
-    let scheduledStartAt = data.scheduledStartAt;
+    let scheduledStartAt = providedScheduledStartAt;
     if (!scheduledStartAt && date && time) {
       const [hours, minutes] = time.split(":").map(Number);
       const d = new Date(date);
@@ -863,7 +915,15 @@ export class BakeryService {
 
     return this.prisma.client.batch.create({
       data: {
-        ...rest,
+        recipeId,
+        plannedQuantity,
+        systemUnitId,
+        orgUnitId,
+        recipeMultiplier,
+        leadBakerId,
+        notes,
+        outputLocationId,
+        tags,
         batchNumber,
         scheduledStartAt: scheduledStartAt || new Date(),
         organizationId,
@@ -1207,11 +1267,37 @@ export class BakeryService {
 
   async createTemplate(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const {
+      name,
+      recipeId,
+      quantity,
+      systemUnitId,
+      orgUnitId,
+      recipeMultiplier,
+      duration,
+      leadBakerId,
+      notes,
+      isActive,
+      shelfLifeDays,
+    } = data;
+
     return this.prisma.client.template.create({
       data: {
-        ...data,
+        name,
+        recipeId,
+        quantity,
+        systemUnitId,
+        orgUnitId,
+        recipeMultiplier,
+        duration,
+        leadBakerId,
+        notes,
+        isActive,
+        shelfLifeDays,
         organizationId,
-      },
+      } as any,
     });
   }
 
@@ -1247,9 +1333,14 @@ export class BakeryService {
 
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const { name, description } = data;
+
     return this.prisma.client.bakeryCategory.create({
       data: {
-        ...data,
+        name,
+        description,
         organizationId,
       },
     });
@@ -1509,8 +1600,33 @@ export class BakeryService {
 
   async createPartner(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const {
+      name,
+      email,
+      phone,
+      address,
+      commissionRate,
+      fixedFee,
+      benefitType,
+      reconciliationPolicy,
+      isActive,
+    } = data;
+
     return this.prisma.client.deliveryPartner.create({
-      data: { ...data, organizationId },
+      data: {
+        name,
+        email,
+        phone,
+        address,
+        commissionRate,
+        fixedFee,
+        benefitType,
+        reconciliationPolicy,
+        isActive,
+        organizationId,
+      } as any,
     });
   }
 
@@ -1760,8 +1876,13 @@ export class BakeryService {
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const variant = await tx.productVariant.findUnique({
-          where: { id: line.ingredientId },
+
+        // 🛡️ Sentinel: Enforce multi-tenant isolation by scoping product variant lookup to the organization
+        const variant = await tx.productVariant.findFirst({
+          where: {
+            id: line.ingredientId,
+            product: { organizationId },
+          },
           select: { productId: true },
         });
 

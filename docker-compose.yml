@@ -4,6 +4,8 @@ services:
     restart: always
     env_file:
       - .env.example
+      - path: .env
+        required: false
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-dbuser}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dbpassword}
@@ -56,6 +58,8 @@ services:
     restart: always
     env_file:
       - .env.example
+      - path: .env
+        required: false
     environment:
       - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-your-access-key}
       - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-your-secret-key}
@@ -141,6 +145,8 @@ services:
           memory: 1G
     env_file:
       - .env.example
+      - path: .env
+        required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
       - REDIS_HOST=${REDIS_HOST:-redis}
@@ -195,6 +201,8 @@ services:
           memory: 768M
     env_file:
       - .env.example
+      - path: .env
+        required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
@@ -239,6 +247,8 @@ services:
           memory: 512M
     env_file:
       - .env.example
+      - path: .env
+        required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
