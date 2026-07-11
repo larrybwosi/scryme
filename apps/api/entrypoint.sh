@@ -25,7 +25,14 @@ wait_for_db() {
     fi
   fi
 
-  until $PRISMA_BIN db execute --stdin "SELECT 1;" --schema "$SCHEMA_PATH" > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+  CONFIG_OPT=""
+  if [ -f "./prisma.config.ts" ]; then
+    CONFIG_OPT="--config ./prisma.config.ts"
+  elif [ -f "./packages/db/prisma.config.ts" ]; then
+    CONFIG_OPT="--config ./packages/db/prisma.config.ts"
+  fi
+
+  until echo "SELECT 1;" | $PRISMA_BIN db execute --stdin $CONFIG_OPT > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
     sleep 2
     COUNT=$((COUNT + 1))
     echo "Retry $COUNT/$MAX_RETRIES: Database not yet available..."
@@ -40,7 +47,6 @@ wait_for_db() {
 
 if [ -n "$DATABASE_URL" ]; then
   wait_for_db
-  echo "Deploying database migrations..."
 
   # Determine prisma binary again for migrations
   PRISMA_BIN="./node_modules/.bin/prisma"
@@ -48,7 +54,27 @@ if [ -n "$DATABASE_URL" ]; then
     PRISMA_BIN="prisma"
   fi
 
-  $PRISMA_BIN migrate deploy --schema "$SCHEMA_PATH"
+  CONFIG_OPT=""
+  if [ -f "./prisma.config.ts" ]; then
+    CONFIG_OPT="--config ./prisma.config.ts"
+  elif [ -f "./packages/db/prisma.config.ts" ]; then
+    CONFIG_OPT="--config ./packages/db/prisma.config.ts"
+  fi
+
+  echo "Cleaning up any previously failed migrations..."
+  echo "DO \$\$ BEGIN IF EXISTS (SELECT FROM pg_tables WHERE tablename = '_prisma_migrations') THEN DELETE FROM _prisma_migrations WHERE finished_at IS NULL; END IF; END \$\$;" | $PRISMA_BIN db execute --stdin $CONFIG_OPT
+
+  echo "Deploying database migrations..."
+  if ! $PRISMA_BIN migrate deploy --schema "$SCHEMA_PATH"; then
+    echo "⚠️ Migration deploy failed. Attempting to resolve 0_init as already applied (baselining)..."
+    if $PRISMA_BIN migrate resolve --applied 0_init --schema "$SCHEMA_PATH"; then
+      echo "Retrying migration deploy..."
+      $PRISMA_BIN migrate deploy --schema "$SCHEMA_PATH"
+    else
+      echo "❌ Failed to resolve 0_init. Migration deploy remains failed."
+      exit 1
+    fi
+  fi
 
   echo "Seeding database..."
   # Use the seeding script defined in package.json or direct command
