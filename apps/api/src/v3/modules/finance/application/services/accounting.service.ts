@@ -262,7 +262,19 @@ export class AccountingService {
     const accounts = await this.prisma.client.ledgerAccount.findMany({
       where: {
         organizationId: expense.organizationId,
-        subType: { in: [AccountSubType.CASH, AccountSubType.OPERATING_EXPENSE, AccountSubType.TAX_PAYABLE] },
+        subType: {
+          in: [
+            AccountSubType.CASH,
+            AccountSubType.OPERATING_EXPENSE,
+            AccountSubType.TAX_PAYABLE,
+          ],
+        },
+      },
+      // ⚡ Bolt Optimization: Select only required fields for account resolution
+      // to reduce database payload and memory usage.
+      select: {
+        id: true,
+        subType: true,
       },
     });
 
