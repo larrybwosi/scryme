@@ -7,6 +7,8 @@ import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { v3Context } from "../../../../common/decorators/v3-context.decorator";
+import { Permissions } from "../../../../common/decorators/permissions.decorator";
 
 @ApiTags("V3 Finance / Accounting")
 @ApiBearerAuth()
@@ -20,17 +22,19 @@ export class AccountingController {
   ) {}
 
   @Post("initialize")
+  @Permissions("accounting:manage")
   @ApiOperation({
     summary: "Initialize Chart of Accounts",
     description: "Sets up the default Chart of Accounts for an organization.",
     operationId: "Accounting_Initialize",
   })
   @ApiResponse({ status: 201, description: "Chart of Accounts initialized" })
-  async initialize(@Body() body: { organizationId: string }) {
-    return this.accountingService.initializeChartOfAccounts(body.organizationId);
+  async initialize(@v3Context("organizationId") organizationId: string) {
+    return this.accountingService.initializeChartOfAccounts(organizationId);
   }
 
   @Get("reports/profit-loss")
+  @Permissions("accounting:report")
   @ApiOperation({
     summary: "Get Profit and Loss Statement",
     operationId: "Accounting_GetProfitLoss",
@@ -39,7 +43,7 @@ export class AccountingController {
   @ApiQuery({ name: "endDate", example: "2023-12-31" })
   @ApiResponse({ status: 200, description: "Profit and Loss data" })
   async getProfitLoss(
-    @Query("organizationId") organizationId: string,
+    @v3Context("organizationId") organizationId: string,
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
   ) {
@@ -51,6 +55,7 @@ export class AccountingController {
   }
 
   @Get("reports/balance-sheet")
+  @Permissions("accounting:report")
   @ApiOperation({
     summary: "Get Balance Sheet",
     operationId: "Accounting_GetBalanceSheet",
@@ -58,13 +63,14 @@ export class AccountingController {
   @ApiQuery({ name: "asOfDate", example: "2023-12-31" })
   @ApiResponse({ status: 200, description: "Balance Sheet data" })
   async getBalanceSheet(
-    @Query("organizationId") organizationId: string,
+    @v3Context("organizationId") organizationId: string,
     @Query("asOfDate") asOfDate: string,
   ) {
     return this.reportingService.getBalanceSheet(organizationId, new Date(asOfDate));
   }
 
   @Get("reports/cash-flow")
+  @Permissions("accounting:report")
   @ApiOperation({
     summary: "Get Cash Flow Statement",
     operationId: "Accounting_GetCashFlow",
@@ -73,7 +79,7 @@ export class AccountingController {
   @ApiQuery({ name: "endDate", example: "2023-12-31" })
   @ApiResponse({ status: 200, description: "Cash Flow data" })
   async getCashFlow(
-    @Query("organizationId") organizationId: string,
+    @v3Context("organizationId") organizationId: string,
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
   ) {
@@ -85,6 +91,7 @@ export class AccountingController {
   }
 
   @Get("reports/tax-summary")
+  @Permissions("accounting:report")
   @ApiOperation({
     summary: "Get Kenyan Tax Summary",
     operationId: "Accounting_GetTaxSummary",
@@ -93,7 +100,7 @@ export class AccountingController {
   @ApiQuery({ name: "endDate", example: "2023-12-31" })
   @ApiResponse({ status: 200, description: "Tax summary data" })
   async getTaxSummary(
-    @Query("organizationId") organizationId: string,
+    @v3Context("organizationId") organizationId: string,
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
   ) {

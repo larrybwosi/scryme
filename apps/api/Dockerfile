@@ -82,6 +82,10 @@ COPY --from=installer --chown=nestjs:nodejs /app/apps/api/package.json ./package
 
 # Copy shared packages if your API depends on them
 COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=installer --chown=nestjs:nodejs /app/packages/db ./packages/db
+COPY --from=installer --chown=nestjs:nodejs /app/packages/env ./packages/env
+
+# Maintain original root paths expected by entrypoint.sh/prisma commands
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma ./prisma
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma/seed.ts ./prisma/seed.ts
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
