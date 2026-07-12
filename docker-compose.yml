@@ -139,7 +139,7 @@ services:
       - scryme-network
 
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.1.0
+    image: ghcr.io/larrybwosi/scryme/api:9.4.0
     restart: always
     deploy:
       resources:
@@ -197,7 +197,7 @@ services:
       - "logging_job=api"
 
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.1.0
+    image: ghcr.io/larrybwosi/scryme/web:9.4.0
     restart: always
     deploy:
       resources:
@@ -245,7 +245,7 @@ services:
       - "logging_job=web"
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.1.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.4.0
     restart: always
     deploy:
       resources:
@@ -293,7 +293,7 @@ services:
       - "logging_job=crm"
 
   bakery:
-    image: ghcr.io/larrybwosi/scryme/bakery:9.1.0
+    image: ghcr.io/larrybwosi/scryme/bakery:9.4.0
     restart: always
     deploy:
       resources:
