@@ -130,6 +130,10 @@ export const auth = betterAuth({
       loginPage: "/login",
       consentPage: "/oauth/authorize",
       scopes: ["openid", "profile", "email", "org_info", "membership"],
+      allowDynamicClientRegistration: true,
+      silenceWarnings: {
+        oauthAuthServerConfig: true,
+      },
       customUserInfoClaims: async ({ user, scopes }) => {
         const claims: any = {};
         if (scopes.includes("profile")) {
