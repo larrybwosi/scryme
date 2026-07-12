@@ -413,13 +413,16 @@ async function main() {
     // Check if the error is exactly because of the path "../src/client" not being found.
     const isClientPathMissing =
       err.code === "ERR_MODULE_NOT_FOUND" &&
-      (err.message?.includes("src/client") || (err.url && err.url.includes("src/client")));
+      (err.message?.includes("src/client") ||
+        (err.url && err.url.includes("src/client")));
 
     if (isClientPathMissing) {
       try {
         prisma = (await import("../packages/db/src/client")).prisma;
       } catch (innerErr: any) {
-        throw new Error(`Failed to import Prisma client from both relative paths. Inner error: ${innerErr.message}`);
+        throw new Error(
+          `Failed to import Prisma client from both relative paths. Inner error: ${innerErr.message}`,
+        );
       }
     } else {
       // Rethrow the original error if it's a real failure (e.g., db down, env validation error, etc.)
