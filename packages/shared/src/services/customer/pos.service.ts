@@ -18,6 +18,21 @@ export class PosCustomerService {
         organizationId,
         ...(lastSync ? { updatedAt: { gt: new Date(lastSync) } } : {}),
       },
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Use targeted select to fetch only essential fields for POS sync.
+       * Reduces database I/O and payload size by avoiding heavy JSON/metadata fields.
+       */
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        loyaltyPoints: true,
+        updatedAt: true,
+        customerType: true,
+        company: true,
+      },
     });
 
     const mappedData = customers.map((c) => ({
@@ -26,6 +41,9 @@ export class PosCustomerService {
       email: c.email,
       phone: c.phone,
       loyaltyPoints: c.loyaltyPoints,
+      updatedAt: c.updatedAt,
+      customerType: c.customerType,
+      company: c.company,
     }));
 
     return {
@@ -53,6 +71,21 @@ export class PosCustomerService {
         ],
       },
       take: 20,
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Use targeted select to fetch only essential fields for POS search results.
+       * Reduces database I/O and payload size by avoiding heavy JSON/metadata fields.
+       */
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        loyaltyPoints: true,
+        updatedAt: true,
+        customerType: true,
+        company: true,
+      },
     });
 
     return customers.map((c) => ({
@@ -61,6 +94,9 @@ export class PosCustomerService {
       email: c.email,
       phone: c.phone,
       loyaltyPoints: c.loyaltyPoints,
+      updatedAt: c.updatedAt,
+      customerType: c.customerType,
+      company: c.company,
     }));
   }
 
