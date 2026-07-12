@@ -119,34 +119,48 @@ export class ExpenseUseCase {
     status: ExpenseStatus,
     expenseNumber: string,
   ) {
-    const {
-      amount,
-      categoryId,
-      pettyCashFundId,
-      utilityAccountId,
-      budgetId,
-      locationId,
-      supplierId,
-      purchaseId,
-      expenseDate,
-      ...rest
-    } = dto;
+    // 🛡️ Sentinel: IDOR Prevention - Verify all referenced entities belong to the organization
+    const validations = [
+      tx.expenseCategory.count({ where: { id: dto.categoryId, organizationId } }),
+    ];
+
+    if (dto.budgetId) validations.push(tx.budget.count({ where: { id: dto.budgetId, organizationId } }));
+    if (dto.supplierId) validations.push(tx.supplier.count({ where: { id: dto.supplierId, organizationId } }));
+    if (dto.purchaseId) validations.push(tx.purchase.count({ where: { id: dto.purchaseId, organizationId } }));
+    if (dto.locationId) validations.push(tx.inventoryLocation.count({ where: { id: dto.locationId, organizationId } }));
+    if (dto.utilityAccountId) validations.push(tx.utilityAccount.count({ where: { id: dto.utilityAccountId, organizationId } }));
+    if (dto.pettyCashFundId) validations.push(tx.pettyCashFund.count({ where: { id: dto.pettyCashFundId, organizationId } }));
+
+    const results = await Promise.all(validations);
+    if (results.some((count) => count === 0)) {
+      throw new ForbiddenException(
+        "One or more referenced entities not found or unauthorized",
+      );
+    }
+
     return await tx.expense.create({
       data: {
-        ...rest,
+        // 🛡️ Sentinel: Mass Assignment Protection - Explicitly map allowed fields from DTO
         expenseNumber,
-        amount: new Prisma.Decimal(amount),
+        description: dto.description,
+        amount: new Prisma.Decimal(dto.amount),
         status,
         memberId,
         organizationId,
-        categoryId,
-        expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
-        ...(locationId && { locationId }),
-        ...(supplierId && { supplierId }),
-        ...(purchaseId && { purchaseId }),
-        ...(pettyCashFundId && { pettyCashFundId }),
-        ...(utilityAccountId && { utilityAccountId }),
-        ...(budgetId && { budgetId }),
+        categoryId: dto.categoryId,
+        expenseDate: dto.expenseDate ? new Date(dto.expenseDate) : new Date(),
+        paymentMethod: dto.paymentMethod,
+        receiptUrl: dto.receiptUrl,
+        notes: dto.notes,
+        tags: dto.tags,
+        isReimbursable: dto.isReimbursable ?? false,
+        isBillable: dto.isBillable ?? false,
+        locationId: dto.locationId,
+        supplierId: dto.supplierId,
+        purchaseId: dto.purchaseId,
+        pettyCashFundId: dto.pettyCashFundId,
+        utilityAccountId: dto.utilityAccountId,
+        budgetId: dto.budgetId,
         ...(status === ExpenseStatus.APPROVED
           ? {
               approverId: memberId,
@@ -175,8 +189,9 @@ export class ExpenseUseCase {
       );
     }
     if (dto.budgetId) {
-      await tx.budget.update({
-        where: { id: dto.budgetId },
+      // 🛡️ Sentinel: Defense in Depth - Use updateMany with organizationId scoping
+      await tx.budget.updateMany({
+        where: { id: dto.budgetId, organizationId },
         data: { spentAmount: { increment: amount } },
       });
     }

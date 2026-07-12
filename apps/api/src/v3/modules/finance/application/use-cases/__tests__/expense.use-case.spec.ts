@@ -2,7 +2,11 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ExpenseUseCase } from "../expense.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ExpenseStatus, PettyCashTransactionType } from "@repo/db";
-import { NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { CreateExpenseDto, PaymentMethod } from "../../dto/finance.dto";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
@@ -20,15 +24,33 @@ describe("ExpenseUseCase", () => {
       findFirst: vi.fn(),
       update: vi.fn(),
     },
+    expenseCategory: {
+      count: vi.fn(),
+    },
+    supplier: {
+      count: vi.fn(),
+    },
+    purchase: {
+      count: vi.fn(),
+    },
+    inventoryLocation: {
+      count: vi.fn(),
+    },
+    utilityAccount: {
+      count: vi.fn(),
+    },
     pettyCashFund: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
     pettyCashTransaction: {
       create: vi.fn(),
     },
     budget: {
       update: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
     },
     $transaction: vi.fn((cb) => cb(mockPrismaClient)),
   };
@@ -71,6 +93,7 @@ describe("ExpenseUseCase", () => {
         expenseReceiptThreshold: 1000,
       });
       mockPrismaClient.expense.count.mockResolvedValue(0);
+      mockPrismaClient.expenseCategory.count.mockResolvedValue(1);
       mockPrismaClient.expense.create.mockResolvedValue({
         id: "exp-1",
         status: ExpenseStatus.APPROVED,
@@ -95,6 +118,7 @@ describe("ExpenseUseCase", () => {
         expenseReceiptThreshold: 1000,
       });
       mockPrismaClient.expense.count.mockResolvedValue(0);
+      mockPrismaClient.expenseCategory.count.mockResolvedValue(1);
       mockPrismaClient.expense.create.mockResolvedValue({
         id: "exp-1",
         status: ExpenseStatus.PENDING,
@@ -113,6 +137,8 @@ describe("ExpenseUseCase", () => {
         pettyCashAutoApproveThreshold: 1000,
       });
       mockPrismaClient.expense.count.mockResolvedValue(0);
+      mockPrismaClient.expenseCategory.count.mockResolvedValue(1);
+      mockPrismaClient.pettyCashFund.count.mockResolvedValue(1);
       mockPrismaClient.expense.create.mockResolvedValue({
         id: "exp-1",
         status: ExpenseStatus.APPROVED,
@@ -131,6 +157,18 @@ describe("ExpenseUseCase", () => {
             type: PettyCashTransactionType.EXPENSE,
           }),
         }),
+      );
+    });
+
+    it("should throw ForbiddenException if category does not belong to organization", async () => {
+      mockPrismaClient.organization.findUnique.mockResolvedValue({
+        expenseApprovalThreshold: 500,
+        expenseReceiptThreshold: 1000,
+      });
+      mockPrismaClient.expenseCategory.count.mockResolvedValue(0);
+
+      await expect(useCase.createExpense(orgId, memberId, dto)).rejects.toThrow(
+        ForbiddenException,
       );
     });
   });
