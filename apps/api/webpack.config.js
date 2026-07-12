@@ -72,11 +72,8 @@ module.exports = function modifyWebpackConfig(options) {
     parallelism: Number(process.env.WEBPACK_PARALLELISM ?? 1),
 
     externals: [
-      {
-        "server-only": `commonjs ${EMPTY_MODULE}`,
-      },
       nodeExternals({
-        allowlist: [/^@repo/],
+        allowlist: [/^@repo/, "server-only"],
         modulesDir: path.resolve(__dirname, "node_modules"),
       }),
       "sharp",
@@ -91,6 +88,7 @@ module.exports = function modifyWebpackConfig(options) {
       alias: {
         ...options.resolve?.alias,
         "@": SRC_DIR,
+        "server-only": EMPTY_MODULE,
       },
       // 5. Restrict module scanning to slash I/O overhead
       modules: [SRC_DIR, "node_modules"],
