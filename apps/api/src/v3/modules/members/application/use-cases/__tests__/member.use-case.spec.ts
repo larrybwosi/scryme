@@ -19,6 +19,15 @@ describe('MemberUseCase', () => {
         update: vi.fn(),
         findUnique: vi.fn(),
       },
+      department: {
+        count: vi.fn(),
+      },
+      customRole: {
+        count: vi.fn(),
+      },
+      roleGroup: {
+        count: vi.fn(),
+      },
       user: {
         findUnique: vi.fn(),
         create: vi.fn(),
@@ -110,6 +119,19 @@ describe('MemberUseCase', () => {
 
       mockPrisma.client.user.findUnique.mockResolvedValue({ id: 'u3', email: dto.email });
       mockPrisma.client.member.findUnique.mockResolvedValue({ id: 'm3' });
+
+      await expect(useCase.createMember('org1', dto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw error if department IDs are invalid', async () => {
+      const dto = {
+        email: 'new@example.com',
+        name: 'New User',
+        role: MemberRole.EMPLOYEE,
+        departmentIds: ['invalid-dept'],
+      };
+
+      mockPrisma.client.department.count.mockResolvedValue(0);
 
       await expect(useCase.createMember('org1', dto)).rejects.toThrow(BadRequestException);
     });

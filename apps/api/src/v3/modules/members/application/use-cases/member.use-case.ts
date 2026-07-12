@@ -124,9 +124,31 @@ export class MemberUseCase {
   }
 
   async createMember(organizationId: string, dto: CreateMemberDto, inviterId?: string) {
-    const { email, name, role, pin, cardId, departmentIds, customRoleIds, roleGroupIds, phone, ...otherData } = dto;
+    const { email, name, role, pin, cardId, departmentIds, customRoleIds, roleGroupIds, phone } = dto;
 
     return this.prisma.client.$transaction(async (tx) => {
+      // Security: Verify related entity ownership
+      if (departmentIds?.length) {
+        const count = await tx.department.count({
+          where: { id: { in: departmentIds }, organizationId },
+        });
+        if (count !== departmentIds.length) throw new BadRequestException('One or more invalid department IDs');
+      }
+
+      if (customRoleIds?.length) {
+        const count = await tx.customRole.count({
+          where: { id: { in: customRoleIds }, organizationId },
+        });
+        if (count !== customRoleIds.length) throw new BadRequestException('One or more invalid custom role IDs');
+      }
+
+      if (roleGroupIds?.length) {
+        const count = await tx.roleGroup.count({
+          where: { id: { in: roleGroupIds }, organizationId },
+        });
+        if (count !== roleGroupIds.length) throw new BadRequestException('One or more invalid role group IDs');
+      }
+
       let user = await tx.user.findUnique({
         where: { email },
       });
@@ -159,7 +181,6 @@ export class MemberUseCase {
 
       const member = await tx.member.create({
         data: {
-          ...otherData,
           organizationId,
           userId: user.id,
           role: finalRole,
@@ -229,7 +250,29 @@ export class MemberUseCase {
   }
 
   async updateMember(organizationId: string, id: string, dto: UpdateMemberDto, actorId: string) {
-    const { pin, departmentIds, customRoleIds, roleGroupIds, ...updateData } = dto;
+    const { pin, departmentIds, customRoleIds, roleGroupIds } = dto;
+
+    // Security: Verify related entity ownership
+    if (departmentIds?.length) {
+      const count = await this.prisma.client.department.count({
+        where: { id: { in: departmentIds }, organizationId },
+      });
+      if (count !== departmentIds.length) throw new BadRequestException('One or more invalid department IDs');
+    }
+
+    if (customRoleIds?.length) {
+      const count = await this.prisma.client.customRole.count({
+        where: { id: { in: customRoleIds }, organizationId },
+      });
+      if (count !== customRoleIds.length) throw new BadRequestException('One or more invalid custom role IDs');
+    }
+
+    if (roleGroupIds?.length) {
+      const count = await this.prisma.client.roleGroup.count({
+        where: { id: { in: roleGroupIds }, organizationId },
+      });
+      if (count !== roleGroupIds.length) throw new BadRequestException('One or more invalid role group IDs');
+    }
 
     const currentMember = await this.prisma.client.member.findUnique({
       where: { id, organizationId },
@@ -238,14 +281,22 @@ export class MemberUseCase {
 
     if (!currentMember) throw new NotFoundException('Member not found');
 
+    let pinHash: string | undefined;
     if (pin) {
-      (updateData as any).pinHash = await bcrypt.hash(pin, 10);
+      pinHash = await bcrypt.hash(pin, 10);
     }
 
     const member = await this.prisma.client.member.update({
       where: { id, organizationId },
       data: {
-        ...(updateData as any),
+        name: dto.name,
+        role: dto.role,
+        membershipStatus: dto.membershipStatus,
+        isActive: dto.isActive,
+        status: dto.status,
+        cardId: dto.cardId,
+        phone: dto.phone,
+        pinHash,
         departmentMemberships: departmentIds ? {
           deleteMany: {},
           create: departmentIds.map(dId => ({
@@ -262,8 +313,15 @@ export class MemberUseCase {
     });
 
     // Audit Log
-    const auditDetails = { ...updateData };
-    if ((auditDetails as any).pinHash) delete (auditDetails as any).pinHash;
+    const auditDetails = {
+      name: dto.name,
+      role: dto.role,
+      membershipStatus: dto.membershipStatus,
+      isActive: dto.isActive,
+      status: dto.status,
+      cardId: dto.cardId,
+      phone: dto.phone,
+    };
 
     await this.prisma.client.auditLog.create({
       data: {

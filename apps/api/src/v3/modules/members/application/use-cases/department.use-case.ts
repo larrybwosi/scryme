@@ -55,9 +55,20 @@ export class DepartmentUseCase {
   }
 
   async createDepartment(organizationId: string, dto: CreateDepartmentDto, actorId: string) {
+    // Security: Verify headId ownership if provided
+    if (dto.headId) {
+      const member = await this.prisma.client.member.findFirst({
+        where: { id: dto.headId, organizationId },
+      });
+      if (!member) throw new BadRequestException('Invalid headId: Member not found in this organization');
+    }
+
     const department = await this.prisma.client.department.create({
       data: {
-        ...dto,
+        name: dto.name,
+        description: dto.description,
+        image: dto.image,
+        headId: dto.headId,
         organizationId,
       },
     });
@@ -77,9 +88,22 @@ export class DepartmentUseCase {
   }
 
   async updateDepartment(organizationId: string, id: string, dto: UpdateDepartmentDto, actorId: string) {
+    // Security: Verify headId ownership if provided
+    if (dto.headId) {
+      const member = await this.prisma.client.member.findFirst({
+        where: { id: dto.headId, organizationId },
+      });
+      if (!member) throw new BadRequestException('Invalid headId: Member not found in this organization');
+    }
+
     const department = await this.prisma.client.department.update({
       where: { id, organizationId },
-      data: dto,
+      data: {
+        name: dto.name,
+        description: dto.description,
+        image: dto.image,
+        headId: dto.headId,
+      },
     });
 
     await this.prisma.client.auditLog.create({
