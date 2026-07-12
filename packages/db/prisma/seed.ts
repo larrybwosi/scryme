@@ -413,7 +413,7 @@ async function main() {
     // Check if the error is exactly because of the path "../src/client" not being found.
     const isClientPathMissing =
       err.code === "ERR_MODULE_NOT_FOUND" &&
-      (err.message?.includes("../src/client") || (err.url && err.url.includes("../src/client")));
+      (err.message?.includes("src/client") || (err.url && err.url.includes("src/client")));
 
     if (isClientPathMissing) {
       try {
