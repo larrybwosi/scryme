@@ -124,6 +124,11 @@ export class LoyaltyService {
     if (!program) return;
 
     return await db.$transaction(async (tx) => {
+      // Verify customer belongs to organization
+      await tx.customer.findFirstOrThrow({
+        where: { id: customerId, organizationId },
+      });
+
       const customer = await tx.customer.update({
         where: { id: customerId },
         data: {
@@ -169,16 +174,16 @@ export class LoyaltyService {
     rewardId: string,
     organizationId: string,
   ) {
-    const reward = await db.loyaltyReward.findUnique({
-      where: { id: rewardId },
+    const reward = await db.loyaltyReward.findFirst({
+      where: { id: rewardId, program: { organizationId } },
       include: { program: true },
     });
 
     if (!reward || !reward.isActive)
       throw new Error("Reward not found or inactive");
 
-    const customer = await db.customer.findUnique({
-      where: { id: customerId },
+    const customer = await db.customer.findFirst({
+      where: { id: customerId, organizationId },
     });
 
     if (!customer || customer.loyaltyPoints < reward.pointsRequired) {
@@ -244,8 +249,8 @@ export class LoyaltyService {
   }
 
   async getCustomerStatus(customerId: string, organizationId: string) {
-    return await db.customer.findUnique({
-      where: { id: customerId },
+    return await db.customer.findFirst({
+      where: { id: customerId, organizationId },
       select: {
         id: true,
         loyaltyPoints: true,
@@ -260,8 +265,8 @@ export class LoyaltyService {
     customerId: string,
     organizationId: string,
   ) {
-    const voucher = await db.loyaltyVoucher.findUnique({
-      where: { code },
+    const voucher = await db.loyaltyVoucher.findFirst({
+      where: { code, organizationId },
       include: {
         reward: true,
         program: true,
