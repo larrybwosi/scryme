@@ -105,4 +105,10 @@ R_USER=$(grep "^RABBITMQ_USER=" "$ENV_FILE" | cut -d'=' -f2-)
 R_PASS=$(grep "^RABBITMQ_PASS=" "$ENV_FILE" | cut -d'=' -f2-)
 update_env_var "RABBITMQ_URL" "amqp://${R_USER}:${R_PASS}@rabbitmq:5672" "true"
 
+# 11. Service Ports
+update_env_var "API_PORT" "4000" "false"
+update_env_var "WEB_PORT" "3000" "false"
+update_env_var "CRM_PORT" "3001" "false"
+update_env_var "BAKERY_PORT" "3003" "false"
+
 echo "The .env file has been processed successfully with unified configurations."
