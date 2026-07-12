@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../redis/redis.service";
@@ -237,8 +238,20 @@ export class CatalogService {
 
   async deleteProduct(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    const result = await this.prisma.client.product.delete({
+
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying ownership before deletion,
+    // as the Product model lacks a composite unique index on [id, organizationId].
+    const product = await this.prisma.client.product.findFirst({
       where: { id, organizationId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
+    const result = await this.prisma.client.product.delete({
+      where: { id },
     });
 
     await this.realtime.publish(
@@ -329,9 +342,22 @@ export class CatalogService {
 
   async deleteCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    const result = await this.prisma.client.category.delete({
+
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying ownership before deletion,
+    // as the Category model lacks a composite unique index on [id, organizationId].
+    const category = await this.prisma.client.category.findFirst({
       where: { id, organizationId },
+      select: { id: true },
     });
+
+    if (!category) {
+      throw new NotFoundException("Category not found");
+    }
+
+    const result = await this.prisma.client.category.delete({
+      where: { id },
+    });
+
     await this.clearCatalogCache(organizationId);
     return result;
   }
