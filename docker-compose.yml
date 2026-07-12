@@ -49,7 +49,12 @@ services:
     user: root
     volumes:
       - rustfs_data:/fix_path
-    command: chown -R 10001:10001 /fix_path
+    command: sh -c "chown -R 10001:10001 /fix_path && touch /tmp/done && sleep infinity"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/done"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
     networks:
       - scryme-network
 
@@ -68,12 +73,12 @@ services:
       - rustfs_data:/data
     depends_on:
       rustfs-perms:
-        condition: service_completed_successfully
+        condition: service_healthy
     networks:
       - scryme-network
       - proxy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/health || wget --no-verbose --tries=1 --spider http://localhost:9000/health || nc -z localhost 9000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -154,7 +159,7 @@ services:
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      - PORT=4000
+      - PORT=${API_PORT:-4000}
       - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
       - SOCKET_URL=${SOCKET_URL:-https://${API_DOMAIN:-api.scryme.local}}
       - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
@@ -182,7 +187,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:4000/api/v2/health",
+          "http://localhost:${API_PORT:-4000}/api/v2/health",
         ]
       interval: 30s
       timeout: 10s
@@ -193,7 +198,7 @@ services:
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
       - "traefik.http.routers.api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.api.loadbalancer.server.port=4000"
+      - "traefik.http.services.api.loadbalancer.server.port=${API_PORT:-4000}"
       - "logging_job=api"
 
   web:
@@ -213,7 +218,7 @@ services:
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
       - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.local}}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
-      - PORT=3000
+      - PORT=${WEB_PORT:-3000}
     depends_on:
       db:
         condition: service_healthy
@@ -230,7 +235,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:3000/api/health",
+          "http://localhost:${WEB_PORT:-3000}/health",
         ]
       interval: 30s
       timeout: 10s
@@ -241,7 +246,7 @@ services:
       - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
       - "traefik.http.routers.web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.web.loadbalancer.server.port=3000"
+      - "traefik.http.services.web.loadbalancer.server.port=${WEB_PORT:-3000}"
       - "logging_job=web"
 
   crm:
@@ -260,7 +265,7 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.local}}
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
       - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.local}}
-      - PORT=3001
+      - PORT=${CRM_PORT:-3001}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
     depends_on:
       db:
@@ -278,7 +283,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:3001/api/health",
+          "http://localhost:${CRM_PORT:-3001}/health",
         ]
       interval: 30s
       timeout: 10s
@@ -289,7 +294,7 @@ services:
       - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
       - "traefik.http.routers.crm.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.crm.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.crm.loadbalancer.server.port=3001"
+      - "traefik.http.services.crm.loadbalancer.server.port=${CRM_PORT:-3001}"
       - "logging_job=crm"
 
   bakery:
@@ -303,7 +308,7 @@ services:
       - .env.example
     environment:
       - VITE_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.local}}
-      - PORT=3003
+      - PORT=${BAKERY_PORT:-3003}
     depends_on:
       api:
         condition: service_healthy
@@ -318,7 +323,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:3003/",
+          "http://localhost:${BAKERY_PORT:-3003}/api/health",
         ]
       interval: 30s
       timeout: 10s
@@ -329,7 +334,7 @@ services:
       - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
       - "traefik.http.routers.bakery.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.bakery.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.bakery.loadbalancer.server.port=3003"
+      - "traefik.http.services.bakery.loadbalancer.server.port=${BAKERY_PORT:-3003}"
       - "logging_job=bakery"
 
 volumes:
