@@ -78,14 +78,18 @@ services:
       - scryme-network
       - proxy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/health || wget --no-verbose --tries=1 --spider http://localhost:9000/health || nc -z localhost 9000 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:9000/health || wget --no-verbose --tries=1 --spider http://localhost:9000/health || nc -z localhost 9000 || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.local}`)"
+      - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.tech}`)"
       - "traefik.http.routers.rustfs.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.rustfs.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
@@ -161,7 +165,7 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - PORT=${API_PORT:-4000}
       - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
-      - SOCKET_URL=${SOCKET_URL:-https://${API_DOMAIN:-api.scryme.local}}
+      - SOCKET_URL=${SOCKET_URL:-https://${API_DOMAIN:-api.scryme.tech}}
       - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
       - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-org-id}
       - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-project-id}
@@ -195,7 +199,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
+      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.tech}`)"
       - "traefik.http.routers.api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.api.loadbalancer.server.port=${API_PORT:-4000}"
@@ -214,9 +218,9 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.local}}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.tech}}
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.local}}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.tech}}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
       - PORT=${WEB_PORT:-3000}
     depends_on:
@@ -243,7 +247,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
+      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.tech}`)"
       - "traefik.http.routers.web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.web.loadbalancer.server.port=${WEB_PORT:-3000}"
@@ -262,9 +266,9 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.local}}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.tech}}
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.local}}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.tech}}
       - PORT=${CRM_PORT:-3001}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
     depends_on:
@@ -291,7 +295,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
+      - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.tech}`)"
       - "traefik.http.routers.crm.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.crm.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.crm.loadbalancer.server.port=${CRM_PORT:-3001}"
@@ -307,7 +311,7 @@ services:
     env_file:
       - .env.example
     environment:
-      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.local}}
+      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.tech}}
       - PORT=${BAKERY_PORT:-3003}
     depends_on:
       api:
@@ -331,7 +335,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
+      - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.tech}`)"
       - "traefik.http.routers.bakery.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.bakery.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.bakery.loadbalancer.server.port=${BAKERY_PORT:-3003}"
