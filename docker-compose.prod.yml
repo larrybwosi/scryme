@@ -1,27 +1,4 @@
 services:
-  # --- REVERSE PROXY ---
-  traefik:
-    image: traefik:v3.1
-    restart: always
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "8080:8080" # Dashboard
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      scryme-prod-network:
-        aliases:
-          - scryme.local
-          - crm.scryme.local
-          - api.scryme.local
-          - auth.scryme.local
-          - windmill.scryme.local
-
   # --- DATABASES ---
   db:
     image: postgres:17-alpine
@@ -136,6 +113,7 @@ services:
         condition: service_completed_successfully
     networks:
       - scryme-prod-network
+      - proxy
     healthcheck:
       test:
         [
@@ -151,23 +129,35 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.local}`)"
+      - "traefik.http.routers.rustfs.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.rustfs.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
       - "traefik.http.routers.rustfs-console.rule=Host(`${RUSTFS_CONSOLE_DOMAIN:-storage-console.scryme.local}`)"
+      - "traefik.http.routers.rustfs-console.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.rustfs-console.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.rustfs-console.loadbalancer.server.port=9001"
 
   mailpit:
     image: axllent/mailpit
     restart: always
-    ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # UI
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.mailpit.rule=Host(`${MAILPIT_HOST:-mail.scryme.local}`)"
+      - "traefik.http.routers.mailpit.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.mailpit.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.mailpit.loadbalancer.server.port=8025"
+    # SMTP (1025) is only needed internally by the other services on
+    # scryme-prod-network, so it's intentionally not published to the host
+    # or routed through the proxy. Uncomment below only if you need
+    # external SMTP access for testing.
+    # ports:
+    #   - "1025:1025"
 
   loki:
     image: grafana/loki:latest
@@ -236,8 +226,8 @@ services:
       - ZITADEL_DATABASE_POSTGRES_DATABASE=${ZITADEL_DB_NAME}
       - ZITADEL_DATABASE_POSTGRES_SSL_MODE=disable
       - ZITADEL_EXTERNALDOMAIN=${ZITADEL_DOMAIN:-auth.scryme.local}
-      - ZITADEL_EXTERNALPORT=80
-      - ZITADEL_EXTERNALSECURE=false
+      - ZITADEL_EXTERNALPORT=443
+      - ZITADEL_EXTERNALSECURE=true
     depends_on:
       zitadel-setup:
         condition: service_completed_successfully
@@ -257,9 +247,13 @@ services:
       start_period: 20s
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.zitadel.rule=Host(`${ZITADEL_DOMAIN:-auth.scryme.local}`)"
+      - "traefik.http.routers.zitadel.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.zitadel.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.zitadel.loadbalancer.server.port=8080"
       - "traefik.http.services.zitadel.loadbalancer.server.scheme=h2c"
 
@@ -293,9 +287,13 @@ services:
       start_period: 20s
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.windmill.rule=Host(`${WINDMILL_DOMAIN:-windmill.scryme.local}`)"
+      - "traefik.http.routers.windmill.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.windmill.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.windmill.loadbalancer.server.port=8000"
 
   windmill-worker:
@@ -346,8 +344,8 @@ services:
       PORT: 4000
       NODE_ENV: production
       REALTIME_PROVIDER: socketio
-      SOCKET_URL: http://api:4000
-      ZITADEL_API_URL: http://${ZITADEL_DOMAIN:-auth.scryme.local}
+      SOCKET_URL: https://${API_DOMAIN:-api.scryme.local}
+      ZITADEL_API_URL: https://${ZITADEL_DOMAIN:-auth.scryme.local}
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       ZITADEL_ORG_ID: ${ZITADEL_ORG_ID}
       ZITADEL_PROJECT_ID: ${ZITADEL_PROJECT_ID}
@@ -360,15 +358,17 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      traefik:
-        condition: service_started
       zitadel:
         condition: service_healthy
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.local}`)"
+      - "traefik.http.routers.api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.api.loadbalancer.server.port=${PORT:-4000}"
       - "logging_job=api"
 
@@ -377,7 +377,7 @@ services:
       context: .
       dockerfile: apps/crm/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.local}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-crm:latest
     restart: always
@@ -401,12 +401,12 @@ services:
       start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
-      NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.local}
       NEXT_PUBLIC_REALTIME_PROVIDER: socketio
-      NEXT_PUBLIC_SOCKET_URL: http://${API_DOMAIN:-api.scryme.local}
+      NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.local}
       PORT: 3001
       NODE_ENV: production
-      ZITADEL_API_URL: http://${ZITADEL_DOMAIN:-auth.scryme.local}
+      ZITADEL_API_URL: https://${ZITADEL_DOMAIN:-auth.scryme.local}
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
@@ -414,9 +414,13 @@ services:
         condition: service_healthy
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.local}`)"
+      - "traefik.http.routers.crm.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.crm.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.crm.loadbalancer.server.port=${PORT:-3001}"
       - "logging_job=crm"
 
@@ -425,7 +429,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.local}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-web:latest
     restart: always
@@ -449,9 +453,9 @@ services:
       start_period: 40s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
-      NEXT_PUBLIC_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.local}
       NEXT_PUBLIC_REALTIME_PROVIDER: socketio
-      NEXT_PUBLIC_SOCKET_URL: http://${API_DOMAIN:-api.scryme.local}
+      NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.local}
       PORT: 3000
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -460,9 +464,13 @@ services:
         condition: service_healthy
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.local}`)"
+      - "traefik.http.routers.web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.web.loadbalancer.server.port=${PORT:-3000}"
       - "logging_job=web"
 
@@ -491,16 +499,20 @@ services:
       retries: 3
       start_period: 20s
     environment:
-      VITE_API_URL: http://${API_DOMAIN:-api.scryme.local}
+      VITE_API_URL: https://${API_DOMAIN:-api.scryme.local}
       NODE_ENV: production
     depends_on:
       api:
         condition: service_healthy
     networks:
       - scryme-prod-network
+      - proxy
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
       - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.local}`)"
+      - "traefik.http.routers.bakery.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.bakery.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
       - "traefik.http.services.bakery.loadbalancer.server.port=${PORT:-3003}"
       - "logging_job=bakery"
 
@@ -514,5 +526,16 @@ volumes:
   loki_prod_data:
 
 networks:
+  # Internal network for service-to-service traffic (db, redis, rabbitmq, etc.)
+  # Not reachable from outside the host.
   scryme-prod-network:
     driver: bridge
+
+  # The platform-managed proxy network. Dokploy creates "dokploy-network",
+  # Coolify creates "coolify" (check `docker network ls` after installing
+  # the platform, or its dashboard, to confirm the exact name) — set
+  # PROXY_NETWORK in your .env to match. It must already exist; that's why
+  # it's marked external rather than created here.
+  proxy:
+    name: ${PROXY_NETWORK:-dokploy-network}
+    external: true
