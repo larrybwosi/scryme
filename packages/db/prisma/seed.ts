@@ -1,4 +1,15 @@
-import { UnitType, IndustryCategory } from "../src/client";
+const UnitType = {
+  MASS: "MASS",
+  VOLUME: "VOLUME",
+  LENGTH: "LENGTH",
+  AREA: "AREA",
+  COUNT: "COUNT",
+  TIME: "TIME",
+} as const;
+
+const IndustryCategory = {
+  UNIVERSAL: "UNIVERSAL",
+} as const;
 
 // System Units data definition
 const units = [
@@ -395,7 +406,12 @@ async function seedConversions(prisma: any) {
 }
 
 async function main() {
-  const { prisma } = await import("../src/client");
+  let prisma: any;
+  try {
+    prisma = (await import("../src/client")).prisma;
+  } catch (err) {
+    prisma = (await import("../packages/db/src/client")).prisma;
+  }
 
   await seedUnits(prisma);
   await seedConversions(prisma);
