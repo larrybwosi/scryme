@@ -1,5 +1,11 @@
 # web
 
+## 6.6.0
+
+### Minor Changes
+
+- 24504bd: update
+
 ## 6.5.0
 
 ### Minor Changes
