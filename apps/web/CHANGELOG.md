@@ -1,5 +1,18 @@
 # web
 
+## 6.7.0
+
+### Minor Changes
+
+- 828362e: update
+- 828362e: update
+
+## 6.6.0
+
+### Minor Changes
+
+- 24504bd: update
+
 ## 6.5.0
 
 ### Minor Changes
