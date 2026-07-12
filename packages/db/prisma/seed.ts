@@ -418,7 +418,7 @@ async function main() {
 
     if (isClientPathMissing) {
       try {
-        prisma = (await import("../packages/db/src/client")).prisma;
+        prisma = (await import("../../db/src/client")).prisma;
       } catch (innerErr: any) {
         throw new Error(
           `Failed to import Prisma client from both relative paths. Inner error: ${innerErr.message}`,
