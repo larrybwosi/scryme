@@ -110,6 +110,10 @@ export class MemberUseCase {
       status: member.status,
       cardId: member.cardId,
       phone: member.phone,
+      address: member.address,
+      age: member.age,
+      gender: member.gender,
+      tags: member.tags,
       createdAt: member.createdAt,
       updatedAt: member.updatedAt,
       // Include extra info if available from findFirst (e.g. in getMember)
@@ -124,7 +128,7 @@ export class MemberUseCase {
   }
 
   async createMember(organizationId: string, dto: CreateMemberDto, inviterId?: string) {
-    const { email, name, role, pin, cardId, departmentIds, customRoleIds, roleGroupIds, phone } = dto;
+    const { email, name, role, pin, cardId, departmentIds, customRoleIds, roleGroupIds, phone, address, age, gender, tags } = dto;
 
     return this.prisma.client.$transaction(async (tx) => {
       // Security: Verify related entity ownership
@@ -189,6 +193,10 @@ export class MemberUseCase {
           cardId,
           pinHash,
           phone,
+          address,
+          age,
+          gender,
+          tags,
           departmentMemberships: departmentIds ? {
             create: departmentIds.map(dId => ({
               departmentId: dId,
@@ -250,7 +258,7 @@ export class MemberUseCase {
   }
 
   async updateMember(organizationId: string, id: string, dto: UpdateMemberDto, actorId: string) {
-    const { pin, departmentIds, customRoleIds, roleGroupIds } = dto;
+    const { pin, departmentIds, customRoleIds, roleGroupIds, name, role, membershipStatus, isActive, status, cardId, phone, address, age, gender, tags } = dto;
 
     // Security: Verify related entity ownership
     if (departmentIds?.length) {
@@ -289,13 +297,17 @@ export class MemberUseCase {
     const member = await this.prisma.client.member.update({
       where: { id, organizationId },
       data: {
-        name: dto.name,
-        role: dto.role,
-        membershipStatus: dto.membershipStatus,
-        isActive: dto.isActive,
-        status: dto.status,
-        cardId: dto.cardId,
-        phone: dto.phone,
+        user: name ? { update: { name } } : undefined,
+        role,
+        membershipStatus,
+        isActive,
+        status,
+        cardId,
+        phone,
+        address,
+        age,
+        gender,
+        tags,
         pinHash,
         departmentMemberships: departmentIds ? {
           deleteMany: {},
@@ -314,13 +326,20 @@ export class MemberUseCase {
 
     // Audit Log
     const auditDetails = {
-      name: dto.name,
-      role: dto.role,
-      membershipStatus: dto.membershipStatus,
-      isActive: dto.isActive,
-      status: dto.status,
-      cardId: dto.cardId,
-      phone: dto.phone,
+      name,
+      role,
+      membershipStatus,
+      isActive,
+      status,
+      cardId,
+      phone,
+      address,
+      age,
+      gender,
+      tags,
+      departmentIds,
+      customRoleIds,
+      roleGroupIds,
     };
 
     await this.prisma.client.auditLog.create({

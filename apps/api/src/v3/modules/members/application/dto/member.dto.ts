@@ -58,6 +58,26 @@ export class CreateMemberDto {
   @IsString()
   phone?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  age?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tags?: string;
+
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
@@ -107,6 +127,26 @@ export class UpdateMemberDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  age?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  tags?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -194,6 +234,18 @@ export class MemberResponseDto {
 
   @ApiPropertyOptional()
   phone?: string;
+
+  @ApiPropertyOptional()
+  address?: string;
+
+  @ApiPropertyOptional()
+  age?: string;
+
+  @ApiPropertyOptional()
+  gender?: string;
+
+  @ApiPropertyOptional()
+  tags?: string;
 
   @ApiProperty()
   createdAt: Date;
