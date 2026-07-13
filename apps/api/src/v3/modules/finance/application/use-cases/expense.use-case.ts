@@ -271,11 +271,7 @@ export class ExpenseUseCase {
         utilityAccount: { select: { id: true, name: true } },
       },
     });
-
-    if (!expense) {
-      throw new NotFoundException("Expense not found");
-    }
-
+    if (!expense) throw new NotFoundException("Expense not found");
     return expense;
   }
 

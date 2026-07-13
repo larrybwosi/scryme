@@ -53,6 +53,7 @@ export class AuthController {
 
   @AllowPublic()
   @All("oauth2/*")
+  @ApiParam({ name: "path", type: "string" })
   @ApiOperation({
     summary: "Handle OAuth2 provider requests",
     description:
