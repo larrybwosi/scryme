@@ -94,7 +94,12 @@ async function bootstrap() {
 
   // Global Configuration
   app.setGlobalPrefix("api", {
-    exclude: [{ path: "s/:shortCode", method: RequestMethod.GET }],
+    exclude: [
+      { path: "s/:shortCode", method: RequestMethod.GET },
+      { path: ".well-known/openid-configuration", method: RequestMethod.GET },
+      { path: ".well-known/oauth-authorization-server", method: RequestMethod.GET },
+      { path: ".well-known/oauth-authorization-server/:issuerPath", method: RequestMethod.GET },
+    ],
   });
   app.useGlobalPipes(
     new ValidationPipe({
