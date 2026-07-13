@@ -1,3 +1,95 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "@repo/ui/globals.css";
+
+@source "../../../packages/ui/src";
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  .tab-active {
+    border-bottom: 2px solid var(--primary);
+    color: var(--primary);
+  }
+
+  /* Plane-style nav item active indicator */
+  .nav-item-active {
+    position: relative;
+    background-color: color-mix(
+      in oklch,
+      var(--sidebar-primary) 12%,
+      transparent
+    );
+    color: var(--sidebar-primary);
+    font-weight: 600;
+  }
+  .nav-item-active::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background-color: var(--sidebar-primary);
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Kanban drop zone shimmer */
+  .kanban-drop-target {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      color-mix(in oklch, var(--primary) 8%, transparent) 4px,
+      color-mix(in oklch, var(--primary) 8%, transparent) 8px
+    );
+  }
+
+  /* React Flow custom styles */
+  .react-flow__background {
+    background-color: var(--background) !important;
+  }
+  .react-flow__controls {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  .react-flow__controls-button {
+    background: var(--card) !important;
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--muted-foreground) !important;
+    fill: var(--muted-foreground) !important;
+  }
+  .react-flow__controls-button:hover {
+    background: var(--accent) !important;
+  }
+  .react-flow__minimap {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+  }
+  .react-flow__edge-path {
+    stroke: var(--border) !important;
+    stroke-width: 2 !important;
+  }
+  .react-flow__edge.selected .react-flow__edge-path {
+    stroke: var(--primary) !important;
+  }
+  .react-flow__handle {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
