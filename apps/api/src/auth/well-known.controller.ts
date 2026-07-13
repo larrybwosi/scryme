@@ -22,7 +22,7 @@ export class WellKnownController {
       headers: req.headers as HeadersInit,
     });
 
-    const handler = oauthProviderOpenIdConfigMetadata(this.authService.auth);
+    const handler = oauthProviderOpenIdConfigMetadata(this.authService.auth as any);
     const response = await handler(request);
 
     // Copy headers to fastify response
@@ -55,7 +55,7 @@ export class WellKnownController {
       headers: req.headers as HeadersInit,
     });
 
-    const handler = oauthProviderAuthServerMetadata(this.authService.auth);
+    const handler = oauthProviderAuthServerMetadata(this.authService.auth as any);
     const response = await handler(request);
 
     // Copy headers to fastify response
@@ -88,7 +88,7 @@ export class WellKnownController {
       headers: req.headers as HeadersInit,
     });
 
-    const handler = oauthProviderAuthServerMetadata(this.authService.auth);
+    const handler = oauthProviderAuthServerMetadata(this.authService.auth as any);
     const response = await handler(request);
 
     // Copy headers to fastify response
