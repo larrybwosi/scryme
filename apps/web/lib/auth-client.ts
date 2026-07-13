@@ -3,7 +3,7 @@ import { adminClient } from "better-auth/client/plugins";
 import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { ac, ADMIN, CASHIER, DEVELOPER } from "./permissions";
 
-export const authClient = createAuthClient({
+export const authClient: any = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000",
   plugins: [
     oauthProviderClient(),

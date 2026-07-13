@@ -133,7 +133,7 @@ export function FeaturesGrid() {
             style={{ color: colors.textMuted, fontFamily: fonts.body }}
           >
             Nothing here runs in isolation. Every module posts to the same
-            record, so the "connects to" column isn't marketing — it's what
+            record, so the &quot;connects to&quot; column isn&apos;t marketing — it&apos;s what
             actually happens when an entry is made.
           </p>
         </motion.div>

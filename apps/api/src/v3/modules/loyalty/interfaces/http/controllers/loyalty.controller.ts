@@ -13,6 +13,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from "@nestjs/swagger";
 import { LoyaltyService } from "../../../application/loyalty.service";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
