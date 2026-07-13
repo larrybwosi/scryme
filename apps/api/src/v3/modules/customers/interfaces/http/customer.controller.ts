@@ -15,7 +15,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
-  ApiParam
+  ApiParam,
 } from "@nestjs/swagger";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";

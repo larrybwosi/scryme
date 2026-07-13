@@ -34,7 +34,8 @@ export class ExpenseController {
   @Permissions("finance:write")
   @ApiOperation({ summary: "Record a new expense" })
   async createExpense(@Req() req: any, @Body() dto: CreateExpenseDto) {
-    return this.expenseUseCase.createExpense(req.organization.id, req.user.memberId, dto);
+    const memberId = req.v3Context?.memberId || req.user?.memberId;
+    return this.expenseUseCase.createExpense(req.organization.id, memberId, dto);
   }
 
   @Get()
