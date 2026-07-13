@@ -65,7 +65,7 @@ export function Footer() {
               style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
               One ledger for CRM, Point of Sale, Inventory, and Finance — every
-              entry reconciled the moment it's made, so every team reads from
+              entry reconciled the moment it&apos;s made, so every team reads from
               the same record.
             </p>
 
