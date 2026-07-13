@@ -1,0 +1,13 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> site@1.0.0 dev /app/apps/site
+> next dev --port 3005
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3005
+- Network:       http://192.168.0.2:3005
+✓ Ready in 563ms
+
+○ Compiling /products/finance ...
+ GET /products/finance 200 in 4.3s (next.js: 3.5s, application-code: 790ms)
+ GET /products/inventory 200 in 885ms (next.js: 538ms, application-code: 347ms)
