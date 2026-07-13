@@ -1,5 +1,11 @@
 # crm
 
+## 7.8.0
+
+### Minor Changes
+
+- 921c072: update
+
 ## 7.7.0
 
 ### Minor Changes
