@@ -14,6 +14,7 @@ import { WebhooksModule } from "../webhooks/webhooks.module";
 import { LoyaltyModule } from "../loyalty/loyalty.module";
 import { CatalogModule } from "../catalog/catalog.module";
 import { FinanceModule } from "../finance/finance.module";
+import { ScrymeModule } from "../../../v2/scryme/scryme.module";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FinanceModule } from "../finance/finance.module";
     WebhooksModule,
     LoyaltyModule,
     CatalogModule,
+    ScrymeModule,
     forwardRef(() => FinanceModule),
   ],
   controllers: [OrderController],

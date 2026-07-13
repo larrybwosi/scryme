@@ -305,7 +305,7 @@ function parseEnv() {
     const parsed = serverSchema.safeParse(raw);
     if (!parsed.success && process.env.NODE_ENV !== "test") {
       console.error(
-        "❌ Invalid environment variables:",
+        "❌ [NestJS Env] Invalid environment variables:",
         z.flattenError(parsed.error).fieldErrors,
       );
       if (
@@ -316,9 +316,10 @@ function parseEnv() {
       }
     }
     return {
+      ...raw,
       ...(parsed.data ?? {}),
       ...clientSchema.parse({}),
-    } as z.infer<typeof serverSchema> & z.infer<typeof clientSchema>;
+    } as any;
   }
 
   const fullSchema = serverSchema.merge(clientSchema);
@@ -336,8 +337,10 @@ function parseEnv() {
     }
   }
 
-  return (parsed.data ?? {}) as z.infer<typeof serverSchema> &
-    z.infer<typeof clientSchema>;
+  return {
+    ...raw,
+    ...(parsed.data ?? {}),
+  } as any;
 }
 
 export const env = parseEnv();
