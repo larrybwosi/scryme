@@ -99,6 +99,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki_data:/tmp/loki
+      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
     depends_on:
       vol-perms:
         condition: service_healthy
@@ -124,8 +125,8 @@ services:
       - /var/log:/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount the folder instead of the file to prevent the "not a directory" error
-      - ./:/mnt/config/:ro
-    command: -config.file=/mnt/config/promtail-config.yml
+      - ./docker/promtail:/mnt/config/:ro
+    command: -config.file=/mnt/config/config.yml
     networks:
       - scryme-network
 
