@@ -14,6 +14,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam
 } from "@nestjs/swagger";
 import * as crypto from "crypto";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";

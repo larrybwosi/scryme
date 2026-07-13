@@ -213,6 +213,53 @@ export class ExpenseUseCase {
     });
   }
 
+  async getExpense(organizationId: string, id: string) {
+    const expense = await this.prisma.client.expense.findFirst({
+      where: { id, organizationId, deletedAt: null },
+      select: {
+        id: true,
+        expenseNumber: true,
+        description: true,
+        expenseDate: true,
+        amount: true,
+        currencyCode: true,
+        exchangeRate: true,
+        baseAmount: true,
+        taxAmount: true,
+        taxRate: true,
+        paymentMethod: true,
+        status: true,
+        isReimbursable: true,
+        isBillable: true,
+        receiptUrl: true,
+        notes: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true,
+        categoryId: true,
+        locationId: true,
+        memberId: true,
+        supplierId: true,
+        purchaseId: true,
+        budgetId: true,
+        pettyCashFundId: true,
+        utilityAccountId: true,
+        category: { select: { id: true, name: true } },
+        location: { select: { id: true, name: true } },
+        member: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+        pettyCashFund: { select: { id: true, name: true } },
+        utilityAccount: { select: { id: true, name: true } },
+      },
+    });
+    if (!expense) throw new NotFoundException("Expense not found");
+    return expense;
+  }
+
   async getExpenses(
     organizationId: string,
     filters: {
