@@ -1,5 +1,11 @@
 # web
 
+## 6.8.0
+
+### Minor Changes
+
+- 921c072: update
+
 ## 6.7.0
 
 ### Minor Changes
