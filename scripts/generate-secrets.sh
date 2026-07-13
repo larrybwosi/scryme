@@ -5,7 +5,10 @@ EXAMPLE_FILE=".env.example"
 
 # 1. Initialize .env file if it doesn't exist
 if [ ! -f "$ENV_FILE" ]; then
-  if [ -f "$EXAMPLE_FILE" ]; then
+  if [ -f ".env.prod.example" ]; then
+    cp ".env.prod.example" "$ENV_FILE"
+    echo "Created .env from .env.prod.example"
+  elif [ -f "$EXAMPLE_FILE" ]; then
     cp "$EXAMPLE_FILE" "$ENV_FILE"
     echo "Created .env from $EXAMPLE_FILE"
   else
@@ -82,5 +85,30 @@ update_env_var "NEXT_PUBLIC_SOCKET_URL" "http://api.scryme.local" "true"
 update_env_var "REDIS_HOST" "redis" "false"
 update_env_var "REDIS_PORT" "6379" "false"
 update_env_var "REDIS_URL" "redis://redis:6379" "false"
+
+# 8. Generate Zitadel database credentials and masterkey if missing
+update_env_var "ZITADEL_DB_USER" "zitadel" "false"
+update_env_var "ZITADEL_DB_PASSWORD" "$(generate_secret)" "false"
+update_env_var "ZITADEL_DB_NAME" "zitadel" "false"
+update_env_var "ZITADEL_MASTERKEY" "$(generate_secret)" "false"
+
+# 9. Generate Windmill database credentials if missing
+update_env_var "WINDMILL_DB_USER" "windmill" "false"
+update_env_var "WINDMILL_DB_PASSWORD" "$(generate_secret)" "false"
+update_env_var "WINDMILL_DB_NAME" "windmill" "false"
+
+# 10. Generate RabbitMQ credentials and construct URL if missing
+update_env_var "RABBITMQ_USER" "scryme" "false"
+update_env_var "RABBITMQ_PASS" "$(generate_secret)" "false"
+
+R_USER=$(grep "^RABBITMQ_USER=" "$ENV_FILE" | cut -d'=' -f2-)
+R_PASS=$(grep "^RABBITMQ_PASS=" "$ENV_FILE" | cut -d'=' -f2-)
+update_env_var "RABBITMQ_URL" "amqp://${R_USER}:${R_PASS}@rabbitmq:5672" "true"
+
+# 11. Service Ports
+update_env_var "API_PORT" "4000" "false"
+update_env_var "WEB_PORT" "3000" "false"
+update_env_var "CRM_PORT" "3001" "false"
+update_env_var "BAKERY_PORT" "3003" "false"
 
 echo "The .env file has been processed successfully with unified configurations."

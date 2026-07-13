@@ -8,6 +8,7 @@ import {
   Param,
   Delete,
   UseInterceptors,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -16,6 +17,7 @@ import {
   ApiResponse,
 } from "@nestjs/swagger";
 import * as crypto from "crypto";
+import { isSafeUrl } from "@repo/shared/server";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
@@ -52,12 +54,20 @@ export class WebhookController {
   })
   async create(@Req() req: any, @Body() body: CreateWebhookDto) {
     const { organizationId, clientId } = req.v3Context;
+
+    // @security Validate URL to prevent SSRF at registration
+    if (!(await isSafeUrl(body.url))) {
+      throw new BadRequestException("Insecure webhook URL blocked");
+    }
+
     // Generate a secure random secret using crypto instead of Math.random()
     const secret = "whsec_" + crypto.randomBytes(24).toString("hex");
 
     return this.prisma.client.webhookSubscription.create({
       data: {
-        ...body,
+        name: body.name,
+        url: body.url,
+        events: body.events,
         organizationId,
         apiClientId: clientId,
         secret,

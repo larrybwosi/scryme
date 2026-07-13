@@ -87,8 +87,9 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma/seed.ts ./pr
 COPY --from=installer --chown=nextjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
 COPY --from=installer --chown=nextjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
-# Copy entrypoint script
-COPY --from=pruner --chown=nextjs:nodejs /app/apps/web/entrypoint.sh ./entrypoint.sh
+# Copy entrypoint script safely from the pruner stage root
+COPY --from=pruner --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+USER root
 RUN chmod +x ./entrypoint.sh
 
 USER nextjs

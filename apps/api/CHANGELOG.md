@@ -1,5 +1,60 @@
 # api
 
+## 6.9.0
+
+### Minor Changes
+
+- 9b76cf7: update
+
+## 6.8.0
+
+### Minor Changes
+
+- 921c072: update
+
+## 6.7.0
+
+### Minor Changes
+
+- 828362e: update
+- 828362e: update
+
+## 6.6.0
+
+### Minor Changes
+
+- 24504bd: update
+
+## 6.5.0
+
+### Minor Changes
+
+- 29f8e17: update
+
+## 6.4.0
+
+### Minor Changes
+
+- a11e407: update
+
+## 6.3.0
+
+### Minor Changes
+
+- 581f179: Update
+
+## 6.2.0
+
+### Minor Changes
+
+- cc1595f: Update
+
+## 6.1.0
+
+### Minor Changes
+
+- 305d3f1: nothing
+
 ## 6.0.0
 
 ### Major Changes

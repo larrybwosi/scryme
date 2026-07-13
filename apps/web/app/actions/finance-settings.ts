@@ -9,6 +9,8 @@ import {
   ConditionType,
   ApprovalMode,
 } from "@repo/db/client";
+import { testWorkflow } from "@repo/windmill";
+import { ScrymeChatApiClient } from "@repo/scryme";
 
 async function checkPermission(allowedRoles: MemberRole[]) {
   const auth = await getServerAuth();
@@ -308,4 +310,88 @@ export async function getWindmillScripts() {
     { path: "f/finance/notify_slack", name: "Notify Slack" },
     { path: "f/finance/check_fraud", name: "Fraud Check" },
   ];
+}
+
+export async function testWorkflowAction(
+  workflowId: string,
+  testData: { amount?: number; locationId?: string; expenseCategoryId?: string }
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN"]);
+  return await testWorkflow(auth.organizationId, workflowId, testData);
+}
+
+export async function sendTestScrymeMessageAction(
+  channelSlug: string,
+  messageText: string
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN"]);
+
+  const config = await db.scrymeConfiguration.findUnique({
+    where: { organizationId: auth.organizationId },
+  });
+
+  if (!config || !config.workspaceSlug) {
+    throw new Error(
+      "Scryme Chat is not configured for your organization. Please set up the integration in Integrations first."
+    );
+  }
+
+  const clientId = process.env.SCRYME_CHAT_CLIENT_ID;
+  const clientSecret = process.env.SCRYME_CHAT_CLIENT_SECRET;
+  const content =
+    messageText || "🔔 This is a test message from Dealio Workflow Manager!";
+
+  if (!clientId || !clientSecret) {
+    // Simulated Mode
+    const mockMessageId = `mock_scryme_${Date.now()}`;
+    await db.scrymeMessage.create({
+      data: {
+        organizationId: auth.organizationId,
+        workspaceSlug: config.workspaceSlug,
+        channelSlug,
+        messageId: mockMessageId,
+        content,
+      },
+    });
+
+    return {
+      success: true,
+      simulated: true,
+      message:
+        "Scryme Chat credentials missing on server. Simulating message transmission.",
+      messageDetails: {
+        id: mockMessageId,
+        channelSlug,
+        content,
+      },
+    };
+  }
+
+  const scrymeClient = new ScrymeChatApiClient();
+  try {
+    const response = await scrymeClient.sendMessage(
+      config.workspaceSlug,
+      channelSlug,
+      {
+        content,
+      }
+    );
+
+    // Save to message logs
+    await db.scrymeMessage.create({
+      data: {
+        organizationId: auth.organizationId,
+        workspaceSlug: config.workspaceSlug,
+        channelSlug,
+        messageId: response?.id || `scryme_${Date.now()}`,
+        content,
+      },
+    });
+
+    return { success: true, simulated: false, response };
+  } catch (err: any) {
+    throw new Error(
+      `Failed to send Scryme message: ${err.message || err}`
+    );
+  }
 }

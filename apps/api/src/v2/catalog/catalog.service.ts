@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../../redis/redis.service";
@@ -218,8 +219,51 @@ export class CatalogService {
 
   async createProduct(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const {
+      name,
+      description,
+      sku,
+      barcode,
+      categoryId,
+      isActive,
+      imageUrls,
+      type,
+      pointsOnPurchase,
+      brand,
+      rating,
+      lowStockThreshold,
+      isNew,
+      detailedDescription,
+      tags,
+      isFeatured,
+      slug,
+      defaultLocationId,
+    } = data;
+
     const result = await this.prisma.client.product.create({
-      data: { ...data, organizationId },
+      data: {
+        name,
+        description,
+        sku,
+        barcode,
+        categoryId,
+        isActive,
+        imageUrls,
+        type,
+        pointsOnPurchase,
+        brand,
+        rating,
+        lowStockThreshold,
+        isNew,
+        detailedDescription,
+        tags,
+        isFeatured,
+        slug,
+        defaultLocationId,
+        organizationId,
+      },
     });
     await this.clearCatalogCache(organizationId);
     return result;
@@ -227,9 +271,13 @@ export class CatalogService {
 
   async updateProduct(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     const result = await this.prisma.client.product.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
     await this.clearCatalogCache(organizationId);
     return result;
@@ -237,8 +285,20 @@ export class CatalogService {
 
   async deleteProduct(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    const result = await this.prisma.client.product.delete({
+
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying ownership before deletion,
+    // as the Product model lacks a composite unique index on [id, organizationId].
+    const product = await this.prisma.client.product.findFirst({
       where: { id, organizationId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
+    const result = await this.prisma.client.product.delete({
+      where: { id },
     });
 
     await this.realtime.publish(
@@ -310,8 +370,19 @@ export class CatalogService {
 
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    const { name, description, parentId, color, code } = data;
+
     const result = await this.prisma.client.category.create({
-      data: { ...data, organizationId },
+      data: {
+        name,
+        description,
+        parentId,
+        color,
+        code,
+        organizationId,
+      },
     });
     await this.clearCatalogCache(organizationId);
     return result;
@@ -319,9 +390,13 @@ export class CatalogService {
 
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
+
+    // 🛡️ Sentinel: Strip organizationId and id from data to prevent mass assignment
+    const { organizationId: _, id: __, ...updateData } = data;
+
     const result = await this.prisma.client.category.update({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
     await this.clearCatalogCache(organizationId);
     return result;
@@ -329,9 +404,22 @@ export class CatalogService {
 
   async deleteCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    const result = await this.prisma.client.category.delete({
+
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying ownership before deletion,
+    // as the Category model lacks a composite unique index on [id, organizationId].
+    const category = await this.prisma.client.category.findFirst({
       where: { id, organizationId },
+      select: { id: true },
     });
+
+    if (!category) {
+      throw new NotFoundException("Category not found");
+    }
+
+    const result = await this.prisma.client.category.delete({
+      where: { id },
+    });
+
     await this.clearCatalogCache(organizationId);
     return result;
   }

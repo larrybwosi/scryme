@@ -26,6 +26,7 @@ import {
   Calendar,
   Heart,
   Users,
+  Loader2,
 } from "lucide-react";
 import {
   updateMemberCustomization,
@@ -42,6 +43,21 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { ImageUpload } from "../../image-upload";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 
 export function StaffSettings({
   member,
@@ -52,6 +68,7 @@ export function StaffSettings({
 }) {
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [form, setForm] = useState({
     cardId: member.cardId || "",
     pin: "",
@@ -108,13 +125,6 @@ export function StaffSettings({
   };
 
   const handleResetPassword = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to reset this member's password? A random password will be generated.",
-      )
-    ) {
-      return;
-    }
     setResettingPassword(true);
     const result = await resetMemberPassword(member.id);
     if (result.success) {
@@ -122,6 +132,7 @@ export function StaffSettings({
         duration: 15000,
         description: `New password: ${result.password}. Please copy and share it securely.`,
       });
+      setShowResetConfirm(false);
     } else {
       toast.error(result.error);
     }
@@ -427,12 +438,47 @@ export function StaffSettings({
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleResetPassword}
+                onClick={() => setShowResetConfirm(true)}
                 disabled={resettingPassword}
                 className="gap-2">
                 <RefreshCcw size={14} />
-                {resettingPassword ? "Resetting..." : "Reset Password"}
+                Reset Password
               </Button>
+
+              <AlertDialog
+                open={showResetConfirm}
+                onOpenChange={setShowResetConfirm}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will reset the member&apos;s password and generate a
+                      new random one. The current password will no longer work.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={resettingPassword}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={e => {
+                        e.preventDefault();
+                        handleResetPassword();
+                      }}
+                      disabled={resettingPassword}
+                      className="bg-red-600 hover:bg-red-700">
+                      {resettingPassword ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Resetting...
+                        </>
+                      ) : (
+                        "Reset Password"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>
@@ -458,14 +504,19 @@ export function StaffSettings({
                   value={form.cardId}
                   onChange={e => setForm({ ...form, cardId: e.target.value })}
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleGenerateCard}
-                  type="button"
-                  title="Generate random Card ID">
-                  <RefreshCcw size={16} />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleGenerateCard}
+                      type="button"
+                      aria-label="Generate random Card ID">
+                      <RefreshCcw size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate random Card ID</TooltipContent>
+                </Tooltip>
               </div>
             </div>
             <div className="space-y-2">
@@ -478,14 +529,19 @@ export function StaffSettings({
                   value={form.pin}
                   onChange={e => setForm({ ...form, pin: e.target.value })}
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleGeneratePin}
-                  type="button"
-                  title="Generate random 6-digit PIN">
-                  <Key size={16} />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleGeneratePin}
+                      type="button"
+                      aria-label="Generate random 6-digit PIN">
+                      <Key size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate random 6-digit PIN</TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-[10px] text-gray-500">
                 Staff will use this PIN to log in to the POS and perform
