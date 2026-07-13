@@ -37,3 +37,6 @@ apps/web/.env
 .turbo
 tsconfig.tsbuildinfo
 .tsbuildinfo
+
+# generated SDK files
+packages/v3-sdk/src/generated/
