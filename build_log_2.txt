@@ -1,0 +1,109 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> web@6.7.0 build /app/apps/web
+> next build
+
+▲ Next.js 16.2.10 (Turbopack)
+- Experiments (use with caution):
+  · cpus: 1
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 39.8s
+  Skipping validation of types
+  Finished TypeScript config validation in 5ms ...
+  Collecting page data using 1 worker ...
+[2m2026-07-12T23:10:53.118Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-07-12T23:10:53.121Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+[2m2026-07-12T23:10:53.966Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
+[2m2026-07-12T23:10:53.967Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
+  Generating static pages using 1 worker (0/63) ...
+  Generating static pages using 1 worker (15/63)
+  Generating static pages using 1 worker (31/63)
+  Generating static pages using 1 worker (47/63)
+✓ Generating static pages using 1 worker (63/63) in 1429ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /.well-known/oauth-authorization-server
+├ ƒ /.well-known/oauth-authorization-server/[issuer-path]
+├ ƒ /.well-known/openid-configuration
+├ ƒ /api/auth/[...all]
+├ ƒ /api/auth/ably
+├ ƒ /api/health
+├ ƒ /api/sales/documents/[id]
+├ ƒ /api/stocking/documents/aggregated-requests
+├ ƒ /api/stocking/documents/requests
+├ ƒ /api/stocking/documents/transfers
+├ ƒ /api/upload
+├ ƒ /api/workflows/[[...slug]]
+├ ○ /banned
+├ ○ /create-org
+├ ƒ /dashboard
+├ ƒ /finance
+├ ○ /finance/accounting/coa
+├ ○ /finance/accounting/journal
+├ ○ /finance/accounting/reconciliation
+├ ○ /finance/accounting/recurring
+├ ƒ /finance/approvals
+├ ƒ /finance/expenses
+├ ƒ /finance/petty-cash
+├ ƒ /finance/purchases
+├ ○ /finance/reports/balance-sheet
+├ ○ /finance/reports/cash-flow
+├ ○ /finance/reports/profit-loss
+├ ○ /finance/reports/tax-compliance
+├ ƒ /finance/settings
+├ ƒ /finance/utilities
+├ ○ /forbidden
+├ ƒ /health
+├ ○ /integrations
+├ ○ /integrations/apps-api
+├ ƒ /inventory
+├ ○ /inventory/barcodes
+├ ƒ /inventory/categories
+├ ƒ /inventory/pricelists
+├ ƒ /inventory/pricelists/[id]
+├ ƒ /inventory/products/[id]
+├ ƒ /inventory/supplier
+├ ƒ /inventory/supplier/[id]
+├ ƒ /inventory/units
+├ ƒ /locations
+├ ƒ /locations/[id]
+├ ○ /login
+├ ○ /oauth/authorize
+├ ○ /reset-password
+├ ƒ /sales/deliveries
+├ ƒ /sales/new
+├ ƒ /sales/transactions
+├ ƒ /settings
+├ ○ /settings/developer
+├ ƒ /settings/devices
+├ ƒ /settings/documents
+├ ƒ /sign-up
+├ ƒ /staff
+├ ƒ /staff/[id]
+├ ƒ /staff/departments
+├ ƒ /staff/departments/[id]
+├ ƒ /staff/drivers
+├ ƒ /staff/drivers/[id]
+├ ƒ /stocking
+├ ƒ /stocking/audit
+├ ƒ /stocking/list
+├ ƒ /stocking/reorder-rules
+├ ƒ /stocking/reports
+├ ○ /stocking/requests
+├ ƒ /stocking/requests/[id]
+├ ƒ /stocking/requests/new
+├ ○ /stocking/transfers
+├ ƒ /stocking/transfers/[id]
+├ ƒ /stocking/transfers/new
+├ ○ /unauthorized
+└ ○ /workflows
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

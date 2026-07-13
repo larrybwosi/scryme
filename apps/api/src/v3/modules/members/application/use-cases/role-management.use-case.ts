@@ -148,12 +148,6 @@ export class RoleManagementUseCase {
   }
 
   // --- Role Groups ---
-
-  /**
-   * ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' and nested count.
-   * Excluding full PermissionSet objects (which contain large permission arrays)
-   * significantly reduces database I/O and payload size for role group lists.
-   */
   async getRoleGroups(organizationId: string) {
     return this.prisma.client.roleGroup.findMany({
       where: { organizationId },
