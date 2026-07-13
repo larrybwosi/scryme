@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up"];
-const publicRoutes = ["/api/auth"];
+const publicRoutes = ["/api/auth", "/health", "/api/health"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
