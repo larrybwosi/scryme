@@ -1,5 +1,11 @@
 # web
 
+## 6.10.0
+
+### Minor Changes
+
+- 159c4cd: Update
+
 ## 6.9.0
 
 ### Minor Changes
