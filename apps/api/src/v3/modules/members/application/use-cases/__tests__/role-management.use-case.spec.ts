@@ -75,7 +75,6 @@ describe("RoleManagementUseCase", () => {
           id: true,
           name: true,
           description: true,
-          organizationId: true,
           isActive: true,
           createdAt: true,
           updatedAt: true,
