@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { colors, fonts } from "@/lib/scryme-tokens";
 
 const highlights = [
   "No credit card required to start",
@@ -10,74 +11,145 @@ const highlights = [
   "99.9% uptime SLA guarantee",
 ];
 
+const statement = [
+  { label: "Businesses on Scryme", value: "4,200+" },
+  { label: "Transactions processed daily", value: "$3.8M+" },
+  { label: "Avg. revenue lift after 90 days", value: "+28%" },
+  { label: "Customer satisfaction score", value: "4.9 / 5" },
+];
+
 export function PricingCTA() {
   return (
-    <section className="py-28 bg-primary relative overflow-hidden">
-      {/* Background grid */}
+    <section
+      className="py-28 relative overflow-hidden"
+      style={{ background: colors.paper }}
+    >
+      {/* faint ledger rule texture, ink-on-paper */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-10"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
-          backgroundImage:
-            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
+          backgroundImage: `linear-gradient(${colors.inkBg} 1px, transparent 1px)`,
+          backgroundSize: "100% 40px",
         }}
       />
 
       <div className="relative z-10 mx-auto max-w-6xl px-6 flex flex-col lg:flex-row items-center gap-14">
         {/* Copy */}
         <div className="flex-1 text-center lg:text-left">
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary-foreground/70 mb-4">
-            Get started today
+          <p
+            className="text-xs font-semibold uppercase tracking-widest mb-4"
+            style={{ color: colors.ledgerRust, fontFamily: fonts.mono }}
+          >
+            Closing statement
           </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground leading-tight text-balance mb-6">
-            The ERP that grows <br className="hidden lg:block" />
+          <h2
+            className="text-4xl md:text-5xl font-medium leading-[1.1] text-balance mb-6"
+            style={{ color: colors.inkBg, fontFamily: fonts.display }}
+          >
+            The ledger grows <br className="hidden lg:block" />
             with your business
           </h2>
-          <p className="text-lg text-primary-foreground/80 max-w-lg mx-auto lg:mx-0 text-pretty">
+          <p
+            className="text-lg max-w-lg mx-auto lg:mx-0 text-pretty leading-relaxed"
+            style={{ color: "rgba(11,18,32,0.68)", fontFamily: fonts.body }}
+          >
             Start your 30-day free trial. No complex setup — your first store is
-            live in minutes. Upgrade, downgrade or cancel at any time.
+            live in minutes. Upgrade, downgrade, or cancel at any time.
           </p>
-
           <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto lg:mx-0">
             {highlights.map((item) => (
-              <li key={item} className="flex items-center gap-2 text-sm text-primary-foreground/90">
-                <CheckCircle className="w-4 h-4 shrink-0 text-primary-foreground" />
+              <li
+                key={item}
+                className="flex items-center gap-2 text-sm"
+                style={{ color: "rgba(11,18,32,0.8)", fontFamily: fonts.body }}
+              >
+                <CheckCircle
+                  className="w-4 h-4 shrink-0"
+                  style={{ color: colors.ledgerRust }}
+                />
                 {item}
               </li>
             ))}
           </ul>
-
           <div className="mt-10 flex flex-wrap gap-4 justify-center lg:justify-start">
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground text-primary px-6 py-3 text-sm font-semibold shadow hover:bg-primary-foreground/90 transition-colors"
+              className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{
+                background: colors.inkBg,
+                color: colors.paper,
+                fontFamily: fonts.body,
+              }}
             >
               View pricing <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/40 text-primary-foreground px-6 py-3 text-sm font-semibold hover:bg-primary-foreground/10 transition-colors"
+              className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-colors"
+              style={{
+                border: `1px solid rgba(11,18,32,0.3)`,
+                color: colors.inkBg,
+                fontFamily: fonts.body,
+              }}
             >
               Talk to sales
             </Link>
           </div>
         </div>
 
-        {/* Stats card */}
+        {/* Statement card */}
         <div className="flex-1 w-full max-w-md">
-          <div className="rounded-2xl bg-primary-foreground/10 border border-primary-foreground/20 backdrop-blur-sm p-8 space-y-6">
-            {[
-              { label: "Businesses on Scryme", value: "4,200+" },
-              { label: "Transactions processed daily", value: "$3.8M+" },
-              { label: "Avg. revenue lift after 90 days", value: "+28%" },
-              { label: "Customer satisfaction score", value: "4.9 / 5" },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between border-b border-primary-foreground/10 pb-5 last:border-0 last:pb-0">
-                <span className="text-sm text-primary-foreground/70">{label}</span>
-                <span className="text-2xl font-bold text-primary-foreground">{value}</span>
-              </div>
-            ))}
+          <div
+            className="rounded-lg p-8"
+            style={{
+              background: "rgba(11,18,32,0.04)",
+              border: `1px solid rgba(11,18,32,0.14)`,
+            }}
+          >
+            <div
+              className="flex items-center justify-between pb-4 mb-5 border-b"
+              style={{ borderColor: "rgba(11,18,32,0.14)" }}
+            >
+              <span
+                className="text-[11px] uppercase tracking-widest"
+                style={{ color: colors.ledgerRust, fontFamily: fonts.mono }}
+              >
+                Statement — YTD
+              </span>
+              <span
+                className="text-[11px]"
+                style={{ color: "rgba(11,18,32,0.4)", fontFamily: fonts.mono }}
+              >
+                {new Date().getFullYear()}
+              </span>
+            </div>
+            <div className="space-y-4">
+              {statement.map(({ label, value }) => (
+                <div key={label} className="flex items-baseline gap-2">
+                  <span
+                    className="text-sm shrink-0"
+                    style={{
+                      color: "rgba(11,18,32,0.65)",
+                      fontFamily: fonts.body,
+                    }}
+                  >
+                    {label}
+                  </span>
+                  <span
+                    className="flex-1 border-b border-dotted translate-y-[-3px]"
+                    style={{ borderColor: "rgba(11,18,32,0.3)" }}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="text-lg font-semibold shrink-0 tabular-nums"
+                    style={{ color: colors.inkBg, fontFamily: fonts.mono }}
+                  >
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

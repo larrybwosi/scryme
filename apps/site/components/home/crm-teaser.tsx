@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { colors, fonts, modules } from "@/lib/scryme-tokens";
+
+const accent = modules.find((m) => m.code === "CRM")!.accent;
 
 const highlights = [
-  "Visual sales pipeline with drag-and-drop Kanban",
+  "Visual sales pipeline with drag-and-drop staging",
   "Automated lead scoring and follow-up sequences",
-  "360° customer profiles with interaction history",
+  "360° customer profiles with full interaction history",
   "Email campaigns, segments, and A/B testing",
-  "Real-time activity feed and team collaboration",
+  "Every closed deal posts straight to the finance ledger",
 ];
 
 function CRMKanban() {
   const columns = [
     {
       title: "Leads",
-      color: "#6366f1",
+      intensity: 0.25,
       cards: [
         { name: "Arjun Mehta", company: "Vantage Corp", value: "$24K" },
         { name: "Sarah Okonkwo", company: "TerraLogix", value: "$18K" },
@@ -21,14 +24,14 @@ function CRMKanban() {
     },
     {
       title: "Qualified",
-      color: "#0891b2",
+      intensity: 0.48,
       cards: [
         { name: "Elena Vasquez", company: "Meridian Grp.", value: "$47K" },
       ],
     },
     {
       title: "Proposal",
-      color: "#d97706",
+      intensity: 0.72,
       cards: [
         { name: "Nkechi Adeyemi", company: "Argent Ind.", value: "$95K" },
         { name: "Jake Thornton", company: "Kestrel LLC", value: "$63K" },
@@ -36,43 +39,58 @@ function CRMKanban() {
     },
     {
       title: "Won",
-      color: "#059669",
-      cards: [
-        { name: "Priya Sharma", company: "Solis Dist.", value: "$112K" },
-      ],
+      intensity: 1,
+      cards: [{ name: "Priya Sharma", company: "Solis Dist.", value: "$112K" }],
     },
   ];
 
   return (
     <div
-      className="rounded-2xl overflow-hidden border"
-      style={{ border: "1px solid var(--border)", boxShadow: "var(--shadow-xl)" }}
+      className="rounded-2xl overflow-hidden"
+      style={{
+        border: `1px solid ${colors.inkLine}`,
+        background: colors.inkPanelAlt,
+      }}
     >
-      {/* Header bar */}
       <div
         className="px-4 py-3 flex items-center justify-between"
-        style={{ background: "var(--card)", borderBottom: "1px solid var(--border)" }}
+        style={{
+          background: "#080D18",
+          borderBottom: `1px solid ${colors.inkLine}`,
+        }}
       >
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-          <span className="text-xs font-semibold text-foreground">Sales Pipeline</span>
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ background: accent }}
+          />
+          <span
+            className="text-xs font-semibold"
+            style={{ color: colors.textPrimary, fontFamily: fonts.body }}
+          >
+            Sales Pipeline
+          </span>
         </div>
-        <span className="text-xs text-muted-foreground">Q4 2025</span>
+        <span
+          className="text-xs"
+          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
+        >
+          Q4 2026
+        </span>
       </div>
 
-      {/* Kanban columns */}
-      <div
-        className="flex gap-3 p-4 overflow-x-auto scrollbar-none"
-        style={{ background: "var(--muted)" }}
-      >
+      <div className="flex gap-3 p-4 overflow-x-auto scrollbar-none">
         {columns.map((col) => (
           <div key={col.title} className="flex-1 min-w-[130px]">
             <div className="flex items-center gap-1.5 mb-2">
               <div
                 className="w-2 h-2 rounded-full"
-                style={{ background: col.color }}
+                style={{ background: `rgba(200,154,75,${col.intensity})` }}
               />
-              <span className="text-xs font-semibold text-foreground">
+              <span
+                className="text-xs font-semibold"
+                style={{ color: colors.textPrimary, fontFamily: fonts.body }}
+              >
                 {col.title}
               </span>
             </div>
@@ -80,30 +98,52 @@ function CRMKanban() {
               {col.cards.map((card) => (
                 <div
                   key={card.name}
-                  className="bg-card rounded-lg p-2.5"
+                  className="rounded-lg p-2.5"
                   style={{
-                    border: "1px solid var(--border)",
-                    boxShadow: "var(--shadow-sm)",
+                    background: colors.inkPanel,
+                    border: `1px solid ${colors.inkLine}`,
                   }}
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                      style={{ background: col.color }}
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{
+                        background: `rgba(200,154,75,${col.intensity})`,
+                        color:
+                          col.intensity > 0.6
+                            ? colors.inkBg
+                            : colors.textPrimary,
+                        fontFamily: fonts.body,
+                      }}
                     >
                       {card.name[0]}
                     </div>
-                    <span className="text-xs font-medium text-foreground truncate">
+                    <span
+                      className="text-xs font-medium truncate"
+                      style={{
+                        color: colors.textPrimary,
+                        fontFamily: fonts.body,
+                      }}
+                    >
                       {card.name}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground truncate">
+                    <span
+                      className="text-xs truncate"
+                      style={{
+                        color: colors.textFaint,
+                        fontFamily: fonts.body,
+                      }}
+                    >
                       {card.company}
                     </span>
                     <span
                       className="text-xs font-semibold shrink-0 ml-1"
-                      style={{ color: "#059669" }}
+                      style={{
+                        color: colors.ledgerGreen,
+                        fontFamily: fonts.mono,
+                      }}
                     >
                       {card.value}
                     </span>
@@ -115,13 +155,22 @@ function CRMKanban() {
         ))}
       </div>
 
-      {/* Pipeline total */}
       <div
         className="px-4 py-3 flex items-center justify-between"
-        style={{ background: "var(--card)", borderTop: "1px solid var(--border)" }}
+        style={{ borderTop: `1px solid ${colors.inkLine}` }}
       >
-        <span className="text-xs text-muted-foreground">Pipeline total</span>
-        <span className="text-sm font-bold text-foreground">$359,000</span>
+        <span
+          className="text-xs"
+          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
+        >
+          Pipeline total
+        </span>
+        <span
+          className="text-sm font-bold"
+          style={{ color: colors.ledgerGreen, fontFamily: fonts.mono }}
+        >
+          $359,000
+        </span>
       </div>
     </div>
   );
@@ -130,28 +179,42 @@ function CRMKanban() {
 export function CRMTeaser() {
   return (
     <section
-      className="py-24 bg-background"
+      className="py-24"
+      style={{ background: colors.inkPanelAlt }}
       aria-labelledby="crm-teaser-heading"
     >
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           {/* Text left */}
           <div className="flex-1 max-w-lg">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/15 mb-5">
-              <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-5"
+              style={{
+                background: `${accent}1A`,
+                border: `1px solid ${accent}55`,
+              }}
+            >
+              <span
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: accent, fontFamily: fonts.mono }}
+              >
                 CRM
               </span>
             </div>
             <h2
               id="crm-teaser-heading"
-              className="text-3xl sm:text-4xl font-extrabold text-foreground text-balance"
+              className="text-3xl sm:text-4xl font-medium text-balance"
+              style={{ color: colors.textPrimary, fontFamily: fonts.display }}
             >
               Close more deals with an intelligent sales pipeline
             </h2>
-            <p className="mt-4 text-base text-muted-foreground leading-relaxed">
+            <p
+              className="mt-4 text-base leading-relaxed"
+              style={{ color: colors.textMuted, fontFamily: fonts.body }}
+            >
               Scryme CRM gives your sales team complete visibility into every
-              deal — from first contact to closed contract. Automate the
-              routine, focus on relationships.
+              deal — from first contact to closed contract, with every won deal
+              reconciled against the same ledger Finance reads from.
             </p>
 
             <ul className="mt-7 space-y-3">
@@ -159,17 +222,30 @@ export function CRMTeaser() {
                 <li key={item} className="flex items-start gap-3">
                   <CheckCircle2
                     size={16}
-                    className="text-primary shrink-0 mt-0.5"
+                    className="shrink-0 mt-0.5"
+                    style={{ color: accent }}
                   />
-                  <span className="text-sm text-foreground">{item}</span>
+                  <span
+                    className="text-sm"
+                    style={{
+                      color: colors.textPrimary,
+                      fontFamily: fonts.body,
+                    }}
+                  >
+                    {item}
+                  </span>
                 </li>
               ))}
             </ul>
 
             <Link
               href="/products/crm"
-              className="inline-flex items-center gap-2 mt-8 px-5 py-3 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              style={{ boxShadow: "var(--shadow-primary)" }}
+              className="inline-flex items-center gap-2 mt-8 px-5 py-3 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{
+                background: accent,
+                color: colors.inkBg,
+                fontFamily: fonts.body,
+              }}
             >
               Explore CRM
               <ArrowRight size={14} />

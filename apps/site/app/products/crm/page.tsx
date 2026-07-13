@@ -1,8 +1,21 @@
 import type { Metadata } from "next";
-import { Users, GitBranch, BarChart2, Bell, Mail, Zap, Lock, Globe } from "lucide-react";
+import {
+  Users,
+  GitBranch,
+  BarChart2,
+  Bell,
+  Mail,
+  Zap,
+  Lock,
+  Globe,
+} from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
+import { ModuleConnects } from "@/components/products/module-connects";
+import { IndexGrid } from "@/components/products/index-grid";
+import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
 import { StructuredData } from "@/components/seo/structured-data";
+import { CrmDealStub } from "@/components/products/crm/crm-deal-stub";
 import { CrmPipelineMock } from "@/components/products/crm/crm-pipeline-mock";
 import { CrmContactMock } from "@/components/products/crm/crm-contact-mock";
 import { CrmAnalyticsMock } from "@/components/products/crm/crm-analytics-mock";
@@ -17,7 +30,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Scryme CRM — Visual Pipeline & Sales Automation",
-    description: "Close more deals with a pipeline built for scale. AI-assisted follow-ups, deal scoring, and revenue forecasting.",
+    description:
+      "Close more deals with a pipeline built for scale. AI-assisted follow-ups, deal scoring, and revenue forecasting.",
     url: "https://scryme.co/products/crm",
   },
 };
@@ -33,12 +47,46 @@ const capabilities = [
   { icon: Globe, label: "Multi-org Support" },
 ];
 
+const includedCards = [
+  {
+    tag: "WF",
+    title: "Workflow Automation",
+    desc: "Trigger emails, tasks, and stage moves based on any CRM event — no code needed.",
+  },
+  {
+    tag: "ES",
+    title: "Email Sequences",
+    desc: "Multi-step outreach cadences with A/B testing and open/click analytics.",
+  },
+  {
+    tag: "LS",
+    title: "Lead Scoring",
+    desc: "Score inbound leads automatically by company size, engagement, and fit.",
+  },
+  {
+    tag: "TM",
+    title: "Territory Management",
+    desc: "Assign accounts by region, industry, or round-robin rules with audit logs.",
+  },
+  {
+    tag: "QB",
+    title: "Quotation Builder",
+    desc: "Generate branded PDF quotes directly from a deal card. E-sign ready.",
+  },
+  {
+    tag: "API",
+    title: "API & Webhooks",
+    desc: "Bidirectional sync with your ERP, marketing tools, and data warehouse.",
+  },
+];
+
 export default function CrmPage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: "Scryme CRM",
-    description: "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
+    description:
+      "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
     brand: {
       "@type": "Brand",
       name: "Scryme",
@@ -77,36 +125,31 @@ export default function CrmPage() {
   };
 
   return (
-    <main>
+    <main className="bg-[#0B1220]">
       <StructuredData data={structuredData} />
       <StructuredData data={breadcrumbData} />
+
       <ProductHero
-        eyebrow="Scryme CRM"
-        title="Close more deals with a pipeline built for scale"
-        description="From first contact to closed-won, Scryme CRM gives your sales team a single, visual workspace — with AI-assisted follow-ups, deal scoring, and revenue forecasting built in."
-        iconSlot={<Users className="w-8 h-8 text-white" />}
-        accentColor="oklch(0.55 0.18 265)"
+        eyebrow="Module · CRM"
+        title={
+          <>
+            Every deal,{" "}
+            <em className="not-italic text-[#C89A4B]">on the record</em> — start
+            to close.
+          </>
+        }
+        description="Scryme CRM gives your team one visual pipeline and one contact record per account. Close a deal and it posts straight to Finance and unlocks fulfillment in Inventory — no re-entry, no reconciliation."
+        primaryCta={{ label: "Start free trial", href: "#pricing" }}
+        secondaryCta={{ label: "See the pipeline ↓", href: "#pipeline" }}
+        visual={<CrmDealStub />}
       />
 
-      {/* Capabilities chip row */}
-      <section className="py-10 bg-surface-2 border-y border-border">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex flex-wrap justify-center gap-3">
-            {capabilities.map(({ icon: Icon, label }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium text-muted"
-              >
-                <Icon className="w-3.5 h-3.5 text-primary" />
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ModuleConnects current="CRM" />
 
-      {/* Feature 1 — Pipeline */}
+      <IndexGrid title="What's on the record" items={capabilities} />
+
       <FeatureSection
+        id="pipeline"
         eyebrow="Visual Pipeline"
         title="See every deal's status at a glance"
         description="Drag-and-drop Kanban stages let your team move deals forward without switching apps. Custom stages, deal weighting, and probability scoring ship out of the box."
@@ -120,8 +163,8 @@ export default function CrmPage() {
         <CrmPipelineMock />
       </FeatureSection>
 
-      {/* Feature 2 — Contact Intelligence */}
       <FeatureSection
+        id="contact"
         eyebrow="Contact Intelligence"
         title="Every interaction — in one place"
         description="Calls, emails, meetings and notes are automatically linked to the right contact and company. Your reps always know what was said and what needs to happen next."
@@ -137,8 +180,8 @@ export default function CrmPage() {
         <CrmContactMock />
       </FeatureSection>
 
-      {/* Feature 3 — Analytics */}
       <FeatureSection
+        id="analytics"
         eyebrow="Revenue Analytics"
         title="Forecast with confidence, not guesswork"
         description="Scryme CRM surfaces the metrics that matter — win rates, cycle length, and pipeline velocity — so you can plan headcount and quota with real data."
@@ -152,57 +195,15 @@ export default function CrmPage() {
         <CrmAnalyticsMock />
       </FeatureSection>
 
-      {/* Full-width feature list */}
-      <section className="py-20 bg-surface-2 border-t border-border">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="text-center mb-14">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-              Everything included
-            </p>
-            <h2 className="text-3xl font-bold text-foreground text-balance">
-              No add-ons required. No hidden tiers.
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                title: "Workflow Automation",
-                desc: "Trigger emails, tasks, and stage moves based on any CRM event — no code needed.",
-              },
-              {
-                title: "Email Sequences",
-                desc: "Multi-step outreach cadences with A/B testing and open/click analytics.",
-              },
-              {
-                title: "Lead Scoring",
-                desc: "Score inbound leads automatically by company size, engagement, and fit.",
-              },
-              {
-                title: "Territory Management",
-                desc: "Assign accounts by region, industry, or round-robin rules with audit logs.",
-              },
-              {
-                title: "Quotation Builder",
-                desc: "Generate branded PDF quotes directly from a deal card. E-sign ready.",
-              },
-              {
-                title: "API & Webhooks",
-                desc: "Bidirectional sync with your ERP, marketing tools, and data warehouse.",
-              },
-            ].map(({ title, desc }) => (
-              <div
-                key={title}
-                className="rounded-xl border border-border bg-background p-6 hover:border-primary/40 transition-colors"
-              >
-                <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LedgerCardGrid
+        eyebrow="Everything included"
+        title="No add-ons required. No hidden tiers."
+        cards={includedCards}
+      />
 
-      <PricingCTA />
+      <div id="pricing">
+        <PricingCTA />
+      </div>
     </main>
   );
 }

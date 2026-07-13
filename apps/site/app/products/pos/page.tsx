@@ -11,14 +11,20 @@ import {
   Layers,
   HardDrive,
   UserCheck,
-  Download,
-  Terminal,
 } from "lucide-react";
 import { ProductHero } from "@/components/products/product-hero";
 import { FeatureSection } from "@/components/products/feature-section";
+import { ModuleConnects } from "@/components/products/module-connects";
+import { IndexGrid } from "@/components/products/index-grid";
+import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
+import { CalloutRow } from "@/components/products/callout-row";
 import { StructuredData } from "@/components/seo/structured-data";
+import { PosTerminalStub } from "@/components/products/pos/pos-terminal-stub";
+import { PosReceiptTape } from "@/components/products/pos/pos-receipt-tape";
 import { PosCheckoutMock } from "@/components/products/pos/pos-checkout-mock";
 import { PosOfflineMock } from "@/components/products/pos/pos-offline-mock";
+import { PosInventorySyncMock } from "@/components/products/pos/pos-inventory-sync-mock";
+import { PosDownloadSection } from "@/components/products/pos/pos-download-section";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
 export const metadata: Metadata = {
@@ -30,7 +36,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Scryme POS — Native Desktop Point of Sale",
-    description: "A fast, reliable checkout experience that never depends on the internet. Built with Tauri and React.",
+    description:
+      "A fast, reliable checkout experience that never depends on the internet. Built with Tauri and React.",
     url: "https://scryme.co/products/pos",
   },
 };
@@ -46,12 +53,67 @@ const capabilities = [
   { icon: ShoppingCart, label: "Layaway & Credit" },
 ];
 
+const edgeCaseCards = [
+  {
+    tag: "MR",
+    title: "Multi-register Support",
+    desc: "Run any number of terminals per location. Each syncs independently and merges conflict-free.",
+  },
+  {
+    tag: "RE",
+    title: "Returns & Exchanges",
+    desc: "Process full or partial returns with or without a receipt. Stock is automatically restocked.",
+  },
+  {
+    tag: "LD",
+    title: "Layaway & Deposits",
+    desc: "Accept partial payments with automatic hold on stock until balance is cleared.",
+  },
+  {
+    tag: "SM",
+    title: "Shift Management",
+    desc: "Open and close tills, assign floats, and generate shift reconciliation reports per cashier.",
+  },
+  {
+    tag: "PS",
+    title: "Peripheral Support",
+    desc: "Plug-and-play with Epson receipt printers, USB/Bluetooth barcode scanners, and cash drawers.",
+  },
+  {
+    tag: "CD",
+    title: "Customer Display",
+    desc: "Mirror line items to a second screen or tablet for transparent, branded customer-facing checkout.",
+  },
+];
+
+const architectureCallouts = [
+  {
+    icon: Layers,
+    title: "Multi-Register Sync",
+    description:
+      "Seamlessly run multiple terminals in a single location. Our CRDT-based synchronization keeps every register updated with live inventory and sales data, resolving conflicts automatically.",
+  },
+  {
+    icon: HardDrive,
+    title: "Peripheral Support",
+    description:
+      "Connect your existing hardware. Native support for industry-standard receipt printers, barcode scanners, and cash drawers via USB, Bluetooth, or network.",
+  },
+  {
+    icon: UserCheck,
+    title: "Advanced Permissions",
+    description:
+      "Granular role-based access control. Manage cashier shifts, till floats, and manager overrides with a detailed audit trail of every action on the terminal.",
+  },
+];
+
 export default function PosPage() {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: "Scryme POS",
-    description: "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support.",
+    description:
+      "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support.",
     brand: {
       "@type": "Brand",
       name: "Scryme",
@@ -90,36 +152,32 @@ export default function PosPage() {
   };
 
   return (
-    <main>
+    <main className="bg-[#0B1220]">
       <StructuredData data={structuredData} />
       <StructuredData data={breadcrumbData} />
+
       <ProductHero
-        eyebrow="Scryme POS"
-        title="A desktop POS that keeps selling — even offline"
-        description="Built as a native desktop app (Tauri + React), Scryme POS gives your retail and wholesale staff a fast, reliable checkout experience that never depends on the internet."
-        iconSlot={<ShoppingCart className="w-8 h-8 text-white" />}
-        accentColor="oklch(0.60 0.18 160)"
+        eyebrow="Module · POS"
+        title={
+          <>
+            A desktop register that keeps selling{" "}
+            <em className="not-italic text-[#C89A4B]">— even offline</em>.
+          </>
+        }
+        description="Built as a native desktop app (Tauri + React), Scryme POS gives your retail and wholesale staff a fast, reliable checkout that never depends on the internet."
+        primaryCta={{ label: "Start free trial", href: "#pricing" }}
+        secondaryCta={{ label: "See it checkout ↓", href: "#checkout" }}
+        visual={<PosTerminalStub />}
       />
 
-      {/* Capabilities */}
-      <section className="py-10 bg-surface-2 border-y border-border">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex flex-wrap justify-center gap-3">
-            {capabilities.map(({ icon: Icon, label }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium text-muted"
-              >
-                <Icon className="w-3.5 h-3.5 text-primary" />
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ModuleConnects current="POS" />
 
-      {/* Feature 1 — Checkout */}
+      <IndexGrid title="What's on the terminal" items={capabilities} />
+
+      <PosReceiptTape />
+
       <FeatureSection
+        id="checkout"
         eyebrow="Checkout Experience"
         title="Blazing-fast checkout built for volume"
         description="Process a sale in under 5 seconds. Barcode scan, item search, or manual entry — all from a clean interface your staff can learn in minutes. Supports card, cash, mobile pay, and split tender."
@@ -133,16 +191,20 @@ export default function PosPage() {
         <PosCheckoutMock />
       </FeatureSection>
 
-      {/* Feature 2 — Offline */}
       <FeatureSection
+        id="offline"
         eyebrow="Offline First"
-        title="Internet down? You&apos;re still open"
+        title="Internet down? You're still open"
         description="Scryme POS stores a complete local copy of inventory, pricing, and customer data. Transactions queue locally and auto-sync the moment connectivity returns — no data loss, ever."
         bullets={[
           { text: "Full SQLite database cached locally on every terminal" },
-          { text: "Conflict-free sync using CRDT-based merge strategy" },
-          { text: "Queue visibility lets managers see pending uploads in real time" },
-          { text: "Supports up to 72 hours of uninterrupted offline operation" },
+          { text: "Conflict-free sync using a CRDT-based merge strategy" },
+          {
+            text: "Queue visibility lets managers see pending uploads in real time",
+          },
+          {
+            text: "Supports up to 72 hours of uninterrupted offline operation",
+          },
         ]}
         reverse
         dark
@@ -150,8 +212,8 @@ export default function PosPage() {
         <PosOfflineMock />
       </FeatureSection>
 
-      {/* Feature 3 — Inventory sync visual */}
       <FeatureSection
+        id="inventory"
         eyebrow="Live Inventory Sync"
         title="Every sale updates stock in real time"
         description="Scryme POS is natively connected to the Inventory module. Every checkout immediately reflects on the warehouse stock count, reorder triggers, and supplier dashboards — no manual reconciliation."
@@ -162,187 +224,22 @@ export default function PosPage() {
           { text: "End-of-day reconciliation report auto-generated on close" },
         ]}
       >
-        {/* inline mock panel */}
-        <div className="rounded-2xl border border-border bg-surface-1 shadow-xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border bg-surface-2">
-            <span className="text-xs font-semibold text-foreground">Stock movement — today</span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400">
-              Live
-            </span>
-          </div>
-          <div className="px-4 py-4 space-y-2">
-            {[
-              { name: "Premium Coffee Beans 1kg", sold: 24, stock: 76, status: "ok" },
-              { name: "Organic Earl Grey Tea", sold: 12, stock: 14, status: "low" },
-              { name: "Stainless Travel Mug", sold: 8, stock: 31, status: "ok" },
-              { name: "French Press 600ml", sold: 5, stock: 3, status: "critical" },
-              { name: "Cold Brew Concentrate", sold: 19, stock: 52, status: "ok" },
-            ].map((item) => (
-              <div
-                key={item.name}
-                className="flex items-center gap-3 rounded-lg bg-background border border-border px-3 py-2.5"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate">{item.name}</p>
-                  <p className="text-[10px] text-muted">{item.sold} sold today</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-bold text-foreground">{item.stock} left</p>
-                  <span
-                    className={`text-[10px] font-semibold ${
-                      item.status === "critical"
-                        ? "text-red-500"
-                        : item.status === "low"
-                        ? "text-amber-500"
-                        : "text-emerald-500"
-                    }`}
-                  >
-                    {item.status === "critical" ? "Reorder now" : item.status === "low" ? "Low stock" : "In stock"}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <PosInventorySyncMock />
       </FeatureSection>
 
-      {/* Deep features grid */}
-      <section className="py-20 bg-surface-2 border-t border-border">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="text-center mb-14">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-              Built for serious retail
-            </p>
-            <h2 className="text-3xl font-bold text-foreground text-balance">
-              Every edge case, already handled
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                title: "Multi-register Support",
-                desc: "Run any number of terminals per location. Each syncs independently and merges conflict-free.",
-              },
-              {
-                title: "Returns & Exchanges",
-                desc: "Process full or partial returns with or without a receipt. Stock is automatically restocked.",
-              },
-              {
-                title: "Layaway & Deposits",
-                desc: "Accept partial payments with automatic hold on stock until balance is cleared.",
-              },
-              {
-                title: "Shift Management",
-                desc: "Open and close tills, assign floats, and generate shift reconciliation reports per cashier.",
-              },
-              {
-                title: "Peripheral Support",
-                desc: "Plug-and-play with Epson receipt printers, USB/Bluetooth barcode scanners, and cash drawers.",
-              },
-              {
-                title: "Customer Display",
-                desc: "Mirror line items to a second screen or tablet for transparent, branded customer-facing checkout.",
-              },
-            ].map(({ title, desc }) => (
-              <div
-                key={title}
-                className="rounded-xl border border-border bg-background p-6 hover:border-primary/40 transition-colors"
-              >
-                <h3 className="text-sm font-semibold text-foreground mb-2">{title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LedgerCardGrid
+        eyebrow="Built for serious retail"
+        title="Every edge case, already handled"
+        cards={edgeCaseCards}
+      />
 
-      {/* Deep features grid */}
-      <section className="py-20 bg-background">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Layers className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold">Multi-Register Sync</h3>
-              <p className="text-muted leading-relaxed">
-                Seamlessly run multiple terminals in a single location. Our CRDT-based synchronization ensures all registers stay updated with live inventory and sales data, resolving conflicts automatically.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <HardDrive className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold">Peripheral Support</h3>
-              <p className="text-muted leading-relaxed">
-                Connect your existing hardware. Native support for industry-standard receipt printers, barcode scanners, and cash drawers via USB, Bluetooth, or Network.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <UserCheck className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold">Advanced Permissions</h3>
-              <p className="text-muted leading-relaxed">
-                Granular role-based access control. Manage cashier shifts, till floats, and manager overrides with a detailed audit trail of every action performed on the terminal.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <CalloutRow items={architectureCallouts} />
 
-      {/* Download Section */}
-      <section className="py-24 bg-surface-2 border-t border-border" id="download">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="text-4xl font-extrabold tracking-tight text-foreground mb-6">
-            Ready to speed up your checkout?
-          </h2>
-          <p className="text-lg text-muted mb-12 max-w-2xl mx-auto">
-            Download the native Scryme POS application for your operating system. Fast, secure, and built for enterprise reliability.
-          </p>
+      <PosDownloadSection />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co"}/public/download/windows`}
-              className="group flex flex-col items-center p-8 rounded-2xl border border-border bg-background hover:border-primary transition-all hover:shadow-xl"
-            >
-              <Monitor className="w-10 h-10 mb-4 text-muted group-hover:text-primary transition-colors" />
-              <span className="font-bold">Windows</span>
-              <span className="text-xs text-muted mt-1">.msi installer</span>
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-primary">
-                <Download className="w-4 h-4" />
-                Download
-              </div>
-            </a>
-            <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co"}/public/download/macos`}
-              className="group flex flex-col items-center p-8 rounded-2xl border border-border bg-background hover:border-primary transition-all hover:shadow-xl"
-            >
-              <HardDrive className="w-10 h-10 mb-4 text-muted group-hover:text-primary transition-colors" />
-              <span className="font-bold">macOS</span>
-              <span className="text-xs text-muted mt-1">Universal .dmg</span>
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-primary">
-                <Download className="w-4 h-4" />
-                Download
-              </div>
-            </a>
-            <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co"}/public/download/linux`}
-              className="group flex flex-col items-center p-8 rounded-2xl border border-border bg-background hover:border-primary transition-all hover:shadow-xl"
-            >
-              <Terminal className="w-10 h-10 mb-4 text-muted group-hover:text-primary transition-colors" />
-              <span className="font-bold">Linux</span>
-              <span className="text-xs text-muted mt-1">.AppImage</span>
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-primary">
-                <Download className="w-4 h-4" />
-                Download
-              </div>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <PricingCTA />
+      <div id="pricing">
+        <PricingCTA />
+      </div>
     </main>
   );
 }

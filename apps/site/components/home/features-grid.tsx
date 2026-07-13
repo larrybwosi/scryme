@@ -2,140 +2,99 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  Users2,
-  ShoppingCart,
-  Package,
-  DollarSign,
-  UserCheck,
-  BarChart3,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { colors, fonts, modules, type ModuleCode } from "@/lib/scryme-tokens";
 
-const features = [
-  {
-    name: "Customer Relationship Management",
-    shortName: "CRM",
-    description:
-      "Track every customer interaction, manage your sales pipeline, automate follow-ups, and close deals faster with an intelligent CRM built for growth.",
-    icon: Users2,
-    href: "/products/crm",
-    color: "#4f46e5",
-    colorBg: "rgba(79,70,229,0.08)",
-  },
-  {
-    name: "Point of Sale",
-    shortName: "POS",
-    description:
-      "Process retail and wholesale transactions with a lightning-fast, offline-capable POS system that syncs inventory in real time.",
-    icon: ShoppingCart,
-    href: "/products/pos",
-    color: "#0891b2",
-    colorBg: "rgba(8,145,178,0.08)",
-  },
-  {
-    name: "Inventory Management",
-    shortName: "Inventory",
-    description:
-      "Monitor stock levels across multiple warehouses, automate reorders, track serial numbers, and get real-time alerts on critical shortages.",
-    icon: Package,
-    href: "/products/inventory",
-    color: "#059669",
-    colorBg: "rgba(5,150,105,0.08)",
-  },
-  {
-    name: "Financial Management",
-    shortName: "Finance",
-    description:
-      "Streamline invoicing, expense tracking, bank reconciliation, and financial reporting with a full-featured accounting module designed for enterprise.",
-    icon: DollarSign,
-    href: "/products/finance",
-    color: "#d97706",
-    colorBg: "rgba(217,119,6,0.08)",
-  },
-  {
-    name: "HR & Workforce",
-    shortName: "HR",
-    description:
-      "Manage employees, attendance, leave, and payroll in one place. Automate compliance reporting and give your HR team the tools they need.",
-    icon: UserCheck,
-    href: "/products/hr",
-    color: "#7c3aed",
-    colorBg: "rgba(124,58,237,0.08)",
-  },
-  {
-    name: "Business Analytics",
-    shortName: "Analytics",
-    description:
-      "Turn your operational data into strategic insight with customizable dashboards, drill-down reports, and AI-powered forecasting tools.",
-    icon: BarChart3,
-    href: "/products/analytics",
-    color: "#db2777",
-    colorBg: "rgba(219,39,119,0.08)",
-  },
-];
+function ConnectsTo({ codes }: { codes: ModuleCode[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {codes.map((c) => {
+        const target = modules.find((m) => m.code === c);
+        return (
+          <span
+            key={c}
+            className="text-[10px] px-1.5 py-0.5 rounded"
+            style={{
+              fontFamily: fonts.mono,
+              color: target?.accent,
+              background: `${target?.accent}1A`,
+              border: `1px solid ${target?.accent}33`,
+            }}
+          >
+            {c}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
-function FeatureCard({
-  feature,
+function ManifestRow({
+  module,
   index,
 }: {
-  feature: (typeof features)[0];
+  module: (typeof modules)[number];
   index: number;
 }) {
-  const Icon = feature.icon;
-
   return (
     <motion.article
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "-40px" }}
       transition={{
-        delay: (index % 3) * 0.1,
-        duration: 0.55,
+        delay: index * 0.06,
+        duration: 0.5,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="group relative bg-card border border-border rounded-xl p-6 flex flex-col hover:border-primary/30 hover:shadow-md transition-all duration-300"
+      className="group grid grid-cols-1 sm:grid-cols-[88px_minmax(0,1.4fr)_minmax(0,2fr)_140px] items-start sm:items-center gap-3 sm:gap-6 px-5 py-5 sm:py-4 border-b transition-colors hover:bg-[rgba(241,233,216,0.02)]"
+      style={{ borderColor: colors.inkLine }}
     >
-      {/* Icon */}
-      <div
-        className="w-11 h-11 rounded-lg flex items-center justify-center mb-5 shrink-0 transition-transform group-hover:scale-110 duration-300"
-        style={{ background: feature.colorBg }}
-      >
-        <Icon size={20} style={{ color: feature.color }} />
+      {/* Ticker code */}
+      <div className="flex items-center gap-2 sm:block">
+        <span
+          className="text-sm font-semibold tracking-wider inline-block px-2 py-1 rounded"
+          style={{
+            fontFamily: fonts.mono,
+            color: module.accent,
+            background: `${module.accent}17`,
+          }}
+        >
+          {module.code}
+        </span>
       </div>
 
-      {/* Content */}
-      <div className="flex items-center gap-2 mb-2">
-        <h3 className="text-base font-semibold text-foreground">
-          {feature.name}
-        </h3>
-      </div>
-      <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-        {feature.description}
+      {/* Name */}
+      <h3
+        className="text-base sm:text-lg font-medium leading-snug"
+        style={{ color: colors.textPrimary, fontFamily: fonts.display }}
+      >
+        {module.name}
+      </h3>
+
+      {/* Description */}
+      <p
+        className="text-sm leading-relaxed"
+        style={{ color: colors.textMuted, fontFamily: fonts.body }}
+      >
+        {module.description}
       </p>
 
-      {/* Link */}
-      <Link
-        href={feature.href}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold mt-5 transition-colors"
-        style={{ color: feature.color }}
-        aria-label={`Learn more about ${feature.name}`}
-      >
-        Learn more
-        <ArrowRight
-          size={14}
-          className="transition-transform group-hover:translate-x-1 duration-200"
-        />
-      </Link>
-
-      {/* Subtle hover glow */}
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse 80% 60% at 20% 20%, ${feature.colorBg}, transparent)`,
-        }}
-        aria-hidden="true"
-      />
+      {/* Connects to + link */}
+      <div className="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-2">
+        <ConnectsTo codes={module.connectsTo} />
+        <Link
+          href={module.href}
+          className="inline-flex items-center gap-1 text-xs font-medium transition-colors opacity-70 group-hover:opacity-100"
+          style={{ color: colors.textPrimary, fontFamily: fonts.body }}
+          aria-label={`Learn more about ${module.name}`}
+        >
+          Learn more
+          <ArrowRight
+            size={12}
+            className="transition-transform group-hover:translate-x-0.5"
+          />
+        </Link>
+      </div>
     </motion.article>
   );
 }
@@ -144,39 +103,66 @@ export function FeaturesGrid() {
   return (
     <section
       id="features"
-      className="py-24 bg-surface-1"
+      className="py-24"
+      style={{ background: colors.inkBg }}
       aria-labelledby="features-heading"
     >
       <div className="container mx-auto">
-        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-14"
+          className="max-w-2xl mb-12"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/15 mb-4">
-            <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-              Platform Modules
-            </span>
-          </div>
+          <span
+            className="text-[11px] uppercase tracking-widest"
+            style={{ color: colors.brass, fontFamily: fonts.mono }}
+          >
+            The manifest
+          </span>
           <h2
             id="features-heading"
-            className="text-3xl sm:text-4xl font-extrabold text-foreground text-balance"
+            className="mt-3 text-3xl sm:text-4xl font-medium text-balance leading-tight"
+            style={{ color: colors.textPrimary, fontFamily: fonts.display }}
           >
-            Everything you need to run your business
+            Six modules. One ledger underneath.
           </h2>
-          <p className="mt-4 text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed text-pretty">
-            Six deeply integrated modules that work seamlessly together — so
-            data flows automatically from your storefront to your balance sheet.
+          <p
+            className="mt-4 text-base leading-relaxed"
+            style={{ color: colors.textMuted, fontFamily: fonts.body }}
+          >
+            Nothing here runs in isolation. Every module posts to the same
+            record, so the "connects to" column isn't marketing — it's what
+            actually happens when an entry is made.
           </p>
         </motion.div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((feature, index) => (
-            <FeatureCard key={feature.shortName} feature={feature} index={index} />
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            background: colors.inkPanelAlt,
+            border: `1px solid ${colors.inkLine}`,
+          }}
+        >
+          {/* header row — desktop only */}
+          <div
+            className="hidden sm:grid grid-cols-[88px_minmax(0,1.4fr)_minmax(0,2fr)_140px] gap-6 px-5 py-3 border-b"
+            style={{ borderColor: colors.inkLine }}
+          >
+            {["Code", "Module", "What it does", "Connects to"].map((h) => (
+              <span
+                key={h}
+                className="text-[10px] uppercase tracking-widest"
+                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
+              >
+                {h}
+              </span>
+            ))}
+          </div>
+
+          {modules.map((module, index) => (
+            <ManifestRow key={module.code} module={module} index={index} />
           ))}
         </div>
       </div>

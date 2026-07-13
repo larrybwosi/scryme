@@ -1,19 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, ArrowRight } from "lucide-react";
+import { BookText, ArrowRight } from "lucide-react";
+import { colors, fonts, modules } from "@/lib/scryme-tokens";
 
-const footerLinks = {
-  products: {
-    title: "Products",
-    links: [
-      { name: "CRM", href: "/products/crm" },
-      { name: "Point of Sale", href: "/products/pos" },
-      { name: "Inventory", href: "/products/inventory" },
-      { name: "Finance", href: "/products/finance" },
-      { name: "Analytics", href: "/products/analytics" },
-    ],
-  },
+const otherLinks = {
   company: {
     title: "Company",
     links: [
@@ -48,57 +39,60 @@ const footerLinks = {
 export function Footer() {
   return (
     <footer
-      className="text-white"
-      style={{ background: "var(--site-dark)" }}
+      style={{ background: colors.inkBg, color: colors.textPrimary }}
       aria-label="Site footer"
     >
-      {/* Main footer content */}
       <div className="container mx-auto py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           {/* Brand column */}
           <div className="lg:col-span-2 flex flex-col items-center md:items-start text-center md:text-left">
             <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary">
-                <Building2 size={16} className="text-primary-foreground" />
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: colors.brass }}
+              >
+                <BookText size={16} style={{ color: colors.inkBg }} />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">
+              <span
+                className="text-xl font-medium tracking-tight"
+                style={{ color: colors.textPrimary, fontFamily: fonts.display }}
+              >
                 Scryme
               </span>
             </Link>
             <p
               className="text-sm leading-relaxed mb-6"
-              style={{ color: "var(--site-dark-muted)" }}
+              style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
-              The enterprise platform that unifies your CRM, Point of Sale,
-              Inventory, and Finance — giving every team a single source of
-              truth.
+              One ledger for CRM, Point of Sale, Inventory, and Finance — every
+              entry reconciled the moment it's made, so every team reads from
+              the same record.
             </p>
 
-            {/* Newsletter CTA */}
             <div className="w-full max-w-sm">
               <p
-                className="text-xs font-semibold uppercase tracking-wider mb-3"
-                style={{ color: "var(--site-dark-muted)" }}
+                className="text-xs font-semibold uppercase tracking-widest mb-3"
+                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
               >
                 Product updates
               </p>
-              <form
-                className="flex gap-2"
-                onSubmit={(e) => e.preventDefault()}
-              >
+              <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="flex-1 min-w-0 px-3 py-2 rounded-md text-sm text-white placeholder:text-white/30 outline-none focus:ring-1 focus:ring-primary"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-md text-sm outline-none"
                   style={{
-                    background: "var(--site-dark-surface)",
-                    border: "1px solid var(--site-dark-border)",
+                    background: colors.inkPanel,
+                    border: `1px solid ${colors.inkLine}`,
+                    color: colors.textPrimary,
+                    fontFamily: fonts.body,
                   }}
                   aria-label="Email for product updates"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-2 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-colors shrink-0"
+                  className="px-3 py-2 rounded-md transition-opacity hover:opacity-90 shrink-0"
+                  style={{ background: colors.brass, color: colors.inkBg }}
                   aria-label="Subscribe"
                 >
                   <ArrowRight size={15} />
@@ -107,10 +101,42 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
-          {Object.values(footerLinks).map((section) => (
+          {/* Products column — reuses the manifest's ticker codes */}
+          <div className="text-center md:text-left">
+            <h3
+              className="text-xs font-semibold uppercase tracking-widest mb-4"
+              style={{ color: colors.textFaint, fontFamily: fonts.mono }}
+            >
+              Products
+            </h3>
+            <ul className="space-y-2.5">
+              {modules.map((m) => (
+                <li key={m.code}>
+                  <Link
+                    href={m.href}
+                    className="text-sm transition-colors inline-flex items-center gap-2 justify-center md:justify-start hover:opacity-100"
+                    style={{ color: colors.textMuted, fontFamily: fonts.body }}
+                  >
+                    <span
+                      className="text-[10px] font-semibold"
+                      style={{ color: m.accent, fontFamily: fonts.mono }}
+                    >
+                      {m.code}
+                    </span>
+                    {m.name.split(" ").slice(0, 2).join(" ")}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Other link columns */}
+          {Object.values(otherLinks).map((section) => (
             <div key={section.title} className="text-center md:text-left">
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 text-white">
+              <h3
+                className="text-xs font-semibold uppercase tracking-widest mb-4"
+                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
+              >
                 {section.title}
               </h3>
               <ul className="space-y-2.5">
@@ -118,8 +144,11 @@ export function Footer() {
                   <li key={link.name}>
                     <Link
                       href={link.href}
-                      className="text-sm transition-colors hover:text-white"
-                      style={{ color: "var(--site-dark-muted)" }}
+                      className="text-sm transition-colors"
+                      style={{
+                        color: colors.textMuted,
+                        fontFamily: fonts.body,
+                      }}
                     >
                       {link.name}
                     </Link>
@@ -132,14 +161,11 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div
-        className="border-t"
-        style={{ borderColor: "var(--site-dark-border)" }}
-      >
+      <div style={{ borderTop: `1px solid ${colors.inkLine}` }}>
         <div className="container mx-auto py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p
             className="text-xs"
-            style={{ color: "var(--site-dark-muted)" }}
+            style={{ color: colors.textFaint, fontFamily: fonts.mono }}
           >
             &copy; {new Date().getFullYear()} Scryme Technologies Ltd. All
             rights reserved.
@@ -149,8 +175,8 @@ export function Footer() {
               <Link
                 key={item}
                 href={`/${item.toLowerCase()}`}
-                className="text-xs transition-colors hover:text-white"
-                style={{ color: "var(--site-dark-muted)" }}
+                className="text-xs transition-colors"
+                style={{ color: colors.textFaint, fontFamily: fonts.body }}
               >
                 {item}
               </Link>

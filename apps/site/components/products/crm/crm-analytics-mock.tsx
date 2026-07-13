@@ -1,50 +1,63 @@
-"use client";
+import { colors, fonts } from "@/lib/scryme-tokens";
 
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
-const values = [42, 58, 51, 72, 84, 90, 110];
-const max = Math.max(...values);
+const stats = [
+  { num: "$2.4M", label: "Forecast, Q3" },
+  { num: "38%", label: "Win rate" },
+  { num: "21d", label: "Avg. cycle" },
+];
 
 export function CrmAnalyticsMock() {
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 shadow-xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-border bg-surface-2">
-        <span className="text-xs font-semibold text-foreground">Revenue by pipeline stage</span>
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
-          +31% YoY
-        </span>
-      </div>
-
-      <div className="px-5 py-5">
-        {/* KPI row */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { label: "Pipeline value", value: "$1.4M" },
-            { label: "Win rate", value: "68%" },
-            { label: "Avg. deal size", value: "$92K" },
-          ].map(({ label, value }) => (
-            <div key={label} className="rounded-lg bg-surface-2 border border-border px-3 py-3">
-              <p className="text-[10px] text-muted mb-1">{label}</p>
-              <p className="text-lg font-bold text-foreground">{value}</p>
+    <div
+      className="rounded-md border p-6"
+      style={{ background: colors.inkPanel, borderColor: colors.inkLine }}
+    >
+      <div className="mb-5.5 flex flex-wrap gap-7">
+        {stats.map((s) => (
+          <div key={s.label}>
+            <div
+              className="text-[26px]"
+              style={{ fontFamily: fonts.display, color: colors.paper }}
+            >
+              {s.num}
             </div>
-          ))}
-        </div>
-
-        {/* Bar chart */}
-        <div className="flex items-end gap-2 h-28">
-          {months.map((month, i) => {
-            const pct = (values[i] / max) * 100;
-            return (
-              <div key={month} className="flex-1 flex flex-col items-center gap-1.5">
-                <div
-                  className="w-full rounded-t-md bg-primary/80 hover:bg-primary transition-colors"
-                  style={{ height: `${pct}%` }}
-                />
-                <span className="text-[10px] text-muted">{month}</span>
-              </div>
-            );
-          })}
-        </div>
+            <div
+              className="text-[10px] uppercase tracking-[0.05em]"
+              style={{ fontFamily: fonts.mono, color: colors.textFaint }}
+            >
+              {s.label}
+            </div>
+          </div>
+        ))}
       </div>
+
+      <svg viewBox="0 0 460 160" className="h-auto w-full">
+        <polygon
+          points="0,120 40,108 80,96 120,84 160,74 200,58 240,66 280,48 320,40 360,30 400,22 440,14 440,160 0,160"
+          fill="rgba(200,154,75,0.10)"
+        />
+        <polyline
+          points="0,120 40,108 80,96 120,84 160,74 200,58 240,66 280,48 320,40 360,30 400,22 440,14"
+          fill="none"
+          stroke={colors.brass}
+          strokeWidth={2}
+        />
+        <polyline
+          points="0,132 40,124 80,118 120,110 160,104 200,96 240,100 280,90 320,86 360,80 400,76 440,70"
+          fill="none"
+          stroke="rgba(241,233,216,0.28)"
+          strokeWidth={1.4}
+          strokeDasharray="3 4"
+        />
+        <line
+          x1="0"
+          y1="140"
+          x2="460"
+          y2="140"
+          stroke={colors.inkLine}
+          strokeWidth={1}
+        />
+      </svg>
     </div>
   );
 }
