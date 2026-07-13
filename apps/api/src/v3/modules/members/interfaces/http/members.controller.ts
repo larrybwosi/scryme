@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -124,6 +125,7 @@ export class MembersController {
     @Request() req: any,
     @Param("id") id: string,
     @Body("status") status: Status,
+  ) {
     const actorId = req.v3Context.memberId;
     return this.memberUseCase.updateMemberStatus(
       req.v3Context.organizationId,

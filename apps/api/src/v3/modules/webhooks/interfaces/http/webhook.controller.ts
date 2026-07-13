@@ -15,6 +15,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam
 } from "@nestjs/swagger";
 import * as crypto from "crypto";
 import { isSafeUrl } from "@repo/shared/server";

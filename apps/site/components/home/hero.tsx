@@ -143,7 +143,7 @@ function LedgerTape() {
 function ReconciledTotal() {
   const [value, setValue] = useState(261480);
   const target = 284900;
-  const frame = useRef<number>();
+  const frame = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const start = performance.now();
@@ -156,7 +156,11 @@ function ReconciledTotal() {
       if (t < 1) frame.current = requestAnimationFrame(tick);
     };
     frame.current = requestAnimationFrame(tick);
-    return () => frame.current && cancelAnimationFrame(frame.current);
+    return () => {
+      if (frame.current) {
+        cancelAnimationFrame(frame.current);
+      }
+    };
   }, []);
 
   return (
