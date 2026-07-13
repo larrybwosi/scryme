@@ -13,7 +13,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiParam
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";

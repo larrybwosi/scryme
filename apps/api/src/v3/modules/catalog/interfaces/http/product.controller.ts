@@ -16,7 +16,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
-  ApiParam
+  ApiParam,
 } from "@nestjs/swagger";
 import { GetProductsUseCase } from "../../application/use-cases/get-products.use-case";
 import { CreateProductUseCase } from "../../application/use-cases/create-product.use-case";
