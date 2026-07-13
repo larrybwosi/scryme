@@ -1,4 +1,5 @@
 services:
+  # --- DATABASE ---
   db:
     image: postgres:17-alpine
     restart: always
@@ -22,6 +23,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- CACHE ---
   redis:
     image: redis:alpine
     restart: always
@@ -33,6 +35,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- MESSAGE BROKER ---
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
@@ -44,12 +47,14 @@ services:
       timeout: 5s
       retries: 5
 
-  rustfs-perms:
+  # --- PERMISSION FIXER FOR NON-ROOT CONTAINERS ---
+  vol-perms:
     image: alpine
     user: root
     volumes:
-      - rustfs_data:/fix_path
-    command: sh -c "chown -R 10001:10001 /fix_path && touch /tmp/done && sleep infinity"
+      - rustfs_data:/fix_rustfs
+      - loki_data:/fix_loki
+    command: sh -c "chown -R 10001:10001 /fix_rustfs /fix_loki && touch /tmp/done && sleep infinity"
     healthcheck:
       test: ["CMD", "test", "-f", "/tmp/done"]
       interval: 5s
@@ -58,6 +63,7 @@ services:
     networks:
       - scryme-network
 
+  # --- OBJECT STORAGE (S3) ---
   rustfs:
     image: rustfs/rustfs:latest
     restart: always
@@ -72,11 +78,11 @@ services:
     volumes:
       - rustfs_data:/data
     depends_on:
-      rustfs-perms:
+      vol-perms:
         condition: service_healthy
     networks:
       - scryme-network
-      - proxy
+      - proxy-network
     healthcheck:
       test:
         [
@@ -86,19 +92,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.rustfs.rule=Host(`${RUSTFS_DOMAIN:-storage.scryme.tech}`)"
-      - "traefik.http.routers.rustfs.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.rustfs.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
 
+  # --- LOGGING INFRASTRUCTURE ---
   loki:
     image: grafana/loki:latest
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki_data:/tmp/loki
+    depends_on:
+      vol-perms:
+        condition: service_healthy
     networks:
       - scryme-network
     healthcheck:
@@ -120,33 +123,12 @@ services:
     volumes:
       - /var/log:/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    entrypoint:
-      - sh
-      - -c
-      - |
-        mkdir -p /etc/promtail
-        cat <<EOF > /etc/promtail/config.yml
-        server:
-          http_listen_port: 9080
-          grpc_listen_port: 0
-        positions:
-          filename: /tmp/positions.yaml
-        clients:
-          - url: http://loki:3100/loki/api/v1/push
-        scrape_configs:
-        - job_name: docker
-          docker_sd_configs:
-            - host: unix:///var/run/docker.sock
-              refresh_interval: 5s
-          relabel_configs:
-            - source_labels: ['__meta_docker_container_name']
-              regex: '/(.*)'
-              target_label: 'container'
-        EOF
-        promtail -config.file=/etc/promtail/config.yml
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
     networks:
       - scryme-network
 
+  # --- APPLICATIONS ---
   api:
     image: ghcr.io/larrybwosi/scryme/api:9.7.0
     restart: always
@@ -165,7 +147,7 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - PORT=${API_PORT:-4000}
       - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
-      - SOCKET_URL=${SOCKET_URL:-https://${API_DOMAIN:-api.scryme.tech}}
+      - SOCKET_URL=${SOCKET_URL:-https://api.scryme.tech}
       - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
       - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-org-id}
       - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-project-id}
@@ -182,7 +164,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
-      - proxy
+      - proxy-network
     healthcheck:
       test:
         [
@@ -196,14 +178,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.api.rule=Host(`${API_DOMAIN:-api.scryme.tech}`)"
-      - "traefik.http.routers.api.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.api.loadbalancer.server.port=${API_PORT:-4000}"
-      - "logging_job=api"
 
   web:
     image: ghcr.io/larrybwosi/scryme/web:9.7.0
@@ -218,9 +192,9 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.tech}}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.tech}}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.scryme.tech}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
       - PORT=${WEB_PORT:-3000}
     depends_on:
@@ -230,7 +204,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
-      - proxy
+      - proxy-network
     healthcheck:
       test:
         [
@@ -244,14 +218,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.web.rule=Host(`${WEB_DOMAIN:-scryme.tech}`)"
-      - "traefik.http.routers.web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.web.loadbalancer.server.port=${WEB_PORT:-3000}"
-      - "logging_job=web"
 
   crm:
     image: ghcr.io/larrybwosi/scryme/crm:9.7.0
@@ -266,9 +232,9 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.tech}}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://${API_DOMAIN:-api.scryme.tech}}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.scryme.tech}
       - PORT=${CRM_PORT:-3001}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
     depends_on:
@@ -278,7 +244,7 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
-      - proxy
+      - proxy-network
     healthcheck:
       test:
         [
@@ -292,14 +258,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.crm.rule=Host(`${CRM_DOMAIN:-crm.scryme.tech}`)"
-      - "traefik.http.routers.crm.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.crm.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.crm.loadbalancer.server.port=${CRM_PORT:-3001}"
-      - "logging_job=crm"
 
   bakery:
     image: ghcr.io/larrybwosi/scryme/bakery:9.7.0
@@ -311,14 +269,14 @@ services:
     env_file:
       - .env.example
     environment:
-      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-https://${API_DOMAIN:-api.scryme.tech}}
+      - VITE_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
       - PORT=${BAKERY_PORT:-3003}
     depends_on:
       api:
         condition: service_healthy
     networks:
       - scryme-network
-      - proxy
+      - proxy-network
     healthcheck:
       test:
         [
@@ -332,14 +290,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
-      - "traefik.http.routers.bakery.rule=Host(`${BAKERY_DOMAIN:-bakery.scryme.tech}`)"
-      - "traefik.http.routers.bakery.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
-      - "traefik.http.routers.bakery.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.bakery.loadbalancer.server.port=${BAKERY_PORT:-3003}"
-      - "logging_job=bakery"
 
 volumes:
   postgres_data:
@@ -349,12 +299,6 @@ volumes:
 networks:
   scryme-network:
     driver: bridge
-
-  # The platform-managed proxy network. Dokploy creates "dokploy-network",
-  # Coolify creates "coolify" (run `docker network ls` after installing the
-  # platform to confirm the exact name) — set PROXY_NETWORK in your .env to
-  # match. It must already exist; that's why it's external rather than
-  # created here.
-  proxy:
-    name: ${PROXY_NETWORK:-dokploy-network}
+  proxy-network:
+    name: ${PROXY_NETWORK_NAME:-dokploy-network}
     external: true

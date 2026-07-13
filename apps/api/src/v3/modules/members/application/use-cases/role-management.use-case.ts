@@ -115,9 +115,20 @@ export class RoleManagementUseCase {
 
   // --- Permission Sets ---
 
+  /**
+   * ⚡ Bolt Optimization: Use targeted select for permission sets list.
+   */
   async getPermissionSets(organizationId: string) {
     return this.prisma.client.permissionSet.findMany({
       where: { organizationId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { name: "asc" },
     });
   }
 
@@ -137,11 +148,21 @@ export class RoleManagementUseCase {
   }
 
   // --- Role Groups ---
-
   async getRoleGroups(organizationId: string) {
     return this.prisma.client.roleGroup.findMany({
       where: { organizationId },
-      include: { permissionSets: true },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: { permissionSets: true },
+        },
+      },
+      orderBy: { name: "asc" },
     });
   }
 
