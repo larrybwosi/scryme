@@ -1,70 +1,62 @@
-"use client";
+import { colors, fonts } from "@/lib/scryme-tokens";
 
-import { Wifi, WifiOff, CheckCircle2, Clock } from "lucide-react";
-
-const syncQueue = [
-  { id: "TXN-8821", amount: "$148.50", status: "synced", time: "09:14 AM" },
-  { id: "TXN-8822", amount: "$34.99", status: "synced", time: "09:19 AM" },
-  { id: "TXN-8823", amount: "$212.00", status: "pending", time: "09:31 AM" },
-  { id: "TXN-8824", amount: "$67.40", status: "pending", time: "09:35 AM" },
+const queue = [
+  { id: "T-2209", detail: "3 items · $41.00 cash", status: "synced" as const },
+  { id: "T-2210", detail: "1 item · $18.50 card", status: "synced" as const },
+  { id: "T-2213", detail: "5 items · $96.40 split", status: "queued" as const },
+  { id: "T-2214", detail: "3 items · $74.75 card", status: "queued" as const },
 ];
+
+const statusStyle = {
+  synced: { color: colors.ledgerGreen, label: "SYNCED" },
+  queued: { color: colors.ledgerRust, label: "QUEUED" },
+};
 
 export function PosOfflineMock() {
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 shadow-xl overflow-hidden">
-      {/* status bar */}
-      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border bg-amber-500/10">
-        <WifiOff className="w-4 h-4 text-amber-500" />
-        <div className="flex-1">
-          <p className="text-xs font-semibold text-amber-500">Offline mode active</p>
-          <p className="text-[10px] text-muted">Transactions queued for sync when connectivity restores</p>
-        </div>
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500">
-          2 pending
-        </span>
+    <div
+      className="rounded-md border py-1"
+      style={{ background: colors.inkPanel, borderColor: colors.inkLine }}
+    >
+      <div
+        className="flex items-center justify-between px-5 py-3.5 text-[10.5px] uppercase tracking-[0.05em]"
+        style={{ fontFamily: fonts.mono, color: colors.textFaint }}
+      >
+        <span>Local queue</span>
+        <span>CRDT merge · no conflicts</span>
       </div>
-
-      <div className="px-5 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted mb-3">
-          Sync queue
-        </p>
-        <div className="space-y-2">
-          {syncQueue.map((txn) => (
-            <div
-              key={txn.id}
-              className="flex items-center gap-3 rounded-lg bg-background border border-border px-3 py-2.5"
-            >
-              {txn.status === "synced" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              ) : (
-                <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground">{txn.id}</p>
-                <p className="text-[10px] text-muted">{txn.time}</p>
+      {queue.map((row, i) => {
+        const s = statusStyle[row.status];
+        return (
+          <div
+            key={row.id}
+            className={`flex items-center justify-between px-5 py-3 ${i < queue.length - 1 ? "border-b border-dashed" : ""}`}
+            style={{ borderColor: colors.inkLine }}
+          >
+            <div>
+              <div className="text-[13px]" style={{ color: colors.paper }}>
+                {row.id}
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-foreground">{txn.amount}</p>
-                <p
-                  className={`text-[10px] font-medium ${
-                    txn.status === "synced" ? "text-emerald-500" : "text-amber-500"
-                  }`}
-                >
-                  {txn.status === "synced" ? "Synced" : "Queued"}
-                </p>
+              <div
+                className="mt-0.5 text-[11px]"
+                style={{ color: colors.textMuted }}
+              >
+                {row.detail}
               </div>
             </div>
-          ))}
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 rounded-lg bg-surface-2 border border-border px-4 py-3">
-          <Wifi className="w-4 h-4 text-primary" />
-          <p className="text-xs text-muted">
-            <span className="font-semibold text-foreground">Auto-sync enabled.</span> All
-            pending transactions will upload instantly when online.
-          </p>
-        </div>
-      </div>
+            <span
+              className="flex items-center gap-1.5 text-[10px] tracking-[0.05em]"
+              style={{ fontFamily: fonts.mono, color: s.color }}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: s.color }}
+              />
+              {s.label}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

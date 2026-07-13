@@ -1,80 +1,101 @@
-"use client";
+import type { ReactNode } from "react";
+import { colors, fonts } from "@/lib/scryme-tokens";
+import { Eyebrow } from "@/components/products/eyebrow";
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+interface Cta {
+  label: string;
+  href: string;
+}
 
 interface ProductHeroProps {
   eyebrow: string;
-  title: string;
+  title: ReactNode;
   description: string;
-  /** Pass the icon as JSX, e.g. <Users className="w-8 h-8 text-white" /> */
-  iconSlot: React.ReactNode;
-  accentColor: string;
-  ctaHref?: string;
+  primaryCta?: Cta;
+  secondaryCta?: Cta;
+  /** Optional right-column visual (e.g. a ledger stub). Falls back to a centered layout without it. */
+  visual?: ReactNode;
 }
 
 export function ProductHero({
   eyebrow,
   title,
   description,
-  iconSlot,
-  accentColor,
-  ctaHref = "/pricing",
+  primaryCta = { label: "Start free trial", href: "#" },
+  secondaryCta,
+  visual,
 }: ProductHeroProps) {
   return (
-    <section className="relative overflow-hidden bg-surface-1 pt-32 pb-20">
-      {/* grid background */}
+    <header
+      className="relative overflow-hidden border-b py-24"
+      style={{ borderColor: colors.inkLine, background: colors.inkBg }}
+    >
+      {/* faint ledger rule texture */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0 opacity-60"
         style={{
-          backgroundImage:
-            "linear-gradient(to right, var(--color-foreground) 1px, transparent 1px), linear-gradient(to bottom, var(--color-foreground) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
+          backgroundImage: `repeating-linear-gradient(180deg, ${colors.inkLine} 0px, ${colors.inkLine} 1px, transparent 1px, transparent 64px)`,
         }}
       />
-      {/* Radial glow */}
+
       <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full opacity-20 blur-3xl"
-        style={{ background: accentColor }}
-      />
-
-      <div className="relative z-10 mx-auto max-w-6xl px-6 text-center">
-        <div
-          className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 shadow-lg"
-          style={{ background: accentColor }}
-        >
-          {iconSlot}
+        className={`relative mx-auto max-w-6xl px-6 ${
+          visual
+            ? "grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]"
+            : "max-w-3xl text-center"
+        }`}
+      >
+        <div>
+          <Eyebrow center={!visual}>{eyebrow}</Eyebrow>
+          <h1
+            className="mt-5 text-[2.4rem] leading-[1.06] sm:text-[3rem] lg:text-[3.6rem]"
+            style={{
+              fontFamily: fonts.display,
+              fontWeight: 500,
+              color: colors.paper,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {title}
+          </h1>
+          <p
+            className={`mt-5 text-[16.5px] ${visual ? "max-w-[46ch]" : "mx-auto max-w-[50ch]"}`}
+            style={{ color: colors.textMuted }}
+          >
+            {description}
+          </p>
+          <div
+            className={`mt-8 flex flex-wrap items-center gap-4 ${visual ? "" : "justify-center"}`}
+          >
+            <a
+              href={primaryCta.href}
+              className="inline-block rounded-[2px] px-5 py-3 text-[13px] transition-transform hover:-translate-y-px"
+              style={{
+                fontFamily: fonts.mono,
+                background: colors.brass,
+                color: colors.inkBg,
+              }}
+            >
+              {primaryCta.label} →
+            </a>
+            {secondaryCta && (
+              <a
+                href={secondaryCta.href}
+                className="border-b px-1 py-3 text-[13px] transition-colors"
+                style={{
+                  fontFamily: fonts.mono,
+                  color: colors.textMuted,
+                  borderColor: colors.inkLine,
+                }}
+              >
+                {secondaryCta.label}
+              </a>
+            )}
+          </div>
         </div>
 
-        <p className="text-sm font-semibold uppercase tracking-widest text-muted mb-3">
-          {eyebrow}
-        </p>
-
-        <h1 className="text-5xl md:text-6xl font-bold text-foreground leading-tight tracking-tight text-balance mb-6">
-          {title}
-        </h1>
-
-        <p className="text-xl text-muted max-w-2xl mx-auto text-pretty leading-relaxed mb-10">
-          {description}
-        </p>
-
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Link
-            href={ctaHref}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Start free trial <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 rounded-lg border border-border text-foreground px-6 py-3 text-sm font-semibold hover:bg-surface-2 transition-colors"
-          >
-            Request a demo
-          </Link>
-        </div>
+        {visual && <div>{visual}</div>}
       </div>
-    </section>
+    </header>
   );
 }

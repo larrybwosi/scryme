@@ -1,3 +1,5 @@
+import { colors, fonts } from "@/lib/scryme-tokens";
+
 const brands = [
   "Westfield Retail",
   "Meridian Corp",
@@ -11,22 +13,38 @@ const brands = [
 export function TrustBar() {
   return (
     <section
-      className="border-y border-border py-10"
-      style={{ background: "var(--card)" }}
+      className="py-10"
+      style={{
+        background: colors.inkBg,
+        borderTop: `1px solid ${colors.inkLine}`,
+        borderBottom: `1px solid ${colors.inkLine}`,
+      }}
       aria-label="Trusted by"
     >
       <div className="container mx-auto">
-        <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-7">
-          Trusted by enterprise teams across industries
+        <p
+          className="text-center text-[11px] font-semibold uppercase tracking-widest mb-7"
+          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
+        >
+          On the ledger — enterprise teams across industries
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-          {brands.map((brand) => (
-            <span
-              key={brand}
-              className="text-sm font-semibold tracking-tight"
-              style={{ color: "oklch(0.72 0.01 265)" }}
-            >
-              {brand}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-3">
+          {brands.map((brand, i) => (
+            <span key={brand} className="flex items-center gap-3">
+              <span
+                className="text-sm font-medium tracking-tight"
+                style={{ color: colors.textMuted, fontFamily: fonts.body }}
+              >
+                {brand}
+              </span>
+              {i !== brands.length - 1 && (
+                <span
+                  aria-hidden="true"
+                  style={{ color: colors.brass, opacity: 0.5 }}
+                >
+                  ·
+                </span>
+              )}
             </span>
           ))}
         </div>

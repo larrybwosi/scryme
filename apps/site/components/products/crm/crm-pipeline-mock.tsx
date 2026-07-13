@@ -1,77 +1,82 @@
-"use client";
+import { colors, fonts } from "@/lib/scryme-tokens";
 
-const stages = [
+const columns = [
   {
-    label: "Prospect",
-    color: "bg-slate-500",
+    label: "Qualified · 6",
     deals: [
-      { name: "Riviera Retail Group", value: "$48K", days: 2 },
-      { name: "Metro Supplies Ltd.", value: "$22K", days: 5 },
+      { id: "D-04799", name: "Hallowell Corp", amt: "$12,400" },
+      { id: "D-04803", name: "Marchetti Foods", amt: "$8,150" },
+      { id: "D-04811", name: "Osei Textiles", amt: "$21,000" },
     ],
   },
   {
-    label: "Qualified",
-    color: "bg-blue-500",
+    label: "Proposal · 4",
     deals: [
-      { name: "Beacon Hardware", value: "$91K", days: 8 },
-      { name: "Crestline Foods", value: "$34K", days: 3 },
+      { id: "D-04788", name: "Rundgren Steel", amt: "$54,900" },
+      { id: "D-04795", name: "Kester Labs", amt: "$17,300" },
     ],
   },
   {
-    label: "Proposal",
-    color: "bg-indigo-500",
+    label: "Negotiation · 3",
     deals: [
-      { name: "Halo Distribution", value: "$180K", days: 12 },
-    ],
-  },
-  {
-    label: "Won",
-    color: "bg-emerald-500",
-    deals: [
-      { name: "Apex Wholesalers", value: "$260K", days: 1 },
-      { name: "Pinnacle Goods", value: "$74K", days: 0 },
+      { id: "D-04821", name: "Norrbom & Vale", amt: "$84,200" },
+      { id: "D-04790", name: "Vantage Rail", amt: "$39,600" },
     ],
   },
 ];
 
 export function CrmPipelineMock() {
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 shadow-xl overflow-hidden">
-      {/* header */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-border bg-surface-2">
-        <span className="text-xs font-semibold text-foreground">Sales Pipeline — Q3 2025</span>
-        <div className="flex gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-        </div>
+    <div
+      className="overflow-hidden rounded-md border"
+      style={{ background: colors.inkPanel, borderColor: colors.inkLine }}
+    >
+      <div
+        className="grid grid-cols-3 border-b"
+        style={{ borderColor: colors.inkLine }}
+      >
+        {columns.map((col, i) => (
+          <div
+            key={col.label}
+            className={`px-4 py-3.5 text-[10.5px] uppercase tracking-[0.05em] ${i < 2 ? "border-r" : ""}`}
+            style={{
+              fontFamily: fonts.mono,
+              color: colors.textFaint,
+              borderColor: colors.inkLine,
+            }}
+          >
+            {col.label}
+          </div>
+        ))}
       </div>
-
-      {/* Kanban board */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
-        {stages.map((stage) => (
-          <div key={stage.label} className="flex flex-col gap-2">
-            {/* column header */}
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`w-2 h-2 rounded-full ${stage.color}`} />
-              <span className="text-[11px] font-semibold text-muted uppercase tracking-wider">
-                {stage.label}
-              </span>
-            </div>
-            {/* cards */}
-            {stage.deals.map((deal) => (
+      <div className="grid grid-cols-3">
+        {columns.map((col, i) => (
+          <div
+            key={col.label}
+            className={`flex flex-col gap-2.5 p-3 ${i < 2 ? "border-r" : ""}`}
+            style={{ borderColor: colors.inkLine }}
+          >
+            {col.deals.map((deal) => (
               <div
-                key={deal.name}
-                className="rounded-lg bg-background border border-border px-3 py-2.5 shadow-sm"
+                key={deal.id}
+                className="rounded border px-3 py-2.5 text-xs"
+                style={{
+                  background: colors.inkPanelAlt,
+                  borderColor: colors.inkLine,
+                }}
               >
-                <p className="text-xs font-semibold text-foreground leading-snug mb-1">
+                <div
+                  className="mb-1.5 font-medium"
+                  style={{ color: colors.paper }}
+                >
                   {deal.name}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-primary">{deal.value}</span>
-                  <span className="text-[10px] text-muted">
-                    {deal.days === 0 ? "Today" : `${deal.days}d ago`}
-                  </span>
+                </div>
+                <div
+                  className="flex justify-between text-[10.5px]"
+                  style={{ fontFamily: fonts.mono, color: colors.textFaint }}
+                >
+                  <span>{deal.id}</span>
+                  <span style={{ color: colors.ledgerGreen }}>{deal.amt}</span>
                 </div>
               </div>
             ))}
