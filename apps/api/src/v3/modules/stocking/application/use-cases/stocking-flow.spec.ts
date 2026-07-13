@@ -131,6 +131,7 @@ describe("Stocking Flow Verification", () => {
       stockTransfer: {
         create: vi.fn(),
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
       },
       stockTransferItem: {
@@ -157,6 +158,12 @@ describe("Stocking Flow Verification", () => {
         stockTransfer: mockTx.stockTransfer,
         stockRequestItem: mockTx.stockRequestItem,
         stockRequest: mockTx.stockRequest,
+        inventoryLocation: {
+          count: vi.fn(),
+        },
+        productVariant: {
+          count: vi.fn(),
+        },
       },
     };
 
@@ -286,6 +293,9 @@ describe("Stocking Flow Verification", () => {
       items: [{ variantId: "v1", requestedQuantity: 5 }],
     };
 
+    prisma.client.inventoryLocation.count.mockResolvedValue(2);
+    prisma.client.productVariant.count.mockResolvedValue(1);
+
     mockTx.stockTransfer.create.mockImplementation(({ data }: any) => ({
       id: "tr-1",
       transferNumber: "TR-1",
@@ -309,7 +319,7 @@ describe("Stocking Flow Verification", () => {
     );
     expect(transfer.status).toBe(StockTransferStatus.PENDING_APPROVAL);
 
-    mockTx.stockTransfer.findUnique.mockResolvedValue({
+    mockTx.stockTransfer.findFirst.mockResolvedValue({
       id: "tr-1",
       ...createTransferDto,
       status: StockTransferStatus.PENDING_APPROVAL,
@@ -332,7 +342,7 @@ describe("Stocking Flow Verification", () => {
     const shipDto = {
       items: [{ transferItemId: "tri-1", shippedQuantity: 5 }],
     };
-    mockTx.stockTransfer.findUnique.mockResolvedValue({
+    mockTx.stockTransfer.findFirst.mockResolvedValue({
       id: "tr-1",
       transferNumber: "TR-1",
       fromLocationId: mockLocationA,
@@ -355,7 +365,7 @@ describe("Stocking Flow Verification", () => {
     const receiveTransferDto = {
       items: [{ transferItemId: "tri-1", receivedQuantity: 5 }],
     };
-    mockTx.stockTransfer.findUnique.mockResolvedValue({
+    mockTx.stockTransfer.findFirst.mockResolvedValue({
       id: "tr-1",
       transferNumber: "TR-1",
       toLocationId: mockLocationB,

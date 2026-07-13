@@ -32,6 +32,36 @@ export class StockTransferUseCase {
   ) {
     const transferNumber = `TR-${Date.now()}`;
 
+    // SECURITY (Sentinel): Verify that both source and destination locations
+    // belong to the authenticated organization.
+    const uniqueLocationIds = Array.from(
+      new Set([dto.fromLocationId, dto.toLocationId]),
+    );
+    const validLocationsCount = await this.prisma.client.inventoryLocation.count({
+      where: {
+        id: { in: uniqueLocationIds },
+        organizationId,
+      },
+    });
+
+    if (validLocationsCount !== uniqueLocationIds.length) {
+      throw new BadRequestException("Invalid source or destination location");
+    }
+
+    // SECURITY (Sentinel): Verify that all requested variants belong to the
+    // authenticated organization (via product relation).
+    const variantIds = dto.items.map((i) => i.variantId);
+    const validVariantsCount = await this.prisma.client.productVariant.count({
+      where: {
+        id: { in: variantIds },
+        product: { organizationId },
+      },
+    });
+
+    if (validVariantsCount !== new Set(variantIds).size) {
+      throw new BadRequestException("One or more invalid variants requested");
+    }
+
     return this.prisma.client.$transaction(async (tx) => {
       const transfer = await tx.stockTransfer.create({
         data: {
@@ -79,7 +109,9 @@ export class StockTransferUseCase {
 
   async approve(organizationId: string, memberId: string, transferId: string) {
     return this.prisma.client.$transaction(async (tx) => {
-      const transfer = await tx.stockTransfer.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockTransfer lacks a composite unique index on [id, organizationId].
+      const transfer = await tx.stockTransfer.findFirst({
         where: { id: transferId, organizationId },
         include: { items: true },
       });
@@ -158,7 +190,9 @@ export class StockTransferUseCase {
     dto: ShipTransferDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const transfer = await tx.stockTransfer.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockTransfer lacks a composite unique index on [id, organizationId].
+      const transfer = await tx.stockTransfer.findFirst({
         where: { id: transferId, organizationId },
         include: { items: { include: { variant: true } } },
       });
@@ -172,8 +206,10 @@ export class StockTransferUseCase {
 
       // ⚡ Bolt Optimization: Batch fetch all relevant batches to eliminate N+1 queries.
       const variantIds = transfer.items.map((i) => i.variantId);
+      // SECURITY (Sentinel): Explicitly scope batch lookups to organizationId.
       const allBatches = await tx.stockBatch.findMany({
         where: {
+          organizationId,
           variantId: { in: variantIds },
           locationId: transfer.fromLocationId,
           currentQuantity: { gt: 0 },
@@ -295,7 +331,9 @@ export class StockTransferUseCase {
     dto: ReceiveTransferDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const transfer = await tx.stockTransfer.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockTransfer lacks a composite unique index on [id, organizationId].
+      const transfer = await tx.stockTransfer.findFirst({
         where: { id: transferId, organizationId },
         include: { items: { include: { variant: true } } },
       });
@@ -422,7 +460,9 @@ export class StockTransferUseCase {
   }
 
   async findOne(organizationId: string, transferId: string) {
-    const transfer = await this.prisma.client.stockTransfer.findUnique({
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // StockTransfer lacks a composite unique index on [id, organizationId].
+    const transfer = await this.prisma.client.stockTransfer.findFirst({
       where: { id: transferId, organizationId },
       include: {
         fromLocation: true,
