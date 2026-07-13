@@ -64,6 +64,7 @@ describe("Stocking Edge Cases", () => {
       },
       stockTransfer: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
         create: vi.fn(),
       },
@@ -92,6 +93,12 @@ describe("Stocking Edge Cases", () => {
         stockRequest: mockTx.stockRequest,
         stockTransfer: mockTx.stockTransfer,
         purchase: mockTx.purchase,
+        inventoryLocation: {
+          count: vi.fn(),
+        },
+        productVariant: {
+          count: vi.fn(),
+        },
       },
     };
 
@@ -109,7 +116,7 @@ describe("Stocking Edge Cases", () => {
 
   it("should handle partial shipment in stock transfer", async () => {
     const transferId = "tr-partial";
-    mockTx.stockTransfer.findUnique.mockResolvedValue({
+    mockTx.stockTransfer.findFirst.mockResolvedValue({
       id: transferId,
       organizationId: mockOrgId,
       status: StockTransferStatus.APPROVED,
@@ -164,7 +171,7 @@ describe("Stocking Edge Cases", () => {
 
   it("should fail shipment if insufficient stock in batches", async () => {
     const transferId = "tr-fail";
-    mockTx.stockTransfer.findUnique.mockResolvedValue({
+    mockTx.stockTransfer.findFirst.mockResolvedValue({
       id: transferId,
       organizationId: mockOrgId,
       status: StockTransferStatus.APPROVED,
@@ -252,7 +259,7 @@ describe("Stocking Edge Cases", () => {
 
   it("should handle partial receipt of stock transfer", async () => {
     const transferId = "tr-partial-rec";
-    mockTx.stockTransfer.findUnique.mockResolvedValue({
+    mockTx.stockTransfer.findFirst.mockResolvedValue({
       id: transferId,
       organizationId: mockOrgId,
       status: StockTransferStatus.SHIPPED,
