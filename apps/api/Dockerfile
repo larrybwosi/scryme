@@ -82,13 +82,18 @@ COPY --from=installer --chown=nestjs:nodejs /app/apps/api/package.json ./package
 
 # Copy shared packages if your API depends on them
 COPY --from=installer --chown=nestjs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=installer --chown=nestjs:nodejs /app/packages/db ./packages/db
+COPY --from=installer --chown=nestjs:nodejs /app/packages/env ./packages/env
+
+# Maintain original root paths expected by entrypoint.sh/prisma commands
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma ./prisma
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma/seed.ts ./prisma/seed.ts
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/prisma.config.ts ./prisma.config.ts
 COPY --from=installer --chown=nestjs:nodejs /app/packages/db/package.json ./packages/db/package.json
 
-# Copy entrypoint script safely from the pruned context
-COPY --from=pruner /app/out/full/apps/api/entrypoint.sh ./entrypoint.sh
+# Copy entrypoint script safely from the pruner stage root
+COPY --from=pruner /app/entrypoint.sh ./entrypoint.sh
+USER root
 RUN chmod +x ./entrypoint.sh
 
 USER nestjs

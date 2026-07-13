@@ -471,10 +471,26 @@ export class InventoryService {
       { organizationId: ctx.organizationId },
       { requestDate: "desc" },
       {
-        include: {
-          fromLocation: true,
-          toLocation: true,
-          requestedBy: { include: { user: true } },
+        /**
+         * ⚡ Bolt: Performance Optimization
+         * Using 'select' instead of 'include' to prune large JSON fields from locations
+         * and unnecessary member data. This reduces database I/O and payload size.
+         */
+        select: {
+          id: true,
+          requestNumber: true,
+          status: true,
+          priority: true,
+          requestDate: true,
+          totalEstimatedCost: true,
+          fromLocation: { select: { id: true, name: true, code: true } },
+          toLocation: { select: { id: true, name: true, code: true } },
+          requestedBy: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true, email: true, image: true } },
+            },
+          },
         },
       },
     );
@@ -490,10 +506,27 @@ export class InventoryService {
       { organizationId: ctx.organizationId },
       { requestedDate: "desc" },
       {
-        include: {
-          fromLocation: true,
-          toLocation: true,
-          requestedBy: { include: { user: true } },
+        /**
+         * ⚡ Bolt: Performance Optimization
+         * Using 'select' instead of 'include' to prune large JSON fields from locations
+         * and unnecessary member data. This reduces database I/O and payload size.
+         */
+        select: {
+          id: true,
+          transferNumber: true,
+          status: true,
+          priority: true,
+          requestedDate: true,
+          shippedDate: true,
+          receivedDate: true,
+          fromLocation: { select: { id: true, name: true, code: true } },
+          toLocation: { select: { id: true, name: true, code: true } },
+          requestedBy: {
+            select: {
+              id: true,
+              user: { select: { id: true, name: true, email: true, image: true } },
+            },
+          },
         },
       },
     );

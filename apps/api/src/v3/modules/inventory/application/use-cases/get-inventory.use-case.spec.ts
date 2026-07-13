@@ -40,4 +40,37 @@ describe("GetInventoryUseCase", () => {
       offset: 0,
     });
   });
+
+  it("should return inventory for a given location", async () => {
+    const orgId = "org-1";
+    const locId = "loc-1";
+    const inventory = [
+      new InventoryItem("1", "var-1", locId, 10, orgId, new Date()),
+    ];
+    const paginatedResponse = {
+      data: inventory,
+      total: 1,
+      limit: 20,
+      offset: 0,
+    };
+    (inventoryRepository.findByLocation as any).mockResolvedValue(
+      paginatedResponse,
+    );
+
+    const result = await useCase.execute(
+      orgId,
+      { limit: 20, offset: 0 },
+      locId,
+    );
+
+    expect(result).toEqual(paginatedResponse);
+    expect(inventoryRepository.findByLocation).toHaveBeenCalledWith(
+      orgId,
+      locId,
+      {
+        limit: 20,
+        offset: 0,
+      },
+    );
+  });
 });

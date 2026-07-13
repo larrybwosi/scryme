@@ -76,13 +76,14 @@ COPY --from=installer /app/apps/bakery/dist /usr/share/nginx/html
 # Copy the Nginx configuration safely from the pruned context
 COPY --from=pruner /app/out/full/apps/bakery/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy entrypoint script safely from the pruned context
-COPY --from=pruner /app/out/full/apps/bakery/entrypoint.sh /entrypoint.sh
+# Copy entrypoint script safely from the pruner stage root
+COPY --from=pruner /app/entrypoint.sh /entrypoint.sh
+USER root
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 3003
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3003}/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3003}/api/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

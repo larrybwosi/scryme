@@ -1,5 +1,60 @@
 # [3.3.0-nextgen.22](https://github.com/larrybwosi/dealio-desktop/compare/v3.3.0-nextgen.21...v3.3.0-nextgen.22) (2026-05-08)
 
+## 9.9.0
+
+### Minor Changes
+
+- 9b76cf7: update
+
+## 9.8.0
+
+### Minor Changes
+
+- 921c072: update
+
+## 9.7.0
+
+### Minor Changes
+
+- 828362e: update
+- 828362e: update
+
+## 9.6.0
+
+### Minor Changes
+
+- 24504bd: update
+
+## 9.5.0
+
+### Minor Changes
+
+- 29f8e17: update
+
+## 9.4.0
+
+### Minor Changes
+
+- a11e407: update
+
+## 9.3.0
+
+### Minor Changes
+
+- 581f179: Update
+
+## 9.2.0
+
+### Minor Changes
+
+- cc1595f: Update
+
+## 9.1.0
+
+### Minor Changes
+
+- 305d3f1: nothing
+
 ## 9.0.0
 
 ### Major Changes
