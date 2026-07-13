@@ -225,7 +225,7 @@ export function POSTeaser() {
               style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
               Whether you run a single store or a chain of 50 branches, every
-              sale posts straight to the ledger the moment it's rung up — no
+              sale posts straight to the ledger the moment it&apos;s rung up — no
               end-of-day reconciliation required.
             </p>
 

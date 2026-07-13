@@ -124,6 +124,7 @@ export class MembersController {
     @Request() req: any,
     @Param("id") id: string,
     @Body("status") status: Status,
+  ) {
     const actorId = req.v3Context.memberId;
     return this.memberUseCase.updateMemberStatus(
       req.v3Context.organizationId,
