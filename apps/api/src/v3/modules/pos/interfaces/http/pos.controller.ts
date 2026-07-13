@@ -12,6 +12,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
