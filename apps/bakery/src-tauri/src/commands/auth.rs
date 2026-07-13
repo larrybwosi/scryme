@@ -138,7 +138,7 @@ impl BakeryAuthState {
                 if cfg!(debug_assertions) {
                     "http://localhost:3002/api/v2".to_string()
                 } else {
-                    "https://api.scryme.app/api/v2".to_string()
+                    "https://api.scryme.tech/api/v2".to_string()
                 }
             };
 
@@ -312,7 +312,7 @@ pub async fn provision_device_with_token(
     let default_api_url = if cfg!(debug_assertions) {
         "http://localhost:3002"
     } else {
-        "https://api.scryme.app"
+        "https://api.scryme.tech"
     };
 
     let base_api_url = api_url_override.as_deref().unwrap_or(default_api_url);

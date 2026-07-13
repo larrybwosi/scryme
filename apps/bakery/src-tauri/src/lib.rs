@@ -106,7 +106,7 @@ pub fn run() {
             let base_api_url = if cfg!(debug_assertions) {
                 "http://localhost:3002"
             } else {
-                option_env!("VITE_API_URL").unwrap_or("https://api.scryme.app")
+                option_env!("VITE_API_URL").unwrap_or("https://api.scryme.tech")
             };
             let api_url = if base_api_url.ends_with("/api/v2") {
                 base_api_url.to_string()
