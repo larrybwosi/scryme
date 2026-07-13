@@ -1,9 +1,9 @@
 ---
 "bakery": minor
-"crm": minor
-"web": minor
 "api": minor
+"crm": minor
 "pos": minor
+"web": minor
 ---
 
-update
+Update
