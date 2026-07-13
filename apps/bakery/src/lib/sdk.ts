@@ -22,7 +22,7 @@ const sdk = getSDK({
     ? sanitizeApiUrl(
         (typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null) ||
           import.meta.env.VITE_API_URL ||
-          'https://api.scryme.app/api/v2'
+          'https://api.scryme.tech/api/v2'
       )
     : '/api/v2',
   onUnauthorized: () => {

@@ -185,7 +185,7 @@ class ApiClient {
 
 // Singleton instance
 export const apiClient = new ApiClient(
-  import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2'
+  import.meta.env.VITE_API_URL || 'https://api.scryme.tech/api/v2'
 );
 
 const queryClient = new QueryClient({
