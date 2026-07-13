@@ -377,7 +377,7 @@ export default function SettingsPage() {
                             setFormData({ ...formData, apiEndpointUrl: e.target.value });
                             setApiTested(false);
                           }}
-                          placeholder="https://api.scryme.app/api/v2"
+                          placeholder="https://api.scryme.tech/api/v2"
                           className="pr-10"
                         />
                         {apiTested && (
