@@ -14,6 +14,7 @@ export const auth = betterAuth({
   session: {
     preserveSessionInDatabase: true,
     storeSessionInDatabase: true,
+    trustedOrigins: ["*.scryme.tech", "http://localhost:3000"],
   },
   secondaryStorage: {
     get: async (key: string) => {
