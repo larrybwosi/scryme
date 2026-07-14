@@ -37,7 +37,9 @@ export class RequestB2BQuoteUseCase {
         );
     } else {
       if (dto.customerId) {
-        const customer = await this.prisma.client.customer.findUnique({
+        // SECURITY (Sentinel): Using findFirst instead of findUnique because
+        // Customer lacks a composite unique index on [id, organizationId].
+        const customer = await this.prisma.client.customer.findFirst({
           where: { id: dto.customerId, organizationId },
           select: { defaultLocationId: true },
         });
@@ -45,8 +47,10 @@ export class RequestB2BQuoteUseCase {
       }
 
       if (!locationId && dto.businessAccountId) {
+        // SECURITY (Sentinel): Using findFirst instead of findUnique because
+        // BusinessAccount lacks a composite unique index on [id, organizationId].
         const businessAccount =
-          await this.prisma.client.businessAccount.findUnique({
+          await this.prisma.client.businessAccount.findFirst({
             where: { id: dto.businessAccountId, organizationId },
             select: { defaultLocationId: true },
           });
