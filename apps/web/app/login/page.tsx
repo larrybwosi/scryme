@@ -14,14 +14,54 @@ import {
   ArrowLeft,
   CheckCircle,
 } from "lucide-react";
+import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, requestPasswordReset, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
+import { GithubIcon } from "@repo/ui/components/icons";
 
-// Zod validation schemas
+// ─────────────────────────────────────────────────────────────────────────
+// Type system
+// Display: Newsreader (editorial serif — institutional, not templated)
+// Body:    IBM Plex Sans (technical, enterprise-grade grotesk)
+// Utility: IBM Plex Mono (ledger data, timestamps, session labels)
+// NOTE: for production, move these three next/font calls into the root
+// layout.tsx and reference the resulting CSS variables here instead —
+// kept local so this file is a drop-in replacement.
+// ─────────────────────────────────────────────────────────────────────────
+const display = Newsreader({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+});
+const sans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-sans",
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Design tokens (arbitrary-value Tailwind, no config edits required)
+//   ink        #0F1B2E   primary dark / headings
+//   ink-2      #16283F   ink hover
+//   parchment  #FBFAF7   light surface
+//   hairline   #E7E2D9   warm border on parchment
+//   slate      #5B6B7C   secondary text
+//   brass      #A9824C   accent / seal / focus
+//   brass-dark #8A6A3E   accent text on light bg (contrast-safe)
+//   success    #2F7A4F   verified state
+//   error      #B3352A   error state
+// ─────────────────────────────────────────────────────────────────────────
+
 const loginSchema = z.object({
   email: z.email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
@@ -34,15 +74,34 @@ const forgotPasswordSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-import { GithubIcon } from "@repo/ui/components/icons";
-
-const DealioLogo = () => (
-  <div className="flex items-center gap-1">
-    <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">D</span>
+// ── Wordmark ──
+const ScrymeMark = () => (
+  <div className="flex items-center gap-2.5">
+    <div className="w-8 h-8 rounded-md bg-[#0F1B2E] flex items-center justify-center shrink-0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="7" stroke="#A9824C" strokeWidth="1.4" />
+        <circle cx="12" cy="12" r="2" fill="#A9824C" />
+        {[0, 60, 120, 180, 240, 300].map(deg => (
+          <line
+            key={deg}
+            x1="12"
+            y1="2.2"
+            x2="12"
+            y2="4.4"
+            stroke="#A9824C"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+            transform={`rotate(${deg} 12 12)`}
+          />
+        ))}
+      </svg>
     </div>
-    <span className="text-xl font-bold tracking-tight text-gray-900">
-      deal<span className="text-emerald-600">io</span>
+    <span
+      className={cn(
+        display.className,
+        "text-[1.35rem] font-medium tracking-tight text-[#0F1B2E]",
+      )}>
+      scryme
     </span>
   </div>
 );
@@ -77,24 +136,90 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// Floating tag for hero panel
-const FloatingTag = ({
-  name,
+// ── Compliance chip for hero panel ──
+const ComplianceBadge = ({
+  label,
   className,
 }: {
-  name: string;
+  label: string;
   className: string;
 }) => (
   <div
     className={cn(
-      "absolute px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-full shadow-lg hidden lg:block",
+      "absolute px-3 py-1.5 bg-white/[0.06] backdrop-blur-sm border border-white/15 rounded-md shadow-lg hidden lg:block",
+      mono.className,
       className,
     )}>
-    {name}
+    <span className="text-[10px] tracking-wider text-white/80 uppercase">
+      {label}
+    </span>
   </div>
 );
 
-// Social provider button
+// ── Signature element: verification ledger ──
+const VERIFICATION_STEPS = [
+  { label: "Identity verified", time: "00:02" },
+  { label: "Financials reviewed", time: "00:41" },
+  { label: "Compliance confirmed", time: "01:18" },
+  { label: "Contract executed", time: "02:05" },
+];
+
+const VerificationLedger = () => (
+  <div className="relative pl-1">
+    {VERIFICATION_STEPS.map((step, i) => (
+      <div
+        key={step.label}
+        className="relative flex items-center gap-3 py-2.5 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-left-2 motion-safe:fill-mode-both"
+        style={{
+          animationDelay: `${i * 180 + 300}ms`,
+          animationDuration: "600ms",
+        }}>
+        {i < VERIFICATION_STEPS.length - 1 && (
+          <span className="absolute left-[9px] top-8 w-px h-[calc(100%-0.5rem)] bg-white/10" />
+        )}
+        <span className="relative z-10 flex items-center justify-center w-[19px] h-[19px] rounded-full bg-[#16283F] border border-[#A9824C]/40 shrink-0">
+          <CheckCircle className="w-3 h-3 text-[#C9A876]" strokeWidth={2.5} />
+        </span>
+        <span className={cn(sans.className, "text-sm text-white/85 flex-1")}>
+          {step.label}
+        </span>
+        <span
+          className={cn(
+            mono.className,
+            "text-[10px] text-[#7F93A8] tracking-wider tabular-nums",
+          )}>
+          {step.time}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+// ── Decorative seal watermark ──
+const SealMark = () => (
+  <svg
+    className="absolute -bottom-16 -right-16 w-[280px] h-[280px] opacity-[0.05] pointer-events-none hidden lg:block"
+    viewBox="0 0 200 200"
+    fill="none">
+    <circle
+      cx="100"
+      cy="100"
+      r="92"
+      stroke="white"
+      strokeWidth="1"
+      strokeDasharray="2 5"
+    />
+    <circle cx="100" cy="100" r="72" stroke="white" strokeWidth="1" />
+    <path
+      d="M78 100l14 14 30-30"
+      stroke="white"
+      strokeWidth="4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const SocialButton = ({
   icon,
   label,
@@ -110,9 +235,9 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm">
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md border border-[#E7E2D9] bg-white hover:bg-[#FBFAF7] hover:border-[#A9824C]/40 transition-all duration-150 text-sm font-medium text-[#33404D] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm">
     {disabled ? (
-      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+      <Loader2 className="h-4 w-4 animate-spin text-[#9AA6B2]" />
     ) : (
       icon
     )}
@@ -120,7 +245,6 @@ const SocialButton = ({
   </button>
 );
 
-// Form field wrapper
 const FieldWrapper = ({
   label,
   error,
@@ -131,10 +255,10 @@ const FieldWrapper = ({
   children: React.ReactNode;
 }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <label className="block text-sm font-medium text-[#33404D]">{label}</label>
     {children}
     {error && (
-      <p className="text-xs text-red-600 flex items-center gap-1">
+      <p className="text-xs text-[#B3352A] flex items-center gap-1">
         <XCircle className="h-3 w-3 shrink-0" />
         {error}
       </p>
@@ -142,11 +266,18 @@ const FieldWrapper = ({
   </div>
 );
 
-// Stat card for hero panel
 const StatCard = ({ value, label }: { value: string; label: string }) => (
   <div className="flex flex-col">
-    <span className="text-2xl font-bold text-white">{value}</span>
-    <span className="text-xs text-emerald-200 mt-0.5">{label}</span>
+    <span className={cn(display.className, "text-2xl font-medium text-white")}>
+      {value}
+    </span>
+    <span
+      className={cn(
+        mono.className,
+        "text-[10px] tracking-wider uppercase text-[#C9A876] mt-1",
+      )}>
+      {label}
+    </span>
   </div>
 );
 
@@ -252,23 +383,30 @@ const LoginPageContent = () => {
   };
 
   const SuccessMessage = ({ text }: { text: string }) => (
-    <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-3">
-      <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5" />
-      <span className="text-emerald-800 text-sm font-medium">{text}</span>
+    <div className="mb-6 p-4 bg-[#F3F6F1] border border-[#C7D9C0] rounded-md flex items-start gap-3">
+      <CheckCircle className="w-5 h-5 text-[#2F7A4F] mt-0.5 shrink-0" />
+      <span className="text-[#2F5B3F] text-sm font-medium">{text}</span>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div
+      className={cn(
+        sans.className,
+        display.variable,
+        sans.variable,
+        mono.variable,
+        "min-h-screen flex bg-[#FBFAF7]",
+      )}>
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
-            <DealioLogo />
+            <ScrymeMark />
             {currentView === "login" && (
-              <p className="text-sm text-gray-500">
-                New here?{" "}
+              <p className="text-sm text-[#5B6B7C]">
+                Need an account?{" "}
                 <button
                   onClick={() => {
                     const params = new URLSearchParams();
@@ -278,8 +416,8 @@ const LoginPageContent = () => {
                       `/sign-up${queryString ? `?${queryString}` : ""}`,
                     );
                   }}
-                  className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors cursor-pointer">
-                  Sign up
+                  className="text-[#8A6A3E] font-semibold hover:text-[#0F1B2E] transition-colors cursor-pointer">
+                  Request access
                 </button>
               </p>
             )}
@@ -288,11 +426,15 @@ const LoginPageContent = () => {
           {currentView === "login" && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-8">
-                <h1 className="text-[1.75rem] font-bold text-gray-900 leading-tight tracking-tight">
+                <h1
+                  className={cn(
+                    display.className,
+                    "text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight",
+                  )}>
                   Welcome back
                 </h1>
-                <p className="text-gray-500 text-sm mt-2">
-                  Sign in to access your enterprise dashboard.
+                <p className="text-[#5B6B7C] text-sm mt-2">
+                  Sign in to your Scryme workspace.
                 </p>
               </div>
 
@@ -320,11 +462,15 @@ const LoginPageContent = () => {
 
               {/* Divider */}
               <div className="relative flex items-center gap-3 mb-6">
-                <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-400 font-medium">
+                <div className="flex-1 h-px bg-[#E7E2D9]" />
+                <span
+                  className={cn(
+                    mono.className,
+                    "text-[10px] text-[#9AA6B2] tracking-wider uppercase",
+                  )}>
                   or continue with email
                 </span>
-                <div className="flex-1 h-px bg-gray-100" />
+                <div className="flex-1 h-px bg-[#E7E2D9]" />
               </div>
 
               <form
@@ -338,22 +484,22 @@ const LoginPageContent = () => {
                     {...registerLogin("email")}
                     placeholder="name@company.com"
                     className={cn(
-                      "h-10 text-sm rounded-lg border-gray-200 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
+                      "h-10 text-sm rounded-md border-[#E7E2D9] focus-visible:ring-[#A9824C]/25 focus-visible:border-[#A9824C]",
                       loginErrors.email &&
-                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                        "border-[#B3352A] focus-visible:ring-[#B3352A]/20 focus-visible:border-[#B3352A]",
                     )}
                   />
                 </FieldWrapper>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-[#33404D]">
                       Password
                     </label>
                     <button
                       type="button"
                       onClick={() => setCurrentView("forgot-password")}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors cursor-pointer">
+                      className="text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors cursor-pointer">
                       Forgot password?
                     </button>
                   </div>
@@ -363,15 +509,15 @@ const LoginPageContent = () => {
                       {...registerLogin("password")}
                       placeholder="Enter your password"
                       className={cn(
-                        "h-10 text-sm rounded-lg border-gray-200 pr-10 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
+                        "h-10 text-sm rounded-md border-[#E7E2D9] pr-10 focus-visible:ring-[#A9824C]/25 focus-visible:border-[#A9824C]",
                         loginErrors.password &&
-                          "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                          "border-[#B3352A] focus-visible:ring-[#B3352A]/20 focus-visible:border-[#B3352A]",
                       )}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9AA6B2] hover:text-[#5B6B7C] transition-colors cursor-pointer"
                       tabIndex={-1}>
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -381,7 +527,7 @@ const LoginPageContent = () => {
                     </button>
                   </div>
                   {loginErrors.password && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
+                    <p className="text-xs text-[#B3352A] flex items-center gap-1">
                       <XCircle className="h-3 w-3 shrink-0" />
                       {loginErrors.password.message}
                     </p>
@@ -390,7 +536,7 @@ const LoginPageContent = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer"
+                  className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer"
                   disabled={isLoading}>
                   {isLoading ? (
                     <>
@@ -412,15 +558,19 @@ const LoginPageContent = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <button
                 onClick={() => setCurrentView("login")}
-                className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors cursor-pointer">
+                className="flex items-center gap-2 text-sm font-medium text-[#5B6B7C] hover:text-[#0F1B2E] mb-8 transition-colors cursor-pointer">
                 <ArrowLeft className="w-4 h-4" /> Back to login
               </button>
 
               <div className="mb-8">
-                <h1 className="text-[1.75rem] font-bold text-gray-900 leading-tight tracking-tight">
+                <h1
+                  className={cn(
+                    display.className,
+                    "text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight",
+                  )}>
                   Reset password
                 </h1>
-                <p className="text-gray-500 text-sm mt-2">
+                <p className="text-[#5B6B7C] text-sm mt-2">
                   Enter your email and we&apos;ll send you a link to reset your
                   password.
                 </p>
@@ -441,16 +591,16 @@ const LoginPageContent = () => {
                     {...registerForgot("email")}
                     placeholder="name@company.com"
                     className={cn(
-                      "h-10 text-sm rounded-lg border-gray-200 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
+                      "h-10 text-sm rounded-md border-[#E7E2D9] focus-visible:ring-[#A9824C]/25 focus-visible:border-[#A9824C]",
                       forgotErrors.email &&
-                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                        "border-[#B3352A] focus-visible:ring-[#B3352A]/20 focus-visible:border-[#B3352A]",
                     )}
                   />
                 </FieldWrapper>
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer"
+                  className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer"
                   disabled={isLoading}>
                   {isLoading ? "Processing..." : "Send reset instructions"}
                 </Button>
@@ -459,84 +609,86 @@ const LoginPageContent = () => {
           )}
 
           {/* Trust badge */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
-            <Shield className="h-3.5 w-3.5 text-gray-300" />
-            <span>
-              SOC 2 Type II certified · 256-bit encryption · GDPR compliant
+          <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-[#9AA6B2]">
+            <Shield className="h-3.5 w-3.5 text-[#A9824C]" />
+            <span className={cn(mono.className, "tracking-wide")}>
+              SOC 2 TYPE II · 256-BIT ENCRYPTION · GDPR COMPLIANT
             </span>
           </div>
         </div>
       </div>
 
       {/* ── Right Panel ── */}
-      <div className="hidden lg:flex flex-1 bg-[#0d3d2b] text-white relative overflow-hidden flex-col justify-between p-12">
-        {/* Subtle grid pattern */}
+      <div className="hidden lg:flex flex-1 bg-[#0F1B2E] text-white relative overflow-hidden flex-col justify-between p-12">
+        {/* Dot-grid instrument texture */}
         <div
-          className="absolute inset-0 opacity-[0.04]"
+          className="absolute inset-0 opacity-[0.10]"
           style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)`,
-            backgroundSize: "40px 40px",
+            backgroundImage: `radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)`,
+            backgroundSize: "22px 22px",
           }}
         />
 
-        {/* Glow blob */}
-        <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full bg-emerald-400/10 blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-full bg-emerald-500/10 blur-[70px] pointer-events-none" />
+        {/* Glow blobs */}
+        <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full bg-[#A9824C]/10 blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-full bg-[#2F5D8A]/15 blur-[70px] pointer-events-none" />
 
-        {/* Floating skill tags */}
-        {[
-          { name: "Website Design", className: "top-16 right-24" },
-          { name: "Blockchain", className: "top-28 left-10" },
-          { name: "Crypto", className: "top-36 right-10" },
-          { name: "E-Commerce", className: "top-52 right-28" },
-          { name: "Golang", className: "bottom-36 left-14" },
-          { name: "Automotive", className: "bottom-24 right-14" },
-          { name: "Ruby on Rails", className: "bottom-32 left-36" },
-        ].map((tag, i) => (
-          <FloatingTag key={i} name={tag.name} className={tag.className} />
-        ))}
+        <SealMark />
 
-        {/* Avatars */}
-        {[
-          { bg: "bg-white", pos: "top-14 left-14" },
-          { bg: "bg-orange-400", pos: "top-36 right-44" },
-          { bg: "bg-sky-400", pos: "bottom-44 left-20" },
-          { bg: "bg-violet-400", pos: "bottom-64 right-36" },
-        ].map(({ bg, pos }, i) => (
-          <div
-            key={i}
-            className={cn(
-              "absolute w-10 h-10 rounded-full ring-2 ring-white/20 hidden xl:block",
-              bg,
-              pos,
-            )}
-          />
-        ))}
+        {/* Compliance credentials */}
+        <ComplianceBadge label="SOC 2 Type II" className="top-16 right-16" />
+        <ComplianceBadge label="ISO 27001" className="top-40 right-32" />
+        <ComplianceBadge
+          label="GDPR Ready"
+          className="bottom-[19rem] left-12"
+        />
+        <ComplianceBadge label="KYB Verified" className="top-[15rem] left-16" />
+
+        {/* Session micro-label */}
+        <div
+          className={cn(
+            mono.className,
+            "relative z-10 flex items-center gap-2 text-[10px] tracking-wider text-white/40 uppercase",
+          )}>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#4FA871] animate-pulse" />
+          Secure session · TLS 1.3
+        </div>
 
         {/* Main copy */}
         <div className="relative z-10 mt-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 border border-emerald-400/20 rounded-full mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-medium text-emerald-300">
-              Trusted by 2,400+ companies
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#A9824C]/15 border border-[#A9824C]/25 rounded-full mb-6">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A876] animate-pulse" />
+            <span
+              className={cn(
+                mono.className,
+                "text-[10px] tracking-wider uppercase text-[#DDC49B]",
+              )}>
+              2,400+ enterprise procurement teams
             </span>
           </div>
 
-          <h2 className="text-4xl font-bold leading-tight tracking-tight mb-4">
-            Welcome home to
+          <h2
+            className={cn(
+              display.className,
+              "text-[2.5rem] font-medium leading-[1.1] tracking-tight mb-4",
+            )}>
+            Every vendor.
             <br />
-            the top 7%
+            <span className="italic text-[#C9A876]">Fully verified.</span>
           </h2>
-          <p className="text-base text-emerald-100/70 leading-relaxed max-w-sm">
-            Access elite dev shops and fractional engineers. Move faster, build
-            better, hire smarter.
+          <p className="text-base text-[#AEBBCB] leading-relaxed max-w-sm mb-8">
+            Scryme gives enterprise teams one system of record for vendor
+            diligence, contracts, and compliance — from first review to final
+            signature.
           </p>
 
+          <VerificationLedger />
+
           {/* Stats row */}
-          <div className="flex gap-8 mt-10 pt-8 border-t border-white/10">
-            <StatCard value="7,200+" label="Vetted agencies" />
-            <StatCard value="94%" label="Client satisfaction" />
-            <StatCard value="3 days" label="Avg. time to hire" />
+          <div className="flex gap-8 mt-8 pt-8 border-t border-white/10">
+            <StatCard value="7,200+" label="Vetted vendors" />
+            <StatCard value="94%" label="Audit pass rate" />
+            <StatCard value="3 days" label="Time to approval" />
           </div>
         </div>
       </div>
@@ -548,8 +700,8 @@ const LoginPage = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <div className="min-h-screen flex items-center justify-center bg-[#FBFAF7]">
+          <Loader2 className="h-8 w-8 animate-spin text-[#0F1B2E]" />
         </div>
       }>
       <LoginPageContent />

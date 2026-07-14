@@ -24,6 +24,15 @@ export class StandardResponseInterceptor<T> implements NestInterceptor<
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<Response<T> | any> {
+    const httpContext = context.switchToHttp();
+    const request = httpContext.getRequest();
+    const url = request?.url || "";
+
+    // Skip intercepting for any better-auth or custom authentication API routes
+    if (url.includes("/api/auth")) {
+      return next.handle();
+    }
+
     return next.handle().pipe(
       map((data) => {
         // Skip wrapping for StreamableFile (used for PDF downloads, etc.)
