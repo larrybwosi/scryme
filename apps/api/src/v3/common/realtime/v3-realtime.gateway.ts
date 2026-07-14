@@ -54,14 +54,14 @@ export class V3RealtimeGateway
             }),
           });
           if (session) {
-            const orgId = session.user.activeOrganizationId || (session.session as any).activeOrganizationId;
+            const orgId = (session.user as any).activeOrganizationId || (session.session as any).activeOrganizationId;
             const org = await this.prisma.client.organization.findUnique({
               where: { id: orgId },
               select: { slug: true },
             });
             payload = {
               userId: session.user.id,
-              memberId: session.user.memberId,
+              memberId: (session.user as any).memberId,
               organizationId: orgId,
               orgSlug: org?.slug || "",
               type: "v3_hybrid",
