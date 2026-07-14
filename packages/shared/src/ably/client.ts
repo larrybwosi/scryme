@@ -18,8 +18,9 @@ export const useAblyRealtime = () => {
       const realtime = new Realtime({
         authCallback: async (tokenParams, callback) => {
           try {
+            // Use relative path so it correctly hits whichever origin (localhost:3000 or localhost:3001) the app is currently running on.
             const tokenRequest = await axios.post(
-              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/auth/ably`,
+              "/api/auth/ably",
               {},
               { withCredentials: true },
             );
@@ -67,8 +68,9 @@ export const getAblyRealtime = (): Realtime | null => {
       ablyRealtimeInstance = new Realtime({
         authCallback: async (tokenParams, callback) => {
           try {
+            // Use relative path so it correctly hits whichever origin (localhost:3000 or localhost:3001) the app is currently running on.
             const tokenRequest = await axios.post(
-              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/auth/ably`,
+              "/api/auth/ably",
               {},
               { withCredentials: true },
             );
