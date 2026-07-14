@@ -215,7 +215,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${WEB_PORT:-3000}/health",
+          "http://localhost:${WEB_PORT:-3000}/api/health",
         ]
       interval: 30s
       timeout: 10s
@@ -255,7 +255,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${CRM_PORT:-3001}/health",
+          "http://localhost:${CRM_PORT:-3001}/api/health",
         ]
       interval: 30s
       timeout: 10s
