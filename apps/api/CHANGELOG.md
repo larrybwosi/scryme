@@ -1,5 +1,11 @@
 # api
 
+## 6.15.0
+
+### Minor Changes
+
+- 00dc3b8: Update
+
 ## 6.14.0
 
 ### Minor Changes
