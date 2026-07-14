@@ -55,7 +55,7 @@ export const useProductCategories = () => {
       const data = await sdk.catalog.getCategories();
       return (Array.isArray(data)
         ? data
-        : data?.data || []) as unknown as any[];
+        : data?.categories || data?.data || []) as unknown as any[];
     },
   });
 };
