@@ -32,8 +32,8 @@ describe("RequestB2BQuoteUseCase", () => {
 
   const mockPrisma = {
     client: {
-      customer: { findUnique: vi.fn() },
-      businessAccount: { findUnique: vi.fn() },
+      customer: { findUnique: vi.fn(), findFirst: vi.fn() },
+      businessAccount: { findUnique: vi.fn(), findFirst: vi.fn() },
       inventoryLocation: { findFirst: vi.fn(), findUnique: vi.fn() },
       productVariant: { findMany: vi.fn() },
       transaction: { create: vi.fn() },
@@ -129,5 +129,65 @@ describe("RequestB2BQuoteUseCase", () => {
         ]),
       }),
     );
+  });
+
+  it("should throw BadRequestException if customerId does not belong to organization", async () => {
+    mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({
+      id: "loc1",
+    });
+    // Mock customer belonging to another org (findUnique might return it if not scoped by organizationId)
+    // but the use case SHOULD fail because it should verify ownership.
+    mockPrisma.client.customer.findUnique.mockResolvedValue({ id: "other-org-customer", organizationId: "org2" });
+    mockPrisma.client.customer.findFirst.mockResolvedValue(null);
+    mockPrisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        sku: "SKU1",
+        name: "Variant 1",
+        buyingPrice: { toNumber: () => 10 },
+        product: { name: "Product 1" },
+        variantStocks: [{ availableStock: { toNumber: () => 15 } }],
+      },
+    ]);
+    vi.mocked(pricingResolver.resolveBatchVariantPrices).mockResolvedValue(
+      new Map([["v1", { unitPrice: 20 }]]),
+    );
+
+    await expect(
+      useCase.execute("org1", {
+        items: [{ variantId: "v1", quantity: 1 }],
+        customerId: "other-org-customer",
+        locationId: "loc1",
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it("should throw BadRequestException if businessAccountId does not belong to organization", async () => {
+    mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({
+      id: "loc1",
+    });
+    mockPrisma.client.businessAccount.findUnique.mockResolvedValue({ id: "other-org-biz", organizationId: "org2" });
+    mockPrisma.client.businessAccount.findFirst.mockResolvedValue(null);
+    mockPrisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        sku: "SKU1",
+        name: "Variant 1",
+        buyingPrice: { toNumber: () => 10 },
+        product: { name: "Product 1" },
+        variantStocks: [{ availableStock: { toNumber: () => 15 } }],
+      },
+    ]);
+    vi.mocked(pricingResolver.resolveBatchVariantPrices).mockResolvedValue(
+      new Map([["v1", { unitPrice: 20 }]]),
+    );
+
+    await expect(
+      useCase.execute("org1", {
+        items: [{ variantId: "v1", quantity: 1 }],
+        businessAccountId: "other-org-biz",
+        locationId: "loc1",
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

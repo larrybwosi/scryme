@@ -23,7 +23,40 @@ export class RequestB2BQuoteUseCase {
   ) {}
 
   async execute(organizationId: string, dto: RequestB2BQuoteDto) {
-    // 1. Resolve Location
+    // 1. Validate Related Entities Ownership
+    if (dto.customerId) {
+      const customer = await this.prisma.client.customer.findFirst({
+        where: { id: dto.customerId, organizationId },
+        select: { id: true, defaultLocationId: true },
+      });
+      if (!customer) {
+        throw new BadRequestException(
+          "Customer not found in this organization",
+        );
+      }
+      if (!dto.locationId) {
+        dto.locationId = customer.defaultLocationId || undefined;
+      }
+    }
+
+    if (dto.businessAccountId) {
+      const businessAccount = await this.prisma.client.businessAccount.findFirst(
+        {
+          where: { id: dto.businessAccountId, organizationId },
+          select: { id: true, defaultLocationId: true },
+        },
+      );
+      if (!businessAccount) {
+        throw new BadRequestException(
+          "Business account not found in this organization",
+        );
+      }
+      if (!dto.locationId) {
+        dto.locationId = businessAccount.defaultLocationId || undefined;
+      }
+    }
+
+    // 2. Resolve Location
     let locationId = dto.locationId;
 
     if (locationId) {
@@ -36,35 +69,12 @@ export class RequestB2BQuoteUseCase {
           "Location not found in this organization",
         );
     } else {
-      if (dto.customerId) {
-        // SECURITY (Sentinel): Using findFirst instead of findUnique because
-        // Customer lacks a composite unique index on [id, organizationId].
-        const customer = await this.prisma.client.customer.findFirst({
-          where: { id: dto.customerId, organizationId },
-          select: { defaultLocationId: true },
+      const defaultLocation =
+        await this.prisma.client.inventoryLocation.findFirst({
+          where: { organizationId, isDefault: true },
+          select: { id: true },
         });
-        locationId = customer?.defaultLocationId || undefined;
-      }
-
-      if (!locationId && dto.businessAccountId) {
-        // SECURITY (Sentinel): Using findFirst instead of findUnique because
-        // BusinessAccount lacks a composite unique index on [id, organizationId].
-        const businessAccount =
-          await this.prisma.client.businessAccount.findFirst({
-            where: { id: dto.businessAccountId, organizationId },
-            select: { defaultLocationId: true },
-          });
-        locationId = businessAccount?.defaultLocationId || undefined;
-      }
-
-      if (!locationId) {
-        const defaultLocation =
-          await this.prisma.client.inventoryLocation.findFirst({
-            where: { organizationId, isDefault: true },
-            select: { id: true },
-          });
-        locationId = defaultLocation?.id;
-      }
+      locationId = defaultLocation?.id;
     }
 
     if (!locationId) {
