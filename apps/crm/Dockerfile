@@ -73,6 +73,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV HOSTNAME="0.0.0.0"
 ENV NODE_OPTIONS="--max-old-space-size=384"
 
 # Create a system user to run the application securely
