@@ -1,5 +1,11 @@
 # web
 
+## 6.12.0
+
+### Minor Changes
+
+- dae7ef5: Update
+
 ## 6.11.0
 
 ### Minor Changes
