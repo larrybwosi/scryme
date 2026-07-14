@@ -5,7 +5,7 @@ import { auth } from "@repo/auth/server";
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
 const publicRoutes = ["/api/auth", "/health", "/api/health"];
 
-export async function proxy(request: NextRequest) {
+async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Skip proxy processing for public routes and auth API
@@ -54,6 +54,32 @@ export async function proxy(request: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
+  const start = Date.now();
+
+  try {
+    const response = await handleProxy(request);
+    const duration = Date.now() - start;
+    const status = response.status;
+    const location = response.headers.get("location");
+    console.log(
+      `[WEB PROXY] ${request.method} ${pathname} - Status: ${status}${
+        location ? ` -> Redirect to: ${location}` : ""
+      } (${duration}ms)`
+    );
+    return response;
+  } catch (error) {
+    const duration = Date.now() - start;
+    console.error(
+      `[WEB PROXY ERROR] ${request.method} ${pathname} - Error:`,
+      error,
+      `(${duration}ms)`
+    );
+    throw error;
+  }
 }
 
 export const config = {
