@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Globe, Users, TrendingUp, Award } from "lucide-react";
 
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
 export const metadata: Metadata = {
   title: "About Us — Our Mission to Empower Global Commerce",
   description:
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About Scryme",
     description: "Learn about the mission and team behind the enterprise platform built for businesses that can't afford to stop.",
-    url: "https://scryme.co/about",
+    url: "https://scryme.tech/about",
   },
 };
 
@@ -204,13 +206,13 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link
-              href="/pricing"
+              href={`${webUrl}/sign-up`}
               className="inline-flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:bg-primary/90 transition-colors"
             >
               Start free trial <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/contact"
+              href={`${webUrl}/sign-up`}
               className="inline-flex items-center gap-2 rounded-lg border border-border text-foreground px-6 py-3 text-sm font-semibold hover:bg-surface-1 transition-colors"
             >
               Book a demo

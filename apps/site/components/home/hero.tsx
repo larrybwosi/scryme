@@ -6,6 +6,8 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { colors, fonts } from "@/lib/scryme-tokens";
 
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
 type Entry = {
   code: "POS" | "CRM" | "INV" | "FIN";
   label: string;
@@ -281,7 +283,7 @@ export function Hero() {
             className="mt-8 flex flex-wrap items-center gap-4 justify-center"
           >
             <Link
-              href="/contact"
+              href={`${webUrl}/sign-up`}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
               style={{
                 background: colors.brass,
@@ -293,7 +295,7 @@ export function Hero() {
               <ArrowRight size={15} />
             </Link>
             <Link
-              href="/contact"
+              href={`${webUrl}/sign-up`}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-md text-sm font-semibold transition-all"
               style={{
                 background: "transparent",

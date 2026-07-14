@@ -3,7 +3,7 @@ import { Monitor, HardDrive, Terminal, Download } from "lucide-react";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.co";
+const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
 
 const platforms = [
   { icon: Monitor, name: "Windows", format: ".msi installer", path: "windows" },

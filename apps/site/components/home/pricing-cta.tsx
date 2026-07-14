@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { colors, fonts } from "@/lib/scryme-tokens";
 
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
 const highlights = [
   "No credit card required to start",
   "Full access to all modules",
@@ -85,7 +87,7 @@ export function PricingCTA() {
               View pricing <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/contact"
+              href={`${webUrl}/sign-up`}
               className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-colors"
               style={{
                 border: `1px solid rgba(11,18,32,0.3)`,

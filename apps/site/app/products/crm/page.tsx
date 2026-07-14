@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title: "Scryme CRM — Visual Pipeline & Sales Automation",
     description:
       "Close more deals with a pipeline built for scale. AI-assisted follow-ups, deal scoring, and revenue forecasting.",
-    url: "https://scryme.co/products/crm",
+    url: "https://scryme.tech/products/crm",
   },
 };
 
@@ -93,7 +93,7 @@ export default function CrmPage() {
     },
     offers: {
       "@type": "Offer",
-      url: "https://scryme.co/products/crm",
+      url: "https://scryme.tech/products/crm",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
@@ -107,19 +107,19 @@ export default function CrmPage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://scryme.co",
+        item: "https://scryme.tech",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Products",
-        item: "https://scryme.co/products",
+        item: "https://scryme.tech/products",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: "CRM",
-        item: "https://scryme.co/products/crm",
+        item: "https://scryme.tech/products/crm",
       },
     ],
   };
