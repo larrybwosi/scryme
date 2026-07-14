@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { getPosts } from "../../lib/sanity";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Blog — Insights on Retail, CRM, and Inventory Management",
@@ -11,22 +14,21 @@ export const metadata: Metadata = {
   },
 };
 
-const posts = [
-  {
-    title: "How to Scale Your Retail Business from 1 to 10 Locations",
-    slug: "scaling-retail-business",
-    date: "June 15, 2025",
-    excerpt: "Learn the essential strategies for multi-location retail management, from centralized inventory to unified CRM data.",
-  },
-  {
-    title: "The Importance of Offline-First POS in Modern Retail",
-    slug: "importance-of-offline-first-pos",
-    date: "June 10, 2025",
-    excerpt: "Why relying on a constant internet connection for your point of sale is a risk you shouldn't take.",
-  },
-];
+function formatDate(dateString: string) {
+  try {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+}
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const posts = await getPosts();
+
   return (
     <main className="pt-32 pb-24 px-6 max-w-5xl mx-auto">
       <div className="text-center mb-16">
@@ -39,15 +41,19 @@ export default function BlogPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {posts.map((post) => (
           <Link
-            key={post.slug}
-            href={`/blog/${post.slug}`}
+            key={post.slug.current}
+            href={`/blog/${post.slug.current}`}
             className="group block p-8 rounded-2xl border border-border bg-surface-1 hover:border-primary/50 transition-all"
           >
-            <p className="text-sm text-primary font-semibold mb-3">{post.date}</p>
+            <p className="text-sm text-primary font-semibold mb-3">
+              {formatDate(post.publishedAt)}
+            </p>
             <h2 className="text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
               {post.title}
             </h2>
-            <p className="text-muted leading-relaxed mb-6">{post.excerpt}</p>
+            <p className="text-muted leading-relaxed mb-6">
+              {post.excerpt || "Read full article..."}
+            </p>
             <div className="flex items-center text-sm font-bold text-primary">
               Read more <ArrowRight className="ml-2 w-4 h-4" />
             </div>
