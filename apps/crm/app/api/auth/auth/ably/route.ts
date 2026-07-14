@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ably } from "@repo/shared/ably";
-import { getOrganizationContext } from "../../../actions/auth";
+import { getOrganizationContext } from "../../../../actions/auth";
 
 export async function POST(req: NextRequest) {
   try {
