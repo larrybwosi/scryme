@@ -63,7 +63,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=4000
-ENV NODE_OPTIONS="--max-old-space-size=768"
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs

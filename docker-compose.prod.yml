@@ -3,6 +3,7 @@ services:
   db:
     image: postgres:17-alpine
     restart: always
+    command: postgres -c shared_buffers=64MB -c max_connections=40 -c work_mem=2MB -c maintenance_work_mem=16MB
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -14,7 +15,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -24,6 +25,7 @@ services:
   zitadel-db:
     image: postgres:17-alpine
     restart: always
+    command: postgres -c shared_buffers=32MB -c max_connections=30 -c work_mem=2MB -c maintenance_work_mem=8MB
     environment:
       POSTGRES_USER: ${ZITADEL_DB_USER}
       POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD}
@@ -32,6 +34,10 @@ services:
       - zitadel_data:/var/lib/postgresql/data
     networks:
       - scryme-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -41,6 +47,7 @@ services:
   windmill-db:
     image: postgres:17-alpine
     restart: always
+    command: postgres -c shared_buffers=32MB -c max_connections=30 -c work_mem=2MB -c maintenance_work_mem=8MB
     environment:
       POSTGRES_USER: ${WINDMILL_DB_USER}
       POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD}
@@ -49,6 +56,10 @@ services:
       - windmill_data:/var/lib/postgresql/data
     networks:
       - scryme-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -59,7 +70,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    command: redis-server --save 60 1 --loglevel warning --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 128mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_prod_data:/data
     networks:
@@ -67,7 +78,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 192M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -77,9 +88,15 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 384M
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_MEM_LIMIT: 256MB
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 256MiB
     volumes:
       - rabbitmq_prod_data:/var/lib/rabbitmq
     networks:
@@ -107,6 +124,10 @@ services:
   rustfs:
     image: rustfs/rustfs:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     environment:
       - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
       - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
@@ -143,6 +164,10 @@ services:
   mailpit:
     image: axllent/mailpit
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     networks:
       - scryme-prod-network
       - proxy
@@ -163,6 +188,10 @@ services:
   loki:
     image: grafana/loki:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 192M
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml
@@ -186,6 +215,10 @@ services:
   promtail:
     image: grafana/promtail:latest
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 64M
     volumes:
       - /var/log:/var/log
       - /var/run/docker.sock:/var/run/docker.sock
@@ -218,7 +251,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -265,7 +298,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
     environment:
       - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=server
@@ -303,7 +336,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
     environment:
       - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=worker
@@ -322,7 +355,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 768M
     healthcheck:
       test:
         [
@@ -385,7 +418,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 384M
     healthcheck:
       test:
         [
@@ -410,6 +443,7 @@ services:
       ZITADEL_API_URL: https://${ZITADEL_DOMAIN:-auth.scryme.tech}
       ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      NEXT_TELEMETRY_DISABLED: 1
     depends_on:
       api:
         condition: service_healthy
@@ -437,7 +471,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 512M
     healthcheck:
       test:
         [
@@ -460,6 +494,7 @@ services:
       PORT: ${WEB_PORT:-3000}
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      NEXT_TELEMETRY_DISABLED: 1
     depends_on:
       api:
         condition: service_healthy
@@ -484,7 +519,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 32M
     healthcheck:
       test:
         [
