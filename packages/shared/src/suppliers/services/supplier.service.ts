@@ -9,8 +9,13 @@ export class SupplierService {
     const { organizationId } = ctx;
     return this.prisma.client.supplier.findMany({
       where: { organizationId },
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Pruning documents to only include IDs in the list view to reduce payload size.
+       * This preserves the array structure for existing clients while minimizing I/O.
+       */
       include: {
-        documents: true,
+        documents: { select: { id: true } },
         _count: { select: { products: true } },
       },
       orderBy: { name: 'asc' },
@@ -184,13 +189,57 @@ export class SupplierService {
       },
       take: take ? Number(take) : undefined,
       skip: skip ? Number(skip) : undefined,
-      include: {
-        batch: true,
-        stockBatch: {
-          include: { variant: true },
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Using targeted 'select' instead of broad 'include' to prune heavy fields (qcData, notes)
+       * and unnecessary user/member data, reducing database I/O and payload size.
+       */
+      select: {
+        id: true,
+        incidentNumber: true,
+        title: true,
+        description: true,
+        severity: true,
+        status: true,
+        createdAt: true,
+        batch: {
+          select: {
+            id: true,
+            batchNumber: true,
+            status: true,
+          },
         },
-        supplier: true,
-        reportedBy: { include: { user: true } },
+        stockBatch: {
+          select: {
+            id: true,
+            batchNumber: true,
+            variant: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+          },
+        },
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        reportedBy: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
