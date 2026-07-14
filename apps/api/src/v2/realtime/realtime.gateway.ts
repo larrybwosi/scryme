@@ -47,9 +47,9 @@ export class RealtimeGateway
             }),
           });
           if (session) {
-            const orgId = session.user.activeOrganizationId || (session.session as any).activeOrganizationId;
+            const orgId = (session.user as any).activeOrganizationId || (session.session as any).activeOrganizationId;
             payload = {
-              memberId: session.user.memberId || session.user.id,
+              memberId: (session.user as any).memberId || session.user.id,
               organizationId: orgId,
               attendanceLogId: "",
             };

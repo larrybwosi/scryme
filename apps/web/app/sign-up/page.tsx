@@ -1,5 +1,7 @@
 "use client";
-import { use, useState } from "react";
+
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,11 +14,12 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+
 import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
+import { GithubIcon } from "@repo/ui/components/icons";
 
 // Zod validation schemas
 const signUpSchema = z.object({
@@ -60,8 +63,6 @@ function getPasswordStrength(password: string): {
   return { score: 4, label: "Strong" };
 }
 
-import { GithubIcon } from "@repo/ui/components/icons";
-
 const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
@@ -103,7 +104,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// Social provider button — subdued, hairline-bordered, enterprise tone
+// Social provider button
 const SocialButton = ({
   icon,
   label,
@@ -153,7 +154,7 @@ const FieldWrapper = ({
   </div>
 );
 
-// Ledger row — used in the verification strip on the right panel
+// Ledger row
 const LedgerRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-baseline justify-between py-3 border-b border-white/10 last:border-b-0">
     <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-200/60">
@@ -163,27 +164,26 @@ const LedgerRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-type Params = Promise<{ slug: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-export const SignupPage = (props: {
-  params: Params;
-  searchParams: SearchParams;
-}) => {
+export function SignupPage() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
   const session = authClient.useSession();
-
-  if (session.data) {
-    router.push("/dashboard");
-  }
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const searchParams = use(props.searchParams);
-  const callbackURL = (searchParams?.callbackUrl ||
-    searchParams?.redirect ||
-    searchParams?.returnTo) as string | undefined;
+
+  const callbackURL =
+    searchParams.get("callbackUrl") ||
+    searchParams.get("redirect") ||
+    searchParams.get("returnTo") ||
+    undefined;
+
+  // Handle side effect navigation in useEffect
+  useEffect(() => {
+    if (session.data) {
+      router.push("/dashboard");
+    }
+  }, [session.data, router]);
 
   const {
     register,
@@ -242,13 +242,14 @@ export const SignupPage = (props: {
     <div className="min-h-screen flex bg-white">
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
-        <div className="w-full max-w-105">
+        <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
             <ScrymeLogo />
             <p className="text-sm text-gray-500">
               Already a member?{" "}
               <button
+                type="button"
                 onClick={() => {
                   const params = new URLSearchParams();
                   if (callbackURL) params.set("callbackUrl", callbackURL);
@@ -305,7 +306,7 @@ export const SignupPage = (props: {
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
-          {/* Form — framed with corner-bracket registration marks */}
+          {/* Form */}
           <div className="relative pt-1">
             <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-emerald-700/30" />
             <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-emerald-700/30" />
@@ -389,7 +390,7 @@ export const SignupPage = (props: {
                   </button>
                 </div>
 
-                {/* Strength meter — shown only when there's input */}
+                {/* Strength meter */}
                 {watchedPassword?.length > 0 && (
                   <div className="space-y-2 pt-1">
                     <div className="flex gap-1 items-center">
@@ -434,37 +435,19 @@ export const SignupPage = (props: {
                       })}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {errors.password && !watchedPassword?.length && (
-                <p className="text-xs text-red-600 flex items-center gap-1">
-                  <XCircle className="h-3 w-3 shrink-0" />
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* Terms */}
-            <p className="text-xs text-gray-400 leading-relaxed pt-1">
-              By signing up you agree to Scryme&#39;s{" "}
-              <button
-                type="button"
-                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
-                Terms of Service
-              </button>{" "}
-              and{" "}
-              <button
-                type="button"
-                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
-                Privacy Policy
-              </button>
-              .
-            </p>
+                {errors.password && !watchedPassword?.length && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <XCircle className="h-3 w-3 shrink-0" />
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
 
               {/* Terms */}
               <p className="text-xs text-gray-400 leading-relaxed pt-1">
-                By signing up you agree to Dealio.ai&#39;s{" "}
+                By signing up you agree to Scryme&#39;s{" "}
                 <button
                   type="button"
                   className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
@@ -520,7 +503,6 @@ export const SignupPage = (props: {
             backgroundSize: "40px 40px",
           }}
         />
-        {/* Frame corner marks, echoing the form on the left */}
         <span className="absolute top-8 left-8 w-4 h-4 border-t-2 border-l-2 border-emerald-400/30" />
         <span className="absolute top-8 right-8 w-4 h-4 border-t-2 border-r-2 border-emerald-400/30" />
 
@@ -534,7 +516,7 @@ export const SignupPage = (props: {
           </div>
         </div>
 
-        {/* Capability index — real categories, presented as a scannable list rather than scattered tags */}
+        {/* Capability index */}
         <div className="relative z-10 self-end w-56">
           <p className="text-[11px] font-mono uppercase tracking-widest text-emerald-200/50 mb-3">
             Capability index
@@ -577,6 +559,12 @@ export const SignupPage = (props: {
       </div>
     </div>
   );
-};
+}
 
-export default SignupPage;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPage />
+    </Suspense>
+  );
+}
