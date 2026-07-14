@@ -242,7 +242,7 @@ export function SignupPage() {
     <div className="min-h-screen flex bg-white">
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
-        <div className="w-full max-w-105">
+        <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
             <ScrymeLogo />
