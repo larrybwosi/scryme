@@ -49,28 +49,70 @@ export class LoyaltyService {
   ) {
     const transaction = await db.transaction.findFirst({
       where: { id: transactionId, organizationId },
-      include: {
+      // ⚡ Bolt Optimization: Use targeted select to avoid over-fetching large relations
+      // and unused fields, reducing database I/O and network payload.
+      select: {
+        id: true,
+        organizationId: true,
+        customerId: true,
+        finalTotal: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            variantId: true,
+            subtotal: true,
             variant: {
-              include: {
-                product: true,
+              select: {
+                id: true,
+                productId: true,
+                loyaltyPointsOverride: true,
+                product: {
+                  select: {
+                    id: true,
+                    categoryId: true,
+                    loyaltyPointsOverride: true,
+                  },
+                },
               },
             },
           },
         },
         organization: {
-          include: {
+          select: {
             loyaltyPrograms: {
               where: { isActive: true },
-              include: {
-                rules: { where: { isActive: true } },
-                tiers: true,
+              select: {
+                id: true,
+                rules: {
+                  where: { isActive: true },
+                  select: {
+                    id: true,
+                    ruleType: true,
+                    variantId: true,
+                    productId: true,
+                    categoryId: true,
+                    pointsValue: true,
+                    currencyAmount: true,
+                  },
+                },
+                tiers: {
+                  select: {
+                    id: true,
+                    minPoints: true,
+                    multiplier: true,
+                  },
+                },
               },
             },
           },
         },
-        customer: true,
+        customer: {
+          select: {
+            id: true,
+            loyaltyPoints: true,
+          },
+        },
       },
     });
 
@@ -214,7 +256,14 @@ export class LoyaltyService {
   ) {
     const reward = await db.loyaltyReward.findFirst({
       where: { id: rewardId, program: { organizationId } },
-      include: { program: true },
+      // ⚡ Bolt Optimization: Select only required fields to avoid fetching full program model
+      select: {
+        id: true,
+        name: true,
+        pointsRequired: true,
+        isActive: true,
+        programId: true,
+      },
     });
 
     if (!reward || !reward.isActive)
@@ -305,11 +354,29 @@ export class LoyaltyService {
   ) {
     const voucher = await db.loyaltyVoucher.findFirst({
       where: { code, organizationId },
-      include: {
-        reward: true,
-        program: true,
+      // ⚡ Bolt Optimization: Use targeted select to fetch only required display/validation fields.
+      select: {
+        id: true,
+        code: true,
+        status: true,
+        expiresAt: true,
+        customerId: true,
+        reward: {
+          select: {
+            name: true,
+          },
+        },
+        program: {
+          select: {
+            isActive: true,
+          },
+        },
       },
     });
+
+    if (voucher && voucher.program && !voucher.program.isActive) {
+      throw new Error("Loyalty program is currently inactive");
+    }
 
     if (!voucher || voucher.status !== VoucherStatus.ACTIVE) {
       throw new Error("Invalid or expired voucher");

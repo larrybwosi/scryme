@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { OrganizationProvider } from '@/lib/providers/organization-context'
 import { DeleteConfirmationProvider } from '@/lib/providers/delete-modal'
+import { TooltipProvider } from '@repo/ui/components/ui/tooltip'
 import { AuthProvider } from '@/lib/providers/auth-context'
 import { DashboardLayout } from './layouts/DashboardLayout'
 import OverviewPage from './pages/OverviewPage'
@@ -59,7 +60,9 @@ function App() {
       <OrganizationProvider>
         <AuthProvider>
           <DeleteConfirmationProvider>
-            <AppContent />
+            <TooltipProvider>
+              <AppContent />
+            </TooltipProvider>
           </DeleteConfirmationProvider>
         </AuthProvider>
       </OrganizationProvider>

@@ -78,11 +78,13 @@ export class V3RealtimeGateway
     // Basic ownership check for common V3 patterns
     if (channel.startsWith("order:")) {
       const orderId = channel.split(":")[1];
-      const order = await this.prisma.client.transaction.findUnique({
-        where: { id: orderId },
-        select: { organizationId: true },
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // Transaction lacks a composite unique index on [id, organizationId].
+      const order = await this.prisma.client.transaction.findFirst({
+        where: { id: orderId, organizationId: context.organizationId },
+        select: { id: true },
       });
-      return !!order && order.organizationId === context.organizationId;
+      return !!order;
     }
 
     if (channel.startsWith("inventory:")) {
@@ -206,12 +208,14 @@ export class V3RealtimeGateway
     }
 
     // Verify ownership
-    const order = await this.prisma.client.transaction.findUnique({
-      where: { id: data.orderId },
-      select: { organizationId: true },
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Transaction lacks a composite unique index on [id, organizationId].
+    const order = await this.prisma.client.transaction.findFirst({
+      where: { id: data.orderId, organizationId: context.organizationId },
+      select: { id: true },
     });
 
-    if (!order || order.organizationId !== context.organizationId) {
+    if (!order) {
       return { event: "error", message: "Unauthorized or not found" };
     }
 

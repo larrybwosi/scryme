@@ -41,8 +41,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@repo/ui/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@repo/ui/components/ui/alert-dialog';
 import { useBakerySettingsManagement } from '@/hooks/bakery';
 import { useUnits } from '@/lib/units/hooks';
+import { useDeleteConfirmation } from '@/lib/providers/delete-modal';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { toast } from 'sonner';
 import sdk from '@/lib/sdk';
 import { getSDK } from '@repo/sdk';
@@ -65,6 +77,7 @@ export default function SettingsPage() {
   } = useBakerySettingsManagement();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('operational');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [isTestingKey, setIsTestingKey] = useState(false);
   const [keyTested, setKeyTested] = useState(false);
   const [isValidatingApi, setIsValidatingApi] = useState(false);
@@ -377,7 +390,7 @@ export default function SettingsPage() {
                             setFormData({ ...formData, apiEndpointUrl: e.target.value });
                             setApiTested(false);
                           }}
-                          placeholder="https://api.scryme.app/api/v2"
+                          placeholder="https://api.scryme.tech/api/v2"
                           className="pr-10"
                         />
                         {apiTested && (
@@ -455,11 +468,7 @@ export default function SettingsPage() {
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => {
-                                  if (confirm("Are you sure you want to reset this device? All local configuration will be lost.")) {
-                                    resetBakeryDevice();
-                                  }
-                                }}
+                                onClick={() => setShowResetConfirm(true)}
                                 className="h-8 gap-2"
                               >
                                 <RefreshCw className="h-3 w-3" />
@@ -1023,6 +1032,27 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset & Re-provision Device?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear all provisioned API keys, local sessions, and server configurations.
+              This action cannot be undone and the device will need to be set up again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => resetBakeryDevice()}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Reset Device
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1034,8 +1064,11 @@ function UnitsSettingsSection() {
     createMutation,
     updateMutation,
     deleteMutation,
+    isDeleting,
     loading
   } = useUnits();
+
+  const { confirmDelete } = useDeleteConfirmation();
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
@@ -1120,12 +1153,44 @@ function UnitsSettingsSection() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => startEdit(unit)}>
-                        <Edit className="h-4 w-4 text-slate-400" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation(unit.id)}>
-                        <Trash2 className="h-4 w-4 text-rose-400" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => startEdit(unit)}
+                            aria-label={`Edit ${unit.name} unit`}
+                          >
+                            <Edit className="h-4 w-4 text-slate-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit Unit</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={async () => {
+                              const confirmed = await confirmDelete({
+                                entityType: 'item',
+                                entityName: unit.name,
+                                title: 'Delete Custom Unit',
+                                description: `Are you sure you want to delete the unit "${unit.name}"? This action cannot be undone.`
+                              });
+                              if (confirmed) {
+                                await deleteMutation(unit.id);
+                              }
+                            }}
+                            disabled={isDeleting}
+                            aria-label={`Delete ${unit.name} unit`}
+                          >
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-rose-400" />}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete Unit</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 ))}

@@ -22,7 +22,7 @@ export default function SetupPage() {
   const [hardwareInfo, setHardwareInfo] = useState<{ macAddress?: string; serialNumber?: string } | null>(null);
   const [isDetectingHardware, setIsDetectingHardware] = useState(false);
   const [showApiUrl, setShowApiUrl] = useState(false);
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'https://api.scryme.app/api/v2');
+  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'https://api.scryme.tech/api/v2');
   const [isValidatingApi, setIsValidatingApi] = useState(false);
 
   const handleDetectHardware = async () => {
