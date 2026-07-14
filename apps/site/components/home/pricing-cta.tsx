@@ -18,7 +18,37 @@ const statement = [
   { label: "Customer satisfaction score", value: "4.9 / 5" },
 ];
 
-export function PricingCTA() {
+export interface PricingCTAProps {
+  title?: React.ReactNode;
+  description?: string;
+  primaryCta?: {
+    label: string;
+    href: string;
+  };
+  secondaryCta?: {
+    label: string;
+    href: string;
+  };
+}
+
+export function PricingCTA({
+  title,
+  description,
+  primaryCta,
+  secondaryCta,
+}: PricingCTAProps = {}) {
+  const displayTitle = title || (
+    <>
+      The ledger grows <br className="hidden lg:block" />
+      with your business
+    </>
+  );
+  const displayDescription =
+    description ||
+    "Start your 30-day free trial. No complex setup — your first store is live in minutes. Upgrade, downgrade, or cancel at any time.";
+  const displayPrimaryCta = primaryCta || { label: "View pricing", href: "/pricing" };
+  const displaySecondaryCta = secondaryCta || { label: "Talk to sales", href: "/contact" };
+
   return (
     <section
       className="py-28 relative overflow-hidden"
@@ -47,15 +77,13 @@ export function PricingCTA() {
             className="text-4xl md:text-5xl font-medium leading-[1.1] text-balance mb-6"
             style={{ color: colors.inkBg, fontFamily: fonts.display }}
           >
-            The ledger grows <br className="hidden lg:block" />
-            with your business
+            {displayTitle}
           </h2>
           <p
             className="text-lg max-w-lg mx-auto lg:mx-0 text-pretty leading-relaxed"
             style={{ color: "rgba(11,18,32,0.68)", fontFamily: fonts.body }}
           >
-            Start your 30-day free trial. No complex setup — your first store is
-            live in minutes. Upgrade, downgrade, or cancel at any time.
+            {displayDescription}
           </p>
           <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto lg:mx-0">
             {highlights.map((item) => (
@@ -74,7 +102,7 @@ export function PricingCTA() {
           </ul>
           <div className="mt-10 flex flex-wrap gap-4 justify-center lg:justify-start">
             <Link
-              href="/pricing"
+              href={displayPrimaryCta.href}
               className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-90"
               style={{
                 background: colors.inkBg,
@@ -82,10 +110,10 @@ export function PricingCTA() {
                 fontFamily: fonts.body,
               }}
             >
-              View pricing <ArrowRight className="w-4 h-4" />
+              {displayPrimaryCta.label} <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/contact"
+              href={displaySecondaryCta.href}
               className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-colors"
               style={{
                 border: `1px solid rgba(11,18,32,0.3)`,
@@ -93,7 +121,7 @@ export function PricingCTA() {
                 fontFamily: fonts.body,
               }}
             >
-              Talk to sales
+              {displaySecondaryCta.label}
             </Link>
           </div>
         </div>
