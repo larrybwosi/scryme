@@ -47,9 +47,10 @@ export class RealtimeGateway
             }),
           });
           if (session) {
-            const orgId = session.user.activeOrganizationId || (session.session as any).activeOrganizationId;
+            const user = session.user as any;
+            const orgId = user.activeOrganizationId || (session.session as any).activeOrganizationId;
             payload = {
-              memberId: session.user.memberId || session.user.id,
+              memberId: user.memberId || user.id,
               organizationId: orgId,
               attendanceLogId: "",
             };
