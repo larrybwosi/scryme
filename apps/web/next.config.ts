@@ -1,5 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
+
+const nextConfig: NextConfig = {
   output: "standalone",
   transpilePackages: ["@react-pdf/renderer"],
   async rewrites() {
@@ -54,4 +56,19 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG || "scryme-enterprise",
+  project: process.env.SENTRY_PROJECT || "scryme-web",
+
+  // Source map upload auth token
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Upload wider set of client source files for better stack trace resolution
+  widenClientFileUpload: true,
+
+  // Create a proxy API route to bypass ad-blockers
+  tunnelRoute: "/monitoring",
+
+  // Suppress non-CI output
+  silent: !process.env.CI,
+});
