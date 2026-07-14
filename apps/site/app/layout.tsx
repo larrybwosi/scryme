@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { StructuredData } from "@/components/seo/structured-data";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -141,12 +142,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} bg-background`}>
       <body className="font-sans antialiased text-foreground">
-        <StructuredData data={organizationData} />
-        <StructuredData data={websiteData} />
-        <StructuredData data={softwareData} />
-        <Navbar />
-        {children}
-        <Footer />
+        <PostHogProvider>
+          <StructuredData data={organizationData} />
+          <StructuredData data={websiteData} />
+          <StructuredData data={softwareData} />
+          <Navbar />
+          {children}
+          <Footer />
+        </PostHogProvider>
       </body>
     </html>
   );
