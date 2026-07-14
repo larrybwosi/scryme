@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from "socket.io";
 import { RealtimeRedisService } from "./realtime-redis.service";
 import { verifyMemberToken } from "@repo/shared/api/v2";
+import { auth } from "@repo/auth/nest";
 
 @WebSocketGateway({
   cors: {
@@ -36,7 +37,28 @@ export class RealtimeGateway
         return;
       }
 
-      const payload = await verifyMemberToken(token);
+      let payload = await verifyMemberToken(token);
+      if (!payload) {
+        try {
+          const session = await auth.api.getSession({
+            headers: new Headers({
+              Authorization: `Bearer ${token}`,
+              Cookie: `better-auth.session_token=${token}`,
+            }),
+          });
+          if (session) {
+            const orgId = session.user.activeOrganizationId || (session.session as any).activeOrganizationId;
+            payload = {
+              memberId: session.user.memberId || session.user.id,
+              organizationId: orgId,
+              attendanceLogId: "",
+            };
+          }
+        } catch (e: any) {
+          console.error("V2 WS better-auth fallback error:", e.message);
+        }
+      }
+
       if (!payload) {
         console.warn(`V2 WS connection rejected: Invalid token for client ${client.id}`);
         client.disconnect();
@@ -71,8 +93,8 @@ export class RealtimeGateway
     const context = (client as any).v2Context;
     if (!context) return false;
 
-    // organization:[id]:[type]
-    if (channel.startsWith("organization:")) {
+    // organization:[id]:[type] or org:[id]:[type]
+    if (channel.startsWith("organization:") || channel.startsWith("org:")) {
       const orgId = channel.split(":")[1];
       return orgId === context.organizationId;
     }

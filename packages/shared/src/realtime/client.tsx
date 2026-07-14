@@ -47,6 +47,14 @@ const RealtimeContext = createContext<RealtimeContextType>({
   },
 });
 
+function getCookie(name: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+  return undefined;
+}
+
 export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [ably, setAbly] = useState<Realtime | null>(null);
@@ -68,8 +76,14 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
         (typeof window !== "undefined"
           ? window.location.origin
           : "http://localhost:3001");
+
+      const sessionToken = getCookie("better-auth.session_token") || getCookie("dealio_member_token");
+
       const socketInstance = io(socketUrl, {
         transports: ["websocket"],
+        auth: {
+          token: sessionToken,
+        },
       });
 
       socketInstance.on("connect", () => {
