@@ -1,5 +1,11 @@
 # api
 
+## 6.17.0
+
+### Minor Changes
+
+- bb4f769: Update
+
 ## 6.16.0
 
 ### Minor Changes
