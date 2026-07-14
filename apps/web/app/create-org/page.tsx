@@ -82,13 +82,13 @@ const companySizes = [
 ];
 
 // Logos and Components re-used from SignUp for consistency
-const DealioLogo = () => (
+const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">D</span>
+      <span className="text-white font-black text-xs tracking-tight">S</span>
     </div>
     <span className="text-xl font-bold tracking-tight text-gray-900">
-      deal<span className="text-emerald-600">io</span>
+      scry<span className="text-emerald-600">me</span>
     </span>
   </div>
 );
@@ -237,7 +237,7 @@ export default function CreateOrgPage() {
         <div className="w-full max-w-120">
           {/* Header */}
           <div className="mb-10">
-            <DealioLogo />
+            <ScrymeLogo />
           </div>
 
           {!showForm && !loadingInvitations && invitations.length > 0 ? (
@@ -367,13 +367,13 @@ export default function CreateOrgPage() {
                       </label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium border-r border-gray-100 pr-3">
-                          dealio.io/
+                          scryme.tech/
                         </div>
                         <Input
                           {...register("slug")}
                           placeholder="acme-corp"
                           className={cn(
-                            "h-12 pl-[85px] rounded-xl border-gray-200 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
+                            "h-12 pl-[105px] rounded-xl border-gray-200 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500",
                             errors.slug &&
                               "border-red-500 focus-visible:ring-red-500/10 focus-visible:border-red-500",
                           )}

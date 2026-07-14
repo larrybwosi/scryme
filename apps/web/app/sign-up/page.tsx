@@ -62,15 +62,13 @@ function getPasswordStrength(password: string): {
 
 import { GithubIcon } from "@repo/ui/components/icons";
 
-const DealioLogo = () => (
-  <div className="flex items-center gap-2">
-    <div className="w-7 h-7 rounded-sm bg-emerald-700 flex items-center justify-center">
-      <span className="text-white font-bold text-xs tracking-tight font-mono">
-        D
-      </span>
+const ScrymeLogo = () => (
+  <div className="flex items-center gap-1">
+    <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
+      <span className="text-white font-black text-xs tracking-tight">S</span>
     </div>
-    <span className="text-lg font-semibold tracking-tight text-gray-900">
-      deal<span className="text-emerald-700">io</span>
+    <span className="text-xl font-bold tracking-tight text-gray-900">
+      scry<span className="text-emerald-600">me</span>
     </span>
   </div>
 );
@@ -247,7 +245,7 @@ export const SignupPage = (props: {
         <div className="w-full max-w-105">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
-            <DealioLogo />
+            <ScrymeLogo />
             <p className="text-sm text-gray-500">
               Already a member?{" "}
               <button
@@ -436,15 +434,33 @@ export const SignupPage = (props: {
                       })}
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {errors.password && !watchedPassword?.length && (
-                  <p className="text-xs text-red-600 flex items-center gap-1">
-                    <XCircle className="h-3 w-3 shrink-0" />
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+              {errors.password && !watchedPassword?.length && (
+                <p className="text-xs text-red-600 flex items-center gap-1">
+                  <XCircle className="h-3 w-3 shrink-0" />
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Terms */}
+            <p className="text-xs text-gray-400 leading-relaxed pt-1">
+              By signing up you agree to Scryme&#39;s{" "}
+              <button
+                type="button"
+                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                Terms of Service
+              </button>{" "}
+              and{" "}
+              <button
+                type="button"
+                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                Privacy Policy
+              </button>
+              .
+            </p>
 
               {/* Terms */}
               <p className="text-xs text-gray-400 leading-relaxed pt-1">
