@@ -14,6 +14,11 @@ module.exports = {
         destination: `${apiUrl}/.well-known/:path*`,
       },
       {
+        source: "/api/auth/ably",
+        // Do not forward /api/auth/ably to API backend, instead run locally
+        destination: "/api/auth/ably",
+      },
+      {
         source: "/api/auth/:path*",
         destination: `${apiUrl}/api/auth/:path*`,
       },
