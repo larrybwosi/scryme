@@ -11,14 +11,17 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@portabletext/react": "^6.2.0",
     "@tailwindcss/postcss": "^4.1.18",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.511.0",
     "next": "16.2.10",
+    "next-sanity": "^13.1.1",
     "postcss": "^8.5.15",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "sanity": "^6.4.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss": "^4.3.0"
   },
