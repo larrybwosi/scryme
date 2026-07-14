@@ -99,6 +99,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - loki_data:/tmp/loki
+      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
     depends_on:
       vol-perms:
         condition: service_healthy
@@ -123,14 +124,15 @@ services:
     volumes:
       - /var/log:/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./promtail-config.yml:/etc/promtail/config.yml:ro
-    command: -config.file=/etc/promtail/config.yml
+      # Mount the folder instead of the file to prevent the "not a directory" error
+      - ./docker/promtail:/mnt/config/:ro
+    command: -config.file=/mnt/config/config.yml
     networks:
       - scryme-network
 
   # --- APPLICATIONS ---
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.7.0
+    image: ghcr.io/larrybwosi/scryme/api:9.11.0
     restart: always
     deploy:
       resources:
@@ -180,7 +182,7 @@ services:
       retries: 3
 
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.7.0
+    image: ghcr.io/larrybwosi/scryme/web:9.11.0
     restart: always
     deploy:
       resources:
@@ -213,14 +215,14 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${WEB_PORT:-3000}/health",
+          "http://localhost:${WEB_PORT:-3000}/api/health",
         ]
       interval: 30s
       timeout: 10s
       retries: 3
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.7.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.11.0
     restart: always
     deploy:
       resources:
@@ -253,14 +255,14 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${CRM_PORT:-3001}/health",
+          "http://localhost:${CRM_PORT:-3001}/api/health",
         ]
       interval: 30s
       timeout: 10s
       retries: 3
 
   bakery:
-    image: ghcr.io/larrybwosi/scryme/bakery:9.7.0
+    image: ghcr.io/larrybwosi/scryme/bakery:9.11.0
     restart: always
     deploy:
       resources:

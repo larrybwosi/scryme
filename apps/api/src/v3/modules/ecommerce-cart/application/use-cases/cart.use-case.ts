@@ -15,6 +15,7 @@ export class CartUseCase {
     organizationId: string,
     customerId?: string,
     sessionId?: string,
+    includeItems: boolean = true,
   ) {
     const where: any = { organizationId };
     if (customerId) where.customerId = customerId;
@@ -23,13 +24,13 @@ export class CartUseCase {
 
     const cart = await this.prisma.client.cart.findFirst({
       where,
-      include: { items: true },
+      include: { items: includeItems },
     });
 
     if (!cart) {
       return this.prisma.client.cart.create({
         data: { organizationId, customerId, sessionId, status: "ACTIVE" },
-        include: { items: true },
+        include: { items: includeItems },
       });
     }
 
@@ -37,10 +38,12 @@ export class CartUseCase {
   }
 
   async addToCart(organizationId: string, dto: AddToCartDto) {
+    // ⚡ Bolt Optimization: Skip fetching cart items as we only need the cart ID
     const cart = await this.getCart(
       organizationId,
       dto.customerId,
       dto.sessionId,
+      false,
     );
 
     const item = await this.prisma.client.cartItem.upsert({
@@ -73,10 +76,12 @@ export class CartUseCase {
   }
 
   async removeFromCart(organizationId: string, dto: RemoveFromCartDto) {
+    // ⚡ Bolt Optimization: Skip fetching cart items as we only need the cart ID
     const cart = await this.getCart(
       organizationId,
       dto.customerId,
       dto.sessionId,
+      false,
     );
 
     return this.prisma.client.cartItem.delete({

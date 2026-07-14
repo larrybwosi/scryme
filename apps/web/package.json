@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "web",
-  "version": "6.9.0",
+  "version": "6.12.0",
   "type": "module",
   "scripts": {
     "dev": "next dev",
@@ -23,6 +23,7 @@
     "@repo/shared": "workspace:^",
     "@repo/ui": "workspace:*",
     "@repo/windmill": "workspace:*",
+    "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.1.18",
     "argon2": "^0.44.0",
     "better-auth": "^1.4.19",

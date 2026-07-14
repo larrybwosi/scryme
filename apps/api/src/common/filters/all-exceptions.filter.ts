@@ -14,12 +14,6 @@ import { redactSensitiveData } from "../utils/redaction";
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
-    // @security Redact the entire exception object before logging to prevent
-    // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
-    const redactedException = redactSensitiveData(exception);
-
-    console.error("Unhandled Exception:", redactedException);
-
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<any>();
 
@@ -44,6 +38,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
         env.NODE_ENV === "development"
           ? exception.message
           : "Internal server error";
+    }
+
+    // @security Redact the entire exception object before logging to prevent
+    // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
+    const redactedException = redactSensitiveData(exception);
+
+    // Only log to console.error if status is 5xx (Internal Server Error or above)
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      console.error("Unhandled Exception:", redactedException);
     }
 
     // Log to OpenObserve if it's an auth error or unhandled exception

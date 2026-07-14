@@ -18,20 +18,21 @@ function formatDate(dateString: string) {
   }
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }> | { slug: string };
-}): Promise<Metadata> {
-  const resolvedParams = await params;
-  const post = await getPostBySlug(resolvedParams.slug);
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
+
   if (!post) return {};
 
   return {
     title: `${post.title} — Scryme Blog`,
     description: post.excerpt,
     alternates: {
-      canonical: `/blog/${resolvedParams.slug}`,
+      canonical: `/blog/${slug}`,
     },
     openGraph: {
       type: "article",
@@ -118,13 +119,10 @@ const portableTextComponents = {
   },
 };
 
-export default async function BlogPost({
-  params,
-}: {
-  params: Promise<{ slug: string }> | { slug: string };
-}) {
-  const resolvedParams = await params;
-  const post = await getPostBySlug(resolvedParams.slug);
+export default async function BlogPost({ params }: Props) {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
+
   if (!post) notFound();
 
   const articleData = {

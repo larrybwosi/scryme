@@ -124,9 +124,53 @@ export class DepartmentUseCase {
     dto: CreateDepartmentDto,
     actorId: string,
   ) {
+    // SECURITY (Sentinel): IDOR validation for linked entities.
+    if (dto.parentId) {
+      const parent = await this.prisma.client.department.findFirst({
+        where: { id: dto.parentId, organizationId },
+      });
+      if (!parent) {
+        throw new BadRequestException("Parent department not found");
+      }
+    }
+
+    if (dto.headId) {
+      const head = await this.prisma.client.member.findFirst({
+        where: { id: dto.headId, organizationId },
+      });
+      if (!head) {
+        throw new BadRequestException("Head member not found");
+      }
+    }
+
+    if (dto.locationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.locationId, organizationId },
+      });
+      if (!location) {
+        throw new BadRequestException("Location not found");
+      }
+    }
+
+    if (dto.costCenterId) {
+      const costCenter = await this.prisma.client.costCenter.findFirst({
+        where: { id: dto.costCenterId, organizationId },
+      });
+      if (!costCenter) {
+        throw new BadRequestException("Cost center not found");
+      }
+    }
+
     const department = await this.prisma.client.department.create({
       data: {
-        ...dto,
+        name: dto.name,
+        description: dto.description,
+        image: dto.image,
+        headId: dto.headId,
+        parentId: dto.parentId,
+        locationId: dto.locationId,
+        costCenterId: dto.costCenterId,
+        settings: dto.settings,
         organizationId,
       },
     });
@@ -188,9 +232,62 @@ export class DepartmentUseCase {
     dto: UpdateDepartmentDto,
     actorId: string,
   ) {
-    const department = await this.prisma.client.department.update({
+    // SECURITY (Sentinel): Find-then-update pattern for multi-tenant isolation.
+    const currentDepartment = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
-      data: dto,
+    });
+
+    if (!currentDepartment) throw new NotFoundException("Department not found");
+
+    // SECURITY (Sentinel): IDOR validation for linked entities.
+    if (dto.parentId) {
+      const parent = await this.prisma.client.department.findFirst({
+        where: { id: dto.parentId, organizationId },
+      });
+      if (!parent) {
+        throw new BadRequestException("Parent department not found");
+      }
+    }
+
+    if (dto.headId) {
+      const head = await this.prisma.client.member.findFirst({
+        where: { id: dto.headId, organizationId },
+      });
+      if (!head) {
+        throw new BadRequestException("Head member not found");
+      }
+    }
+
+    if (dto.locationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.locationId, organizationId },
+      });
+      if (!location) {
+        throw new BadRequestException("Location not found");
+      }
+    }
+
+    if (dto.costCenterId) {
+      const costCenter = await this.prisma.client.costCenter.findFirst({
+        where: { id: dto.costCenterId, organizationId },
+      });
+      if (!costCenter) {
+        throw new BadRequestException("Cost center not found");
+      }
+    }
+
+    const department = await this.prisma.client.department.update({
+      where: { id: currentDepartment.id },
+      data: {
+        name: dto.name,
+        description: dto.description,
+        image: dto.image,
+        headId: dto.headId,
+        parentId: dto.parentId,
+        locationId: dto.locationId,
+        costCenterId: dto.costCenterId,
+        settings: dto.settings,
+      },
     });
 
     await this.prisma.client.auditLog.create({
@@ -208,8 +305,15 @@ export class DepartmentUseCase {
   }
 
   async deleteDepartment(organizationId: string, id: string, actorId: string) {
-    const department = await this.prisma.client.department.delete({
+    // SECURITY (Sentinel): Find-then-delete pattern for multi-tenant isolation.
+    const currentDepartment = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
+    });
+
+    if (!currentDepartment) throw new NotFoundException("Department not found");
+
+    const department = await this.prisma.client.department.delete({
+      where: { id: currentDepartment.id },
     });
 
     await this.prisma.client.auditLog.create({
@@ -341,6 +445,13 @@ export class DepartmentUseCase {
     memberId: string,
     actorId: string,
   ) {
+    // SECURITY (Sentinel): Verify department belongs to organization before removing member.
+    const dept = await this.prisma.client.department.findFirst({
+      where: { id: departmentId, organizationId },
+    });
+
+    if (!dept) throw new NotFoundException("Department not found");
+
     await this.prisma.client.departmentMember.delete({
       where: {
         departmentId_memberId: {
