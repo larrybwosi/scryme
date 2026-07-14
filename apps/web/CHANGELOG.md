@@ -1,5 +1,11 @@
 # web
 
+## 6.11.0
+
+### Minor Changes
+
+- 0fc8f60: Update
+
 ## 6.10.0
 
 ### Minor Changes
