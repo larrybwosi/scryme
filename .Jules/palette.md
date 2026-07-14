@@ -52,3 +52,7 @@
 ## 2026-07-08 - [Standardized Developer Settings UX]
 **Learning:** Native `confirm()` in developer settings felt inconsistent and lacked asynchronous feedback. Icon-only actions for copying and deleting lacked accessibility features and tooltips.
 **Action:** Replace native `confirm()` with themed `AlertDialog`. Include `Loader2` feedback in destructive action buttons. Wrap icon-only triggers in `Tooltip` and provide descriptive `aria-label` attributes.
+
+## 2026-07-08 - [Standardized Deletion & Device Reset UX in Bakery]
+**Learning:** Native `confirm()` and icon-only buttons without feedback or tooltips degrade the terminal experience. Standardizing on themed `AlertDialog` and `TooltipProvider` with `useDeleteConfirmation` ensures a consistent, accessible, and high-quality UI across the monorepo.
+**Action:** Always wrap the application in `TooltipProvider` at the root. Replace native `confirm()` with `AlertDialog` and use `useDeleteConfirmation` for entity deletions to provide consistent visual feedback and loading states (`Loader2`).
