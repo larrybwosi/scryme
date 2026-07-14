@@ -1759,11 +1759,14 @@ export class BakeryService {
       description,
       buyingPrice,
       reorderPoint,
+      reorderLevel,
       baseUnitId,
       baseOrgUnitId,
       stockingUnitId,
       stockingOrgUnitId,
     } = data;
+
+    const finalReorderPoint = reorderPoint !== undefined ? reorderPoint : reorderLevel;
 
     return this.prisma.client.$transaction(async tx => {
       const product = await tx.product.create({
@@ -1780,7 +1783,7 @@ export class BakeryService {
                 name,
                 sku: sku || `RM-${Date.now()}-VAR`,
                 buyingPrice: buyingPrice || 0,
-                reorderPoint: reorderPoint || 0,
+                reorderPoint: finalReorderPoint || 0,
                 baseUnitId,
                 baseOrgUnitId,
                 stockingUnitId,
@@ -1806,11 +1809,14 @@ export class BakeryService {
       description,
       buyingPrice,
       reorderPoint,
+      reorderLevel,
       baseUnitId,
       baseOrgUnitId,
       stockingUnitId,
       stockingOrgUnitId,
     } = data;
+
+    const finalReorderPoint = reorderPoint !== undefined ? reorderPoint : reorderLevel;
 
     return this.prisma.client.$transaction(async tx => {
       // Find the product first to get its variant
@@ -1837,7 +1843,7 @@ export class BakeryService {
             name,
             sku,
             buyingPrice,
-            reorderPoint,
+            reorderPoint: finalReorderPoint !== undefined ? finalReorderPoint : undefined,
             baseUnitId,
             baseOrgUnitId,
             stockingUnitId,
