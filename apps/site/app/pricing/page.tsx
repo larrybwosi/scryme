@@ -8,6 +8,8 @@ import {
 } from "@/components/pricing/pricing-comparison";
 import { PricingFaq, type FaqItem } from "@/components/pricing/pricing-faq";
 
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
 export const metadata: Metadata = {
   title: "Pricing — Simple, Transparent Plans for Every Business",
   description:
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
     title: "Pricing — Scryme",
     description:
       "Simple, transparent pricing for every stage of your business. Start free, scale as you grow.",
-    url: "https://scryme.co/pricing",
+    url: "https://scryme.tech/pricing",
   },
 };
 
@@ -30,7 +32,7 @@ const plans: Plan[] = [
     period: "/mo",
     tagline: "For independent retailers getting started",
     cta: "Start free trial",
-    href: "/signup",
+    href: `${webUrl}/sign-up`,
     highlight: false,
     features: [
       "1 POS terminal",
@@ -50,7 +52,7 @@ const plans: Plan[] = [
     period: "/mo",
     tagline: "For growing businesses with multiple staff",
     cta: "Start free trial",
-    href: "/signup",
+    href: `${webUrl}/sign-up`,
     highlight: true,
     badge: "Most popular",
     features: [
@@ -71,7 +73,7 @@ const plans: Plan[] = [
     period: "",
     tagline: "For large retailers and wholesale operations",
     cta: "Talk to sales",
-    href: "/contact",
+    href: `${webUrl}/sign-up`,
     highlight: false,
     features: [
       "Unlimited POS terminals",

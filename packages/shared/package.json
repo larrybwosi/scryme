@@ -170,7 +170,7 @@
     "socket.io-client": "^4.8.3",
     "sonner": "latest",
     "tailwind-merge": "^3.5.0",
-    "zod": "^4.3.6",
+    "zod": "^4.4.3",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

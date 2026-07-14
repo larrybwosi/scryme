@@ -19,7 +19,7 @@
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
     "jose": "^5.9.6",
-    "zod": "latest"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

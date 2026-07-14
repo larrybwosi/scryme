@@ -121,7 +121,7 @@ export default async function Image({ params }: { params: { category: string } }
             color: "#6b7280",
           }}
         >
-          scryme.co/products/{category}
+          scryme.tech/products/{category}
         </div>
       </div>
     ),

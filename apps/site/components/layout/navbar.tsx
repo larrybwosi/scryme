@@ -13,6 +13,8 @@ const navLinks = [
   { name: "About", href: "/about" },
 ];
 
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -173,14 +175,14 @@ export function Navbar() {
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3 ml-auto">
           <Link
-            href="/login"
+            href={`${webUrl}/login`}
             className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
             style={{ color: colors.textMuted, fontFamily: fonts.body }}
           >
             Sign in
           </Link>
           <Link
-            href="/contact"
+            href={`${webUrl}/sign-up`}
             className="px-4 py-2 rounded-md text-sm font-semibold transition-opacity hover:opacity-90"
             style={{
               background: colors.brass,
@@ -272,7 +274,7 @@ export function Navbar() {
             style={{ borderTop: `1px solid ${colors.inkLine}` }}
           >
             <Link
-              href="/login"
+              href={`${webUrl}/login`}
               className="px-4 py-2.5 rounded-lg text-sm font-medium text-center transition-colors"
               style={{
                 color: colors.textPrimary,
@@ -284,7 +286,7 @@ export function Navbar() {
               Sign in
             </Link>
             <Link
-              href="/contact"
+              href={`${webUrl}/sign-up`}
               className="px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-opacity hover:opacity-90"
               style={{
                 background: colors.brass,
