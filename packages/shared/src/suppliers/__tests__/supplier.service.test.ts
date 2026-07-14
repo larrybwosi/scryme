@@ -142,8 +142,10 @@ describe('SupplierService Security', () => {
           batchId: undefined,
           stockBatchId: undefined,
         },
-        include: expect.any(Object),
+        select: expect.any(Object),
         orderBy: expect.any(Object),
+        take: undefined,
+        skip: undefined,
       });
 
       const where = mockPrisma.client.qualityIncident.findMany.mock.calls[0][0].where;
