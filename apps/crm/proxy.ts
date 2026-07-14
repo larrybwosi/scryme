@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up"];
-const publicRoutes = ["/api/auth", "/monitoring"];
+const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -44,7 +44,14 @@ export async function proxy(request: NextRequest) {
   const isExcludedFromOrgCheck = ["/banned", "/forbidden"].includes(pathname);
 
   if (!organizationId && !isExcludedFromOrgCheck) {
-    const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
+    const isDev = process.env.NODE_ENV === "development";
+    const defaultWebUrl = isDev
+      ? "http://localhost:3000"
+      : "https://app.scryme.tech";
+    const webUrl =
+      process.env.NEXT_PUBLIC_WEB_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      defaultWebUrl;
     return NextResponse.redirect(new URL("/create-org", webUrl));
   }
 

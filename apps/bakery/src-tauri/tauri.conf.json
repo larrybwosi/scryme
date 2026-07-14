@@ -1,6 +1,6 @@
 {
   "productName": "Scryme Bakery",
-  "version": "9.9.0",
+  "version": "9.12.0",
   "identifier": "app.scryme.bakery",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -22,7 +22,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://api.scryme.app/api/v2/bakery/update/{{target}}/{{current_version}}"
+        "https://api.scryme.tech/api/v2/bakery/update/{{target}}/{{current_version}}"
       ],
       "pubkey": "dW51c2VkX3B1YmxpY19rZXlfZm9yX2J1aWxkX3ZlcmlmaWNhdGlvbg=="
     },

@@ -27,6 +27,7 @@ describe('V3RealtimeGateway', () => {
             client: {
               transaction: {
                 findUnique: vi.fn(),
+                findFirst: vi.fn(),
               },
             },
           },
@@ -88,7 +89,7 @@ describe('V3RealtimeGateway', () => {
       v3Context: mockContext,
     } as any as Socket;
 
-    vi.mocked(prisma.client.transaction.findUnique).mockResolvedValue({ organizationId: 'org-1' } as any);
+    vi.mocked(prisma.client.transaction.findFirst).mockResolvedValue({ id: 'order-1' } as any);
 
     const data = { channel: 'order:order-1', event: 'status', data: { status: 'PAID' } };
     const result = await gateway.handlePublish(client, data);
@@ -102,8 +103,8 @@ describe('V3RealtimeGateway', () => {
       v3Context: mockContext,
     } as any as Socket;
 
-    // Order belongs to org-2
-    vi.mocked(prisma.client.transaction.findUnique).mockResolvedValue({ organizationId: 'org-2' } as any);
+    // Order belongs to org-2, so findFirst will return null when scoped to org-1
+    vi.mocked(prisma.client.transaction.findFirst).mockResolvedValue(null);
 
     const data = { channel: 'order:order-2', event: 'status', data: { status: 'PAID' } };
     const result = await gateway.handlePublish(client, data);
