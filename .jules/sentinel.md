@@ -133,6 +133,10 @@
 **Learning:** Even with multi-tenant guards, service-level mutations that trust the entire request body are susceptible to mass assignment. Relying on the presence of `organizationId` in the data object is insufficient if the client can also provide a different one in the same object, which might override the intended one depending on merge order.
 **Prevention:** Always use explicit field whitelisting for `create` operations and either whitelisting or explicit blacklisting (stripping sensitive keys like `id` and `organizationId`) for `update` operations in service layers.
 
+## 2026-07-14 - IDOR Bypass via Conditional Logic in Quote Requests
+**Vulnerability:** The `RequestB2BQuoteUseCase` skipped ownership verification for `customerId` and `businessAccountId` if a `locationId` was explicitly provided in the request. These unverified IDs were then persisted in the database, allowing cross-tenant data association.
+**Learning:** Security validation must be unconditional for all user-provided identifiers. Branching logic that resolves optional parameters (like location) must not inadvertently bypass the authorization checks for other sensitive inputs that are still being processed or persisted.
+**Prevention:** Implement a "Validate All Inputs" block at the start of service methods. Every user-provided ID that will be used in a query or persisted must be explicitly verified against the tenant context (e.g., `organizationId`) regardless of whether other parameters are present.
 ## 2025-05-24 - IDOR Vulnerability in V3 Realtime Gateway and B2B Quotes
 **Vulnerability:** The V3 Realtime Gateway and B2B Quote Use Case were susceptible to IDOR as they performed lookups using only record IDs or were trusting Prisma to enforce multi-tenancy via 'findUnique' with an 'organizationId' filter on models lacking composite unique indices.
 **Learning:** Prisma's 'findUnique' silently ignores non-unique filters (like 'organizationId') if they aren't part of a composite unique index (@@unique) in the schema. This creates a false sense of security where developers believe a query is tenant-scoped when it is actually fetching by primary ID only.
