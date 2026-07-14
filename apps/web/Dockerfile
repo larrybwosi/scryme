@@ -48,7 +48,7 @@ COPY --from=pruner /app/out/full/ .
 
 # Build-time environment variables
 ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3002}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
 ARG BETTER_AUTH_SECRET
 ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-build}
 # Provide a dummy DATABASE_URL for build time validation
