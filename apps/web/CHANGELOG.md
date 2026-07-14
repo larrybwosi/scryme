@@ -1,5 +1,11 @@
 # web
 
+## 6.16.0
+
+### Minor Changes
+
+- e0fd6b8: Update
+
 ## 6.15.0
 
 ### Minor Changes
