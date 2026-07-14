@@ -126,6 +126,10 @@ const clientSchema = z.object({
     (val) => (val === "" ? undefined : val),
     z.url().default("http://localhost:3002"),
   ),
+
+  // PostHog Config
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().default("https://us.i.posthog.com"),
 });
 
 // ─────────────────────────────────────────────
@@ -268,6 +272,8 @@ function getRawEnv() {
     NEXT_PUBLIC_COOKIE_DOMAIN: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     NEXT_PUBLIC_REALTIME_PROVIDER: process.env.NEXT_PUBLIC_REALTIME_PROVIDER,
     NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   };
 }
 
