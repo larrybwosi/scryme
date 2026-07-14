@@ -2,6 +2,7 @@
   "name": "bakery",
   "private": true,
   "version": "9.10.0",
+  "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
