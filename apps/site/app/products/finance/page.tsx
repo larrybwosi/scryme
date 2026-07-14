@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title: "Scryme Finance — Automated Bookkeeping",
     description:
       "Connect POS, inventory, and CRM for automated Posting. Close your month in hours, not days.",
-    url: "https://scryme.co/products/finance",
+    url: "https://scryme.tech/products/finance",
   },
 };
 
@@ -93,7 +93,7 @@ export default function FinancePage() {
     },
     offers: {
       "@type": "Offer",
-      url: "https://scryme.co/products/finance",
+      url: "https://scryme.tech/products/finance",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
@@ -107,19 +107,19 @@ export default function FinancePage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://scryme.co",
+        item: "https://scryme.tech",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Products",
-        item: "https://scryme.co/products",
+        item: "https://scryme.tech/products",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: "Finance",
-        item: "https://scryme.co/products/finance",
+        item: "https://scryme.tech/products/finance",
       },
     ],
   };

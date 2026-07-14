@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://scryme.co"),
+  metadataBase: new URL("https://scryme.tech"),
   title: {
     default: "Scryme — Enterprise Business Platform",
     template: "%s | Scryme",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     "Wholesale ERP",
     "Cloud POS",
   ],
-  authors: [{ name: "Scryme", url: "https://scryme.co" }],
+  authors: [{ name: "Scryme", url: "https://scryme.tech" }],
   creator: "Scryme",
   publisher: "Scryme",
   formatDetection: {
@@ -46,14 +46,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://scryme.co",
+    url: "https://scryme.tech",
     title: "Scryme — Enterprise Business Platform",
     description:
       "All-in-one enterprise platform for CRM, POS, Inventory, and Finance.",
     siteName: "Scryme",
     images: [
       {
-        url: "https://scryme.co/og-image.png",
+        url: "https://scryme.tech/og-image.png",
         width: 1200,
         height: 630,
         alt: "Scryme — Enterprise Business Platform",
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     description:
       "All-in-one enterprise platform for CRM, POS, Inventory, and Finance.",
     creator: "@scryme",
-    images: ["https://scryme.co/og-image.png"],
+    images: ["https://scryme.tech/og-image.png"],
   },
   robots: {
     index: true,
@@ -98,8 +98,8 @@ export default function RootLayout({
     "@type": "Organization",
     name: "Scryme",
     alternateName: "Scryme Technologies",
-    url: "https://scryme.co",
-    logo: "https://scryme.co/logo.png",
+    url: "https://scryme.tech",
+    logo: "https://scryme.tech/logo.png",
     sameAs: [
       "https://twitter.com/scryme",
       "https://linkedin.com/company/scryme",
@@ -117,10 +117,10 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Scryme",
-    url: "https://scryme.co",
+    url: "https://scryme.tech",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://scryme.co/search?q={search_term_string}",
+      target: "https://scryme.tech/search?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };

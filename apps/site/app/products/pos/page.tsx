@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     title: "Scryme POS — Native Desktop Point of Sale",
     description:
       "A fast, reliable checkout experience that never depends on the internet. Built with Tauri and React.",
-    url: "https://scryme.co/products/pos",
+    url: "https://scryme.tech/products/pos",
   },
 };
 
@@ -120,7 +120,7 @@ export default function PosPage() {
     },
     offers: {
       "@type": "Offer",
-      url: "https://scryme.co/products/pos",
+      url: "https://scryme.tech/products/pos",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
@@ -134,19 +134,19 @@ export default function PosPage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://scryme.co",
+        item: "https://scryme.tech",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Products",
-        item: "https://scryme.co/products",
+        item: "https://scryme.tech/products",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: "POS",
-        item: "https://scryme.co/products/pos",
+        item: "https://scryme.tech/products/pos",
       },
     ],
   };

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     title: "Scryme Inventory — Real-time Stock Control",
     description:
       "Track every SKU across warehouses and stores. Eliminate stockouts with data-driven reorder automation.",
-    url: "https://scryme.co/products/inventory",
+    url: "https://scryme.tech/products/inventory",
   },
 };
 
@@ -92,7 +92,7 @@ export default function InventoryPage() {
     },
     offers: {
       "@type": "Offer",
-      url: "https://scryme.co/products/inventory",
+      url: "https://scryme.tech/products/inventory",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     },
@@ -106,19 +106,19 @@ export default function InventoryPage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://scryme.co",
+        item: "https://scryme.tech",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Products",
-        item: "https://scryme.co/products",
+        item: "https://scryme.tech/products",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: "Inventory",
-        item: "https://scryme.co/products/inventory",
+        item: "https://scryme.tech/products/inventory",
       },
     ],
   };

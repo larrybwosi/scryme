@@ -8,6 +8,8 @@ import { AboutValues } from "@/components/about/about-values";
 import { AboutTeam } from "@/components/about/about-team";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
 export const metadata: Metadata = {
   title: "About Us — Our Mission to Empower Global Commerce",
   description:
@@ -17,9 +19,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "About Scryme",
-    description:
-      "Learn about the mission and team behind the enterprise platform built for businesses that can't afford to stop.",
-    url: "https://scryme.co/about",
+    description: "Learn about the mission and team behind the enterprise platform built for businesses that can't afford to stop.",
+    url: "https://scryme.tech/about",
   },
 };
 

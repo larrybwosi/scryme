@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/_next/", "/static/"],
     },
-    sitemap: "https://scryme.co/sitemap.xml",
+    sitemap: "https://scryme.tech/sitemap.xml",
   };
 }
