@@ -368,6 +368,8 @@ export async function updateMemberCustomization(
     gender?: string;
     tags?: string;
     image?: string;
+    name?: string;
+    email?: string;
     jobTitle?: string;
     employmentType?: any;
     joiningDate?: string;
@@ -396,8 +398,12 @@ export async function updateMemberCustomization(
     emergencyContactName: data.emergencyContactName,
     emergencyContactPhone: data.emergencyContactPhone,
     emergencyContactRelation: data.emergencyContactRelation,
-    managerId: data.managerId === "" ? null : data.managerId,
+    managerId: (data.managerId === "" || data.managerId === "none") ? null : data.managerId,
   };
+
+  if (data.joiningDate !== undefined) {
+    updateData.joiningDate = data.joiningDate ? new Date(data.joiningDate) : null;
+  }
 
   if (data.cardId !== undefined) {
     updateData.cardId = data.cardId === "" ? null : data.cardId;
@@ -417,10 +423,28 @@ export async function updateMemberCustomization(
       select: { userId: true },
     });
 
+    const userUpdateData: any = {};
     if (data.image) {
+      userUpdateData.image = data.image;
+    }
+    if (data.name) {
+      userUpdateData.name = data.name;
+    }
+    if (data.email) {
+      // Check if email already in use
+      const existingUser = await db.user.findUnique({
+        where: { email: data.email },
+      });
+      if (existingUser && existingUser.id !== member.userId) {
+        return { success: false, error: "Email address is already in use by another user." };
+      }
+      userUpdateData.email = data.email;
+    }
+
+    if (Object.keys(userUpdateData).length > 0) {
       await db.user.update({
         where: { id: member.userId },
-        data: { image: data.image },
+        data: userUpdateData,
       });
     }
 

@@ -13,6 +13,11 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  // Skip proxy processing for invitation routes
+  if (pathname.startsWith("/invite")) {
+    return NextResponse.next();
+  }
+
   // Natively fetch the session using the direct auth API via incoming request headers
   const session = await auth.api.getSession({
     headers: request.headers,
@@ -27,8 +32,26 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // If authenticated and on an auth route, redirect to dashboard
+  // If authenticated and on an auth route, redirect to dashboard or callbackUrl
   if (isAuthRoute) {
+    const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") ||
+                        request.nextUrl.searchParams.get("redirect") ||
+                        request.nextUrl.searchParams.get("returnTo");
+
+    if (callbackUrl) {
+      try {
+        if (callbackUrl.startsWith("/")) {
+          return NextResponse.redirect(new URL(callbackUrl, request.url));
+        } else {
+          const parsedUrl = new URL(callbackUrl);
+          if (parsedUrl.hostname.endsWith("scryme.tech") || parsedUrl.hostname === "localhost") {
+            return NextResponse.redirect(parsedUrl);
+          }
+        }
+      } catch (e) {
+        console.error("Invalid callbackUrl in proxy redirect:", e);
+      }
+    }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

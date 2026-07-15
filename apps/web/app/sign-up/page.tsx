@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -172,18 +173,19 @@ export function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [nuqsCallbackUrl] = useQueryState("callbackUrl");
+  const [nuqsRedirect] = useQueryState("redirect");
+  const [nuqsReturnTo] = useQueryState("returnTo");
+
   const callbackURL =
-    searchParams.get("callbackUrl") ||
-    searchParams.get("redirect") ||
-    searchParams.get("returnTo") ||
-    undefined;
+    nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo || undefined;
 
   // Handle side effect navigation in useEffect
   useEffect(() => {
     if (session.data) {
-      router.push("/dashboard");
+      router.push(callbackURL || "/create-org");
     }
-  }, [session.data, router]);
+  }, [session.data, router, callbackURL]);
 
   const {
     register,
@@ -205,7 +207,7 @@ export function SignupPage() {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || undefined,
+        callbackURL: callbackURL || "/create-org",
       });
     } catch (error) {
       console.error("Login failed:", error);
@@ -251,8 +253,11 @@ export function SignupPage() {
               <button
                 type="button"
                 onClick={() => {
+                  // Explicitly preserve the callbackURL search parameter when transitioning to login
                   const params = new URLSearchParams();
-                  if (callbackURL) params.set("callbackUrl", callbackURL);
+                  if (callbackURL) {
+                    params.set("callbackUrl", callbackURL);
+                  }
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}
