@@ -13,6 +13,7 @@
   "dependencies": {
     "@portabletext/react": "^6.2.0",
     "@repo/env": "workspace:*",
+    "@sentry/nextjs": "^10.65.0",
     "@sanity/icons": "^5.1.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.31.1",
