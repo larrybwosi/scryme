@@ -99,6 +99,10 @@ const serverSchema = z.object({
   REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
   ABLY_API_KEY: z.string().optional(),
   SOCKET_URL: z.url().default("http://localhost:3002"),
+
+  // Windmill
+  WINDMILL_BASE_URL: z.string().default("http://windmill:8000"),
+  WINDMILL_ADMIN_API_KEY: z.string().optional(),
 });
 
 const clientSchema = z.object({
@@ -260,6 +264,9 @@ function getRawEnv() {
     REALTIME_PROVIDER: process.env.REALTIME_PROVIDER,
     ABLY_API_KEY: process.env.ABLY_API_KEY,
     SOCKET_URL: process.env.SOCKET_URL,
+    // Windmill
+    WINDMILL_BASE_URL: process.env.WINDMILL_BASE_URL,
+    WINDMILL_ADMIN_API_KEY: process.env.WINDMILL_ADMIN_API_KEY,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,

@@ -1,4 +1,4 @@
-import { getWindmillClientForOrg, WindmillApiClient } from "./client";
+import { getWindmillClientForOrg, WindmillApiClient, encrypt, decrypt } from "./client";
 import { ScrymeChatApiClient } from "./scryme-chat";
 import * as fs from "fs/promises";
 import { Dirent } from "fs";
@@ -61,9 +61,28 @@ export class WindmillTemplateService {
     });
 
     if (!config) {
-      throw new Error(
-        `Windmill not configured for organization ${organizationId}`,
-      );
+      const baseUrl =
+        process.env.WINDMILL_BASE_URL ||
+        process.env.WINDMILL_INTERNAL_URL ||
+        "http://windmill:8000";
+      const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
+
+      if (!adminApiKey) {
+        throw new Error(
+          `Windmill not configured for organization ${organizationId} and no global WINDMILL_ADMIN_API_KEY is available.`,
+        );
+      }
+
+      const encryptedApiKey = encrypt(adminApiKey);
+
+      config = await prisma.windmillConfiguration.create({
+        data: {
+          organizationId,
+          windmillBaseUrl: baseUrl,
+          windmillApiKey: encryptedApiKey,
+          isActive: true,
+        },
+      });
     }
 
     if (!config.workspaceId) {
@@ -71,9 +90,18 @@ export class WindmillTemplateService {
       const adminApiKey =
         process.env.WINDMILL_ADMIN_API_KEY || config.windmillApiKey;
 
+      let decryptedAdminApiKey = adminApiKey;
+      try {
+        if (adminApiKey.includes(":")) {
+          decryptedAdminApiKey = decrypt(adminApiKey);
+        }
+      } catch (err) {
+        console.warn("Failed to decrypt apiKey when creating workspace, using as-is:", err);
+      }
+
       await WindmillApiClient.createWorkspace(
         config.windmillBaseUrl,
-        adminApiKey,
+        decryptedAdminApiKey,
         orgName,
         workspaceSlug,
       );
