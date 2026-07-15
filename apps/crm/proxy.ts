@@ -26,8 +26,26 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // If authenticated and on an auth route, redirect to home
+  // If authenticated and on an auth route, redirect to home or callbackUrl
   if (isAuthRoute) {
+    const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") ||
+                        request.nextUrl.searchParams.get("redirect") ||
+                        request.nextUrl.searchParams.get("returnTo");
+
+    if (callbackUrl) {
+      try {
+        if (callbackUrl.startsWith("/")) {
+          return NextResponse.redirect(new URL(callbackUrl, request.url));
+        } else {
+          const parsedUrl = new URL(callbackUrl);
+          if (parsedUrl.hostname.endsWith("scryme.tech") || parsedUrl.hostname === "localhost") {
+            return NextResponse.redirect(parsedUrl);
+          }
+        }
+      } catch (e) {
+        console.error("Invalid callbackUrl in proxy redirect:", e);
+      }
+    }
     return NextResponse.redirect(new URL("/", request.url));
   }
 
