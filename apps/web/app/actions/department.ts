@@ -153,27 +153,44 @@ export async function createDepartment(data: {
   try {
     const session = await checkAdminPermission();
 
+    // Check if name is duplicate case-insensitively within the same organization
+    const existing = await db.department.findFirst({
+      where: {
+        organizationId: session.organizationId,
+        name: { equals: data.name, mode: "insensitive" },
+      },
+    });
+
+    if (existing) {
+      return { success: false, error: "A department with this name already exists." };
+    }
+
+    const headIdValue = !data.headId || data.headId === "" || data.headId === "none" ? null : data.headId;
+    const parentIdValue = !data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId;
+    const locationIdValue = !data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId;
+    const costCenterIdValue = !data.costCenterId || data.costCenterId === "" || data.costCenterId === "none" ? null : data.costCenterId;
+
     const department = await db.department.create({
       data: {
         name: data.name,
-        description: data.description,
-        headId: data.headId === "none" ? null : data.headId,
-        parentId: data.parentId === "none" ? null : data.parentId || null,
-        locationId: data.locationId === "none" ? null : data.locationId || null,
-        costCenterId: data.costCenterId === "none" ? null : data.costCenterId,
-        image: data.image,
-        banner: data.banner,
+        description: data.description || null,
+        headId: headIdValue,
+        parentId: parentIdValue,
+        locationId: locationIdValue,
+        costCenterId: costCenterIdValue,
+        image: data.image || null,
+        banner: data.banner || null,
         settings: data.settings || {},
         organizationId: session.organizationId,
       },
     });
 
     // If a head is assigned, also add them as a department member with HEAD role
-    if (data.headId && data.headId !== "none" && data.headId !== "") {
+    if (headIdValue) {
       await db.departmentMember.create({
         data: {
           departmentId: department.id,
-          memberId: data.headId,
+          memberId: headIdValue,
           role: "HEAD",
         },
       });
@@ -203,10 +220,30 @@ export async function updateDepartment(
   try {
     const session = await checkAdminPermission();
 
+    // Check if name is duplicate case-insensitively within the same organization
+    if (data.name) {
+      const existing = await db.department.findFirst({
+        where: {
+          organizationId: session.organizationId,
+          name: { equals: data.name, mode: "insensitive" },
+          id: { not: id },
+        },
+      });
+
+      if (existing) {
+        return { success: false, error: "A department with this name already exists." };
+      }
+    }
+
     const oldDept = await db.department.findUnique({
       where: { id, organizationId: session.organizationId },
       select: { headId: true },
     });
+
+    const headIdValue = data.headId === undefined ? undefined : (!data.headId || data.headId === "" || data.headId === "none" ? null : data.headId);
+    const parentIdValue = data.parentId === undefined ? undefined : (!data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId);
+    const locationIdValue = data.locationId === undefined ? undefined : (!data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId);
+    const costCenterIdValue = data.costCenterId === undefined ? undefined : (!data.costCenterId || data.costCenterId === "" || data.costCenterId === "none" ? null : data.costCenterId);
 
     const department = await db.department.update({
       where: {
@@ -216,20 +253,10 @@ export async function updateDepartment(
       data: {
         name: data.name,
         description: data.description,
-        headId:
-          data.headId === "" || data.headId === "none" ? null : data.headId,
-        parentId:
-          data.parentId === "" || data.parentId === "none"
-            ? null
-            : data.parentId,
-        locationId:
-          data.locationId === "" || data.locationId === "none"
-            ? null
-            : data.locationId,
-        costCenterId:
-          data.costCenterId === "" || data.costCenterId === "none"
-            ? null
-            : data.costCenterId,
+        headId: headIdValue,
+        parentId: parentIdValue,
+        locationId: locationIdValue,
+        costCenterId: costCenterIdValue,
         image: data.image,
         banner: data.banner,
         settings: data.settings,
@@ -237,20 +264,20 @@ export async function updateDepartment(
     });
 
     // If head changed, handle department membership
-    if (data.headId !== undefined && data.headId !== oldDept?.headId) {
-      if (data.headId && data.headId !== "") {
+    if (headIdValue !== undefined && headIdValue !== oldDept?.headId) {
+      if (headIdValue) {
         // Upsert the new head as a member with HEAD role
         await db.departmentMember.upsert({
           where: {
             departmentId_memberId: {
               departmentId: id,
-              memberId: data.headId,
+              memberId: headIdValue,
             },
           },
           update: { role: "HEAD" },
           create: {
             departmentId: id,
-            memberId: data.headId,
+            memberId: headIdValue,
             role: "HEAD",
           },
         });

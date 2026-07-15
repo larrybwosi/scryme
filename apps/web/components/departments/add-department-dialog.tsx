@@ -2,14 +2,14 @@
 
 import React, { useState } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetFooter,
-} from "@repo/ui/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@repo/ui/components/ui/dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
@@ -28,11 +28,11 @@ import { getCostCenters } from "../../app/actions/finance-settings";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-interface AddDepartmentSheetProps {
+interface AddDepartmentDialogProps {
   children: React.ReactNode;
 }
 
-export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
+export function AddDepartmentDialog({ children }: AddDepartmentDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<any[]>([]);
@@ -85,18 +85,18 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <SheetHeader>
-            <SheetTitle>Create New Department</SheetTitle>
-            <SheetDescription>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full space-y-4">
+          <DialogHeader>
+            <DialogTitle>Create New Department</DialogTitle>
+            <DialogDescription>
               Define a new department and assign a department head.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="flex-1 py-6 space-y-4">
+          <div className="flex-1 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Department Name</Label>
               <Input
@@ -129,8 +129,8 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
                     {members.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{member.user.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{member.user.email}</span>
+                          <span className="font-medium text-left">{member.user.name}</span>
+                          <span className="text-[10px] text-muted-foreground text-left">{member.user.email}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -193,7 +193,7 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
             </div>
           </div>
 
-          <SheetFooter className="pt-4 border-t">
+          <DialogFooter className="pt-4 border-t gap-2">
             <Button
               type="button"
               variant="outline"
@@ -207,9 +207,9 @@ export function AddDepartmentSheet({ children }: AddDepartmentSheetProps) {
               className="bg-[#1D1D1F] text-white hover:bg-[#1D1D1F]/90">
               {loading ? "Creating..." : "Create Department"}
             </Button>
-          </SheetFooter>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
