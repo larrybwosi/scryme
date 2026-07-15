@@ -1,6 +1,8 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
+    "composite": false,
+    "incremental": false,
     "outDir": "dist",
     "rootDir": "src",
     "baseUrl": ".",
@@ -8,5 +10,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src/**/*"]
 }

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, Inject } from "@nestjs/common";
+import { Injectable, ConflictException, NotFoundException, BadRequestException, Inject } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateServiceDto, CreateServiceCategoryDto, UpdateServiceDto, UpdateServiceCategoryDto, UpdateServiceResourceDto, CreateServiceResourceDto } from "../dto/service.dto";
 import { notificationEngine } from "@repo/notifications";
@@ -9,6 +9,15 @@ export class ServiceManagementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createCategory(orgId: string, dto: CreateServiceCategoryDto) {
+    if (dto.parentId) {
+      const parent = await this.prisma.client.serviceCategory.findFirst({
+        where: { id: dto.parentId, organizationId: orgId }
+      });
+      if (!parent) {
+        throw new BadRequestException("Parent category does not exist or does not belong to this organization");
+      }
+    }
+
     return this.prisma.client.serviceCategory.create({
       data: {
         ...dto,
@@ -23,6 +32,15 @@ export class ServiceManagementService {
     });
 
     if (!category) throw new NotFoundException("Category not found");
+
+    if (dto.parentId) {
+      const parent = await this.prisma.client.serviceCategory.findFirst({
+        where: { id: dto.parentId, organizationId: orgId }
+      });
+      if (!parent) {
+        throw new BadRequestException("Parent category does not exist or does not belong to this organization");
+      }
+    }
 
     return this.prisma.client.serviceCategory.update({
         where: { id },
@@ -51,6 +69,55 @@ export class ServiceManagementService {
 
   async createService(orgId: string, dto: CreateServiceDto) {
     const { staffIds, resourceIds, materials, taxRateIds, ...serviceData } = dto;
+
+    // Validate category
+    const category = await this.prisma.client.serviceCategory.findFirst({
+      where: { id: dto.categoryId, organizationId: orgId }
+    });
+    if (!category) {
+      throw new BadRequestException("Service category does not exist or does not belong to this organization");
+    }
+
+    // Validate staff
+    if (staffIds && staffIds.length > 0) {
+      const staffCount = await this.prisma.client.member.count({
+        where: { id: { in: staffIds }, organizationId: orgId }
+      });
+      if (staffCount !== staffIds.length) {
+        throw new BadRequestException("One or more staff members are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate resources
+    if (resourceIds && resourceIds.length > 0) {
+      const resourceCount = await this.prisma.client.serviceResource.count({
+        where: { id: { in: resourceIds }, organizationId: orgId }
+      });
+      if (resourceCount !== resourceIds.length) {
+        throw new BadRequestException("One or more service resources are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate tax rates
+    if (taxRateIds && taxRateIds.length > 0) {
+      const taxRateCount = await this.prisma.client.taxRate.count({
+        where: { id: { in: taxRateIds }, organizationId: orgId }
+      });
+      if (taxRateCount !== taxRateIds.length) {
+        throw new BadRequestException("One or more tax rates are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate materials (product variants)
+    if (materials && materials.length > 0) {
+      const variantIds = materials.map(m => m.variantId);
+      const variantsCount = await this.prisma.client.productVariant.count({
+        where: { id: { in: variantIds }, product: { organizationId: orgId } }
+      });
+      if (variantsCount !== variantIds.length) {
+        throw new BadRequestException("One or more materials (variants) are invalid or do not belong to this organization");
+      }
+    }
 
     // Check for existing SKU
     const existing = await this.prisma.client.service.findUnique({
@@ -89,6 +156,57 @@ export class ServiceManagementService {
     if (!service) throw new NotFoundException("Service not found");
 
     const { staffIds, resourceIds, materials, taxRateIds, ...serviceData } = dto;
+
+    // Validate category if updating it
+    if (dto.categoryId) {
+      const category = await this.prisma.client.serviceCategory.findFirst({
+        where: { id: dto.categoryId, organizationId: orgId }
+      });
+      if (!category) {
+        throw new BadRequestException("Service category does not exist or does not belong to this organization");
+      }
+    }
+
+    // Validate staff
+    if (staffIds && staffIds.length > 0) {
+      const staffCount = await this.prisma.client.member.count({
+        where: { id: { in: staffIds }, organizationId: orgId }
+      });
+      if (staffCount !== staffIds.length) {
+        throw new BadRequestException("One or more staff members are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate resources
+    if (resourceIds && resourceIds.length > 0) {
+      const resourceCount = await this.prisma.client.serviceResource.count({
+        where: { id: { in: resourceIds }, organizationId: orgId }
+      });
+      if (resourceCount !== resourceIds.length) {
+        throw new BadRequestException("One or more service resources are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate tax rates
+    if (taxRateIds && taxRateIds.length > 0) {
+      const taxRateCount = await this.prisma.client.taxRate.count({
+        where: { id: { in: taxRateIds }, organizationId: orgId }
+      });
+      if (taxRateCount !== taxRateIds.length) {
+        throw new BadRequestException("One or more tax rates are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate materials (product variants)
+    if (materials && materials.length > 0) {
+      const variantIds = materials.map(m => m.variantId);
+      const variantsCount = await this.prisma.client.productVariant.count({
+        where: { id: { in: variantIds }, product: { organizationId: orgId } }
+      });
+      if (variantsCount !== variantIds.length) {
+        throw new BadRequestException("One or more materials (variants) are invalid or do not belong to this organization");
+      }
+    }
 
     return this.prisma.client.service.update({
         where: { id },
