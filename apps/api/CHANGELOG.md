@@ -1,5 +1,11 @@
 # api
 
+## 6.19.0
+
+### Minor Changes
+
+- 5e41af7: Update
+
 ## 6.18.0
 
 ### Minor Changes
