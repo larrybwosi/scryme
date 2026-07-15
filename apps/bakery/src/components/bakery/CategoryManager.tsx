@@ -16,6 +16,7 @@ import {
 } from '@repo/ui/components/ui/dialog';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Separator } from '@repo/ui/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { BakeryCategory } from '@/types/bakery';
 import {
   Plus,
@@ -29,6 +30,7 @@ import {
   RefreshCw,
   Search,
   FolderOpen,
+  Loader2,
 } from 'lucide-react';
 import {
   useCreateBakeryCategory,
@@ -123,7 +125,14 @@ function EditCategoryDialog({ category, open, onOpenChange, onSave, isSubmitting
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="min-w-24 bg-gray-900 hover:bg-gray-800">
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </Button>
           </div>
         </form>
@@ -392,7 +401,14 @@ export default function CategoryManager() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isCreating} className="min-w-24 bg-gray-900 hover:bg-gray-800">
-                  {isCreating ? 'Creating...' : 'Create'}
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create'
+                  )}
                 </Button>
               </div>
             </form>
@@ -418,24 +434,36 @@ export default function CategoryManager() {
           return (
             <Card key={category.id} className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg border-border/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm">
                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => setEditingCategory(category)}
-                      disabled={isUpdating || isDeleting}
-                      className="h-8 w-8 bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => handleDeleteCategory(category.id)}
-                      disabled={isDeleting}
-                      className="h-8 w-8 bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => setEditingCategory(category)}
+                        disabled={isUpdating || isDeleting}
+                        className="h-8 w-8 bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+                        aria-label={`Edit ${category.name} category`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Edit Category</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => handleDeleteCategory(category.id)}
+                        disabled={isDeleting}
+                        className="h-8 w-8 bg-background/80 backdrop-blur-sm border shadow-sm hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+                        aria-label={`Delete ${category.name} category`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Delete Category</TooltipContent>
+                  </Tooltip>
                </div>
 
               <CardHeader className="pb-3">
