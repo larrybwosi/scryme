@@ -181,9 +181,9 @@ export function SignupPage() {
   // Handle side effect navigation in useEffect
   useEffect(() => {
     if (session.data) {
-      router.push("/dashboard");
+      router.push(callbackURL || "/create-org");
     }
-  }, [session.data, router]);
+  }, [session.data, router, callbackURL]);
 
   const {
     register,
@@ -205,7 +205,7 @@ export function SignupPage() {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || "/dashboard",
+        callbackURL: callbackURL || "/create-org",
       });
     } catch (error) {
       console.error("Login failed:", error);

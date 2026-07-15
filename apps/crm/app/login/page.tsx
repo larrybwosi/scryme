@@ -167,16 +167,16 @@ const LoginContent = () => {
 
   const session = authClient.useSession();
 
-  useEffect(() => {
-    if (session.data) {
-      router.push("/customers");
-    }
-  }, [session.data, router]);
-
   const callbackUrl =
     searchParams.get("callbackUrl") ||
     searchParams.get("redirect") ||
     searchParams.get("returnTo");
+
+  useEffect(() => {
+    if (session.data) {
+      router.push(callbackUrl || "/customers");
+    }
+  }, [session.data, router, callbackUrl]);
 
   const {
     register: registerLogin,

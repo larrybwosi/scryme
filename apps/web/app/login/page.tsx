@@ -301,9 +301,9 @@ const LoginPageContent = () => {
 
   useEffect(() => {
     if (session.data) {
-      router.push("/dashboard");
+      router.push(callbackUrl || "/dashboard");
     }
-  }, [session.data, router]);
+  }, [session.data, router, callbackUrl]);
 
   const {
     register: registerLogin,
