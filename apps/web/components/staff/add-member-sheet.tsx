@@ -650,7 +650,7 @@ export function AddMemberSheet({ children }: { children: React.ReactNode }) {
                     required
                   />
                   <p className="text-xs text-slate-400">
-                    They'll sign in or create an account using this email.
+                    They&apos;ll sign in or create an account using this email.
                   </p>
                 </div>
                 <div className="space-y-1.5">
