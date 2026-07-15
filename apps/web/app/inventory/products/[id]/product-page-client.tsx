@@ -140,6 +140,82 @@ export function ProductPageClient({
     isNew: false,
   });
 
+  // Hardware barcode scanner integration
+  React.useEffect(() => {
+    if (!isVariantDialogOpen) return;
+
+    let buffer = "";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore keys like Shift, Control, Alt, CapsLock, Arrow keys, Tab, Escape etc.
+      if (e.key.length > 1 && e.key !== "Enter") {
+        return;
+      }
+
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastKeyTime;
+      lastKeyTime = currentTime;
+
+      // Reset buffer if character input takes longer than 45ms, meaning it's likely manual typing
+      if (timeDiff > 45 && e.key !== "Enter") {
+        buffer = "";
+      }
+
+      if (e.key === "Enter") {
+        if (buffer.length >= 3) {
+          // Scanner finished. Intercept and prevent form submit / click handlers
+          e.preventDefault();
+          e.stopPropagation();
+
+          setVariantForm((prev: any) => ({ ...prev, barcode: buffer }));
+          toast.success(`Barcode scanned: ${buffer}`);
+
+          // Remove the first leaked character from the currently focused element, if applicable.
+          if (
+            document.activeElement instanceof HTMLInputElement ||
+            document.activeElement instanceof HTMLTextAreaElement
+          ) {
+            const activeInput = document.activeElement;
+            if (activeInput.id !== "v-barcode") {
+              const val = activeInput.value;
+              // Check if the input value ends with the first character of our buffer
+              if (buffer.length > 0 && val.endsWith(buffer[0])) {
+                const newVal = val.slice(0, -1);
+                activeInput.value = newVal;
+
+                // Dispatch event to inform React/controlled component of the updated value
+                const tracker = (activeInput as any)._valueTracker;
+                if (tracker) {
+                  tracker.setValue(newVal);
+                }
+                const event = new Event("input", { bubbles: true });
+                activeInput.dispatchEvent(event);
+              }
+            }
+          }
+          buffer = "";
+        } else {
+          buffer = "";
+        }
+        return;
+      }
+
+      buffer += e.key;
+
+      // If we are gathering keys with scanner speed, prevent those keys from leaking into focused text inputs
+      if (buffer.length > 1) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [isVariantDialogOpen]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -1841,13 +1917,20 @@ export function ProductPageClient({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="v-barcode">Barcode</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="v-barcode">Barcode</Label>
+                  <span className="text-[10px] text-green-600 font-medium flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    Scanner Ready
+                  </span>
+                </div>
                 <Input
                   id="v-barcode"
                   value={variantForm.barcode || ""}
                   onChange={e =>
                     setVariantForm({ ...variantForm, barcode: e.target.value })
                   }
+                  placeholder="Scan or enter barcode"
                 />
               </div>
               <div className="grid gap-2">
