@@ -1,5 +1,5 @@
 "use client";
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
@@ -187,20 +188,29 @@ export const SignupPage = (props: {
   searchParams: SearchParams;
 }) => {
   const router = useRouter();
-
+  const searchParams = use(props.searchParams);
   const session = authClient.useSession();
 
-  if (session.data) {
-    router.push("/customers");
-  }
+  const [nuqsCallbackUrl] = useQueryState("callbackUrl");
+  const [nuqsRedirect] = useQueryState("redirect");
+  const [nuqsReturnTo] = useQueryState("returnTo");
+
+  const callbackURL = (nuqsCallbackUrl ||
+    nuqsRedirect ||
+    nuqsReturnTo ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect ||
+    searchParams?.returnTo) as string | undefined;
+
+  useEffect(() => {
+    if (session.data) {
+      router.push(callbackURL || "/customers");
+    }
+  }, [session.data, router, callbackURL]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
-  const searchParams = use(props.searchParams);
-  const callbackURL = (searchParams?.callbackUrl ||
-    searchParams?.redirect ||
-    searchParams?.returnTo) as string | undefined;
 
   const {
     register,
@@ -222,7 +232,7 @@ export const SignupPage = (props: {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || undefined,
+        callbackURL: callbackURL || "/customers",
       });
     } catch (error) {
       console.error("Login failed:", error);
@@ -267,8 +277,11 @@ export const SignupPage = (props: {
               Already a member?{" "}
               <button
                 onClick={() => {
+                  // Explicitly preserve the callbackURL search parameter when transitioning to login
                   const params = new URLSearchParams();
-                  if (callbackURL) params.set("callbackUrl", callbackURL);
+                  if (callbackURL) {
+                    params.set("callbackUrl", callbackURL);
+                  }
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}

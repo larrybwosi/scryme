@@ -23,7 +23,7 @@ function getKey(): string {
   return key;
 }
 
-function decrypt(text: string): string {
+export function decrypt(text: string): string {
   const key = getKey();
   const [ivHex, authTagHex, encryptedHex] = text.split(":");
   if (!ivHex || !authTagHex || !encryptedHex)
@@ -38,6 +38,16 @@ function decrypt(text: string): string {
   let decrypted = decipher.update(encryptedHex, "hex", "utf8");
   decrypted += decipher.final("utf8");
   return decrypted;
+}
+
+export function encrypt(text: string): string {
+  const key = getKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(key), iv);
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  const authTag = cipher.getAuthTag().toString("hex");
+  return `${iv.toString("hex")}:${authTag}:${encrypted}`;
 }
 
 export class WindmillApiClient {
