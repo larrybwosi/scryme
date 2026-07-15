@@ -31,6 +31,20 @@ export class RoleManagementUseCase {
       this.prisma.client.customRole.count({ where }),
       this.prisma.client.customRole.findMany({
         where,
+        /**
+         * ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+         * and network payload size by excluding the potentially large 'permissions' array.
+         */
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+          isSystemRole: true,
+          organizationId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         skip,
         take: limit,
         orderBy: { name: "asc" },
