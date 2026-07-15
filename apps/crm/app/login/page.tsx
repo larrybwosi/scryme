@@ -15,6 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { signIn, requestPasswordReset, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -167,10 +168,11 @@ const LoginContent = () => {
 
   const session = authClient.useSession();
 
-  const callbackUrl =
-    searchParams.get("callbackUrl") ||
-    searchParams.get("redirect") ||
-    searchParams.get("returnTo");
+  const [nuqsCallbackUrl] = useQueryState("callbackUrl");
+  const [nuqsRedirect] = useQueryState("redirect");
+  const [nuqsReturnTo] = useQueryState("returnTo");
+
+  const callbackUrl = nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo;
 
   useEffect(() => {
     if (session.data) {
@@ -284,8 +286,11 @@ const LoginContent = () => {
                 New here?{" "}
                 <button
                   onClick={() => {
+                    // Force the state query parameters to be explicitly preserved
                     const params = new URLSearchParams();
-                    if (callbackUrl) params.set("callbackUrl", callbackUrl);
+                    if (callbackUrl) {
+                      params.set("callbackUrl", callbackUrl);
+                    }
                     const queryString = params.toString();
                     router.push(
                       `/sign-up${queryString ? `?${queryString}` : ""}`,
