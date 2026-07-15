@@ -27,6 +27,7 @@ import {
   Heart,
   Users,
   Loader2,
+  Mail,
 } from "lucide-react";
 import {
   updateMemberCustomization,
@@ -78,6 +79,8 @@ export function StaffSettings({
     gender: member.gender || "",
     tags: member.tags || "",
     image: member.user?.image || "",
+    name: member.user?.name || "",
+    email: member.user?.email || "",
     jobTitle: member.jobTitle || "",
     employmentType: member.employmentType || "",
     joiningDate: member.joiningDate
@@ -161,6 +164,46 @@ export function StaffSettings({
                   onChange={urls => setForm({ ...form, image: urls[0] || "" })}
                   maxImages={1}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <div className="relative">
+                    <User
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={16}
+                    />
+                    <Input
+                      id="name"
+                      className="pl-10"
+                      placeholder="e.g. John Doe"
+                      value={form.name}
+                      onChange={e =>
+                        setForm({ ...form, name: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="relative">
+                    <Mail
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={16}
+                    />
+                    <Input
+                      id="email"
+                      type="email"
+                      className="pl-10"
+                      placeholder="e.g. john@example.com"
+                      value={form.email}
+                      onChange={e =>
+                        setForm({ ...form, email: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -318,25 +361,24 @@ export function StaffSettings({
                     <Input
                       id="joiningDate"
                       type="date"
-                      className="pl-10 opacity-70 cursor-not-allowed bg-gray-50"
+                      className="pl-10"
                       value={form.joiningDate}
-                      readOnly
-                      disabled
+                      onChange={e =>
+                        setForm({ ...form, joiningDate: e.target.value })
+                      }
                     />
                   </div>
-                  <p className="text-[10px] text-gray-400">
-                    Joining date cannot be modified once set.
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="manager">Reporting Manager</Label>
                   <Select
-                    value={form.managerId || undefined}
-                    onValueChange={val => setForm({ ...form, managerId: val })}>
+                    value={form.managerId || "none"}
+                    onValueChange={val => setForm({ ...form, managerId: val === "none" ? "" : val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select manager" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">No Manager</SelectItem>
                       {allMembers
                         .filter(m => m.id !== member.id)
                         .map(m => (
