@@ -41,6 +41,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.1.27",
     "@repo/auth": "workspace:*",
+    "@sentry/nestjs": "^10.65.0",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",

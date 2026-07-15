@@ -13,6 +13,7 @@
   "dependencies": {
     "@portabletext/react": "^6.2.0",
     "@repo/env": "workspace:*",
+    "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.1.18",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
