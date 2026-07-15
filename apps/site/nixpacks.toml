@@ -7,3 +7,13 @@ nixPkgs = ["nodejs_22"]
 cmds = [
   "npx pnpm@10.34.1 install --no-frozen-lockfile"
 ]
+
+# 1. Build only the 'site' application
+[phases.build]
+cmds = [
+  "npx pnpm@10.34.1 --filter site build"
+]
+
+# 2. Tell Nixpacks how to run the 'site' application at startup
+[start]
+cmd = "npx pnpm@10.34.1 --filter site start"
