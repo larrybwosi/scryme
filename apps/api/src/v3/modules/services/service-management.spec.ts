@@ -35,8 +35,18 @@ describe('ServiceManagementService', () => {
                 create: vi.fn(),
                 findMany: vi.fn(),
                 findFirst: vi.fn(),
+                count: vi.fn(),
                 update: vi.fn(),
                 delete: vi.fn(),
+              },
+              member: {
+                count: vi.fn(),
+              },
+              taxRate: {
+                count: vi.fn(),
+              },
+              productVariant: {
+                count: vi.fn(),
               },
               v3ApiClient: {
                 create: vi.fn(),
@@ -96,6 +106,8 @@ describe('ServiceManagementService', () => {
 
         vi.spyOn(prisma.client.service, 'findFirst').mockResolvedValue({ id: serviceId, organizationId: orgId } as any);
         vi.spyOn(prisma.client.service, 'update').mockResolvedValue({ id: serviceId, ...dto } as any);
+        vi.spyOn(prisma.client.member, 'count').mockResolvedValue(1);
+        vi.spyOn(prisma.client.serviceResource, 'count').mockResolvedValue(1);
 
         await service.updateService(orgId, serviceId, dto);
 

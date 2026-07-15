@@ -25,6 +25,46 @@ export class BookingService {
 
     if (!service) throw new NotFoundException("Service not found");
 
+    // Validate Customer
+    if (dto.customerId) {
+      const customer = await this.prisma.client.customer.findFirst({
+        where: { id: dto.customerId, organizationId: orgId }
+      });
+      if (!customer) {
+        throw new BadRequestException("Customer does not exist or does not belong to this organization");
+      }
+    }
+
+    // Validate Location
+    if (dto.locationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.locationId, organizationId: orgId }
+      });
+      if (!location) {
+        throw new BadRequestException("Location does not exist or does not belong to this organization");
+      }
+    }
+
+    // Validate Staff belong to the organization
+    if (dto.staffIds && dto.staffIds.length > 0) {
+      const staffCount = await this.prisma.client.member.count({
+        where: { id: { in: dto.staffIds }, organizationId: orgId }
+      });
+      if (staffCount !== dto.staffIds.length) {
+        throw new BadRequestException("One or more staff members are invalid or do not belong to this organization");
+      }
+    }
+
+    // Validate Resources belong to the organization
+    if (dto.resourceIds && dto.resourceIds.length > 0) {
+      const resourceCount = await this.prisma.client.serviceResource.count({
+        where: { id: { in: dto.resourceIds }, organizationId: orgId }
+      });
+      if (resourceCount !== dto.resourceIds.length) {
+        throw new BadRequestException("One or more service resources are invalid or do not belong to this organization");
+      }
+    }
+
     const startTime = new Date(dto.scheduledStartTime);
     const duration = service.estimatedDuration || 0;
 
@@ -137,7 +177,7 @@ export class BookingService {
     }
 
     if (dto.recurrenceRule) {
-        const rule = rrulestr(dto.recurrenceRule);
+        const rule = rrulestr(dto.recurrenceRule, { dtstart: startTime });
         const dates = rule.all((d, i) => i < 50); // Limit to 50 occurrences for safety
 
         const recurrence = await this.prisma.client.bookingRecurrence.create({
@@ -148,38 +188,35 @@ export class BookingService {
             }
         });
 
-        const bookingsData = [];
         for (const date of dates) {
             if (date.getTime() === startTime.getTime()) continue;
 
             const occStartTime = date;
             const occEndTime = new Date(occStartTime.getTime() + (endTime.getTime() - startTime.getTime()));
 
-            bookingsData.push({
-                organizationId: orgId,
-                serviceId: dto.serviceId,
-                customerId: dto.customerId,
-                locationId: dto.locationId,
-                scheduledStartTime: occStartTime,
-                scheduledEndTime: occEndTime,
-                notes: dto.notes,
-                customFields: dto.customFields as any,
-                serviceName: service.name,
-                price: service.price,
-                pricingModel: service.pricingModel,
-                status: BookingStatus.SCHEDULED,
-                recurrenceId: recurrence.id,
+            await this.prisma.client.serviceBooking.create({
+                data: {
+                    organizationId: orgId,
+                    serviceId: dto.serviceId,
+                    customerId: dto.customerId,
+                    locationId: dto.locationId,
+                    scheduledStartTime: occStartTime,
+                    scheduledEndTime: occEndTime,
+                    notes: dto.notes,
+                    customFields: dto.customFields as any,
+                    serviceName: service.name,
+                    price: service.price,
+                    pricingModel: service.pricingModel,
+                    status: BookingStatus.SCHEDULED,
+                    recurrenceId: recurrence.id,
+                    staff: dto.staffIds ? {
+                        create: dto.staffIds.map(id => ({ memberId: id }))
+                    } : undefined,
+                    resources: dto.resourceIds ? {
+                        create: dto.resourceIds.map(id => ({ resourceId: id }))
+                    } : undefined,
+                }
             });
-        }
-
-        if (bookingsData.length > 0) {
-            await this.prisma.client.serviceBooking.createMany({
-                data: bookingsData,
-            });
-
-            // Note: createMany doesn't handle relations like staff and resources directly in Prisma
-            // For production, we'd need to fetch the IDs and create relations,
-            // but for this step we've optimized the main creation.
         }
 
         await this.prisma.client.serviceBooking.update({
