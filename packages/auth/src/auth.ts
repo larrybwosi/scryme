@@ -22,7 +22,7 @@ export const auth = betterAuth({
       "*.scryme.tech",
     ],
     protocol: env.NODE_ENV === "development" ? "http" : "https",
-    fallback: env.BETTER_AUTH_URL || "http://localhost:3000",
+    fallback: env.BETTER_AUTH_URL || (env.NODE_ENV === "production" ? "https://app.scryme.tech" : "http://localhost:3000"),
   },
   session: {
     preserveSessionInDatabase: true,

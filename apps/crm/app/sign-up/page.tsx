@@ -187,20 +187,20 @@ export const SignupPage = (props: {
   searchParams: SearchParams;
 }) => {
   const router = useRouter();
-
+  const searchParams = use(props.searchParams);
   const session = authClient.useSession();
 
+  const callbackURL = (searchParams?.callbackUrl ||
+    searchParams?.redirect ||
+    searchParams?.returnTo) as string | undefined;
+
   if (session.data) {
-    router.push("/customers");
+    router.push(callbackURL || "/customers");
   }
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
-  const searchParams = use(props.searchParams);
-  const callbackURL = (searchParams?.callbackUrl ||
-    searchParams?.redirect ||
-    searchParams?.returnTo) as string | undefined;
 
   const {
     register,
