@@ -145,3 +145,8 @@
 **Vulnerability:** The `DepartmentUseCase` allowed users to create or update departments referencing `parentId`, `headId`, `locationId`, and `costCenterId` from other organizations. The system did not verify that these IDs belonged to the requester's organization.
 **Learning:** Security guards at the controller level only protect the primary entity (the department). Secondary linked entities (foreign keys) provided in the request body are often overlooked but can be used to probe for the existence of resources in other tenants or create unauthorized cross-tenant associations.
 **Prevention:** Always perform explicit ownership validation (`findFirst` with `organizationId`) for every user-provided ID that references a related record before persisting it. Use a "find-then-mutate" pattern for models lacking composite unique indexes on `[id, organizationId]`.
+
+## 2025-05-25 - IDOR in Bulk Related Entity Assignments
+**Vulnerability:** The `RoleManagementUseCase` allowed users to associate permission sets and custom roles from other organizations to their own role groups and members because it didn't verify the ownership of the provided IDs before calling Prisma's `connect`.
+**Learning:** In multi-tenant systems, any method that accepts a list of IDs (e.g., for many-to-many relationships) must validate that *every* ID in that list belongs to the current tenant. Prisma's `connect` does not perform this validation automatically.
+**Prevention:** Always perform a bulk ownership check using `count` with a `where` clause that includes both the list of IDs and the `organizationId`. Verify that the resulting count matches the unique number of IDs provided (`new Set(ids).size`) before proceeding with the operation.
