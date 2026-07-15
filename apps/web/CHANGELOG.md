@@ -1,5 +1,11 @@
 # web
 
+## 6.20.0
+
+### Minor Changes
+
+- 1289e2a: Update
+
 ## 6.19.0
 
 ### Minor Changes
