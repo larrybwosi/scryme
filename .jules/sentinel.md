@@ -145,3 +145,8 @@
 **Vulnerability:** The `DepartmentUseCase` allowed users to create or update departments referencing `parentId`, `headId`, `locationId`, and `costCenterId` from other organizations. The system did not verify that these IDs belonged to the requester's organization.
 **Learning:** Security guards at the controller level only protect the primary entity (the department). Secondary linked entities (foreign keys) provided in the request body are often overlooked but can be used to probe for the existence of resources in other tenants or create unauthorized cross-tenant associations.
 **Prevention:** Always perform explicit ownership validation (`findFirst` with `organizationId`) for every user-provided ID that references a related record before persisting it. Use a "find-then-mutate" pattern for models lacking composite unique indexes on `[id, organizationId]`.
+
+## 2026-07-15 - IDOR via Unvalidated Location IDs in Attendance
+**Vulnerability:** The Attendance module allowed members to check in/out using location IDs belonging to other organizations, as the system only verified the member's identity but not the location's ownership.
+**Learning:** Security guards at the controller level that establish organization context do not transitively protect foreign keys provided in the request body. Each secondary ID must be explicitly validated against the established tenant context.
+**Prevention:** Always perform a scoped lookup (e.g., `inventoryLocation.findFirst({ where: { id: locationId, organizationId } })`) for all user-provided resource identifiers before using them in business logic or persisting them.
