@@ -205,7 +205,7 @@ export function SignupPage() {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || undefined,
+        callbackURL: callbackURL || "/dashboard",
       });
     } catch (error) {
       console.error("Login failed:", error);

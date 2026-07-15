@@ -328,7 +328,7 @@ const LoginPageContent = () => {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackUrl || undefined,
+        callbackURL: callbackUrl || "/dashboard",
       });
     } catch (error) {
       console.error("Login failed:", error);
