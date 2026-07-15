@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts } from "@/lib/scryme-tokens";
 
 export interface Plan {
@@ -81,6 +82,15 @@ export function PricingPlans({ plans }: { plans: Plan[] }) {
                 border: plan.highlight ? "none" : `1px solid ${colors.inkLine}`,
                 color: plan.highlight ? colors.inkBg : colors.textPrimary,
               }}
+              onClick={() =>
+                captureCtaClicked("pricing_plan_cta_clicked", {
+                  location: "pricing_grid",
+                  cta_label: plan.cta,
+                  destination: plan.href,
+                  cta_type: "plan",
+                  plan_name: plan.name,
+                })
+              }
             >
               {plan.cta}
               {plan.highlight && <ArrowRight className="h-3.5 w-3.5" />}

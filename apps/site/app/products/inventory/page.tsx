@@ -129,6 +129,7 @@ export default function InventoryPage() {
       <StructuredData data={breadcrumbData} />
 
       <ProductHero
+        module="inventory"
         eyebrow="Module · Inventory"
         title={
           <>

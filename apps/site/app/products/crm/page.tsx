@@ -130,6 +130,7 @@ export default function CrmPage() {
       <StructuredData data={breadcrumbData} />
 
       <ProductHero
+        module="crm"
         eyebrow="Module · CRM"
         title={
           <>

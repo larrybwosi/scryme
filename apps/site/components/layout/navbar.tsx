@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, ChevronDown, BookText, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts, modules } from "@/lib/scryme-tokens";
 
 const productLinks = modules.slice(0, 4);
@@ -14,6 +15,19 @@ const navLinks = [
 ];
 
 const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+
+function captureNavigationCta(
+  ctaLabel: string,
+  destination: string,
+  ctaType: "signin" | "signup",
+) {
+  captureCtaClicked("navigation_cta_clicked", {
+    location: "navbar",
+    cta_label: ctaLabel,
+    destination,
+    cta_type: ctaType,
+  });
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -178,6 +192,9 @@ export function Navbar() {
             href={`${webUrl}/login`}
             className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
             style={{ color: colors.textMuted, fontFamily: fonts.body }}
+            onClick={() =>
+              captureNavigationCta("Sign in", `${webUrl}/login`, "signin")
+            }
           >
             Sign in
           </Link>
@@ -189,6 +206,9 @@ export function Navbar() {
               color: colors.inkBg,
               fontFamily: fonts.body,
             }}
+            onClick={() =>
+              captureNavigationCta("Get started", `${webUrl}/sign-up`, "signup")
+            }
           >
             Get started
           </Link>
@@ -281,7 +301,10 @@ export function Navbar() {
                 border: `1px solid ${colors.inkLine}`,
                 fontFamily: fonts.body,
               }}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                captureNavigationCta("Sign in", `${webUrl}/login`, "signin");
+                setMobileOpen(false);
+              }}
             >
               Sign in
             </Link>
@@ -293,7 +316,10 @@ export function Navbar() {
                 color: colors.inkBg,
                 fontFamily: fonts.body,
               }}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                captureNavigationCta("Get started", `${webUrl}/sign-up`, "signup");
+                setMobileOpen(false);
+              }}
             >
               Get started
             </Link>

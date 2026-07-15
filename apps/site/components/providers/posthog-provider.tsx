@@ -35,8 +35,9 @@ function SuspendedPostHogPageView() {
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const posthogKey = env.NEXT_PUBLIC_POSTHOG_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    const posthogHost = env.NEXT_PUBLIC_POSTHOG_HOST || process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const posthogHost =
+      process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
     if (posthogKey && typeof window !== "undefined") {
       posthog.init(posthogKey, {

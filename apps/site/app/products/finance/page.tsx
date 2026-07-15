@@ -130,6 +130,7 @@ export default function FinancePage() {
       <StructuredData data={breadcrumbData} />
 
       <ProductHero
+        module="finance"
         eyebrow="Module · Finance"
         title={
           <>

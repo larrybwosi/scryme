@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 
@@ -13,6 +14,7 @@ interface ProductHeroProps {
   description: string;
   primaryCta?: Cta;
   secondaryCta?: Cta;
+  module: string;
   /** Optional right-column visual (e.g. a ledger stub). Falls back to a centered layout without it. */
   visual?: ReactNode;
 }
@@ -23,6 +25,7 @@ export function ProductHero({
   description,
   primaryCta = { label: "Start free trial", href: "#" },
   secondaryCta,
+  module,
   visual,
 }: ProductHeroProps) {
   return (
@@ -75,6 +78,15 @@ export function ProductHero({
                 background: colors.brass,
                 color: colors.inkBg,
               }}
+              onClick={() =>
+                captureCtaClicked("product_hero_cta_clicked", {
+                  location: "product_hero",
+                  cta_label: primaryCta.label,
+                  destination: primaryCta.href,
+                  cta_type: "primary",
+                  module,
+                })
+              }
             >
               {primaryCta.label} →
             </a>
@@ -87,6 +99,15 @@ export function ProductHero({
                   color: colors.textMuted,
                   borderColor: colors.inkLine,
                 }}
+                onClick={() =>
+                  captureCtaClicked("product_hero_cta_clicked", {
+                    location: "product_hero",
+                    cta_label: secondaryCta.label,
+                    destination: secondaryCta.href,
+                    cta_type: "secondary",
+                    module,
+                  })
+                }
               >
                 {secondaryCta.label}
               </a>
