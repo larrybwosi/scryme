@@ -48,6 +48,48 @@ describe("RoleManagementUseCase", () => {
     expect(useCase).toBeDefined();
   });
 
+  describe("getCustomRoles", () => {
+    it("should return custom roles with optimized selection", async () => {
+      const organizationId = "org1";
+      const query = { page: 1, limit: 10 };
+      const mockCustomRoles = [
+        {
+          id: "cr1",
+          name: "Sales Lead",
+          description: "Custom role for sales lead",
+          isActive: true,
+          isSystemRole: false,
+          organizationId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockPrisma.client.customRole.count.mockResolvedValue(1);
+      mockPrisma.client.customRole.findMany.mockResolvedValue(mockCustomRoles);
+
+      const result = await useCase.getCustomRoles(organizationId, query);
+
+      expect(result.items).toEqual(mockCustomRoles);
+      expect(mockPrisma.client.customRole.findMany).toHaveBeenCalledWith({
+        where: { organizationId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+          isSystemRole: true,
+          organizationId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { name: "asc" },
+      });
+    });
+  });
+
   describe("getRoleGroups", () => {
     it("should return role groups with optimized selection", async () => {
       const organizationId = "org1";
