@@ -1,5 +1,11 @@
 # crm
 
+## 7.18.0
+
+### Minor Changes
+
+- e2821fa: Update
+
 ## 7.17.0
 
 ### Minor Changes

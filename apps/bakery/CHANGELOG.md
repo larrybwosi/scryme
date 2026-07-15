@@ -1,5 +1,11 @@
 # bakery
 
+## 9.18.0
+
+### Minor Changes
+
+- e2821fa: Update
+
 ## 9.17.0
 
 ### Minor Changes

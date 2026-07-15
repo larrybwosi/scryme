@@ -1,5 +1,11 @@
 # api
 
+## 6.18.0
+
+### Minor Changes
+
+- e2821fa: Update
+
 ## 6.17.0
 
 ### Minor Changes
