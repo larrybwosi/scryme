@@ -62,9 +62,14 @@ export class RoleManagementUseCase {
     dto: CreateCustomRoleDto,
     actorId: string,
   ) {
+    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    const { name, description, permissions } = dto;
+
     const role = await this.prisma.client.customRole.create({
       data: {
-        ...dto,
+        name,
+        description,
+        permissions,
         organizationId,
       },
     });
@@ -89,9 +94,24 @@ export class RoleManagementUseCase {
     dto: UpdateCustomRoleDto,
     actorId: string,
   ) {
-    const role = await this.prisma.client.customRole.update({
+    // SECURITY (Sentinel): Find-then-update pattern for multi-tenant isolation.
+    const currentRole = await this.prisma.client.customRole.findFirst({
       where: { id, organizationId },
-      data: dto,
+    });
+
+    if (!currentRole) throw new NotFoundException("Custom role not found");
+
+    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    const { name, description, permissions, isActive } = dto;
+
+    const role = await this.prisma.client.customRole.update({
+      where: { id: currentRole.id },
+      data: {
+        name,
+        description,
+        permissions,
+        isActive,
+      },
     });
 
     await this.prisma.client.auditLog.create({
@@ -109,8 +129,15 @@ export class RoleManagementUseCase {
   }
 
   async deleteCustomRole(organizationId: string, id: string, actorId: string) {
-    const role = await this.prisma.client.customRole.delete({
+    // SECURITY (Sentinel): Find-then-delete pattern for multi-tenant isolation.
+    const currentRole = await this.prisma.client.customRole.findFirst({
       where: { id, organizationId },
+    });
+
+    if (!currentRole) throw new NotFoundException("Custom role not found");
+
+    const role = await this.prisma.client.customRole.delete({
+      where: { id: currentRole.id },
     });
 
     await this.prisma.client.auditLog.create({
@@ -151,9 +178,14 @@ export class RoleManagementUseCase {
     dto: CreatePermissionSetDto,
     actorId: string,
   ) {
+    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    const { name, description, permissions } = dto;
+
     const set = await this.prisma.client.permissionSet.create({
       data: {
-        ...dto,
+        name,
+        description,
+        permissions,
         organizationId,
       },
     });
@@ -185,10 +217,27 @@ export class RoleManagementUseCase {
     dto: CreateRoleGroupDto,
     actorId: string,
   ) {
-    const { permissionSetIds, ...data } = dto;
+    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    const { name, description, permissionSetIds } = dto;
+
+    // SECURITY (Sentinel): Validate ownership of permission sets.
+    if (permissionSetIds && permissionSetIds.length > 0) {
+      const count = await this.prisma.client.permissionSet.count({
+        where: {
+          id: { in: permissionSetIds },
+          organizationId,
+        },
+      });
+
+      if (count !== new Set(permissionSetIds).size) {
+        throw new BadRequestException("One or more permission sets not found");
+      }
+    }
+
     const group = await this.prisma.client.roleGroup.create({
       data: {
-        ...data,
+        name,
+        description,
         organizationId,
         permissionSets: permissionSetIds
           ? {
@@ -209,8 +258,29 @@ export class RoleManagementUseCase {
     roleIds: string[],
     actorId: string,
   ) {
+    // SECURITY (Sentinel): Verify member belongs to organization.
+    const currentMember = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId, deletedAt: null },
+    });
+
+    if (!currentMember) throw new NotFoundException("Member not found");
+
+    // SECURITY (Sentinel): Validate ownership of custom roles.
+    if (roleIds && roleIds.length > 0) {
+      const count = await this.prisma.client.customRole.count({
+        where: {
+          id: { in: roleIds },
+          organizationId,
+        },
+      });
+
+      if (count !== new Set(roleIds).size) {
+        throw new BadRequestException("One or more custom roles not found");
+      }
+    }
+
     const member = await this.prisma.client.member.update({
-      where: { id: memberId, organizationId },
+      where: { id: currentMember.id },
       data: {
         customRoles: {
           connect: roleIds.map((id) => ({ id })),
@@ -227,8 +297,15 @@ export class RoleManagementUseCase {
     roleIds: string[],
     actorId: string,
   ) {
+    // SECURITY (Sentinel): Verify member belongs to organization.
+    const currentMember = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId, deletedAt: null },
+    });
+
+    if (!currentMember) throw new NotFoundException("Member not found");
+
     const member = await this.prisma.client.member.update({
-      where: { id: memberId, organizationId },
+      where: { id: currentMember.id },
       data: {
         customRoles: {
           disconnect: roleIds.map((id) => ({ id })),
