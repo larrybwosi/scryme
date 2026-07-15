@@ -157,6 +157,7 @@ export default function PosPage() {
       <StructuredData data={breadcrumbData} />
 
       <ProductHero
+        module="pos"
         eyebrow="Module · POS"
         title={
           <>
