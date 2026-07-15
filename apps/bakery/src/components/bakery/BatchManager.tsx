@@ -242,7 +242,9 @@ export default function BatchManager() {
       (b: any) => b && typeof b === "object" && "batchNumber" in b,
     ) || [];
 
-  const totalCount: number = batchesData?.meta?.total ?? batches.length;
+  const totalCount: number =
+    (batchesData?.metadata?.total ?? batchesData?.metadata?.meta?.total) ??
+    batches.length;
 
   const filteredBatches = useMemo(() => {
     const term = localSearchTerm.toLowerCase();
@@ -749,10 +751,12 @@ export default function BatchManager() {
                 batches
               </p>
               <Pagination
-                page={page}
-                limit={limit}
-                total={totalCount}
+                currentPage={page}
+                pageSize={limit}
+                totalItems={totalCount}
+                totalPages={Math.ceil(totalCount / limit)}
                 onPageChange={setPage}
+                onPageSizeChange={setLimit}
               />
             </div>
           )}
