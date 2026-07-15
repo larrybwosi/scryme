@@ -1,4 +1,7 @@
 import posthog from "posthog-js";
+import * as Sentry from "@sentry/nextjs";
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
 

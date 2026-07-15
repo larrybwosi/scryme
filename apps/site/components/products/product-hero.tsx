@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts } from "@/lib/scryme-tokens";
