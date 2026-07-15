@@ -222,7 +222,7 @@ export const SignupPage = (props: {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || undefined,
+        callbackURL: callbackURL || "/customers",
       });
     } catch (error) {
       console.error("Login failed:", error);
