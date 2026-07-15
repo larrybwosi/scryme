@@ -1,0 +1,11 @@
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = [
+  "corepack enable --install-directory /usr/local/bin",
+  "corepack prepare pnpm@10.34.1 --activate",
+  "pnpm install --no-frozen-lockfile"
+]
