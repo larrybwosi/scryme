@@ -16,6 +16,9 @@ export const auth = betterAuth({
     storeSessionInDatabase: true,
     trustedOrigins: [
       "*.scryme.tech",
+      "https://scryme.tech",
+      "https://app.scryme.tech",
+      "https://crm.scryme.tech",
       "http://localhost:3000",
       "http://localhost:3001",
     ],
