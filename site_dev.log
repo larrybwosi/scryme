@@ -18,3 +18,5 @@ Invalid Sentry Dsn: https://placeholder-dsn@sentry.io/placeholder
  GET /blog/scaling-retail-business 200 in 2.5s (next.js: 2.3s, application-code: 240ms)
  GET /blog 200 in 141ms (next.js: 20ms, application-code: 121ms)
  GET /blog/scaling-retail-business 200 in 206ms (next.js: 57ms, application-code: 149ms)
+✓ Compiled in 3.2s
+✓ Compiled in 335ms
