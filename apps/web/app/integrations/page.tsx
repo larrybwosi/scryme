@@ -39,6 +39,7 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   getIntegrationsStatus,
   updateWindmillConfig,
+  provisionWindmill,
   updateHulyConfig,
   updateZitadelConfig,
   updatePlaneConfig,
@@ -102,11 +103,28 @@ export default function IntegrationsPage() {
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isProvisioning, setIsProvisioning] = useState(false);
   const [configValues, setConfigValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     loadStatuses();
   }, []);
+
+  const handleProvision = async () => {
+    setIsProvisioning(true);
+    try {
+      const result = await provisionWindmill();
+      if (result.success) {
+        toast.success("Windmill workspace successfully provisioned and templates deployed!");
+        setSelectedIntegration(null);
+        loadStatuses();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to provision Windmill workspace automatically.");
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
 
   const loadStatuses = async () => {
     setIsLoading(true);
@@ -164,6 +182,27 @@ export default function IntegrationsPage() {
       case "windmill":
         return (
           <div className="space-y-4 py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <h4 className="font-semibold text-amber-900 text-sm mb-1">One-Click Automatic Provisioning</h4>
+              <p className="text-amber-700 text-xs mb-3">
+                Let Dealio automatically spin up a dedicated Windmill tenant workspace and deploy all automation templates for your organization using global credentials.
+              </p>
+              <Button
+                type="button"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white h-10 text-xs font-semibold"
+                disabled={isProvisioning}
+                onClick={handleProvision}
+              >
+                {isProvisioning ? "Provisioning..." : "Provision Automatically"}
+              </Button>
+            </div>
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-xs uppercase font-medium">Or Configure Manually</span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
             <div className="space-y-2">
               <Label>Windmill Base URL</Label>
               <Input
