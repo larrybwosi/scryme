@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { signIn, requestPasswordReset, authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
@@ -294,10 +295,11 @@ const LoginPageContent = () => {
 
   const session = authClient.useSession();
 
-  const callbackUrl =
-    searchParams.get("callbackUrl") ||
-    searchParams.get("redirect") ||
-    searchParams.get("returnTo");
+  const [nuqsCallbackUrl] = useQueryState("callbackUrl");
+  const [nuqsRedirect] = useQueryState("redirect");
+  const [nuqsReturnTo] = useQueryState("returnTo");
+
+  const callbackUrl = nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo;
 
   useEffect(() => {
     if (session.data) {
@@ -409,8 +411,11 @@ const LoginPageContent = () => {
                 Need an account?{" "}
                 <button
                   onClick={() => {
+                    // Force state parameters to be explicitly preserved during transitions
                     const params = new URLSearchParams();
-                    if (callbackUrl) params.set("callbackUrl", callbackUrl);
+                    if (callbackUrl) {
+                      params.set("callbackUrl", callbackUrl);
+                    }
                     const queryString = params.toString();
                     router.push(
                       `/sign-up${queryString ? `?${queryString}` : ""}`,
