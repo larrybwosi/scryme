@@ -1,5 +1,6 @@
 "use client";
 import { Monitor, HardDrive, Terminal, Download } from "lucide-react";
+import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 
@@ -44,6 +45,16 @@ export function PosDownloadSection() {
                 borderColor: colors.inkLine,
                 background: colors.inkPanel,
               }}
+              onClick={() =>
+                captureCtaClicked("pos_download_clicked", {
+                  location: "pos_download_section",
+                  cta_label: `Download ${name}`,
+                  destination: `${apiBase}/public/download/${path}`,
+                  cta_type: "download",
+                  module: "pos",
+                  platform: name,
+                })
+              }
               onMouseEnter={(e) =>
                 (e.currentTarget.style.borderColor = colors.brassLine)
               }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts } from "@/lib/scryme-tokens";
 
 const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
@@ -111,6 +112,14 @@ export function PricingCTA({
                 color: colors.paper,
                 fontFamily: fonts.body,
               }}
+              onClick={() =>
+                captureCtaClicked("homepage_cta_clicked", {
+                  location: "closing_statement",
+                  cta_label: displayPrimaryCta.label,
+                  destination: displayPrimaryCta.href,
+                  cta_type: "primary",
+                })
+              }
             >
               {displayPrimaryCta.label} <ArrowRight className="w-4 h-4" />
             </Link>
@@ -122,6 +131,14 @@ export function PricingCTA({
                 color: colors.inkBg,
                 fontFamily: fonts.body,
               }}
+              onClick={() =>
+                captureCtaClicked("homepage_cta_clicked", {
+                  location: "closing_statement",
+                  cta_label: displaySecondaryCta.label,
+                  destination: `${webUrl}/sign-up`,
+                  cta_type: "secondary",
+                })
+              }
             >
               {displaySecondaryCta.label}
             </Link>

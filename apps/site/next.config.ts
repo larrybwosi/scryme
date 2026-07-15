@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+const isEuPostHog = posthogHost?.includes("eu.i.posthog.com");
+const posthogAssetsHost = isEuPostHog
+  ? "https://eu-assets.i.posthog.com"
+  : "https://us-assets.i.posthog.com";
+const posthogIngestHost = posthogHost || "https://us.i.posthog.com";
+
 const nextConfig: NextConfig = {
   output: "standalone",
   skipTrailingSlashRedirect: true,
@@ -17,15 +24,15 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/ingest/static/:path*",
-        destination: "https://us-assets.i.posthog.com/static/:path*",
+        destination: `${posthogAssetsHost}/static/:path*`,
       },
       {
         source: "/ingest/array/:path*",
-        destination: "https://us-assets.i.posthog.com/array/:path*",
+        destination: `${posthogAssetsHost}/array/:path*`,
       },
       {
         source: "/ingest/:path*",
-        destination: "https://us.i.posthog.com/:path*",
+        destination: `${posthogIngestHost}/:path*`,
       },
     ];
   },
