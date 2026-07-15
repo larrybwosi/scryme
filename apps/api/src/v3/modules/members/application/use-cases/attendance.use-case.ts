@@ -74,8 +74,18 @@ export class AttendanceUseCase {
   }
 
   async checkIn(organizationId: string, memberId: string, dto: CheckInDto) {
+    // SECURITY (Sentinel): Verify location ownership to prevent cross-tenant check-ins
+    const location = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id: dto.locationId, organizationId },
+      select: { id: true },
+    });
+
+    if (!location) {
+      throw new NotFoundException("Location not found");
+    }
+
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: { memberId, checkOutTime: null },
+      where: { organizationId, memberId, checkOutTime: null },
     });
 
     if (activeLog) {
@@ -109,8 +119,20 @@ export class AttendanceUseCase {
   }
 
   async checkOut(organizationId: string, memberId: string, dto: CheckOutDto) {
+    // SECURITY (Sentinel): Verify location ownership if provided
+    if (dto.locationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.locationId, organizationId },
+        select: { id: true },
+      });
+
+      if (!location) {
+        throw new NotFoundException("Location not found");
+      }
+    }
+
     const activeLog = await this.prisma.client.attendanceLog.findFirst({
-      where: { memberId, checkOutTime: null },
+      where: { organizationId, memberId, checkOutTime: null },
     });
 
     if (!activeLog) {
@@ -149,7 +171,9 @@ export class AttendanceUseCase {
   }
 
   async getMemberStatus(organizationId: string, memberId: string) {
-    const member = await this.prisma.client.member.findUnique({
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Member lacks a composite unique index on [id, organizationId]
+    const member = await this.prisma.client.member.findFirst({
       where: { id: memberId, organizationId },
       select: {
         id: true,
