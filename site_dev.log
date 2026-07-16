@@ -1,0 +1,22 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> site@1.0.0 dev /app/apps/site
+> next dev --port 3005
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3005
+- Network:       http://192.168.0.2:3005
+- Environments: .env
+✓ Ready in 631ms
+Invalid Sentry Dsn: https://placeholder-dsn@sentry.io/placeholder
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+○ Compiling /blog ...
+ HEAD /blog 200 in 6.8s (next.js: 5.9s, application-code: 919ms)
+ GET /blog 200 in 174ms (next.js: 13ms, application-code: 160ms)
+ GET /blog/scaling-retail-business 200 in 2.5s (next.js: 2.3s, application-code: 240ms)
+ GET /blog 200 in 141ms (next.js: 20ms, application-code: 121ms)
+ GET /blog/scaling-retail-business 200 in 206ms (next.js: 57ms, application-code: 149ms)
+✓ Compiled in 3.2s
+✓ Compiled in 335ms
